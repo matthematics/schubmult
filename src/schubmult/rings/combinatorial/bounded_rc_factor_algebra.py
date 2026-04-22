@@ -405,42 +405,51 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         return result
 
     def full_schub_elem(self, perm, size):
-        def cem_schub_schur_decomp(perm, n):
-            from sympy import Add, Mul, Pow, expand, sympify
+        # def cem_schub_schur_decomp(perm, n):
+        #     from sympy import Add, Mul, Pow, expand, sympify
 
-            from schubmult import Sx, uncode
-            result = Sx.zero @ Sx.zero
-            cd = (perm.strict_mul_dominant(n)).trimcode
-            if any(a < n for a in cd):
-                toadd = min(n - a for a in cd if a < n)
-                cd = [a + toadd for a in cd]
-            domperm = uncode(cd)
-            reppy = sympify(expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False))
-            for arg in Add.make_args(reppy):
-                coeff, schur_part = arg.as_coeff_Mul()
-                part1 = Sx.one
-                part2 = Sx.one
-                for elem_arg in Mul.make_args(schur_part):
-                    if isinstance(elem_arg, Pow):
-                        base, exp = elem_arg.as_base_exp()
-                    else:
-                        base = elem_arg
-                        exp = 1
-                    for _ in range(exp):
-                        if base.numvars < n:
-                            part1 *= base
-                        else:
-                            part2 *= base
-                    # if elem_arg.numvars < n:
-                    #     part1 *= elem_arg
-                    # else:
-                    #     part2 *= elem_arg
-                result += coeff * part1 @ part2
-            return result
-        decomp = cem_schub_schur_decomp(perm, size)
+        #     from schubmult import Sx, uncode
+        #     result = Sx.zero @ Sx.zero
+        #     cd = (perm.strict_mul_dominant(n)).trimcode
+        #     if any(a < n for a in cd):
+        #         toadd = min(n - a for a in cd if a < n)
+        #         cd = [a + toadd for a in cd]
+        #     domperm = uncode(cd)
+        #     reppy = sympify(expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False))
+        #     for arg in Add.make_args(reppy):
+        #         coeff, schur_part = arg.as_coeff_Mul()
+        #         part1 = Sx.one
+        #         part2 = Sx.one
+        #         for elem_arg in Mul.make_args(schur_part):
+        #             if isinstance(elem_arg, Pow):
+        #                 base, exp = elem_arg.as_base_exp()
+        #             else:
+        #                 base = elem_arg
+        #                 exp = 1
+        #             for _ in range(exp):
+        #                 if base.numvars < n:
+        #                     part1 *= base
+        #                 else:
+        #                     part2 *= base
+        #             # if elem_arg.numvars < n:
+        #             #     part1 *= elem_arg
+        #             # else:
+        #             #     part2 *= elem_arg
+        #         result += coeff * part1 @ part2
+        #     return result
+        # decomp = cem_schub_schur_decomp(perm, size)
+        from schubmult.rings.polynomial_algebra import ElemSymPolyBasis, Schub
+        schub_elem = Schub(perm, size).change_basis(ElemSymPolyBasis)
         schub = self.zero
-        for (p1, p2), coeff in decomp.items():
-            schub += coeff * self.schub_elem(p1, size) * self.schub_elem(p2, size, partition=tuple((~(p2.mul_dominant())).trimcode))
+        for (comp, _), coeff in schub_elem.items():
+            term = self(self.make_key((), size))
+            #grass_part = self.make_key((), size)
+            for index, part in enumerate(comp, start=1):
+                if index < size:
+                    term *= self.elem_sym(part, index, size=size)
+                else:
+                    term *= self.elem_sym(part, size, size=size)
+            schub += coeff * term
         return schub
 
     def schub_elem(self, perm, size, partition=None):
@@ -639,59 +648,90 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
     def _merge_elem_sym(self, normalized_key, elem_sym_rc):
         if not _is_full_grassmannian_rc(elem_sym_rc):
             raise ValueError(f"elem_sym_rc must be full Grassmannian, got {elem_sym_rc}")
+        if elem_sym_rc.perm.inv == 0:
+            return normalized_key
         size = normalized_key.size
+        if len(elem_sym_rc) > size:
+            raise ValueError(f"elem_sym_rc of size {len(elem_sym_rc)} cannot fit into key of size {size}")
+        if len(normalized_key) == 0:
+            return (elem_sym_rc,)
         if len(elem_sym_rc) == size:
-            if len(normalized_key) == 0:
-                return (elem_sym_rc,)
             if len(normalized_key[-1]) == size:
                 return (*normalized_key[:-1], normalized_key[-1].squash_product(elem_sym_rc))
+            return (*normalized_key, elem_sym_rc)
         if not any(len(rc) == len(elem_sym_rc) for rc in normalized_key):
             index = min([i for i, rc in enumerate(normalized_key) if len(rc) > len(elem_sym_rc)], default=len(normalized_key))
             return [*normalized_key[:index], elem_sym_rc, *normalized_key[index:]]
         index = next(i for i, rc in enumerate(normalized_key) if len(rc) == len(elem_sym_rc))
-        squashed_elem = normalized_key[index].squash_product(elem_sym_rc)
+        tensor = CrystalGraphTensor(*normalized_key[:index + 1], elem_sym_rc)
+        hw, raise_seq = tensor.to_highest_weight()
+        left_part, the_elem_sym = hw.factors[:-1], hw.factors[-1]
+        squashed_elem = left_part[-1].squash_product(the_elem_sym)
+        left_part = left_part[:-1]
         base, overflow = squashed_elem.resize(len(elem_sym_rc) + 1).squash_decomp()
         base = base.normalize()
         overflow = overflow.normalize()
-        if overflow.perm.inv == 0:
-            if len(base.perm) - 1 > len(base):
-                raise ValueError(f"Unexpected non-identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
-            return self._merge_elem_sym(self.make_key([*normalized_key[:index], *normalized_key[index+1:]], size), base)
-        full_overflow = [overflow]
-        if not _is_full_grassmannian_rc(base):
-            #raise ValueError(f"Unexpected non full Grassmannian base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+        build_back_up = self.make_key(left_part, size)#, base, *normalized_key[index + 1 :]
+        if not _is_full_grassmannian_rc(base) or len(base) - 1 > len(base):
             base0 = base
-            full_overflow = [overflow]
+            addup_list = []
             while base0.perm.inv > 0 and (not _is_full_grassmannian_rc(base0) or len(base0.perm) - 1 > len(base0)):
-                base0, more_overflow = base0.squash_decomp()
+                base0, overflow0 = base0.squash_decomp()
                 base0 = base0.normalize()
-                more_overflow = more_overflow.normalize()
-                # merge partial key
-                full_overflow = [more_overflow, *full_overflow]
-                if more_overflow.perm.inv == 0:
-                    raise ValueError(f"Unexpected identity overflow during merging elem_sym: {more_overflow} from {base} and {normalized_key[index]} in key of size {size}")
-            base = base0
-        if base.perm.inv == 0:
-            raise ValueError(f"Unexpected identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
-        full_overflow = [base, *full_overflow]
-        ret_key = [*normalized_key[:index]]
-        if index < len(normalized_key) - 1:
-            overflow_index = max([i for i, rc in enumerate(full_overflow) if len(rc) == len(normalized_key[index + 1])], default=-1)
-            if overflow_index != -1:
-                full_overflow = [*full_overflow[:overflow_index+1], normalized_key[index + 1], *full_overflow[overflow_index+1:]]
-                ret_key = [*ret_key, *normalized_key[index+2:]]
-            else:
-                ret_key = [*ret_key, *normalized_key[index + 1:]]
-        #flag = True
-        while len(full_overflow) > 0:
-            overflow = full_overflow.pop(0)
-            ret_key = self._merge_elem_sym(self.make_key(ret_key, size), overflow)
+                overflow0 = overflow0.normalize()
+                addup_list = [overflow0, *addup_list]
+            if base0.perm.inv > 0:
+                addup_list = [base0, *addup_list]
+            for rc in addup_list:
+                build_back_up = self.make_key(self._merge_elem_sym(build_back_up, rc), size)
+        else:
+            build_back_up = self.make_key(self._merge_elem_sym(build_back_up, base), size)
+        build_back_up = self.make_key(self._merge_elem_sym(build_back_up, overflow), size)
+        back_to_key = self.make_key(build_back_up.reverse_raise_seq(raise_seq), size)
+        build_back_up = back_to_key
+        for rc in normalized_key[index + 1:]:
+            build_back_up = self.make_key(self._merge_elem_sym(build_back_up, rc), size)
+        #     full_overflow = addup_list
+        # else:
+        #     full_overflow = [base, overflow]
+            #raise ValueError(f"Unexpected non full Grassmannian base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+            # base0 = base
+            # #full_overflow = [overflow]
+
+            # while len(overflow) <= size and base0.perm.inv > 0 and (not _is_full_grassmannian_rc(base0) or len(base0.perm) - 1 > len(base0)):
+            #     base0, overflow = base0.squash_decomp()
+            #     base0 = base0.normalize()
+            #     overflow = overflow.normalize()
+            #     # merge partial key
+            #     full_overflow = [overflow, *full_overflow]
+            #     if overflow.perm.inv == 0:
+            #         raise ValueError(f"Unexpected identity overflow during merging elem_sym: {overflow} from {base} and {normalized_key[index]} in key of size {size}")
+            # base = base0
+        # if base.perm.inv == 0:
+        #     raise ValueError(f"Unexpected identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+        # if len(base.perm) - 1 > len(base):
+        #     raise ValueError(f"Unexpected non-identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+        #mix_index = min([i for i, rc in enumerate(normalized_key) if len(rc) > len(base)], default=len(normalized_key))
+        #full_overflow = [base, *full_overflow]
+        # ret_key = [*normalized_key[:index]]
+        # #the_rest = []
+        # for mixer in [base, *normalized_key[index+1:]]:
+        #     overflow_index = max([i for i, rc in enumerate(full_overflow) if len(rc) <= len(mixer)], default=-1) + 1
+        #     #if overflow_index != -1:
+        #     full_overflow = [*full_overflow[:overflow_index], mixer, *full_overflow[overflow_index:]]
+        #     # else:
+        #     #     full_overflow = [mixer, *full_overflow]
+        # #flag = True
+        # while len(full_overflow) > 0:
+        #     overflow = full_overflow.pop(0)
+        #     ret_key = self._merge_elem_sym(self.make_key(ret_key, size), overflow)
             # if index < len(normalized_key) - 1:
             #     if len(normalized_key[index + 1]) == len(overflow):
             #         ret_key = self.make_key([*self._merge_elem_sym(ret_key, overflow)], size)
             #         #, size), normalized_key[index + 1]), *normalized_key[index + 2:]]
             #     return (*normalized_key[:index], base, overflow, *normalized_key[index + 1 :])
             # return (*normalized_key[:index], base, overflow)
+        ret_key = list(build_back_up)
         return ret_key
         #(*ret_key, ) if index < len(normalized_key) - 1 else ret_key
         # elif index < len(normalized_key) - 1 and len(normalized_key[index + 1]) == len(overflow):
@@ -700,84 +740,99 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
 
 
-    def _sort_and_merge(self, key):
+    def _sort_and_merge(self, key, legacy=True):
         """Sort factors by length (ascending, stable) and merge same-length adjacent via squash_product."""
-        new_key = self.make_key((), key.size)
-        last_seen = -1
-        for index, rc in enumerate(key):
-            if len(rc) == 0 or rc.perm.inv == 0:
-                continue
-            if len(rc) > last_seen:
-                new_key = self.make_key((*new_key[:index], rc), key.size)
-            else:
-                # if  len(rc) == last_seen:
-                #     print("DEBUG: Merging elem_sym_rc of full size with existing factor in key:", rc, new_key, "last_seen=", last_seen)
-                #     new_key = self.make_key((*new_key[:index - 1], new_key[index-1].squash_product(rc)), key.size)
+        if not legacy:
+            new_key = self.make_key((), key.size)
+            #last_seen = -1
+            for index, rc in enumerate(key):
+                if len(rc) == 0 or rc.perm.inv == 0:
+                    continue
+                # if len(rc) > last_seen:
+                #     new_key = self.make_key((*new_key[:index], rc), key.size)
                 # else:
+                #     # if  len(rc) == last_seen:
+                #     #     print("DEBUG: Merging elem_sym_rc of full size with existing factor in key:", rc, new_key, "last_seen=", last_seen)
+                #     #     new_key = self.make_key((*new_key[:index - 1], new_key[index-1].squash_product(rc)), key.size)
+                #     # else:
+                #hw_key, raise_seq = new_key.to_highest_weight()
                 new_key = self.make_key(self._merge_elem_sym(new_key, rc), key.size)
-            last_seen = 0 if len(new_key) == 0 else len(new_key[-1])
-        return new_key
-        # factors = list(key)
-        # factors.sort(key=len)
-        # if len(factors) <= 1:
-        #     return factors
-        # merged = [factors[0]]
-        # for rc in factors[1:]:
-        #     if len(merged[-1]) == len(rc):
-        #         m = merged[-1].squash_product(rc)
-        #         if m.perm.inv == 0:
-        #             merged.pop()
-        #         else:
-        #             merged[-1] = m
-        #     else:
-        #         merged.append(rc)
-        # return merged
+                #last_seen = 0 if len(new_key) == 0 else len(new_key[-1])
+            if tuple(sorted(new_key, key=len)) != tuple(new_key) or not all(len(rc.perm) - 1 == len(rc) for rc in new_key if len(rc) < key.size):
+                raise ValueError(f"Sorting and merging failed to produce length-sorted key: {new_key} from {key}")
+            return new_key
+        factors = list(key)
+        factors.sort(key=len)
+        if len(factors) <= 1:
+            return factors
+        merged = [factors[0]]
+        for rc in factors[1:]:
+            if len(merged[-1]) == len(rc):
+                m = merged[-1].squash_product(rc)
+                if m.perm.inv == 0:
+                    merged.pop()
+                else:
+                    merged[-1] = m
+            else:
+                merged.append(rc)
+        return merged
+
+    def _check_normal_key(self, key):
+        if tuple(sorted(key, key=len)) != tuple(key):
+            raise ValueError(f"Key is not sorted by length: {key}")
+        if not all(len(rc.perm) - 1 == len(rc) for rc in key if len(rc) < key.size):
+            raise ValueError(f"Key has non-identity factor that is not full Grassmannian: {key}")
+        if sorted({len(rc) for rc in key}) != [len(rc) for rc in key]:
+            raise ValueError(f"Key has factors of different sizes: {key}")
+        return key
 
 
-    def _normalize_key(self, key):
+    def _normalize_key(self, key, legacy=True):
         """Normalize an RCGraph tensor key to normal form."""
-        key = self._ensure_valid_key(key)
-        if len(key) == 0:
-            return key
-        return self._sort_and_merge(key)
-        # hw_key, raise_seq = key.to_highest_weight()
-        # factors = list(key)
-        # # key_hw, raise_seq = key.to_highest_weight()
-        # # factors = list(key_hw)
-        # while True:
-        #     # Phase 1: sort by length and merge same-length adjacent factors
-        #     factors = _sort_and_merge(list(factors))
-        #     # hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
-        #     # Phase 2: normalize individual RCGraphs and strip identities
-        #     factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
+        if not legacy:
+            key = self._ensure_valid_key(key)
+            if len(key) == 0:
+                return key
+            return self._check_normal_key(self._sort_and_merge(key))
+        size = key.size
+        hw_key, raise_seq = key.to_highest_weight()
+        factors = list(key)
+        # key_hw, raise_seq = key.to_highest_weight()
+        # factors = list(key_hw)
+        while True:
+            # Phase 1: sort by length and merge same-length adjacent factors
+            factors = self._sort_and_merge(list(factors), legacy)
+            # hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
+            # Phase 2: normalize individual RCGraphs and strip identities
+            factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
 
-        #     peeled = False
-        #     for i in range(len(factors) - 1, -1, -1):
-        #         if not _is_full_grassmannian_rc(factors[i]):
-        #             raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
-        #         factor = factors[i]
-        #         if len(factor) < size and len(factor.perm) - 1 > len(factor):
-        #             max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
-        #             max_rc = max_rc.normalize()
-        #             elem_rc = elem_rc.normalize()
-        #             if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
-        #                 continue
-        #             # if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
-        #             addup_list = [elem_rc]
-        #             working_rc = max_rc.normalize()
-        #             while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
-        #                 working_rc_base, working_elem_rc = working_rc.squash_decomp()
-        #                 working_elem_rc = working_elem_rc.normalize()
-        #                 working_rc_base = working_rc_base.normalize()
-        #                 addup_list = [working_elem_rc.normalize(), *addup_list]
-        #                 working_rc = working_rc_base.normalize()
-        #             if working_rc.perm.inv > 0:
-        #                 if not _is_full_grassmannian_rc(working_rc):
-        #                     raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
-        #                 addup_list = [working_rc.normalize(), *addup_list]
-        #             factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
-        #             peeled = True
-        #             break
+            peeled = False
+            for i in range(len(factors) - 1, -1, -1):
+                if not _is_full_grassmannian_rc(factors[i]):
+                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
+                factor = factors[i]
+                if len(factor) < size and len(factor.perm) - 1 > len(factor):
+                    max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
+                    max_rc = max_rc.normalize()
+                    elem_rc = elem_rc.normalize()
+                    if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
+                        continue
+                    # if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
+                    addup_list = [elem_rc]
+                    working_rc = max_rc.normalize()
+                    while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
+                        working_rc_base, working_elem_rc = working_rc.squash_decomp()
+                        working_elem_rc = working_elem_rc.normalize()
+                        working_rc_base = working_rc_base.normalize()
+                        addup_list = [working_elem_rc.normalize(), *addup_list]
+                        working_rc = working_rc_base.normalize()
+                    if working_rc.perm.inv > 0:
+                        if not _is_full_grassmannian_rc(working_rc):
+                            raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
+                        addup_list = [working_rc.normalize(), *addup_list]
+                    factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
+                    peeled = True
+                    break
 
         #     #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
         #     #         #     factor = factors[i].resize(len(factors[i]) + 1)
@@ -810,14 +865,14 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #     #         # if len(set(factors[i].perm.trimcode)) > 2:
         #     #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
         #     # factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
-        #     if not peeled:
-        #         break
+            if not peeled:
+                break
 
         # # for fact in factors:
         # #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
         # #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
         # # factors = _sort_and_merge(list(factors))
-        # return self.make_key(factors, size)
+        return self.make_key(factors, size)
         # return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
     def _check_in_coprod(self, left_key, right_key, new_key):
@@ -856,7 +911,8 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         just return the raw element to avoid infinite mutual recursion with
         mul -> _post_normalize_dict -> schub_elem -> from_tensor_dict -> _post_normalize_dict.
         """
-        if self._post_normalizing or not self.post_normalize:
+        #if self._post_normalizing or not self.post_normalize:
+        if True:
             return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
 
         clean = {}

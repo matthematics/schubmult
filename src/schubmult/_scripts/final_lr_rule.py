@@ -59,7 +59,7 @@ def safe_load_recording(filename):
 def verify_pair(perm1, perm2, n):
     from schubmult import BoundedRCFactorAlgebra, RCGraph, RCGraphRing, Sx, uncode
     from schubmult.utils.tuple_utils import pad_tuple
-    from sympy import Add, Mul, expand, Pow, sympify
+    from sympy import Add, Mul, expand, Pow, sympify, pretty_print
 
     g = BoundedRCFactorAlgebra()
     r = RCGraphRing()
@@ -102,14 +102,16 @@ def verify_pair(perm1, perm2, n):
         # g_result = g.zero
         result = r.zero
         prd = Sx(perm1) * Sx(perm2)
-        length = n
-        #length = max(len(perm1.trimcode), len(perm2.trimcode)) + 1
+        # length = max(len(perm1), len(perm2)) - 1
+        length = max(len(perm1.trimcode), len(perm2.trimcode))
         #length = n
         # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
         # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
         # decomp1 = cem_schub_schur_decomp(perm1, length)
         schub1 = g.full_schub_elem(perm1, length)
         schub2 = g.full_schub_elem(perm2, length)
+        # schub1 = g.schub_elem(perm1, length)
+        # schub2 = g.schub_elem(perm2, length)
         # schub1 = g.zero
         # for (p1, p2), coeff in decomp1.items():
         #     schub1 += coeff * g.schub_elem(p1, length) * g.schub_elem(p2, length, partition=tuple((~(p2.mul_dominant())).trimcode))
@@ -147,13 +149,13 @@ def verify_pair(perm1, perm2, n):
         #     #     return False
                         
 
-        # # # if any(v < 0 for v in result.values()):
-        # # #     print(f"Negative coefficient in result for {perm1} and {perm2}: {result}")
-        # # #     return False
-        # # # if any(v < 0 for v in g_result.values()):
-        # # #     print(f"Negative coefficient in result for {perm1} and {perm2}: {g_result}")
-        # # #     return False
+        
         result = g_result.to_rc_graph_ring_element().resize(n)
+        if any(v < 0 for v in result.values()):
+            print(f"Negative coefficient in result for {perm1} and {perm2}: {result}")
+            return False
+        
+        # pretty_print(result)
         prd2 = Sx.zero
         for rc, coeff in result.items():
             if coeff != prd.get(rc.perm, 0):
