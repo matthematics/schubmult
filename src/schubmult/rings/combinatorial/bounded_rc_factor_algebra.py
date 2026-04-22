@@ -761,20 +761,25 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             if tuple(sorted(new_key, key=len)) != tuple(new_key) or not all(len(rc.perm) - 1 == len(rc) for rc in new_key if len(rc) < key.size):
                 raise ValueError(f"Sorting and merging failed to produce length-sorted key: {new_key} from {key}")
             return new_key
+        # legacy
         factors = list(key)
-        factors.sort(key=len)
+        #factors.sort(key=lambda )
         if len(factors) <= 1:
             return factors
-        merged = [factors[0]]
+        merged = [factors[0].normalize()]
         for rc in factors[1:]:
-            if len(merged[-1]) == len(rc):
-                m = merged[-1].squash_product(rc)
-                if m.perm.inv == 0:
-                    merged.pop()
+            rc = rc.normalize()
+            index = len(merged) - 1
+            while index >= 0 and len(merged[index]) > len(rc):
+                index -= 1
+            if index >= 0:
+                if len(merged[index]) == len(rc):
+                    m = merged[index].squash_product(rc)
+                    merged[index] = m
                 else:
-                    merged[-1] = m
+                    merged.insert(index + 1, rc)
             else:
-                merged.append(rc)
+                merged.insert(0, rc)
         return merged
 
     def _check_normal_key(self, key):
@@ -789,27 +794,29 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     def _normalize_key(self, key, legacy=True):
         """Normalize an RCGraph tensor key to normal form."""
+        key = self._ensure_valid_key(key)
+        if len(key) == 0:
+            return key
         if not legacy:
-            key = self._ensure_valid_key(key)
-            if len(key) == 0:
-                return key
-            return self._check_normal_key(self._sort_and_merge(key))
+            return self._check_normal_key(self._sort_and_merge(key, legacy=False))
         size = key.size
-        hw_key, raise_seq = key.to_highest_weight()
+        #hw_key, raise_seq = key.to_highest_weight()
         factors = list(key)
         # key_hw, raise_seq = key.to_highest_weight()
         # factors = list(key_hw)
         while True:
             # Phase 1: sort by length and merge same-length adjacent factors
-            factors = self._sort_and_merge(list(factors), legacy)
-            # hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
-            # Phase 2: normalize individual RCGraphs and strip identities
             factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
+            factors = self._sort_and_merge(list(factors), legacy)
+            factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
+            #hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
+            # Phase 2: normalize individual RCGraphs and strip identities
+            #factors = [rc.normalize() for rc in hw_key if rc.perm.inv != 0]
 
             peeled = False
             for i in range(len(factors) - 1, -1, -1):
                 if not _is_full_grassmannian_rc(factors[i]):
-                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
+                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}\n{factors=}")
                 factor = factors[i]
                 if len(factor) < size and len(factor.perm) - 1 > len(factor):
                     max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
@@ -864,7 +871,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #     #             #     break
         #     #         # if len(set(factors[i].perm.trimcode)) > 2:
         #     #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
-        #     # factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
+            #factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
             if not peeled:
                 break
 
@@ -983,12 +990,14 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         raise NotImplementedError("from_rc_graph is not implemented; use from_dict with explicit keys for now.")
 
     def mul(self, a, b):
-        if not isinstance(b, BoundedRCFactorAlgebraElement):
-            return super().mul(a, b)
-        accum = {}
-        for left_key, left_coeff in a.items():
-            for right_key, right_coeff in b.items():
-                key = self._mul_keys(left_key, right_key)
-                if key is not None:
-                    accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
-        return self._post_normalize_dict(accum)
+        # if not isinstance(b, BoundedRCFactorAlgebraElement):
+        #     return super().mul(a, b)
+        if isinstance(a, BoundedRCFactorAlgebraElement):
+            accum = self.zero
+            for left_key, left_coeff in a.items():
+                for right_key, right_coeff in b.items():
+                    key = self._mul_keys(left_key, right_key)
+                    #if key is not None:
+                    accum += left_coeff * right_coeff * self(key)
+        # return self._post_normalize_dict(accum)
+        return accum
