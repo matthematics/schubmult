@@ -13,7 +13,12 @@ def _canonical_rc(rc):
     return next(iter(the_set))
 
 class ForestRCGraphRingElement(RCGraphRingElement):
-    pass
+    def to_free_algebra_element(self, basis=None):
+        from schubmult import ForestDual
+        result = sum([coeff * ForestDual(*key.forest_weight) for key, coeff in self.items()])
+        if basis is None:
+            return result
+        return result.change_basis(basis)
 
 class ForestRCGraphRing(RCGraphRing):
     _id = 0
@@ -31,6 +36,7 @@ class ForestRCGraphRing(RCGraphRing):
 
     def __call__(self, x):
         return self.new(x)
+
 
     @property
     def zero_monom(self):
