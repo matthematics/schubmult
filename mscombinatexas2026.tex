@@ -12,7 +12,7 @@
 \author{Matthew J. Samuel}
 \institute{CombinaTexas 2026}
 \date{April 25, 2026}
-
+\newcommand{\code}{\mathrm{code}}
 \newcommand{\coma}{\mathbf{S}}
 \newcommand{\dcoma}{\mathcal{DS}}
 \newcommand{\wb}[1]{\left[#1\right]}
@@ -1172,29 +1172,172 @@ $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,
 \begin{itemize}
 \item Forest polynomials (Nadeau and Tewari 2024 \cite{nadeau2024forest}): $\Forest{F}$ are polynomials indexed by ``indexed forests'' $F$ (bijectively related to weak compositions) and can be defined by a certain equivalence relation on reduced words/compatible sequences
 %A paper was posted on arXiv with a pipe dream formula for $\Forest{F}$ (Guo and Woodruff 2026 \cite{guo2026forest}). The transition algorithm respects the equivalence relation, so there is a relationship with the $\star$ product.
-\item It was shown that the Schubert polynomials expand positively in the forest basis. Using the equivalence relation, we can define a ``forest weight'' $F(R)$ for each pipe dream $R$, and obtain
+\item It was shown that the Schubert polynomials expand positively in the forest basis (additionally in \cite{guo2026forest} there is a pipe dream formula). Using the equivalence relation, we can define a ``forest invariant'' $\Omega(R)$ for each pipe dream $R$, and obtain
 \end{itemize}
 \begin{theorem}[S, 2026+]
-Let $F$ be an indexed forest with $\mathrm{code}(F) = \mathrm{code}(w)$ for a permutation $w$. Then
-$$\Forest{F}= \sum_{R\in\RC(w), F(R) = F} \mathrm{wt}(R)$$
+Let $F$ be an indexed forest and let $R\in\RC$ be such that $\mathrm{code}(\Omega(R))=F$. Then
+$$\Forest{F}= \sum_{A\in\RC, \Omega(A) = \Omega(R)} \mathrm{wt}(A)$$
 \end{theorem}
 \end{frame}
 
-\begin{frame}{New result: forest polynomial branching formula}
+% labeled indexed forests?
+\begin{frame}{Forest invariant algebra}
+  \begin{itemize}
+    \item We can actually do better, algebraically speaking. The equivalence relation is actually as strong as Edelman-Greene insertion and uniquely encodes a word and compatible sequences as a pair of labeled indexed forests
+    
+    \item Let $\sim$ be the equivalence relation on $\RC$ such that $R\sim A$ if $\wtt(R)=\wtt(A)$ and $\Omega_Q(R) = \Omega_Q(A)$, where $\Omega_Q$ is the $Q$-tableau of the insertion algorithm. Let $\Omega\RC$ be the set of equivalence classes of $\RC$ under $\sim$.
+  \end{itemize}
+\begin{center}
+\begin{tikzpicture}[scale=0.3,
+  tnode/.style={circle, draw=black, fill=white, inner sep=1.5pt, font=\tiny}]
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (6,0);
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (6,1);
+  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (6,2);
+  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (6,3);
+  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (6,4);
+  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (6,5);
+  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (6,6);
+  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,6);
+  \draw[blue, line width=0.5pt] (0,5.5) .. controls (0.3,5.5) and (0.5,5.7) .. (0.5,6);
+  \draw[blue, line width=0.5pt] (0.5,5) .. controls (0.5,5.3) and (0.7,5.5) .. (1,5.5);
+  \draw[blue, line width=0.5pt] (1,5.5) .. controls (1.3,5.5) and (1.5,5.7) .. (1.5,6);
+  \draw[blue, line width=0.5pt] (1.5,5) .. controls (1.5,5.3) and (1.7,5.5) .. (2,5.5);
+  \draw[blue, line width=0.5pt, line cap=round] (2,5.5) -- (3,5.5);
+  \draw[blue, line width=0.5pt, line cap=round] (2.5,5) -- (2.5,6);
+  \draw[blue, line width=0.5pt] (3,5.5) .. controls (3.3,5.5) and (3.5,5.7) .. (3.5,6);
+  \draw[blue, line width=0.5pt] (3.5,5) .. controls (3.5,5.3) and (3.7,5.5) .. (4,5.5);
+  \draw[blue, line width=0.5pt] (4,5.5) .. controls (4.3,5.5) and (4.5,5.7) .. (4.5,6);
+  \draw[blue, line width=0.5pt] (4.5,5) .. controls (4.5,5.3) and (4.7,5.5) .. (5,5.5);
+  \draw[blue, line width=0.5pt] (5,5.5) .. controls (5.3,5.5) and (5.5,5.7) .. (5.5,6);
+  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
+  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
+  \draw[blue, line width=0.5pt] (1,4.5) .. controls (1.3,4.5) and (1.5,4.7) .. (1.5,5);
+  \draw[blue, line width=0.5pt] (1.5,4) .. controls (1.5,4.3) and (1.7,4.5) .. (2,4.5);
+  \draw[blue, line width=0.5pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
+  \draw[blue, line width=0.5pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
+  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
+  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
+  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
+  \draw[blue, line width=0.5pt, line cap=round] (0,3.5) -- (1,3.5);
+  \draw[blue, line width=0.5pt, line cap=round] (0.5,3) -- (0.5,4);
+  \draw[blue, line width=0.5pt, line cap=round] (1,3.5) -- (2,3.5);
+  \draw[blue, line width=0.5pt, line cap=round] (1.5,3) -- (1.5,4);
+  \draw[blue, line width=0.5pt, line cap=round] (2,3.5) -- (3,3.5);
+  \draw[blue, line width=0.5pt, line cap=round] (2.5,3) -- (2.5,4);
+  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
+  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
+  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
+  \draw[blue, line width=0.5pt, line cap=round] (1,2.5) -- (2,2.5);
+  \draw[blue, line width=0.5pt, line cap=round] (1.5,2) -- (1.5,3);
+  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
+  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
+  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
+  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
+  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,5.5) {1};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,4.5) {4};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,3.5) {6};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,2.5) {5};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,1.5) {2};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,0.5) {3};
+  \node[font=\scriptsize, text=black, anchor=south] at (0.5,6.3) {1};
+  \node[font=\scriptsize, text=black, anchor=south] at (1.5,6.3) {2};
+  \node[font=\scriptsize, text=black, anchor=south] at (2.5,6.3) {3};
+  \node[font=\scriptsize, text=black, anchor=south] at (3.5,6.3) {4};
+  \node[font=\scriptsize, text=black, anchor=south] at (4.5,6.3) {5};
+  \node[font=\scriptsize, text=black, anchor=south] at (5.5,6.3) {6};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (2.5,5.5) {3};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,4.5) {2};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (2.5,3.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5,3.5) {4};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,3.5) {3};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5,2.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,2.5) {4};
+  \draw[black, line width=1.5pt] (0,0) rectangle (6,6);
+  % Arrow between pipe dream and trees
+  \node[font=\scriptsize] at (7, 3) {$\xrightarrow{\Omega}$};
+  % LBS tree (inorder x-positions * 1.5 + 8.5, depth-based y)
+  % inorder: N2=1, N3=2, N4=3, N5=4, N6=5, N7=6, N8=7
+  % depth:   N8=0, N2=1, N7=2, N6=3, N3=4, N5=5, N4=6
+  \node[font=\tiny\itshape, anchor=south] at (13.5,6.5) {$\Omega_P(R)$};
+  \node[tnode] (lbs8) at (18.0, 5.5)  {$3_2$};
+  \node[tnode] (lbs2) at (9.0,  4.65) {$2_1$};
+  \node[tnode] (lbs7) at (16.5, 3.8)  {$5_2$};
+  \node[tnode] (lbs6) at (15.0, 2.95) {$4_2$};
+  \node[tnode] (lbs3) at (10.5, 2.1)  {$3_1$};
+  \node[tnode] (lbs5) at (13.5, 1.25) {$5_1$};
+  \node[tnode] (lbs4) at (12.0, 0.4)  {$4_1$};
+  \draw (lbs8) -- (lbs2);
+  \draw (lbs2) -- (lbs7);
+  \draw (lbs7) -- (lbs6);
+  \draw (lbs6) -- (lbs3);
+  \draw (lbs3) -- (lbs5);
+  \draw (lbs5) -- (lbs4);
+  % Separator
+  \node[font=\scriptsize] at (19.5, 3) {,};
+  % Dec tree (offset 12 more in x: 8.5+12=20.5)
+  \node[font=\tiny\itshape, anchor=south] at (26.0,6.5) {$\Omega_Q(R)$};
+  \node[tnode] (dec8) at (30.5, 5.5)  {$7$};
+  \node[tnode] (dec2) at (21.5, 4.65) {$6$};
+  \node[tnode] (dec7) at (29.0, 3.8)  {$5$};
+  \node[tnode] (dec6) at (27.5, 2.95) {$4$};
+  \node[tnode] (dec3) at (23.0, 2.1)  {$3$};
+  \node[tnode] (dec5) at (26.0, 1.25) {$2$};
+  \node[tnode] (dec4) at (24.5, 0.4)  {$1$};
+  \draw (dec8) -- (dec2);
+  \draw (dec2) -- (dec7);
+  \draw (dec7) -- (dec6);
+  \draw (dec6) -- (dec3);
+  \draw (dec3) -- (dec5);
+  \draw (dec5) -- (dec4);
+\end{tikzpicture}
+\end{center}
+
+\end{frame}
+
+\begin{frame}{Dual forest LR rule}
+    \begin{theorem}[S, 2026+]
+    $\Omega\RC$ inherits the product $\star$ from $\RC$ via the function $R\mapsto [R]$ from the subalgebra of $\RC$ generated by the pipe dreams satisfying $\code(\Omega(R))=\code(\mathrm{perm}(R))$, which is a surjective homomorphism of rings onto $\Omega\RC$. The function
+    $$\pi_{\Forest{}}:\Omega\RC\to\dcoma$$
+    such that
+    $$[R]\mapsto \Forest{\mathrm{code}(\Omega(R))}^*$$
+    is a surjective homomorphism of rings onto $\dcoma$.
+    \end{theorem}
+\end{frame}
+
+\begin{frame}{Dual forest polynomial LR rule}
   \begin{theorem}[S, 2026+]
-    Write
-    $$\Forest{F}(x_1,\ldots,x_{n_1+n_2}) = \sum_{G,H} d_{F}^{G,H}\,\Forest{G}(x_1,\ldots,x_{n_1})\Forest{H}(x_{n_1+1},\ldots,x_{n_1+n_2}).$$
-    Then, fixing bounded pipe dreams $R_G, R_H$ with $\hr(R_G) = n_1$, $\hr(R_H) = n_2$, $F(R_G) = G = \wtt(R_G)$ and $F(R_H) = H = \wtt(R_H)$,  $d_{F,G}^{H}$ is the number of bounded pipe dreams $R$ with $\hr(R)=n_1+n_2$ and $F(R) = F$ such that $R$ has a coefficient of $1$ in the product $R_G\star R_H$.
+    Suppose
+    
+    $$\Forest{F}^*\Forest{G}^* = \sum_H f_{F,G}^H \Forest{H}^*$$
+    where $f_{F,G}^H$ are the structure constants for the product in $\dcoma$. Then $f_{F,G}^H$ counts the sum of the coefficients of all $[R_H]$ such that $\code(\Omega(R_H))=H$ in a product $[R_F]\star [R_G]\in\Omega\RC$ with $\code(\Omega(R_F)) = F$ and $\code(\Omega(R_G)) = G$, and in particular is nonnegative.
   \end{theorem}
-  \begin{corollary}
-  Dual forest polynomials $\Forest{F}^*$ have nonnegative structure constants for the product in $\dcoma$.
-  \end{corollary}
+  
 \end{frame}
 
 \begin{frame}{Dual forest polynomial coproduct?}
   It is known (combinatorially, but not with a formula) that forest polynomials have nonnegative structure constants, so that dual forest polynomials $\Forest{F}^*$ have nonnegative structure constants for the coproduct in $\dcoma$. 
+  
+  For example,
+  \begin{align*}
+    \Delta\!\left(\Forest{1,2}^*\right) =\;
+      &\Forest{0,0}^*\!\otimes\!\Forest{1,2}^*
+      + \Forest{0,1}^*\!\otimes\!\Forest{0,2}^*
+      + \Forest{0,1}^*\!\otimes\!\Forest{1,1}^*
+      + \Forest{0,2}^*\!\otimes\!\Forest{0,1}^* \\
+      +\;&\Forest{0,2}^*\!\otimes\!\Forest{1,0}^*
+      + \Forest{1,0}^*\!\otimes\!\Forest{0,2}^*
+      + \Forest{1,1}^*\!\otimes\!\Forest{0,1}^*
+      + \Forest{1,2}^*\!\otimes\!\Forest{0,0}^*
+  \end{align*}
   \begin{itemize}
-  \item It is highly likely that a positive coproduct formula for $\Forest{F}^*$ in $\dcoma$ can be obtained (at least as compared to the much harder problem for Schubert polynomials) by analyzing the $\star$ product of pipe dreams with $F(R) = F$.
+  \item It is distinctly possible that a positive coproduct formula for $\Forest{F}^*$ in $\dcoma$ can be obtained by analyzing the $\star$ product of pipe dreams with $F(R) = F$.
   \end{itemize}
 \end{frame}
 
