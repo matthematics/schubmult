@@ -577,8 +577,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @classmethod
     @cache
     def _extremal_weight(cls, hw_rc):
-        # search_space = {rc for rc in RCGraph.all_rc_graphs(perm, len(self)) if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
-        # return min(search_space, key=lambda rc: tuple([sum(rc.length_vector[:i]) for i in range(1, len(rc.length_vector))])).length_vector
         min_vec = hw_rc.length_vector
         min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
         for rc in hw_rc.full_crystal:
@@ -1899,19 +1897,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @cached_property
     def weight_tableau(self) -> Plactic:
-        if self.is_highest_weight:
-            tb = Plactic.yamanouchi(self.p_tableau.shape)
-            trimmed_lv = list(self.length_vector)
-            while len(trimmed_lv) > 0 and trimmed_lv[-1] == 0:
-                trimmed_lv.pop()
-            trimmed_lv = tuple(trimmed_lv)
-            assert tb.shape == trimmed_lv, f"{tb.shape=}, {trimmed_lv=}"
-            return tb
-        rc_hw, raise_seq = self.to_highest_weight()
-        w_tab = rc_hw.weight_tableau
-        tb = w_tab.reverse_raise_seq(raise_seq)
-        assert tb is not None, f"Could not reverse raise seq {raise_seq} on {w_tab=} {rc_hw=} {self=}"
-        return tb
+        nilp, plac = NilPlactic.ed_column_insert_rsk(self.perm_word, self.compatible_sequence)
+        return plac
 
     def monk_insert(self, row):
         if row <= 0:

@@ -407,14 +407,8 @@ class WordBasis(FreeAlgebraBasis):
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
-        highest_weights = set({rc.to_highest_weight()[0] for rc in all_rcs})
-        seen = {}
-        for hw in highest_weights:
-            code_key = hw.extremal_weight
-            if code_key not in seen:
-                seen[code_key] = hw
-            elif seen[code_key] != hw:
-                continue
+        for rc in all_rcs:
+            code_key = rc.extremal_weight
             dct[code_key] = dct.get(code_key, S.Zero) + S.One
         return dct
 
