@@ -63,7 +63,8 @@ class PolynomialBasis(ABC):
         """Apply a transition function to a dict of basis elements."""
         return tkeyfunc(output)
 
-    def change_tensor_basis(self, tensor_elem, basis1, basis2):
+    @classmethod
+    def change_tensor_basis(cls, tensor_elem, basis1, basis2):
         """Change the bases of both factors of a tensor element.
 
         Args:

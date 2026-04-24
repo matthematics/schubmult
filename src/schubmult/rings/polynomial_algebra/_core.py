@@ -12,7 +12,7 @@ from schubmult.utils.logging import get_logger
 
 from ..base_ring import BaseRing, BaseRingElement
 from ..schubert.base_schubert_ring import BaseSchubertElement
-from .polynomial_basis import MonomialBasis
+from .polynomial_basis import MonomialBasis, PolynomialBasis
 
 # from .polynomial_basis import EXBasis
 
@@ -36,6 +36,16 @@ class PolynomialAlgebraElement(BaseRingElement):
 
     # def expand(self, deep=True, *args, **kwargs):
     #     return self.change_basis(EXBasis())
+
+    def branch(self, index):
+        monom = self.change_basis(MonomialBasis)
+        monom_result = (monom.ring@monom.ring).zero
+        for k, v in monom.items():
+            if len(k) > index:
+                key_left = k[:index]
+                key_right = k[index:]
+                monom_result += v * monom.ring(key_left) @ monom.ring(key_right)
+        return PolynomialBasis.change_tensor_basis(monom_result, self.ring._basis, self.ring._basis)
 
     @property
     def free_symbols(self):

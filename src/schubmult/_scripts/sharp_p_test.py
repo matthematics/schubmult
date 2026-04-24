@@ -102,10 +102,11 @@ def verify_pair(perm1, perm2, n):
         # g_result = g.zero
         result = r.zero
         
-        # length = max(len(perm1), len(perm2)) - 1
-        length = n
+        length = max(len(perm1), len(perm2))
+        # length = n
         #max(len(perm1.trimcode), len(perm2.trimcode)) + 1
-        prd = Sx.from_dict({k: v for k, v in (Sx(perm1) * Sx(perm2)).items() if len(k) <= length})
+        #prd = Sx.from_dict({k: v for k, v in (Sx(perm1) * Sx(perm2)).items() if len(k) <= length})
+        prd = Sx(perm1) * Sx(perm2)
         #length = n
         # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
         # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
@@ -127,17 +128,19 @@ def verify_pair(perm1, perm2, n):
                 #continue
             else:
                 rc_by_grass2 += coeff2 * g(g.make_key(key2, key2.size)) @ g(g.make_key((), key2.size))
-        overflow_result = (r@r).zero
+        overflow_result = (g@g).zero
 
         for (part1, grass1), coeff1 in rc_by_grass1.items():
             for (part2, grass2), coeff2 in rc_by_grass2.items():
                 base = g(part1) * g(part2)
-                for key_base, coeff in base.items():
-                    if len(key_base) > 0 and len(key_base[-1]) == key_base.size:
-                        overflow_result += coeff * coeff1 * coeff2 * g(g.make_key(key_base[:-1], key_base.size)).to_rc_graph_ring_element() @ (g(g.make_key((key_base[-1],), key_base.size)) * g(grass1) * g(grass2)).to_rc_graph_ring_element()
-                        #continue
-                    else:
-                        overflow_result += coeff * coeff1 * coeff2 * g(g.make_key(key_base, key_base.size)).to_rc_graph_ring_element() @ (g(grass1) * g(grass2)).to_rc_graph_ring_element()
+                grass = g(grass1) * g(grass2)
+                overflow_result += base @ grass
+                # for key_base, coeff in base.items():
+                #     if len(key_base) > 0 and len(key_base[-1]) == key_base.size:
+                #         overflow_result += coeff * coeff1 * coeff2 * g(g.make_key(key_base[:-1], key_base.size)) @ (g(g.make_key((key_base[-1],), key_base.size)) * g(grass1) * g(grass2))
+                #         #continue
+                #     else:
+                #         overflow_result += coeff * coeff1 * coeff2 * g(g.make_key(key_base, key_base.size)) @ (g(grass1) * g(grass2))
                 #overflow_result += coeff1 * coeff2 * g(g.make_key((grass1,), length)) @ g(g.make_key((grass2,), length)) @ (g(part1)*g(part2)).to_rc_graph_ring_element()
         #pretty_print(overflow_result)
         # for key2, coeff2 in schub2.items():
@@ -172,10 +175,10 @@ def verify_pair(perm1, perm2, n):
         result = r.zero
         
         for (part, grass), coeff in overflow_result.items():
-            if grass.perm.inv != 0:
-                continue
-            assert coeff >= 0
-            result += coeff * r(part)#.resize(len(grass)).squash_product(grass))
+            # if grass.perm.inv != 0:
+            #     continue
+            #assert coeff >= 0
+            result += coeff * (g(part)*g(grass)).to_rc_graph_ring_element()#.resize(len(grass)).squash_product(grass))
         
         # for grass, part in rc_by_grass_result.items():
         #     # if not grass.is_highest_weight:
@@ -208,7 +211,7 @@ def verify_pair(perm1, perm2, n):
             if coeff != prd.get(rc.perm, 0):
                 print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm}: got {coeff}, expected {prd.get(rc.perm, 0)}")
                 return False
-            if rc.perm not in prd2:#is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
+            if rc.is_principal:#is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
                 # if rc.perm not in seen:
                 #     seen.add(rc.perm)
                 prd2 += coeff * Sx(rc.perm)

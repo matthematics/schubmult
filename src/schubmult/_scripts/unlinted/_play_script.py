@@ -149,6 +149,13 @@ if __name__ == "__main__":
 
     r = BoundedRCFactorAlgebra()
 
+    for perm in perms:
+        spit = r.schub_elem(perm, len(perm.trimcode), partition=tuple((~(perm.mul_dominant())).trimcode))
+        if any(v < 0 for v in spit.values()):
+            assert any(perm.has_pattern(neg_pat) for neg_pat in [[3,1,4,2],[4,1,3,2],[1,4,3,2]]), f"Failure for {perm}, got {spit}"
+        # else:
+        #     assert not any(perm.has_pattern(neg_pat) for neg_pat in [[3,1,4,2],[4,1,3,2],[1,4,3,2]]), f"Failure for {perm}, got {spit}"
+    exit(0)
     # def _is_elem_sym(rc):
     #     return rc.perm.descents() == {len(rc) - 1} and set(rc.trimcode).issubset({0, 1})
     # EE = FreeAlgebra(ElementaryBasis)
