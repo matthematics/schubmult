@@ -1167,198 +1167,35 @@ $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,
 % Thank you.
 % \end{frame}
 
-\begin{frame}{Other bases of $\dcoma$}
+\begin{frame}{Forest polynomials}
     \emph{Any} basis of the polynomial ring in $n$ variables results in a dual basis of $\dcoma_n$. If it can be treated as a series of stable bases in $n$, we can analyze bases related to Schubert polynomials in this way.
-
-  \textbf{Examples}
 \begin{itemize}
-\item Key polynomials (Demazure 1974 \cite{demazure1974key}): $\kappa_\alpha$, have a formula in terms of pipe dreams. The transition algorithm respects the Demazure crystal structure, so we can obtain related results.
-\item Forest polynomials (Nadeau and Tewari 2024 \cite{nadeau2024forest}): $\Forest{F}$, can be defined by a certain equivalence relation on reduced words/compatible sequences. 
-A paper was posted on arXiv with a pipe dream formula for $\Forest{F}$ (Guo and Woodruff 2026 \cite{guo2026forest}). The transition algorithm respects the equivalence relation, so there is a relationship with the $\star$ product.
+\item Forest polynomials (Nadeau and Tewari 2024 \cite{nadeau2024forest}): $\Forest{F}$ are polynomials indexed by ``indexed forests'' $F$ (bijectively related to weak compositions) and can be defined by a certain equivalence relation on reduced words/compatible sequences
+%A paper was posted on arXiv with a pipe dream formula for $\Forest{F}$ (Guo and Woodruff 2026 \cite{guo2026forest}). The transition algorithm respects the equivalence relation, so there is a relationship with the $\star$ product.
+\item It was shown that the Schubert polynomials expand positively in the forest basis. Using the equivalence relation, we can define a ``forest weight'' $F(R)$ for each pipe dream $R$, and obtain
 \end{itemize}
-
+\begin{theorem}[S, 2026+]
+Let $F$ be an indexed forest with $\mathrm{code}(F) = \mathrm{code}(w)$ for a permutation $w$. Then
+$$\Forest{F}= \sum_{R\in\RC(w), F(R) = F} \mathrm{wt}(R)$$
+\end{theorem}
 \end{frame}
 
-% \begin{frame}{The squash product}
-%   \centering
-%   \begin{tikzpicture}[scale=0.34]
-%     % -------- panel A: rc (4 cols, 3 rows) --------
-%     \draw[lightgray, very thin, opacity=0.3] (0,0) grid (4,3);
-%     \draw[black, line width=1.4pt] (0,0) rectangle (4,3);
-    
-%     % bumps (all non-cross cells): (1,0), (2,0), (3,0), (2,1), (3,1), (0,2), (1,2), (2,2)
-%     \foreach \x/\y in {1/0,2/0,3/0,2/1,3/1,0/2,1/2,2/2}{
-%       \draw[blue, line width=0.5pt] (\x,\y+0.5) .. controls (\x+0.3,\y+0.5) and (\x+0.5,\y+0.7) .. (\x+0.5,\y+1);
-%       \draw[blue, line width=0.5pt] (\x+0.5,\y) .. controls (\x+0.5,\y+0.3) and (\x+0.7,\y+0.5) .. (\x+1,\y+0.5);
-%     }
-    
-%     % crosses: (0,0), (0,1), (1,1), (3,2)
-%     \foreach \x/\y in {0/0,0/1,1/1,3/2}{
-%       \draw[blue, line width=0.5pt, line cap=round] (\x,\y+0.5) -- (\x+1,\y+0.5);
-%       \draw[blue, line width=0.5pt, line cap=round] (\x+0.5,\y) -- (\x+0.5,\y+1);
-%     }
-%     % simple reflections on crosses, left-to-right then top-to-bottom: 4; 2,3; 3
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (3.5,2.5) {4};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,1.5) {2};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (1.5,1.5) {3};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,0.5) {3};
-    
-%     \node[font=\small] at (2.0,4.0) {$rc$};
-%     \foreach \y/\lab in {2.5/1,1.5/2,0.5/3}{
-%       \node[font=\scriptsize, anchor=east] at (-0.2,\y) {\lab};
-%     }
-
-%     % -------- panel B: rc2 (3 cols, 3 rows) --------
-%     \draw[lightgray, very thin, opacity=0.3] (5.5,0) grid (8.5,3);
-%     \draw[black, line width=1.4pt] (5.5,0) rectangle (8.5,3);
-    
-%     % bumps (all non-cross cells)
-%     \foreach \x/\y in {0/2,0/1,1/1,2/1}{
-%       \draw[blue, line width=0.5pt] (\x+5.5,\y+0.5) .. controls (\x+5.8,\y+0.5) and (\x+6.0,\y+0.7) .. (\x+6.0,\y+1);
-%       \draw[blue, line width=0.5pt] (\x+6.0,\y) .. controls (\x+6.0,\y+0.3) and (\x+6.2,\y+0.5) .. (\x+6.5,\y+0.5);
-%     }
-    
-%     % crosses: (1,2), (1,3), (3,1), (3,2), (3,3) in matrix → (1,2), (2,2), (0,0), (1,0), (2,0) in TikZ
-%     \foreach \x/\y in {0/0,1/0,2/0,1/2,2/2}{
-%       \draw[blue, line width=0.5pt, line cap=round] (\x+5.5,\y+0.5) -- (\x+6.5,\y+0.5);
-%       \draw[blue, line width=0.5pt, line cap=round] (\x+6.0,\y) -- (\x+6.0,\y+1);
-%     }
-%     % simple reflections on crosses, left-to-right then top-to-bottom: 2,3; 3,4,5
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (7.0,2.5) {2};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (8.0,2.5) {3};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (6.0,0.5) {3};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (7.0,0.5) {4};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (8.0,0.5) {5};
-    
-%     \node[font=\small] at (7.0,4.0) {$rc_2$};
-%     \foreach \y/\lab in {2.5/1,1.5/2,0.5/3}{
-%       \node[font=\scriptsize, anchor=east] at (5.3,\y) {\lab};
-%     }
-
-%     % disjoint union arrow (with clear margins from labels/boxes)
-%     \draw[->, line width=1.1pt] (8.75,1.5) -- (10.45,1.5);
-%     \node[font=\scriptsize, fill=white, inner sep=1pt] at (9.60,2.0) {$\sqcup$};
-
-%     % -------- panel C: rc \sqcup rc2 (7 cols, 3 rows) --------
-%     \draw[lightgray, very thin, opacity=0.3] (11.4,0) grid (18.4,3);
-%     \draw[black, line width=1.4pt] (11.4,0) rectangle (18.4,3);
-%     % bumps (all non-cross cells)
-%     \foreach \x/\y in {0/2,1/2,2/2,4/2,2/1,3/1,4/1,5/1,6/1,1/0,2/0,3/0}{
-%       \draw[blue, line width=0.5pt] (\x+11.4,\y+0.5) .. controls (\x+11.7,\y+0.5) and (\x+11.9,\y+0.7) .. (\x+11.9,\y+1);
-%       \draw[blue, line width=0.5pt] (\x+11.9,\y) .. controls (\x+11.9,\y+0.3) and (\x+12.1,\y+0.5) .. (\x+12.4,\y+0.5);
-%     }
-%     % crosses at matrix positions:
-%     % (1,4), (1,6), (1,7), (2,1), (2,2), (3,1), (3,5), (3,6), (3,7)
-%     % TikZ coordinates: (3,2), (5,2), (6,2), (0,1), (1,1), (0,0), (4,0), (5,0), (6,0)
-%     \foreach \x/\y in {3/2,5/2,6/2,0/1,1/1,0/0,4/0,5/0,6/0}{
-%       \draw[blue, line width=0.5pt, line cap=round] (\x+11.4,\y+0.5) -- (\x+12.4,\y+0.5);
-%       \draw[blue, line width=0.5pt, line cap=round] (\x+11.9,\y) -- (\x+11.9,\y+1);
-%     }
-%     % simple reflections on crosses, left-to-right then top-to-bottom: 4,6,7; 2,3; 3,7,8,9
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (14.9,2.5) {4};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (16.9,2.5) {6};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (17.9,2.5) {7};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (11.9,1.5) {2};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (12.9,1.5) {3};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (11.9,0.5) {3};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (15.9,0.5) {7};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (16.9,0.5) {8};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (17.9,0.5) {9};
-%     \node[font=\small] at (14.9,4.0) {$rc\sqcup rc_2$};
-%     \foreach \y/\lab in {2.5/1,1.5/2,0.5/3}{
-%       \node[font=\scriptsize, anchor=east] at (11.32,\y) {\lab};
-%     }
-
-%     % transition arrow to squash product (with clear margins from labels/boxes)
-%     \draw[->, line width=1.1pt] (18.6,1.5) -- (21.8,1.5);
-%     \node[font=\scriptsize, fill=white, inner sep=1pt] at (20.2,2.0) {transition};
-
-%     % -------- panel D: rc \star rc2 (6 cols, 3 rows) --------
-%     \draw[lightgray, very thin, opacity=0.3] (22.8,0) grid (28.8,3);
-%     \draw[black, line width=1.4pt] (22.8,0) rectangle (28.8,3);
-%     % bumps (all non-cross cells)
-%     \foreach \x/\y in {0/2,1/2,2/2,2/1,3/1,4/1,5/1,4/0,5/0}{
-%       \draw[blue, line width=0.5pt] (\x+22.8,\y+0.5) .. controls (\x+23.1,\y+0.5) and (\x+23.3,\y+0.7) .. (\x+23.3,\y+1);
-%       \draw[blue, line width=0.5pt] (\x+23.3,\y) .. controls (\x+23.3,\y+0.3) and (\x+23.5,\y+0.5) .. (\x+23.8,\y+0.5);
-%     }
-%     % crosses at matrix positions:
-%     % (1,4), (1,5), (1,6), (2,1), (2,2), (3,1), (3,2), (3,3), (3,4)
-%     % TikZ coordinates: (3,2), (4,2), (5,2), (0,1), (1,1), (0,0), (1,0), (2,0), (3,0)
-%     \foreach \x/\y in {3/2,4/2,5/2,0/1,1/1,0/0,1/0,2/0,3/0}{
-%       \draw[blue, line width=0.5pt, line cap=round] (\x+22.8,\y+0.5) -- (\x+23.8,\y+0.5);
-%       \draw[blue, line width=0.5pt, line cap=round] (\x+23.3,\y) -- (\x+23.3,\y+1);
-%     }
-%     % simple reflections on crosses, left-to-right then top-to-bottom: 4,5,6; 2,3; 3,4,5,6
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (26.3,2.5) {4};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (27.3,2.5) {5};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (28.3,2.5) {6};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (23.3,1.5) {2};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (24.3,1.5) {3};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (23.3,0.5) {3};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (24.3,0.5) {4};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (25.3,0.5) {5};
-%     \node[font=\tiny, text=green!60!black, fill=white, inner sep=0pt, circle] at (26.3,0.5) {6};
-%     \node[font=\small] at (25.8,4.0) {$rc\boxtimes rc_2$};
-%     \foreach \y/\lab in {2.5/1,1.5/2,0.5/3}{
-%       \node[font=\scriptsize, anchor=east] at (22.72,\y) {\lab};
-%     }
-%   \end{tikzpicture}
-
-%   \vspace{-0.65em}
-  
-
-%   \vspace{-0.15em}
-%   \[
-%   rc\ \sqcup\ rc_2\ \xrightarrow{\ \text{transition}\ }\ rc\boxtimes rc_2
-%   \]
-
-%   \vspace{0.45em}
-%   \begin{itemize}
-%     \item Start with disjoint union after shifting $R_2$ to the right by the length of $\mathrm{perm}(R_1)$.
-%     \item Apply combinatorial transition to return to an $n$-row pipe dream.
-%     \item This is well-defined for any pipe dream, but restricting to $R_2$ $n$-Grassmannian it results in a right module action of $\mathrm{GrassPipe}_n$ (which becomes a ring under this product isomorphic to the opposite of the plactic algebra)
-%   \end{itemize}
-% \end{frame}
-
-
-% \begin{frame}{RC factor algebra}
-%   Consider the algebra $\mathcal{B}_n$ that is given by the quotient of the tensor algebra 
-%   $$T\left(\bigoplus_{k=1}^n \mathrm{GrassPipe}_k\right)$$
-%   by the relations
-%   \begin{itemize}
-%   \item Pipe dreams of different lengths commute,
-%   \item The product of two pipe dreams of the same length is given by the squash product
-%   \end{itemize}
-%   There is a linear map $\RC:\mathcal{B}_n\to\RC_n$ given by sending a pure tensor of Grassmannian pipe dreams to the $\boxtimes$ product of those pipe dreams in increasing order of length.  This is a surjective homomorphism of right $\mathrm{GrassPipe}_n$-modules. Unfortunately, the kernel is not an ideal of $\mathcal{B}_n$. \textbf{There may not be a product that ``checks all the boxes'' on pipe dreams at all.}
-% \end{frame}
-
-% \newtheorem{conjecture}{Conjecture}
-
-% \begin{frame}{Schubert elements}
-%   \begin{theorem}[S, $2026+$]
-%   There are canonical elements $\sch_w^{(n)}$ of $\mathcal{B}_n$ such that 
-%   $$\RC(\sch_w^{(n)}) = \sum_{P\in \RC_n(w)}P$$
-%   and
-%   $$\RC(\sch_u^{(n)}\cdot \sch_v^{(n)}) = \sum_{w} c_{u,v}^{w}\RC(\sch_w^{(n)})$$
-%    where $c_{u,v}^{w}$ is the Littlewood-Richardson coefficient of the complete flag variety.
-%   \end{theorem}
-
-%   These $\sch_w^{(n)}$ do not form a basis of the subring they generate, but there may be additional relations that can make this happen.
-% \end{frame}
-
-% \input{caveat_pipe_tensors.tex}
-
-% \begin{frame}{Other bases of the dual algebra}
-% \end{frame}
-
-\begin{frame}{Results}
-  It turns out the pipe dream product preserves these two particular structures in a certain sense. Enough to derive
-\begin{theorem}[S, $2026+$]
-    \begin{itemize}
-    \item Key polynomial branching formula (known but not with this particular combinatorial interpretation), highest weight quotient of $\RC$ lifts the dual algebra.
-    \item Forest polynomial branching formula (not previously known).
-    \end{itemize}
+\begin{frame}{New result: forest polynomial branching formula}
+  \begin{theorem}[S, 2026+]
+    Write
+    $$\Forest{F}(x_1,\ldots,x_{n_1+n_2}) = \sum_{G,H} d_{F}^{G,H}\,\Forest{G}(x_1,\ldots,x_{n_1})\Forest{H}(x_{n_1+1},\ldots,x_{n_1+n_2}).$$
+    Then, fixing bounded pipe dreams $R_G, R_H$ with $\hr(R_G) = n_1$, $\hr(R_H) = n_2$, $F(R_G) = G = \wtt(R_G)$ and $F(R_H) = H = \wtt(R_H)$,  $d_{F,G}^{H}$ is the number of bounded pipe dreams $R$ with $\hr(R)=n_1+n_2$ and $F(R) = F$ such that $R$ has a coefficient of $1$ in the product $R_G\star R_H$.
   \end{theorem}
+  \begin{corollary}
+  Dual forest polynomials $\Forest{F}^*$ have nonnegative structure constants for the product in $\dcoma$.
+  \end{corollary}
+\end{frame}
+
+\begin{frame}{Dual forest polynomial coproduct?}
+  It is known (combinatorially, but not with a formula) that forest polynomials have nonnegative structure constants, so that dual forest polynomials $\Forest{F}^*$ have nonnegative structure constants for the coproduct in $\dcoma$. 
+  \begin{itemize}
+  \item It is highly likely that a positive coproduct formula for $\Forest{F}^*$ in $\dcoma$ can be obtained (at least as compared to the much harder problem for Schubert polynomials) by analyzing the $\star$ product of pipe dreams with $F(R) = F$.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}
