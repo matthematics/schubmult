@@ -1,3 +1,5 @@
+from functools import cache
+
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
@@ -53,6 +55,23 @@ class KeyBasis(FreeAlgebraBasis):
             if rc.extremal_weight == key:
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct
+
+    @classmethod
+    @cache
+    def product(cls, key1, key2, coeff=S.One):
+        """Multiply two keys by transitioning to WordBasis and back."""
+        from schubmult.utils._mul_utils import add_perm_dict
+
+        from .schubert_basis import SchubertBasis
+
+        left = cls.transition_schubert(key1)
+        right = cls.transition_schubert(key2)
+        ret = {}
+
+        for key_schub_right, v in right.items():
+            for key_schub_left, v2 in left.items():
+                ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
+        return ret
 
 
     @classmethod

@@ -580,8 +580,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @classmethod
     @cache
-    def _extremal_weight(cls, hw_rc):
+    def _extremal_weight(cls, nilp):
         import numpy as np
+        hw_rc = nilp.hw_rc(len(nilp.perm.trimcode))
         # min_vec = hw_rc.length_vector
         # min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
         properly_sortable = [rc for rc in hw_rc.full_crystal if rc.sorted_length_vector == hw_rc.length_vector]
@@ -599,9 +600,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return properly_sortable[min_vec].length_vector
 
     @cached_property
+    def full_crystal(self):
+        return super().full_crystal
+
+    @cached_property
     def extremal_weight(self):
         from schubmult.utils.tuple_utils import pad_tuple
-        return pad_tuple(RCGraph._extremal_weight(self.normalize().to_highest_weight()[0]), len(self))
+        return pad_tuple(RCGraph._extremal_weight(NilPlactic.from_word(self.perm_word)), len(self))
         # hw_vec = self.to_highest_weight()[0].length_vector
         # # search_space = {rc for rc in self.full_crystal if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
         # # for rc in sea
