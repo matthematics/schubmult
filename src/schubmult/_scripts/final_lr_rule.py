@@ -56,10 +56,13 @@ def safe_load_recording(filename):
     return {}, {}
 
 
-def verify_pair(perm1, perm2, n):
+def verify_pair(perm1, perm2, n, forest):
     from schubmult import BoundedRCFactorAlgebra, RCGraph, RCGraphRing, Sx, uncode
     from schubmult.utils.tuple_utils import pad_tuple
     from sympy import Add, Mul, expand, Pow, sympify, pretty_print
+    from schubmult.rings.polynomial_algebra import PolynomialAlgebra, ForestPolyBasis
+
+    ForestPoly = PolynomialAlgebra(ForestPolyBasis(Sx.genset))
 
     g = BoundedRCFactorAlgebra()
     r = RCGraphRing()
@@ -98,18 +101,35 @@ def verify_pair(perm1, perm2, n):
     #         result += coeff * part1 @ part2
     #     return result
 
+    def de_unforest(perm, brcf_elem):
+        new_elem = 0
+        for key, coeff in brcf_elem.items():
+            rc = g.key_to_rc_graph(key)
+            if rc.perm != perm or rc.forest_weight == rc.perm.pad_code(len(rc)):
+                new_elem += coeff * g(key)
+        return new_elem
+
     try:
         # g_result = g.zero
         result = r.zero
-        prd = Sx(perm1) * Sx(perm2)
+        
+        prd = 0
+        #Sx(perm1) * Sx(perm2)
         # length = max(len(perm1), len(perm2)) - 1
         length = max(len(perm1.trimcode), len(perm2.trimcode))
+        if forest:
+            prd = ForestPoly(perm1.pad_code(length)) * ForestPoly(perm2.pad_code(length))
+        else:
+            prd = Sx(perm1) * Sx(perm2)
         #length = n
         # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
         # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
         # decomp1 = cem_schub_schur_decomp(perm1, length)
         schub1 = g.full_schub_elem(perm1, length)
         schub2 = g.full_schub_elem(perm2, length)
+        if forest:
+            schub1 = de_unforest(perm1, schub1)
+            schub2 = de_unforest(perm2, schub2)
         # schub1 = g.schub_elem(perm1, length)
         # schub2 = g.schub_elem(perm2, length)
         # schub1 = g.zero
@@ -150,25 +170,40 @@ def verify_pair(perm1, perm2, n):
                         
 
         
-        result = g_result.to_rc_graph_ring_element().resize(n)
+        result = g_result.to_rc_graph_ring_element().resize(length)
+        
+        if forest:
+            result = r.from_dict({rc: coeff for rc, coeff in result.items() if rc.forest_weight == rc.perm.pad_code(len(rc))})
+        # pretty_print(result)
         if any(v < 0 for v in result.values()):
             print(f"Negative coefficient in result for {perm1} and {perm2}: {result}")
             return False
-        
-        # pretty_print(result)
-        prd2 = Sx.zero
+        prd2 = 0
         for rc, coeff in result.items():
-            if coeff != prd.get(rc.perm, 0):
-                print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm}: got {coeff}, expected {prd.get(rc.perm, 0)}")
-                return False
-            if rc.is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
+            if not forest:
+                if coeff != prd.get(rc.perm, 0):
+                    print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm}: got {coeff}, expected {prd.get(rc.perm, 0)}")
+                    return False
+            else:
+                if coeff != prd.get(rc.perm.pad_code(length), 0):
+                    print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm.pad_code(length)}: got {coeff}, expected {prd.get(rc.perm.pad_code(length), 0)}")
+                    return False
+            if rc.is_principal:#rc.is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
                 # if rc.perm not in seen:
                 #     seen.add(rc.perm)
-                prd2 += coeff * Sx(rc.perm)
+                if not forest:
+                    prd2 += coeff * Sx(rc.perm)
+                else:
+                    prd2 += coeff * ForestPoly(rc.perm.pad_code(length))
 
-        if prd != prd2:
-            print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")
-            return False
+        if not forest:
+            if prd != prd2:
+                print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")
+                return False
+        else:
+            if not prd.almosteq(prd2):
+                print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")
+                return False
         #from sympy import pretty_print
         #pretty_print(result)
         return True
@@ -184,18 +219,18 @@ def worker(shared_recording_dict, lock, task_queue):
             item = task_queue.get()
             if item is None:
                 break
-            perm1, perm2, n = item
+            perm1, perm2, n, forest = item
         except Exception:
             import traceback
             traceback.print_exc()
             break
 
-        key = (tuple(perm1), tuple(perm2), n)
+        key = (tuple(perm1), tuple(perm2), n, forest)
         with lock:
             if shared_recording_dict.get(key) is True:
                 continue
 
-        good = verify_pair(perm1, perm2, n)
+        good = verify_pair(perm1, perm2, n, forest)
 
         with lock:
             shared_recording_dict[key] = good
@@ -239,7 +274,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
     safe_save_recording(recording_copy, verification_filename, meta=meta or {})
 
 
-def queue_producer(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, shared_recording_dict):
+def queue_producer(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, forest, shared_recording_dict):
     task_count = 0
     left_factor = perms
     right_factor = perms
@@ -251,10 +286,10 @@ def queue_producer(task_queue, perms, n, num_processors, skip_id, grass_left_fac
     for perm1, perm2 in itertools.product(left_factor, right_factor):
         if skip_id and (perm1.inv == 0 or perm2.inv == 0):
             continue
-        key = (tuple(perm1), tuple(perm2), n)
+        key = (tuple(perm1), tuple(perm2), n, forest)
         if shared_recording_dict.get(key) is True:
             continue
-        task_queue.put((perm1, perm2, n))
+        task_queue.put((perm1, perm2, n, forest))
         task_count += 1
         if task_count % 100 == 0:
             gc.collect()
@@ -275,6 +310,7 @@ def main():
     parser.add_argument("--grass_right_factor", action="store_true", default=False, help="Use Grassmann right factor (default: False)")
     parser.add_argument("--no-skip-id", dest="skip_id", action="store_false", help="Include identity permutations")
     parser.add_argument("--extra", type=int, default=1, help="Extra size for permutation generation (default: 1)")
+    parser.add_argument("--forest", action="store_true", default=False, help="Use forest factor (default: False)")
 
     args = parser.parse_args()
     n = args.n
@@ -283,10 +319,11 @@ def main():
     skip_id = args.skip_id
     grass_left_factor = args.grass_left_factor
     grass_right_factor = args.grass_right_factor
+    forest = args.forest
     filename = args.filename
     verification_filename = filename + ".verification" if filename else None
 
-    meta = {"n": n, "extra": extra, "skip_id": skip_id}
+    meta = {"n": n, "extra": extra, "skip_id": skip_id, "forest": forest, "grass_left_factor": grass_left_factor, "grass_right_factor": grass_right_factor}
 
     loaded_recording = {}
     if verification_filename:
@@ -318,7 +355,7 @@ def main():
 
         producer_proc = Process(
             target=queue_producer,
-            args=(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, shared_recording_dict),
+            args=(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, forest, shared_recording_dict),
         )
         producer_proc.start()
 

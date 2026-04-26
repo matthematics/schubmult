@@ -574,27 +574,34 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         return tup[:-1]
 
+    @cached_property
+    def sorted_length_vector(self):
+        return tuple(sorted(self.length_vector, reverse=True))
+
     @classmethod
     @cache
     def _extremal_weight(cls, hw_rc):
-        min_vec = hw_rc.length_vector
-        min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
-        for rc in hw_rc.full_crystal:
-            if tuple(sorted(rc.length_vector, reverse=True)) != hw_rc.length_vector:
-                continue
-            good = True
-            for j in range(1, len(rc.length_vector)):
-                if sum(rc.length_vector[:j]) > min_vec_prefix_sums[j - 1]:
-                    good = False
-                    break
-            if good:
-                min_vec = rc.length_vector
-                min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
-        return min_vec
+        import numpy as np
+        # min_vec = hw_rc.length_vector
+        # min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        properly_sortable = [rc for rc in hw_rc.full_crystal if rc.sorted_length_vector == hw_rc.length_vector]
+        min_vec = min([(i, np.cumsum(properly_sortable[i].length_vector).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
+        # for rc in properly_sortable:
+        #     good = True
+        #     prefix_sums = np.cumsum(rc.length_vector).tolist()
+        #     for j in range(1, len(rc.length_vector)):
+        #         if prefix_sums[j - 1] > min_vec_prefix_sums[j - 1]:
+        #             good = False
+        #             break
+        #     if good:
+        #         min_vec = rc.length_vector
+        #         min_vec_prefix_sums = prefix_sums
+        return properly_sortable[min_vec].length_vector
 
-    @property
+    @cached_property
     def extremal_weight(self):
-        return RCGraph._extremal_weight(self.to_highest_weight()[0])
+        from schubmult.utils.tuple_utils import pad_tuple
+        return pad_tuple(RCGraph._extremal_weight(self.normalize().to_highest_weight()[0]), len(self))
         # hw_vec = self.to_highest_weight()[0].length_vector
         # # search_space = {rc for rc in self.full_crystal if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
         # # for rc in sea
