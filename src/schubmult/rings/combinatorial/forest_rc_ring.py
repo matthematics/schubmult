@@ -4,13 +4,13 @@ from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 def _canonical_rc(rc):
-    from schubmult.utils.tuple_utils import pad_tuple
-
-    if rc.forest_weight != pad_tuple(tuple(rc.perm.trimcode), len(rc)):
+    # needed
+    if rc.forest_weight != rc.perm.pad_code(len(rc)):
         return None
-    perm = rc.perm
-    the_set = {rc2 for rc2 in RCGraph.all_rc_graphs(perm, len(rc), weight=rc.length_vector) if rc2.omega_invariant[1] == rc.omega_invariant[1] and rc2.forest_weight == rc.forest_weight and rc2.forest_weight == pad_tuple(tuple(rc.perm.trimcode), len(rc))}
-    return next(iter(the_set))
+    # does not work
+    # the_set = {rc2 for rc2 in RCGraph.all_forest_rcs(rc.forest_weight, weight=rc.length_vector) if rc2.omega_invariant[1] == rc.omega_invariant[1] and rc2.forest_weight == rc.forest_weight}
+    # return next(iter(the_set))
+    return rc
 
 class ForestRCGraphRingElement(RCGraphRingElement):
     def to_free_algebra_element(self, basis=None):
