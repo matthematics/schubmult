@@ -2140,6 +2140,16 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @classmethod
     @cache
+    def all_forest_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
+        return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.forest_weight == comp}
+
+    @classmethod
+    @cache
+    def all_key_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
+        return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.extremal_weight == comp}
+
+    @classmethod
+    @cache
     def all_lw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
         ret = set()
         for rc in cls.all_rc_graphs(perm, length, weight=weight):

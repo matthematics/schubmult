@@ -430,6 +430,11 @@ class Permutation(Printable):
                 piv.add((i, j))
         return piv
 
+    def pad_code(self, length):
+        if length < len(self.trimcode):
+            raise ValueError("Cannot pad to a length shorter than the trimcode")
+        return tuple(list(self.trimcode) + [0 for i in range(length - len(self.trimcode))])
+
     @cached_property
     def trimcode(self):
         if self._perm == ():

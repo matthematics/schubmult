@@ -39,31 +39,25 @@ if __name__ == "__main__":
     #         assert fbranch.almosteq(tbranch), f"Failed for {perm} at index {index} with {len(key_set)} RC graphs, got {tbranch} but expected {fbranch}"
 
     for perm1, perm2 in itertools.product(perms, repeat=2):
-        comp1 = pad_tuple(tuple(perm1.trimcode), n - 1)
-        comp2 = pad_tuple(tuple(perm2.trimcode), n - 1)
+        for length1, length2 in itertools.product(range(len(perm1.trimcode), n), range(len(perm2.trimcode), n)):
+            comp1 = pad_tuple(tuple(perm1.trimcode), length1)
+            comp2 = pad_tuple(tuple(perm2.trimcode), length2)
+            for key_rc1_base, key_rc2_base in itertools.product(RCGraph.all_key_rcs(comp1), RCGraph.all_key_rcs(comp2)):
+                key_rc1 = r(key_rc1_base)
+                key_rc2 = r(key_rc2_base)
 
-        key_rc1 = r(RCGraph.principal_rc(perm1, n - 1))
-        key_rc2 = r(RCGraph.principal_rc(perm2, n - 1))
-        # key_rc1 = r.from_free_algebra_element(KeyDual(*comp1))
-        # key_rc2 = r.from_free_algebra_element(KeyDual(*comp2))
-        # key_rc1 = r(next(iter([rc for rc in RCGraph.all_rc_graphs(perm1, len(comp1)) if rc.extremal_weight == comp1])))
-        # key_rc2 = r(next(iter([rc for rc in RCGraph.all_rc_graphs(perm2, len(comp2)) if rc.extremal_weight == comp2])))
+                rc_test_prod = KeyDual.zero
 
-        rc_test_prod = KeyDual.zero
-        #invariants_seen = {}
-        rc_prod = (key_rc1 * key_rc2)
-        # pretty_print(rc_prod)
-        # print({k.key_invariant: v for k, v in rc_prod.items()})
-        for k, v in rc_prod.items():
-            # if k.extremal_weight != pad_tuple(k.perm.trimcode, len(k)):
-            #     raise ValueError(f"Failed for {comp1} * {comp2}, got non-forest RC graph {k} with weight {k.extremal_weight} and perm {k.perm}, expected only forest RC graphs")
-            rc_test_prod += v * KeyDual(*k.extremal_weight)
-        #rc_test_prd = sum([v * KeyDual(*k.extremal_weight) for k, v in (r(key_rc1) * r(key_rc2)).items() if k.is_principal])
-        #rc_test_prod = rc_prod.to_free_algebra_element(KeyBasis)
-        expected_prd = KeyDual(*comp1) * KeyDual(*comp2)
-        assert rc_test_prod.almosteq(expected_prd), f"Failed for {comp1} * {comp2}, got {rc_test_prod} but expected {expected_prd}"
-        print(f"Passed for {comp1} * {comp2}")
+                rc_prod = (key_rc1 * key_rc2)
 
+                for k, v in rc_prod.items():
+                    # if k.extremal_weight != k.perm.pad_code(len(k)):
+                    #     raise ValueError(f"Failed for {comp1} * {comp2}, got non-forest RC graph {k} with weight {k.extremal_weight} and perm {k.perm}, expected only forest RC graphs")
+                    rc_test_prod += v * KeyDual(*k.extremal_weight)
+                expected_prd = KeyDual(*comp1) * KeyDual(*comp2)
+                assert rc_test_prod.almosteq(expected_prd), f"Failed for {comp1} * {comp2}, got {rc_test_prod} but expected {expected_prd}"
+                print(f"Passed for {comp1} * {comp2}")
+            
 
         # key_set = [rc for rc in RCGraph.all_rc_graphs(perm, n - 1) if rc.extremal_weight == comp]
 
