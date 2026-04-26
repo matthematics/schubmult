@@ -6,8 +6,8 @@ from schubmult.rings.combinatorial.key_rc_ring import KeyRCGraphRing
 from sympy import pretty_print
 
 #KeyDual = FreeAlgebra(KeyBasis)
-def snap_key(rc):
-    return next(iter([rcc for rcc in RCGraph.all_rc_graphs(rc.perm, len(rc), weight=rc.extremal_weight)]))
+# def snap_key(rc):
+#     return next(iter([rcc for rcc in RCGraph.all_rc_graphs(rc.perm, len(rc), weight=rc.extremal_weight)]))
 
 # def key_equal(rc1, rc2):
 #     return rc1.extremal_weight == rc2.extremal_weight and rc1.omega_invariant[1] == rc2.omega_invariant[1]
@@ -39,10 +39,11 @@ if __name__ == "__main__":
     #         assert fbranch.almosteq(tbranch), f"Failed for {perm} at index {index} with {len(key_set)} RC graphs, got {tbranch} but expected {fbranch}"
 
     for perm1, perm2 in itertools.product(perms, repeat=2):
-        for length1, length2 in itertools.product(range(len(perm1.trimcode), n), range(len(perm2.trimcode), n)):
+        for length1, length2 in itertools.product(range(max(1,len(perm1.trimcode)), n), range(max(1,len(perm2.trimcode)), n)):
             comp1 = pad_tuple(tuple(perm1.trimcode), length1)
             comp2 = pad_tuple(tuple(perm2.trimcode), length2)
             for key_rc1_base, key_rc2_base in itertools.product(RCGraph.all_key_rcs(comp1), RCGraph.all_key_rcs(comp2)):
+                
                 key_rc1 = r(key_rc1_base)
                 key_rc2 = r(key_rc2_base)
 

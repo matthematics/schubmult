@@ -124,7 +124,7 @@ class CrystalGraph(Printable):
             crystal.add(elem)
             for i in range(1, elem.crystal_length()):
                 new_elem = elem.lowering_operator(i)
-                if new_elem is not None:
+                if new_elem is not None and new_elem not in crystal:
                     stack.append(new_elem)
         return crystal
 

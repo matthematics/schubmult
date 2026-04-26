@@ -409,7 +409,8 @@ class WordBasis(FreeAlgebraBasis):
         all_rcs = r.monomial(*key)
         for rc in all_rcs:
             code_key = rc.extremal_weight
-            dct[code_key] = dct.get(code_key, S.Zero) + S.One
+            if code_key == rc.perm.pad_code(len(rc)):
+                dct[code_key] = dct.get(code_key, S.Zero) + S.One
         return dct
 
     @classmethod

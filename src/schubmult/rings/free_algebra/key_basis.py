@@ -47,13 +47,22 @@ class KeyBasis(FreeAlgebraBasis):
     @classmethod
     def transition_schubert(cls, key):
         """Transition a key composition to the Schubert basis via RC graphs."""
-        from schubmult.rings.combinatorial import RCGraphRing
+        from schubmult import RCGraph, RCGraphRing
+        #from schubmult import uncode
         r = RCGraphRing()
         dct = {}
+        #all_rcs = {rc: coeff for rc, coeff in r.monomial(*key).items() if rc.extremal_weight == key}
         all_rcs = r.monomial(*key)
-        for rc in all_rcs:
-            if rc.extremal_weight == key:
-                dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
+        all_perms = {rc.perm for rc in all_rcs.keys()}
+        for perm in all_perms:
+            for hw_rc in RCGraph.all_hw_rcs(perm, len(key)):
+                if hw_rc.extremal_weight == key:
+                    dct[(hw_rc.perm, len(key))] = dct.get((hw_rc.perm, len(key)), S.Zero) + 1
+        # seen = set()
+        # for rc, coeff in all_rcs.items():
+        #     if rc.extremal_weight == key and rc.to_highest_weight()[0] not in seen:
+        #         dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
+        #         seen.add(rc.to_highest_weight()[0])
         return dct
 
     @classmethod
