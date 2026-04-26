@@ -2,13 +2,14 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{natbib}
-\usetheme{default}
+\usetheme{Madrid}
+\usecolortheme{beaver}
 
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{tikz}
 \usetikzlibrary{calc,fit,shapes.geometric}
 
-\title{A Bialgebra Framework for Positivity in Schubert Calculus}
+\title[A Bialgebra Framework for Schubert Calculus]{A Bialgebra Framework for Positivity in Schubert Calculus}
 \author{Matthew J. Samuel}
 \institute{CombinaTexas 2026}
 \date{April 25, 2026}
@@ -64,7 +65,7 @@
 
 \begin{frame}{Schubert polynomials}
 \begin{itemize}
-  \item Multivariate polynomials representing cohomology classes of Schubert varieties in the complete flag variety.
+  \item Basis of the polynomial ring $\mathbb{Z}[x_1,x_2,\ldots]$, sharing their structure constants with the Schubert classes in the cohomology of the complete flag variety.
   \item Indexed by permutations, with the Schubert polynomial $\sch_w$ corresponding to a permutation $w$.
   \item Generalize the Schur polynomials, so their structure constants generalize the Littlewood-Richardson coefficients.
   \item Structure constants are nonnegative integers, but no positive combinatorial formula is known for them in general.
@@ -115,16 +116,16 @@ $$\Delta(x_1^2x_3x_5) = 1\otimes x_1^2x_3x_5 + x_1^2\otimes x_3x_5 + x_1^2x_3\ot
 
 \begin{frame}{Dual algebra}
 
-We define the dual algebra $\dcoma$ to be the graded dual of $\coma$. For the monomial basis, which is indexed by weak compositions, we define the dual basis $[\alpha]$ for weak compositions $\alpha$ by 
-$$\langle x_\alpha, [\beta]\rangle = \delta_{\alpha,\beta}$$
+We define the dual algebra $\dcoma$ to be the graded dual of $\coma$. For the monomial basis, which is indexed by weak compositions, we define the dual basis $[a]$ for weak compositions $a$ by 
+$$\langle x_a, [b]\rangle = \delta_{a,b}$$
 
 We have that the dual product is concatenation:
 \[
-\wb{\alpha}\cdot \wb{\beta} = \wb{\alpha\,\beta}.
+\wb{a}\cdot \wb{b} = \wb{a\,b}.
 \]
 
 Hence $\dcoma$ is a free associative algebra (tensor algebra on the generators $\wb{k}$, $k\ge 0$). The coproduct is
-\[\Delta(\wb{\gamma}) = \sum_{\alpha + \beta=\gamma} \wb{\alpha} \otimes \wb{\beta}.\]
+\[\Delta(\wb{c}) = \sum_{a + b=c} \wb{a} \otimes \wb{b}.\]
 
 What do the duals of Schubs look like?
 \end{frame}
@@ -180,7 +181,7 @@ Follow the strands through the row. The admissibility condition is that it canno
 \end{frame}
 
 \begin{frame}{A nice combinatorial basis}
-Let $\Xi_w^k$ be the basis indexed by permutations $w$ such that $w(p) < w(p+1)$ for all $p>k$ satisfying the following:
+Let $\Xi_w^k$ be the basis of $\dcoma_k$ indexed by permutations $w$ such that $w(p) < w(p+1)$ for all $p>k$ satisfying the following:
 \begin{itemize}
 \item $\Xi_{w}^1 = [w(1) - 1]$
 \item For a nonnegative integer $[p]$, we have that
@@ -203,7 +204,7 @@ The coefficients $c_{u,v}^{w}$ of the coproduct formula
 \Delta\,\Sch{w}^{n} = \sum_{u,v} c_{u,v}^{w}\,\Sch{u}^{n}\otimes \Sch{v}^{n}
 \]
 
-are the Littlewood-Richardson coefficients for Schubert polynomials!
+are the elusive Littlewood-Richardson coefficients for Schubert polynomials!
 
 \end{frame}
 
@@ -252,7 +253,7 @@ are the Littlewood-Richardson coefficients for Schubert polynomials!
 % \end{frame}
 
 \begin{frame}{Bounded pipe dreams}
-Pipe dreams are well-studied objects introduced in the $1990$s by Bergeron and Billey to give a nicer combinatorial formula for Schubert polynomials equivalent to an earlier one by Billey, Jockusch, and Stanley involving reduced words/compatible sequences.
+Pipe dreams are well-studied objects introduced in the $1990$ by Bergeron and Billey to represent monomials of Schubert polynomials. We associate a fixed bound $\mathrm{length}(R)$ that is $\geq$ the length of the Lehmer code 
 \begin{center}
 \begin{tikzpicture}[scale=0.3]
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (6,1);
@@ -326,15 +327,14 @@ Pipe dreams are well-studied objects introduced in the $1990$s by Bergeron and B
 \begin{theorem}[Bergeron, Billey, 1993 \cite{bbrc}]
 The Schubert polynomial $\mathfrak{S}_w$ is equal to
 $$\sum_{R\in\RC(w)}x_{\mathrm{wt}(R)}$$
-where $\RC(w)$ is the set of pipe dreams with permutation $w$ and $\mathrm{wt}(R)$ is the weak composition whose $i$-th part is the number of crosses in row $i$ of $R$.
 \end{theorem}
 
 
 \end{frame}
 
 \begin{frame}{Transition algorithm on bounded pipe dreams}
-  There is an algorithm that takes a bounded pipe dream of length $n$ with row $n$ empty to a unique pipe dream of length $n-1$
-in a way that matches the Schubert transition formula in a strong, weight-preserving, structure-preserving form.
+  There is an algorithm that takes a bounded pipe dream of length $n$ with row $n$ empty to a unique bounded pipe dream of length $n-1$
+by a method that adheres to the Schubert transition formula in a way that preserves important combinatorial invariants and structures
 \begin{center}
   {\scriptsize
   \begin{algorithmic}
@@ -360,20 +360,20 @@ in a way that matches the Schubert transition formula in a strong, weight-preser
 \begin{frame}{Bounded pipe dream ring product}
 Given bounded pipe dreams $R_1,R_2$, define $R_1\star R_2$ by taking the sum of all $R$ obtained by
 \begin{itemize}
-  \item \emph{untransitioning} $R_1$ in all possible valid ways to create space while remaining a pipe dream,
-  \item shifting $R_2$ downward,
-  \item placing the shifted $R_2$ into the new empty region, unchanged, if doing so yields a valid pipe dream.
+  \item \emph{untransitioning} $R_1$ in all possible valid ways to add as many empty rows as the length of $\mathrm{perm}(R_2)$
+  \item shifting $R_2$ downward by $\mathrm{length}(R_1)$
+  \item placing the shifted $R_2$ into the new empty region, unchanged, if doing so yields a valid pipe dream (meaning we can connect the pipes consistently)
 \end{itemize}
-This allows us to lift the product of the dual algebra $\dcoma$ to a product on formal linear combinations of bounded pipe dreams.
+% This allows us to lift the product of the dual algebra $\dcoma$ to a product on formal linear combinations of bounded pipe dreams.
 \begin{theorem}[S, 2026+]
-The product $\star$ is associative and gives a well-defined ring structure on the vector space $\RC$ spanned by bounded pipe dreams.
+The product $\star$ is associative and gives a well-defined ring structure on the vector space $\RC$ spanned by bounded pipe dreams, graded by length and degree
 \end{theorem}
 \end{frame}
 
 \begin{frame}{Product example}
   \centering
   \begin{minipage}{0.45\textwidth}\centering
-  $rc$\\[0.3em]
+  $R_1$\\[0.3em]
 \begin{tikzpicture}[scale=0.3]
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (4,0);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,4);
@@ -408,7 +408,7 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \end{minipage}
   $\star$
   \begin{minipage}{0.45\textwidth}\centering
-  $rc_2$\\[0.3em]
+  $R_2$\\[0.3em]
 \begin{tikzpicture}[scale=0.3]
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (4,0);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,4);
@@ -444,21 +444,25 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \end{minipage}
 
   \vspace{0.5em}
-  \textit{Untransitioning of $rc$}
+  \textit{Untransitioning of $R_1$}
 
   \vspace{0.3em}
-  \begin{minipage}{0.18\textwidth}\centering\scriptsize A\\[0.2em]
-\begin{tikzpicture}[scale=0.15]
+  \begin{minipage}[t]{0.18\textwidth}\centering\scriptsize A\\[0.2em]
+\begin{tikzpicture}[scale=0.15, baseline=(current bounding box.north)]
+  \draw[lightgray, very thin, opacity=0.3] (0,-4) -- (4,-4);
+  \draw[lightgray, very thin, opacity=0.3] (0,-4) -- (0,4);
+  \draw[lightgray, very thin, opacity=0.3] (0,-3) -- (4,-3);
+  \draw[lightgray, very thin, opacity=0.3] (1,-4) -- (1,4);
+  \draw[lightgray, very thin, opacity=0.3] (0,-2) -- (4,-2);
+  \draw[lightgray, very thin, opacity=0.3] (2,-4) -- (2,4);
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (4,-1);
+  \draw[lightgray, very thin, opacity=0.3] (3,-4) -- (3,4);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (4,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,4);
+  \draw[lightgray, very thin, opacity=0.3] (4,-4) -- (4,4);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (4,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,4);
   \draw[lightgray, very thin, opacity=0.3] (0,2) -- (4,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,4);
   \draw[lightgray, very thin, opacity=0.3] (0,3) -- (4,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,4);
   \draw[lightgray, very thin, opacity=0.3] (0,4) -- (4,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,4);
   \draw[blue, line width=0.375pt, line cap=round] (0,3.5) -- (1,3.5);
   \draw[blue, line width=0.375pt, line cap=round] (0.5,3) -- (0.5,4);
   \draw[blue, line width=0.375pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
@@ -477,23 +481,26 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \draw[blue, line width=0.375pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,1.5) {3};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,3.5) {1};
-  \draw[black, line width=1.4pt] (0,0) rectangle (4,4);
+  \draw[black, line width=1.4pt] (0,-4) rectangle (4,4);
 \end{tikzpicture}
   \end{minipage}
-  \begin{minipage}{0.18\textwidth}\centering\scriptsize B\\[0.2em]
-\begin{tikzpicture}[scale=0.15]
+  \begin{minipage}[t]{0.18\textwidth}\centering\scriptsize B\\[0.2em]
+\begin{tikzpicture}[scale=0.15, baseline=(current bounding box.north)]
+  \draw[lightgray, very thin, opacity=0.3] (0,-3) -- (5,-3);
+  \draw[lightgray, very thin, opacity=0.3] (0,-3) -- (0,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,-2) -- (5,-2);
+  \draw[lightgray, very thin, opacity=0.3] (1,-3) -- (1,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (5,-1);
+  \draw[lightgray, very thin, opacity=0.3] (2,-3) -- (2,5);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
+  \draw[lightgray, very thin, opacity=0.3] (3,-3) -- (3,5);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
+  \draw[lightgray, very thin, opacity=0.3] (4,-3) -- (4,5);
   \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
+  \draw[lightgray, very thin, opacity=0.3] (5,-3) -- (5,5);
   \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
   \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
   \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
   \draw[blue, line width=0.375pt, line cap=round] (0,4.5) -- (1,4.5);
   \draw[blue, line width=0.375pt, line cap=round] (0.5,4) -- (0.5,5);
   \draw[blue, line width=0.375pt] (1,4.5) .. controls (1.3,4.5) and (1.5,4.7) .. (1.5,5);
@@ -521,25 +528,27 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \draw[blue, line width=0.375pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,4.5) {1};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (1.5,2.5) {4};
-  \draw[black, line width=1.4pt] (0,0) rectangle (5,5);
+  \draw[black, line width=1.4pt] (0,-3) rectangle (5,5);
 \end{tikzpicture}
   \end{minipage}
-  \begin{minipage}{0.18\textwidth}\centering\scriptsize C\\[0.2em]
-\begin{tikzpicture}[scale=0.15]
+  \begin{minipage}[t]{0.18\textwidth}\centering\scriptsize C\\[0.2em]
+\begin{tikzpicture}[scale=0.15, baseline=(current bounding box.north)]
+  \draw[lightgray, very thin, opacity=0.3] (0,-2) -- (6,-2);
+  \draw[lightgray, very thin, opacity=0.3] (0,-2) -- (0,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (6,-1);
+  \draw[lightgray, very thin, opacity=0.3] (1,-2) -- (1,6);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (6,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,6);
+  \draw[lightgray, very thin, opacity=0.3] (2,-2) -- (2,6);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (6,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,6);
+  \draw[lightgray, very thin, opacity=0.3] (3,-2) -- (3,6);
   \draw[lightgray, very thin, opacity=0.3] (0,2) -- (6,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,6);
+  \draw[lightgray, very thin, opacity=0.3] (4,-2) -- (4,6);
   \draw[lightgray, very thin, opacity=0.3] (0,3) -- (6,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,6);
+  \draw[lightgray, very thin, opacity=0.3] (5,-2) -- (5,6);
   \draw[lightgray, very thin, opacity=0.3] (0,4) -- (6,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,6);
+  \draw[lightgray, very thin, opacity=0.3] (6,-2) -- (6,6);
   \draw[lightgray, very thin, opacity=0.3] (0,5) -- (6,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,6);
   \draw[lightgray, very thin, opacity=0.3] (0,6) -- (6,6);
-  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,6);
   \draw[blue, line width=0.375pt, line cap=round] (0,5.5) -- (1,5.5);
   \draw[blue, line width=0.375pt, line cap=round] (0.5,5) -- (0.5,6);
   \draw[blue, line width=0.375pt] (1,5.5) .. controls (1.3,5.5) and (1.5,5.7) .. (1.5,6);
@@ -578,27 +587,28 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \draw[blue, line width=0.375pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,5.5) {1};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (2.5,3.5) {5};
-  \draw[black, line width=1.4pt] (0,0) rectangle (6,6);
+  \draw[black, line width=1.4pt] (0,-2) rectangle (6,6);
 \end{tikzpicture}
   \end{minipage}
-  \begin{minipage}{0.18\textwidth}\centering\scriptsize D\\[0.2em]
-\begin{tikzpicture}[scale=0.15]
+  \begin{minipage}[t]{0.18\textwidth}\centering\scriptsize D\\[0.2em]
+\begin{tikzpicture}[scale=0.15, baseline=(current bounding box.north)]
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (7,-1);
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (0,7);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (7,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,7);
+  \draw[lightgray, very thin, opacity=0.3] (1,-1) -- (1,7);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (7,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,7);
+  \draw[lightgray, very thin, opacity=0.3] (2,-1) -- (2,7);
   \draw[lightgray, very thin, opacity=0.3] (0,2) -- (7,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,7);
+  \draw[lightgray, very thin, opacity=0.3] (3,-1) -- (3,7);
   \draw[lightgray, very thin, opacity=0.3] (0,3) -- (7,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,7);
+  \draw[lightgray, very thin, opacity=0.3] (4,-1) -- (4,7);
   \draw[lightgray, very thin, opacity=0.3] (0,4) -- (7,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,7);
+  \draw[lightgray, very thin, opacity=0.3] (5,-1) -- (5,7);
   \draw[lightgray, very thin, opacity=0.3] (0,5) -- (7,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,7);
+  \draw[lightgray, very thin, opacity=0.3] (6,-1) -- (6,7);
   \draw[lightgray, very thin, opacity=0.3] (0,6) -- (7,6);
-  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,7);
+  \draw[lightgray, very thin, opacity=0.3] (7,-1) -- (7,7);
   \draw[lightgray, very thin, opacity=0.3] (0,7) -- (7,7);
-  \draw[lightgray, very thin, opacity=0.3] (7,0) -- (7,7);
   \draw[blue, line width=0.375pt, line cap=round] (0,6.5) -- (1,6.5);
   \draw[blue, line width=0.375pt, line cap=round] (0.5,6) -- (0.5,7);
   \draw[blue, line width=0.375pt] (1,6.5) .. controls (1.3,6.5) and (1.5,6.7) .. (1.5,7);
@@ -650,11 +660,11 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \draw[blue, line width=0.375pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,6.5) {1};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (3.5,4.5) {6};
-  \draw[black, line width=1.4pt] (0,0) rectangle (7,7);
+  \draw[black, line width=1.4pt] (0,-1) rectangle (7,7);
 \end{tikzpicture}
   \end{minipage}
-  \begin{minipage}{0.18\textwidth}\centering\scriptsize E\\[0.2em]
-\begin{tikzpicture}[scale=0.15]
+  \begin{minipage}[t]{0.18\textwidth}\centering\scriptsize E\\[0.2em]
+\begin{tikzpicture}[scale=0.15, baseline=(current bounding box.north)]
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (8,0);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,8);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (8,1);
@@ -744,25 +754,26 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \end{minipage}
 
   \vspace{0.3em}
-  $rc \star rc_2 =$
-  \begin{minipage}{0.22\textwidth}\centering
-\begin{tikzpicture}[scale=0.18]
+  $R_1 \star R_2 =$
+  \begin{minipage}[t]{0.22\textwidth}\centering
+\begin{tikzpicture}[scale=0.18, baseline=(current bounding box.center)]
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (7,-1);
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (0,7);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (7,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,7);
+  \draw[lightgray, very thin, opacity=0.3] (1,-1) -- (1,7);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (7,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,7);
+  \draw[lightgray, very thin, opacity=0.3] (2,-1) -- (2,7);
   \draw[lightgray, very thin, opacity=0.3] (0,2) -- (7,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,7);
+  \draw[lightgray, very thin, opacity=0.3] (3,-1) -- (3,7);
   \draw[lightgray, very thin, opacity=0.3] (0,3) -- (7,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,7);
+  \draw[lightgray, very thin, opacity=0.3] (4,-1) -- (4,7);
   \draw[lightgray, very thin, opacity=0.3] (0,4) -- (7,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,7);
+  \draw[lightgray, very thin, opacity=0.3] (5,-1) -- (5,7);
   \draw[lightgray, very thin, opacity=0.3] (0,5) -- (7,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,7);
+  \draw[lightgray, very thin, opacity=0.3] (6,-1) -- (6,7);
   \draw[lightgray, very thin, opacity=0.3] (0,6) -- (7,6);
-  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,7);
+  \draw[lightgray, very thin, opacity=0.3] (7,-1) -- (7,7);
   \draw[lightgray, very thin, opacity=0.3] (0,7) -- (7,7);
-  \draw[lightgray, very thin, opacity=0.3] (7,0) -- (7,7);
   \draw[blue, line width=0.44999999999999996pt, line cap=round] (0,6.5) -- (1,6.5);
   \draw[blue, line width=0.44999999999999996pt, line cap=round] (0.5,6) -- (0.5,7);
   \draw[blue, line width=0.44999999999999996pt] (1,6.5) .. controls (1.3,6.5) and (1.5,6.7) .. (1.5,7);
@@ -817,28 +828,29 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,6.5) {1};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,2.5) {5};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (1.5,2.5) {6};
-  \draw[black, line width=1.4pt] (0,0) rectangle (7,7);
+  \draw[black, line width=1.4pt] (0,-1) rectangle (7,7);
 \end{tikzpicture}
   \end{minipage}
   $+$
-  \begin{minipage}{0.22\textwidth}\centering
-\begin{tikzpicture}[scale=0.18]
+  \begin{minipage}[t]{0.22\textwidth}\centering
+\begin{tikzpicture}[scale=0.18, baseline=(current bounding box.center)]
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (7,-1);
+  \draw[lightgray, very thin, opacity=0.3] (0,-1) -- (0,7);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (7,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,7);
+  \draw[lightgray, very thin, opacity=0.3] (1,-1) -- (1,7);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (7,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,7);
+  \draw[lightgray, very thin, opacity=0.3] (2,-1) -- (2,7);
   \draw[lightgray, very thin, opacity=0.3] (0,2) -- (7,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,7);
+  \draw[lightgray, very thin, opacity=0.3] (3,-1) -- (3,7);
   \draw[lightgray, very thin, opacity=0.3] (0,3) -- (7,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,7);
+  \draw[lightgray, very thin, opacity=0.3] (4,-1) -- (4,7);
   \draw[lightgray, very thin, opacity=0.3] (0,4) -- (7,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,7);
+  \draw[lightgray, very thin, opacity=0.3] (5,-1) -- (5,7);
   \draw[lightgray, very thin, opacity=0.3] (0,5) -- (7,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,7);
+  \draw[lightgray, very thin, opacity=0.3] (6,-1) -- (6,7);
   \draw[lightgray, very thin, opacity=0.3] (0,6) -- (7,6);
-  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,7);
+  \draw[lightgray, very thin, opacity=0.3] (7,-1) -- (7,7);
   \draw[lightgray, very thin, opacity=0.3] (0,7) -- (7,7);
-  \draw[lightgray, very thin, opacity=0.3] (7,0) -- (7,7);
   \draw[blue, line width=0.44999999999999996pt, line cap=round] (0,6.5) -- (1,6.5);
   \draw[blue, line width=0.44999999999999996pt, line cap=round] (0.5,6) -- (0.5,7);
   \draw[blue, line width=0.44999999999999996pt] (1,6.5) .. controls (1.3,6.5) and (1.5,6.7) .. (1.5,7);
@@ -893,12 +905,12 @@ The product $\star$ is associative and gives a well-defined ring structure on th
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (0.5,2.5) {5};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (1.5,4.5) {4};
   \node[font=\fontsize{3}{3}\selectfont, text=green!60!black, fill=white, inner sep=0pt, circle] at (1.5,2.5) {6};
-  \draw[black, line width=1.4pt] (0,0) rectangle (7,7);
+  \draw[black, line width=1.4pt] (0,-1) rectangle (7,7);
 \end{tikzpicture}
   \end{minipage}
   $+$
-  \begin{minipage}{0.22\textwidth}\centering
-\begin{tikzpicture}[scale=0.18]
+  \begin{minipage}[t]{0.22\textwidth}\centering
+\begin{tikzpicture}[scale=0.18, baseline=(current bounding box.center)]
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (8,0);
   \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,8);
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (8,1);
@@ -1050,8 +1062,8 @@ $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,
 \begin{frame}{A warm-up: dual key polynomials}
   Key polynomials $\Key{\alpha}$ are a well-known basis of $\mathbb{Q}[x_1,\dots,x_n]$ (Demazure characters) closely related to Schubert polynomials. We can deduce an LR rule for dual keys as follows:
   \begin{itemize}
-    \item The \emph{Coxeter-Knuth equivalence}  on reduced words \cite{morse2016crystal} as well as the $Q$ tableau \cite{hamaker2014relating} are preserved by $\star$. Using this, we define $R\sim A$ iff $Q(R)=Q(A)$, $\wtt(R)=\wtt(A)$, and $\mathrm{word}(R)$, $\mathrm{word}(A)$ are Coxeter-Knuth equivalent.
-    \item Quotient the ring by this equivalence relation to obtain $\Key{}\RC$ with $[R]\mapsto\Key{\mathrm{wt}(R)}^*$.
+    \item The \emph{Coxeter-Knuth equivalence}  on reduced words \cite{morse2016crystal} (Morse-Schilling 2016) as well as the $Q$ tableau \cite{hamaker2014relating} (Hamaker-Young 2014) are preserved by $\star$. Using this, we define $R\sim A$ iff $Q(R)=Q(A)$, $\wtt(R)=\wtt(A)$, and $\mathrm{word}(R)$, $\mathrm{word}(A)$ are Coxeter-Knuth equivalent.
+    \item Quotient the ring by this equivalence relation to obtain $\Key{}\RC$ with $[R]\mapsto\Key{\mathrm{exwt}(R)}^*$.
   \end{itemize}
   \begin{theorem}[S, 2026+]
     $\pi_{\Key{}}:\Key{}\RC \twoheadrightarrow \dcoma$, $[R]\mapsto\Key{\mathrm{wt}(R)}^*$ is a surjective ring homomorphism. The structure constants $k_{\alpha,\beta}^\gamma$ in $\Key{\alpha}^*\Key{\beta}^* = \sum_\gamma k_{\alpha,\beta}^\gamma\,\Key{\gamma}^*$ count classes $[R_\gamma]$ in $[R_\alpha]\star[R_\beta]$, and in particular are nonnegative.
@@ -1183,22 +1195,23 @@ $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,
 \begin{frame}{Forest polynomials}
     Nearly the same construction works for the recently discovered \emph{forest polynomials}, whose products expand nonnegatively in $\coma$, unlike key polynomials
 \begin{itemize}
-\item Forest polynomials (Nadeau and Tewari 2024 \cite{nadeau2024forest}): $\Forest{F}$ are polynomials indexed by ``indexed forests'' $F$ (bijectively related to weak compositions), which can be characterized by an equivalence relation on words/compatible sequences
+\item Forest polynomials (Nadeau and Tewari 2024 \cite{nadeau2024forest}, $+$Spink \cite{nadeau2024quasisym}): $\Forest{F}$ are polynomials indexed by ``indexed forests'' $F$ (bijectively related to weak compositions), which can be characterized by an equivalence relation on words, or quasisymmetric divided difference operators based on the Bergeron-Sottile map \cite{coprod}
 %A paper was posted on arXiv with a pipe dream formula for $\Forest{F}$ (Guo and Woodruff 2026 \cite{guo2026forest}). The transition algorithm respects the equivalence relation, so there is a relationship with the $\star$ product.
-\item It was shown that the Schubert polynomials expand positively in the forest basis (additionally in \cite{guo2026forest} there is a pipe dream formula). Using the equivalence relation, we can define a ``forest invariant'' $\Omega(R)$ for each pipe dream $R$, and obtain
+\item Using the equivalence relation, we can define a ``forest invariant'' $\Omega(R)$ for each pipe dream $R$, and obtain
 \end{itemize}
 \begin{theorem}[S, 2026+]
 Let $F$ be an indexed forest and let $R\in\RC$ be such that $\mathrm{code}(\Omega(R))=F$. Then
 $$\Forest{F}= \sum_{A\in\RC, \Omega(A) = \Omega(R)} \mathrm{wt}(A)$$
 \end{theorem}
+In Guo and Woodruff 2026 \cite{guo2026forest} there is also a pipe dream formula
 \end{frame}
 
 % labeled indexed forests?
 \begin{frame}{Forest equivalence on $\RC$}
   \begin{itemize}
-    \item We can actually do better, algebraically speaking. The equivalence relation is as strong as Edelman-Greene insertion and uniquely encodes a word and compatible sequences as a pair of labeled indexed forests
+    \item We can actually do better, algebraically speaking. The equivalence relation is as strong as Edelman-Greene insertion (Edelman-Greene 1987 \cite{edelman1987balanced}) and uniquely encodes a word and compatible sequences as a pair of labeled indexed forests
     
-    \item Let $\sim$ be the equivalence relation on $\RC$ such that $R\sim A$ if $\wtt(R)=\wtt(A)$ and $\Omega_Q(R) = \Omega_Q(A)$, where $\Omega_Q$ is the $Q$-tableau of the insertion algorithm. Let $\Omega\RC$ be the set of equivalence classes of $\RC$ under $\sim$.
+    \item Let $\sim$ be the equivalence relation on $\RC$ such that $R\sim A$ if $\wtt(R)=\wtt(A)$, $\mathrm{code}(\Omega(R))=\mathrm{code}(\Omega(A))$ and $\Omega_Q(R) = \Omega_Q(A)$, where $\Omega_Q$ is the $Q$-tableau of the insertion algorithm. Let $\Omega\RC$ be the set of equivalence classes of $\RC$ under $\sim$.
   \end{itemize}
 \begin{center}
 \begin{tikzpicture}[scale=0.3,
@@ -1351,14 +1364,14 @@ $$\Forest{F}= \sum_{A\in\RC, \Omega(A) = \Omega(R)} \mathrm{wt}(A)$$
       + \Forest{1,2}^*\!\otimes\!\Forest{0,0}^*
   \end{align*}
   \begin{itemize}
-  \item It is distinctly possible that a positive coproduct formula for $\Forest{F}^*$ in $\dcoma$ can be obtained by analyzing the $\star$ product of pipe dreams with $F(R) = F$.
+  \item It is distinctly possible that a positive coproduct formula for $\Forest{F}^*$ in $\dcoma$ can be obtained by analyzing the $\star$ product of pipe dreams with $\code(\Omega(R)) = F$.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Summary}
   \begin{itemize}
     \item The pipe dream ring $\RC$ with product $\star$ lifts the algebra $\dcoma$ and gives positive LR rules for dual Schubert, key, and forest polynomials by taking appropriate quotients of subalgebras.
-    \item The forest coproduct story (branching formula) is an active direction.
+    \item Positive formulas for the forest polynomial coproduct remain open and are potentially accessible via this framework.
   \end{itemize}
   \vspace{0.5em}
   \centering Thank you!
