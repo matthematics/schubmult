@@ -4,10 +4,19 @@ from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 def _canonical_rc(rc):
+    from schubmult import NilPlactic
     # not needed
-    if rc.extremal_weight != rc.perm.pad_code(len(rc)):
-        return None
-    return rc#.to_highest_weight()[0]
+    # if rc.extremal_weight != rc.perm.pad_code(len(rc)):
+    #     return None
+    # return rc#.to_highest_weight()[0]
+    nilp, plac = NilPlactic.ed_column_insert_rsk(rc.perm_word, rc.compatible_sequence)
+    for rc2 in RCGraph.all_key_rcs(rc.extremal_weight, weight=rc.length_vector):
+        nilp2, plac2 = NilPlactic.ed_column_insert_rsk(rc2.perm_word, rc2.compatible_sequence)
+        if plac == plac2:
+            return rc
+    raise ValueError("ca")
+    # return None
+    #return rc
     #the_set = {rc2 for rc2 in RCGraph.all_key_rcs(rc.extremal_weight, weight=rc.length_vector) if rc2.weight_tableau == rc.weight_tableau and rc.length_vector == rc2.length_vector}
     # # if len(the_set) > 1:
     # #     raise ValueError(f"Multiple RC graphs with same extremal weight and weight tableau found for {rc}, got {the_set}")
