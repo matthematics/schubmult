@@ -4,11 +4,10 @@ from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 def _canonical_rc(rc):
-    from schubmult import uncode
     # not needed
     # if rc.extremal_weight != pad_tuple(tuple(rc.perm.trimcode), len(rc)):
     #     return None
-    the_set = {rc2 for rc2 in RCGraph.all_key_rcs(rc.extremal_weight, weight=rc.length_vector) if rc2.weight_tableau == rc.weight_tableau and rc2.extremal_weight == rc.extremal_weight}
+    the_set = {rc2 for rc2 in RCGraph.all_key_rcs(rc.extremal_weight, weight=rc.length_vector) if rc2.weight_tableau == rc.weight_tableau}
     return next(iter(the_set))
 
 class KeyRCGraphRingElement(RCGraphRingElement):
