@@ -647,6 +647,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         return omega_insertion(word_to_pair_labeled(word))[0]
 
+    @classmethod
+    def from_omega_invariant(cls, omega_invariant):
+        pass
+
     @property
     def omega_invariant(self):
         from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion

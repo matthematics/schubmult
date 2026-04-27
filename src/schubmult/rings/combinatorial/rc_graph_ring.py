@@ -375,9 +375,12 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     def monomial(self, *tup):
         elem = self.one
-        for a in tup:
-            elem = elem * self(RCGraph.one_row(a))
-        return elem
+        if len(tup) <= 1:
+            for a in tup:
+                elem = elem * self(RCGraph.one_row(a))
+            return elem
+        mid = len(tup) // 2
+        return self.monomial(*tup[:mid]) * self.monomial(*tup[mid:])
 
     def elem_sym(self, descent, weight):
         from schubmult import uncode

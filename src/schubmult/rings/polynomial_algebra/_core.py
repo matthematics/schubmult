@@ -41,11 +41,18 @@ class PolynomialAlgebraElement(BaseRingElement):
         monom = self.change_basis(MonomialBasis)
         monom_result = (monom.ring@monom.ring).zero
         for k, v in monom.items():
-            if len(k) > index:
+            if len(k) >= index:
                 key_left = k[:index]
                 key_right = k[index:]
                 monom_result += v * monom.ring(key_left) @ monom.ring(key_right)
+            # else:
+            #     monom_result += v * monom.ring(k) @ monom.ring.one
         return PolynomialBasis.change_tensor_basis(monom_result, self.ring._basis, self.ring._basis)
+
+    def coproduct(self):
+        monom = self.change_basis(MonomialBasis)
+        mx_size = max([len(k) for k in monom.keys()])
+        return sum([self.branch(index) for index in range(mx_size)])
 
     @property
     def free_symbols(self):
