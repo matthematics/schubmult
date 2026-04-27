@@ -2,6 +2,7 @@ from schubmult import *
 from schubmult.rings.polynomial_algebra import *
 from schubmult.rings.free_algebra import *
 from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
+from schubmult.combinatorics.indexed_forests import *
 from sympy import pretty_print
 
 # def snap_key(rc):
@@ -9,7 +10,19 @@ from sympy import pretty_print
 
 # def forest_equal(rc1, rc2):
 #     return rc1.forest_weight == rc2.forest_weight and rc1.omega_invariant[1] == rc2.omega_invariant[1]
+def omega_invariant(word):
+    from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 
+    def word_to_pair_labeled(word):
+        counts = {}
+        out = []
+        for a in word:
+            aa = int(a)
+            counts[aa] = counts.get(aa, 0) + 1
+            out.append(letterpair(aa, counts[aa]))
+        return tuple(out)
+
+    return omega_insertion(word_to_pair_labeled(word))
 
 if __name__ == "__main__":
     import sys
@@ -41,8 +54,9 @@ if __name__ == "__main__":
             comp1 = perm1.pad_code(length1)
             comp2 = perm2.pad_code(length2)
             for forest_rc1_base, forest_rc2_base in itertools.product(RCGraph.all_forest_rcs(comp1), RCGraph.all_forest_rcs(comp2)):
-                forest_rc1 = r(forest_rc1_base)
-                forest_rc2 = r(forest_rc2_base)
+                # forest_rc1 = r(forest_rc1_base)
+                # forest_rc2 = r(forest_rc2_base)
+                the_omega = omega_invariant(tuple(reversed(forest_rc1_base.perm_word)) + tuple(reversed(forest_rc2_base.perm_word)))
 
                 rc_test_prod = ForestDual.zero
 
