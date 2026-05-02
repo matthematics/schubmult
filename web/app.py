@@ -122,15 +122,43 @@ def _worker(flavor: str, argv: list[str], q) -> None:
         q.put((out.getvalue(), err.getvalue()))
 
 
+def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
+    """Fallback: run in-process (no timeout). Used when multiprocessing fails."""
+    out, err = io.StringIO(), io.StringIO()
+    try:
+        if flavor == "py":
+            from schubmult._scripts import schubmult_py as mod
+        else:
+            from schubmult._scripts import schubmult_double as mod
+        with redirect_stdout(out), redirect_stderr(err):
+            try:
+                mod.main(argv)
+            except SystemExit:
+                pass
+            except Exception:
+                err.write(traceback.format_exc())
+    except Exception:
+        err.write(traceback.format_exc())
+    return (out.getvalue(), err.getvalue(), False)
+
+
 def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
-    """Run the script in a child process with a hard timeout.
+    """Run the script in a child process with a hard timeout, falling back
+    to in-process execution if multiprocessing isn't available.
 
     Returns (stdout, stderr, timed_out).
     """
-    ctx = mp.get_context("spawn")
-    q = ctx.Queue()
-    p = ctx.Process(target=_worker, args=(flavor, argv, q), daemon=True)
-    p.start()
+    if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") == "1":
+        return _run_inline(flavor, argv)
+    try:
+        ctx = mp.get_context("spawn")
+        q = ctx.Queue()
+        p = ctx.Process(target=_worker, args=(flavor, argv, q), daemon=True)
+        p.start()
+    except Exception:
+        # Fall back to inline if subprocess machinery fails (e.g. some
+        # restricted hosts disallow exec/fork).
+        return _run_inline(flavor, argv)
     p.join(COMPUTE_TIMEOUT)
     if p.is_alive():
         p.terminate()
@@ -139,7 +167,8 @@ def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
             p.kill()
         return ("", f"Computation exceeded {COMPUTE_TIMEOUT}s timeout.\n", True)
     if q.empty():
-        return ("", "Worker exited without producing output.\n", False)
+        return ("", "Worker exited without producing output. "
+                    "Set SCHUBMULT_DISABLE_SUBPROCESS=1 to run inline.\n", False)
     out, err = q.get()
     return (out, err, False)
 
