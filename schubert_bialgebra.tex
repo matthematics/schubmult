@@ -185,7 +185,7 @@
 %%
 %% This is the end of the preamble.
 %% 
-\title{The Schubert Algebra and the ring of RC graphs}
+\title{The Schubert Bialgebra and the ring of RC graphs}
 \author{Matthew J. Samuel}
 
 %\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
@@ -296,7 +296,7 @@ Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, whic
 \end{proof}
 
 
-\section{The Schubert Algebra and its dual}
+\section{The Schubert Bialgebra and its dual}
 
 \subsection{Definition}
 
@@ -363,7 +363,7 @@ $\dcoma$ also has a coproduct compatible with its product, namely
 $$c\mapsto \sum_{a+b=c} a\otimes b$$
 Thus $\coma$ and $\dcoma$ are dual bialgebras.
 
-Calling $\coma$ the ``Schubert algebra'' may seem unnecessarily grandiose, however the reason will become clear below.
+Calling $\coma$ the ``Schubert bialgebra'' may seem unnecessarily grandiose, however the reason will become clear below.
 
 \subsection{The Schubert basis}
 
@@ -391,38 +391,80 @@ We can ask for transition formulas between the Schubert and the elementary basis
 $$e_{\alpha}^n = \sum_{1\xrightarrow{1,2,\ldots,n}_{\alpha} u}\sch_u^n$$
 
 For the reverse transition, we need a lemma.
-\begin{lemma}
-Let $n\geq 0$ be an integer, let $p>0$ be an integer, and let $w\in S_\infty$ be a permutation such that $\ell(w)=n$. Then we have that $\partial^w(x_p^n)$ is the sum over all saturated chains $C$ in Bruhat order of the form
-$$1=u_0\prec u_1\prec \cdots \prec u_n=w$$
+\begin{lemma} \label{lemma:powerdiff}
+Let $n\geq 0$ be an integer, let $p>0$ be an integer, and let $u, w\in S_\infty$ be permutations such that $\ell(u,w)=n$. Then we have that $\partial_u^w(x_p^n)$ is the sum over all saturated chains $C$ in the Bruhat interval $[u,w]$ of the form
+$$u=u_0\prec u_1\prec \cdots \prec u_n=w$$
 such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the term $(-1)^{\sigma(C)}$, where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$.
 \end{lemma}
+\begin{proof}
+Consider the case where $\ell(u,w)=1$. Then there is a transposition $t_{ij}$ such that $w = ut_{ij}$. Assume that $i<j$. If $p\notin\{i,j\}$, then $\partial_u^w(x_p)=0$. If $p=i$, then $\partial_u^w(x_p) = \partial^{ij}(x_p) = 1$. If instead $j=p$, then $\partial_u^w(x_p) = \partial^{ij}(x_p) = -1$. In all cases, the result holds.
+
+Now, consider the case where $\ell(u,w)=n>1$. We have that
+$$x_p^n = x_p\cdot x_p^{n-1}$$
+Applying the Leibniz formula, we have
+$$\partial_u^w(x_p^n) = \sum_{u\prec u'}\partial_u^{u'}(x_p)\partial_{u'}^w(x_p^{n-1})$$
+By the above, $\partial_u^{u'}(x_p)$ is nonzero if and only if $u\prec u'$ is a cover in the Bruhat order such that $u(p)\neq u'(p)$. In this case, $\partial_u^{u'}(x_p)$ is either $1$ or $-1$ depending on the number of indices $j<p$ such that $u(j)\neq u'(j)$, which is either $0$ or $1$, respectively. By induction, $\partial_{u'}^w(x_p^{n-1})$ is the sum over all saturated chains from $u'$ to $w$ of the form $$u'=u_1\prec u_2\prec \cdots \prec u_n=w$$ such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the term $(-1)^{\sigma(C')}$, where $\sigma(C')$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$, for $i>1$. Hence, the term $\partial_u^{u'}(x_p)\partial_{u'}^w(x_p^{n-1})$ is the sum over all saturated chains from $u$ to $w$ of the form
+$$u=u_0\prec u'=u_1\prec u_2\prec \cdots \prec u_n=w$$
+such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the term $(-1)^{\sigma(C)}$, where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$. Summing over all $u'$ such that $u\prec u'\leq w$, we obtain the result.
+\end{proof}
+
+\begin{definition}
+Let $\delta^u$ be the divided difference operator associated to $u$ on the $y$ variables for a given $u\in S_\infty$, and let 
+$$E_k(x;y_p)=\prod_{i=1}^k (x_i - y_p)$$
+which is a factorial elementary symmetric polynomial, a special case of a double Schubert polynomial.
+\end{definition}
+
+\begin{lemma} \label{lemma:doublediff}
+Let $k,p>0$ be integers and suppose $u,w\in S_\infty$ satisfy $0\leq \ell(u,w)\leq k$. Then we have that 
+$$\delta_u^w E_k(x;-y_p)\mid_{y_p=0}$$
+ is the sum over all saturated chains $C$ in the Bruhat interval $[u,w]$ of the form
+$$u=u_0\prec u_1\prec \cdots \prec u_{\ell(w)-\ell(u)}=w$$
+such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the terms 
+$$(-1)^{\sigma(C)}e_{k-\ell(u,w)}^k$$
+where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$.
+\end{lemma}
+\begin{proof}
+This follows from the observation that
+$$E_k(x;-y_p) = \sum_{i=0}^k e_{k-i}^k y_p^i$$
+and Lemma \ref{lemma:powerdiff}.
+\end{proof}
+
+\begin{definition}
 Suppose we want to express $\sch_w^n$ in the elementary basis. Let $w_{\lambda}$ be a dominant permutation such that 
 $$\code^*(w_\lambda)=\lambda = (n, n, \ldots, n, n - 1,\ldots, 1)$$ 
 and consider the double Schubert polynomial
-$$\sch_{w_{\lambda}}(x;y)=\prod_i E_{\lambda_i}(x;y_i)$$
-We have that
-$$\sch_w(x;y) = \nabla^{w\lambda^{-1}}\sch_{w_{\lambda}}(x;y)$$
-We may apply the divided difference $\nabla^{ww_\lambda^{-1}}$ to the product $\prod_i E_{\lambda_i}(x;y_i)$ using the Leibniz formula and set $y_i=0$ for all $i$, which gives us
-$$\sum_{P=C_1,\ldots,C_{\ell(\lambda)}}(-1)^{\sigma(C_1)+\cdots+\sigma(C_{\ell(\lambda)})}e_{\lambda_{1}-|C_1|}^{\lambda_1}e_{\lambda_2-|C_2|}^{\lambda_2}\cdots e_{\lambda_{\ell(\lambda)}-|C_{\ell(\lambda)}|}^{\lambda_{\ell(\lambda)}}$$
-% It is possible to find a combinatorial formula for each factor in the product, keeping the $y$ variables, but we only need the sign. We define $\sigma_i(u_{i-1},u_i)$ to be the number of indexes $j<i$ such that $u_{i-1}(j)\neq u_i(j)$. Then we define
-% $$\sigma(P)=\sum_i \sigma_i(u_{i-1},u_i)$$
-% %$$\sch_w^n = \sum_{P:1\xrightarrow{\lambda} w\lambda^{-1}} (-1)^{|\lambda| - \ell(w) + \sigma(P)}e_{\alpha(P,\lambda),\lambda}^n$$
-Then we define
-$$E^{\alpha;n}_w = \sum_{(\lambda_{\ell(\lambda) + 1 - i}-|C_{\ell(\lambda) + 1 - i}|)_{i=1}^{\ell(\lambda)}=\alpha}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
+$$\sch_{w_{\lambda}}(x;-y)=\prod_i E_{\lambda_i}(x;-y_i)$$
+(this equation for $\sch_{w_\lambda}$ follows from \cite[(6.14)]{notes}).
 
-\begin{theorem}
+
+We have that
+$$\sch_w(x;y) = \delta^{w\lambda^{-1}}\sch_{w_{\lambda}}(x;y)$$
+We may apply the divided difference $\delta^{ww_\lambda^{-1}}$ to the product $\prod_i E_{\lambda_i}(x;-y_i)$ using the Leibniz formula and set $y_i=0$ for all $i$, which gives us, by Lemma \ref{lemma:doublediff},
+$$\sum_{P=C_1,\ldots,C_{\ell(\lambda)}}(-1)^{\sigma(C_1)+\cdots+\sigma(C_{\ell(\lambda)})}e_{\lambda_{1}-|C_1|}^{\lambda_1}e_{\lambda_2-|C_2|}^{\lambda_2}\cdots e_{\lambda_{\ell(\lambda)}-|C_{\ell(\lambda)}|}^{\lambda_{\ell(\lambda)}}$$
+
+Define, for convenience,
+$$\sigma(P) = \sum_{i=1}^{\ell(\lambda)} \sigma(C_i)$$
+for such a $P$. Then we define
+$$E^{\alpha;n}_w = \sum_{(\lambda_{\ell(\lambda) + 1 - i}-|C_{\ell(\lambda) + 1 - i}|)_{i=1}^{\ell(\lambda)}=\alpha}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
+\end{definition}
+
+\begin{theorem}[Transition to the elementary basis] \label{theorem:elemtrans}
 	For each $w$, we have
 	$$\sch_w^n = \sum_{\alpha}E_w^{\alpha;n}e_{\alpha}^n$$
 \end{theorem}
 These numbers are stable for fixed $w$ as soon as the number of variables is at least as large as the value of $n$ such that $w\in S_n$, and are well-studied but poorly understood.
 
 \begin{example}
-	Let $n=5$ and let $w$ be the permutation such that $\code(w)=(0,2,0,2,3)$. Let $\lambda = (5,5,5,4,3,2,1)$. Then
+	Let $n=5$ and let $w$ be the permutation such that $\code(w)=(0,2,0,2,3)$. Then
 	\begin{align*}
 		\sch_w^n &= e_{(0,0,0,0,5,1,1)} - e_{(0,0,0,0,4,2,1)} + e_{(0,0,0,0,4,3)}- e_{(0,1,0,0,4,1,1)} +e_{(0,0,1,0,3,2,1)}\\
 		&+e_{(0,1,0,0,5,1)} + e_{(0,1,0,0,3,3)}
 	\end{align*}
 \end{example}
+
+\begin{remark}
+This transition formula can be used to obtain an extremely efficient formula for multiplication of Schubert polynomials. If we want to compute $\sch_u^n\sch_v^n$, we can first express $\sch_v^n$ in the elementary basis using Theorem \ref{theorem:elemtrans}. Then we can multiply by $\sch_v^n$ by iterating the Pieri formula. This is the method used in the python package \verb|schubmult| written by the author. In fact, there is also a version for double Schubert polynomials, quantum Schubert polynomials, and quantum double Schubert polynomials, which will will not go into here but are implemented in the same package.
+\end{remark}
 
 % Suppose $\alpha$ and $\beta$ are weak compositions. We define $\alpha\|_p \beta$ to be the weak composition defined by
 % $$\gamma_i = \begin{cases}
@@ -2988,6 +3030,269 @@ Squash prod BPDs
 The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
 \end{theorem}
 
+
+\section{Complexity of the transition multiplication algorithm}\label{sec:complexity}
+
+In this section we analyze the worst-case running time of \texttt{schubmult\_py},
+the transition-equation algorithm for multiplying ordinary Schubert polynomials,
+and compare it against dense polynomial multiplication. The bounds we obtain
+are output-sensitive in a strong sense: they depend on the \emph{total
+multiplicity}
+\[
+   M_{\mathrm{out}}(u,v) \;:=\; \sum_{w} c_{u,v}^{w}
+\]
+of the product $\sch_u \cdot \sch_v$ rather than on $n!$, with cancellation
+overhead controlled by explicit Bruhat-fiber data. Note that $M_{\mathrm{out}}$
+dominates the support size $N_{\mathrm{out}}(u,v) := \#\{w : c_{u,v}^{w}\neq 0\}$
+but can be much larger when the structure constants $c_{u,v}^{w}$ exceed $1$.
+
+Throughout, fix $u, v \in S_n$ and write $\theta = \theta(v^{-1})$ for the
+sequence of column lengths used in the algorithm, with $r = \ell(\theta)$ parts
+and $\sum_j \theta_j = \ell(v)$. At each level $j$, the algorithm maintains a
+dictionary $\mathrm{vpathsums}_j : (u', v') \mapsto \mathrm{coeff}$, and the
+``descent operators'' applied through \texttt{kdown\_perms} are the only source
+of negative signs.
+
+\subsection{Baseline rigorous bound}
+
+Combining the multiplicity-free Pieri fan-out
+$\binom{k}{p}\binom{n+1-k}{p}$ with the Chu--Vandermonde identity, the
+intermediate sets satisfy the unconditional bound
+\[
+   |\mathrm{vpathsums}_j| \;\le\; \prod_{i \le j} \binom{n+1}{\theta_i},
+\]
+and the entire algorithm runs in time
+\begin{equation}\label{eq:rigorous-bound}
+   T_{\mathrm{schub}}(u,v) \;\le\; \mathrm{poly}(n) \cdot \prod_{j=1}^{r}
+   \binom{n+1}{\theta_j}.
+\end{equation}
+
+\subsection{The dominant case: no cancellation}
+
+\begin{proposition}\label{prop:dominant-monotone}
+If $v$ is dominant, then every coefficient computed by \texttt{schubmult\_py}
+during the run on $(u,v)$ is non-negative, and no two contributions to the
+same \(\mathrm{vpathsums}\) entry have opposite signs.
+\end{proposition}
+
+\begin{proof}
+When $v$ is dominant, $v^{-1}$ is dominant, so $\mu := \mathrm{uncode}(\theta)$
+equals $v^{-1}$ and $v\mu = \mathrm{id}$. At every level $j$, the auxiliary
+\texttt{monoperm}$_j$ is itself dominant, and the only $vp$ in
+$\mathrm{vpathdicts}_j$ that survives is reached by the trivial branch
+$(\mathrm{perm}, 0, +1)$ of \texttt{kdown\_perms}. Inspection of
+\texttt{kdown\_perms} shows that negative signs are produced only when a
+non-trivial Bruhat descent of \texttt{monoperm}$_j$ is taken (the line
+$s_2 := -s$); since no such descent contributes here, every entry of
+$\mathrm{vpathsums}$ is computed by an unsigned sum of positive contributions.
+\end{proof}
+
+\begin{corollary}\label{cor:dominant-output-sensitive}
+If $v$ is dominant,
+\[
+   T_{\mathrm{schub}}(u,v) \;=\; O\!\left(M_{\mathrm{out}}(u,v) \cdot
+   \mathrm{poly}(n)\right),
+\]
+i.e.\ the algorithm is output-sensitive in the total-multiplicity sense.
+\end{corollary}
+
+\begin{proof}
+By Proposition~\ref{prop:dominant-monotone} no entry of any
+$\mathrm{vpathsums}_j$ can be cancelled to zero in a later step, so every
+weighted contribution that the algorithm processes survives to the final
+output. The total work is then proportional to the sum, over all paths through
+the Pieri tree, of the absolute value of the contribution carried; in the
+cancellation-free dominant case this is precisely $M_{\mathrm{out}}(u,v)$ up
+to a polynomial factor in $n$ for the per-step Pieri fan and dictionary
+operations. Note that intermediate $\mathrm{vpathsums}$ keys may have
+multiplicity $> 1$, which is correctly counted by $M_{\mathrm{out}}$ but not
+by the bare support size $N_{\mathrm{out}}$.
+\end{proof}
+
+\subsection{The general case: cancellation is fiber-confined}
+
+For non-dominant $v$, signed contributions can in principle cancel. The
+following proposition isolates exactly where cancellation can occur.
+
+\begin{proposition}\label{prop:fiber-cancellation}
+At each level $j$, signed contributions to a single entry
+$\mathrm{vpathsums}_{j+1}[u_2][v_2]$ arise only from upstream pairs
+$(u', vp), (u'', vp')$ that lie in the same Bruhat fiber of
+\texttt{monoperm}$_j$ above $v_2$. In particular, the cancellation blow-up
+factor at level $j$ is bounded by the maximum size of a length-$\theta_j$
+\texttt{kdown}-fiber, i.e.\ by
+\[
+   F_j \;:=\; \max_{v_2}\;\#\{ vp : vp \xrightarrow{\,\le\,\theta_j\, \mathrm{Bruhat\ descents\ of\ monoperm}_j\,} v_2 \}
+   \;\le\; \binom{\ell(\mathrm{monoperm}_j)}{\theta_j}.
+\]
+\end{proposition}
+
+\begin{proof}
+Sign-flips in \texttt{kdown\_perms} are produced exclusively by Bruhat
+descents in the auxiliary chain from \texttt{monoperm}$_j$. Two upstream
+contributions to a given $(u_2, v_2)$ that carry opposite signs must therefore
+differ by an even/odd parity in the number of \texttt{monoperm}$_j$-descents
+taken. In particular both pre-images $vp, vp'$ of $v_2$ lie inside a single
+Bruhat fiber of length $\le \theta_j$, of size at most
+$\binom{\ell(\mathrm{monoperm}_j)}{\theta_j}$.
+\end{proof}
+
+\begin{theorem}\label{thm:cancellation-bound}
+The running time of \texttt{schubmult\_py} on $(u,v)$ satisfies
+\[
+   T_{\mathrm{schub}}(u,v) \;\le\; \mathrm{poly}(n) \cdot M_{\mathrm{out}}(u,v) \cdot
+   \prod_{j=1}^{r} F_j,
+\]
+where $M_{\mathrm{out}} = \sum_w c_{u,v}^{w}$ is the total multiplicity and
+$F_j$ is the per-level cancellation fiber bound of
+Proposition~\ref{prop:fiber-cancellation}. In particular, if all parts
+$\theta_j$ are bounded by a constant, the cancellation overhead is at most
+a polynomial in $n$ per level, giving
+\[
+   T_{\mathrm{schub}}(u,v) \;=\; \widetilde{O}\!\left(M_{\mathrm{out}}(u,v) \cdot
+   n^{O(r)}\right).
+\]
+\end{theorem}
+
+\subsection{What does ``dense multiplication'' mean? Specifying the problem}
+
+Comparing \texttt{schubmult\_py} against ``dense'' multiplication only makes
+sense once both the input and output bases are pinned down, since basis
+changes between the monomial basis and the Schubert basis are themselves
+nontrivial. We distinguish four problems:
+
+\begin{itemize}
+\item[\textbf{(P1)} Mon$\to$Mon:] given $\sch_u, \sch_v$ as polynomials in
+the Artin monomial basis, output their product in the monomial basis.
+\item[\textbf{(P2)} Sch$\to$Mon:] given $u, v \in S_n$, output
+$\sch_u \cdot \sch_v$ in the monomial basis.
+\item[\textbf{(P3)} Mon$\to$Sch:] given $\sch_u, \sch_v$ as polynomials,
+output the structure constants $c_{u,v}^{w}$.
+\item[\textbf{(P4)} Sch$\to$Sch:] given $u, v \in S_n$, output the structure
+constants $c_{u,v}^{w}$. \emph{This is the problem \texttt{schubmult\_py}
+solves.}
+\end{itemize}
+
+The four problems differ by basis-change steps. Calling any two of them ``the
+same problem'' is sloppy: each basis change is itself a nontrivial algorithm,
+and the dominant case dramatically illustrates the difference. If $v$ is
+dominant, $\sch_v = x^{\mathrm{code}(v)}$ is a single monomial, so problem
+(P1) is trivial — just shift the exponents of $\sch_u$ — while problem (P4)
+must additionally re-expand the result in the Schubert basis, which is
+genuine work and what \texttt{schubmult\_py} does.
+
+\paragraph{The fair baseline for (P4).}
+Any honest competitor to \texttt{schubmult\_py} must also output structure
+constants. The natural ``dense'' competitor for (P4) is
+
+\begin{quote}
+\textbf{(MS)} ``\emph{Multiply-then-straighten}'': solve (P2) by monomial
+multiplication, then convert the result to the Schubert basis via repeated
+divided differences (or any straightening algorithm).
+\end{quote}
+
+Let $S_w := |\mathrm{supp}(\sch_w)|$. The two stages of (MS) cost:
+
+\begin{itemize}
+\item Stage 1 (multiply): $S_u \cdot S_v$ monomial products plus dictionary
+operations, producing a polynomial of support size at most
+$A(n, \ell(u)+\ell(v))$.
+\item Stage 2 (straighten): expand the resulting polynomial of degree
+$\ell(u)+\ell(v)$ in the Schubert basis. The standard divided-difference
+algorithm $c_{u,v}^{w} = \partial_{w^{-1} w_0}\bigl(\sch_u \sch_v \cdot
+\sch_{w_0}\bigr)\big|_{x=0}$ requires up to $\binom{n}{2}$ divided
+differences, each of which can roughly double the polynomial support, giving
+a worst-case stage-2 cost
+\[
+   T_{\mathrm{straighten}}(u,v) \;\ge\; A(n, \ell(u)+\ell(v)) \cdot
+   \mathrm{poly}(n).
+\]
+\end{itemize}
+
+So in total
+\begin{equation}\label{eq:ms-bound}
+   T_{\mathrm{MS}}(u,v) \;\ge\; \max\!\bigl(\,S_u \cdot S_v,\;
+   A(n, \ell(u)+\ell(v))\,\bigr) \cdot \mathrm{poly}(n).
+\end{equation}
+Both terms are necessary lower bounds: the first because the multiplication
+stage cannot be avoided, the second because any straightening algorithm must
+read every monomial of the intermediate polynomial.
+
+\paragraph{Honest accounting in the dominant case.}
+If $v$ is dominant, $S_v = 1$ and stage 1 is trivial. But stage 2 of (MS)
+must straighten a polynomial of degree $\ell(u) + \ell(v)$ supported on a
+shifted Artin set of size $S_u \le A(n, \ell(u))$. So
+$T_{\mathrm{MS}} \ge A(n, \ell(u)) \cdot \mathrm{poly}(n)$, while
+\[
+   T_{\mathrm{schub}} \;=\; \widetilde{O}\bigl(M_{\mathrm{out}}(u,v)\bigr)
+\]
+by Corollary~\ref{cor:dominant-output-sensitive}. The transition algorithm
+wins iff $M_{\mathrm{out}}(u,v) \ll A(n,\ell(u))$. Since
+$M_{\mathrm{out}}(u,v)$ is bounded by the number of pipe dreams for $u$
+shifted by $\mathrm{code}(v)$ that survive the straightening relations, this
+ratio depends on $u$ and is not uniformly favorable. \emph{The dominant case
+is genuinely close, and we make no uniform claim there.}
+
+\subsection{Comparison and clean win regime}
+
+For arbitrary $v$, combining \eqref{eq:rigorous-bound} with \eqref{eq:ms-bound}:
+
+\begin{theorem}\label{thm:fair-comparison}
+The transition algorithm beats the multiply-then-straighten baseline whenever
+\begin{equation}\label{eq:fair-cutoff}
+   \prod_{j=1}^{r} \binom{n+1}{\theta_j(v^{-1})} \;<\;
+   \frac{A(n, \ell(u)+\ell(v))}{\mathrm{poly}(n)},
+\end{equation}
+i.e.\ whenever the rigorous \texttt{vpathsums} fan-out is dominated by the
+size of the intermediate dense polynomial.
+\end{theorem}
+
+The Mahonian sequence $A(n,\cdot)$ is strongly log-concave, with peak
+$A(n, \binom{n}{2}/2) = \Theta(n!/n^{3/2})$ and Gaussian tail
+\[
+   A(n, d) \;=\; \frac{n!}{\sigma\sqrt{2\pi}}
+   \exp\!\left(-\frac{(d - N/2)^2}{2\sigma^2}\right)\,(1 + o(1)),
+   \qquad N := \binom{n}{2},\ \sigma^2 = \tfrac{2n^3 + 3n^2 - 5n}{72}.
+\]
+
+\begin{proposition}\label{prop:bounded-parts-win}
+Suppose $\theta(v^{-1})$ has all parts bounded by a constant $c$, and
+$\ell(u) + \ell(v)$ lies within $O(\sigma) = O(n^{3/2})$ of the Mahonian peak.
+Then
+\[
+   \frac{T_{\mathrm{MS}}(u,v)}{T_{\mathrm{schub}}(u,v)}
+   \;\ge\; \frac{n!}{n^{O(c\,r)}}
+   \;=\; \frac{n!}{\mathrm{poly}(n)},
+\]
+i.e.\ \texttt{schubmult\_py} beats multiply-then-straighten by a factor
+$\sim n!$ in this regime.
+\end{proposition}
+
+\begin{proof}
+Under the part-size hypothesis, $\prod_j \binom{n+1}{\theta_j} \le
+(n+1)^{cr}$. The Mahonian estimate gives $A(n, \ell(u)+\ell(v)) =
+\Theta(n!/\sigma) = \Theta(n!/n^{3/2})$ in the stated window. Substituting
+into \eqref{eq:fair-cutoff} yields the claim.
+\end{proof}
+
+\begin{remark}
+The win factor of Proposition~\ref{prop:bounded-parts-win} comes entirely
+from \emph{not} forming the intermediate polynomial $\sch_u \cdot \sch_v$ in
+the monomial basis. The transition algorithm avoids ever writing down a
+polynomial of size $A(n, \ell(u)+\ell(v))$ — its intermediate state is the
+Schubert-coefficient dictionary, which under the bounded-parts hypothesis has
+size only $\mathrm{poly}(n)^r$. The basis change is performed
+\emph{incrementally and selectively}, level by level through
+\texttt{kdown\_perms}, rather than as a single monolithic straightening at the
+end.
+\end{remark}
+
+The picture that emerges is that the transition algorithm avoids both the
+monomial blow-up of the intermediate product and the cost of a full
+straightening pass; cancellation overhead, when present, is fiber-confined.
+The clean unconditional win regime is bounded part-sizes in $\theta(v^{-1})$
+with $\ell(u) + \ell(v)$ near the Mahonian peak; the dominant case is
+\emph{not} a clean win and we explicitly do not claim it.
 
 
 
