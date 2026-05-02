@@ -16,18 +16,43 @@
 
 <div class="schubmult-widget">
   <style>
-    .schubmult-widget { font-family: -apple-system, system-ui, sans-serif; font-size: 14px; }
+    /* Widget owns its own color scheme so it stays readable inside dark
+       WordPress themes (or any host page with unusual text colors). */
+    .schubmult-widget {
+      font-family: -apple-system, system-ui, sans-serif; font-size: 14px;
+      color: #1a1a1a; background: #ffffff;
+      padding: 0.8em; border-radius: 6px;
+      color-scheme: light;
+    }
+    .schubmult-widget * { color: inherit; }
     .schubmult-widget label { display: inline-block; margin-right: 1em; }
-    .schubmult-widget input[type=text] { width: 100%; padding: 4px; box-sizing: border-box;
-                                         font-family: ui-monospace, monospace; }
+    .schubmult-widget input[type=text],
+    .schubmult-widget select,
+    .schubmult-widget textarea {
+      color: #1a1a1a; background: #ffffff;
+      border: 1px solid #c0c4cc; border-radius: 3px;
+      padding: 4px; box-sizing: border-box;
+    }
+    .schubmult-widget input[type=text],
+    .schubmult-widget textarea { width: 100%; font-family: ui-monospace, monospace; }
     .schubmult-widget select, .schubmult-widget button { padding: 4px 8px; }
+    .schubmult-widget input[type=checkbox] { accent-color: #2962ff; }
+    .schubmult-widget button {
+      cursor: pointer; color: #1a1a1a; background: #f0f2f5;
+      border: 1px solid #c0c4cc; border-radius: 3px;
+    }
+    .schubmult-widget button:hover { background: #e2e6ea; }
     .schubmult-widget .row { margin: 0.6em 0; }
-    .schubmult-widget pre { background: #f6f8fa; padding: 0.8em; border-radius: 4px;
-                            white-space: pre-wrap; word-break: break-word; max-height: 400px;
-                            overflow: auto; font-size: 13px; }
+    .schubmult-widget pre {
+      background: #f6f8fa; color: #1a1a1a;
+      padding: 0.8em; border-radius: 4px;
+      white-space: pre-wrap; word-break: break-word; max-height: 400px;
+      overflow: auto; font-size: 13px;
+    }
     .schubmult-widget .err { color: #b00020; }
     .schubmult-widget .hint { color: #555; font-size: 12px; margin-top: 4px; }
-    .schubmult-widget button { cursor: pointer; }
+    /* Override any inline `color: #555` set on the status span. */
+    .schubmult-widget #sm-status { color: #555 !important; }
   </style>
 
   <div class="row">
