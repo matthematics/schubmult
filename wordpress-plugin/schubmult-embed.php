@@ -21,9 +21,9 @@ const SCHUBMULT_DEFAULT_URL = 'https://example.pythonanywhere.com/embed';
  */
 function schubmult_embed_shortcode($atts) {
     $atts = shortcode_atts(array(
-        'height' => '640',
+        'height' => 'auto',  // 'auto' = grow to fit content via postMessage
         'width'  => '100%',
-        'flavor' => '',     // optional: py | double; appended as ?flavor=...
+        'flavor' => '',     // optional: py | double | q | q_double; appended as ?flavor=...
     ), $atts, 'schubmult');
 
     $url = trim((string) get_option(SCHUBMULT_OPTION, SCHUBMULT_DEFAULT_URL));
@@ -32,21 +32,66 @@ function schubmult_embed_shortcode($atts) {
     }
 
     $src = esc_url($url);
-    if (!empty($atts['flavor']) && in_array($atts['flavor'], array('py', 'double'), true)) {
+    if (!empty($atts['flavor']) && in_array($atts['flavor'], array('py', 'double', 'q', 'q_double'), true)) {
         $sep = (strpos($src, '?') === false) ? '?' : '&';
         $src .= $sep . 'flavor=' . rawurlencode($atts['flavor']);
     }
 
-    $height = preg_replace('/[^0-9]/', '', (string) $atts['height']);
-    if ($height === '') { $height = '640'; }
+    $height_attr = strtolower(trim((string) $atts['height']));
+    $auto = ($height_attr === 'auto' || $height_attr === '');
+    if ($auto) {
+        // Initial height before the iframe reports its real size. Kept small
+        // so there's no large empty gap on first paint.
+        $height = '120';
+    } else {
+        $height = preg_replace('/[^0-9]/', '', $height_attr);
+        if ($height === '') { $height = '640'; }
+    }
     $width  = esc_attr($atts['width']);
 
-    return sprintf(
-        '<iframe src="%s" width="%s" height="%s" loading="lazy" '
-        . 'style="border: 1px solid #ddd; border-radius: 6px;" '
+    // Compute the embed origin so we can validate postMessage senders.
+    $origin = '';
+    $parts  = wp_parse_url($url);
+    if (!empty($parts['scheme']) && !empty($parts['host'])) {
+        $origin = $parts['scheme'] . '://' . $parts['host'];
+        if (!empty($parts['port'])) { $origin .= ':' . $parts['port']; }
+    }
+
+    // Unique id so multiple embeds on one page each resize independently.
+    static $counter = 0;
+    $counter++;
+    $id = 'schubmult-embed-' . $counter;
+
+    $iframe = sprintf(
+        '<iframe id="%s" src="%s" width="%s" height="%s" loading="lazy" '
+        . 'style="border: 1px solid #ddd; border-radius: 6px; display: block;" '
         . 'sandbox="allow-scripts allow-same-origin allow-forms"></iframe>',
-        $src, $width, $height
+        esc_attr($id), $src, $width, esc_attr($height)
     );
+
+    if (!$auto) {
+        return $iframe;
+    }
+
+    // Inline auto-resize listener. Scoped to this iframe id and origin.
+    $script = sprintf(
+        '<script>(function(){'
+        . 'var f=document.getElementById(%s);'
+        . 'var origin=%s;'
+        . 'if(!f)return;'
+        . 'window.addEventListener("message",function(ev){'
+        .   'if(origin&&ev.origin!==origin)return;'
+        .   'var d=ev.data;'
+        .   'if(!d||d.type!=="schubmult-resize")return;'
+        .   'var h=parseInt(d.height,10);'
+        .   'if(h>0&&h<5000)f.style.height=h+"px";'
+        . '});'
+        . '})();</script>',
+        wp_json_encode($id),
+        wp_json_encode($origin)
+    );
+
+    return $iframe . $script;
 }
 add_shortcode('schubmult', 'schubmult_embed_shortcode');
 
@@ -97,9 +142,13 @@ function schubmult_embed_settings_page() {
             <?php submit_button(); ?>
         </form>
         <h2>Shortcode reference</h2>
-        <pre>[schubmult]
-[schubmult height="500"]
-[schubmult flavor="double" height="700"]</pre>
+        <pre>[schubmult]                       (auto-resizes to fit content)
+[schubmult height="500"]          (fixed pixel height, no auto-resize)
+[schubmult flavor="double"]
+[schubmult flavor="q_double"]</pre>
+        <p>By default the iframe reports its content height back to the page
+           and grows/shrinks to fit. Pass an explicit numeric <code>height</code>
+           to disable auto-resize.</p>
         <p>The host serving the embed must include your WordPress site in its
            <code>SCHUBMULT_ALLOWED_ORIGINS</code> environment variable so the
            iframe is allowed.</p>

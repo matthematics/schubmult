@@ -173,6 +173,36 @@
   $('sm-perms').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') $('sm-go').click();
   });
+
+  // Auto-resize: when running inside an <iframe>, post our content height to
+  // the parent so it can shrink/grow the frame to fit. The WP plugin shipped
+  // with schubmult listens for this and resizes accordingly. Other hosts can
+  // ignore it safely.
+  if (window.parent && window.parent !== window) {
+    let lastH = 0;
+    const sendHeight = () => {
+      // scrollHeight of <html> includes margins; add a small fudge so a
+      // descender or focus ring never produces a scrollbar.
+      const h = Math.max(
+        document.documentElement.scrollHeight,
+        document.body ? document.body.scrollHeight : 0
+      ) + 8;
+      if (h !== lastH) {
+        lastH = h;
+        try {
+          window.parent.postMessage({type: 'schubmult-resize', height: h}, '*');
+        } catch (_) { /* ignore */ }
+      }
+    };
+    sendHeight();
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(sendHeight).observe(document.documentElement);
+    } else {
+      setInterval(sendHeight, 500);
+    }
+  }
 })();
 </script>
 
