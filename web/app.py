@@ -96,24 +96,28 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         argv.append("--display-positive")
     if mixed_var:
         argv.append("--mixed-var")
+    # Validate parabolic but do NOT append it yet; --parabolic uses nargs="+" and
+    # would greedily swallow the perm tokens. We append it *after* the perms.
+    ptoks: list[str] = []
     if parabolic:
-        # Validate: space-separated positive integers.
         ptoks = parabolic.replace(",", " ").split()
         for t in ptoks:
             if not t.isdigit():
                 raise ValueError(f"Invalid parabolic generator {t!r}: expected positive integers.")
             if int(t) < 1 or int(t) > MAX_INT_VALUE:
                 raise ValueError(f"Parabolic generator {t} out of range [1, {MAX_INT_VALUE}].")
-        if ptoks:
-            argv.append("--parabolic")
-            argv.extend(ptoks)
+    mult_tail: list[str] = []
     if mult:
         if not ENABLE_MULT:
             raise ValueError("The --mult option is disabled on this server.")
         if len(mult) > 200:
             raise ValueError("--mult expression too long (max 200 chars).")
-        argv.extend(["--mult", mult])
+        mult_tail = ["--mult", mult]
     argv.extend(tokens)
+    if ptoks:
+        argv.append("--parabolic")
+        argv.extend(ptoks)
+    argv.extend(mult_tail)
     return argv
 
 
