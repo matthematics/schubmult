@@ -60,7 +60,8 @@ def _tokenize(s: str) -> list[str]:
 
 
 def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
-                display_positive: bool, mult: str | None) -> list[str]:
+                display_positive: bool, mixed_var: bool,
+                mult: str | None) -> list[str]:
     """Build sys.argv-like list to pass to the script's main(). Validates input."""
     argv: list[str] = [prog]
     tokens = _tokenize(perms_raw)
@@ -93,6 +94,8 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         argv.append("--code")
     if display_positive:
         argv.append("--display-positive")
+    if mixed_var:
+        argv.append("--mixed-var")
     if mult:
         if not ENABLE_MULT:
             raise ValueError("The --mult option is disabled on this server.")
@@ -214,11 +217,13 @@ def compute():
     ascode = bool(data.get("ascode", False))
     coprod = bool(data.get("coprod", False))
     display_positive = bool(data.get("display_positive", False))
+    mixed_var = bool(data.get("mixed_var", False))
     mult = (data.get("mult") or "").strip() or None
 
     if flavor == "py":
         prog = "schubmult_py"
         display_positive = False
+        mixed_var = False  # py-only flavor has no mixed variable mode
     elif flavor == "double":
         prog = "schubmult_double"
     else:
@@ -226,7 +231,8 @@ def compute():
 
     try:
         argv = _build_argv(prog, perms_raw, ascode=ascode, coprod=coprod,
-                           display_positive=display_positive, mult=mult)
+                           display_positive=display_positive,
+                           mixed_var=mixed_var, mult=mult)
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
 

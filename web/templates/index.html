@@ -51,6 +51,7 @@
     <label><input type="checkbox" id="sm-ascode"> Lehmer code input</label>
     <label><input type="checkbox" id="sm-coprod"> Coproduct (one perm + split index list)</label>
     <label><input type="checkbox" id="sm-positive"> Display positive (double only)</label>
+    <label><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double only)</label>
   </div>
 
   {% if enable_mult %}
@@ -103,6 +104,7 @@
       ascode: $('sm-ascode').checked,
       coprod: $('sm-coprod').checked,
       display_positive: $('sm-positive').checked,
+      mixed_var: $('sm-mixedvar').checked,
       mult: $('sm-mult').value.trim(),
     };
 
