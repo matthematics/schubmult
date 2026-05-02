@@ -88,6 +88,32 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         raise ValueError("Need at least two permutations separated by '-'. "
                          "Example:  3 1 2 - 2 1 3")
 
+    # When tokens are interpreted as one-line permutations (not Lehmer codes),
+    # each '-'-separated chunk must be a permutation of {1,...,n}: distinct
+    # positive integers forming an initial interval.
+    if not ascode:
+        chunks: list[list[str]] = [[]]
+        for tok in tokens:
+            if tok == "-":
+                chunks.append([])
+            else:
+                chunks[-1].append(tok)
+        for idx, chunk in enumerate(chunks, start=1):
+            if not chunk:
+                raise ValueError(f"Permutation #{idx} is empty.")
+            try:
+                vals = [int(t) for t in chunk]
+            except ValueError as e:  # pragma: no cover -- already validated
+                raise ValueError(str(e)) from None
+            n = len(vals)
+            if sorted(vals) != list(range(1, n + 1)):
+                raise ValueError(
+                    f"Permutation #{idx} ({' '.join(chunk)}) is not a permutation "
+                    f"of 1..{n}: entries must be distinct positive integers forming "
+                    f"the initial interval 1..{n}. "
+                    f"(Use --code if you meant a Lehmer code.)"
+                )
+
     if coprod:
         argv.append("--coprod")
     if ascode:
