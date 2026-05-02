@@ -60,7 +60,7 @@ def _tokenize(s: str) -> list[str]:
 
 
 def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
-                display_positive: bool, mixed_var: bool,
+                display_positive: bool, mixed_var: bool, parabolic: str | None,
                 mult: str | None) -> list[str]:
     """Build sys.argv-like list to pass to the script's main(). Validates input."""
     argv: list[str] = [prog]
@@ -96,6 +96,17 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         argv.append("--display-positive")
     if mixed_var:
         argv.append("--mixed-var")
+    if parabolic:
+        # Validate: space-separated positive integers.
+        ptoks = parabolic.replace(",", " ").split()
+        for t in ptoks:
+            if not t.isdigit():
+                raise ValueError(f"Invalid parabolic generator {t!r}: expected positive integers.")
+            if int(t) < 1 or int(t) > MAX_INT_VALUE:
+                raise ValueError(f"Parabolic generator {t} out of range [1, {MAX_INT_VALUE}].")
+        if ptoks:
+            argv.append("--parabolic")
+            argv.extend(ptoks)
     if mult:
         if not ENABLE_MULT:
             raise ValueError("The --mult option is disabled on this server.")
@@ -112,8 +123,14 @@ def _worker(flavor: str, argv: list[str], q) -> None:
     try:
         if flavor == "py":
             from schubmult._scripts import schubmult_py as mod
-        else:
+        elif flavor == "double":
             from schubmult._scripts import schubmult_double as mod
+        elif flavor == "q":
+            from schubmult._scripts import schubmult_q as mod
+        elif flavor == "q_double":
+            from schubmult._scripts import schubmult_q_double as mod
+        else:
+            raise ValueError(f"Unknown flavor {flavor!r}")
         with redirect_stdout(out), redirect_stderr(err):
             try:
                 mod.main(argv)
@@ -131,8 +148,14 @@ def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
     try:
         if flavor == "py":
             from schubmult._scripts import schubmult_py as mod
-        else:
+        elif flavor == "double":
             from schubmult._scripts import schubmult_double as mod
+        elif flavor == "q":
+            from schubmult._scripts import schubmult_q as mod
+        elif flavor == "q_double":
+            from schubmult._scripts import schubmult_q_double as mod
+        else:
+            return ("", f"Unknown flavor {flavor!r}\n", False)
         with redirect_stdout(out), redirect_stderr(err):
             try:
                 mod.main(argv)
@@ -218,21 +241,32 @@ def compute():
     coprod = bool(data.get("coprod", False))
     display_positive = bool(data.get("display_positive", False))
     mixed_var = bool(data.get("mixed_var", False))
+    parabolic = (data.get("parabolic") or "").strip() or None
     mult = (data.get("mult") or "").strip() or None
 
     if flavor == "py":
         prog = "schubmult_py"
         display_positive = False
-        mixed_var = False  # py-only flavor has no mixed variable mode
+        mixed_var = False
+        parabolic = None
     elif flavor == "double":
         prog = "schubmult_double"
+        parabolic = None
+    elif flavor == "q":
+        prog = "schubmult_q"
+        display_positive = False
+        mixed_var = False
+        coprod = False
+    elif flavor == "q_double":
+        prog = "schubmult_q_double"
+        coprod = False
     else:
         return jsonify({"ok": False, "error": f"Unknown flavor {flavor!r}"}), 400
 
     try:
         argv = _build_argv(prog, perms_raw, ascode=ascode, coprod=coprod,
                            display_positive=display_positive,
-                           mixed_var=mixed_var, mult=mult)
+                           mixed_var=mixed_var, parabolic=parabolic, mult=mult)
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
 

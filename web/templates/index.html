@@ -35,6 +35,8 @@
       <select id="sm-flavor">
         <option value="py" selected>schubmult_py (ordinary)</option>
         <option value="double">schubmult_double (double)</option>
+        <option value="q">schubmult_q (quantum)</option>
+        <option value="q_double">schubmult_q_double (quantum double)</option>
       </select>
     </label>
   </div>
@@ -50,8 +52,14 @@
   <div class="row">
     <label><input type="checkbox" id="sm-ascode"> Lehmer code input</label>
     <label><input type="checkbox" id="sm-coprod"> Coproduct (one perm + split index list)</label>
-    <label><input type="checkbox" id="sm-positive"> Display positive (double only)</label>
-    <label><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double only)</label>
+    <label><input type="checkbox" id="sm-positive"> Display positive (double / q_double)</label>
+    <label><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double / q_double)</label>
+  </div>
+
+  <div class="row">
+    <label for="sm-parabolic">Parabolic generators (quantum only):</label>
+    <input type="text" id="sm-parabolic" placeholder="e.g. 1 3">
+    <div class="hint">Space-separated positive integers. Leave blank for non-parabolic.</div>
   </div>
 
   {% if enable_mult %}
@@ -105,6 +113,7 @@
       coprod: $('sm-coprod').checked,
       display_positive: $('sm-positive').checked,
       mixed_var: $('sm-mixedvar').checked,
+      parabolic: $('sm-parabolic').value.trim(),
       mult: $('sm-mult').value.trim(),
     };
 
