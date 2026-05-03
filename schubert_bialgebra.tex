@@ -337,18 +337,15 @@ where the equation $ab=c$ indicates that $a$ concatenated with $b$ is equal to $
 	$\nabla:\coma\otimes \coma\to \coma$ is a homomorphism of coalgebras.
 \end{lemma}
 \begin{proof}
-  Consider the basis element $x_a\otimes x_b$ of $\coma\otimes \coma$. We have
-$$\nabla(x_a\otimes x_b) = x_{a+b}$$
-Applying $\Delta$ to this gives us
+  Consider the basis element $x_a\otimes x_b$ of $\coma\otimes \coma$. The product is
+  $$x_{a+b}$$
+  Applying $\Delta$ results in
 $$\sum_{a'b'=a+b} x_{a'}\otimes x_{b'}$$
-On the other hand, applying $\Delta\otimes \tau\otimes \Delta$ to $x_a\otimes x_b$ gives us
-$$\sum_{a'b'=a} x_{a'}\otimes x_{b'} \otimes \sum_{c'd'=b} x_{c'}\otimes x_{d'}$$
-which, after applying $(\nabla\otimes \nabla) \circ \tau$ and rearranging, gives us
-$$\sum_{a'b'=a, c'd'=b} x_{a'+c'}\otimes x_{b'+d'} \otimes x_{b'}\otimes x_{d'}$$
-since $a'+c' + b'+d' = a+b$, this is the same.
-
-%matches the previous expression, confirming that $\nabla$ is a homomorphism of coalgebras.
-
+Conversely, applying $\Delta\otimes \Delta$ yields
+$$\sum_{a_1a_2=a,b_1b_2=b}x_{a_1}\otimes x_{a_2}\otimes x_{b_1}\otimes x_{b_2}$$
+and applying $\nabla\otimes \nabla$ yields
+$$\sum x_{a_1 + b_1}\otimes x_{a_2 + b_2}$$
+The definition of $\nabla$ ensures that $a_1$ and $b_1$ are the same length for a nonzero term, and similarly for $a_2$ and $b_2$. Setting $a_1+b_1=a'$, $a_2+b_2=b'$ yields the result.
 \end{proof}
 
 \begin{corollary}
@@ -369,13 +366,13 @@ Calling $\coma$ the ``Schubert bialgebra'' may seem unnecessarily grandiose, how
 
 In $\coma$, each $\coma_n$ has a basis of Schubert polynomials $\sch_u^{(n)}$, where the largest right descent of $u$ is at most $n$, ensuring that $\sch_u(x)$ has at most $n$ variables. Schubert polynomials limited to a specific number of variables have well-defined structure constants $c_{u,v}^w$, independent of $n$, given by
 $$\sch_u^{(n)}\sch_v^{(n)} = \sum_{w}c_{u,v}^w\sch_w^{(n)}$$
-These are known to be nonnegative integers, however except in special cases no positive combinatorial formula is known.
+These are known to be nonnegative integers by virtue of the fact that they count points of transverse intersections of generic translates of Schubert varieties, however except in special cases no positive combinatorial formula is known.
 
 \subsection{The elementary basis}
 
 An $n$-elementary weak composition is a finite sequence of nonnegative integers $\alpha=(\alpha_1,\alpha_2,\ldots,\alpha_N)$ such that $\alpha_i\leq i$ for all $i<n$ and $\alpha_i\leq n$  for all $i\geq n$, satisfying the additional restriction that $\alpha_i\geq \alpha_{i+1}$ if $i\geq n$.
 
-An $n$-elementary monomial is a an element of the polynomial ring of the following form: 
+An $n$-elementary monomial is a an element of $\coma_n$ of the following form: 
 $$e_{\alpha_1}^{1}\cdots e_{\alpha_n}^ne_{\alpha_{n+1}}^n\cdots e_{\alpha_m}^n$$
 where $\alpha$ is an $n$-elementary weak composition. Define $\mathcal{E}_n$ to be the set of $n$-elementary monomials.
 
@@ -386,27 +383,50 @@ where $\alpha$ is an $n$-elementary weak composition. Define $\mathcal{E}_n$ to 
 	It is a theorem of Macdonald that the polynomial ring $\mathbb{Z}[x_1,\ldots,x_n]$ is a free module over $\Lambda_n$ with basis the Schubert polynomials $\sch_u(x)$ such that $u\in S_n$. These Schubert polynomials are uniquely expressed in terms of strict elementary symmetric monomials with fewer than $n$ variables. Since $\Lambda_n$ is a polynomial ring in the $e_{i,n}$ by the standard characterization of $\Lambda_n$ as a polynomial ring in $e_1,\ldots,e_n$, $\Lambda_n$ has a basis of monomials $e_{\lambda}^n$ as $\lambda$ ranges over all partitions with parts bounded by $n$. The multiplicative combination of these two bases is therefore a $\mathbb{Z}$-basis of $\coma_n$ by freeness of the module. This is exactly the description of the monomials $e_{\alpha}^n$ for $\alpha$ an $n$-elementary weak composition.
 \end{proof}
 
-We can ask for transition formulas between the Schubert and the elementary basis. From elementary to Schubert, we may use Sottile's Pieri formula. That is,
+We can ask for transition formulas between the Schubert and the elementary basis. From elementary to Schubert, we may use Sottile's Pieri formula iteratively \cite{sottile}, which provides a positive formula for multiplying a Schubert polynomial by an elementary symmetric polynomial. That is,
 
 $$e_{\alpha}^n = \sum_{1\xrightarrow{1,2,\ldots,n}_{\alpha} u}\sch_u^n$$
 
-For the reverse transition, we need a lemma.
+For the reverse transition, we need a lemma. Recall the skew divided difference operators $\partial_u^w$ for $u,w\in S_\infty$ defined originally in \cite{notes}, though we use the notation of \cite{samuelleibniz}, by the Leibniz formula
+$$\partial^w(pq) = \sum_{u} \partial^u(p)\partial_u^w(q)$$
+where $p$ and $q$ are arbitrary polynomials and $u$ is a permutation such that $u\leq w$ in Bruhat order. The formula below provides a formula for application of a skew divided difference operator of degree $-n$ to a polynomial of degree $n$, which yields an integer for integer-coefficient polynomials. Specifically, it is a formula for application of such an operator with $\ell(u,w)=n$ specifically to $x_p^n$ for some $p>0$.
+
+\newcommand{\achain}[1]{\mathcal{C}^{(#1)}}
+\begin{definition}
+For $u,w\in S_\infty$ such that $u\leq w$, we define $\achain{p}(u,w)$ to be the set of saturated chains $C$ in the Bruhat interval $[u,w]$ of the form
+$$u=u_0\prec u_1\prec \cdots \prec u_n=w$$  
+such that $u_{i-1}(p)\neq u_i(p)$ for all $i$. We also define $\sigma(C)$ to be the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$.
+\end{definition}
+
 \begin{lemma} \label{lemma:powerdiff}
-Let $n\geq 0$ be an integer, let $p>0$ be an integer, and let $u, w\in S_\infty$ be permutations such that $\ell(u,w)=n$. Then we have that $\partial_u^w(x_p^n)$ is the sum over all saturated chains $C$ in the Bruhat interval $[u,w]$ of the form
-$$u=u_0\prec u_1\prec \cdots \prec u_n=w$$
-such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the term $(-1)^{\sigma(C)}$, where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$.
+Let $n\geq 0$ be an integer, let $p>0$ be an integer, and let $u, w\in S_\infty$ be permutations such that $\ell(u,w)=n$. Then we have that 
+$$\partial_u^w(x_p^n) = \sum_{C\in \achain{p}(u,w)} (-1)^{\sigma(C)}.$$
 \end{lemma}
 \begin{proof}
+
+  
+
 Consider the case where $\ell(u,w)=1$. Then there is a transposition $t_{ij}$ such that $w = ut_{ij}$. Assume that $i<j$. If $p\notin\{i,j\}$, then $\partial_u^w(x_p)=0$. If $p=i$, then $\partial_u^w(x_p) = \partial^{ij}(x_p) = 1$. If instead $j=p$, then $\partial_u^w(x_p) = \partial^{ij}(x_p) = -1$. In all cases, the result holds.
 
 Now, consider the case where $\ell(u,w)=n>1$. We have that
 $$x_p^n = x_p\cdot x_p^{n-1}$$
 Applying the Leibniz formula, we have
 $$\partial_u^w(x_p^n) = \sum_{u\prec u'}\partial_u^{u'}(x_p)\partial_{u'}^w(x_p^{n-1})$$
-By the above, $\partial_u^{u'}(x_p)$ is nonzero if and only if $u\prec u'$ is a cover in the Bruhat order such that $u(p)\neq u'(p)$. In this case, $\partial_u^{u'}(x_p)$ is either $1$ or $-1$ depending on the number of indices $j<p$ such that $u(j)\neq u'(j)$, which is either $0$ or $1$, respectively. By induction, $\partial_{u'}^w(x_p^{n-1})$ is the sum over all saturated chains from $u'$ to $w$ of the form $$u'=u_1\prec u_2\prec \cdots \prec u_n=w$$ such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the term $(-1)^{\sigma(C')}$, where $\sigma(C')$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$, for $i>1$. Hence, the term $\partial_u^{u'}(x_p)\partial_{u'}^w(x_p^{n-1})$ is the sum over all saturated chains from $u$ to $w$ of the form
-$$u=u_0\prec u'=u_1\prec u_2\prec \cdots \prec u_n=w$$
-such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the term $(-1)^{\sigma(C)}$, where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$. Summing over all $u'$ such that $u\prec u'\leq w$, we obtain the result.
+By the above, $\partial_u^{u'}(x_p)$ is nonzero if and only if $u\prec u'$ is a cover in the Bruhat order such that $u(p)\neq u'(p)$. In this case, $\partial_u^{u'}(x_p)$ is either $1$ or $-1$ depending on the number of indices $j<p$ such that $u(j)\neq u'(j)$, which is either $0$ or $1$, respectively. By induction, 
+$$\partial_{u'}^w(x_p^{n-1}) = \sum_{C'\in \achain{p}(u',w)} (-1)^{\sigma(C')}.$$
+Hence, 
+$$\partial_u^{u'}(x_p)\partial_{u'}^w(x_p^{n-1})=\begin{cases}
+-\displaystyle\sum_{C'\in \achain{p}(u',w)} (-1)^{\sigma(C')}&\mbox{ if }u(j)\neq u'(j)\mbox{ for some }j<p\\
+\displaystyle\sum_{C'\in \achain{p}(u',w)} (-1)^{\sigma(C')}&\mbox{ otherwise,}
+\end{cases}$$
+which, by definition, is
+$$\sum_{C=C'\cup\{u\}, C'\in \achain{p}(u',w)} (-1)^{\sigma(C)}$$
+%is the sum over all saturated chains from $u$ to $w$ of the form
+% $$u=u_0\prec u'=u_1\prec u_2\prec \cdots \prec u_n=w$$
+% such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the term $(-1)^{\sigma(C)}$, where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$. 
+Summing over all $u'$ such that $u\prec u'\leq w$, we obtain the result.
 \end{proof}
+Using a minor sleight of hand, this affords us an explicit formula for transition of a Schubert polynomial into the elementary basis.
 
 \begin{definition}
 Let $\delta^u$ be the divided difference operator associated to $u$ on the $y$ variables for a given $u\in S_\infty$, and let 
@@ -415,14 +435,19 @@ which is a factorial elementary symmetric polynomial, a special case of a double
 \end{definition}
 
 \begin{lemma} \label{lemma:doublediff}
-Let $k,p>0$ be integers and suppose $u,w\in S_\infty$ satisfy $0\leq \ell(u,w)\leq k$. Then we have that 
-$$\delta_u^w E_k(x;-y_p)\mid_{y_p=0}$$
- is the sum over all saturated chains $C$ in the Bruhat interval $[u,w]$ of the form
-$$u=u_0\prec u_1\prec \cdots \prec u_{\ell(w)-\ell(u)}=w$$
-such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the terms 
-$$(-1)^{\sigma(C)}e_{k-\ell(u,w)}^k$$
-where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$.
+  Let $u,w\in S_\infty$ satisfy $u\leq w$ and let $p>0,k>0$ be integers. Then we have
+  $$\partial_u^w(E_k(x;-y_p))=\sum_{C\in\achain{p}(u,w)}(-1)^{\sigma(C)}e_{k-\ell(u,w)}^k+\mathcal{O}(y)$$
 \end{lemma}
+
+% \begin{lemma} 
+% Let $k,p>0$ be integers and suppose $u,w\in S_\infty$ satisfy $0\leq \ell(u,w)\leq k$. Then we have that 
+% $$\delta_u^w E_k(x;-y_p)\mid_{y_p=0}$$
+%  is the sum over all saturated chains $C$ in the Bruhat interval $[u,w]$ of the form
+% $$u=u_0\prec u_1\prec \cdots \prec u_{\ell(w)-\ell(u)}=w$$
+% such that $u_{i-1}(p)\neq u_i(p)$ for all $i$, of the terms 
+% $$(-1)^{\sigma(C)}e_{k-\ell(u,w)}^k$$
+% where $\sigma(C)$ is the number of indices $i$ for which the index $j\neq p$ such that $u_{i-1}(j)\neq u_i(j)$ satisfies $j<p$.
+% \end{lemma}
 \begin{proof}
 This follows from the observation that
 $$E_k(x;-y_p) = \sum_{i=0}^k e_{k-i}^k y_p^i$$
@@ -440,12 +465,12 @@ $$\sch_{w_{\lambda}}(x;-y)=\prod_i E_{\lambda_i}(x;-y_i)$$
 We have that
 $$\sch_w(x;y) = \delta^{w\lambda^{-1}}\sch_{w_{\lambda}}(x;y)$$
 We may apply the divided difference $\delta^{ww_\lambda^{-1}}$ to the product $\prod_i E_{\lambda_i}(x;-y_i)$ using the Leibniz formula and set $y_i=0$ for all $i$, which gives us, by Lemma \ref{lemma:doublediff},
-$$\sum_{P=C_1,\ldots,C_{\ell(\lambda)}}(-1)^{\sigma(C_1)+\cdots+\sigma(C_{\ell(\lambda)})}e_{\lambda_{1}-|C_1|}^{\lambda_1}e_{\lambda_2-|C_2|}^{\lambda_2}\cdots e_{\lambda_{\ell(\lambda)}-|C_{\ell(\lambda)}|}^{\lambda_{\ell(\lambda)}}$$
-
+$$\sum_{P=(C_1,\ldots,C_{\ell(\lambda)})\atop C_i\in\achain{i}(u_{i-1},u_i)}(-1)^{\sigma(C_1)+\cdots+\sigma(C_{\ell(\lambda)})}e_{\lambda_{1}-|C_1|}^{\lambda_1}e_{\lambda_2-|C_2|}^{\lambda_2}\cdots e_{\lambda_{\ell(\lambda)}-|C_{\ell(\lambda)}|}^{\lambda_{\ell(\lambda)}}$$
+where $1 = u_0 \leq u_1\leq \cdots \leq u_{\ell(\lambda)} = ww_\lambda^{-1}$.
 Define, for convenience,
 $$\sigma(P) = \sum_{i=1}^{\ell(\lambda)} \sigma(C_i)$$
 for such a $P$. Then we define
-$$E^{\alpha;n}_w = \sum_{(\lambda_{\ell(\lambda) + 1 - i}-|C_{\ell(\lambda) + 1 - i}|)_{i=1}^{\ell(\lambda)}=\alpha}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
+$$E^{\alpha;n}_w = \sum_{P = (C_1,\ldots,C_{\ell(\lambda)})\atop C_i\in\achain{i}(u_{i-1},u_i)}\sum_{(\lambda_{\ell(\lambda) + 1 - i}-|C_{\ell(\lambda) + 1 - i}|)_{i=1}^{\ell(\lambda)}=\alpha}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
 \end{definition}
 
 \begin{theorem}[Transition to the elementary basis] \label{theorem:elemtrans}

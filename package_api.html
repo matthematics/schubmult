@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>PACKAGE_API</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1 id="schubmult--python-package-api">schubmult — Python package
+API</h1>
+<p>Practical reference for using <strong>schubmult</strong> as a Python
+library. For the CLI tools shipped with the package see the <a
+href="https://github.com/matthematics/schubmult">README</a>.</p>
+<p>This document targets schubmult <strong>4.0.x</strong>.</p>
+<hr />
+<h2 id="installation">Installation</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install schubmult                <span class="co"># PyPI release (when available)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># or, for a development checkout:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/matthematics/schubmult</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> schubmult <span class="kw">&amp;&amp;</span> <span class="ex">pip</span> install <span class="at">-e</span> .</span></code></pre></div>
+<h2 id="conceptual-map">Conceptual map</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>What it is</th>
+<th>Where it lives</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Combinatorics</strong></td>
+<td><code>Permutation</code>, RC-graphs, root tableaux</td>
+<td><a
+href="https://github.com/matthematics/schubmult/tree/main/src/schubmult/combinatorics"><code>schubmult.combinatorics</code></a></td>
+</tr>
+<tr class="even">
+<td><strong>Multiplication kernels</strong></td>
+<td>Pure functions <code>schubmult_*</code> on dicts</td>
+<td><a
+href="https://github.com/matthematics/schubmult/tree/main/src/schubmult/mult"><code>schubmult.mult</code></a></td>
+</tr>
+<tr class="odd">
+<td><strong>Rings</strong></td>
+<td>Algebraic ring objects with <code>+</code>, <code>*</code>,
+<code>expand()</code></td>
+<td><a
+href="https://github.com/matthematics/schubmult/tree/main/src/schubmult/rings"><code>schubmult.rings</code></a></td>
+</tr>
+<tr class="even">
+<td><strong>Symbolic</strong></td>
+<td>Hybrid SymPy/SymEngine facade and variable factories</td>
+<td><a
+href="https://github.com/matthematics/schubmult/tree/main/src/schubmult/symbolic"><code>schubmult.symbolic</code></a></td>
+</tr>
+<tr class="odd">
+<td><strong>CLI scripts</strong></td>
+<td><code>schubmult_py</code>, <code>schubmult_double</code>,
+<code>schubmult_q</code>, <code>schubmult_q_double</code></td>
+<td><a
+href="https://github.com/matthematics/schubmult/tree/main/src/schubmult/_scripts"><code>schubmult._scripts</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>The two everyday entry points are the <strong>rings</strong>
+(<code>Sx</code>, <code>DSx</code>, …) for high-level algebraic work and
+the <strong>kernels</strong> (<code>schubmult_py</code>,
+<code>schubmult_double</code>, …) for fast dict-level computations.</p>
+<hr />
+<h2 id="permutation--the-central-object"><code>Permutation</code> — the
+central object</h2>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> Permutation, uncode</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> Permutation([<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>])     <span class="co"># one-line notation: w(1)=3, w(2)=1, w(3)=2</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>w.code                         <span class="co"># Lehmer code (full)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>w.trimcode                     <span class="co"># Lehmer code with trailing zeros stripped</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>w.descents()                   <span class="co"># descent set (0-indexed by default)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>w.inv                          <span class="co"># number of inversions = length</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>w.inversion_set()              <span class="co"># set of inversion pairs (i,j)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>w.is_dominant                  <span class="co"># bool</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>w.is_vexillary                 <span class="co"># bool</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>w.shape                        <span class="co"># partition shape (when dominant/vexillary)</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>w <span class="op">*</span> Permutation([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>])     <span class="co"># composition (group product)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="op">~</span>w                             <span class="co"># not used; use w.inverse() if needed</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>w(<span class="dv">1</span>)                           <span class="co"># apply to a point: returns w[0]</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>w[<span class="dv">0</span>]                           <span class="co"># 0-indexed array access</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(w)                         <span class="co"># length of the underlying array</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="bu">list</span>(w)                        <span class="co"># explicit array form</span></span></code></pre></div>
+<h3 id="construction-shortcuts">Construction shortcuts</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Call</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Permutation([3, 1, 2])</code></td>
+<td>from one-line</td>
+</tr>
+<tr class="even">
+<td><code>Permutation.from_code([2, 0])</code> or
+<code>uncode([2, 0])</code></td>
+<td>from Lehmer code</td>
+</tr>
+<tr class="odd">
+<td><code>Permutation.from_cycles([(1, 3), (2, 4)])</code></td>
+<td>from cycle notation</td>
+</tr>
+<tr class="even">
+<td><code>Permutation.w0(n)</code></td>
+<td>longest element of <span
+class="math inline"><em>S</em><sub><em>n</em></sub></span></td>
+</tr>
+<tr class="odd">
+<td><code>Permutation.all_permutations(n)</code></td>
+<td>iterator over <span
+class="math inline"><em>S</em><sub><em>n</em></sub></span></td>
+</tr>
+<tr class="even">
+<td><code>Permutation.longest_element(*descs)</code></td>
+<td>longest element of a parabolic</td>
+</tr>
+<tr class="odd">
+<td><code>Permutation.reflection(root)</code></td>
+<td>simple/general reflection</td>
+</tr>
+</tbody>
+</table>
+<h3 id="useful-methods-selection">Useful methods (selection)</h3>
+<p><code>apply</code>, <code>swap</code>, <code>dominates</code>,
+<code>bruhat_leq</code>, <code>min_coset_rep</code>,
+<code>max_coset_rep</code>, <code>coset_decomp</code>,
+<code>parabolic_reduce</code>, <code>weight_coset_decomp</code>,
+<code>min_of_weight_coset</code>, <code>max_of_weight_coset</code>,
+<code>code_word</code>, <code>right_act</code>, <code>act_root</code>,
+<code>root_swap</code>, <code>pad_code</code>,
+<code>mul_dominant</code>, <code>strict_mul_dominant</code>,
+<code>pivots</code>, <code>rothe_diagram</code>, <code>diagram</code>,
+<code>has_pattern</code>, <code>get_cycles</code>,
+<code>from_partial</code>, <code>cycle</code>.</p>
+<p>The full source is <a
+href="https://github.com/matthematics/schubmult/blob/main/src/schubmult/combinatorics/permutation.py"><code>combinatorics/permutation.py</code></a>.</p>
+<hr />
+<h2 id="schubert-rings">Schubert rings</h2>
+<p>The recommended high-level interface. Elements behave like dicts
+<code>{Permutation: coefficient}</code> but expose ring operations.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> Sx, DSx, Permutation</span></code></pre></div>
+<h3 id="sx--single-ordinary-schubert-ring"><code>Sx</code> — single
+(ordinary) Schubert ring</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> Sx([<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>])              <span class="co"># S_{312}</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> Sx([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>])              <span class="co"># S_{213}</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> a <span class="op">*</span> b                      <span class="co"># multiplication via schubmult_py kernel</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>c                              <span class="co"># {Permutation([4, 1, 2, 3]): 1}</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>(a <span class="op">+</span> b).expand()               <span class="co"># explicit polynomial in x_1, x_2, ...</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">list</span>(c.items())                <span class="co"># iterate (Permutation, coeff) pairs</span></span></code></pre></div>
+<p><code>Sx(arg)</code> accepts a list/tuple (one-line), a
+<code>Permutation</code>, or a polynomial expression in the underlying
+variable set.</p>
+<h3 id="dsx--double-schubert-ring"><code>DSx</code> — double Schubert
+ring</h3>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> DSx, Permutation</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> DSx([<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>])             <span class="co"># double Schubert in y-variables</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> DSx([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>])</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> a <span class="op">*</span> b                      <span class="co"># coefficients are polynomials in y</span></span></code></pre></div>
+<p>For mixed-variable products (<code>y</code> <em>and</em>
+<code>z</code>), instantiate the ring with two generating sets — see <a
+href="https://github.com/matthematics/schubmult/blob/main/src/schubmult/rings/schubert/double_schubert_ring.py"><code>rings/schubert/double_schubert_ring.py</code></a>.</p>
+<h3 id="quantum-and-parabolic-quantum-rings">Quantum and
+parabolic-quantum rings</h3>
+<p>Available via lazy import; pick the right one for your context:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> (</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    SingleSchubertRing, DoubleSchubertRing,            <span class="co"># ordinary</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Quantum variants live in:</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   schubmult.rings.schubert.quantum_schubert_ring</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   schubmult.rings.schubert.quantum_double_schubert_ring</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   schubmult.rings.schubert.parabolic_quantum_schubert_ring</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   schubmult.rings.schubert.parabolic_quantum_double_schubert_ring</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>For a custom variable set:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> SingleSchubertRing, GeneratingSet</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>R <span class="op">=</span> SingleSchubertRing(GeneratingSet(<span class="st">&quot;u&quot;</span>))      <span class="co"># Schubert ring in u_1, u_2, ...</span></span></code></pre></div>
+<h3 id="common-ring-element-operations">Common ring-element
+operations</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Operation</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>a + b</code>, <code>a - b</code>, <code>a * b</code>,
+<code>n * a</code></td>
+<td>ring arithmetic</td>
+</tr>
+<tr class="even">
+<td><code>a == b</code></td>
+<td>structural equality (same dict)</td>
+</tr>
+<tr class="odd">
+<td><code>a.expand()</code></td>
+<td>explicit polynomial in the underlying variables</td>
+</tr>
+<tr class="even">
+<td><code>dict(a)</code> / <code>a.items()</code></td>
+<td>inspect the <code>{Permutation: coeff}</code> representation</td>
+</tr>
+<tr class="odd">
+<td><code>R.zero</code>, <code>R.one</code></td>
+<td>additive/multiplicative identities of ring <code>R</code></td>
+</tr>
+<tr class="even">
+<td><code>R.new(x)</code></td>
+<td>coerce a <code>Permutation</code>, list, tuple, or expression into
+<code>R</code></td>
+</tr>
+<tr class="odd">
+<td><code>R.from_dict({...})</code></td>
+<td>build an element directly from a dict</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="low-level-multiplication-kernels">Low-level multiplication
+kernels</h2>
+<p>When you don't want a ring wrapper, work with raw dicts.</p>
+<h3
+id="schubmult_pyperm_dict-v"><code>schubmult_py(perm_dict, v)</code></h3>
+<p>Ordinary (single) Schubert multiplication. <a
+href="https://github.com/matthematics/schubmult/blob/main/src/schubmult/mult/single.py"><code>mult/single.py</code></a></p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult.mult.single <span class="im">import</span> schubmult_py</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> Permutation</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympy <span class="im">import</span> S</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>u, v <span class="op">=</span> Permutation([<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>]), Permutation([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>])</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>schubmult_py({u: S.One}, v)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># {Permutation([4, 1, 2, 3]): 1}</span></span></code></pre></div>
+<h3
+id="schubmult_doubleperm_dict-v-var2none-var3none"><code>schubmult_double(perm_dict, v, var2=None, var3=None)</code></h3>
+<p>Double Schubert multiplication; coefficients are polynomials in
+<code>var2</code> (and optionally <code>var3</code> for mixed-variable).
+<a
+href="https://github.com/matthematics/schubmult/blob/main/src/schubmult/mult/double.py"><code>mult/double.py</code></a></p>
+<p>Convenience helpers:</p>
+<ul>
+<li><code>schubmult_double_pair(perm1, perm2, var2, var3)</code> —
+multiply two Schubert basis elements directly, returning the coefficient
+dict.</li>
+<li><code>schubmult_double_pair_generic(perm1, perm2)</code> — same with
+the generic variable set.</li>
+<li><code>mult_poly_double(coeff_dict, poly)</code> — multiply a
+Schubert expansion by an ordinary polynomial.</li>
+</ul>
+<h3
+id="schubmult_qperm_dict-v-and-schubmult_q_fast"><code>schubmult_q(perm_dict, v)</code>
+and <code>schubmult_q_fast(...)</code></h3>
+<p>Quantum Schubert multiplication; coefficients live in <span
+class="math inline">ℤ[<em>q</em><sub>1</sub>,<em>q</em><sub>2</sub>,…]</span>.
+<a
+href="https://github.com/matthematics/schubmult/blob/main/src/schubmult/mult/quantum.py"><code>mult/quantum.py</code></a></p>
+<h3 id="schubmult_q_double"><code>schubmult_q_double(...)</code></h3>
+<p>Quantum double; conjectural in some cases. <a
+href="https://github.com/matthematics/schubmult/blob/main/src/schubmult/mult/quantum_double.py"><code>mult/quantum_double.py</code></a></p>
+<h3
+id="schub_coprod_pyperm-indices"><code>schub_coprod_py(perm, indices)</code></h3>
+<p>Coproduct of an ordinary Schubert polynomial along the split
+<code>indices</code>.</p>
+<h3 id="dict-utilities">Dict utilities</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult.utils.perm_utils <span class="im">import</span> add_perm_dict</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>add_perm_dict(d1, d2)          <span class="co"># merge two coefficient dicts</span></span></code></pre></div>
+<hr />
+<h2 id="rc-graphs-and-root-tableaux">RC-graphs and root tableaux</h2>
+<p>Combinatorial models of reduced expressions used internally and
+exposed for research.</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> RCGraph, RootTableau</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> RCGraph.from_perm(Permutation([<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>]))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>g.normalize()                  <span class="co"># canonical form</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>g.weight                       <span class="co"># weight vector (tuple of ints)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>g.raising_operator(<span class="dv">1</span>)          <span class="co"># crystal raising op; returns None if undefined</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>g.lowering_operator(<span class="dv">1</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>g.to_highest_weight()          <span class="co"># (highest-weight element, sequence of ops)</span></span></code></pre></div>
+<p>Crystal-operator results are <code>None</code> when undefined —
+always check before using.</p>
+<p><code>RootTableau</code> implements dual Knuth equivalence with JDT
+slides and tracks the Edelman–Greene invariant; see <a
+href="https://github.com/matthematics/schubmult/blob/main/src/schubmult/combinatorics/root_tableau.py"><code>combinatorics/root_tableau.py</code></a>.</p>
+<hr />
+<h2 id="symbolic-layer">Symbolic layer</h2>
+<p><code>schubmult.symbolic</code> is a thin facade over SymPy +
+SymEngine. <strong>Always import through it</strong>, not directly from
+sympy/symengine, so the package can swap backends transparently.</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult.symbolic <span class="im">import</span> sympify, Add, Mul, S</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult.symbolic.poly.variables <span class="im">import</span> GeneratingSet</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> GeneratingSet(<span class="st">&quot;x&quot;</span>)         <span class="co"># x_1, x_2, ... on demand</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>X[<span class="dv">1</span>] <span class="op">+</span> X[<span class="dv">2</span>]                    <span class="co"># symbolic expression</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>sympify(<span class="st">&quot;y_1 + y_2&quot;</span>)</span></code></pre></div>
+<p><code>GeneratingSet(label)</code> returns an indexed family; the
+existing rings expose their generating set via <code>R.genset</code>
+(and <code>R.coeff_genset</code> for double rings).</p>
+<hr />
+<h2 id="cli-scripts">CLI scripts</h2>
+<p>Each is registered as a console entry point and also importable as a
+module under <code>schubmult._scripts</code>.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Command</th>
+<th>Module</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>schubmult_py</code></td>
+<td><code>schubmult._scripts.schubmult_py</code></td>
+<td>Ordinary Schubert product</td>
+</tr>
+<tr class="even">
+<td><code>schubmult_double</code></td>
+<td><code>schubmult._scripts.schubmult_double</code></td>
+<td>Double Schubert product</td>
+</tr>
+<tr class="odd">
+<td><code>schubmult_q</code></td>
+<td><code>schubmult._scripts.schubmult_q</code></td>
+<td>Quantum Schubert product</td>
+</tr>
+<tr class="even">
+<td><code>schubmult_q_double</code></td>
+<td><code>schubmult._scripts.schubmult_q_double</code></td>
+<td>Quantum double Schubert product</td>
+</tr>
+</tbody>
+</table>
+<p>Common flags (see <code>schubmult/utils/argparse.py</code>):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Flag</th>
+<th>Meaning</th>
+<th>Available on</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>--code</code></td>
+<td>Treat tokens as Lehmer codes instead of permutations</td>
+<td>all</td>
+</tr>
+<tr class="even">
+<td><code>-np</code>, <code>--no-print</code></td>
+<td>Suppress stdout</td>
+<td>all</td>
+</tr>
+<tr class="odd">
+<td><code>--mult EXPR</code></td>
+<td>Multiply by a polynomial parsed via SymPy</td>
+<td>all</td>
+</tr>
+<tr class="even">
+<td><code>--display-positive</code></td>
+<td>MILP-based root-positive display (slow)</td>
+<td>double, q_double</td>
+</tr>
+<tr class="odd">
+<td><code>--mixed-var</code></td>
+<td>Use <code>y</code> and <code>z</code> instead of just
+<code>y</code></td>
+<td>double, q_double</td>
+</tr>
+<tr class="even">
+<td><code>--down</code></td>
+<td>Compute the "down" version (divided-difference style)</td>
+<td>double</td>
+</tr>
+<tr class="odd">
+<td><code>--coprod</code></td>
+<td>Coproduct mode: one perm + split-index list</td>
+<td>py, double</td>
+</tr>
+<tr class="even">
+<td><code>--parabolic g1 g2 …</code></td>
+<td>Parabolic generators (positive integers)</td>
+<td>q, q_double</td>
+</tr>
+<tr class="odd">
+<td><code>--basic-pieri</code></td>
+<td>Slow reference Pieri implementation</td>
+<td>q, q_double</td>
+</tr>
+<tr class="even">
+<td><code>--display-mode {basic,pretty,latex,raw}</code></td>
+<td>Output formatting</td>
+<td>quantum scripts</td>
+</tr>
+</tbody>
+</table>
+<p>Examples (terminal):</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">schubmult_py</span> 3 1 2 <span class="at">-</span> 2 1 3</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">schubmult_double</span> 3 1 2 <span class="at">-</span> 2 1 3 <span class="at">--mixed-var</span> <span class="at">--display-positive</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="ex">schubmult_q</span> 3 1 2 <span class="at">-</span> 2 1 3 <span class="at">--parabolic</span> 1</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="ex">schubmult_py</span> <span class="at">--code</span> 2 0 <span class="at">-</span> 1 0</span></code></pre></div>
+<p>Programmatic use:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult._scripts <span class="im">import</span> schubmult_py</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>schubmult_py.main([<span class="st">&quot;schubmult_py&quot;</span>, <span class="st">&quot;3&quot;</span>, <span class="st">&quot;1&quot;</span>, <span class="st">&quot;2&quot;</span>, <span class="st">&quot;-&quot;</span>, <span class="st">&quot;2&quot;</span>, <span class="st">&quot;1&quot;</span>, <span class="st">&quot;3&quot;</span>])</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># (prints to stdout; capture with contextlib.redirect_stdout if needed)</span></span></code></pre></div>
+<hr />
+<h2 id="worked-example-a-one-page-tour">Worked example: a one-page
+tour</h2>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult <span class="im">import</span> Sx, DSx, Permutation, uncode</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Build a Schubert polynomial.</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> Sx([<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(a.expand())                       <span class="co"># x_1 * x_2</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Multiply two of them.</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> Sx([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>])</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> a <span class="op">*</span> b                               <span class="co"># {Permutation([4,1,2,3]): 1}</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> w, coeff <span class="kw">in</span> c.items():</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(coeff, w.trimcode)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Same product with double Schuberts (coefficients in y).</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>A <span class="op">=</span> DSx([<span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>B <span class="op">=</span> DSx([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>])</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> A <span class="op">*</span> B                               <span class="co"># coefficients are polynomials in y</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Permutation gymnastics.</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> uncode([<span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>])                   <span class="co"># Lehmer code -&gt; Permutation</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(w, w.code, w.descents())</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(w <span class="op">*</span> Permutation([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>]))       <span class="co"># group multiplication</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Hit a kernel directly for raw dict output.</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> schubmult.mult.single <span class="im">import</span> schubmult_py</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sympy <span class="im">import</span> S</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(schubmult_py({Permutation([<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>]): S.One}, Permutation([<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>])))</span></code></pre></div>
+</body>
+</html>

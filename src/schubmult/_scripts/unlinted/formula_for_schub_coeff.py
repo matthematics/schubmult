@@ -43,9 +43,11 @@ if __name__ == "__main__":
             #                 stack.append([[(the_path[0][0] + 1, next_perm)] + the_path, [(weight_diff,) + weight, path_sign * the_sign]])
             the_coeffs = count_paths(perm, length)
             dual_schub = ASx(perm, length).change_basis(WordBasis)
+            from schubmult.symbolic import prod
+            import math
             for k, v in the_coeffs.items():
                 try:
-                    assert dual_schub.get(k, 0) == v, f"Failed for {perm} at length {length} with weight {k} and coeff {v}, got {dual_schub.get(k, 0)}, {the_coeffs=} {dual_schub=}"
+                    assert dual_schub.get(k, 0) == prod([math.factorial(k[i]) for i in range(len(k))]) *v, f"Failed for {perm} at length {length} with weight {k} and coeff {v}, got {dual_schub.get(k, 0)}, {the_coeffs=} {dual_schub=}"
                 except AssertionError as e:
                     print(e)
                     print(f"Permutation: {perm}, length: {length}, weight: {k}, coeff: {v}, dual_schub coeff: {dual_schub.get(k, 0)}")
