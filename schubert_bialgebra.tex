@@ -466,11 +466,15 @@ We have that
 $$\sch_w(x;y) = \delta^{w\lambda^{-1}}\sch_{w_{\lambda}}(x;y)$$
 We may apply the divided difference $\delta^{ww_\lambda^{-1}}$ to the product $\prod_i E_{\lambda_i}(x;-y_i)$ using the Leibniz formula and set $y_i=0$ for all $i$, which gives us, by Lemma \ref{lemma:doublediff},
 $$\sum_{P=(C_1,\ldots,C_{\ell(\lambda)})\atop C_i\in\achain{i}(u_{i-1},u_i)}(-1)^{\sigma(C_1)+\cdots+\sigma(C_{\ell(\lambda)})}e_{\lambda_{1}-|C_1|}^{\lambda_1}e_{\lambda_2-|C_2|}^{\lambda_2}\cdots e_{\lambda_{\ell(\lambda)}-|C_{\ell(\lambda)}|}^{\lambda_{\ell(\lambda)}}$$
-where $1 = u_0 \leq u_1\leq \cdots \leq u_{\ell(\lambda)} = ww_\lambda^{-1}$.
+where $u_0 \leq u_1\leq \cdots \leq u_{\ell(\lambda)}$ is a saturated chain.
 Define, for convenience,
+$$\mathrm{Path}_\lambda(w) = \{P=(C_1,\ldots,C_{\ell(\lambda)})\mid C_i\in\achain{i}(u_{i-1},u_i),u_0=1,u_{\ell(\lambda)}=ww_\lambda^{-1}\}$$
+and for $P\in\mathrm{Path}_\lambda(w)$ define an integer
 $$\sigma(P) = \sum_{i=1}^{\ell(\lambda)} \sigma(C_i)$$
-for such a $P$. Then we define
-$$E^{\alpha;n}_w = \sum_{P = (C_1,\ldots,C_{\ell(\lambda)})\atop C_i\in\achain{i}(u_{i-1},u_i)}\sum_{(\lambda_{\ell(\lambda) + 1 - i}-|C_{\ell(\lambda) + 1 - i}|)_{i=1}^{\ell(\lambda)}=\alpha}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
+Furthermore, define a weak composition $\alpha(P)$ by
+$$\alpha(P) = (\lambda_{\ell(\lambda) + 1 - i}-|C_{\ell(\lambda) + 1 - i}|)_{i=1}^{\ell(\lambda)}$$
+Then we define
+$$E^{\alpha;n}_w = \sum_{P \in \mathrm{Path}_\lambda(w)\atop \alpha(P)=\alpha}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
 \end{definition}
 
 \begin{theorem}[Transition to the elementary basis] \label{theorem:elemtrans}
@@ -488,7 +492,7 @@ These numbers are stable for fixed $w$ as soon as the number of variables is at 
 \end{example}
 
 \begin{remark}
-This transition formula can be used to obtain an extremely efficient formula for multiplication of Schubert polynomials. If we want to compute $\sch_u^n\sch_v^n$, we can first express $\sch_v^n$ in the elementary basis using Theorem \ref{theorem:elemtrans}. Then we can multiply by $\sch_v^n$ by iterating the Pieri formula. This is the method used in the python package \verb|schubmult| written by the author. In fact, there is also a version for double Schubert polynomials, quantum Schubert polynomials, and quantum double Schubert polynomials, which will will not go into here but are implemented in the same package.
+This transition formula can be used to obtain an extremely efficient formula for multiplication of Schubert polynomials. If we want to compute $\sch_u^n\sch_v^n$, we can first express $\sch_v^n$ in the elementary basis using Theorem \ref{theorem:elemtrans}. Then we can multiply by $\sch_v^n$ by iterating the Pieri formula. This is the method used in the python package \verb|schubmult| written by the author. In fact, there is also a version for double Schubert polynomials, quantum Schubert polynomials, and quantum double Schubert polynomials, which we will not go into here but are implemented in the same package.
 \end{remark}
 
 % Suppose $\alpha$ and $\beta$ are weak compositions. We define $\alpha\|_p \beta$ to be the weak composition defined by
@@ -525,7 +529,7 @@ We characterize it with an explicit formula.
 
 \begin{theorem}
 	For each permutation $u$ and integer $n$ with $\ell(us_i)>\ell(u)$ for all $i>n$ we have the equation
-	$$\dsch_u^{n} = \sum_{\ell(\alpha)=n} E^{\code(\mu)-\alpha,\code(\mu)}_{u\mu^{-1}}\alpha$$
+	$$\dsch_u^{n} = \sum_{\ell(\alpha)=n} E^{\code(\mu)-\alpha;n}_{u\mu^{-1}}\alpha$$
 	where $\mu$ is any strict dominant permutation such that $0\neq \code_n(\mu) \geq \ell(u)$ and $\code_{n+1}(\mu)=0$.
 \end{theorem}
 \begin{proof}
@@ -534,7 +538,7 @@ We characterize it with an explicit formula.
 	We have that
 	$$\sch_\mu(x;-y)=\sum_u \sch_u(x)\sch_{u\mu^{-1}}(y)$$
 	Expressing the second factor in the $e_{\alpha,\lambda}(y)$ basis, we have
-	$$\sch_\mu(x;-y)=\sum_{u,\alpha} \sch_u(x)E_{u\mu^{-1}}^{\code(\mu)-\alpha,\code(\mu)}e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
+	$$\sch_\mu(x;-y)=\sum_{u,\alpha} \sch_u(x)E_{u\mu^{-1}}^{\code(\mu)-\alpha;n}e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
 	An alternative expression for $\sch_\mu(x;-y)$ is
 	$$\sch_\mu(x;-y)=\sum_{\alpha} x_\alpha e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
 	from which we see that the coefficient is correct.
@@ -565,8 +569,11 @@ $$\dsch_{4271356}^3 = -[026] + [035] + [125] - [134] + [206] - [215] - [305] + [
 Thus the product structure of $\dcoma$ encodes splitting of the Schubert polynomial into two sets of variables. In particular,
 \begin{lemma} \label{lemma:dpieri}
 Let $a\geq 0$ be an integer and $w\in S_\infty$. Then we have
-$$[a]\cdot \dsch_{w}^{n} = \sum_{\substack{w\in\mathcal{D}_1(w')\\\ell(w,w')=a}} \dsch_{w'}^{n+1}$$
+$$[a]\cdot \dsch_{w}^{n} = \sum_{w'\downvar{1} w\atop\ell(w,w')=a} \dsch_{w'}^{n+1}$$
 \end{lemma}
+\begin{proof}
+  This follows from Proposition \ref{proposition:pullindex} with $i=1$.
+\end{proof}
 
 \section{The ring of bounded RC graphs}
 
@@ -574,7 +581,7 @@ $$[a]\cdot \dsch_{w}^{n} = \sum_{\substack{w\in\mathcal{D}_1(w')\\\ell(w,w')=a}}
 
 \begin{definition}\label{definition:rcgraph}
 	Let $R\subseteq \mathbb{P}\times \mathbb{P}$ be a finite set. To each such set we associate an element $\wof{R}$ of $S_\infty$ as follows. Given a pair $(i, j)$ where $i,j>0$ are integers, define $s(i,j) = s_{i+j - 1}$. Totally order the grid such that $(i, j) < (a, b)$ if and only if $i < a$ or $i = a$ and $j > b$ (in other words, lexicographical order, except that the order on the second coordinate is reversed). By this ordering, index $R$ as $r_1, r_2,\ldots, r_m$ in increasing order. Then
-	$$\wof{R} = s(r_1)\cdots s(r_m)$$
+	$$\wof{R} = s_{r_1}\cdots s_{r_m}$$
 	If $\ell(\wof{R}) = m$, then we say that $R$ is an \emph{RC-graph}.
 	
 	A \emph{bounded RC-graph} is an RC-graph $R$ together with a specified number of rows $n\geq \max\{i: (i,j)\in R\text{ for some }j\}$ such that $\wof{R}$ has no right descent larger than $n$. The definition is as an ordered pair $(R, n)$, but it will be far more convenient to abuse notation and consider the number of rows a property of $R$ itself. To denote the number of rows, we define the \emph{height} of $R$ to be $\hr(R)=n$. A bounded RC graph has an associated weight vector $\wtt(R)$ where $\wtt_i(R)$ is the number of elements in row $i$.
@@ -640,7 +647,7 @@ $$\mathrm{row}_i(A) = \{(i, a_j) \mid a_j\in A\}$$
 
 \begin{theorem} \label{theorem:modactrc}
 Let $a\geq 0$ be an integer and let $R\in \BRC$. Then
-$$[a]\cdot R = \sum_{\substack{\wof{R}\in \mathcal{D}_1(w')\\\ell(\wof{R},w')=a}} \left(\mathrm{row}_1(Q_1(\wof{R},w'))\cup \shup{R}\right)$$
+$$[a]\cdot R = \sum_{\substack{w'\downvar{1}\wof{R}\\\ell(\wof{R},w')=a}} \left(\mathrm{row}_1(Q_1(\wof{R},w'))\cup \shup{R}\right)$$
 where the right side denotes bounded RC graphs with $\hr(R)+1$ rows.
 \end{theorem}
 \begin{proof}
@@ -659,17 +666,20 @@ where the right side denotes bounded RC graphs with $\hr(R)+1$ rows.
 
 \begin{lemma} \label{lemma:drcpieri}
 	Let $a\geq 0$ be an integer and let $w\in S_\infty$. For any valid $n$, we have
-	$$[a]\cdot \mathcal{S}_w(n) = \sum_{\substack{w\in \mathcal{D}_1(w')\\\ell(w,w')=a}} \mathcal{S}_{w'}(n+1)$$
+	$$[a]\cdot \mathcal{S}_w(n) = \sum_{\substack{w\downvar{1} w'\\\ell(w,w')=a}} \mathcal{S}_{w'}(n+1)$$
 \end{lemma}
+\begin{proof}
+Theorem \ref{theorem:modactrc} establishes an explicit bijection between $[a]\cdot R$ and the set of bounded RC graphs $R'$ such that $\wof{R'}\downvar{1}\wof{R}$ and $\ell(\wof{R},\wof{R'})=a$. The result follows by summing over all $R$ such that $\wof{R}=w$ and $\hr(R)=n$.
+\end{proof}
 
 Let $t$ be an indeterminate commuting with all elements of $\dcoma$. Write
-$$\sch(t) = \sum_{a=0}^\infty [a]t^a$$
+$$\sch_\dcoma(t) = \sum_{a=0}^\infty [a]t^a$$
 Define
-$$\sch(x_1,x_2,\ldots,x_n) = \sch(x_1)\sch(x_2)\cdots \sch(x_n)$$
+$$\sch_\dcoma(x_1,x_2,\ldots,x_n) = \sch_\dcoma(x_1)\sch_\dcoma(x_2)\cdots \sch_\dcoma(x_n)$$
 
 \begin{theorem}
 	Let $\emptyset\in \BRC$ denote the empty bounded RC graph with $\hr(\emptyset)=0$. Then
-	$$\sch(x_1,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty}\sch_w(x_1,\ldots,x_n)\mathcal{S}_w(n)$$
+	$$\sch_\dcoma(x_1,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty}\sch_w(x_1,\ldots,x_n)\mathcal{S}_w(n)$$
 \end{theorem}
 \begin{proof}
 	The result for $n=1$ is Lemma~\ref{lemma:drcpieri} together with Theorem~\ref{theorem:modactrc}. The general result follows by induction on $n$. Consider the inductive hypothesis
