@@ -75,9 +75,15 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         if not PERM_TOKEN_RE.match(tok):
             raise ValueError(f"Invalid token {tok!r}: expected integers and '-' separators.")
         v = int(tok)
-        if not (-MAX_INT_VALUE <= v <= MAX_INT_VALUE):
+        if v < 0:
+            raise ValueError(f"Negative entry {v} not allowed.")
+        if v > MAX_INT_VALUE:
             raise ValueError(f"Permutation entry {v} out of allowed range "
-                             f"[-{MAX_INT_VALUE}, {MAX_INT_VALUE}].")
+                             f"[0, {MAX_INT_VALUE}].")
+        if not ascode and v < 1:
+            raise ValueError(f"Permutation entry {v} not allowed: "
+                             f"one-line entries must be >= 1. "
+                             f"(Use --code if you meant a Lehmer code.)")
         int_count += 1
 
     if int_count > MAX_PERM_LENGTH:
@@ -86,7 +92,7 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
 
     if "-" not in tokens and not coprod:
         raise ValueError("Need at least two permutations separated by '-'. "
-                         "Example:  3 1 2 - 2 1 3")
+                         "Example:  3 1 4 2 - 2 5 1 4 3")
 
     # When tokens are interpreted as one-line permutations (not Lehmer codes),
     # each '-'-separated chunk must be a permutation of {1,...,n}: distinct
