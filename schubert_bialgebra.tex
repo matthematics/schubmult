@@ -33,9 +33,11 @@
 
 \newtheorem{lemma}{Lemma}[subsection]
 \newtheorem{corollary}[lemma]{Corollary}
-\newtheorem{conjecture}[lemma]{Conjecture} 
+
 \newtheorem{proposition}[lemma]{Proposition} 
+\newtheorem{proposition2}{Proposition}[section]
 \newtheorem{theorem}{Theorem}[section]
+\newtheorem{conjecture}[theorem]{Conjecture} 
 \newtheorem{observation}{Observation}[section]
 \newtheorem{question}{Question}
 
@@ -120,11 +122,16 @@
 % simplified product notation
 \newcommand{\smpfu}{\mathsf{\Pi}}
 \newcommand{\smpr}[3]{\ensuremath{}\smpfu\left( #1 \mid #2_{[#3]}\right)}
-\newcommand{\smpre}[2]{\ensuremath{}\smpfu\left( #1 \mid #2\right)}
+%\newcommand{\smpre}[2]{\ensuremath{}\smpfu\left( #1 \mid #2\right)}
+\newcommand{\smpre}[2]{\ensuremath{}\prod_{b\in #2}(#1-b)}
+
 \newcommand{\rtt}{\mathtt{rt}}
 \newcommand{\trm}{\mathtt{trim}}
 \newcommand{\zeromap}{\mathcal{Z}}
 \newcommand{\hr}{\mathtt{ht}}
+\newcommand{\clp}{\mathtt{clip}}
+\newcommand{\BRC}{\mathcal{BRC}}
+\newcommand{\RC}{\mathcal{RC}}
 %\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\stackrel{\blacktriangleright}{\mathbf{\_}}$}}\limits}
 
 %\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\blacktriangleright$}}\limits}
@@ -198,7 +205,8 @@
 \newcommand{\ducode}{\overline{\mathfrak{c}}}
 
 \newcommand{\maxd}{\mathfrak{m}}
-\newcommand{\ddv}[1]{{{}_{{\scriptscriptstyle (#1)}}\partial}}
+%\newcommand{\ddv}[1]{{{}_{{\scriptscriptstyle (#1)}}\partial}}
+\newcommand{\ddv}[1]{\delta}
 %\newglossary[slg]{symbolslist}{syi}{syg}{Symbolslist}
 %\GlsXtrLoadResources
 %[src={symbols},sort=use,type=main,
@@ -216,9 +224,127 @@
 \begin{document}
 	\maketitle
 	
-\section{Some preliminaries}
-\subsection{Notation}
-\begin{definition} \label{definition:polysequence}
+\section{Introduction}
+
+\subsection*{The Schubert bialgebra and its dual} In this article we introduce a bialgebra $\coma$ that we call the Schubert bialgebra. This bialgebra has a basis of Schubert polynomials $\sch_u^n$ for $u\in S_\infty$, where the last descent of $u$ is not past index $n$. The structure constants for multiplication in this basis are the same as the structure constants for multiplication of Schubert polynomials. The difference from the usual realm of study of Schubert polynomials, which is the polynomial ring in infinitely many variables, is that this algebra is graded into length components that interact trivially. That is,
+$$\coma = \bigoplus_{n=0}^\infty \mathbb{Z}[x_1,\ldots,x_n]$$
+This allows us to consistently define a ``splitting'' coproduct that is compatible with the usual product of polynomials but actively requires the triviality of products between length components to achieve a bialgebra structure.
+
+We focus primarily on the dual $\dcoma$ of this algebra, where the product is derived from this splitting (deconcatenation) coproduct. Specifically, let $\mathrm{Comp}_n$ be the set of weak compositions of length $n$. Then, additively,
+$$\dcoma = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus \mathrm{Comp}_n}$$
+and multiplicatively the product of two basis elements indexed by $a\in \mathrm{Comp}_p$ and $b\in \mathrm{Comp}_q$ is the basis element indexed by the concatenation of $a$ and $b$, which is an element of $\mathrm{Comp}_{p+q}$. The coproduct on $\dcoma$ is given by deconcatenation, that is to say
+$$\Delta(c) = \sum_{a+b=c} a\otimes b$$
+where $a$ and $b$ are weak compositions of lengths $p$ and $q$ respectively, and the equation $a+b=c$ indicates that the pointwise sum of $a$ and $b$ is equal to $c$. The counit is given by $\varepsilon(c)=0$ unless $c$ is the empty composition, in which case $\varepsilon(c)=1$. With these definitions, $\coma$ and $\dcoma$ are dual bialgebras over $\mathbb{Z}$, a fact that is straightforward to verify. They fail to be connected and are not Hopf algebras.
+
+Combinatorially, $\dcoma$ is interesting, but not fundamentally new at this point. What is new is the Schubert basis $\dsch_u^n$ of $\dcoma$ indexed by $u\in S_\infty$ and $n$ at least as large as the last descent of $u$, defined by
+$$\langle \dsch_u^m, \sch_v^n\rangle = \delta_{u,v}\delta_{m,n}$$
+where we take $\langle -,-\rangle$ to be the pairing implied by the assertion that for a composition $c\in\mathrm{Comp}_n$ we have that
+$$\langle c, x_a\rangle = \delta_{c,a}$$
+where $a$ is any composition. We present an explicit formula for the dual Schubert basis in $\dcoma$ with integer coefficients. These are extremely similar to the dual Schubert polynomials of Postnikov and Stanley defined in \cite{postnikov2009chains}, and in fact are related by a scalar factor and a trivial change of basis. The dual Schubert polynomials of Stanley and Postinkov however do not naturally posses the multiplicative structure of $\dcoma$, but do come with an integral formula that mimics the action of divided difference operators on Schubert polynomials. In principle these structures should be transferrable to our dual Schubert basis, but we have not yet explored this.
+% Then $\dcoma$ has a basis indexed by $\bigcup_{n=0}^\infty \mathrm{Comp}_n$, and the product of two basis elements is given by concatenation of the corresponding weak compositions. Hence, as an algebra, $\dcoma$ is isomorphic to the free associative algebra on a countable set of generators indexed by nonnegative integers. The coproduct on $\dcoma$ is given by deconcatenation, that is to say
+
+%Multiplicatively, the algebra is free on a countable set of generators indexed by nonnegative integers, with the degree of the generator being its index. We identify the basis dual to the Schubert polynomials in $\dcoma$, which we index as $\dsch_u^n$ for $u\in S_\infty$ and $n$ is at least as large as the last descent of $u$. This is closely related to, yet subtly distinct from, the dual basis to the Schubert polynomials in the polynomial ring considered by Postnikov and Stanley in \cite{postnikov2009chains}, identified with an explicit formula in said article. 
+
+\subsection*{The Littlewood-Richardson rule for dual Schubert polynomials} The reader familiar with the landscape may already see that the Schubert basis of $\dcoma$ has nonnegative structure constants. This was observed by Macdonald \cite{notes} as well as Bergeron and Billey \cite{bbrc}, with a more general result proved by Bergeron and Sottile in \cite{coprod}. Our main result is a positive, combinatorial formula for the structure constants for multiplication in the dual Schubert basis, that is to say a Littlewood-Richardson type rule for these structure constants, the numbers $d_{u,v}^w(p, q)$ such that 
+$$\dsch_u^p\dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\dsch_w^{p+q}$$
+The combinatorial objects that we use to express this formula are RC graphs, the definition of which can be found, for example, in \cite{bbrc}. The reader may be more familiar with the term ``pipe dreams,'' introduced as a catchier name for the same objects by Knutson and Miller in \cite{knutson2005grobner}. We retain the name RC graphs since this method of approaching the objects (thought of as reduced words paired with compatible sequences, with the generators arranged in rows) is far more tractable for our purposes, most of the time. The original intention was indeed to model such biwords, initially presented as a positive formula for Schubert polynomials in \cite{bjs}.
+
+For an RC graph $R$ with $n$ rows, we define two associated RC graphs $\clp^p(R)$ and $\trm^p(R)$ such that $\trm^p(R)$ is obtained directly from the last $n - p$ rows of $R$, whereas $\clp^p(R)$ is obtained by an insertion algorithm that combinatorially models Lascoux-Schützenberger transition formula for Schubert polynomials, the latter of which is expounded upon in detail by Macdonald in \cite{notes}, with the algorithm maintaining numerous structures that can be imposed on RC graphs. We point out the definition of the function $\zeromap:\RC_n^0\to \RC_{n-1}$ in Definition \ref{definition:zeromap}, where $\RC_n^0$ indicates the set of RC graphs with $n$ rows such that row $n$ is empty, that realizes the transition formula, for discussion below.
+ Our main theorem is the following.
+
+
+\begin{theorem}\label{theorem:LR}
+Suppose $u,v\in S_\infty$ and $p,q\geq 0$ are integers such that the last descent of $u$ is at most $p$ and the last descent of $v$ is at most $q$. Define integers $d_{u,v}^w(p, q)$ by the equation
+$$\dsch_u^p\dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\dsch_w^{p+q}$$
+Then for any fixed choices of RC graphs $U\in \RC_p(u)$, $V\in\RC_q(v)$, and a permutation $w\in S_\infty$, we have that $d_{u, v}^w(p, q)$ is the number of RC graphs $R\in \RC_{p+q}(w)$ such that $\clp^p(R)=U$ and $\trm^p(R)=V$, and is in particular nonnegative.
+\end{theorem}
+\newcommand{\forest}{\mathfrak{P}}
+\newcommand{\fcode}{\mathfrak{c}_f}
+
+\subsection*{Forest polynomials}
+
+Note that \emph{any} polynomial basis that is graded by length and degree has a corresponding dual basis in $\dcoma$. In particular, the \emph{forest polynomials} are such a basis. These were introduced by Nadeau and Tewari in \cite{nadeau2024forest} and are closely related to Schubert polynomials. They can be defined by reduced words and compatible sequences, but the invariant preserved by these words is distinct from the permutation. Given a reduced word/compatible sequence pair $(\mathbf{r},\mathbf{s})$, there is an insertion algorithm that produces a corresponding invariant $\mathcal{F}(\mathbf{r},\mathbf{s})$ that represents an equivalence relation on the words, where the compatible sequence can vary arbitrarily. We therefore shorten the notation to $\mathcal{F}(\mathbf{r})$. The equivalence classes $\mathcal{F}$ consist of words that are all for the same permutation, so that if we define
+$$R\equiv_{\forest} R'$$
+to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Then we have
+\begin{theorem}
+Let $R\in \BRC$ be a bounded RC graph. Then the dual forest polynomial $\forest_{\fcode(R)}$ is equal to
+$$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
+\end{theorem}
+
+Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph formula for forest polynomials.
+
+Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$. 
+
+\begin{theorem}[LR rule for dual forests]\label{theorem:LRforest}
+Let $a,b$ be weak compositions of lengths $p$ and $q$, respectively. Define integers $f_{a,b}^c$ for weak compositions $c$ of length $p+q$ by the equation
+$$\forest_a^*\forest_b^* = \sum_{c} f_{a,b}^c\forest_c^*$$
+Then for each weak composition $c$ of length $p+q$ we have that $f_{a, b}^c$ is the number of distinct $[R]\in \mathcal{C}_\forest(c)$ such that $[\clp^p(R)]\in \mathcal{C}_\forest(a)$ and $[\trm^p(R)]\in \mathcal{C}_\forest(b)$, and is in particular nonnegative.
+\end{theorem}
+
+\subsection*{The ring of RC graphs}
+
+Perhaps the strongest indication that this is the ``correct'' way to decompose RC graphs is that these formulas are proved by the fact that if we define
+$$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\mathrm{RC}_n}$$
+then there is an associative product $\diamond$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
+$$\alpha(R) = \dsch_u^n$$
+where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\diamond$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorem \ref{theorem:LRforest} piggybacks off of this as well, defining an ideal $\Gamma$ of $\BRC$ such that $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintining the projection to $\dcoma$ and leveraging this to find the formula.
+
+\subsection*{Conjectures}
+
+Beyond this, there is potentially much to explore. For example, the coproduct of $\dcoma$ has as its structure constants the structure constants of Schubert polynomials, which have evaded expression in terms of positive formulas for decades, and at the time of this writing no positive, combinatorial formula is known for the structure constants of Schubert polynomials that applies in all cases. At the very least, this coproduct is a new potential method of attack on this and related problems, since as far as we know it is new. An expression for $\dsch_w^n$ in the composition basis leads to a simple, purely mechanical method for computing all $c_{u,v}^w$ (generalized Littlewood-Richardson coefficients for Schubert polynomials) by leveraging the extremely simple form the coproduct takes on the composition basis, as well as a neat positive formula for the expansion of a composition $[a]$ in the Schubert basis.
+%It is a nearly trivial observation that if a basis of the polynomial ring is such that the Schubert polynomials have a nonnegative expression in terms of that basis, then the dual Schubert elements can be expressed nonnegatively in terms of the corresponding dual basis.
+
+For the reader familiar with bumpless pipe dreams \cite{lam2021back}, we state without proof that our apparently complex transition algorithm for RC graphs can be realized almost trivially for bumpless pipe dreams. Specifically, while (reduced) bumpless pipe dreams are typically defined in such a way that they cannot deviate from a square shape, there is indeed a consistent way to remove rows from a bumpless pipe dream unambiguously. This was observed by Yu in \cite[Lemma~3.18]{Yu2025EmbeddingBP} in the definition of a $k$-row BPD. Wiengandt in \cite{Weigandt2021} defines a transition formula $\mathbf{t}:\mathrm{BPD}_n\to\mathrm{BPD}_{n-1}$ and while the image is realized as square, it agrees with Yu's notion of an $n-1$-row BPD.
+
+Gao and Huang in \cite{GaoHuang2023} defined a natural bijection between RC graphs and bumpless pipe dreams. Given a bumpless pipe dream $B$ with $n$ rows, we define $\phi(B)$ to be the corresponding RC graph under this bijection.
+\begin{conjecture}
+Let $B$ be a $k$-row reduced bumpless pipe dream such that row $k$ has no blanks (``weighty tiles''). Then 
+$$\zeromap(\phi(B)) = \phi(\mathbf{t}(B))$$
+\end{conjecture}
+
+This may appear too strong to be a coincidence. Indeed, we believe that this is the case. There is a known bijection between RC graphs and RFC (reduced factorizations with cutoff), a subset of RFs (reduced factorizations), on which a crystal structure is imposed by Morse and Schilling in \cite{morse2016crystal}. This is then shown to realize the Demazure crystal structure of RFCs, essentially equivalent to RC graphs, in \cite{assaf2018demazure}. For another conjecture that would explain such an apparent coincidence, we posit the following.
+\begin{conjecture}
+  Let $e_i, f_i$ be the raising and lowering operators defined by Morse and Schilling in \cite{morse2016crystal}. Let $n>0$ be an integer and suppose $i<n-1$. If $R$ is an RC graph with $n$ rows such that row $n$ is empty, then we have the formulas
+  $$\zeromap(e_i(R)) = e_i(\zeromap(R))$$
+  and
+  $$\zeromap(f_i(R)) = f_i(\zeromap(R))$$
+  and $\zeromap$ is an isomorphism of Demazure crystals from the set of $n$-row RC graphs with row $n$ empty to the set of $(n-1)$-row RC graphs.
+\end{conjecture}
+This is a strengthening of Theorem \ref{theorem:zero_bijection} below, which only asserts that the bijection is weight-preserving.
+
+\section{The Schubert Bialgebra and its dual}
+\subsection{Some preliminaries}
+
+\begin{definition}[Two Pieri relations $\tom{k}$ and $\Tom{k}$]
+The relations $\tom{k}$ and $\Tom{k}$ are defined on $S_\infty$ as follows, with different notation, in \cite{sottile}. For $v,w\in S_\infty$, we have $v\tom{k} w$ if there is a sequence of transpositions $t_{a_1b_1},\ldots,t_{a_mb_m}$ such that the following hold:
+\begin{enumerate}
+\item  $a_i \leq k < b_i$ for all $i$.
+\item $\ell(ut_{a_1b_1}\cdots t_{a_i b_i}) = \ell(u)+i$ for all $i$.
+\item $w = ut_{a_1b_1}\cdots t_{a_m b_m}$.
+\item \label{item:thintom} The integers $a_1,\ldots,a_m$ are pairwise distinct.
+\end{enumerate}
+For $\Tom{k}$, only (\ref{item:thintom}) changes:
+\begin{itemize}
+  \item[(\ref*{item:thintom}')] \label{item:varthintom} The integers $b_1,\ldots,b_m$ are pairwise distinct.
+\end{itemize}
+
+Notice that necessarily $m\leq k$ for $\tom{k}$, but there is no upper bound on $m$ for $\Tom{k}$. This reflects the fact that the following theorem holds:
+\begin{theorem}[{\cite[Theorem~1]{sottile}}]
+  Let $p\geq 0$, $k>0$ be integers and let $u$ be a permutation.
+  \begin{itemize}
+    
+    \item[\textrm{I}. ] We have the formula
+    $$\sch_u(x)h_{p,k}(x) = \sum_{u\Tom{k} w} \sch_w(x)$$
+    where $h_{p,k}(x)$ is the complete homogeneous symmetric polynomial of degree $p$ in the first $k$ variables.
+    \item[\textrm{II}. ] We have the formula
+    $$\sch_u(x)e_{p,k}(x) = \sum_{u\tom{k} w} \sch_w(x)$$
+    where $e_{p,k}(x)$ is the elementary symmetric polynomial of degree $p$ in the first $k$ variables.
+  \end{itemize}
+\end{theorem}
+
+\end{definition}
+
+\begin{definition}[Pulling out variables from double Schubert polynomials, the relation $\downvar{i}$] \label{definition:polysequence}
 		For a permutation $v'$ such that $v'\in S_{n}$, define
 		$$\varphi_{i,n}(v')(j)=\begin{cases}
 			v'(j)&\mbox{ if }j<i\\
@@ -234,69 +360,37 @@
 		$$Q_i(v',v)=\{v(j)\mid j>i\mbox{ and }v'(j-1)=v(j)\}$$
 		Given the fact that any element of $S_\infty$ fixes all but finitely many positive integers, it follows that $Q_i(v',v)$ is a finite set.
 		
-		We then define $\mathcal{D}_i(v)$ to be all permutations $v'\in S_\infty$ such that $v\downvar{i} v'$. The permutations $\mathcal{D}_i(v)$ arise when pulling a variable out of a Schubert polynomial and expressing the coefficients of the powers of this variable as Schubert polynomials in the remaining variables, as is done in \cite{coprod}, from which this definition essentially comes.
+		The permutations $v'$ such that $v\downvar{i} v'$ arise when pulling a variable out of a Schubert polynomial and expressing the coefficients of the powers of this variable as Schubert polynomials in the remaining variables, as is done in \cite{coprod}, from which this definition essentially comes.
 
+    For convenience, if $a$ is a weak composition of length $n$ and $v,v'\in S_\infty$, we declare that $v\downvar{a} v'$ if
+    $$v\downvar{a_1} v_1\downvar{a_2} v_2\downvar{a_3}\cdots \downvar{a_n} v'$$
+  \end{definition}
+  
+\begin{definition}[Upward shifting of permutations, maximum right descent]
 		For a permutation $v\in S_\infty$, we define $\shup{v}$ to be the permutation defined by
 		$$\shup{v}(i) = \begin{cases}
 			v(i-1)+1&\mbox{ if }i>1\\
 			1&\mbox{ if }i=1
 		\end{cases}$$
-		Recursively, we define $\shup^k(v)$ to be $\shup(\shup^{k-1}(v))$.
+		Recursively, we define $\shup^k(v)$ to be $\shup(\shup^{k-1}(v))$. In the literature, this is sometimes written as
+    $$\shup^kv = 1^k\times v$$
 
 		For a permutation $w$, we define $\maxd(w)$ to be the maximum right descent of $w$. That is
 		$$\maxd(w) = \max\{i\mid w(i)>w(i+1)\}$$
 
-		Define
-		$$\smpre{a}{B} = \prod_{b\in B}(a-b)$$
+		%Define
+		%$$\smpre{a}{B} = \prod_{b\in B}(a-b)$$
 	\end{definition}
 
-	\begin{proposition}[Special case of Pieri formula {\cite[Theorem~7.1]{samuelmolev}}] \label{proposition:pieri}
-Suppose $k\geq 1$ and $u,w\in S_\infty$. If $u\not\tom{k} w$, then
-$$\ddv{y}_u^w\smpr{x_1}{y}{k}=0$$
-If $u\tom{k} w$, define
-$$Q = \{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
-then
-$$\ddv{y}_u^w\smpr{x_1}{y}{k}=\smpre{x_1}{y_Q}$$
-\end{proposition}
-\begin{proof}
-	This is simply a change of variables from the original theorem.
-\end{proof}
+	
 
 The next proposition specializes, in the case of ordinary Schubert polynomial $\sch_v(x)$, to a formula that isolates a chosen index $i$: one can express $\sch_v(x)$ as a sum of terms of the form $x_i^p\sch_{v'}(x^{(i)})$, thereby effectively extracting the variable $x_i$ and leaving Schubert polynomials in the remaining variables \cite[Theorem~5.1]{bsskew}. Proposition \ref{proposition:pullindex} is the double Schubert polynomial version of this, which, as far as we know, is new.% A more general formula is possible for arbitrary splitting into disjoint sets of indices, similar to the formula in \cite{bsskew} and using the same method of proof as Proposition \ref{proposition:pullindex} coupled with the main result of \cite{samuelleibniz}, though we will not need this here.
 
-
 \begin{proposition} \label{proposition:pullindex}
 Let $v\in S_\infty$ and let $i>0$ be an integer. Then we have
-$$\sch_v(x;y)=\sum_{v\downvar{i} v'}\smpre{x_i}{y_{Q_i(v',v)}}\sch_{v'}(x^{(i)};y)$$
+$$\sch_v(x;y)=\sum_{v\downvar{i} v'}\sch_{v'}(x^{(i)};y)\prod_{b\in Q_i(v',v)}(x_i - y_b)$$
 \end{proposition}
-\begin{proof}
-Suppose $v\in S_n$. We have
-$$\sch_v(x;y)=\ddv{y}^{vw_0(n)}(\sch_{w_0(n)}(x;y))$$
-This is equal to
-$$\ddv{y}^{vw_0(n)}(\sch_{s_{n+1-i}\cdots s_1w_0(n)}(x^{(i)};y)\smpr{x_i}{y}{n+1-i})$$
-and, applying the Leibniz formula, is also equal to
-$$\sum_{\substack{v'\in S_\infty\\\ell(v'w_0(n)s_1\cdots s_{n+1-i})=\ell(w_0(n)s_1\cdots s_{n+1-i})-\ell(v')}}\sch_{v'}(x^{(i)};y)\ddv{y}_{v'w_0(n)s_1\cdots s_{n+1-i}}^{vw_0(n)}\smpr{x_i}{y}{n+1-i}$$
-By the restricted Pieri formula (Proposition \ref{proposition:pieri}), for this to be nonzero necessarily $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$. We note that $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$ if and only if 
-$$v\Tom{i}v'w_0(n)s_1\cdots s_{n+1-i}w_0(n)=v's_ns_{n-1}\cdots s_i$$
-We have that $v's_n\cdots s_i$ is exactly $\varphi_{i,n}(v')$ since $v'\in S_n$, so we require that
-$$v\Tom{i}\varphi_{i,n}(v')$$
-so the sum is over all $v'\in \mathcal{D}_i(v)$.
-
-Applying Proposition \ref{proposition:pieri}, we obtain that the result is equal to
-$$\sum_{v'\in \mathcal{D}_i(v)} \smpre{x_i}{y_{A(v',v)}}\sch_{v'}(x^{(i)};y)$$
-where $A(v',v)$ is the set of all $vw_0(n)(j)$ such that $1\leq j\leq n+1-i$ and $v'w_0(n)s_1\cdots s_{n+1-i}(j)=vw_0(n)(j)$. These values are the same as at the indices that comprise the set of all $1\leq j\leq n+1-i$ such that
-$$v'(n+2-s_1\cdots s_{n+1-i}(j))=v(n+2-j)$$
-Applying the $s_1\cdots s_{n+1-i}$ to $j$, since $1\leq j\leq n+1-i$ we have that 
-$$s_1\cdots s_{n+1-i}(j)=j+1$$
-Hence we need
-$$v'(n+2-(j+1))=v'(n+1-j)=v(n+2-j)$$
-Replacing $j$ with $n+2-p$, the indices are the set of all $p$ such that $i<p\leq n+1$ and
-$$v'(p-1)=v(p)$$
-Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, which is exactly $Q_i(v',v)$, and we are done.
-\end{proof}
-
-
-\section{The Schubert Bialgebra and its dual}
+See the Appendix for a proof.
 
 \subsection{Definition}
 
@@ -305,7 +399,7 @@ We define a commutative algebra $\coma$ over the integers as follows. For each $
 $$\coma =\bigoplus_{n=0}^\infty \coma_n$$
 The multiplication within $\coma_n$ is as usually defined for the polynomial ring. However, if $a\in \coma_m$ and $b\in \coma_n$ with $m\neq n$ and $m,n>0$,  then
 $$ab = 0$$
-Otherwise, the component for $n=0$ is identified with the coefficient ring. Note that the ``identity element'' for positive $n$ is not an identity element of $\coma$ (we may sometimes refer to it as a ``fat identity'').
+Otherwise, the component for $n=0$ is identified with the coefficient ring. Note that the ``identity element'' for positive $n$ is not an identity element of $\coma$ (we may think of it as a ``fat identity'').
 
 Each $\coma_n$ has a basis consisting of elements $x_a$, where $a$ is a weak composition of length $n$, and the notation indicates that
 $$x_a = x_1^{a_1}\cdots x_n^{a_n}$$
@@ -316,7 +410,7 @@ $$\Delta(x_c) = \sum_{ab=c} x_a\otimes x_b$$
 where the equation $ab=c$ indicates that $a$ concatenated with $b$ is equal to $c$. We also define a counit $\varepsilon:\coma\to \mathbb{Z}$ by $\varepsilon(x_a)=0$ unless $a$ is the empty composition.
 
 \begin{lemma}
-	With $\Delta$ and $\varepsilon$, $\coma$ is a coassociative, counital coalegebra.
+	With $\Delta$ and $\varepsilon$, $\coma$ is a coassociative, counital coalgebra.
 \end{lemma}
 \begin{proof}
 	We have 
@@ -492,7 +586,7 @@ These numbers are stable for fixed $w$ as soon as the number of variables is at 
 \end{example}
 
 \begin{remark}
-This transition formula can be used to obtain an extremely efficient formula for multiplication of Schubert polynomials. If we want to compute $\sch_u^n\sch_v^n$, we can first express $\sch_v^n$ in the elementary basis using Theorem \ref{theorem:elemtrans}. Then we can multiply by $\sch_v^n$ by iterating the Pieri formula. This is the method used in the python package \verb|schubmult| written by the author. In fact, there is also a version for double Schubert polynomials, quantum Schubert polynomials, and quantum double Schubert polynomials, which we will not go into here but are implemented in the same package.
+This transition formula from the Schubert basis to the elementary basis can be used to obtain an extremely efficient formula for multiplication of Schubert polynomials. If we want to compute $\sch_u^n\sch_v^n$, we can first express $\sch_v^n$ in the elementary basis using Theorem \ref{theorem:elemtrans}. Then we can multiply by $\sch_v^n$ by iterating the Pieri formula. This is the method used in the python package \verb|schubmult| written by the author \cite{schubmult}. In fact, there is also a version for double Schubert polynomials, quantum Schubert polynomials, and quantum double Schubert polynomials, which we will not go into here but are implemented in the same package.
 \end{remark}
 
 % Suppose $\alpha$ and $\beta$ are weak compositions. We define $\alpha\|_p \beta$ to be the weak composition defined by
@@ -528,7 +622,7 @@ $$\langle \dsch_u^n,\sch_v^n\rangle = \delta_{uv}$$
 We characterize it with an explicit formula.
 
 \begin{theorem}
-	For each permutation $u$ and integer $n$ with $\ell(us_i)>\ell(u)$ for all $i>n$ we have the equation
+	For each permutation $u$ and integer $n$ with $\maxd(u)\leq n$ we have the equation
 	$$\dsch_u^{n} = \sum_{\ell(\alpha)=n} E^{\code(\mu)-\alpha;n}_{u\mu^{-1}}\alpha$$
 	where $\mu$ is any strict dominant permutation such that $0\neq \code_n(\mu) \geq \ell(u)$ and $\code_{n+1}(\mu)=0$.
 \end{theorem}
@@ -575,6 +669,7 @@ $$[a]\cdot \dsch_{w}^{n} = \sum_{w'\downvar{1} w\atop\ell(w,w')=a} \dsch_{w'}^{n
   This follows from Proposition \ref{proposition:pullindex} with $i=1$.
 \end{proof}
 
+\subsection{The coproduct}
 \section{The ring of bounded RC graphs}
 
 \subsection{The module of bounded RC graphs}
@@ -590,8 +685,7 @@ $$[a]\cdot \dsch_{w}^{n} = \sum_{w'\downvar{1} w\atop\ell(w,w')=a} \dsch_{w'}^{n
 	$$\shup^m R=\{(i+m, j)| (i,j)\in R\}$$
 \end{definition}
 
-\newcommand{\BRC}{\mathcal{BRC}}
-\newcommand{\RC}{\mathcal{RC}}
+
 
 Let $\BRC$ be the free abelian group spanned by all bounded RC graphs. If $\BRC_n$ is the subgroup spanned by all bounded RC graphs $R$ with $\hr(R)=n$, then we have a grading
 $$\BRC = \bigoplus_{n=0}^\infty \BRC_n$$
@@ -611,7 +705,7 @@ $$[a]\cdot R=\sum_{\substack{\trm(R') = R\\\wtt_1(R') = a}}R'$$
 which is an element of $\BRC$. By virtue of the fact that $\dcoma$ is a free algebra generated by these elements, it is nearly a trivial observation that this is a left module action on $\BRC$. The consequences of this, however, are not at all trivial.
 
 \begin{lemma}[{\cite[Corollary~3.11]{bbrc}}] \label{lemma:d1desc}
-We have that $\mathcal{D}_1(w)$ is equal to the set of permutations $w'$ such that there exists a permutation $v=s_{a_1}\cdots s_{a_m}$ for some integers $a_1>a_2>\cdots>a_m\geq 1$ such that $w =v\shup{w'}$.
+We have that the set $\{w'\mid w\downvar{1} w'\}$ is equal to the set of permutations $w'$ such that there exists a permutation $v=s_{a_1}\cdots s_{a_m}$ for some integers $a_1>a_2>\cdots>a_m\geq 1$ such that $w =v\shup{w'}$.
 \end{lemma}
 
 
@@ -651,7 +745,7 @@ $$[a]\cdot R = \sum_{\substack{w'\downvar{1}\wof{R}\\\ell(\wof{R},w')=a}} \left(
 where the right side denotes bounded RC graphs with $\hr(R)+1$ rows.
 \end{theorem}
 \begin{proof}
-	If $\trm(R') = R$, then by definition $\wof{R'} = s_{a_1}\cdots s_{a_m}\shup \wof{R}$. It follows by Lemma~\ref{lemma:d1desc} then $\wof{R}\in \mathcal{D}_1(\wof{R'})$. By Lemma~\ref{lemma:factor}, the integers $a_1,\ldots, a_m$ are precisely the elements of $Q_1(\wof{R},\wof{R'})$ in decreasing order. This establishes the result.
+	If $\trm(R') = R$, then by definition $\wof{R'} = s_{a_1}\cdots s_{a_m}\shup \wof{R}$. It follows by Lemma~\ref{lemma:d1desc} then $\wof{R'}\downvar{1}\wof{R}$. By Lemma~\ref{lemma:factor}, the integers $a_1,\ldots, a_m$ are precisely the elements of $Q_1(\wof{R},\wof{R'})$ in decreasing order. This establishes the result.
 \end{proof}
 
 % \begin{lemma} \label{lemma:rcpieri}
@@ -679,19 +773,19 @@ $$\sch_\dcoma(x_1,x_2,\ldots,x_n) = \sch_\dcoma(x_1)\sch_\dcoma(x_2)\cdots \sch_
 
 \begin{theorem}
 	Let $\emptyset\in \BRC$ denote the empty bounded RC graph with $\hr(\emptyset)=0$. Then
-	$$\sch_\dcoma(x_1,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty}\sch_w(x_1,\ldots,x_n)\mathcal{S}_w(n)$$
+	$$\sch_\dcoma(x_1,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty\atop\maxd{w}\leq n}\sch_w(x_1,\ldots,x_n)\mathcal{S}_w(n)$$
 \end{theorem}
 \begin{proof}
 	The result for $n=1$ is Lemma~\ref{lemma:drcpieri} together with Theorem~\ref{theorem:modactrc}. The general result follows by induction on $n$. Consider the inductive hypothesis
-	$$\sch(x_2,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty}\sch_w(x_2,\ldots,x_n)\mathcal{S}_w(n-1)$$
-	Then applying $\sch(x_1)$ to both sides, we have
-	$$\sch(x_1)\sch(x_2,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty}\sch_w(x_2,\ldots,x_n)\sch(x_1)\mathcal{S}_w(n-1)$$
+	$$\sch_\dcoma(x_2,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty}\sch_w(x_2,\ldots,x_n)\mathcal{S}_w(n-1)$$
+	Then applying $\sch_\dcoma(x_1)$ to both sides, we have
+	$$\sch_\dcoma(x_1)\sch_\dcoma(x_2,\ldots,x_n)\cdot \emptyset=\sum_{w\in S_\infty}\sch_w(x_2,\ldots,x_n)\sch_\dcoma(x_1)\mathcal{S}_w(n-1)$$
 	which is equal to
-	$$\sum_{a=0}^\infty\sum_{w\in S_\infty}x_1^a\sch_w(x_2,\ldots,x_n)\sch(x_1)[a]\mathcal{S}_w(n-1)$$
+	$$\sum_{a=0}^\infty\sum_{w\in S_\infty}x_1^a\sch_w(x_2,\ldots,x_n)[a]\mathcal{S}_w(n-1)$$
 	Applying Lemma~\ref{lemma:dpieri} to each term, we have
-	$$\sum_{a=0}^\infty\sum_{w\in S_\infty}x_1^a\sch_w(x_2,\ldots,x_n)\sum_{\substack{w\in \mathcal{D}_1(w')\\\ell(w,w')=a}} \mathcal{S}_{w'}(n)$$
+	$$\sum_{a=0}^\infty\sum_{w\in S_\infty}x_1^a\sch_w(x_2,\ldots,x_n)\sum_{\substack{w'\downvar{1} w\\\ell(w,w')=a}} \mathcal{S}_{w'}(n)$$
 	Bringing the polynomial inside the inner sum, this is
-	$$\sum_{w'\in S_\infty}\left(\sum_{\substack{w\in \mathcal{D}_1(w')}} x_1^{\ell(w,w')}\sch_w(x_2,\ldots,x_n)\right)\mathcal{S}_{w'}(n)$$
+	$$\sum_{w'\in S_\infty}\left(\sum_{w:w'\downvar{1}w} x_1^{\ell(w,w')}\sch_w(x_2,\ldots,x_n)\right)\mathcal{S}_{w'}(n)$$
 	which simplifies to
 	$$\sum_{w'\in S_\infty}\sch_{w'}(x_1,\ldots,x_n)\mathcal{S}_{w'}(n)$$
 	as desired.
@@ -952,7 +1046,7 @@ We proceed now to define a product on $\BRC$ turning it into a ring. To do this,
 \end{algorithm}
 
 
-\begin{algorithm}
+\begin{algorithm} \label{algorithm:zero}
 	\caption{Map $\zeromap(R)$ zeroing out last row}
 	\label{algorithm:zero}
 	\begin{algorithmic}[1]
@@ -986,6 +1080,9 @@ given by
 $$(I, R)\mapsto \ins{k}{I} R$$ 
 need not be injective.
 
+\begin{definition}\label{definition:zeromap}
+Let $R$ be an RC graph with $\hr(R) = n$ such that row $n$ is empty. We define $\zeromap(R)$ to be the output of Algorithm \ref{algorithm:zero}, an RC graph with $n-1$ rows, on input $R$.
+\end{definition}
 
 \begin{figure}[htbp]
 \centering
@@ -1303,95 +1400,6 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 
 
 
-\newcommand{\clp}{\mathtt{clip}}
-
-
-\subsection{Preservation of the Demazure crystal structure}
-
-RC-graphs have a Demazure crystal structure defined by Assaf and Schilling in \cite{assaf2018demazure}. Namely, they define operators $e_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ and $f_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ for each $i\geq 1$ as follows. 
-
-\begin{definition}
-Consider elements $(i, j)\in R$ and $(i+1, k)\in R$. The pairing algorithm starts with the largest $j$ in row $i$ and pairs $(i, j)$ with $(i+1, k)$ where $k$ is the smallest such that $k \geq j$. If no such $k$ exists, then $(i, j)$ is unpaired. The algorithm continues by considering the next largest $j$ in row $i$ and repeating the process until all elements in row $i$ have been considered.
-
-Define $R_i$ to be the set of unpaired elements in row $i$ after applying the pairing algorithm between rows $i$ and $i+1$, and define $L_i$ to be the set of unpaired elements in row $i+1$. Then $f_i(R)$ is defined by removing the leftmost element $(i, j)$ from $R_i$ and adding the element $(i + 1, k)$ to $R$, where $k$ is the largest value such that $(i+1,k)\notin R$ and $k < j$. If $R_i$ is empty or $k$ does not exist, then $f_i(R) = \emptyset$. Similarly, $e_i(R)$ is defined by removing the rightmost element $(i + 1, k)$ from $L_i$ and adding the element $(i, j)$ to $R$, where $j$ is the smallest value such that $(i,j)\notin R$ and $j > k$. If $L_i$ is empty, then $e_i(R) = \emptyset$.
-\end{definition}
-
-We may transport this structure to bounded RC graphs as  operators $e_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ and $f_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ by preserving the bound:
-$$e_i(R) = e_i(R)$$
-$$f_i(R)=f_i(R)$$
-
-where the bound is preserved (i.e., $\hr(f_i(R)) = \hr(R)$ when $f_i(R)\neq\emptyset$).
-
-
-
-\newcommand{\ckeq}{\sim}
-\newcommand{\ege}{\widetilde{\mathrm{eg}}}
-\begin{definition}
-An RC graph $R$ has a uniquely associated reduced word $\mathrm{word}(R)=(s_{i_1},\ldots,s_{i_N})$. Recall the Coxeter-Knuth relation $\ege$ defined by
-$$j\ i\ k \ckeq j\ k\ i$$
-and
-$$k\ i\ j \ckeq i\ k\ j$$
-if $i<j<k$, and
-$$i\ i+1\ i \ckeq i+1\ i\ i+1$$
-For an RC graph $R$, define $N(R)$ to be the maximum letter in $R$. Then define
-$$\ege(R) = (N(R) + 1 - i_1, \ldots, N(R) + 1 - i_N)$$
-Via the Edelman-Greene insertion algorithm, we may define a pair
-$$(P, Q)$$
-of tableaux of the same shape such that the reading word of $P$ is CK-equivalent to $\ege(R)$ and $Q$, the recording tableau, is standard. Define $\mathtt{tab}(R)$ to be the tableau of the same shape as $Q$ such that the entry in box $(i, j)$ is the row index of the box in $R$ that was inserted to create box $(i, j)$ in $P$.
-\end{definition}
-
-\begin{lemma}
-	We have that $\mathtt{tab}(R)$ is a semistandard Young tableau of shape $\mathrm{shape}(Q)$, and the map
-	$$R\mapsto \mathtt{tab}(R)$$
-	 is a morphism of crystal graphs into $B(\mathrm{shape}(Q))$. 
-\end{lemma}
-\begin{proof}
-Suppose $R$ is a highest weight. Then $\wtt(R)$ is a partition. By the highest weight condition, the longest increasing subsequence of $\ege(R)$ is of length $\wtt(R)_1$ and is precisely the first row read in the grid order. By the Edelman-Greene correspondence \cite{edelman1987balanced}, the first row of $P$ has length equal to the length of the longest increasing subsequence of $\ege(R)$. Hence, the first row of $P$ has length $\wtt(R)_1$. By similar reasoning on the subsequent rows, we have that $\mathrm{shape}(P) = \wtt(R)$. We then have that $\mathtt{tab}(R)$ is the unique Yamanouchi tableau of shape $\wtt(R)$, establishing the claim for highest weights. The general case follows from the rigidity of the Demazure crystal structure \cite{assaf2018demazure}; since the function is weight-preserving, it is a morphism of crystal graphs.
-\end{proof}
-
-\begin{theorem}
-	% Let $R,R'$ be RC graphs. Then $\mathrm{hw}(R) = \mathrm{hw}(R')$ if and only if $\ege(R) \ckeq \ege(R')$.
-  The distinct Demazure crystals that make up $\RC(w)$ are in bijection with the Coxeter-Knuth equivalence classes of reduced words for $w_0ww_0$ via the map $R\mapsto \ege(R)$, with $R\mapsto \mathtt{tab}(R)$ being a homomorphism of crystal graphs into $B(\lambda)$, where $\lambda=\mathrm{shape}(P(\ege(R)))$.
-\end{theorem}
-\begin{proof}
-By \cite[Theorem~4.11]{morse2016crystal}, if $e_i(R)\neq \emptyset$, then $R$ and $e_i(R)$ have the same Edelman-Greene insertion tableau. Since conjugation by $w_0$ is an automorphism of Coxeter-Knuth equivalence, so do $\ege(R)$ and $\ege(e_i(R))$. The shape is determined inductively. Suppose $R$ is a highest weight element and consider $\mathtt{word}(R)$. The first row of $R$ forms a word that corresponds to an initial increasing subsequence of $\ege(R)$. If there were a letter in some row below the first that is smaller than the last letter of the first row, then some raising operator would yield a nonempty result, contradicting the fact that $R$ is a highest weight. Thus, the first row of $P(\ege(R))$ has length equal to the length of the first row of $R$. The rest follows by induction on the remaining rows.
-\end{proof}
-
-\begin{definition}
-Let $\RC(w, n)^0$ be the set of bounded RC graphs $R$ with $\hr(R)=n$ such that $\wof{R} = w$ and row $n$ is empty. We define a function $\zeromap_*^R:R\to R'$, where $\zeromap(R) = (R',n-1)$ and $w'=\wof{R'}$, as follows. Clearly if $\code_n(w) = 0$, then $\zeromap_*^R$ is the identity map. 
-
-Consider now the case where $\code_n(w) = 1$. The initial deletion of $(i,j)$ with $\rtt_R(i,j) = (n, n+1)$ results in an RC graph $R_0 = R\setminus\{(i,j)\}$ with $\wof{R_1} = w s_n$, after which we add $(n,1)$ to obtain $R_1$. Let
-$$f_1:R_1\to R$$
-be the identity. Afterwards, $(i_1, j_1)$ is inserted into $R_1$ to obtain $R_2$. Set
-$$f_1(i_1,j_1) = (i,j)$$
-and
-$$f_1(a,b) = (a,b)$$
-otherwise.
-
-At this point, rectification may be required. In that case, we delete some element $(i_1', j_1')$ from $R_2$ such that $i_1'<i_1$ and $\rtt_{R_2}(i_1', j_1') = \rtt_{R_2}(i_1, j_1)$. Afterwards, we add $(i_1', j_2)$ to obtain $R_2'$. Set
-$$f_2(i_1', j_2) = (i_1', j_1')$$
-and
-$$f_2(a,b) = f_1(a,b)$$
-otherwise. Continuing in this manner, we eventually obtain $R'$. Pieicing all of the maps defined at each step gives the desired map. The same method works for $\code_n(w) > 1$ by induction.
-\end{definition}
-
-\begin{lemma} \label{lemma:crystalpair}
-Let $(R, n)\in \RC(w, n)^0$ and suppose $\zeromap(R) = (R', n-1)$. Then for any $(a,b)\in R'$, $(a,b)$ is paired in the $i,i+1$ pairing in $R'$ if any only if $\zeromap_*^R(a,b)$ is paired in the $i,i+1$ pairing in $R$.
-\end{lemma}
-\begin{proof}
-  This is true for $a=i$ because at most one root is changed in row $i$ and it has moved to the left. For $a=i+1$, the only way that the pairing status could change is if a root in row $i$ moved past an unpaired root in row $i+1$. However, by construction of the insertion algorithm, this cannot happen since a root that was already inserted into row $i+1$ was deleted from row $i$ in the rectification process, and the new inserted root occurs to the left.
-\end{proof}
-
-\begin{theorem} \label{theorem:zcrystal}
-	Let $w\in S_\infty$ and $n>0$ be such that $\maxd(w)\leq n$. Then 
-	$$\zeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{theorem}
-\begin{proof}
-The existence of the map $\zeromap_*^R$ and the previous lemma establish that $\zeromap$ is a bijection (by Theorem \ref{theorem:zero_bijection}) that preserves both weights and the lengths of $i$-strings. Hence it is a weight-preserving isomorphism of crystal graphs.
-\end{proof}
-
-
 
 
 \subsection{Definition of the ring product}
@@ -1400,57 +1408,67 @@ The existence of the map $\zeromap_*^R$ and the previous lemma establish that $\
 Suppose we have two bounded RC graphs $R_1$ with $\hr(R_1)=m$ and $R_2$ with $\hr(R_2)=n$. The product of these is defined by
 $$R_1\diamond R_2 = \sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}}R'$$  
 where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
-
-Define a map $D:\BRC\to \dcoma\otimes \dcoma$ by
-$$D(R) = \dsch_{\wof{R}}^{\hr(R)}\otimes [\wtt(R)]$$
 \end{definition}
 
-\begin{theorem}
-	 The product $\diamond$ turns $\BRC$ into a ring, and $D:\BRC\to \dcoma\otimes \dcoma$ is a homomorphism of rings.
-\end{theorem}
-\begin{proof}
-What is in question is associativity. Suppose we have three bounded RC graphs $R_1$ with $\hr(R_1)=p$, $R_2$ with $\hr(R_2)=q$, and $R_3$ with $\hr(R_3)=r$, and we want to show that the order of bracketing the product is irrelevant. This is because if $R_w$ is a term in the expansion of the product with $\hr(R_w)=p+q+r$, then
-$$\clp^p(\clp^{p+q}(R_w)) = R_1 = \clp^p(R_w)$$
-$$\trm^p(\clp^{p+q}(R_w)) = R_2 = \clp^q(\trm^p(R_w))$$ 
-and 
-$$\trm^{p+q}(R_w) = R_3 = \trm^q(\trm^{p}(R_w))$$
-by Lemma \ref{lemma:assoc_clip}, and each term in the expansion of the product has a coefficient of $1$.
+\begin{definition}
+Define a function $A_p:\RC_n\to\RC_{p}\times \RC_{n - p}\times S_\infty$ as follows:
+$$A_p(R) = (\clp^{p}(R), \trm^p(R),\wof{R})$$
+\end{definition}
 
-To prove the map $D:\BRC\to \dcoma\otimes \dcoma$ is a homomorphism of rings, we utilize the formula for the coefficient $d_{u,v}^w(p,q)$ as the coefficient of $\sch_u(x_1,\ldots,x_p)$ when we set $x_{p+1}=\cdots=x_{p+q}=0$ in the polynomial
-$$\partial^{\shup^p v}\sch_w(x_1,\ldots,x_{p+q})$$
-(that is, Theorem \ref{theorem:LRdual}). We claim that if we fix an RC graph $R_u$ for $u$ and an RC graph $R_v$ for $v$, then this coefficient is the same as the number of BRCs $(R, p+q)$ for $w$ such that $\trm^p(R)=R_v$ and $\clp^p(R) = R_u$. If we assume that $v$ is the identity, this follows from Theorem \ref{theorem:transition} and Theorem \ref{theorem:zero_bijection}. The divided difference operator characterization means that for $\ell(v)>0$, we can replace the empty space with any (shifted up) RC graph for $v$ $(R_v, q)$ and get the result for $\alpha$ as desired. Since the weight is also preserved in this construction, the result follows for $D$ as well.
-\end{proof}
-
-%We would also like a combinatorial interpretation of this product.
-\begin{lemma} \label{lemma:assoc_clip}
-  We have the following equations for an RC graph $R$ and two integers $p$ and $q$:
-$$\clp^p(\clp^{p+q}(R)) = \clp^p(R)$$
-$$\trm^p(\clp^{p+q}(R)) = \clp^q(\trm^p(R))$$ 
-and 
-$$\trm^{p+q}(R) = \trm^q(\trm^{p}(R))$$
+\begin{lemma} \label{lemma:injap}
+The function $A_p$ is injective.
 \end{lemma}
 \begin{proof}
-Suppose $(R, n)$ is a bounded RC graph. We prove that $\clp^{n-2}(\clp^{n-1}(R)) = \clp^{n-2}(R)$. For $n=2$, this is trivial. As an additional base case, we also need $n=3$, which is not trivial, but true because a bounded RC graph $(R,1)$ is uniquely determined by its size. We proceed by induction on $n$. Without loss of generality, assume that row $n$ is empty. Then $\clp^{n-1}(R) = \zeromap(R)$. We have
-$$\clp^{n-2}(R) = \zeromap^2(R_{\leq n-2}, n)=\zeromap(\zeromap(R_{\leq n-2}))$$
-$$\clp^{n-2}(\clp^{n-1}(R)) = \zeromap(\zeromap(R)_{\leq n-2}, n-1)$$
-IF $\maxd(\wof{R_{\leq n-2}})\leq n-1$, then both sides are equal to $\zeromap(R_{\leq n-2})$. Otherwise, by Lemma \ref{lemma:ztrim}, we have
-$$\trm(\clp^{n-2}(R)) = \trm(\zeromap(\zeromap(R_{\leq n-2}))) =\zeromap(\zeromap(\trm(R)_{\leq n-3}))$$
-$$\trm(\clp^{n-2}(\clp^{n-1}(R))) = \zeromap(\zeromap(\trm(R))_{\leq n-3}, n-2)$$
-Thus, $\clp^{n-2}(\clp^{n-1}(R))$ and $\clp^{n-2}(R)$ agree on all rows except possibly the first row. We proceed by induction on the number of elements of $R$ in the first row. For zero elements, the result is obvious. If we have proved the result for $k-1$ elements in the first row, let $(1, i)$ be the rightmost such element. Then $R\setminus\{(1,i)\}$ has $k-1$ elements in the first row, so by the inductive hypothesis, $\clp^{n-2}(\clp^{n-1}(R\setminus\{(1,i)\})) = \clp^{n-2}(R\setminus\{(1,i)\})$. Applying Theorem \ref{theorem:commutative_diagram}, we see that adding back in the element $(1,i)$ to both sides preserves equality, due to the commutativity of the diagram. This establishes the first equation. The second equation easily follows from repeated application of Lemma \ref{lemma:ztrim}, and the third equation is the definition of $\trm$.
+This follows by iterated application of Theorem \ref{theorem:zero_bijection} if all rows with index greater than $p$ are empty. Suppose that this is not the case. Let $v=\wof{\trm^p(R)}$. We have that $\ell(w(\shup^p v)^{-1}) = \ell(w) - \ell(v)$ by the definition of an RC graph. We may therefore recover the image of $R$ by removing all elements in rows with index greater than $p$ to obtain an RC graph $R'$ while keeping track of $\trm^p(R)$. This reduces the problem to the previous case, where the third coordinate of the tuple becomes $w(\shup^p v)^{-1}$ and the first is $\clp^p(R')$, allowing us to uniquely determine $R'$. Combining this with knowledge of $\trm^p(R)$, we may recover the original graph, as desired.
 \end{proof}
 
-\begin{theorem} \label{theorem:howyouslice}
-  Let $r>0$ be an integer and suppose $p\geq 0$ is an integer such that $p\leq r$. Then the map $\BRC(r)\to \BRC(p)\times \BRC(r - p)\times S_\infty$ defined by
-  $$(R, r)\mapsto (\clp^p(R, r), \trm^{p}(R, r), \wof{R})$$
-  is injective.
+\begin{theorem}
+	 The product $\diamond$ is associative and $\BRC$ is a ring when equipped with $\diamond$.%, and $\Xi:\BRC\to \dcoma$ and $\omega:\BRC\to \dcoma$ are homomorphisms of rings.
 \end{theorem}
 \begin{proof}
-For $p = 0$ this is trivial, and for $p = 1$ this is due to the fact that any subset of the first row of an RC graph corresponds to a unique permutation, so that if we know $\trm^1(R, r) = (R', r - 1)$ and we know $\wof{R}$, then $R$ is the unique RC graph such that the first row corresponds to the permutation $u$ such that $u\wof{R'}=\wof{R}$ and $\trm^1(R, r) = (R', r-1)$. 
+Suppose we have three bounded RC graphs $R_1$ with $\hr(R_1)=p$, $R_2$ with $\hr(R_2)=q$, and $R_3$ with $\hr(R_3)=r$, and we want to show that the order of bracketing the product is irrelevant. Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. By Lemma \ref{lemma:injap}, we have that
+$$A_{p+q}(R)=(P_1, R_3, \wof{R})$$
+is a unique representation of $R$, where $\hr(P_1)=p+q$ and $\hr(R_3)=r$. Applying $A_p$ to the first coordinate, we obtain
+$$(A_p(P_1), R_3, \wof{R})=((R_1, R_2, \wof{P_1}), R_3, \wof{R})$$
+where $\hr(R_1)=p$, $\hr(R_2)=q$. We also have
+$$A_{p}(R)=(R_1', P_2, \wof{R})$$
+where $P_2$ is a unique RC graph with $\hr(P_2) = q+r$. Applying $A_q$ to the second coordinate, we have
+$$(R_1', A_q(P_2), \wof{R})=(R_1', (R_2', R_3', \wof{P_2}), \wof{R})$$
+We may immediately conclude that $R_3=R_3'$. Without loss of generality, we may therefore assume that $R_3$ is empty. The two representations therefore become
+$$((R_1, R_2, \wof{P_1}), \emptyset, \wof{R})$$
+and
+$$(R_1', (R_2', \emptyset, \wof{P_2}), \wof{R})$$
+Consider the change in representation when we clip $R$ to $p+q$ rows. We can see that the first representation becomes simply
+$$(R_1, R_2,\wof{P_1})$$
+and the RC graph $P_2$ is clipped in the second representation, obtaining
+$$(R_1', R_2', \wof{R})$$
+since $R_2'=\clp^q(P_2)$. These represent the same RC graph $\clp^{p+q}(R)$. It follows that $R_1=R_1'$ and $R_2=R_2'$ from Lemma \ref{lemma:injap}. We may conclude that if we know the RC graphs $R_1, R_2, R_3$, then the RC graphs that appear as terms in the product $(R_1\diamond R_2)\diamond R_3 = R_1\diamond(R_2\diamond R_3)$ do not depend on the bracketing.
+%Then $A_{p+q}(R)$ is uniquely determined by a term in $R_1\diamond R_2$ and the RC graph $R_3$. The term in $R_1\diamond R_2$ is uniquely determined by $R_1$, $R_2$, and the permutation of $\clp^{p+q}(R)$. We conclude therefore that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$. If we consider the bracketing $R_1\diamond (R_2\diamond R_3)$, we have that $A_p(R)$ is uniquely determined by $R_1$ and a term in $R_2\diamond R_3$, which is uniquely determined by $R_2$, $R_3$, and the permutation of $\clp^p(R)$. We conclude that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$, as before. By Lemma \ref{lemma:injap}, this implies that the two products are equal, establishing associativity.
 
-For $p=r-1$, we use the fact that row $r$ of a bounded RC graph $(R,r)$ is uniquely determined by its weight. It therefore suffices to prove the result when this weight is $0$, which is covered by Theorem \ref{theorem:zero_bijection}. We have thus proved the theorem for $r=2$.
+% The fact that $\omega$ is a homomorphism of rings follows from the observation that for any $R$ that occurs as a term in $R_1\diamond R_2$, we have that 
+% $$\wtt(R)=\wtt(R_1)\wtt(R_2)$$
+% To prove that $\Xi$ is a homomorphism, note that for a weak composition $a$ of length $n$ we have
+% $$\sum_{R\in\RC_n\wtt(R)=a}\Xi(R) = [a]$$
+% We must show that given a permutation $w$ with $\maxd(w)\leq n$, for each weak composition $c$ of length $p+q$, given a fixed pair $a,b$ such that $ab = c$ with $\ell(a)=p$ and $\ell(b)=q$, there is a bijection
+% $$\RC(w, c)\to \bigcup_{u:w\downvar{b} u}\bigcup_{\RC(v,b)\atop\ell(w\left(\shup^p v\right)^{-1}) = \ell(w)-\ell(v)}\RC(u,a)$$
+% We prove this by induction on $p$, the base case $p=0$ being trivial. Suppose we have proved the result for all $p'$ with $p'<p$. For $p-1$, let $f$ be a specific bijection. Suppose $R\in \RC(w, c)$ and $f(R) = (R_1, R_2)$, with $\wtt(R_1) = (a_1,\ldots,a_{p-1})$ and $\wtt(R_2) = (a_p,b_1,\ldots,b_q)$. Suppose $\wof{R_2} = v'$. Then we have a bijection 
+% $$\RC(v', (a_p, b_1, \ldots, b_q))\to \bigcup_{v'\downvar{1} v}\RC(v, (a_p, b_1, \ldots, b_q))\times Q_1(v,v')$$
+% By the property that $v'$ div diffs, row $p$ of $R$ coincides with row $1$ of $R_2$ shifted up by $p-1$.
 
-For larger $r$, we prove the result by induction on $p$, keeping in mind the solutions for the cases $p=0,1,r-1$. We know that $(R,r)$ is uniquely determined by $(\clp^{r-1}(R), \wof{R})$ and we may use the inductive hypothesis to reason that it is therefore uniquely determined by $(\clp^{p}(R), \trm^p(\clp^{r-1}(R)), \wof{R})$. Furthermore, Let $u=\wof{\clp^{p}(R)}$. Then the pair $(\trm^{p-1}(\clp^{r-1}(R)), u^{-1}\wof{R})$ uniquely determines $\trm^p(R)$ by the inductive hypothesis. Hence $(\clp^{p}(R), \trm^{p}(R), \wof{R})$ uniquely determines $(R, r)$, establishing injectivity.
+% Consider the graphs $R_1'=\clp^p(R)$ with $\wtt(R) = a$. This is uniquely determined by $\wof_{R_1'}$ and the graph $\clp^{p-1}(R)$. Since we know precisely what row $p$ of $R$ is, in particular we know its length. Thus the bijection $f$ gives rise to a bijection
+
+
+
+% Suppose $(R, n)$ is a bounded RC graph. We prove that $\clp^{n-2}(\clp^{n-1}(R)) = \clp^{n-2}(R)$. For $n=2$, this is trivial. As an additional base case, we also need $n=3$, which is not trivial, but true because a bounded RC graph $(R,1)$ is uniquely determined by its size. We proceed by induction on $n$. Without loss of generality, assume that row $n$ is empty. Then $\clp^{n-1}(R) = \zeromap(R)$. We have
+% $$\clp^{n-2}(R) = \zeromap^2(R_{\leq n-2}, n)=\zeromap(\zeromap(R_{\leq n-2}))$$
+% $$\clp^{n-2}(\clp^{n-1}(R)) = \zeromap(\zeromap(R)_{\leq n-2}, n-1)$$
+% IF $\maxd(\wof{R_{\leq n-2}})\leq n-1$, then both sides are equal to $\zeromap(R_{\leq n-2})$. Otherwise, by Lemma \ref{lemma:ztrim}, we have
+% $$\trm(\clp^{n-2}(R)) = \trm(\zeromap(\zeromap(R_{\leq n-2}))) =\zeromap(\zeromap(\trm(R)_{\leq n-3}))$$
+% $$\trm(\clp^{n-2}(\clp^{n-1}(R))) = \zeromap(\zeromap(\trm(R))_{\leq n-3}, n-2)$$
+% Thus, $\clp^{n-2}(\clp^{n-1}(R))$ and $\clp^{n-2}(R)$ agree on all rows except possibly the first row. We proceed by induction on the number of elements of $R$ in the first row. For zero elements, the result is obvious. If we have proved the result for $k-1$ elements in the first row, let $(1, i)$ be the rightmost such element. Then $R\setminus\{(1,i)\}$ has $k-1$ elements in the first row, so by the inductive hypothesis, $\clp^{n-2}(\clp^{n-1}(R\setminus\{(1,i)\})) = \clp^{n-2}(R\setminus\{(1,i)\})$. Applying Theorem \ref{theorem:commutative_diagram}, we see that adding back in the element $(1,i)$ to both sides preserves equality, due to the commutativity of the diagram. This establishes the first equation. The second equation easily follows from repeated application of Lemma \ref{lemma:ztrim}, and the third equation is the definition of $\trm$.
 \end{proof}
+
+
 
 \begin{example}
 We compute the product of two bounded RC graphs $(R_1, 2)\in\BRC(2413,2)$ and $(R_2, 2)\in\BRC(231,2)$:
@@ -2288,10 +2306,16 @@ We compute the product of two bounded RC graphs $(R_1, 2)\in\BRC(2413,2)$ and $(
 % where $\mathtt{sz}_n:\BRCC\to \BRCC$ is defined on basis elements by 
 % $$\mathtt{sz}_n(R, m) = \begin{cases}(R, n) & \text{if } i\leq n\text{ for all }(i, j)\in R\\
 % 0 & \text{otherwise}\end{cases}$$
+\subsection{Proof of the Littlewood-Richardson rule for the dual Schubert basis}
 
 
 \begin{definition}
-Let $\mathcal{R}$  be the subring generated by the single-row RC graphs $\mathtt{row}(i)$ for $i\geq 0$. Let $a$ be a sequence of elements of a ring indexed by the nonnegative integers. For a permutation $w$ and an integer $n\geq \maxd(w)$, define a function $\dsch_w^n(a)$ By
+Define a map $\Xi:\BRC\to \dcoma$ by
+$$\Xi(R) = \dsch_{\wof{R}}^{\hr(R)}$$
+and $\omega:\BRC\to\dcoma$ by
+$$\omega(R) = [\wtt(R)]$$
+
+Let $\mathcal{R}$  be the subring of $\BRC$ generated by the single-row RC graphs $\mathtt{row}(i)$ for $i\geq 0$. Let $a$ be a sequence of elements of a ring indexed by the nonnegative integers. For a permutation $w$ and an integer $n\geq \maxd(w)$, define a function $\dsch_w^n(a)$ by
 $$\dsch_w^n(a) = \sum_{\alpha} d_{\alpha, w}^n a_{\alpha_1} \cdots a_{\alpha_n}$$
 where the sum is over all weak compositions $\alpha$ of length $n$, and $d_{\alpha, w}^n$ is the coefficient of $\alpha$ in $\dsch_w^n\in\dcoma$.
 \end{definition}
@@ -2299,1035 +2323,90 @@ where the sum is over all weak compositions $\alpha$ of length $n$, and $d_{\alp
 \begin{proposition}
 We have that the elements
 $$\dsch_w^n(\mathtt{row})$$
-as $n$ ranges over all nonnegative integers $w$ ranges over all permutations in $S_\infty$ with $n\geq \maxd(w)$ form a $\mathbb{Z}$-basis of $\mathcal{R}$, and $\alpha:\mathcal{R}\to \dcoma$ is an isomorphism of graded rings.
+for integers $n\geq 0$ and $w$ that ranges over all permutations in $S_\infty$ with $n\geq \maxd(w)$ form a $\mathbb{Z}$-basis of $\mathcal{R}$, and $\alpha:\mathcal{R}\to \dcoma$ is an isomorphism of graded rings.
 \end{proposition}
 \begin{proof}
 Since $\alpha(\dsch_w(\mathtt{row})) = \dsch_w^n\in \dcoma$, the elements $\dsch_w^n(\mathtt{row})$ are linearly independent. Given that the images form a basis of $\dcoma$, they must also span $\mathcal{R}$ since $\dcoma$ is a free algebra, and hence there is a homomorphism backwards $\dcoma\to \mathcal{R}$ sending $[i]\mapsto \mathtt{row}(i)$ which is necessarily surjective. Thus, the elements $\dsch_w^n(\mathtt{row})$ form a $\mathbb{Z}$-basis of $\mathcal{R}$.
 \end{proof}
 
-
-\subsection{Relation to Little bumps}
-
-
-\newcommand{\lzeromap}{\mathscr{Z}}
-\newcommand{\lmap}{\mathscr{L}}
-Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
-$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
-Then define
-$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
-Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
-
-\newcommand{\ltb}{\mathrm{little}}
-
-\begin{proposition} \label{proposition:little_bump}
-  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
-  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
-  and 
-  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k$$ 
-  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
-  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
-\end{proposition}
-\begin{proof}
-Consider the biword
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
-a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
-\end{matrix}$$
-The first deletion yields
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
-a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
-\end{matrix}$$
-Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
-
-We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
-\end{proof}
-
-\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
-Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
-$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
-for any valid $p$.
-\end{theorem}
-
-\begin{corollary}
-  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
-\end{corollary}
-
-\begin{corollary}
-$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{corollary}
-
-
-\begin{corollary}
-  We have the equality
-$$\lzeromap=\zeromap$$ 
-\end{corollary}
-
-\begin{proposition}
-The map $\alpha\times \omega:\BRC\to \dcoma\times \dcoma$ is a homomorphism of rings, and on the subalgebra $\mathcal{D}$ generated by the single-row RC graphs, it is an isomorphism of rings onto the diagonal.
-\end{proposition}
-
-\begin{proposition}
-Let $w\in S_\infty$ and let $A_{w,a}$ be the coefficients such that 
-$$\dsch_w^n = \sum_a A_{w,a} [a]$$
-and let $F_{a,w}$ be the coefficients such that
-$$[a] = \sum_w F_{a,w} \dsch_w^n$$
-Then
-% $$\sum_{S\in\RC_n(a)} c_{w,a} \omega(S) = \delta_{a,\code(w)}\dsch_w^n$$
-% and
-
-%$$\sum_{S\in\RC_n}c_{w,S} \omega(S) = \sum_{S\in \RC_n}c_{w, S} \alpha(S)$$
-then
-$$\sum_{S\in\RC_n} A_{w,\wtt(S)} \omega(S) = \dsch_w^n$$
-$$\sum_{R,S\in\RC_n} A_{w,\wtt(S)} F_{\wtt(S),\wof{R}}\alpha(R) = \dsch_w^n$$
-\end{proposition}
-
-We have that
-$$\Delta(\dsch_w^n) = \sum_{S\in \RC_n}A_{w,\wtt(S)}\Delta(\omega(S))$$
-This is equal to
-$$\Delta(\dsch_w^n) = \sum_{S\in \RC_n,S_1\in\RC(a),S_2\in\RC(b),a+b=\wtt(S)} A_{w,\wtt(S)} \omega(S_1)\otimes\omega(S_2)$$
-Change basis to $\alpha$,
-$$\Delta(\dsch_w^n) = \sum_{S\in \RC_n,S_1\in\RC(a),S_2\in\RC(b),a+b=\wtt(S)} A_{w,\wtt(S)}F_{\wtt(S_1),R_1}F_{\wtt(S_2),R_2} \alpha(R_1)\otimes\alpha(R_2)$$
-
-%$$\Delta(\dsch_w^n) = \sum_{R\in \RC_n,S\in \RC_n,R_1\in\RC(a),R_2\in\RC(b),a+b=\wtt(S)} A_{w,\wtt(S)} F_{\wtt(S),\wof{R}}A_{\wof{R},\wtt} \omega(R_1)\otimes\omega(R_2)$$
-%$$\Delta(\dsch_w^n) = \sum_{R\in \RC_n,S\in \RC_n,R_1\in\RC(a),R_2\in\RC(b),a+b=\wtt(S)} A_{w,\wtt(S)} F_{\wtt(S),\wof{R}}A_{\wof{R},\wtt} \omega(R_1)\otimes\omega(R_2)$$
-%$$\Delta(\dsch_w^n) = \sum_{R\in \RC_n,S\in \RC_n,R_1\in\RC(a),R_2\in\RC(b),a+b=\wtt(S)} A_{w,\wtt(R)} F_{\wtt(R),\wof{S}}F_{\wtt(R_1),T_1}F_{\wtt(R_2),T_2} \alpha(T_1)\otimes\alpha(T_2)$$
-%$\wof{R}=w$, hence $\wtt(S)=\code(w)$
-%This is $0$ unless $\wof{R}=w$, in which case we have
-%$$\Delta(\dsch_w^n) = \sum_{S\in \RC_n(\code(w)),R_1\in\RC(a),R_2\in\RC(b),a+b=\wtt(S)}c_{w,S}\alpha(R_1)\otimes\alpha(R_2)$$
-%$$\Delta(\dsch_w^n) = \sum_{S_1\in \RC_n(a)}\sum_{S_2\in \RC_n(u)}c_{w,\wtt(S_1)}c_{u,\wtt(S_2)}\Delta(\omega(S))$$
-% Since this is a homomorphism of rings, the sum is $0$ unless we restrict to $\wtt(S)=\code(w)$. In that case, we have
-% $$\Delta(\dsch_w^n) = \sum_{R\in \RC(\code(w)),R\in \RC(u)} c_{w,a}c_{\wof{S},b}\Delta(\omega(R))$$
-% This is equal to
-% $$\Delta(\dsch_w^n) = \sum_{R\in \RC(\code(w)),R\in \RC(u)} c_{w,a}c_{\wof{S},b}\Delta(\omega(R))$$
-
-% Let
-
-% $$\Delta_w = \sum_a\sum_{R\in \RC_n(a),\wtt(S_1)+\wtt(S_2)=a}A_{w,a}(R, S_1\otimes S_2)$$
-% since
-% $$\Delta_w = \sum_a\sum_{R\in \RC_n(a),\wtt(S_1)+\wtt(S_2)=a}(A_{w,a}R, A_{w,a}S_1\otimes S_2)$$
-% All terms with $a\neq \code(w)$ vanish in the projection. Expand
-% $$\Delta_w = \sum_a\sum_{R\in \RC_n(\alpha(a)),\wtt(S_1)+\wtt(S_2)=\code(w)}(\mathcal{A}_{w,\wtt(R)}R, A_{w,\wtt(R)}S_1\otimes S_2)$$
-% %$$\Delta_w = \sum_a\sum_{R\in \RC_n(a),\wtt(S_1)+\wtt(S_2)=a}(A_{w,a}R, A_{w,a}F_{\wtt(S_1),\wof{R_1}}F_{\wtt(S_2),\wof{R_2}}R_1\otimes R_2)$$
-
-
-
-\subsection{The space of noncommutative elementary monomials}
-\newcommand{\RRC}{\widetilde{\BRC}}
-% Let us consider the ring $\RRC$ to be $\BRC$ modulo the ideal $\mathcal{C}$ generated by differences of RC graphs $R$, $S$ such that $\wof{R}=\wof{S}$ and $\wtt(R)=\wtt(S)$. There as a homomorphism
-% $$\alpha\times\omega:\RRC\to \dcoma\times \dcoma$$
-% that is now injective after the quotient. Elementary basis
-% %Then $\RRC$ is isomorphic to $\dcoma$ via the map $\alpha$, and the map $\omega$ also descends to a homomorphism of rings $\RRC\to \dcoma$.
-
-% \begin{theorem}
-% In the ring $\coma\times \coma$, the subspace with basis the distinct elements $(\sch_{\wof{R}}, x_{\wtt(R)})$ is a subring.
-% \end{theorem}
-% \begin{proof}
-% The function $\alpha\times \omega:\BRC\to \dcoma\times \dcoma$ is a homomorphism of rings, and on the subalgebra $\mathcal{D}$ generated by the single-row RC graphs, it is an isomorphism of rings onto the diagonal. 
-% \end{proof}
-
-\subsection{Relation to the bijection with bumpless pipe dreams}
-
-\newcommand{\BPD}{\mathcal{BPD}}
-
-
 \begin{definition}
-  Denote by $\BPD(w,n)$ the set of (reduced) $n$-row bumpless pipe dreams for a permutation $w$, where $n\geq \maxd(w)$. These are $n\times N$ grids, where $N$ is at least the length of $w$, populated with $6$ possible tiles, shown in Figure \ref{figure:bpdtiles}, satisfying the conditions that pipes must enter from the bottom and exit on the right, and no two pipes may cross twice. We may assign a permutation to such a BPD as follows.
-
-  Let $(B, n)$ be an $n$-row BPD. Let $c_1,\ldots,c_m$ be the columns such that the pipes on the bottom edge have an entrance from the bottom. If the pipe coming from $c_i$ exits on row $j$ on the right, then $w(c_i) = j$. To fill in the remaining elements of the permutation, we set $w(m + k) = d_k$, where $d_1,\ldots,d_k$ are the remaining columns with no entrance in increasing order.
-
-  
-
+Let $\Omega$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the RC graphs $R_1-R_2$ such that $\wof{R_1}=\wof{R_2}$ and $\hr(R_1)=\hr(R_2)$.
 \end{definition}
 
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[scale=0.8]
-% Define common parameters
-\def\tilesize{1.2}
-\def\pipewidth{1pt}
-
-% Tile 1: NW Elbow
-\begin{scope}[shift={(0,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) 
-    arc[start angle=-90, end angle=0, radius=0.5*\tilesize];
-  \node[below] at (0.5*\tilesize,-0.3) {NW Elbow};
-\end{scope}
-
-% Tile 2: SE Elbow
-\begin{scope}[shift={(2*\tilesize,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) 
-    arc[start angle=180, end angle=90, radius=0.5*\tilesize];
-  \node[below] at (0.5*\tilesize,-0.3) {SE Elbow};
-\end{scope}
-
-% Tile 3: Cross
-\begin{scope}[shift={(4*\tilesize,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) -- (\tilesize,0.5*\tilesize);
-  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) -- (0.5*\tilesize,\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Cross};
-\end{scope}
-
-% Tile 4: Vertical
-\begin{scope}[shift={(6*\tilesize,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) -- (0.5*\tilesize,\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Vertical};
-\end{scope}
-
-% Tile 5: Horizontal
-\begin{scope}[shift={(0,-2*\tilesize)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) -- (\tilesize,0.5*\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Horizontal};
-\end{scope}
-
-% Tile 6: Blank
-\begin{scope}[shift={(2*\tilesize,-2*\tilesize)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Blank};
-\end{scope}
-
-\end{tikzpicture}
-\caption{The six possible tiles in bumpless pipe dreams. Pipes enter from the bottom and exit at the right.}
-\label{figure:bpdtiles}
-\end{figure}
-
-
-\begin{lemma}[{\cite[Theorem~3.6]{Yu2025EmbeddingBP}}] \label{lemma:bpd_completion}
-  Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then the BPD $B'$ obtained by only retaining the first $n$ rows of $B$ satisfies $w(B', n) = w(B, N)$ and uniquely determines $B$ under this assumption.
+\begin{lemma}
+$\Omega$ is a two-sided ideal of $\BRC$.
 \end{lemma}
+\begin{proof}
+  The fact that $\Omega$ is a left ideal follows from the fact that a product $R\diamond R_1$ is uniquely determines by $R\diamond \mathrm{empty}(\hr(R_1))$ and $R_1$, and the contribution of $R_1$ is precisely that it replaces the last $\hr(R_1)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R_1$ is added as the last $\hr(R_1)$ rows. It follows that $R\diamond R_1 - R\diamond R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a left ideal.
 
+  The fact that $\Omega$ is a right ideal follows from the fact that a product $R_1\diamond R$ is uniquely determined by $R_1\diamond \mathrm{empty}(\hr(R))$ and $R$, and the contribution of $R$ is precisely that it replaces the last $\hr(R)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R$ is added as the last $\hr(R)$ rows. It follows that $R_1\diamond R - R_2\diamond R$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a right ideal.
+\end{proof}
 
-\begin{definition}
-There is a bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$, where $w\in S_n$, defined in \cite{GaoHuang2023} that preserves weight. It is viewed as ``canonical'' because it also provides bijective correspondences between certain insertion/bumping operations on BPDs and RC graphs, showing that they agree in a strong way. In light of Lemma \ref{lemma:bpd_completion}, we may extend this bijection to $w\in S_\infty$ with $\maxd(w)\leq n$ by first expanding the BPD to a square BPD with sufficiently many rows and columns, then applying the bijection, and finally truncating the resulting RC graph to $n$ rows.
-\end{definition}
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[scale=0.7]
-\def\s{0.8}  % tile size
-\def\pw{1pt} % pipe width
-
-% Row 0 (bottom): vert, blank, vert, se, horiz, cross
-% Col 0: vertical
-\draw[gray] (0,0) rectangle (\s,\s);
-\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
-% Col 1: blank
-\draw[gray] (\s,0) rectangle (2*\s,\s);
-% Col 2: vertical
-\draw[gray] (2*\s,0) rectangle (3*\s,\s);
-\draw[line width=\pw, blue] (2.5*\s,0) -- (2.5*\s,\s);
-% Col 3: se elbow
-\draw[gray] (3*\s,0) rectangle (4*\s,\s);
-\draw[line width=\pw, blue] (3.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 4: horizontal
-\draw[gray] (4*\s,0) rectangle (5*\s,\s);
-\draw[line width=\pw, blue] (4*\s,0.5*\s) -- (5*\s,0.5*\s);
-% Col 5: cross
-\draw[gray] (5*\s,0) rectangle (6*\s,\s);
-\draw[line width=\pw, blue] (5*\s,0.5*\s) -- (6*\s,0.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
-
-% Row 1: vert, blank, se, horiz, nw, se
-% Col 0: vertical
-\draw[gray] (0,\s) rectangle (\s,2*\s);
-\draw[line width=\pw, blue] (0.5*\s,\s) -- (0.5*\s,2*\s);
-% Col 1: blank
-\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
-% Col 2: se elbow
-\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
-\draw[line width=\pw, blue] (2.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 3: horizontal
-\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
-\draw[line width=\pw, blue] (3*\s,1.5*\s) -- (4*\s,1.5*\s);
-% Col 4: nw elbow
-\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
-\draw[line width=\pw, blue] (4*\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-% Col 5: se elbow
-\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
-\draw[line width=\pw, blue] (5.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-
-% Row 2: se, horiz, nw, blank, se, horiz
-% Col 0: se elbow
-\draw[gray] (0,2*\s) rectangle (\s,3*\s);
-\draw[line width=\pw, blue] (0.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 1: horizontal
-\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
-\draw[line width=\pw, blue] (\s,2.5*\s) -- (2*\s,2.5*\s);
-% Col 2: nw elbow
-\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
-\draw[line width=\pw, blue] (2*\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-% Col 3: blank
-\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
-% Col 4: se elbow
-\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
-\draw[line width=\pw, blue] (4.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 5: horizontal
-\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
-\draw[line width=\pw, blue] (5*\s,2.5*\s) -- (6*\s,2.5*\s);
-
-% Row 3 (top): blank, blank, se, horiz, horiz, horiz
-% Col 0: blank
-\draw[gray] (0,3*\s) rectangle (\s,4*\s);
-% Col 1: blank
-\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
-% Col 2: se elbow
-\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
-\draw[line width=\pw, blue] (2.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 3: horizontal
-\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
-\draw[line width=\pw, blue] (3*\s,3.5*\s) -- (4*\s,3.5*\s);
-% Col 4: horizontal
-\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
-\draw[line width=\pw, blue] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
-% Col 5: horizontal
-\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
-\draw[line width=\pw, blue] (5*\s,3.5*\s) -- (6*\s,3.5*\s);
-
-% Column labels at bottom
-\foreach \i in {1,...,6} {
-  \node[below] at (\i*\s-0.5*\s,-0.3) {\scriptsize \i};
-}
-
-% Row exit labels on right
-\node[right] at (6*\s+0.2,3.5*\s) {\scriptsize 1};
-\node[right] at (6*\s+0.2,2.5*\s) {\scriptsize 3};
-\node[right] at (6*\s+0.2,1.5*\s) {\scriptsize 6};
-\node[right] at (6*\s+0.2,0.5*\s) {\scriptsize 4};
-
-\end{tikzpicture}
-
-\begin{tikzpicture}[scale=0.7]
-  \def\s{0.8}
-  \draw[gray] (0,\s) -- (6*\s,\s);
-  \draw[gray] (0,\s) -- (0,5*\s);
-  \draw[gray] (0,2*\s) -- (6*\s,2*\s);
-  \draw[gray] (\s,\s) -- (\s,5*\s);
-  \draw[gray] (0,3*\s) -- (6*\s,3*\s);
-  \draw[gray] (2*\s,\s) -- (2*\s,5*\s);
-  \draw[gray] (0,4*\s) -- (6*\s,4*\s);
-  \draw[gray] (3*\s,\s) -- (3*\s,5*\s);
-  \draw[gray] (0,5*\s) -- (6*\s,5*\s);
-  \draw[gray] (4*\s,\s) -- (4*\s,5*\s);
-  \draw[gray] (5*\s,\s) -- (5*\s,5*\s);
-  \draw[gray] (6*\s,\s) -- (6*\s,5*\s);
-  \draw[blue, line width=1.0pt] (0,4.5*\s) .. controls (0.3*\s,4.5*\s) and (0.5*\s,4.7*\s) .. (0.5*\s,5*\s);
-  \draw[blue, line width=1.0pt] (0.5*\s,4*\s) .. controls (0.5*\s,4.3*\s) and (0.7*\s,4.5*\s) .. (1*\s,4.5*\s);
-  \draw[blue, line width=1.0pt] (1*\s,4.5*\s) .. controls (1.3*\s,4.5*\s) and (1.5*\s,4.7*\s) .. (1.5*\s,5*\s);
-  \draw[blue, line width=1.0pt] (1.5*\s,4*\s) .. controls (1.5*\s,4.3*\s) and (1.7*\s,4.5*\s) .. (2*\s,4.5*\s);
-  \draw[blue, line width=1.0pt] (2*\s,4.5*\s) .. controls (2.3*\s,4.5*\s) and (2.5*\s,4.7*\s) .. (2.5*\s,5*\s);
-  \draw[blue, line width=1.0pt] (2.5*\s,4*\s) .. controls (2.5*\s,4.3*\s) and (2.7*\s,4.5*\s) .. (3*\s,4.5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (3*\s,4.5*\s) -- (4*\s,4.5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (3.5*\s,4*\s) -- (3.5*\s,5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (4*\s,4.5*\s) -- (5*\s,4.5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (4.5*\s,4*\s) -- (4.5*\s,5*\s);
-  \draw[blue, line width=1.0pt] (5*\s,4.5*\s) .. controls (5.3*\s,4.5*\s) and (5.5*\s,4.7*\s) .. (5.5*\s,5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (0,3.5*\s) -- (1*\s,3.5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5*\s,3*\s) -- (0.5*\s,4*\s);
-  \draw[blue, line width=1.0pt] (1*\s,3.5*\s) .. controls (1.3*\s,3.5*\s) and (1.5*\s,3.7*\s) .. (1.5*\s,4*\s);
-  \draw[blue, line width=1.0pt] (1.5*\s,3*\s) .. controls (1.5*\s,3.3*\s) and (1.7*\s,3.5*\s) .. (2*\s,3.5*\s);
-  \draw[blue, line width=1.0pt] (2*\s,3.5*\s) .. controls (2.3*\s,3.5*\s) and (2.5*\s,3.7*\s) .. (2.5*\s,4*\s);
-  \draw[blue, line width=1.0pt] (2.5*\s,3*\s) .. controls (2.5*\s,3.3*\s) and (2.7*\s,3.5*\s) .. (3*\s,3.5*\s);
-  \draw[blue, line width=1.0pt] (3*\s,3.5*\s) .. controls (3.3*\s,3.5*\s) and (3.5*\s,3.7*\s) .. (3.5*\s,4*\s);
-  \draw[blue, line width=1.0pt] (3.5*\s,3*\s) .. controls (3.5*\s,3.3*\s) and (3.7*\s,3.5*\s) .. (4*\s,3.5*\s);
-  \draw[blue, line width=1.0pt] (4*\s,3.5*\s) .. controls (4.3*\s,3.5*\s) and (4.5*\s,3.7*\s) .. (4.5*\s,4*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (0,2.5*\s) -- (1*\s,2.5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5*\s,2*\s) -- (0.5*\s,3*\s);
-  \draw[blue, line width=1.0pt] (1*\s,2.5*\s) .. controls (1.3*\s,2.5*\s) and (1.5*\s,2.7*\s) .. (1.5*\s,3*\s);
-  \draw[blue, line width=1.0pt] (1.5*\s,2*\s) .. controls (1.5*\s,2.3*\s) and (1.7*\s,2.5*\s) .. (2*\s,2.5*\s);
-  \draw[blue, line width=1.0pt] (2*\s,2.5*\s) .. controls (2.3*\s,2.5*\s) and (2.5*\s,2.7*\s) .. (2.5*\s,3*\s);
-  \draw[blue, line width=1.0pt] (2.5*\s,2*\s) .. controls (2.5*\s,2.3*\s) and (2.7*\s,2.5*\s) .. (3*\s,2.5*\s);
-  \draw[blue, line width=1.0pt] (3*\s,2.5*\s) .. controls (3.3*\s,2.5*\s) and (3.5*\s,2.7*\s) .. (3.5*\s,3*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (0,1.5*\s) -- (1*\s,1.5*\s);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5*\s,1*\s) -- (0.5*\s,2*\s);
-  \draw[blue, line width=1.0pt] (1*\s,1.5*\s) .. controls (1.3*\s,1.5*\s) and (1.5*\s,1.7*\s) .. (1.5*\s,2*\s);
-  \draw[blue, line width=1.0pt] (1.5*\s,1*\s) .. controls (1.5*\s,1.3*\s) and (1.7*\s,1.5*\s) .. (2*\s,1.5*\s);
-  \draw[blue, line width=1.0pt] (2*\s,1.5*\s) .. controls (2.3*\s,1.5*\s) and (2.5*\s,1.7*\s) .. (2.5*\s,2*\s);
-  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5*\s,3.5*\s) {2};
-  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.5*\s,4.5*\s) {5};
-  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5*\s,2.5*\s) {3};
-  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (3.5*\s,4.5*\s) {4};
-  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5*\s,1.5*\s) {4};
-  \node[font=\scriptsize, text=black, anchor=south] at (0.5*\s,5.3*\s) {1};
-  \node[font=\scriptsize, text=black, anchor=south] at (1.5*\s,5.3*\s) {5};
-  \node[font=\scriptsize, text=black, anchor=south] at (2.5*\s,5.3*\s) {2};
-  \node[font=\scriptsize, text=black, anchor=south] at (3.5*\s,5.3*\s) {4};
-  \node[font=\scriptsize, text=black, anchor=south] at (4.5*\s,5.3*\s) {6};
-  \node[font=\scriptsize, text=black, anchor=south] at (5.5*\s,5.3*\s) {3};
-  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,4.5*\s) {1};
-  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,3.5*\s) {2};
-  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,2.5*\s) {3};
-  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,1.5*\s) {4};
-\end{tikzpicture}
-\caption{An example of a $4$-row bumpless pipe dream for a permutation of length $6$. Pipes enter from the bottom at columns 1, 3, 4, and 6, and exit on the right at the labeled rows. The associated permutation is $[1,3,6,4,2,5]$. The associated RC graph under the bijection $\varphi$ is shown as well, with crosses in positions $(1,4)$, $(1,5)$, $(2,1)$, $(3,1)$, and $(4,1)$.}
-\label{figure:bpdexample}
-\end{figure}
-
-\newcommand{\bzeromap}{\mathbf{t}}
-
-
-\begin{definition}
-We define a function $\bzeromap:\BPD(n)^0\to \BPD(n-1)$, found in \cite{WEIGANDT2021105470} in a more general context, as follows. Given a bumpless pipe dream $(B, n)$ with no blank tiles in row $n$, we simply remove row $n$ to obtain $B'$. Then
-$$\bzeromap(B, n) = (B', n-1)$$
-One may ask oneself here whether anything changes at all. Indeed, all that changes are the labels of the incoming pipes, as shown in Figure \ref{figure:transition}, and this only happens if $\maxd(w) = n$.
-\end{definition}
-
-
-
-
-
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[scale=0.7]
-\def\s{0.8}
-\def\pw{1pt}
-
-% First BPD (left side) - 5 rows x 7 cols
-\begin{scope}
-% Row 0 (bottom, will be removed): VERT, VERT, SE, HORIZ, NW, VERT, SE
-\draw[gray] (0,0) rectangle (\s,\s);
-\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
-\draw[gray] (\s,0) rectangle (2*\s,\s);
-\draw[line width=\pw, blue] (1.5*\s,0) -- (1.5*\s,\s);
-\draw[gray] (2*\s,0) rectangle (3*\s,\s);
-\draw[line width=\pw, blue] (2.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (3*\s,0) rectangle (4*\s,\s);
-\draw[line width=\pw, blue] (3*\s,0.5*\s) -- (4*\s,0.5*\s);
-\draw[gray] (4*\s,0) rectangle (5*\s,\s);
-\draw[line width=\pw, blue] (4*\s,0.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (5*\s,0) rectangle (6*\s,\s);
-\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
-\draw[gray] (6*\s,0) rectangle (7*\s,\s);
-\draw[line width=\pw, blue] (6.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-
-% Row 1: VERT, SE, HORIZ, NW, SE, CROSS, HORIZ
-\draw[gray] (0,\s) rectangle (\s,2*\s);
-\draw[line width=\pw, blue] (0.5*\s,\s) -- (0.5*\s,2*\s);
-\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
-\draw[line width=\pw, blue] (1.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
-\draw[line width=\pw, blue] (2*\s,1.5*\s) -- (3*\s,1.5*\s);
-\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
-\draw[line width=\pw, blue] (3*\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
-\draw[line width=\pw, blue] (4.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
-\draw[line width=\pw, blue] (5*\s,1.5*\s) -- (6*\s,1.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,\s) -- (5.5*\s,2*\s);
-\draw[gray] (6*\s,\s) rectangle (7*\s,2*\s);
-\draw[line width=\pw, blue] (6*\s,1.5*\s) -- (7*\s,1.5*\s);
-
-% Row 2: SE, NW, BLANK, SE, HORIZ, CROSS, HORIZ
-\draw[gray] (0,2*\s) rectangle (\s,3*\s);
-\draw[line width=\pw, blue] (0.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
-\draw[line width=\pw, blue] (\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
-\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
-\draw[line width=\pw, blue] (3.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
-\draw[line width=\pw, blue] (4*\s,2.5*\s) -- (5*\s,2.5*\s);
-\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
-\draw[line width=\pw, blue] (5*\s,2.5*\s) -- (6*\s,2.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,2*\s) -- (5.5*\s,3*\s);
-\draw[gray] (6*\s,2*\s) rectangle (7*\s,3*\s);
-\draw[line width=\pw, blue] (6*\s,2.5*\s) -- (7*\s,2.5*\s);
-
-% Row 3: BLANK, SE, NW, BLANK, BLANK, SE, HORIZ
-\draw[gray] (0,3*\s) rectangle (\s,4*\s);
-\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
-\draw[line width=\pw, blue] (1.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
-\draw[line width=\pw, blue] (2*\s,3.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
-\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
-\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
-\draw[line width=\pw, blue] (5.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (6*\s,3*\s) rectangle (7*\s,4*\s);
-\draw[line width=\pw, blue] (6*\s,3.5*\s) -- (7*\s,3.5*\s);
-
-% Row 4 (top): BLANK, BLANK, SE, HORIZ, HORIZ, HORIZ, HORIZ
-\draw[gray] (0,4*\s) rectangle (\s,5*\s);
-\draw[gray] (\s,4*\s) rectangle (2*\s,5*\s);
-\draw[gray] (2*\s,4*\s) rectangle (3*\s,5*\s);
-\draw[line width=\pw, blue] (2.5*\s,4*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (3*\s,4*\s) rectangle (4*\s,5*\s);
-\draw[line width=\pw, blue] (3*\s,4.5*\s) -- (4*\s,4.5*\s);
-\draw[gray] (4*\s,4*\s) rectangle (5*\s,5*\s);
-\draw[line width=\pw, blue] (4*\s,4.5*\s) -- (5*\s,4.5*\s);
-\draw[gray] (5*\s,4*\s) rectangle (6*\s,5*\s);
-\draw[line width=\pw, blue] (5*\s,4.5*\s) -- (6*\s,4.5*\s);
-\draw[gray] (6*\s,4*\s) rectangle (7*\s,5*\s);
-\draw[line width=\pw, blue] (6*\s,4.5*\s) -- (7*\s,4.5*\s);
-
-% Column labels at bottom
-\foreach \i in {1,...,7} {
-  \node[below] at (\i*\s-0.5*\s,-0.3) {\scriptsize \i};
-}
-% Exit labels on right (showing which row each pipe exits)
-\node[right] at (7*\s+0.2,0.5*\s) {\scriptsize 7};
-\node[right] at (7*\s+0.2,1.5*\s) {\scriptsize 3};
-\node[right] at (7*\s+0.2,2.5*\s) {\scriptsize 2};
-\node[right] at (7*\s+0.2,3.5*\s) {\scriptsize 6};
-\node[right] at (7*\s+0.2,4.5*\s) {\scriptsize 1};
-\end{scope}
-
-% Vertical arrow from left BPD to left RC graph
-\draw[->, line width=0.8pt] (3.5*\s,-1.2) -- (3.5*\s,-3.8*\s) node[midway, right] {$\varphi$};
-
-% Arrow and label
-\node at (9*\s,2.5*\s) {\Large $\xrightarrow{\bzeromap}$};
-
-% Second BPD (right side) - 4 rows (bottom row removed)
-\begin{scope}[shift={(11*\s,\s)}]
-% Start from row 1 (skipping the bottom row from left BPD)
-% Row 0 (was row 1): VERT, SE, HORIZ, NW, SE, CROSS, HORIZ
-\draw[gray] (0,0) rectangle (\s,\s);
-\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
-\draw[gray] (\s,0) rectangle (2*\s,\s);
-\draw[line width=\pw, blue] (1.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,0) rectangle (3*\s,\s);
-\draw[line width=\pw, blue] (2*\s,0.5*\s) -- (3*\s,0.5*\s);
-\draw[gray] (3*\s,0) rectangle (4*\s,\s);
-\draw[line width=\pw, blue] (3*\s,0.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (4*\s,0) rectangle (5*\s,\s);
-\draw[line width=\pw, blue] (4.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (5*\s,0) rectangle (6*\s,\s);
-\draw[line width=\pw, blue] (5*\s,0.5*\s) -- (6*\s,0.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
-\draw[gray] (6*\s,0) rectangle (7*\s,\s);
-\draw[line width=\pw, blue] (6*\s,0.5*\s) -- (7*\s,0.5*\s);
-
-% Row 1 (was row 2): SE, NW, BLANK, SE, HORIZ, CROSS, HORIZ
-\draw[gray] (0,\s) rectangle (\s,2*\s);
-\draw[line width=\pw, blue] (0.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
-\draw[line width=\pw, blue] (\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
-\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
-\draw[line width=\pw, blue] (3.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
-\draw[line width=\pw, blue] (4*\s,1.5*\s) -- (5*\s,1.5*\s);
-\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
-\draw[line width=\pw, blue] (5*\s,1.5*\s) -- (6*\s,1.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,\s) -- (5.5*\s,2*\s);
-\draw[gray] (6*\s,\s) rectangle (7*\s,2*\s);
-\draw[line width=\pw, blue] (6*\s,1.5*\s) -- (7*\s,1.5*\s);
-
-% Row 2 (was row 3): BLANK, SE, NW, BLANK, BLANK, SE, HORIZ
-\draw[gray] (0,2*\s) rectangle (\s,3*\s);
-\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
-\draw[line width=\pw, blue] (1.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
-\draw[line width=\pw, blue] (2*\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
-\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
-\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
-\draw[line width=\pw, blue] (5.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (6*\s,2*\s) rectangle (7*\s,3*\s);
-\draw[line width=\pw, blue] (6*\s,2.5*\s) -- (7*\s,2.5*\s);
-
-% Row 3 (was row 4): BLANK, BLANK, SE, HORIZ, HORIZ, HORIZ, HORIZ
-\draw[gray] (0,3*\s) rectangle (\s,4*\s);
-\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
-\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
-\draw[line width=\pw, blue] (2.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
-\draw[line width=\pw, blue] (3*\s,3.5*\s) -- (4*\s,3.5*\s);
-\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
-\draw[line width=\pw, blue] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
-\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
-\draw[line width=\pw, blue] (5*\s,3.5*\s) -- (6*\s,3.5*\s);
-\draw[gray] (6*\s,3*\s) rectangle (7*\s,4*\s);
-\draw[line width=\pw, blue] (6*\s,3.5*\s) -- (7*\s,3.5*\s);
-
-% Column labels at bottom
-\foreach \i in {1,...,7} {
-  \node[below] at (\i*\s-0.5*\s,-0.3) {\scriptsize \i};
-}
-% Exit labels on right (showing which row each pipe exits after bzeromap)
-\node[right] at (7*\s+0.2,0.5*\s) {\scriptsize 5};
-\node[right] at (7*\s+0.2,1.5*\s) {\scriptsize 2};
-\node[right] at (7*\s+0.2,2.5*\s) {\scriptsize 6};
-\node[right] at (7*\s+0.2,3.5*\s) {\scriptsize 1};
-\end{scope}
-
-% Vertical arrow from right BPD to right RC graph
-\draw[->, line width=0.8pt] (14.5*\s,-0.2*\s) -- (14.5*\s,-3.8*\s) node[midway, right] {$\varphi$};
-
-% RC Graphs below (parallel example)
-% First RC graph (left side) - 5 rows (trimmed from 7), corresponds to left BPD
-\begin{scope}[shift={(0,-10*\s)}]
-% Grid lines
-\draw[gray] (0,0) -- (7*\s,0);
-\draw[gray] (0,0) -- (0,5*\s);
-\foreach \i in {1,...,5} {
-  \draw[gray] (0,\i*\s) -- (7*\s,\i*\s);
-}
-\foreach \i in {1,...,7} {
-  \draw[gray] (\i*\s,0) -- (\i*\s,5*\s);
-}
-
-% Blue and red pipes (rows 2-6 from original become 0-4)
-% Row 4 (was row 6 in original): top row
-\draw[blue, line width=1.0pt] (0,4.5*\s) .. controls (0.3*\s,4.5*\s) and (0.5*\s,4.7*\s) .. (0.5*\s,5*\s);
-\draw[blue, line width=1.0pt] (0.5*\s,4*\s) .. controls (0.5*\s,4.3*\s) and (0.7*\s,4.5*\s) .. (1*\s,4.5*\s);
-\draw[blue, line width=1.0pt] (1*\s,4.5*\s) .. controls (1.3*\s,4.5*\s) and (1.5*\s,4.7*\s) .. (1.5*\s,5*\s);
-\draw[blue, line width=1.0pt] (1.5*\s,4*\s) .. controls (1.5*\s,4.3*\s) and (1.7*\s,4.5*\s) .. (2*\s,4.5*\s);
-\draw[blue, line width=1.0pt] (2*\s,4.5*\s) .. controls (2.3*\s,4.5*\s) and (2.5*\s,4.7*\s) .. (2.5*\s,5*\s);
-\draw[blue, line width=1.0pt] (2.5*\s,4*\s) .. controls (2.5*\s,4.3*\s) and (2.7*\s,4.5*\s) .. (3*\s,4.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (3*\s,4.5*\s) -- (4*\s,4.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (3.5*\s,4*\s) -- (3.5*\s,5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (4*\s,4.5*\s) -- (5*\s,4.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (4.5*\s,4*\s) -- (4.5*\s,5*\s);
-\draw[blue, line width=1.0pt] (5*\s,4.5*\s) .. controls (5.3*\s,4.5*\s) and (5.5*\s,4.7*\s) .. (5.5*\s,5*\s);
-\draw[blue, line width=1.0pt] (5.5*\s,4*\s) .. controls (5.5*\s,4.3*\s) and (5.7*\s,4.5*\s) .. (6*\s,4.5*\s);
-\draw[blue, line width=1.0pt] (6*\s,4.5*\s) .. controls (6.3*\s,4.5*\s) and (6.5*\s,4.7*\s) .. (6.5*\s,5*\s);
-
-% Row 3 (was row 5 in original)
-\draw[blue, line width=1.0pt, line cap=round] (0,3.5*\s) -- (1*\s,3.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (0.5*\s,3*\s) -- (0.5*\s,4*\s);
-\draw[blue, line width=1.0pt, line cap=round] (1*\s,3.5*\s) -- (2*\s,3.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (1.5*\s,3*\s) -- (1.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (2*\s,3.5*\s) .. controls (2.3*\s,3.5*\s) and (2.5*\s,3.7*\s) .. (2.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (2.5*\s,3*\s) .. controls (2.5*\s,3.3*\s) and (2.7*\s,3.5*\s) .. (3*\s,3.5*\s);
-\draw[blue, line width=1.0pt] (3*\s,3.5*\s) .. controls (3.3*\s,3.5*\s) and (3.5*\s,3.7*\s) .. (3.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (3.5*\s,3*\s) .. controls (3.5*\s,3.3*\s) and (3.7*\s,3.5*\s) .. (4*\s,3.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (4.5*\s,3*\s) -- (4.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (5*\s,3.5*\s) .. controls (5.3*\s,3.5*\s) and (5.5*\s,3.7*\s) .. (5.5*\s,4*\s);
-
-% Row 2 (was row 4 in original)
-\draw[blue, line width=1.0pt] (0,2.5*\s) .. controls (0.3*\s,2.5*\s) and (0.5*\s,2.7*\s) .. (0.5*\s,3*\s);
-\draw[blue, line width=1.0pt] (0.5*\s,2*\s) .. controls (0.5*\s,2.3*\s) and (0.7*\s,2.5*\s) .. (1*\s,2.5*\s);
-\draw[blue, line width=1.0pt] (1*\s,2.5*\s) .. controls (1.3*\s,2.5*\s) and (1.5*\s,2.7*\s) .. (1.5*\s,3*\s);
-\draw[blue, line width=1.0pt] (1.5*\s,2*\s) .. controls (1.5*\s,2.3*\s) and (1.7*\s,2.5*\s) .. (2*\s,2.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (2*\s,2.5*\s) -- (3*\s,2.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (2.5*\s,2*\s) -- (2.5*\s,3*\s);
-\draw[blue, line width=1.0pt] (3*\s,2.5*\s) .. controls (3.3*\s,2.5*\s) and (3.5*\s,2.7*\s) .. (3.5*\s,3*\s);
-\draw[blue, line width=1.0pt] (3.5*\s,2*\s) .. controls (3.5*\s,2.3*\s) and (3.7*\s,2.5*\s) .. (4*\s,2.5*\s);
-\draw[blue, line width=1.0pt] (4*\s,2.5*\s) .. controls (4.3*\s,2.5*\s) and (4.5*\s,2.7*\s) .. (4.5*\s,3*\s);
-
-% Row 1 (was row 3 in original)
-\draw[blue, line width=1.0pt] (0,1.5*\s) .. controls (0.3*\s,1.5*\s) and (0.5*\s,1.7*\s) .. (0.5*\s,2*\s);
-\draw[blue, line width=1.0pt] (0.5*\s,1*\s) .. controls (0.5*\s,1.3*\s) and (0.7*\s,1.5*\s) .. (1*\s,1.5*\s);
-\draw[blue, line width=1.0pt] (1*\s,1.5*\s) .. controls (1.3*\s,1.5*\s) and (1.5*\s,1.7*\s) .. (1.5*\s,2*\s);
-\draw[blue, line width=1.0pt] (1.5*\s,1*\s) .. controls (1.5*\s,1.3*\s) and (1.7*\s,1.5*\s) .. (2*\s,1.5*\s);
-\draw[blue, line width=1.0pt] (2*\s,1.5*\s) .. controls (2.3*\s,1.5*\s) and (2.5*\s,1.7*\s) .. (2.5*\s,2*\s);
-\draw[blue, line width=1.0pt] (2.5*\s,1*\s) .. controls (2.5*\s,1.3*\s) and (2.7*\s,1.5*\s) .. (3*\s,1.5*\s);
-\draw[blue, line width=1.0pt] (3*\s,1.5*\s) .. controls (3.3*\s,1.5*\s) and (3.5*\s,1.7*\s) .. (3.5*\s,2*\s);
-
-% Row 0 (was row 2 in original)
-\draw[blue, line width=1.0pt] (0,0.5*\s) .. controls (0.3*\s,0.5*\s) and (0.5*\s,0.7*\s) .. (0.5*\s,1*\s);
-\draw[blue, line width=1.0pt] (0.5*\s,0) .. controls (0.5*\s,0.3*\s) and (0.7*\s,0.5*\s) .. (1*\s,0.5*\s);
-\draw[blue, line width=1.0pt] (1*\s,0.5*\s) .. controls (1.3*\s,0.5*\s) and (1.5*\s,0.7*\s) .. (1.5*\s,1*\s);
-\draw[blue, line width=1.0pt] (1.5*\s,0) .. controls (1.5*\s,0.3*\s) and (1.7*\s,0.5*\s) .. (2*\s,0.5*\s);
-\draw[blue, line width=1.0pt] (2*\s,0.5*\s) .. controls (2.3*\s,0.5*\s) and (2.5*\s,0.7*\s) .. (2.5*\s,1*\s);
-
-% Green labels
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5*\s,3.5*\s) {2};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.5*\s,4.5*\s) {5};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (3.5*\s,4.5*\s) {4};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (2.5*\s,2.5*\s) {5};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5*\s,3.5*\s) {3};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.5*\s,3.5*\s) {6};
-
-% Column labels (red, top)
-\node[font=\scriptsize, text=black, anchor=south] at (0.5*\s,5.3*\s) {1};
-\node[font=\scriptsize, text=black, anchor=south] at (1.5*\s,5.3*\s) {3};
-\node[font=\scriptsize, text=black, anchor=south] at (2.5*\s,5.3*\s) {4};
-\node[font=\scriptsize, text=black, anchor=south] at (3.5*\s,5.3*\s) {6};
-\node[font=\scriptsize, text=black, anchor=south] at (4.5*\s,5.3*\s) {7};
-\node[font=\scriptsize, text=black, anchor=south] at (5.5*\s,5.3*\s) {2};
-\node[font=\scriptsize, text=black, anchor=south] at (6.5*\s,5.3*\s) {5};
-
-% Row labels (blue, left)
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,4.5*\s) {1};
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,3.5*\s) {2};
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,2.5*\s) {3};
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,1.5*\s) {4};
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,0.5*\s) {5};
-\end{scope}
-
-% Arrow between RC graphs
-\node at (9*\s,-7.5*\s) {\Large $\xrightarrow{\zeromap}$};
-
-% Second RC graph (right side) - 4 rows (trimmed from 6), corresponds to right BPD
-\begin{scope}[shift={(11*\s,-9*\s)}]
-% Grid lines
-\draw[gray] (0,0) -- (6*\s,0);
-\draw[gray] (0,0) -- (0,4*\s);
-\foreach \i in {1,...,4} {
-  \draw[gray] (0,\i*\s) -- (6*\s,\i*\s);
-}
-\foreach \i in {1,...,6} {
-  \draw[gray] (\i*\s,0) -- (\i*\s,4*\s);
-}
-
-% Blue and red pipes (rows 2-5 from original become 0-3)
-% Row 3 (was row 5 in original): top row
-\draw[blue, line width=1.0pt] (0,3.5*\s) .. controls (0.3*\s,3.5*\s) and (0.5*\s,3.7*\s) .. (0.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (0.5*\s,3*\s) .. controls (0.5*\s,3.3*\s) and (0.7*\s,3.5*\s) .. (1*\s,3.5*\s);
-\draw[blue, line width=1.0pt] (1*\s,3.5*\s) .. controls (1.3*\s,3.5*\s) and (1.5*\s,3.7*\s) .. (1.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (1.5*\s,3*\s) .. controls (1.5*\s,3.3*\s) and (1.7*\s,3.5*\s) .. (2*\s,3.5*\s);
-\draw[blue, line width=1.0pt] (2*\s,3.5*\s) .. controls (2.3*\s,3.5*\s) and (2.5*\s,3.7*\s) .. (2.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (2.5*\s,3*\s) .. controls (2.5*\s,3.3*\s) and (2.7*\s,3.5*\s) .. (3*\s,3.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (3*\s,3.5*\s) -- (4*\s,3.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (3.5*\s,3*\s) -- (3.5*\s,4*\s);
-\draw[blue, line width=1.0pt, line cap=round] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (4.5*\s,3*\s) -- (4.5*\s,4*\s);
-\draw[blue, line width=1.0pt] (5*\s,3.5*\s) .. controls (5.3*\s,3.5*\s) and (5.5*\s,3.7*\s) .. (5.5*\s,4*\s);
-
-% Row 2 (was row 4 in original)
-\draw[blue, line width=1.0pt, line cap=round] (0,2.5*\s) -- (1*\s,2.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (0.5*\s,2*\s) -- (0.5*\s,3*\s);
-\draw[blue, line width=1.0pt, line cap=round] (1*\s,2.5*\s) -- (2*\s,2.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (1.5*\s,2*\s) -- (1.5*\s,3*\s);
-\draw[blue, line width=1.0pt] (2*\s,2.5*\s) .. controls (2.3*\s,2.5*\s) and (2.5*\s,2.7*\s) .. (2.5*\s,3*\s);
-\draw[blue, line width=1.0pt] (2.5*\s,2*\s) .. controls (2.5*\s,2.3*\s) and (2.7*\s,2.5*\s) .. (3*\s,2.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (3*\s,2.5*\s) -- (4*\s,2.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (3.5*\s,2*\s) -- (3.5*\s,3*\s);
-\draw[blue, line width=1.0pt] (4*\s,2.5*\s) .. controls (4.3*\s,2.5*\s) and (4.5*\s,2.7*\s) .. (4.5*\s,3*\s);
-
-% Row 1 (was row 3 in original)
-\draw[blue, line width=1.0pt] (0,1.5*\s) .. controls (0.3*\s,1.5*\s) and (0.5*\s,1.7*\s) .. (0.5*\s,2*\s);
-\draw[blue, line width=1.0pt] (0.5*\s,1*\s) .. controls (0.5*\s,1.3*\s) and (0.7*\s,1.5*\s) .. (1*\s,1.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (1*\s,1.5*\s) -- (2*\s,1.5*\s);
-\draw[blue, line width=1.0pt, line cap=round] (1.5*\s,1*\s) -- (1.5*\s,2*\s);
-\draw[blue, line width=1.0pt] (2*\s,1.5*\s) .. controls (2.3*\s,1.5*\s) and (2.5*\s,1.7*\s) .. (2.5*\s,2*\s);
-\draw[blue, line width=1.0pt] (2.5*\s,1*\s) .. controls (2.5*\s,1.3*\s) and (2.7*\s,1.5*\s) .. (3*\s,1.5*\s);
-\draw[blue, line width=1.0pt] (3*\s,1.5*\s) .. controls (3.3*\s,1.5*\s) and (3.5*\s,1.7*\s) .. (3.5*\s,2*\s);
-
-% Row 0 (was row 2 in original)
-\draw[blue, line width=1.0pt] (0,0.5*\s) .. controls (0.3*\s,0.5*\s) and (0.5*\s,0.7*\s) .. (0.5*\s,1*\s);
-\draw[blue, line width=1.0pt] (0.5*\s,0) .. controls (0.5*\s,0.3*\s) and (0.7*\s,0.5*\s) .. (1*\s,0.5*\s);
-\draw[blue, line width=1.0pt] (1*\s,0.5*\s) .. controls (1.3*\s,0.5*\s) and (1.5*\s,0.7*\s) .. (1.5*\s,1*\s);
-\draw[blue, line width=1.0pt] (1.5*\s,0) .. controls (1.5*\s,0.3*\s) and (1.7*\s,0.5*\s) .. (2*\s,0.5*\s);
-\draw[blue, line width=1.0pt] (2*\s,0.5*\s) .. controls (2.3*\s,0.5*\s) and (2.5*\s,0.7*\s) .. (2.5*\s,1*\s);
-
-% Green labels
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (3.5*\s,2.5*\s) {5};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5*\s,2.5*\s) {2};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.5*\s,3.5*\s) {5};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (3.5*\s,3.5*\s) {4};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5*\s,2.5*\s) {3};
-\node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5*\s,1.5*\s) {4};
-
-% Column labels (red, top)
-\node[font=\scriptsize, text=black, anchor=south] at (0.5*\s,4.3*\s) {1};
-\node[font=\scriptsize, text=black, anchor=south] at (1.5*\s,4.3*\s) {3};
-\node[font=\scriptsize, text=black, anchor=south] at (2.5*\s,4.3*\s) {5};
-\node[font=\scriptsize, text=black, anchor=south] at (3.5*\s,4.3*\s) {6};
-\node[font=\scriptsize, text=black, anchor=south] at (4.5*\s,4.3*\s) {4};
-\node[font=\scriptsize, text=black, anchor=south] at (5.5*\s,4.3*\s) {2};
-
-% Row labels (blue, left)
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,3.5*\s) {1};
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,2.5*\s) {2};
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,1.5*\s) {3};
-\node[font=\scriptsize, text=black, anchor=east] at (-0.3*\s,0.5*\s) {4};
-\end{scope}
-
-\end{tikzpicture}
-\caption{The $\bzeromap$ transformation on a bumpless pipe dream with permutation $[1,6,2,3,7,4,5]$. The bottom row is removed, resulting in a BPD with one fewer row and permutation $[1,6,2,5,3,4]$. The associated RC graphs under the bijection are shown below with the corresponding $\zeromap$ transformation.} 
-\label{figure:transition}
-\end{figure}
-
-\begin{theorem}
-We have the formula
-$$\varphi\circ \bzeromap = \zeromap \circ \varphi$$
+\begin{theorem} \label{theorem:semidirect}
+  We have that $\alpha:\BRC\to \dcoma$ is a surjective homomorphism of rings with kernel $\Omega$, and the homomorphism $\dcoma\to\BRC$ sending $[i]\mapsto \mathtt{row}(i)$ is a right inverse to $\alpha$. In particular, $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{theorem}
 \begin{proof}
-Little bumps on last descent
+  We have an exact sequence
+$$0\to \Omega\to \BRC\to \dcoma\to 0$$
+where the map $\BRC\to \dcoma$ is $\alpha$. We have a homomorphism $\dcoma\to \BRC$ sending $[i]\mapsto \mathtt{row}(i)$ inducing an isomorphism on $\mathcal{R}$, and the composition $\dcoma\to \BRC\to \dcoma$ is the identity since $\alpha(\mathtt{row}(i)) = [i]$. Since $\Omega$ is a two-sided ideal, we can conclude that $\alpha$ is in fact a homomorphism of rings. Since $\BRC = \mathcal{R}\oplus \Omega$, by virtue of the fact that the sequence is split, and $\mathcal{R}\cong \dcoma$, we have $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{proof}
 
 \begin{definition}
-Let $(B, p)$ be a BPD and let $(C, q)$ be another BPD. We define an operation $B\looparrowright C$ as follows. First, let $\varphi(B) = ((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m))$. Then define
-$$B\looparrowright^p C = \Delta(((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m)),C\shup^p)$$
-
-We may define a ring product on $\BPD$, somewhat independently of the bijection, by declaring that 
-$$(B, p)\diamond (C, q) = \sum_{\mathbf{t}^N(B', p + N) = (B,n)} (B'\looparrowright^p C, p+q)$$
+Given RC graphs $U\in \RC_p(u)$ and $V\in\RC_q(v)$ and a permutation $w$, define
+$$d_{U, V}^w = \#\{R\in \RC(w, p + q): \clp^p(R)=U,\trm^p(R)=V\}$$
 \end{definition}
 
-
-
-Squash prod BPDs
-
-
-
-\begin{theorem}
-The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
-\end{theorem}
-
-
-\section{Complexity of the transition multiplication algorithm}\label{sec:complexity}
-
-In this section we analyze the worst-case running time of \texttt{schubmult\_py},
-the transition-equation algorithm for multiplying ordinary Schubert polynomials,
-and compare it against dense polynomial multiplication. The bounds we obtain
-are output-sensitive in a strong sense: they depend on the \emph{total
-multiplicity}
-\[
-   M_{\mathrm{out}}(u,v) \;:=\; \sum_{w} c_{u,v}^{w}
-\]
-of the product $\sch_u \cdot \sch_v$ rather than on $n!$, with cancellation
-overhead controlled by explicit Bruhat-fiber data. Note that $M_{\mathrm{out}}$
-dominates the support size $N_{\mathrm{out}}(u,v) := \#\{w : c_{u,v}^{w}\neq 0\}$
-but can be much larger when the structure constants $c_{u,v}^{w}$ exceed $1$.
-
-Throughout, fix $u, v \in S_n$ and write $\theta = \theta(v^{-1})$ for the
-sequence of column lengths used in the algorithm, with $r = \ell(\theta)$ parts
-and $\sum_j \theta_j = \ell(v)$. At each level $j$, the algorithm maintains a
-dictionary $\mathrm{vpathsums}_j : (u', v') \mapsto \mathrm{coeff}$, and the
-``descent operators'' applied through \texttt{kdown\_perms} are the only source
-of negative signs.
-
-\subsection{Baseline rigorous bound}
-
-Combining the multiplicity-free Pieri fan-out
-$\binom{k}{p}\binom{n+1-k}{p}$ with the Chu--Vandermonde identity, the
-intermediate sets satisfy the unconditional bound
-\[
-   |\mathrm{vpathsums}_j| \;\le\; \prod_{i \le j} \binom{n+1}{\theta_i},
-\]
-and the entire algorithm runs in time
-\begin{equation}\label{eq:rigorous-bound}
-   T_{\mathrm{schub}}(u,v) \;\le\; \mathrm{poly}(n) \cdot \prod_{j=1}^{r}
-   \binom{n+1}{\theta_j}.
-\end{equation}
-
-\subsection{The dominant case: no cancellation}
-
-\begin{proposition}\label{prop:dominant-monotone}
-If $v$ is dominant, then every coefficient computed by \texttt{schubmult\_py}
-during the run on $(u,v)$ is non-negative, and no two contributions to the
-same \(\mathrm{vpathsums}\) entry have opposite signs.
-\end{proposition}
-
-\begin{proof}
-When $v$ is dominant, $v^{-1}$ is dominant, so $\mu := \mathrm{uncode}(\theta)$
-equals $v^{-1}$ and $v\mu = \mathrm{id}$. At every level $j$, the auxiliary
-\texttt{monoperm}$_j$ is itself dominant, and the only $vp$ in
-$\mathrm{vpathdicts}_j$ that survives is reached by the trivial branch
-$(\mathrm{perm}, 0, +1)$ of \texttt{kdown\_perms}. Inspection of
-\texttt{kdown\_perms} shows that negative signs are produced only when a
-non-trivial Bruhat descent of \texttt{monoperm}$_j$ is taken (the line
-$s_2 := -s$); since no such descent contributes here, every entry of
-$\mathrm{vpathsums}$ is computed by an unsigned sum of positive contributions.
+\begin{proof}[Proof of Theorem \ref{theorem:LR}]
+For any choice of RC graphs $U_1,U_2\in \RC_p(u)$ and $V_1,V_2\in\RC_q(v)$ and a permutation $w$, we have $\alpha(U_1) = \alpha(U_2)$ and $\alpha(V_1)=\alpha(V_2)$, so that $\alpha(U_1)\alpha(V_1) = \alpha(U_2)\alpha(V_2)$. We have
+$$U_1\diamond V_1 = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} R$$
+Applying $\alpha$, we then have that
+$$\dsch_u^p\dsch_v^q = \alpha(U_1)\alpha(V_1) = \alpha(U_1\diamond V_1) = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \alpha(R)=\sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \dsch_{\wof{R}}^{p+q}$$
+The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=d_{U_2, V_2}^w$ by definition, and we have the result.
 \end{proof}
 
-\begin{corollary}\label{cor:dominant-output-sensitive}
-If $v$ is dominant,
-\[
-   T_{\mathrm{schub}}(u,v) \;=\; O\!\left(M_{\mathrm{out}}(u,v) \cdot
-   \mathrm{poly}(n)\right),
-\]
-i.e.\ the algorithm is output-sensitive in the total-multiplicity sense.
-\end{corollary}
+\section{The ring of forest classes of RC graphs}
 
+\section{Appendix}
+
+We dedicate this subsection to the otherwise distracting proof of Proposition \ref{proposition:pullindex}.
+
+\begin{proposition2}[Special case of Pieri formula {\cite[Theorem~7.1]{samuelmolev}}] \label{proposition:pieri}
+Suppose $k\geq 1$ and $u,w\in S_\infty$. If $u\not\tom{k} w$, then
+$$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=0$$
+If $u\tom{k} w$, define
+$$Q = \{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
+then
+$$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=\prod_{q\in Q}(x_1 - y_q)$$
+\end{proposition2}
 \begin{proof}
-By Proposition~\ref{prop:dominant-monotone} no entry of any
-$\mathrm{vpathsums}_j$ can be cancelled to zero in a later step, so every
-weighted contribution that the algorithm processes survives to the final
-output. The total work is then proportional to the sum, over all paths through
-the Pieri tree, of the absolute value of the contribution carried; in the
-cancellation-free dominant case this is precisely $M_{\mathrm{out}}(u,v)$ up
-to a polynomial factor in $n$ for the per-step Pieri fan and dictionary
-operations. Note that intermediate $\mathrm{vpathsums}$ keys may have
-multiplicity $> 1$, which is correctly counted by $M_{\mathrm{out}}$ but not
-by the bare support size $N_{\mathrm{out}}$.
+	This is simply a change of variables from the original theorem.
 \end{proof}
 
-\subsection{The general case: cancellation is fiber-confined}
+\begin{proof}[Proof of Proposition \ref{proposition:pullindex}]
+Suppose $v\in S_n$. We have
+$$\sch_v(x;y)=\ddv{y}^{vw_0(n)}(\sch_{w_0(n)}(x;y))$$
+This is equal to
+$$\ddv{y}^{vw_0(n)}\left(\sch_{s_{n+1-i}\cdots s_1w_0(n)}(x^{(i)};y)\prod_{j=1}^{n+1-i}(x_i - y_j)\right)$$
+and, applying the Leibniz formula, is also equal to
+$$\sum_{\substack{v'\in S_\infty\\\ell(v'w_0(n)s_1\cdots s_{n+1-i})=\ell(w_0(n)s_1\cdots s_{n+1-i})-\ell(v')}}\sch_{v'}(x^{(i)};y)\ddv{y}_{v'w_0(n)s_1\cdots s_{n+1-i}}^{vw_0(n)}\prod_{j=1}^{n+1-i}(x_i - y_j)$$
+By the restricted Pieri formula (Proposition \ref{proposition:pieri}), for this to be nonzero necessarily $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$. We note that $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$ if and only if 
+$$v\Tom{i}v'w_0(n)s_1\cdots s_{n+1-i}w_0(n)=v's_ns_{n-1}\cdots s_i$$
+We have that $v's_n\cdots s_i$ is exactly $\varphi_{i,n}(v')$ since $v'\in S_n$, so we require that
+$$v\Tom{i}\varphi_{i,n}(v')$$
+so the sum is over all $v'$ with $v\downvar{1} v'$.
 
-For non-dominant $v$, signed contributions can in principle cancel. The
-following proposition isolates exactly where cancellation can occur.
-
-\begin{proposition}\label{prop:fiber-cancellation}
-At each level $j$, signed contributions to a single entry
-$\mathrm{vpathsums}_{j+1}[u_2][v_2]$ arise only from upstream pairs
-$(u', vp), (u'', vp')$ that lie in the same Bruhat fiber of
-\texttt{monoperm}$_j$ above $v_2$. In particular, the cancellation blow-up
-factor at level $j$ is bounded by the maximum size of a length-$\theta_j$
-\texttt{kdown}-fiber, i.e.\ by
-\[
-   F_j \;:=\; \max_{v_2}\;\#\{ vp : vp \xrightarrow{\,\le\,\theta_j\, \mathrm{Bruhat\ descents\ of\ monoperm}_j\,} v_2 \}
-   \;\le\; \binom{\ell(\mathrm{monoperm}_j)}{\theta_j}.
-\]
-\end{proposition}
-
-\begin{proof}
-Sign-flips in \texttt{kdown\_perms} are produced exclusively by Bruhat
-descents in the auxiliary chain from \texttt{monoperm}$_j$. Two upstream
-contributions to a given $(u_2, v_2)$ that carry opposite signs must therefore
-differ by an even/odd parity in the number of \texttt{monoperm}$_j$-descents
-taken. In particular both pre-images $vp, vp'$ of $v_2$ lie inside a single
-Bruhat fiber of length $\le \theta_j$, of size at most
-$\binom{\ell(\mathrm{monoperm}_j)}{\theta_j}$.
+Applying Proposition \ref{proposition:pieri}, we obtain that the result is equal to
+$$\sum_{v\downvar{1} v'} \sch_{v'}(x^{(i)};y)\prod_{a\in A(v',v)}(x_i - y_a)$$
+where $A(v',v)$ is the set of all $vw_0(n)(j)$ such that $1\leq j\leq n+1-i$ and $v'w_0(n)s_1\cdots s_{n+1-i}(j)=vw_0(n)(j)$. These values are the same as at the indices that comprise the set of all $1\leq j\leq n+1-i$ such that
+$$v'(n+2-s_1\cdots s_{n+1-i}(j))=v(n+2-j)$$
+Applying the $s_1\cdots s_{n+1-i}$ to $j$, since $1\leq j\leq n+1-i$ we have that 
+$$s_1\cdots s_{n+1-i}(j)=j+1$$
+Hence we need
+$$v'(n+2-(j+1))=v'(n+1-j)=v(n+2-j)$$
+Replacing $j$ with $n+2-p$, the indices are the set of all $p$ such that $i<p\leq n+1$ and
+$$v'(p-1)=v(p)$$
+Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, which is exactly $Q_i(v',v)$, and we are done.
 \end{proof}
-
-\begin{theorem}\label{thm:cancellation-bound}
-The running time of \texttt{schubmult\_py} on $(u,v)$ satisfies
-\[
-   T_{\mathrm{schub}}(u,v) \;\le\; \mathrm{poly}(n) \cdot M_{\mathrm{out}}(u,v) \cdot
-   \prod_{j=1}^{r} F_j,
-\]
-where $M_{\mathrm{out}} = \sum_w c_{u,v}^{w}$ is the total multiplicity and
-$F_j$ is the per-level cancellation fiber bound of
-Proposition~\ref{prop:fiber-cancellation}. In particular, if all parts
-$\theta_j$ are bounded by a constant, the cancellation overhead is at most
-a polynomial in $n$ per level, giving
-\[
-   T_{\mathrm{schub}}(u,v) \;=\; \widetilde{O}\!\left(M_{\mathrm{out}}(u,v) \cdot
-   n^{O(r)}\right).
-\]
-\end{theorem}
-
-\subsection{What does ``dense multiplication'' mean? Specifying the problem}
-
-Comparing \texttt{schubmult\_py} against ``dense'' multiplication only makes
-sense once both the input and output bases are pinned down, since basis
-changes between the monomial basis and the Schubert basis are themselves
-nontrivial. We distinguish four problems:
-
-\begin{itemize}
-\item[\textbf{(P1)} Mon$\to$Mon:] given $\sch_u, \sch_v$ as polynomials in
-the Artin monomial basis, output their product in the monomial basis.
-\item[\textbf{(P2)} Sch$\to$Mon:] given $u, v \in S_n$, output
-$\sch_u \cdot \sch_v$ in the monomial basis.
-\item[\textbf{(P3)} Mon$\to$Sch:] given $\sch_u, \sch_v$ as polynomials,
-output the structure constants $c_{u,v}^{w}$.
-\item[\textbf{(P4)} Sch$\to$Sch:] given $u, v \in S_n$, output the structure
-constants $c_{u,v}^{w}$. \emph{This is the problem \texttt{schubmult\_py}
-solves.}
-\end{itemize}
-
-The four problems differ by basis-change steps. Calling any two of them ``the
-same problem'' is sloppy: each basis change is itself a nontrivial algorithm,
-and the dominant case dramatically illustrates the difference. If $v$ is
-dominant, $\sch_v = x^{\mathrm{code}(v)}$ is a single monomial, so problem
-(P1) is trivial — just shift the exponents of $\sch_u$ — while problem (P4)
-must additionally re-expand the result in the Schubert basis, which is
-genuine work and what \texttt{schubmult\_py} does.
-
-\paragraph{The fair baseline for (P4).}
-Any honest competitor to \texttt{schubmult\_py} must also output structure
-constants. The natural ``dense'' competitor for (P4) is
-
-\begin{quote}
-\textbf{(MS)} ``\emph{Multiply-then-straighten}'': solve (P2) by monomial
-multiplication, then convert the result to the Schubert basis via repeated
-divided differences (or any straightening algorithm).
-\end{quote}
-
-Let $S_w := |\mathrm{supp}(\sch_w)|$. The two stages of (MS) cost:
-
-\begin{itemize}
-\item Stage 1 (multiply): $S_u \cdot S_v$ monomial products plus dictionary
-operations, producing a polynomial of support size at most
-$A(n, \ell(u)+\ell(v))$.
-\item Stage 2 (straighten): expand the resulting polynomial of degree
-$\ell(u)+\ell(v)$ in the Schubert basis. The standard divided-difference
-algorithm $c_{u,v}^{w} = \partial_{w^{-1} w_0}\bigl(\sch_u \sch_v \cdot
-\sch_{w_0}\bigr)\big|_{x=0}$ requires up to $\binom{n}{2}$ divided
-differences, each of which can roughly double the polynomial support, giving
-a worst-case stage-2 cost
-\[
-   T_{\mathrm{straighten}}(u,v) \;\ge\; A(n, \ell(u)+\ell(v)) \cdot
-   \mathrm{poly}(n).
-\]
-\end{itemize}
-
-So in total
-\begin{equation}\label{eq:ms-bound}
-   T_{\mathrm{MS}}(u,v) \;\ge\; \max\!\bigl(\,S_u \cdot S_v,\;
-   A(n, \ell(u)+\ell(v))\,\bigr) \cdot \mathrm{poly}(n).
-\end{equation}
-Both terms are necessary lower bounds: the first because the multiplication
-stage cannot be avoided, the second because any straightening algorithm must
-read every monomial of the intermediate polynomial.
-
-\paragraph{Honest accounting in the dominant case.}
-If $v$ is dominant, $S_v = 1$ and stage 1 is trivial. But stage 2 of (MS)
-must straighten a polynomial of degree $\ell(u) + \ell(v)$ supported on a
-shifted Artin set of size $S_u \le A(n, \ell(u))$. So
-$T_{\mathrm{MS}} \ge A(n, \ell(u)) \cdot \mathrm{poly}(n)$, while
-\[
-   T_{\mathrm{schub}} \;=\; \widetilde{O}\bigl(M_{\mathrm{out}}(u,v)\bigr)
-\]
-by Corollary~\ref{cor:dominant-output-sensitive}. The transition algorithm
-wins iff $M_{\mathrm{out}}(u,v) \ll A(n,\ell(u))$. Since
-$M_{\mathrm{out}}(u,v)$ is bounded by the number of pipe dreams for $u$
-shifted by $\mathrm{code}(v)$ that survive the straightening relations, this
-ratio depends on $u$ and is not uniformly favorable. \emph{The dominant case
-is genuinely close, and we make no uniform claim there.}
-
-\subsection{Comparison and clean win regime}
-
-For arbitrary $v$, combining \eqref{eq:rigorous-bound} with \eqref{eq:ms-bound}:
-
-\begin{theorem}\label{thm:fair-comparison}
-The transition algorithm beats the multiply-then-straighten baseline whenever
-\begin{equation}\label{eq:fair-cutoff}
-   \prod_{j=1}^{r} \binom{n+1}{\theta_j(v^{-1})} \;<\;
-   \frac{A(n, \ell(u)+\ell(v))}{\mathrm{poly}(n)},
-\end{equation}
-i.e.\ whenever the rigorous \texttt{vpathsums} fan-out is dominated by the
-size of the intermediate dense polynomial.
-\end{theorem}
-
-The Mahonian sequence $A(n,\cdot)$ is strongly log-concave, with peak
-$A(n, \binom{n}{2}/2) = \Theta(n!/n^{3/2})$ and Gaussian tail
-\[
-   A(n, d) \;=\; \frac{n!}{\sigma\sqrt{2\pi}}
-   \exp\!\left(-\frac{(d - N/2)^2}{2\sigma^2}\right)\,(1 + o(1)),
-   \qquad N := \binom{n}{2},\ \sigma^2 = \tfrac{2n^3 + 3n^2 - 5n}{72}.
-\]
-
-\begin{proposition}\label{prop:bounded-parts-win}
-Suppose $\theta(v^{-1})$ has all parts bounded by a constant $c$, and
-$\ell(u) + \ell(v)$ lies within $O(\sigma) = O(n^{3/2})$ of the Mahonian peak.
-Then
-\[
-   \frac{T_{\mathrm{MS}}(u,v)}{T_{\mathrm{schub}}(u,v)}
-   \;\ge\; \frac{n!}{n^{O(c\,r)}}
-   \;=\; \frac{n!}{\mathrm{poly}(n)},
-\]
-i.e.\ \texttt{schubmult\_py} beats multiply-then-straighten by a factor
-$\sim n!$ in this regime.
-\end{proposition}
-
-\begin{proof}
-Under the part-size hypothesis, $\prod_j \binom{n+1}{\theta_j} \le
-(n+1)^{cr}$. The Mahonian estimate gives $A(n, \ell(u)+\ell(v)) =
-\Theta(n!/\sigma) = \Theta(n!/n^{3/2})$ in the stated window. Substituting
-into \eqref{eq:fair-cutoff} yields the claim.
-\end{proof}
-
-\begin{remark}
-The win factor of Proposition~\ref{prop:bounded-parts-win} comes entirely
-from \emph{not} forming the intermediate polynomial $\sch_u \cdot \sch_v$ in
-the monomial basis. The transition algorithm avoids ever writing down a
-polynomial of size $A(n, \ell(u)+\ell(v))$ — its intermediate state is the
-Schubert-coefficient dictionary, which under the bounded-parts hypothesis has
-size only $\mathrm{poly}(n)^r$. The basis change is performed
-\emph{incrementally and selectively}, level by level through
-\texttt{kdown\_perms}, rather than as a single monolithic straightening at the
-end.
-\end{remark}
-
-The picture that emerges is that the transition algorithm avoids both the
-monomial blow-up of the intermediate product and the cost of a full
-straightening pass; cancellation overhead, when present, is fiber-confined.
-The clean unconditional win regime is bounded part-sizes in $\theta(v^{-1})$
-with $\ell(u) + \ell(v)$ near the Mahonian peak; the dominant case is
-\emph{not} a clean win and we explicitly do not claim it.
 
 
 

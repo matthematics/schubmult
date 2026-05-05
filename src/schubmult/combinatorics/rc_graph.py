@@ -695,7 +695,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         return AntiRCGraph.from_rc_graph(self)
 
-    @property
+    @cached_property
     def forest_weight(self):
         from schubmult.utils.tuple_utils import pad_tuple
 
@@ -2157,7 +2157,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @classmethod
     @cache
     def all_forest_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
-        return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.forest_weight == comp}
+        #return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.forest_weight == comp}
+        from schubmult.rings.free_algebra import ForestDual, SchubertBasis
+        ret_set = set()
+        perms = set(ForestDual(*comp).change_basis(SchubertBasis).keys())
+        for (perm, length) in perms:
+            if length != len(comp):
+                raise ValueError(f"Permutation {perm} has length {length} not equal to expected {len(comp)}")
+            ret_set.update({rc for rc in cls.all_rc_graphs(perm, length, weight=weight) if rc.forest_weight == tuple(comp)})
+        return ret_set
 
     @classmethod
     @cache
