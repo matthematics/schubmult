@@ -1,5 +1,3 @@
-from schubmult.combinatorics.indexed_forests import decreasing_labelings, omega_park, weak_composition_to_indfor, word_from_labeling
-from schubmult.combinatorics.nilplactic import NilPlactic
 from schubmult.combinatorics.rc_graph import RCGraph
 
 from .rc_graph_ring import RCGraphRing, RCGraphRingElement
