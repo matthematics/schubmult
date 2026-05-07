@@ -1,16 +1,20 @@
+from schubmult.combinatorics.indexed_forests import decreasing_labelings, omega_park, weak_composition_to_indfor, word_from_labeling
+from schubmult.combinatorics.nilplactic import NilPlactic
 from schubmult.combinatorics.rc_graph import RCGraph
 
 from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 def _canonical_rc(rc):
-    # needed
-    if rc.forest_weight != rc.perm.pad_code(len(rc)):
-        return None
-    # does not work
-    # the_set = {rc2 for rc2 in RCGraph.all_forest_rcs(rc.forest_weight, weight=rc.length_vector) if rc2.omega_invariant[1] == rc.omega_invariant[1] and rc2.forest_weight == rc.forest_weight}
-    # return next(iter(the_set))
-    return rc
+    # if rc.forest_weight == rc.length_vector:
+    #     return rc
+    # print(omega_park(rc.perm_word))
+    # for rc0 in RCGraph.all_forest_rcs(rc.forest_weight):
+    #     if rc0.forest_invariant == rc.forest_invariant and omega_park(tuple(reversed(rc0.perm_word))) == set(range(1, rc0.inv + 1)):
+    #         return rc0
+    #     print(rc0, rc0.forest_invariant, omega_park(tuple(reversed(rc0.perm_word))))
+    # raise ValueError(f"Failed to find canonical RC graph for {rc}, which has forest weight {rc.forest_weight} and forest invariant {rc.forest_invariant}")
+    return next(iter([rc0 for rc0 in RCGraph.all_forest_rcs(rc.forest_weight) if rc0.forest_weight == rc0.length_vector and rc0.forest_invariant == rc.forest_invariant]))
 
 class ForestRCGraphRingElement(RCGraphRingElement):
     def to_free_algebra_element(self, basis=None):
@@ -46,8 +50,8 @@ class ForestRCGraphRing(RCGraphRing):
         ret = self.zero
         for key, coeff in elem.items():
             the_rc = _canonical_rc(key)
-            if the_rc is not None:
-                ret += self.from_dict({the_rc: coeff})
+            #if the_rc is not None:
+            ret += self.from_dict({the_rc: coeff})
         return ret
 
     def mul(self, a, b):

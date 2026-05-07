@@ -669,7 +669,6 @@ class LBS(LabeledForest):
 
     def hw_rc(self, length=None):
         from schubmult import NilPlactic, Permutation
-        print(self.word)
         if length is None:
             length = len(Permutation.ref_product(*self.word).trimcode)
         return NilPlactic().ed_insert(*self.word).hw_rc(length=length)
@@ -800,7 +799,37 @@ def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabe
     return new_P, new_Q
 
 
+def omega_park(word):
+    """Parking procedure Omega.
 
+    Cars 1, 2, ... arrive successively; car i prefers spot ``word[i]``.
+    If the preferred spot is empty, the car parks there. Otherwise the
+    preferred spot lies in a maximal interval [a, b] of occupied spots.
+    Let j < i be maximal with ``word[j] in [a, b]``; if ``word[i] >= word[j]``
+    the car parks at b+1, else at a-1.
+
+    Returns the set of occupied spots after all cars have parked.
+    """
+    occupied = {}  # spot -> car index
+    parked_at = {}  # car index -> spot
+    for i, v in enumerate(word):
+        if v not in occupied:
+            occupied[v] = i
+            parked_at[i] = v
+            continue
+        # Find the maximal interval [a, b] of occupied spots containing v.
+        a = v
+        while (a - 1) in occupied:
+            a -= 1
+        b = v
+        while (b + 1) in occupied:
+            b += 1
+        # j < i maximal with word[j] in [a, b].
+        j = max(k for k in range(i) if a <= word[k] <= b)
+        spot = b + 1 if v >= word[j] else a - 1
+        occupied[spot] = i
+        parked_at[i] = spot
+    return set(occupied.keys())
 
 if __name__ == "__main__":
     # Example usage

@@ -13,7 +13,7 @@ class ForestInvariantRCGraphRing(RCGraphRing):
         self.dtype = type("ForestInvariantRCGraphRingElement", (RCGraphRingElement,), {"ring": self})
 
     def __hash__(self):
-        return hash(("Dinkbeasfrrtasfsfystoa", self._ID))
+        return hash(("Dinkbeasfrrtasfsfystoa", self._xID))
 
     def new(self, x):
         return self.from_dict({x: 1})

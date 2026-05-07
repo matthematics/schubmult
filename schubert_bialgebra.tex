@@ -232,7 +232,7 @@ This allows us to consistently define a ``splitting'' coproduct that is compatib
 
 We focus primarily on the dual $\dcoma$ of this algebra, where the product is derived from this splitting (deconcatenation) coproduct. Specifically, let $\mathrm{Comp}_n$ be the set of weak compositions of length $n$. Then, additively,
 $$\dcoma = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus \mathrm{Comp}_n}$$
-and multiplicatively the product of two basis elements indexed by $a\in \mathrm{Comp}_p$ and $b\in \mathrm{Comp}_q$ is the basis element indexed by the concatenation of $a$ and $b$, which is an element of $\mathrm{Comp}_{p+q}$. The coproduct on $\dcoma$ is given by deconcatenation, that is to say
+and multiplicatively the product of two basis elements indexed by $a\in \mathrm{Comp}_p$ and $b\in \mathrm{Comp}_q$ is the basis element indexed by the concatenation of $a$ and $b$, which is an element of $\mathrm{Comp}_{p+q}$. The coproduct on $\dcoma$ is given by splitting sums of exponents, that is to say
 $$\Delta(c) = \sum_{a+b=c} a\otimes b$$
 where $a$ and $b$ are weak compositions of lengths $p$ and $q$ respectively, and the equation $a+b=c$ indicates that the pointwise sum of $a$ and $b$ is equal to $c$. The counit is given by $\varepsilon(c)=0$ unless $c$ is the empty composition, in which case $\varepsilon(c)=1$. With these definitions, $\coma$ and $\dcoma$ are dual bialgebras over $\mathbb{Z}$, a fact that is straightforward to verify. They fail to be connected and are not Hopf algebras.
 
@@ -249,7 +249,9 @@ where $a$ is any composition. We present an explicit formula for the dual Schube
 $$\dsch_u^p\dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\dsch_w^{p+q}$$
 The combinatorial objects that we use to express this formula are RC graphs, the definition of which can be found, for example, in \cite{bbrc}. The reader may be more familiar with the term ``pipe dreams,'' introduced as a catchier name for the same objects by Knutson and Miller in \cite{knutson2005grobner}. We retain the name RC graphs since this method of approaching the objects (thought of as reduced words paired with compatible sequences, with the generators arranged in rows) is far more tractable for our purposes, most of the time. The original intention was indeed to model such biwords, initially presented as a positive formula for Schubert polynomials in \cite{bjs}.
 
-For an RC graph $R$ with $n$ rows, we define two associated RC graphs $\clp^p(R)$ and $\trm^p(R)$ such that $\trm^p(R)$ is obtained directly from the last $n - p$ rows of $R$, whereas $\clp^p(R)$ is obtained by an insertion algorithm that combinatorially models Lascoux-Schützenberger transition formula for Schubert polynomials, the latter of which is expounded upon in detail by Macdonald in \cite{notes}, with the algorithm maintaining numerous structures that can be imposed on RC graphs. We point out the definition of the function $\zeromap:\RC_n^0\to \RC_{n-1}$ in Definition \ref{definition:zeromap}, where $\RC_n^0$ indicates the set of RC graphs with $n$ rows such that row $n$ is empty, that realizes the transition formula, for discussion below.
+It is important to note that while it common to consider two RC graphs to be the same if they have the same set of crossings, we add an datum, the number of rows, that can distinguish two RC graphs that would otherwise be considered identical. It is a key feature in this exposition that we limit our focus to cases with finitely many rows/variables.
+
+For an RC graph $R$ with $n$ rows, we define two associated RC graphs $\clp^p(R)$ and $\trm^p(R)$ such that $\trm^p(R)$ is obtained directly from the last $n - p$ rows of $R$, whereas $\clp^p(R)$ is obtained by an insertion algorithm that combinatorially models the Lascoux-Schützenberger transition formula for Schubert polynomials, the latter of which is expounded upon in detail by Macdonald in \cite{notes}, with the algorithm maintaining numerous structures that can be imposed on RC graphs. We point out the definition of the function $\zeromap:\RC_n^0\to \RC_{n-1}$ in Definition \ref{definition:zeromap}, where $\RC_n^0$ indicates the set of RC graphs with $n$ rows such that row $n$ is empty, that realizes the transition formula, for discussion below.
  Our main theorem is the following.
 
 
@@ -265,20 +267,26 @@ Then for any fixed choices of RC graphs $U\in \RC_p(u)$, $V\in\RC_q(v)$, and a p
 
 Note that \emph{any} polynomial basis that is graded by length and degree has a corresponding dual basis in $\dcoma$. In particular, the \emph{forest polynomials} are such a basis. These were introduced by Nadeau and Tewari in \cite{nadeau2024forest} and are closely related to Schubert polynomials. They can be defined by reduced words and compatible sequences, but the invariant preserved by these words is distinct from the permutation. Given a reduced word/compatible sequence pair $(\mathbf{r},\mathbf{s})$, there is an insertion algorithm that produces a corresponding invariant $\mathcal{F}(\mathbf{r},\mathbf{s})$ that represents an equivalence relation on the words, where the compatible sequence can vary arbitrarily. We therefore shorten the notation to $\mathcal{F}(\mathbf{r})$. The equivalence classes $\mathcal{F}$ consist of words that are all for the same permutation, so that if we define
 $$R\equiv_{\forest} R'$$
-to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Then we have
+to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$. Then we have
 \begin{theorem}
-Let $R\in \BRC$ be a bounded RC graph. Then the dual forest polynomial $\forest_{\fcode(R)}$ is equal to
+  \begin{itemize}
+\item[I] Let $R\in \BRC$ be a bounded RC graph. Then the forest polynomial $\forest_{\fcode(R)}$ is equal to
 $$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
+
+\item[II] Let $c$ be a weak composition. Then dual forest polynomial $\forest^*_c$ is equal to
+$$\forest^*_c = \sum_{[R]\in\mathcal{C}_\forest(c)} \dsch_{\wof{R}}^{\hr(R)}$$
+  \end{itemize}
 \end{theorem}
 
 Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph formula for forest polynomials.
 
-Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$. 
+
+
 
 \begin{theorem}[LR rule for dual forests]\label{theorem:LRforest}
 Let $a,b$ be weak compositions of lengths $p$ and $q$, respectively. Define integers $f_{a,b}^c$ for weak compositions $c$ of length $p+q$ by the equation
 $$\forest_a^*\forest_b^* = \sum_{c} f_{a,b}^c\forest_c^*$$
-Then for each weak composition $c$ of length $p+q$ we have that $f_{a, b}^c$ is the number of distinct $[R]\in \mathcal{C}_\forest(c)$ such that $[\clp^p(R)]\in \mathcal{C}_\forest(a)$ and $[\trm^p(R)]\in \mathcal{C}_\forest(b)$, and is in particular nonnegative.
+Fix an RC graph $C$ such that $\code_\forest(C) = c$. Then $f_{a, b}^c$ is the number of distinct $R\in[C]$ such that $[\clp^p(R)]\in \mathcal{C}_\forest(a)$ and $[\trm^p(R)]\in \mathcal{C}_\forest(b)$, and is in particular nonnegative.
 \end{theorem}
 
 \subsection*{The ring of RC graphs}
@@ -334,10 +342,10 @@ Notice that necessarily $m\leq k$ for $\tom{k}$, but there is no upper bound on 
   \begin{itemize}
     
     \item[\textrm{I}. ] We have the formula
-    $$\sch_u(x)h_{p,k}(x) = \sum_{u\Tom{k} w} \sch_w(x)$$
+    $$\sch_u(x)h_{p,k}(x) = \sum_{u\Tom{k} w\atop \ell(u,w) = p} \sch_w(x)$$
     where $h_{p,k}(x)$ is the complete homogeneous symmetric polynomial of degree $p$ in the first $k$ variables.
     \item[\textrm{II}. ] We have the formula
-    $$\sch_u(x)e_{p,k}(x) = \sum_{u\tom{k} w} \sch_w(x)$$
+    $$\sch_u(x)e_{p,k}(x) = \sum_{u\tom{k} w\atop \ell(u,w) = p} \sch_w(x)$$
     where $e_{p,k}(x)$ is the elementary symmetric polynomial of degree $p$ in the first $k$ variables.
   \end{itemize}
 \end{theorem}
@@ -530,7 +538,7 @@ which is a factorial elementary symmetric polynomial, a special case of a double
 
 \begin{lemma} \label{lemma:doublediff}
   Let $u,w\in S_\infty$ satisfy $u\leq w$ and let $p>0,k>0$ be integers. Then we have
-  $$\partial_u^w(E_k(x;-y_p))=\sum_{C\in\achain{p}(u,w)}(-1)^{\sigma(C)}e_{k-\ell(u,w)}^k+\mathcal{O}(y)$$
+  $$\partial_u^w(E_k(x;-y_p))=\sum_{C\in\achain{p}(u,w)}(-1)^{\sigma(C)}e_{k-\ell(u,w)}^k+\mathcal{O}(y_p)$$
 \end{lemma}
 
 % \begin{lemma} 
@@ -2365,6 +2373,45 @@ The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=
 \end{proof}
 
 \section{The ring of forest classes of RC graphs}
+
+\subsection{Indexed forests, forest invariant}
+
+\begin{definition}[Indexed forests and codes]
+  An \emph{indexed forest} $F$ is a pair $(S, T_\bullet)$ where $S$ is a set of positive integers, called the \emph{support} of $F$, and if we write
+  $$S=I_1\cup I_2\cup \cdots \cup I_k$$
+  where $I_1,I_2,\ldots, I_k$ are the maximal intervals contained in $S$, then $T_\bullet$ is a sequence of binary trees $T_1,T_2,\ldots, T_k$ such that $T_j$ has $|I_j|$ internal nodes for each $j$. The internal nodes of $F$ are denoted by $\mathrm{IN}(F)$. There is a natural labeling $\lambda_F:\mathrm{IN}(F)\to S$ sending each internal node, say $v\in T_j$, to the unique element of $I_j$ that is at the same index as $v\in T_j$ in the inorder traversal of $T_j$.
+  
+  The function $\rho_F:\mathrm{IN}(F)\to S$ is defined for an internal node $v\in T_j$ by 
+  $$\rho_F(v) = \begin{cases}
+  \lambda_F(v)&\mbox{ if }\mathrm{left}(v)\notin\mathrm{IN}(F)\\
+  \lambda_F(\mathrm{left}(v))&\mbox{ if }\mathrm{left}(v)\in\mathrm{IN}(F).
+  \end{cases}$$
+  For each indexed forest $F$, we assign a weak composition $\code(F)$ by
+  $$\code_j(F)=\#\{v\in \mathrm{IN}(F): \rho_F(v)=j\}$$
+  Then the \emph{forest polynomial} $\forest_F(x)$ is defined by
+  $$\forest_F(x) = \sum_{\kappa}\prod_{v\in\mathrm{IN}(F)}x_{\kappa(v)}$$
+  where the sum is over all functions $\kappa:\mathrm{IN}(F)\to \mathbb{Z}_{>0}$ such that $\kappa(v)\leq \rho_F(v)$ for all $v\in \mathrm{IN}(F)$, $\kappa(v)\leq\kappa(\mathrm{left}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{left}(v)\in \mathrm{IN}(F)$, and $\kappa(v)<\kappa(\mathrm{right}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{right}(v)\in \mathrm{IN}(F)$.
+\end{definition}
+
+\begin{definition}[Injective words, forest invariant]
+In \cite{nadeau2024ppartitions}, an alphabet $\overline{\mathbb{Z}}$ is defined as the set of pairs of integers $(i,j)$ in lexicographical order, written with the notation $i^{[j]}$. They define $\mathrm{val}(i^{[j]})=i$. An \emph{injective word} is a word $w=w_1w_2\cdots w_k$ such that $w_i\in\overline{\mathbb{Z}}$ for all $i$. An \emph{LBS (local binary search)  labeling} of an indexed forest $F$ is an injective function $\rho:\mathrm{IN}(F)\to \overline{\mathbb{Z}}$ such that
+\begin{enumerate}
+\item $\rho(\mathrm{left}(v))<\rho(v)$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{left}(v)\in \mathrm{IN}(F)$.
+\item $\rho(v)<\rho(\mathrm{right}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{right}(v)\in \mathrm{IN}(F)$.
+\item For all $v\in\mathrm{IN}(F)$, $\mathrm{val}(\rho(v)) = \lambda_F(u)$ for some $u\in\mathrm{IN}(F)$.
+\end{enumerate}
+
+Given any injective word $w = w_1\cdots w_m$, we associate to it inductively an indexed forest $F(w)$, an LBS labeling $P(w)$ of $F(w)$, and an injective ``time-stamp'' labeling $Q(w):\mathrm{IN}(F(w))\to\{1,\ldots,m\}$ as follows. If $m=0$, then $F(w)$ is the empty forest. Otherwise write $w = w'a$ with $w' = w_1\cdots w_{m-1}$, and assume $F' := F(w')$, $P' := P(w')$, and $Q' := Q(w')$ have already been constructed; let $S'$ be the support of $F'$, and let $S' = I_1\cup\cdots\cup I_k$ be its decomposition into maximal intervals (listed left to right). For each $j$, denote by $u_j$ the root of the tree of $F'$ supported on $I_j$, and set $a_j := P'(u_j)$. We obtain $F(w)$ by adjoining a new internal node $u$ to $F'$, with attachments determined by $i := \mathrm{val}(a)$:
+\begin{itemize}
+\item If $i\notin S'$, then $u$ is the root of a new tree, with left child $u_j$ when $i-1\in I_j$ (otherwise no left child), and right child $u_j$ when $i+1\in I_j$ (otherwise no right child).
+\item If $i\in I_j$, then we compare $a$ with $a_j$ in the order on $\overline{\mathbb{Z}}$:
+\begin{itemize}
+\item if $a>a_j$, then $u_j$ becomes the left child of $u$; additionally, if $\max(I_j)+2\in S'$ (necessarily $\max(I_j)+2 = \min(I_{j+1})$), then $u_{j+1}$ becomes the right child of $u$;
+\item if $a<a_j$, then $u_j$ becomes the right child of $u$; additionally, if $\min(I_j)-2\in S'$ (necessarily $\min(I_j)-2=\max(I_{j-1})$), then $u_{j-1}$ becomes the left child of $u$.
+\end{itemize}
+\end{itemize}
+The remaining roots of $F'$ become roots of $F(w)$ unchanged. We then extend $P'$ to $P(w)$ by setting $P(w)(u) := a$, and extend $Q'$ to $Q(w)$ by setting $Q(w)(u) := m$. The pair $(P(w), Q(w))$ is the \emph{$\Omega$-insertion} of $w$.
+\end{definition}
 
 \section{Appendix}
 
