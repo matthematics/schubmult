@@ -132,6 +132,9 @@
 \newcommand{\clp}{\mathtt{clip}}
 \newcommand{\BRC}{\mathcal{BRC}}
 \newcommand{\RC}{\mathcal{RC}}
+\newcommand{\lzeromap}{\mathscr{Z}}
+\newcommand{\lmap}{\mathscr{L}}
+\newcommand{\ltb}{\mathrm{little}}
 %\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\stackrel{\blacktriangleright}{\mathbf{\_}}$}}\limits}
 
 %\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\blacktriangleright$}}\limits}
@@ -2480,6 +2483,64 @@ it follows that $F_aF_b$ is a linear combination of the $F_c$, so the span of th
 \begin{proof}[Proof of Theorem \ref{theorem:LRforest}]
   The coefficient of $F_c$ in $F_aF_b$ is the same as the coefficient of $\forest_c^*$ in $\forest_a^*\forest_b^*$, which is $f_{a,b}^c$ by definition. Since each of the summands of $F_c$ that are equivalence classes of RC graphs are distinct from the summands of any other forest element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
+
+\section{The ring of RC graph crystals}
+
+\subsection{Little bumps}
+
+\begin{definition}
+Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
+$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
+Then define
+$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
+Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
+\end{definition}
+
+\begin{proposition} \label{proposition:little_bump}
+  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
+  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
+  and 
+  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k$$ 
+  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
+  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
+\end{proposition}
+\begin{proof}
+Consider the biword
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
+a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
+\end{matrix}$$
+The first deletion yields
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
+a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
+\end{matrix}$$
+Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
+
+We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
+\end{proof}
+
+\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
+Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
+$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
+for any valid $p$.
+\end{theorem}
+
+\begin{corollary}
+  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
+\end{corollary}
+
+\begin{corollary}
+$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is a weight-preserving isomorphism of crystal graphs.
+\end{corollary}
+
+
+\begin{corollary}
+  We have the equality
+$$\lzeromap=\zeromap$$ 
+\end{corollary}
+
 
 \section{Appendix}
 
