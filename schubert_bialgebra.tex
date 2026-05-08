@@ -275,6 +275,8 @@ where the sum runs over semistandard Young tableaux $T$ of shape $\mathrm{sort}(
 
 From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from the highest weight element by closure under the operators $\{f_{i_k}^n : n\geq 0\}$, and Kashiwara proved that its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. In type $A$, this means $\kappa_a$ is precisely the character of a Demazure crystal inside a tensor product of fundamental crystals, and the key polynomial expansion of any nonnegative-on-Demazure-crystals polynomial is forced to be nonnegative. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs (equivalently, pipe dreams) of a permutation $w$, thereby giving a representation-theoretic proof of the Lascoux--Schützenberger key-positivity of Schubert polynomials. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
 
+There is a dual key basis $\{\kappa_a^*\}$ of $\dcoma$ defined by $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$, where as before we are restricting to fixed lengths of compositions, and we give an explicit formula for these dual key polynomials in terms of RC graphs. Specifically, for an RC graph $R$, we define the \emph{extremal weight} $\mathrm{extwt}(R)$ to be the extremal weight of the Demazure crystal of $R$, which is the unique lowest weight element that generates the crystal, and we define $\mathrm{Dem}(R)$ to be the set of RC graphs in the same Demazure crystal as $R$. Then we have the following.
+
 \begin{theorem} \label{theorem:keyformula}
   Let $c$ be a weak composition. Then dual key polynomial $\kappa^*_c$ is equal to
 $$\kappa^*_c = \sum_{R=\mathbb{Y}(R)\atop\mathrm{extwt}(R)=c} \dsch_{\wof{R}}^{\hr(R)}$$
@@ -299,6 +301,7 @@ Note that \emph{any} polynomial basis that is graded by length and degree has a 
 $$R\equiv_{\forest} R'$$
 to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$. Then we have
 \begin{theorem}\label{theorem:forestformula}
+  We have the following.
   \begin{itemize}
 \item[I] Let $R\in \BRC$ be a bounded RC graph. Then the forest polynomial $\forest_{\fcode(R)}$ is equal to
 $$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
@@ -326,7 +329,7 @@ expressing a forest polynomial in $p+q$ variables as a nonnegative integer combi
 \subsection*{The ring of RC graphs}
 
 Perhaps the strongest indication that this is the ``correct'' way to decompose RC graphs is that these formulas are proved by the fact that if we define
-$$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\mathrm{RC}_n}$$
+$$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\RC_n}$$
 then there is an associative product $\diamond$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
 $$\alpha(R) = \dsch_u^n$$
 where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\diamond$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintining the projection to $\dcoma$ and leveraging this to find the formula.
@@ -2468,7 +2471,18 @@ $$\lzeromap=\zeromap$$
   For a weak composition $a$ of length $n$, define $\kappa_a^*\in \dcoma_n$ to be the unique element such that $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
 \end{definition}
 
-\begin{definition}[The submodule $\Gamma\subseteq \BRC$]
+We invoke the following result of Reiner and Shimozono.
+\begin{theorem}[{\cite[Theorem~5(3)]{reiner1995key}}] \label{theorem:keykey}
+  For a weak composition $a$ of length $n$, we have
+  $$\kappa_a = \sum_{\mathrm{rev}(\mathbf{r})\sim_{\mathrm{CK}} \mathrm{key}(a)\atop b\mbox{ is }a{-compatible}} x^b$$
+\end{theorem}
+
+\begin{proof}[Proof of Theorem \ref{theorem:keyformula}]
+  The statement of the theorem is equivalent to Lascoux and Sch\"utzenberger's formula for Schubert polynomials in terms of key polynomials through Theorem \ref{theorem:keykey}.
+\end{proof}
+
+
+\begin{definition}[The submodule $\Theta\subseteq \BRC$]
   Let $\Theta$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$.
 
 \end{definition}
@@ -2477,7 +2491,7 @@ $$\lzeromap=\zeromap$$
   $\Theta$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-  The fact that $\Theta$ is a left ideal follows from the fact that the products $R\diamond R_1$ and $R\diamond R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. Since the crystals raising/lowering operators act directly on adjacent rows, the same crystal operators will apply to the rows below, so that $R\diamond R_1$ and $R\diamond R_2$ have the same crystal structure In the trailing rows. In passing to highest weights $\mathbb{Y}(R\diamond R_1)$ and $\mathbb{Y}(R\diamond R_2)$, we may pass through the partial highest weights $R\diamond Y(R_1) = R\diamond Y(R_2)$, so that in particular the highest weights of the bijectively corresponding terms of $R\diamond R_1$ and $R\diamond R_2$ are the same.
+  The fact that $\Theta$ is a left ideal follows from the fact that the products $R\diamond R_1$ and $R\diamond R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. Since the crystal raising/lowering operators act directly on adjacent rows, the same crystal operators will apply to the rows below, so that $R\diamond R_1$ and $R\diamond R_2$ have the same crystal structure in the trailing rows. In passing to highest weights $\mathbb{Y}(R\diamond R_1)$ and $\mathbb{Y}(R\diamond R_2)$, we may pass through the partial highest weights $R\diamond Y(R_1) = R\diamond Y(R_2)$, so that in particular the highest weights of the bijectively corresponding terms of $R\diamond R_1$ and $R\diamond R_2$ are the same.
   
   %, so that $R\diamond R_1 - R\diamond R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\mathbb{Y}(R_1') = \mathbb{Y}(R_2')$, and $\Theta$ is a left ideal.
 
@@ -2493,7 +2507,7 @@ This is because the generators of $\Theta$ are all in $\Omega$.
 
 \begin{definition}
 For a composition $a$, define  an element $K_a\in\BRC/\Theta$ by
-$$K_a =\sum_{R\in\mathrm{Dem}_{\RC}(a)\atop R=\mathbb{Y}(R)} \dsch_{\wof{R}}^{\hr(R)}$$
+$$K_a =\sum_{R\in\mathrm{Dem}_{\RC}(a)\atop R=\mathbb{Y}(R)} R$$
 \end{definition}
 
 \begin{proposition}
@@ -2502,12 +2516,12 @@ $$\alpha(K_a) = \kappa_a^*$$
 \end{proposition}
 \begin{proof}
 The $K_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Theta\to \dcoma$. We have that $\alpha(K_a)=\kappa_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $K_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $K_a$, and since 
-$$\alpha(K_a)\alpha(K_b) = \kappa_a^*\kappa_b^*=\sum_{c}f_{ab}^c\kappa_c^*=\sum f_{a,b}^c\alpha(K_c),$$ 
+$$\alpha(K_a)\alpha(K_b) = \kappa_a^*\kappa_b^*=\sum_{c}k_{ab}^c\kappa_c^*=\sum k_{a,b}^c\alpha(K_c),$$ 
 it follows that $K_aK_b$ is a linear combination of the $K_c$, so the span of the $K_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
 \end{proof}
 
 \begin{proof}[Proof of Theorem \ref{theorem:LRkey}]
-  The coefficient of $K_c$ in $K_aK_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are equivalence classes of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
+  The coefficient of $K_c$ in $K_aK_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are Demazure crystals of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
 
 
@@ -2575,15 +2589,17 @@ Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathb
   $$\sch_w(x) = \sum_{C\in \mathcal{C}_\forest(w)} \forest_{\code_\forest(C)}(x)$$
 \end{theorem}
 
-\begin{proof}[Proof of Theorem \ref{theorem:forestformula}]
-  Part I of this theorem follows from the fact that for any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$, which are simply the RC graphs in the corresponding equivalence class of RC graphs. Part II follows from Theorem \ref{theorem:forestforest} and the definition of the dual Schubert basis.
-\end{proof}
 
 \subsection{The dual forest basis and the ring of forest classes of RC graphs}
 
 \begin{definition}[The dual forest basis]
   For a weak composition $a$ of length $n$, define $\forest_a^*\in \dcoma_n$ to be the unique element such that $\langle \forest_a^*, \forest_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
 \end{definition}
+
+\begin{proof}[Proof of Theorem \ref{theorem:forestformula}]
+  Part I of this theorem follows from the fact that for any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$, which are simply the RC graphs in the corresponding equivalence class of RC graphs. Part II follows from Theorem \ref{theorem:forestforest} and the definition of the dual Schubert basis.
+\end{proof}
+
 
 \begin{definition}[The submodule $\Gamma\subseteq \BRC$]
   Let $\Gamma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $R_1\equiv_\forest R_2$.
