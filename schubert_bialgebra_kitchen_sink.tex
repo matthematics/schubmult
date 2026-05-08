@@ -93,7 +93,7 @@
 \newcommand{\R}{\mathbf{R}}  % The real numbers.
 
 %%
-%% The comment after the defintion is not required, but if you are
+%% The comment after the definition is not required, but if you are
 %% working with someone they will likely thank you for explaining your
 %% definition.  
 %%
@@ -1978,7 +1978,7 @@ $$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R \neq 0$$
 \end{enumerate}
 \end{proposition}
 \begin{proof}
-For (1)$\Rightarrow$(2), we proceed by induction on length. For (1) to be true, in particular if $n=\maxd(\wof{R})$ we have that $(n,1)\in R$. Applying $\rcdd^n$ and lowering operators (necessarily maximally) results in a term being an RC graph which has the same recursive property, which by the inductive hypothesis is $R^0(ws_n)$, which implies that row $n$ of $R$ has length $\code_n(w)$. Choosing our reduced word carefully, we obtain in the process as some nonzero term an RC graph for $w'$ with $\code_k(w') = \code_k(w)$ for all $k<n$ and $\code_n(w')=0$ that has the same property, and hence is prinicipal by the induction hypothesis. It follows that $R$ is principal as well.
+For (1)$\Rightarrow$(2), we proceed by induction on length. For (1) to be true, in particular if $n=\maxd(\wof{R})$ we have that $(n,1)\in R$. Applying $\rcdd^n$ and lowering operators (necessarily maximally) results in a term being an RC graph which has the same recursive property, which by the inductive hypothesis is $R^0(ws_n)$, which implies that row $n$ of $R$ has length $\code_n(w)$. Choosing our reduced word carefully, we obtain in the process as some nonzero term an RC graph for $w'$ with $\code_k(w') = \code_k(w)$ for all $k<n$ and $\code_n(w')=0$ that has the same property, and hence is principal by the induction hypothesis. It follows that $R$ is principal as well.
 
 For (2)$\Rightarrow$(1), we again proceed by induction on length. If $w$ has no descents, the statement is vacuous. For a principal RC graph $R^0(w)$ for some $w$ with $\ell(w)>0$ and we have the result for smaller lengths, suppose $i$ is a descent of $w$. Then $\code_i(w) > \code_{i+1}(w)$. In particular, if we let $j = \code_{i+1}(w) + 1$, then $(i,j)$ is a ledge of $R^0(w)$. Applying $\rcdd^iR^0(w)$, the lowest weight in the sum is in fact $R^0(ws_i)$. It follows by induction that applying the sequence of divided difference operators corresponding to a reduced word for $w$ to $R^0(w)$ yields the empty RC graph with a coefficient of $1$.
 \end{proof}
@@ -3126,7 +3126,7 @@ By definition of the product, both crystal and transition chute move elements ar
 Suppose $R_1$ and $R_2$ differ by a single chute move at row $i$. Then for any RC graph $R$, the elements $(R_1 - R_2)\diamond R$ and $R\diamond (R_1 - R_2)$ are sums of chute move elements.
 \end{lemma}
 \begin{proof}
-For left muliplication, $R_1$ and $R_2$ are actually subgraphs of all resulting elements. For right multiplication, let $R'$ be an RC graph in the product. Then there is a crystal isomorphism between a subset of the crystal components of RC graphs for $\wof{R'}$ and the entirety of the crystal components of RC graphs for $\wof{R_1}=\wof{R_2}$. Note that the chute moves form a basis over $\mathbb{Z}$, and hence over $\mathbb{Q}$. Thus, applying the right inverse map $\zeromap$, $R_1 - R_2$ restricted to a single permutation map to an element $R_1' - R_2'$, which necessarily is a sum of chute moves
+For left multiplication, $R_1$ and $R_2$ are actually subgraphs of all resulting elements. For right multiplication, let $R'$ be an RC graph in the product. Then there is a crystal isomorphism between a subset of the crystal components of RC graphs for $\wof{R'}$ and the entirety of the crystal components of RC graphs for $\wof{R_1}=\wof{R_2}$. Note that the chute moves form a basis over $\mathbb{Z}$, and hence over $\mathbb{Q}$. Thus, applying the right inverse map $\zeromap$, $R_1 - R_2$ restricted to a single permutation map to an element $R_1' - R_2'$, which necessarily is a sum of chute moves
 \end{proof}
 
 
@@ -4486,7 +4486,7 @@ Left multiplication by a dominant. Raise to highest weight. Dominant commutes wi
 % \end{theorem}
 
 % \begin{theorem}
-% Suppose that $B_\alpha$ is a basis of $\dcoma$ that is a nonnegative combination of dual Schubert elements. Then for each $\alpha$ there are unique nonnegative integers $c_\alpha^R$ for $R\in \BRC$ satifying the condition that for each permutation $w$, $c_\alpha^R$ is nonzero for at most one $R\in \RC(w)$, such that the elements
+% Suppose that $B_\alpha$ is a basis of $\dcoma$ that is a nonnegative combination of dual Schubert elements. Then for each $\alpha$ there are unique nonnegative integers $c_\alpha^R$ for $R\in \BRC$ satisfying the condition that for each permutation $w$, $c_\alpha^R$ is nonzero for at most one $R\in \RC(w)$, such that the elements
 % $$\mathcal{B}_\alpha= \sum c_\alpha^R R$$
 % generate a subalgebra of $\BRC$ that projects isomorphically onto $\dcoma$ under the homomorphism sending $R$ to $\dsch_{\wof{R}}^n$ where $n=\hr(R)$.
 % \end{theorem}
