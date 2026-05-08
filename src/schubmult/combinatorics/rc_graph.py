@@ -2170,7 +2170,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @classmethod
     @cache
     def all_key_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
-        return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.extremal_weight == comp}
+        from schubmult.rings.free_algebra import FreeAlgebra, KeyBasis, SchubertBasis
+        ret_set = set()
+        KeyDual = FreeAlgebra(KeyBasis)
+        perms = set(KeyDual(*comp).change_basis(SchubertBasis).keys())
+        for (perm, length) in perms:
+            if length != len(comp):
+                raise ValueError(f"Permutation {perm} has length {length} not equal to expected {len(comp)}")
+            ret_set.update({rc for rc in cls.all_rc_graphs(perm, length, weight=weight) if rc.extremal_weight == tuple(comp)})
+        return ret_set
 
     @classmethod
     @cache

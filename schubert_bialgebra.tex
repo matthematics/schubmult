@@ -268,7 +268,7 @@ Then for any fixed choices of RC graphs $U\in \RC_p(u)$, $V\in\RC_q(v)$, and a p
 Note that \emph{any} polynomial basis that is graded by length and degree has a corresponding dual basis in $\dcoma$. In particular, the \emph{forest polynomials} are such a basis. These were introduced by Nadeau and Tewari in \cite{nadeau2024forest} and are closely related to Schubert polynomials. They can be defined by reduced words and compatible sequences, but the invariant preserved by these words is distinct from the permutation. Given a reduced word/compatible sequence pair $(\mathbf{r},\mathbf{s})$, there is an insertion algorithm that produces a corresponding invariant $\mathcal{F}(\mathbf{r},\mathbf{s})$ that represents an equivalence relation on the words, where the compatible sequence can vary arbitrarily. We therefore shorten the notation to $\mathcal{F}(\mathbf{r})$. The equivalence classes $\mathcal{F}$ consist of words that are all for the same permutation, so that if we define
 $$R\equiv_{\forest} R'$$
 to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$. Then we have
-\begin{theorem}
+\begin{theorem}\label{theorem:forestformula}
   \begin{itemize}
 \item[I] Let $R\in \BRC$ be a bounded RC graph. Then the forest polynomial $\forest_{\fcode(R)}$ is equal to
 $$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
@@ -2394,14 +2394,14 @@ The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=
 \end{definition}
 
 \begin{definition}[Injective words, forest invariant]
-In \cite{nadeau2024ppartitions}, an alphabet $\overline{\mathbb{Z}}$ is defined as the set of pairs of integers $(i,j)$ in lexicographical order, written with the notation $i^{[j]}$. They define $\mathrm{val}(i^{[j]})=i$. An \emph{injective word} is a word $w=w_1w_2\cdots w_k$ such that $w_i\in\overline{\mathbb{Z}}$ for all $i$. An \emph{LBS (local binary search)  labeling} of an indexed forest $F$ is an injective function $\rho:\mathrm{IN}(F)\to \overline{\mathbb{Z}}$ such that
+In \cite{nadeau2024ppartitions}, an alphabet $\overline{\mathbb{Z}}$ is defined as the set of pairs of integers $(i,j)$ in lexicographical order, written with the notation $i^{[j]}$. They define $\mathrm{val}(i^{[j]})=i$. An \emph{injective word} is a word $w=w_1w_2\cdots w_k$ such that $w_i\neq w_j$ for all $i\neq j$. An \emph{LBS (local binary search)  labeling} of an indexed forest $F$ is an injective function $\rho:\mathrm{IN}(F)\to \overline{\mathbb{Z}}$ such that
 \begin{enumerate}
 \item $\rho(\mathrm{left}(v))<\rho(v)$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{left}(v)\in \mathrm{IN}(F)$.
 \item $\rho(v)<\rho(\mathrm{right}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{right}(v)\in \mathrm{IN}(F)$.
 \item For all $v\in\mathrm{IN}(F)$, $\mathrm{val}(\rho(v)) = \lambda_F(u)$ for some $u\in\mathrm{IN}(F)$.
 \end{enumerate}
 
-Given any injective word $w = w_1\cdots w_m$, we associate to it inductively an indexed forest $F(w)$, an LBS labeling $P(w)$ of $F(w)$, and an injective ``time-stamp'' labeling $Q(w):\mathrm{IN}(F(w))\to\{1,\ldots,m\}$ as follows. If $m=0$, then $F(w)$ is the empty forest. Otherwise write $w = w'a$ with $w' = w_1\cdots w_{m-1}$, and assume $F' := F(w')$, $P' := P(w')$, and $Q' := Q(w')$ have already been constructed; let $S'$ be the support of $F'$, and let $S' = I_1\cup\cdots\cup I_k$ be its decomposition into maximal intervals (listed left to right). For each $j$, denote by $u_j$ the root of the tree of $F'$ supported on $I_j$, and set $a_j := P'(u_j)$. We obtain $F(w)$ by adjoining a new internal node $u$ to $F'$, with attachments determined by $i := \mathrm{val}(a)$:
+Given any injective word $w = w_1\cdots w_m$ in $\overline{\mathbb{Z}}$, we associate to it inductively an indexed forest $F(w)$, an LBS labeling $P(w)$ of $F(w)$, and an injective ``time-stamp'' labeling $Q(w):\mathrm{IN}(F(w))\to\{1,\ldots,m\}$ as follows. If $m=0$, then $F(w)$ is the empty forest. Otherwise write $w = w'a$ with $w' = w_1\cdots w_{m-1}$, and assume $F' := F(w')$, $P' := P(w')$, and $Q' := Q(w')$ have already been constructed; let $S'$ be the support of $F'$, and let $S' = I_1\cup\cdots\cup I_k$ be its decomposition into maximal intervals (listed left to right). For each $j$, denote by $u_j$ the root of the tree of $F'$ supported on $I_j$, and set $a_j := P'(u_j)$. We obtain $F(w)$ by adjoining a new internal node $u$ to $F'$, with attachments determined by $i := \mathrm{val}(a)$:
 \begin{itemize}
 \item If $i\notin S'$, then $u$ is the root of a new tree, with left child $u_j$ when $i-1\in I_j$ (otherwise no left child), and right child $u_j$ when $i+1\in I_j$ (otherwise no right child).
 \item If $i\in I_j$, then we compare $a$ with $a_j$ in the order on $\overline{\mathbb{Z}}$:
@@ -2412,6 +2412,74 @@ Given any injective word $w = w_1\cdots w_m$, we associate to it inductively an 
 \end{itemize}
 The remaining roots of $F'$ become roots of $F(w)$ unchanged. We then extend $P'$ to $P(w)$ by setting $P(w)(u) := a$, and extend $Q'$ to $Q(w)$ by setting $Q(w)(u) := m$. The pair $(P(w), Q(w))$ is the \emph{$\Omega$-insertion} of $w$.
 \end{definition}
+
+The importance of this algorithm is
+
+\begin{theorem}[{\cite[Theorem~5.1]{nadeau2024forest}}]
+The correspondence $w\mapsto (P(w), Q(w))$ is a bijection between the following two sets:
+\begin{enumerate}
+\item Injective words $w$ with letters in $\overline{\mathbb{Z}}$, and
+\item Pairs $(P, Q)$ such that $P \in \mathrm{LBS}(F)$ and $Q \in \mathrm{Dec}(F)$ for a common indexed forest $F$.
+\end{enumerate}
+\end{theorem}
+
+
+\begin{definition}[Injectification, $\equiv_\forest$]
+  For a word $\mathbf{r}$ in the alphabet $\mathbb{Z}$, we may canonically turn $\mathbf{r}$ into an injective word in the alphabet $\overline{\mathbb{Z}}$ by assigning superscripts consecutively starting at $1$ to break ties between equal letters.
+
+Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathbf{r}_1\equiv_\forest\mathbf{r}_2$ if $P(\overline{\mathbf{r}_1}) = P(\overline{\mathbf{r}_2})$. Naturally, we may apply this to RC graphs as well: for RC graphs $R_1$ and $R_2$, we say that $R_1\equiv_\forest R_2$ if $\overline{\mathrm{word}(R_1)}\equiv_\forest \overline{\mathrm{word}(R_2)}$. For a permutation $w$, we denote by $\mathcal{C}_\forest(w)$ the set of equivalence classes of reduced words for $w$ under $\equiv_\forest$.
+\end{definition}
+
+\begin{theorem}[{\cite[Theorem~1.4]{nadeau2024forest}}] \label{theorem:forestforest}
+  Let $w\in S_\infty$. Then we have
+
+  $$\sch_w(x) = \sum_{C\in \mathcal{C}_\forest(w)} \forest_{\code_\forest(C)}(x)$$
+\end{theorem}
+
+\begin{proof}[Proof of Theorem \ref{theorem:forestformula}]
+  Part I of this theorem follows from the fact that for any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$, which are simply the RC graphs in the corresponding equivalence class of RC graphs. Part II follows from Theorem \ref{theorem:forestforest} and the definition of the dual Schubert basis.
+\end{proof}
+
+\begin{definition}[The submodule $\Gamma\subseteq \BRC$]
+  Let $\Gamma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $R_1\equiv_\forest R_2$.
+
+\end{definition}
+
+\begin{lemma}
+  $\Gamma$ is a two-sided ideal of $\BRC$.
+\end{lemma}
+\begin{proof}
+  The fact that $\Gamma$ is a left ideal follows from the fact that the products $R\diamond R_1$ and $R\diamond R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. In terms of the resulting words, the shifted $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ are suffixes of $\mathrm{word}(R\diamond R_1)$ and $\mathrm{word}(R\diamond R_2)$. The $\equiv_\forest$ equivalence is determined by local swaps of pairs of letters that are related in a shift-invariant \cite[Proposition~5.8]{nadeau2024forest} and prefix-invariant \cite[Lemma~5.9]{nadeau2024forest} way, from which the result follows, since the prefixes are identical and the suffixes are related in the same way as $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$.
+
+  To prove that $\Gamma$ is a right ideal, assume $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ differ by a single local swap of adjacent letters $a$ and $b$ in the same equivalence class, with $a$ to the left of $b$ in $\mathrm{word}(R_1)$ and to the right of $b$ in $\mathrm{word}(R_2)$. It suffices to consider only the case where $R$ is empty to show that
+  $$R_1\diamond R - R_2\diamond R\in \Gamma$$
+  for any $R$. According to \cite{nadeau2024forest}, the local swap of $a$ and $b$ is a commutation move, and we may reduce to the case where $a$ and $b$ are the last two letters of $\mathrm{word}(R_1)$, and that $b$ is the last descent of $\wof{R_1}$. For any empty $R$, the position $a$ will remain the same. For any term not identical to $R_1$, the suffix of the word will be $ab'$ where $b'>b$. For each $b'$, there will be precisely one matching term with suffix $b'a$ and identical prefix. The local swap of $a$ and $b'$ in the suffix is a valid local swap, so the resulting terms are all in $\Gamma$, and we are done.
+\end{proof}
+
+\begin{lemma}
+  The homomorphism $\alpha:\BRC\to\dcoma$ factors through the quotient $\BRC/\Gamma$.
+\end{lemma}
+\begin{proof}
+This is because the generators of $\Gamma$ are all in $\Omega$.
+\end{proof}
+
+\begin{definition}
+For a composition $a$, define  an element $F_a\in\BRC/\Gamma$ by
+$$F_a =\sum_{[R]\in\mathcal{C}_\forest(a)} [R]$$
+\end{definition}
+
+\begin{proposition}
+The elements $F_a\in\BRC/\Gamma$ form an additive basis of a subring isomorphic to $\dcoma$ under the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$.
+\end{proposition}
+\begin{proof}
+The $F_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$. We have that $\alpha(F_a)=\forest_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $F_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $F_a$, and since 
+$$\alpha(F_a)\alpha(F_b) = \forest_a^*\forest_b^*=\sum_{c}f_{ab}^c\forest_c^*=\sum f_{a,b}^c\alpha(F_c),$$ 
+it follows that $F_aF_b$ is a linear combination of the $F_c$, so the span of the $F_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{theorem:LRforest}]
+  The coefficient of $F_c$ in $F_aF_b$ is the same as the coefficient of $\forest_c^*$ in $\forest_a^*\forest_b^*$, which is $f_{a,b}^c$ by definition. Since each of the summands of $F_c$ that are equivalence classes of RC graphs are distinct from the summands of any other forest element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
+\end{proof}
 
 \section{Appendix}
 
