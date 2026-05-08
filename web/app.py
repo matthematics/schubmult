@@ -26,6 +26,8 @@ Configuration via environment variables:
 """
 
 import io
+import logging
+import logging.handlers
 import multiprocessing as mp
 import os
 import re
@@ -36,6 +38,51 @@ from contextlib import redirect_stderr, redirect_stdout
 from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
+
+# ---------- access logging ----------
+# Logs each /api/compute request with the exact command line that would be
+# invoked (argv), but NEVER the output. Path configurable via env var
+# SCHUBMULT_ACCESS_LOG; defaults to web/access.log next to this file.
+# Set SCHUBMULT_ACCESS_LOG=- to log to stderr instead.
+_DEFAULT_LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "access.log")
+_ACCESS_LOG_PATH = os.environ.get("SCHUBMULT_ACCESS_LOG", _DEFAULT_LOG_PATH)
+
+access_logger = logging.getLogger("schubmult.web.access")
+access_logger.setLevel(logging.INFO)
+access_logger.propagate = False
+if not access_logger.handlers:
+    _fmt = logging.Formatter("%(asctime)s %(message)s",
+                             datefmt="%Y-%m-%dT%H:%M:%S%z")
+    if _ACCESS_LOG_PATH == "-":
+        _h: logging.Handler = logging.StreamHandler()
+    else:
+        try:
+            _h = logging.handlers.RotatingFileHandler(
+                _ACCESS_LOG_PATH, maxBytes=2_000_000, backupCount=5,
+                encoding="utf-8")
+        except OSError:
+            _h = logging.StreamHandler()
+    _h.setFormatter(_fmt)
+    access_logger.addHandler(_h)
+
+
+def _client_ip() -> str:
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.remote_addr or "-"
+
+
+def _log_access(flavor: str, argv: list[str] | None, *, status: str,
+                error: str | None = None) -> None:
+    cmdline = shlex.join(argv) if argv else "-"
+    ua = request.headers.get("User-Agent", "-").replace("\n", " ")[:200]
+    msg = (f"ip={_client_ip()} flavor={flavor} status={status} "
+           f"cmd={cmdline!r} ua={ua!r}")
+    if error:
+        msg += f" error={error!r}"
+    access_logger.info(msg)
 
 PERM_TOKEN_RE = re.compile(r"^-?\d+$")
 
@@ -304,9 +351,13 @@ def compute():
                            display_positive=display_positive,
                            mixed_var=mixed_var, parabolic=parabolic, mult=mult)
     except ValueError as e:
+        _log_access(flavor, None, status="reject", error=str(e))
         return jsonify({"ok": False, "error": str(e)}), 400
 
+    _log_access(flavor, argv, status="run")
     stdout, stderr, timed_out = _run_script(flavor, argv)
+    if timed_out:
+        _log_access(flavor, argv, status="timeout")
     return jsonify({
         "ok": not timed_out,
         "argv": argv,
