@@ -12,7 +12,7 @@ class SchurElementaryBasis(FreeAlgebraBasis):
 
     Keys are ``(tuple, tuple)`` pairs encoding products of
     a standard elementary monomial (first tuple) and a Schur polynomial (second tuple, partition
-    of length percisely len(first_tuple) + 1 in increasing order, with zeros at the beginning if
+    of length precisely len(first_tuple) + 1 in increasing order, with zeros at the beginning if
     needed).  For example, the key ``((1, 2), (0, 1, 3))`` corresponds to the product of the elementary monomial
     """
 
