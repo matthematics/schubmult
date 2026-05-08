@@ -265,6 +265,33 @@ Then for any fixed choices of RC graphs $U\in \RC_p(u)$, $V\in\RC_q(v)$, and a p
 \end{theorem}
 \newcommand{\forest}{\mathfrak{P}}
 \newcommand{\fcode}{\mathfrak{c}_f}
+\subsection*{Key polynomials}
+
+The \emph{key polynomials} (also called \emph{Demazure characters} in type $A$) form a $\mathbb{Z}$-basis $\{\kappa_a\}$ of the polynomial ring $\mathbb{Z}[x_1,x_2,\ldots]$ indexed by weak compositions $a$. Their origin lies in the work of Demazure \cite{demazure1974desingularisation,demazure1974nouvelle}, who introduced isobaric divided difference operators $\pi_i$ in order to compute the characters of the $B$-modules $H^0(X_w,\mathcal{L}_\lambda)$ associated to Schubert varieties $X_w$ in $G/B$. In type $A$, the resulting characters become polynomials in the $x_i$, and one obtains $\kappa_a$ for any weak composition $a$ by setting $\kappa_\lambda = x^\lambda$ when $\lambda$ is a partition (an antidominant weight in the convention used here) and applying the appropriate operator $\pi_i$ at each descent of $a$ to interpolate between rearrangements of $\lambda$.
+
+A purely combinatorial development of key polynomials was carried out by Lascoux and Schützenberger in \cite{lascoux1990keys}, where they introduced the notion of the \emph{right key} $K_+(T)$ and \emph{left key} $K_-(T)$ of a semistandard Young tableau $T$, and proved that
+$$\kappa_a = \sum_{T} x^{\wtt(T)}$$
+where the sum runs over semistandard Young tableaux $T$ of shape $\mathrm{sort}(a)$ whose right key $K_+(T)$ is bounded above (entrywise) by the key tableau associated to $a$. They additionally proved that Schubert polynomials decompose as a positive sum of key polynomials, which was given a combinatorial proof in terms of compatible sequences and the right-key map by Reiner and Shimozono \cite{reiner1995key}. The intermediate basis of \emph{Demazure atoms} (the ``standard bases'' of \cite{lascoux1990keys}) was later given an explicit nonnegative monomial expansion by Mason \cite{mason2009explicit} via semi-skyline augmented fillings.
+
+From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from the highest weight element by closure under the operators $\{f_{i_k}^n : n\geq 0\}$, and Kashiwara proved that its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. In type $A$, this means $\kappa_a$ is precisely the character of a Demazure crystal inside a tensor product of fundamental crystals, and the key polynomial expansion of any nonnegative-on-Demazure-crystals polynomial is forced to be nonnegative. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs (equivalently, pipe dreams) of a permutation $w$, thereby giving a representation-theoretic proof of the Lascoux--Schützenberger key-positivity of Schubert polynomials. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
+
+\begin{theorem} \label{theorem:keyformula}
+  Let $c$ be a weak composition. Then dual key polynomial $\kappa^*_c$ is equal to
+$$\kappa^*_c = \sum_{R=\mathbb{Y}(R)\atop\mathrm{extwt}(R)=c} \dsch_{\wof{R}}^{\hr(R)}$$
+\end{theorem}
+
+
+Our $\zeromap$ has an alternative description in terms of Little bumps on reduced words, as defined by Little in \cite{little2003combinatorial}. It was shown by Hamaker and Young \cite{hamaker2014relating} that Little bumps preserve Coxeter-Knuth moves, which precisely characterize the Demazure crystals of an RC graph, so that $\zeromap$ preserves the Demazure crystal structure on RC graphs. This allows us to give a Littlewood-Richardson type rule for multiplication in the dual key basis. Specifically, we have the following.
+\begin{theorem}[LR rule for dual keys] \label{theorem:LRkey}
+Let $a,b$ be weak compositions of lengths $p$ and $q$, respectively. Define integers $k_{a,b}^c$ for weak compositions $c$ of length $p+q$ by the equation
+$$\kappa_a^*\kappa_b^* = \sum_{c} k_{a,b}^c\kappa_c^*$$
+Fix an RC graph $C$ such that $\mathrm{extwt}(C) = c$. Then $k_{a, b}^c$ is the number of distinct $R\in \mathrm{Dem}(C)$ such that $\mathrm{extwt}(\clp^p(R))=a$ and $\mathrm{extwt}(\trm^p(R))=b$, and is in particular nonnegative.
+
+\end{theorem}
+
+Equivalently, Theorem \ref{theorem:LRkey} is a positive combinatorial branching rule
+$$\kappa_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} k_{a,b}^c\,\kappa_a(x_1,\ldots,x_p)\,\kappa_b(x_{p+1},\ldots,x_{p+q})$$
+expressing a key polynomial in $p+q$ variables as a nonnegative integer combination of products of key polynomials in the first $p$ and last $q$ variables. The nonnegativity of these coefficients is, in retrospect, a consequence of the theory of \emph{excellent filtrations} for $B$-modules introduced by Polo \cite{polo1989excellent} and van der Kallen \cite{vanderkallen1989longest}, with existence of such filtrations on tensor products of Demazure modules established in general by Mathieu \cite{mathieu1990filtrations}; see also Joseph \cite{joseph1985demazure}. Restricting a Demazure module $V_c(\lambda)$ for $GL_{p+q}$ to the Borel of the Levi $GL_p\times GL_q$ yields a $B$-module with an excellent filtration, whose Demazure subquotients account for the $k_{a,b}^c$. To the best of our knowledge, however, no explicit positive combinatorial formula for these coefficients has previously appeared in the literature, and the dual key basis itself does not appear to have been studied before.
 
 \subsection*{Forest polynomials}
 
@@ -292,13 +319,17 @@ $$\forest_a^*\forest_b^* = \sum_{c} f_{a,b}^c\forest_c^*$$
 Fix an RC graph $C$ such that $\code_\forest(C) = c$. Then $f_{a, b}^c$ is the number of distinct $R\in[C]$ such that $[\clp^p(R)]\in \mathcal{C}_\forest(a)$ and $[\trm^p(R)]\in \mathcal{C}_\forest(b)$, and is in particular nonnegative.
 \end{theorem}
 
+As with the dual key basis, Theorem \ref{theorem:LRforest} is equivalent to a positive combinatorial branching formula
+$$\forest_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} f_{a,b}^c\,\forest_a(x_1,\ldots,x_p)\,\forest_b(x_{p+1},\ldots,x_{p+q})$$
+expressing a forest polynomial in $p+q$ variables as a nonnegative integer combination of products of forest polynomials in the first $p$ and last $q$ variables. To the best of our knowledge, no such splitting formula for forest polynomials has previously appeared in the literature, and the dual forest basis itself is introduced here.
+
 \subsection*{The ring of RC graphs}
 
 Perhaps the strongest indication that this is the ``correct'' way to decompose RC graphs is that these formulas are proved by the fact that if we define
 $$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\mathrm{RC}_n}$$
 then there is an associative product $\diamond$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
 $$\alpha(R) = \dsch_u^n$$
-where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\diamond$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorem \ref{theorem:LRforest} piggybacks off of this as well, defining an ideal $\Gamma$ of $\BRC$ such that $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintining the projection to $\dcoma$ and leveraging this to find the formula.
+where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\diamond$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintining the projection to $\dcoma$ and leveraging this to find the formula.
 
 \subsection*{Conjectures}
 
@@ -313,15 +344,15 @@ Let $B$ be a $k$-row reduced bumpless pipe dream such that row $k$ has no blanks
 $$\zeromap(\phi(B)) = \phi(\mathbf{t}(B))$$
 \end{conjecture}
 
-This may appear too strong to be a coincidence. Indeed, we believe that this is the case. There is a known bijection between RC graphs and RFC (reduced factorizations with cutoff), a subset of RFs (reduced factorizations), on which a crystal structure is imposed by Morse and Schilling in \cite{morse2016crystal}. This is then shown to realize the Demazure crystal structure of RFCs, essentially equivalent to RC graphs, in \cite{assaf2018demazure}. For another conjecture that would explain such an apparent coincidence, we posit the following.
-\begin{conjecture}
-  Let $e_i, f_i$ be the raising and lowering operators defined by Morse and Schilling in \cite{morse2016crystal}. Let $n>0$ be an integer and suppose $i<n-1$. If $R$ is an RC graph with $n$ rows such that row $n$ is empty, then we have the formulas
-  $$\zeromap(e_i(R)) = e_i(\zeromap(R))$$
-  and
-  $$\zeromap(f_i(R)) = f_i(\zeromap(R))$$
-  and $\zeromap$ is an isomorphism of Demazure crystals from the set of $n$-row RC graphs with row $n$ empty to the set of $(n-1)$-row RC graphs.
-\end{conjecture}
-This is a strengthening of Theorem \ref{theorem:zero_bijection} below, which only asserts that the bijection is weight-preserving.
+% This may appear too strong to be a coincidence. Indeed, we believe that this is the case. There is a known bijection between RC graphs and RFC (reduced factorizations with cutoff), a subset of RFs (reduced factorizations), on which a crystal structure is imposed by Morse and Schilling in \cite{morse2016crystal}. This is then shown to realize the Demazure crystal structure of RFCs, essentially equivalent to RC graphs, in \cite{assaf2018demazure}. For another conjecture that would explain such an apparent coincidence, we posit the following.
+% \begin{conjecture}
+%   Let $e_i, f_i$ be the raising and lowering operators defined by Morse and Schilling in \cite{morse2016crystal}. Let $n>0$ be an integer and suppose $i<n-1$. If $R$ is an RC graph with $n$ rows such that row $n$ is empty, then we have the formulas
+%   $$\zeromap(e_i(R)) = e_i(\zeromap(R))$$
+%   and
+%   $$\zeromap(f_i(R)) = f_i(\zeromap(R))$$
+%   and $\zeromap$ is an isomorphism of Demazure crystals from the set of $n$-row RC graphs with row $n$ empty to the set of $(n-1)$-row RC graphs.
+% \end{conjecture}
+% This is a strengthening of Theorem \ref{theorem:zero_bijection} below, which only asserts that the bijection is weight-preserving.
 
 \section{The Schubert Bialgebra and its dual}
 \subsection{Some preliminaries}
@@ -2375,6 +2406,111 @@ $$\dsch_u^p\dsch_v^q = \alpha(U_1)\alpha(V_1) = \alpha(U_1\diamond V_1) = \sum_{
 The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=d_{U_2, V_2}^w$ by definition, and we have the result.
 \end{proof}
 
+\section{The ring of RC graph crystals}
+
+\subsection{Little bumps}
+
+\begin{definition}
+Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
+$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
+Then define
+$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
+Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
+\end{definition}
+
+\begin{proposition} \label{proposition:little_bump}
+  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
+  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
+  and 
+  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k$$ 
+  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
+  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
+\end{proposition}
+\begin{proof}
+Consider the biword
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
+a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
+\end{matrix}$$
+The first deletion yields
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
+a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
+\end{matrix}$$
+Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
+
+We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
+\end{proof}
+
+\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
+Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
+$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
+for any valid $p$.
+\end{theorem}
+
+\begin{corollary}
+  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
+\end{corollary}
+
+\begin{corollary} \label{corollary:crystaliso}
+$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is a weight-preserving isomorphism of crystal graphs.
+\end{corollary}
+
+
+\begin{corollary}
+  We have the equality
+$$\lzeromap=\zeromap$$ 
+\end{corollary}
+\subsection{The dual key basis and the ring of RC graph crystals}
+
+\begin{definition}[The dual key basis]
+  For a weak composition $a$ of length $n$, define $\kappa_a^*\in \dcoma_n$ to be the unique element such that $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
+\end{definition}
+
+\begin{definition}[The submodule $\Gamma\subseteq \BRC$]
+  Let $\Theta$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$.
+
+\end{definition}
+
+\begin{lemma}
+  $\Theta$ is a two-sided ideal of $\BRC$.
+\end{lemma}
+\begin{proof}
+  The fact that $\Theta$ is a left ideal follows from the fact that the products $R\diamond R_1$ and $R\diamond R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. Since the crystals raising/lowering operators act directly on adjacent rows, the same crystal operators will apply to the rows below, so that $R\diamond R_1$ and $R\diamond R_2$ have the same crystal structure In the trailing rows. In passing to highest weights $\mathbb{Y}(R\diamond R_1)$ and $\mathbb{Y}(R\diamond R_2)$, we may pass through the partial highest weights $R\diamond Y(R_1) = R\diamond Y(R_2)$, so that in particular the highest weights of the bijectively corresponding terms of $R\diamond R_1$ and $R\diamond R_2$ are the same.
+  
+  %, so that $R\diamond R_1 - R\diamond R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\mathbb{Y}(R_1') = \mathbb{Y}(R_2')$, and $\Theta$ is a left ideal.
+
+  To prove that $\Theta$ is a right ideal, the same argument applies, but we must invoke Corollary \ref{corollary:crystaliso} to guarantee that the crystals remain isomorphic as needed.
+\end{proof}
+
+\begin{lemma}
+  The homomorphism $\alpha:\BRC\to\dcoma$ factors through the quotient $\BRC/\Theta$.
+\end{lemma}
+\begin{proof}
+This is because the generators of $\Theta$ are all in $\Omega$.
+\end{proof}
+
+\begin{definition}
+For a composition $a$, define  an element $K_a\in\BRC/\Theta$ by
+$$K_a =\sum_{R\in\mathrm{Dem}_{\RC}(a)\atop R=\mathbb{Y}(R)} \dsch_{\wof{R}}^{\hr(R)}$$
+\end{definition}
+
+\begin{proposition}
+The elements $K_a\in\BRC/\Theta$ form an additive basis of a subring isomorphic to $\dcoma$ under the homomorphism $\alpha:\BRC/\Theta\to \dcoma$, and 
+$$\alpha(K_a) = \kappa_a^*$$
+\end{proposition}
+\begin{proof}
+The $K_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Theta\to \dcoma$. We have that $\alpha(K_a)=\kappa_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $K_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $K_a$, and since 
+$$\alpha(K_a)\alpha(K_b) = \kappa_a^*\kappa_b^*=\sum_{c}f_{ab}^c\kappa_c^*=\sum f_{a,b}^c\alpha(K_c),$$ 
+it follows that $K_aK_b$ is a linear combination of the $K_c$, so the span of the $K_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{theorem:LRkey}]
+  The coefficient of $K_c$ in $K_aK_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are equivalence classes of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
+\end{proof}
+
+
 \section{The ring of forest classes of RC graphs}
 
 \subsection{Indexed forests, forest invariant}
@@ -2443,6 +2579,12 @@ Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathb
   Part I of this theorem follows from the fact that for any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$, which are simply the RC graphs in the corresponding equivalence class of RC graphs. Part II follows from Theorem \ref{theorem:forestforest} and the definition of the dual Schubert basis.
 \end{proof}
 
+\subsection{The dual forest basis and the ring of forest classes of RC graphs}
+
+\begin{definition}[The dual forest basis]
+  For a weak composition $a$ of length $n$, define $\forest_a^*\in \dcoma_n$ to be the unique element such that $\langle \forest_a^*, \forest_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
+\end{definition}
+
 \begin{definition}[The submodule $\Gamma\subseteq \BRC$]
   Let $\Gamma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $R_1\equiv_\forest R_2$.
 
@@ -2472,7 +2614,8 @@ $$F_a =\sum_{[R]\in\mathcal{C}_\forest(a)} [R]$$
 \end{definition}
 
 \begin{proposition}
-The elements $F_a\in\BRC/\Gamma$ form an additive basis of a subring isomorphic to $\dcoma$ under the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$.
+The elements $F_a\in\BRC/\Gamma$ form an additive basis of a subring isomorphic to $\dcoma$ under the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$, and 
+$$\alpha(F_a) = \forest_a^*$$
 \end{proposition}
 \begin{proof}
 The $F_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$. We have that $\alpha(F_a)=\forest_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $F_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $F_a$, and since 
@@ -2484,62 +2627,6 @@ it follows that $F_aF_b$ is a linear combination of the $F_c$, so the span of th
   The coefficient of $F_c$ in $F_aF_b$ is the same as the coefficient of $\forest_c^*$ in $\forest_a^*\forest_b^*$, which is $f_{a,b}^c$ by definition. Since each of the summands of $F_c$ that are equivalence classes of RC graphs are distinct from the summands of any other forest element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
 
-\section{The ring of RC graph crystals}
-
-\subsection{Little bumps}
-
-\begin{definition}
-Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
-$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
-Then define
-$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
-Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
-\end{definition}
-
-\begin{proposition} \label{proposition:little_bump}
-  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
-  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
-  and 
-  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k$$ 
-  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
-  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
-\end{proposition}
-\begin{proof}
-Consider the biword
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
-a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
-\end{matrix}$$
-The first deletion yields
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
-a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
-\end{matrix}$$
-Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
-
-We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
-\end{proof}
-
-\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
-Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
-$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
-for any valid $p$.
-\end{theorem}
-
-\begin{corollary}
-  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
-\end{corollary}
-
-\begin{corollary}
-$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{corollary}
-
-
-\begin{corollary}
-  We have the equality
-$$\lzeromap=\zeromap$$ 
-\end{corollary}
 
 
 \section{Appendix}
