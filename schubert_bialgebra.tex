@@ -263,6 +263,10 @@ Suppose $u,v\in S_\infty$ and $p,q\geq 0$ are integers such that the last descen
 $$\dsch_u^p\dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\dsch_w^{p+q}$$
 Then for any fixed choices of RC graphs $U\in \RC_p(u)$, $V\in\RC_q(v)$, and a permutation $w\in S_\infty$, we have that $d_{u, v}^w(p, q)$ is the number of RC graphs $R\in \RC_{p+q}(w)$ such that $\clp^p(R)=U$ and $\trm^p(R)=V$, and is in particular nonnegative.
 \end{theorem}
+
+We note that, when restricted to Grassmannian permutations, Theorem \ref{theorem:LR} reduces directly to a Littlewood--Richardson rule for Schur polynomials: if $u$, $v$, $w$ are Grassmannian with unique descents at $p$, $q$, $p+q$ corresponding to partitions $\lambda$, $\mu$, $\nu$, then $\dsch^p_u$, $\dsch^q_v$, $\dsch^{p+q}_w$ are precisely the Schur polynomials $s_\lambda(x_1,\ldots,x_p)$, $s_\mu(x_{p+1},\ldots,x_{p+q})$, $s_\nu(x_1,\ldots,x_{p+q})$, and the classical splitting
+$$s_\nu(x_1,\ldots,x_{p+q}) = \sum_{\lambda,\mu} c^{\nu}_{\lambda,\mu}\, s_\lambda(x_1,\ldots,x_p)\, s_\mu(x_{p+1},\ldots,x_{p+q})$$
+identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} thus gives an alternative positive combinatorial rule for the classical Littlewood--Richardson coefficients in terms of RC graphs and the $\clp^p / \trm^p$ decomposition.
 \newcommand{\forest}{\mathfrak{P}}
 \newcommand{\fcode}{\mathfrak{c}_f}
 \subsection*{Key polynomials}
@@ -293,7 +297,7 @@ Fix an RC graph $C$ such that $\mathrm{extwt}(C) = c$. Then $k_{a, b}^c$ is the 
 
 Equivalently, Theorem \ref{theorem:LRkey} is a positive combinatorial branching rule
 $$\kappa_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} k_{a,b}^c\,\kappa_a(x_1,\ldots,x_p)\,\kappa_b(x_{p+1},\ldots,x_{p+q})$$
-expressing a key polynomial in $p+q$ variables as a nonnegative integer combination of products of key polynomials in the first $p$ and last $q$ variables. The nonnegativity of these coefficients is, in retrospect, a consequence of the theory of \emph{excellent filtrations} for $B$-modules introduced by Polo \cite{polo1989excellent} and van der Kallen \cite{vanderkallen1989longest}, with existence of such filtrations on tensor products of Demazure modules established in general by Mathieu \cite{mathieu1990filtrations}; see also Joseph \cite{joseph1985demazure}. Restricting a Demazure module $V_c(\lambda)$ for $GL_{p+q}$ to the Borel of the Levi $GL_p\times GL_q$ yields a $B$-module with an excellent filtration, whose Demazure subquotients account for the $k_{a,b}^c$. To the best of our knowledge, however, no explicit positive combinatorial formula for these coefficients has previously appeared in the literature, and the dual key basis itself does not appear to have been studied before.
+expressing a key polynomial in $p+q$ variables as a nonnegative integer combination of products of key polynomials in the first $p$ and last $q$ variables. The coefficients $k_{a,b}^c$ may be regarded as the Demazure analogue of the $GL_{p+q}\downarrow GL_p\times GL_q$ Littlewood--Richardson branching coefficients: in the full-Demazure (Schur) case they reduce to the classical $c_{\mu,\nu}^{\lambda}$. Their nonnegativity is, in retrospect, a consequence of the theory of \emph{excellent filtrations} for $B$-modules introduced by Polo \cite{polo1989excellent} and van der Kallen \cite{vanderkallen1989longest}, with existence of such filtrations on tensor products of Demazure modules established in general by Mathieu \cite{mathieu1990filtrations}; see also Joseph \cite{joseph1985demazure}. Restricting a Demazure module $V_c(\lambda)$ for $GL_{p+q}$ to the Borel of the Levi $GL_p\times GL_q$ yields a $B$-module with an excellent filtration whose Demazure subquotients account for the $k_{a,b}^c$. While this abstract nonnegativity is classical, no explicit positive combinatorial rule for these coefficients appears in the literature to our knowledge, and the dual key basis itself does not appear to have been studied before.
 
 \subsection*{Forest polynomials}
 
@@ -324,7 +328,7 @@ Fix an RC graph $C$ such that $\code_\forest(C) = c$. Then $f_{a, b}^c$ is the n
 
 As with the dual key basis, Theorem \ref{theorem:LRforest} is equivalent to a positive combinatorial branching formula
 $$\forest_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} f_{a,b}^c\,\forest_a(x_1,\ldots,x_p)\,\forest_b(x_{p+1},\ldots,x_{p+q})$$
-expressing a forest polynomial in $p+q$ variables as a nonnegative integer combination of products of forest polynomials in the first $p$ and last $q$ variables. To the best of our knowledge, no such splitting formula for forest polynomials has previously appeared in the literature, and the dual forest basis itself is introduced here.
+expressing a forest polynomial in $p+q$ variables as a nonnegative integer combination of products of forest polynomials in the first $p$ and last $q$ variables. To the best of our knowledge, no such positive combinatorial splitting rule for forest polynomials has previously appeared in the literature, and the dual forest basis itself does not appear to have been studied before.
 
 \subsection*{The ring of RC graphs}
 
@@ -1091,7 +1095,7 @@ We proceed now to define a product on $\BRC$ turning it into a ring. To do this,
 \end{algorithm}
 
 
-\begin{algorithm} \label{algorithm:zero}
+\begin{algorithm} 
 	\caption{Map $\zeromap(R)$ zeroing out last row}
 	\label{algorithm:zero}
 	\begin{algorithmic}[1]
@@ -2471,11 +2475,31 @@ $$\lzeromap=\zeromap$$
   For a weak composition $a$ of length $n$, define $\kappa_a^*\in \dcoma_n$ to be the unique element such that $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
 \end{definition}
 
-We invoke the following result of Reiner and Shimozono.
-\begin{theorem}[{\cite[Theorem~5(3)]{reiner1995key}}] \label{theorem:keykey}
-  For a weak composition $a$ of length $n$, we have
-  $$\kappa_a = \sum_{\mathrm{rev}(\mathbf{r})\sim_{\mathrm{CK}} \mathrm{key}(a)\atop b\mbox{ is }a{-compatible}} x^b$$
+% We invoke the following result of Reiner and Shimozono.
+
+
+\begin{definition}[Crystal action on RC graphs, highest weights, extremal weights] \label{definition:crystal}
+Following Morse and Schilling \cite{morse2016crystal}, who defined an $A_{\ell-1}$-crystal structure on reduced factorizations of a permutation $w$, and the adaptation to RC graphs by Assaf and Schilling \cite{assaf2018demazure}, we equip $\RC(w)$ with Kashiwara raising and lowering operators $e_i, f_i$ for $i\geq 1$. The operator pair $(e_i, f_i)$ acts only on rows $i$ and $i+1$ of an RC graph $R$, viewed as adjacent factors in the corresponding reduced factorization.
+
+The action is governed by a bracketing procedure on the column indices appearing in rows $i$ and $i+1$. Process the entries of row $i$ in decreasing order of column index: for each column $b$ in row $i$, pair it with the smallest column $a>b$ appearing in row $i+1$ that has not yet been paired in an earlier step; if no such $a$ exists, $b$ is left unpaired. Let $R_i(R)$ denote the set of unpaired column indices in row $i$, and $L_i(R)$ the set of unpaired column indices in row $i+1$.
+
+If $R_i(R)$ is nonempty, $f_i(R)$ is obtained by removing the smallest unpaired entry $b\in R_i(R)$ from row $i$ and inserting an entry into row $i+1$ at the largest column $b' < b$ such that $b'$ does not already appear in row $i+1$; if $R_i(R) = \emptyset$ or no such $b'$ exists, $f_i(R) = \emptyset$. Dually, if $L_i(R)$ is nonempty, $e_i(R)$ is obtained by removing the largest unpaired entry $a\in L_i(R)$ from row $i+1$ and inserting an entry into row $i$ at the smallest column $a' > a$ such that $a'$ does not already appear in row $i$; if $L_i(R) = \emptyset$ or no such $a'$ exists, $e_i(R) = \emptyset$.
+
+The \emph{weight} of $R$ as an element of the crystal is simply $\wtt(R)$, the row weight itself. A \emph{highest weight} element is an RC graph $R$ with $e_i(R) = \emptyset$ for all $i\geq 1$. Every $R\in \RC(w)$ corresponds to a unique highest weight element $\mathbb{Y}(R)$, which can always be obtained by greedily applying available $e_i$ until none apply.The \emph{Demazure crystal} $\mathrm{Dem}(R)$ generated by a highest weight $\mathbb{Y}(R)$ is the closure of $\{\mathbb{Y}(R)\}$ under the operators $\{f_i^k : i\geq 1, k\geq 0\}$ subject to the Demazure truncation rule of \cite{assaf2018demazure}. The \emph{extremal weight} $\mathrm{extwt}(R)$ of $R$ is the weak composition that is the lexicographically smallest weight of any element of $\mathrm{Dem}(R)$.
+\end{definition}
+
+The significance of this elaborate structure is the following.
+\begin{theorem} \label{theorem:keykey}
+If $A\in\BRC$ is such that $\mathrm{extwt}(A) = a$, then
+$$\kappa_a = \sum_{R\in\mathrm{Dem}(A)} x^{\wtt(R)}$$
 \end{theorem}
+% where $\mathrm{Dem}_{\RC}(a)$ is the set of RC graphs $R$ such that $\mathrm{extwt}(R) = a$. In particular, the Demazure crystal $\mathrm{Dem}(R)$ is precisely the set of RC graphs $R'$ such that $\mathbb{Y}(R') = \mathbb{Y}(R)$ and $\mathrm{extwt}(R') = \mathrm{extwt}(R)$, so that the above formula is equivalent to the following result of Reiner and Shimozono.
+
+% \begin{theorem}[{\cite[Theorem~5(3)]{reiner1995key}}] \label{theorem:keykey}
+%   For a weak composition $a$ of length $n$, we have
+%   $$\kappa_a = \sum_{\mathrm{rev}(\mathbf{r})\sim_{\mathrm{CK}} \mathrm{key}(a)\atop b\mbox{ is }a{-compatible}} x^b$$
+% \end{theorem}
+
 
 \begin{proof}[Proof of Theorem \ref{theorem:keyformula}]
   The statement of the theorem is equivalent to Lascoux and Sch\"utzenberger's formula for Schubert polynomials in terms of key polynomials through Theorem \ref{theorem:keykey}.
@@ -2672,10 +2696,10 @@ By the restricted Pieri formula (Proposition \ref{proposition:pieri}), for this 
 $$v\Tom{i}v'w_0(n)s_1\cdots s_{n+1-i}w_0(n)=v's_ns_{n-1}\cdots s_i$$
 We have that $v's_n\cdots s_i$ is exactly $\varphi_{i,n}(v')$ since $v'\in S_n$, so we require that
 $$v\Tom{i}\varphi_{i,n}(v')$$
-so the sum is over all $v'$ with $v\downvar{1} v'$.
+so the sum is over all $v'$ with $v\downvar{i} v'$.
 
 Applying Proposition \ref{proposition:pieri}, we obtain that the result is equal to
-$$\sum_{v\downvar{1} v'} \sch_{v'}(x^{(i)};y)\prod_{a\in A(v',v)}(x_i - y_a)$$
+$$\sum_{v\downvar{i} v'} \sch_{v'}(x^{(i)};y)\prod_{a\in A(v',v)}(x_i - y_a)$$
 where $A(v',v)$ is the set of all $vw_0(n)(j)$ such that $1\leq j\leq n+1-i$ and $v'w_0(n)s_1\cdots s_{n+1-i}(j)=vw_0(n)(j)$. These values are the same as at the indices that comprise the set of all $1\leq j\leq n+1-i$ such that
 $$v'(n+2-s_1\cdots s_{n+1-i}(j))=v(n+2-j)$$
 Applying the $s_1\cdots s_{n+1-i}$ to $j$, since $1\leq j\leq n+1-i$ we have that 
