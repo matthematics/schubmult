@@ -4,6 +4,19 @@ from schubmult.combinatorics.rc_graph import RCGraph
 from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
+def _canonical_rc(rc):
+    if rc.is_quasi_yamanouchi:
+        return rc
+    #row = 1
+    for i in range(1, len(rc)):
+        if max(rc[i], default=0) < min(rc[i - 1], default=0) and min(rc[i - 1], default=0) >= i + 1:
+            new_rc = [*rc]
+            new_rc[i] = (*rc[i - 1], *rc[i])
+            new_rc[i - 1] = ()
+            return _canonical_rc(RCGraph(new_rc))
+    raise ValueError(f"Should never reach here {rc=} {rc.is_quasi_yamanouchi=}")
+
+
 class QYRCGraphRing(RCGraphRing):
     _id = 0
 
@@ -28,11 +41,8 @@ class QYRCGraphRing(RCGraphRing):
     def _snap_qy(self, elem):
         ret = self.zero
 
-        def the_qy(rc):
-            return next(iter([rc0 for rc0 in RCGraph.all_rc_graphs(rc.perm, len(rc)) if rc0.perm_word == rc.perm_word and rc0.is_quasi_yamanouchi]))
-
         for key, coeff in elem.items():
-            ret += self.from_dict({the_qy(key): coeff})
+            ret += self.from_dict({_canonical_rc(key): coeff})
         return ret
 
     def mul(self, a, b):

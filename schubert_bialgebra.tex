@@ -114,6 +114,7 @@
 \newcommand{\wof}[1]{w_{#1}}
 \newcommand{\rcdd}{\mathfrak{F}}
 \newcommand{\wtt}{\mathtt{wt}}
+\newcommand{\QY}{\ensuremath{\mathbb{QY}}}
 \newcommand{\tom}[1]{\xrightarrow{#1}}
 \newcommand{\Tom}[1]{\xRightarrow{#1}}
 \newcommand{\mot}[1]{\xleftarrow{#1}}
@@ -279,12 +280,8 @@ where the sum runs over semistandard Young tableaux $T$ of shape $\mathrm{sort}(
 
 From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from the highest weight element by closure under the operators $\{f_{i_k}^n : n\geq 0\}$, and Kashiwara proved that its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. In type $A$, this means $\kappa_a$ is precisely the character of a Demazure crystal inside a tensor product of fundamental crystals, and the key polynomial expansion of any nonnegative-on-Demazure-crystals polynomial is forced to be nonnegative. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs (equivalently, pipe dreams) of a permutation $w$, thereby giving a representation-theoretic proof of the Lascoux--Schützenberger key-positivity of Schubert polynomials. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
 
-There is a dual key basis $\{\kappa_a^*\}$ of $\dcoma$ defined by $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$, where as before we are restricting to fixed lengths of compositions, and we give an explicit formula for these dual key polynomials in terms of RC graphs. Specifically, for an RC graph $R$, we define the \emph{extremal weight} $\mathrm{extwt}(R)$ to be the extremal weight of the Demazure crystal of $R$, which is the unique lowest weight element that generates the crystal, and we define $\mathrm{Dem}(R)$ to be the set of RC graphs in the same Demazure crystal as $R$. Then we have the following.
+There is a dual key basis $\{\kappa_a^*\}$ of $\dcoma$ defined by $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$, where as before we are restricting to fixed lengths of compositions, and we give an explicit formula for these dual key polynomials in terms of RC graphs. Specifically, for an RC graph $R$, we define the \emph{extremal weight} $\mathrm{extwt}(R)$ to be the extremal weight of the Demazure crystal of $R$, which is the unique lowest weight element that generates the crystal, and we define $\mathrm{Dem}(R)$ to be the set of RC graphs in the same Demazure crystal as $R$.
 
-\begin{theorem} \label{theorem:keyformula}
-  Let $c$ be a weak composition. Then dual key polynomial $\kappa^*_c$ is equal to
-$$\kappa^*_c = \sum_{R=\mathbb{Y}(R)\atop\mathrm{extwt}(R)=c} \dsch_{\wof{R}}^{\hr(R)}$$
-\end{theorem}
 
 
 Our $\zeromap$ has an alternative description in terms of Little bumps on reduced words, as defined by Little in \cite{little2003combinatorial}. It was shown by Hamaker and Young \cite{hamaker2014relating} that Little bumps preserve Coxeter-Knuth moves, which precisely characterize the Demazure crystals of an RC graph, so that $\zeromap$ preserves the Demazure crystal structure on RC graphs. This allows us to give a Littlewood-Richardson type rule for multiplication in the dual key basis. Specifically, we have the following.
@@ -303,19 +300,7 @@ expressing a key polynomial in $p+q$ variables as a nonnegative integer combinat
 
 Note that \emph{any} polynomial basis that is graded by length and degree has a corresponding dual basis in $\dcoma$. In particular, the \emph{forest polynomials} are such a basis. These were introduced by Nadeau and Tewari in \cite{nadeau2024forest} and are closely related to Schubert polynomials. They can be defined by reduced words and compatible sequences, but the invariant preserved by these words is distinct from the permutation. Given a reduced word/compatible sequence pair $(\mathbf{r},\mathbf{s})$, there is an insertion algorithm that produces a corresponding invariant $\mathcal{F}(\mathbf{r},\mathbf{s})$ that represents an equivalence relation on the words, where the compatible sequence can vary arbitrarily. We therefore shorten the notation to $\mathcal{F}(\mathbf{r})$. The equivalence classes $\mathcal{F}$ consist of words that are all for the same permutation, so that if we define
 $$R\equiv_{\forest} R'$$
-to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$. Then we have
-\begin{theorem}\label{theorem:forestformula}
-  We have the following.
-  \begin{itemize}
-\item[I] Let $R\in \BRC$ be a bounded RC graph. Then the forest polynomial $\forest_{\fcode(R)}$ is equal to
-$$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
-
-\item[II] Let $c$ be a weak composition. Then dual forest polynomial $\forest^*_c$ is equal to
-$$\forest^*_c = \sum_{[R]\in\mathcal{C}_\forest(c)} \dsch_{\wof{R}}^{\hr(R)}$$
-  \end{itemize}
-\end{theorem}
-
-Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph formula for forest polynomials.
+to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$.
 
 
 
@@ -340,7 +325,7 @@ where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC
 
 \subsection*{Conjectures}
 
-Beyond this, there is potentially much to explore. For example, the coproduct of $\dcoma$ has as its structure constants the structure constants of Schubert polynomials, which have evaded expression in terms of positive formulas for decades, and at the time of this writing no positive, combinatorial formula is known for the structure constants of Schubert polynomials that applies in all cases. At the very least, this coproduct is a new potential method of attack on this and related problems, since as far as we know it is new. An expression for $\dsch_w^n$ in the composition basis leads to a simple, purely mechanical method for computing all $c_{u,v}^w$ (generalized Littlewood-Richardson coefficients for Schubert polynomials) by leveraging the extremely simple form the coproduct takes on the composition basis, as well as a neat positive formula for the expansion of a composition $[a]$ in the Schubert basis.
+Beyond this, there is potentially much to explore. For example, the coproduct of $\dcoma$ has as its structure constants the structure constants of Schubert polynomials, which have evaded expression in terms of positive formulas for decades, and at the time of this writing no positive, combinatorial formula is known for the structure constants of Schubert polynomials that applies in all cases. At the very least, this coproduct is a new potential method of attack on this and related problems, since as far as we know it is new. An expression for $\dsch_w^n$ in the composition basis leads to a simple, purely mechanical method for computing all $c_{u,v}^w$ (generalized Littlewood-Richardson coefficients for Schubert polynomials) by leveraging the extremely simple form the coproduct takes on the weak composition basis, as well as a neat positive formula for the expansion of a weak composition $[a]$ in the Schubert basis.
 %It is a nearly trivial observation that if a basis of the polynomial ring is such that the Schubert polynomials have a nonnegative expression in terms of that basis, then the dual Schubert elements can be expressed nonnegatively in terms of the corresponding dual basis.
 
 For the reader familiar with bumpless pipe dreams \cite{lam2021back}, we state without proof that our apparently complex transition algorithm for RC graphs can be realized almost trivially for bumpless pipe dreams. Specifically, while (reduced) bumpless pipe dreams are typically defined in such a way that they cannot deviate from a square shape, there is indeed a consistent way to remove rows from a bumpless pipe dream unambiguously. This was observed by Yu in \cite[Lemma~3.18]{Yu2025EmbeddingBP} in the definition of a $k$-row BPD. Wiengandt in \cite{Weigandt2021} defines a transition formula $\mathbf{t}:\mathrm{BPD}_n\to\mathrm{BPD}_{n-1}$ and while the image is realized as square, it agrees with Yu's notion of an $n-1$-row BPD.
@@ -2392,13 +2377,19 @@ $\Omega$ is a two-sided ideal of $\BRC$.
 \end{proof}
 
 \begin{theorem} \label{theorem:semidirect}
-  We have that $\alpha:\BRC\to \dcoma$ is a surjective homomorphism of rings with kernel $\Omega$, and the homomorphism $\dcoma\to\BRC$ sending $[i]\mapsto \mathtt{row}(i)$ is a right inverse to $\alpha$. In particular, $\BRC\cong \dcoma\ltimes \Omega$ as rings.
+  We have that $\alpha:\BRC\to \dcoma$ is a surjective homomorphism of rings with kernel $\Omega$, and the homomorphism $\iota:\dcoma\to\BRC$ sending $[i]\mapsto \mathtt{row}(i)$ is a right inverse to $\alpha$. In particular, $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{theorem}
 \begin{proof}
   We have an exact sequence
 $$0\to \Omega\to \BRC\to \dcoma\to 0$$
-where the map $\BRC\to \dcoma$ is $\alpha$. We have a homomorphism $\dcoma\to \BRC$ sending $[i]\mapsto \mathtt{row}(i)$ inducing an isomorphism on $\mathcal{R}$, and the composition $\dcoma\to \BRC\to \dcoma$ is the identity since $\alpha(\mathtt{row}(i)) = [i]$. Since $\Omega$ is a two-sided ideal, we can conclude that $\alpha$ is in fact a homomorphism of rings. Since $\BRC = \mathcal{R}\oplus \Omega$, by virtue of the fact that the sequence is split, and $\mathcal{R}\cong \dcoma$, we have $\BRC\cong \dcoma\ltimes \Omega$ as rings.
+where the map $\BRC\to \dcoma$ is $\alpha$. We have a homomorphism $\iota:\dcoma\to \BRC$ sending $[i]\mapsto \mathtt{row}(i)$ inducing an isomorphism on $\mathcal{R}$, and the composition $\dcoma\to \BRC\to \dcoma$ is the identity since $\alpha(\mathtt{row}(i)) = [i]$. Since $\Omega$ is a two-sided ideal, we can conclude that $\alpha$ is in fact a homomorphism of rings. Since $\BRC = \mathcal{R}\oplus \Omega$, by virtue of the fact that the sequence is split, and $\mathcal{R}\cong \dcoma$, we have $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{proof}
+
+\begin{proposition}
+Let $[c]$ be a weak composition of length $n$. Then
+$$[c] = \sum_{\substack{w\in S_\infty\\\maxd(w)\leq n}}\#{R\in \RC_n(w)\mid wtt(R)=c} \dsch_{\wof{R}}^n$$
+\end{proposition}
+
 
 \begin{definition}
 Given RC graphs $U\in \RC_p(u)$ and $V\in\RC_q(v)$ and a permutation $w$, define
@@ -2413,70 +2404,23 @@ $$\dsch_u^p\dsch_v^q = \alpha(U_1)\alpha(V_1) = \alpha(U_1\diamond V_1) = \sum_{
 The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=d_{U_2, V_2}^w$ by definition, and we have the result.
 \end{proof}
 
+% Let $R$ be an RC graph with $\wof{R}=w$ and $\hr(R)=n$. Then for any $m\leq n$,
+% $$\dsch_w^n = \alpha(\clp^m(R))\alpha(\trm^m(R)) - \sum_{\substack{\clp^m(R')=\clp^m(R)\\\trm^m(R')=\trm^m(R)\\R'\neq R}} \alpha(R')$$
+
+% $n=4$
+
+% $$\dsch_w^4 = \alpha(\clp^2(R))\alpha(\trm^2(R)) - \sum_{R'}\alpha(\clp^1(R))\alpha(\trm^1(R'))$$
+
+% $$\dsch_w^m = \sum_i(-1)^{i-1}\sum_{\substack{\clp^{\left\lfloor \frac m{2^{i}}\right\rfloor}(R')=\clp^{\left\lfloor \frac m{2^{i}}\right\rfloor}(R)\\\trm^{\left\lfloor \frac m{2^{i}}\right\rfloor}(R')=\trm^{\left\lfloor \frac m{2^{i}}\right\rfloor}(R)\\\trm^{\left\lfloor \frac m{2^{i+1}}\right\rfloor}(R')\neq\trm^{\left\lfloor \frac m{2^{i+1}}\right\rfloor}(R)}} \alpha(\clp^{\left\lfloor \frac m{2^i}\right\rfloor}(R))\alpha(\trm^{\left\lfloor \frac m{2^i}\right\rfloor}(R'))$$
+
+% Suppose $D\in \dcoma$ satisfies
+% $$D = \sum_{w} c_w \dsch_w^n$$
+% Then
+% $$D = \sum_{w} c_w \wtt(\dsch_w^n(\mathtt{row}))$$
+
 \section{The ring of RC graph crystals}
 
-\subsection{Little bumps}
-
-\begin{definition}
-Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
-$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
-Then define
-$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
-Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
-\end{definition}
-
-\begin{proposition} \label{proposition:little_bump}
-  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
-  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
-  and 
-  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k$$ 
-  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
-  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
-\end{proposition}
-\begin{proof}
-Consider the biword
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
-a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
-\end{matrix}$$
-The first deletion yields
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
-a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
-\end{matrix}$$
-Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
-
-We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
-\end{proof}
-
-\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
-Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
-$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
-for any valid $p$.
-\end{theorem}
-
-\begin{corollary}
-  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
-\end{corollary}
-
-\begin{corollary} \label{corollary:crystaliso}
-$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{corollary}
-
-
-\begin{corollary}
-  We have the equality
-$$\lzeromap=\zeromap$$ 
-\end{corollary}
-\subsection{The dual key basis and the ring of RC graph crystals}
-
-\begin{definition}[The dual key basis]
-  For a weak composition $a$ of length $n$, define $\kappa_a^*\in \dcoma_n$ to be the unique element such that $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
-\end{definition}
-
-% We invoke the following result of Reiner and Shimozono.
-
+\subsection{Little bumps and the crystal action on RC graphs}
 
 \begin{definition}[Crystal action on RC graphs, highest weights, extremal weights] \label{definition:crystal}
 Following Morse and Schilling \cite{morse2016crystal}, who defined an $A_{\ell-1}$-crystal structure on reduced factorizations of a permutation $w$, and the adaptation to RC graphs by Assaf and Schilling \cite{assaf2018demazure}, we equip $\RC(w)$ with Kashiwara raising and lowering operators $e_i, f_i$ for $i\geq 1$. The operator pair $(e_i, f_i)$ acts only on rows $i$ and $i+1$ of an RC graph $R$, viewed as adjacent factors in the corresponding reduced factorization.
@@ -2493,6 +2437,99 @@ The significance of this elaborate structure is the following.
 If $A\in\BRC$ is such that $\mathrm{extwt}(A) = a$, then
 $$\kappa_a = \sum_{R\in\mathrm{Dem}(A)} x^{\wtt(R)}$$
 \end{theorem}
+
+It will be advantageous to have an alternative, crystal-friendly definition of the map $\zeromap$ for the purposes of proving results about key polynomials.
+
+\begin{definition}[Little bumps]
+  Given a reduced word $a_1\cdots a_m$ for a permutation $w$ and an index $1\leq p\leq m$, the \emph{Little bump} $\ltb_p(a_1\cdots a_m)$ is defined recursively as follows. If $a_p>1$, replace $a_p$ with $a_p-1$, and if $a_p=1$ then instead replace all $a_q$ with $q\neq p$ with $a_q+1$. Denote the new word by $a_1'\cdots a_m'$. If this resulting word is reduced, we are done. Otherwise, there is a unique index $j\neq p$ such that the word obtained by deleting $a_j'$ from the new word is reduced by the deletion property of Coxeter groups. We then define
+  $$\ltb_p(a_1\cdots a_m) = \ltb_j(a_1'\cdots a_m')$$
+\end{definition}
+
+\begin{definition}
+Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
+$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
+Then define
+$$\lmap(R) = (\ins{n-1}{i} R')\setminus\{(n, 1)\}$$
+which we assign height $n+1$. Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$, then reducing the number of rows to $n-1$.
+\end{definition}
+
+\begin{proposition} \label{proposition:little_bump}
+  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
+  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
+  and 
+  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k$$ 
+  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
+  $$\mathrm{word}(\lmap(R)) = \ltb_{p}(\mathrm{word}(R))$$
+\end{proposition}
+\begin{proof}
+Consider the biword
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
+a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
+\end{matrix}$$
+The first deletion yields
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
+a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
+\end{matrix}$$
+Necessarily, we must have $a_p > 1$. To see this, note that if we have $a_p=1$, then we would have $r_p=1$ by the compatible sequence condition. The only way for position $(1,1)$ in an RC graph to be the final right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty, which is included in the hypotheses of the proposition.
+
+We must also have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. Recursively, this is the same as applying $\lmap$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
+\end{proof}
+
+
+
+We invoke the following theorem of Hamaker and Young.
+
+\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}] \label{theorem:littlecrystal}
+Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
+$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
+for any valid $p$.
+\end{theorem}
+
+
+\begin{proposition} \label{proposition:zeroequal}
+  We have that
+$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is an isomorphism of crystal graphs.
+\end{proposition}
+\begin{proof}
+The fact that this is a weight-preserving bijection follows directly from repeated application of \cite[Lemma~7]{little2003combinatorial}, which states that the Little bump on the last descent realizes the Lascoux-Sch\"utzenberger transition formula. The crystal isomorphism follows from Theorem \ref{theorem:littlecrystal}.
+\end{proof}
+
+\begin{theorem}
+We have the equality $\lzeromap=\zeromap$.
+\end{theorem}
+\begin{proof}
+Let $R$ be a bounded RC graph, say with permutation $w$, with $r$ rows and last descent $r$ such that row $r$ is empty. We prove this by induction on $\ell(w)$ as well as on $s - r$, where $s>r$ is the maximal index such that $w(r)>w(s)$. If $s=r+1$, then the definitions of the two maps are identical. 
+
+% Otherwise, we quote the following formula:
+% $$\sch_w(x) = \sch_w(x_1, \ldots, x_{r-1}, 0) + x_r\partial^r(\sch_w(x))(x_1,\ldots,x_r,0)$$
+% We model the second term as follows. 
+By the exchange property of Coxeter groups, there is a unique pair $(i,j)$ such that $\rtt_R(i, j) = (r, r+1)$. Set
+$$R' = R\setminus\{(i,j)\}$$
+and assume that $\hr(R') = r+1$. By the inductive hypothesis, we have $\lzeromap(R') = \zeromap(R')$. We have thus established that $\lzeromap$ and $\zeromap$ induce the same bijection between $\RC(ws_r)^0$ and 
+$$\bigcup_{ws_r\downvar{r+1} w'}\RC(w')$$
+Inspection of both algorithms reveals that the removal of this crossing and the subsequent reinsertion in the first step of both algorithms is precisely the same, and holding this fixed then applying the inductive hypothesis yields the result.
+\end{proof}
+
+\begin{corollary} \label{corollary:crystaliso}
+For any bounded RC graph $R$ and any $i\geq 1$, we have 
+$$\zeromap(e_i(R)) = e_i(\zeromap(R))$$
+and
+$$\zeromap(f_i(R)) = f_i(\zeromap(R))$$
+whenever the left-hand sides are defined.
+\end{corollary}
+
+\subsection{The dual key basis and the ring of RC graph crystals}
+
+\begin{definition}[The dual key basis]
+  For a weak composition $a$ of length $n$, define $\kappa_a^*\in \dcoma_n$ to be the unique element such that $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
+\end{definition}
+
+% We invoke the following result of Reiner and Shimozono.
+
+
 % where $\mathrm{Dem}_{\RC}(a)$ is the set of RC graphs $R$ such that $\mathrm{extwt}(R) = a$. In particular, the Demazure crystal $\mathrm{Dem}(R)$ is precisely the set of RC graphs $R'$ such that $\mathbb{Y}(R') = \mathbb{Y}(R)$ and $\mathrm{extwt}(R') = \mathrm{extwt}(R)$, so that the above formula is equivalent to the following result of Reiner and Shimozono.
 
 % \begin{theorem}[{\cite[Theorem~5(3)]{reiner1995key}}] \label{theorem:keykey}
@@ -2501,10 +2538,18 @@ $$\kappa_a = \sum_{R\in\mathrm{Dem}(A)} x^{\wtt(R)}$$
 % \end{theorem}
 
 
-\begin{proof}[Proof of Theorem \ref{theorem:keyformula}]
+\begin{theorem} \label{theorem:keyformula}
+  Let $c$ be a weak composition. Then dual key polynomial $\kappa^*_c$ is equal to
+$$\kappa^*_c = \sum_{R=\mathbb{Y}(R)\atop\mathrm{extwt}(R)=c} \dsch_{\wof{R}}^{\hr(R)}$$
+\end{theorem}
+\begin{proof}
   The statement of the theorem is equivalent to Lascoux and Sch\"utzenberger's formula for Schubert polynomials in terms of key polynomials through Theorem \ref{theorem:keykey}.
 \end{proof}
 
+\begin{proposition}
+Let $c$ be a weak composition of length $p$. Let $\RC_{\mathbb{Y}}(c)$ be the set of RC graphs $R$ with $\wtt(R) = c$ such that $\mathrm{word}(\mathbb{Y}(R))$ is minimal in lexicographical order among all RC graphs $R'$ such that $\mathrm{extwt}(R) = \mathrm{extwt}(R')$. Then
+$$[c] = \sum_{R\in\RC_{\mathbb{Y}}(c)} \kappa_{\mathrm{extwt}(\mathbb{Y}(R))}^*$$
+\end{proposition}
 
 \begin{definition}[The submodule $\Theta\subseteq \BRC$]
   Let $\Theta$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$.
@@ -2539,7 +2584,7 @@ The elements $K_a\in\BRC/\Theta$ form an additive basis of a subring isomorphic 
 $$\alpha(K_a) = \kappa_a^*$$
 \end{proposition}
 \begin{proof}
-The $K_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Theta\to \dcoma$. We have that $\alpha(K_a)=\kappa_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $K_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $K_a$, and since 
+The last statement is simply Theorem \ref{theorem:keyformula}. The $K_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Theta\to \dcoma$. We have that $\alpha(K_a)=\kappa_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $K_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $K_a$, and since 
 $$\alpha(K_a)\alpha(K_b) = \kappa_a^*\kappa_b^*=\sum_{c}k_{ab}^c\kappa_c^*=\sum k_{a,b}^c\alpha(K_c),$$ 
 it follows that $K_aK_b$ is a linear combination of the $K_c$, so the span of the $K_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
 \end{proof}
@@ -2549,6 +2594,7 @@ it follows that $K_aK_b$ is a linear combination of the $K_c$, so the span of th
 \end{proof}
 
 
+
 \section{The ring of forest classes of RC graphs}
 
 \subsection{Indexed forests, forest invariant}
@@ -2556,7 +2602,9 @@ it follows that $K_aK_b$ is a linear combination of the $K_c$, so the span of th
 \begin{definition}[Indexed forests and codes]
   An \emph{indexed forest} $F$ is a pair $(S, T_\bullet)$ where $S$ is a set of positive integers, called the \emph{support} of $F$, and if we write
   $$S=I_1\cup I_2\cup \cdots \cup I_k$$
-  where $I_1,I_2,\ldots, I_k$ are the maximal intervals contained in $S$, then $T_\bullet$ is a sequence of binary trees $T_1,T_2,\ldots, T_k$ such that $T_j$ has $|I_j|$ internal nodes for each $j$. The internal nodes of $F$ are denoted by $\mathrm{IN}(F)$. There is a natural labeling $\lambda_F:\mathrm{IN}(F)\to S$ sending each internal node, say $v\in T_j$, to the unique element of $I_j$ that is at the same index as $v\in T_j$ in the inorder traversal of $T_j$.
+  where $I_1,I_2,\ldots, I_k$ are the maximal intervals contained in $S$, then $T_\bullet$ is a sequence of binary trees $T_1,T_2,\ldots, T_k$ such that $T_j$ has $|I_j|$ internal nodes for each $j$. The internal nodes of $F$ are denoted by $\mathrm{IN}(F)$. For $v\in \mathrm{IN}(F)$, we denote by $\mathrm{left}(v)$ and $\mathrm{right}(v)$ the left and right children of $v$ respectively, which may not be in $\mathrm{IN}(F)$ if they are leaves, or may be empty.
+  
+  There is a natural labeling $\lambda_F:\mathrm{IN}(F)\to S$ sending each internal node, say $v\in T_j$, to the unique element of $I_j$ that is at the same index as $v\in T_j$ in the inorder traversal of $T_j$.
   
   The function $\rho_F:\mathrm{IN}(F)\to S$ is defined for an internal node $v\in T_j$ by 
   $$\rho_F(v) = \begin{cases}
@@ -2566,8 +2614,10 @@ it follows that $K_aK_b$ is a linear combination of the $K_c$, so the span of th
   For each indexed forest $F$, we assign a weak composition $\code(F)$ by
   $$\code_j(F)=\#\{v\in \mathrm{IN}(F): \rho_F(v)=j\}$$
   Then the \emph{forest polynomial} $\forest_F(x)$ is defined by
-  $$\forest_F(x) = \sum_{\kappa}\prod_{v\in\mathrm{IN}(F)}x_{\kappa(v)}$$
-  where the sum is over all functions $\kappa:\mathrm{IN}(F)\to \mathbb{Z}_{>0}$ such that $\kappa(v)\leq \rho_F(v)$ for all $v\in \mathrm{IN}(F)$, $\kappa(v)\leq\kappa(\mathrm{left}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{left}(v)\in \mathrm{IN}(F)$, and $\kappa(v)<\kappa(\mathrm{right}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{right}(v)\in \mathrm{IN}(F)$.
+  $$\forest_F(x) = \sum_{\tau}\prod_{v\in\mathrm{IN}(F)}x_{\tau(v)}$$
+  where the sum is over all functions $\tau:\mathrm{IN}(F)\to \mathbb{Z}_{>0}$ such that $\tau(v)\leq \rho_F(v)$ for all $v\in \mathrm{IN}(F)$, $\tau(v)\leq\tau(\mathrm{left}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{left}(v)\in \mathrm{IN}(F)$, and $\tau(v)<\tau(\mathrm{right}(v))$ for all $v\in \mathrm{IN}(F)$ such that $\mathrm{right}(v)\in \mathrm{IN}(F)$.
+
+  It is easiest for our purposes to index forest polynomials by weak compositions rather than indexed forests, so we define $\forest_a(x) = \forest_F(x)$ where $F$ is the unique indexed forest such that $\code(F) = a$.
 \end{definition}
 
 \begin{definition}[Injective words, forest invariant]
@@ -2578,7 +2628,7 @@ In \cite{nadeau2024ppartitions}, an alphabet $\overline{\mathbb{Z}}$ is defined 
 \item For all $v\in\mathrm{IN}(F)$, $\mathrm{val}(\rho(v)) = \lambda_F(u)$ for some $u\in\mathrm{IN}(F)$.
 \end{enumerate}
 
-Given any injective word $w = w_1\cdots w_m$ in $\overline{\mathbb{Z}}$, we associate to it inductively an indexed forest $F(w)$, an LBS labeling $P(w)$ of $F(w)$, and an injective ``time-stamp'' labeling $Q(w):\mathrm{IN}(F(w))\to\{1,\ldots,m\}$ as follows. If $m=0$, then $F(w)$ is the empty forest. Otherwise write $w = w'a$ with $w' = w_1\cdots w_{m-1}$, and assume $F' := F(w')$, $P' := P(w')$, and $Q' := Q(w')$ have already been constructed; let $S'$ be the support of $F'$, and let $S' = I_1\cup\cdots\cup I_k$ be its decomposition into maximal intervals (listed left to right). For each $j$, denote by $u_j$ the root of the tree of $F'$ supported on $I_j$, and set $a_j := P'(u_j)$. We obtain $F(w)$ by adjoining a new internal node $u$ to $F'$, with attachments determined by $i := \mathrm{val}(a)$:
+Following \cite{nadeau2024forest}, given any injective word $w = w_1\cdots w_m$ in $\overline{\mathbb{Z}}$, we associate to it inductively an indexed forest $F(w)$, an LBS labeling $P(w)$ of $F(w)$, and an injective ``time-stamp'' labeling $Q(w):\mathrm{IN}(F(w))\to\{1,\ldots,m\}$ as follows. If $m=0$, then $F(w)$ is the empty forest. Otherwise write $w = w'a$ with $w' = w_1\cdots w_{m-1}$, and assume $F' := F(w')$, $P' := P(w')$, and $Q' := Q(w')$ have already been constructed; let $S'$ be the support of $F'$, and let $S' = I_1\cup\cdots\cup I_k$ be its decomposition into maximal intervals (listed left to right). For each $j$, denote by $u_j$ the root of the tree of $F'$ supported on $I_j$, and set $a_j := P'(u_j)$. We obtain $F(w)$ by adjoining a new internal node $u$ to $F'$, with attachments determined by $i := \mathrm{val}(a)$:
 \begin{itemize}
 \item If $i\notin S'$, then $u$ is the root of a new tree, with left child $u_j$ when $i-1\in I_j$ (otherwise no left child), and right child $u_j$ when $i+1\in I_j$ (otherwise no right child).
 \item If $i\in I_j$, then we compare $a$ with $a_j$ in the order on $\overline{\mathbb{Z}}$:
@@ -2620,10 +2670,29 @@ Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathb
   For a weak composition $a$ of length $n$, define $\forest_a^*\in \dcoma_n$ to be the unique element such that $\langle \forest_a^*, \forest_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
 \end{definition}
 
+\begin{theorem}\label{theorem:forestformula}
+  We have the following.
+  \begin{itemize}
+\item[I] Let $R\in \BRC$ be a bounded RC graph. Then the forest polynomial $\forest_{\fcode(R)}$ is equal to
+$$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
+
+\item[II] Let $c$ be a weak composition. Then dual forest polynomial $\forest^*_c$ is equal to
+$$\forest^*_c = \sum_{[R]\in\mathcal{C}_\forest(c)} \dsch_{\wof{R}}^{\hr(R)}$$
+  \end{itemize}
+\end{theorem}
+
+
 \begin{proof}[Proof of Theorem \ref{theorem:forestformula}]
   Part I of this theorem follows from the fact that for any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$, which are simply the RC graphs in the corresponding equivalence class of RC graphs. Part II follows from Theorem \ref{theorem:forestforest} and the definition of the dual Schubert basis.
 \end{proof}
 
+Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph formula for forest polynomials.
+
+
+\begin{proposition}
+Let $c$ be a weak composition of length $p$. Let $\RC_\forest(c)$ be the set of RC graphs with $\wtt(R) = c$ such that $\mathrm{word}(\mathbb{Y}_\forest(R))$ is minimal in lexicographical order among all RC graphs $R'$ such that $\code_\forest(R)=\code_\forest(R')$.
+$$[c] = \sum_{R\in\RC_\forest(c)} \forest_{\code_\forest(R)}^*$$
+\end{proposition}
 
 \begin{definition}[The submodule $\Gamma\subseteq \BRC$]
   Let $\Gamma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $R_1\equiv_\forest R_2$.
@@ -2658,7 +2727,7 @@ The elements $F_a\in\BRC/\Gamma$ form an additive basis of a subring isomorphic 
 $$\alpha(F_a) = \forest_a^*$$
 \end{proposition}
 \begin{proof}
-The $F_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$. We have that $\alpha(F_a)=\forest_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $F_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $F_a$, and since 
+As before, the last statement is simply Theorem \ref{theorem:forestformula}. The $F_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$. We have that $\alpha(F_a)=\forest_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $F_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $F_a$, and since 
 $$\alpha(F_a)\alpha(F_b) = \forest_a^*\forest_b^*=\sum_{c}f_{ab}^c\forest_c^*=\sum f_{a,b}^c\alpha(F_c),$$ 
 it follows that $F_aF_b$ is a linear combination of the $F_c$, so the span of the $F_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
 \end{proof}
@@ -2668,10 +2737,67 @@ it follows that $F_aF_b$ is a linear combination of the $F_c$, so the span of th
 \end{proof}
 
 
+% $$\dsch_u = [\code_1(u)]\dsch_{\downarrow u} - \sum_{\substack{u'\downvar{1} \downarrow u\\ \ell(\downarrow u,u')=\code_1(u)\\u'\neq u}}\dsch_{u'}$$
+% where $\downarrow u$ is the unique permutation such that $\code_i(\downarrow u) = \code_{i+1}(u)$.
 
-\section{Appendix}
+\section{Product rule for dual slide polynomials}
+\subsection{Slide polynomials}
 
-We dedicate this subsection to the otherwise distracting proof of Proposition \ref{proposition:pullindex}.
+RC graph is a triple $(w,E,\alpha)$ where $w$ is a permutation, 
+$$E:I(w)\to [\ell(w)]$$
+is a linear extension, and $\alpha:I(w)\to \mathbb{Z}_{>0}$ is a compatible sequence.
+
+\begin{definition}
+Slide polynomials $\mathfrak{F}(\mathbf{r})$ for a word $\mathbf{r}$ are defined by summing over all compatible sequences of $\mathbf{r}$. They can be characterized as follows.
+
+A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as it's smallest element. We then define
+$$\QY(A)=R$$
+\end{definition}
+
+\begin{theorem}[{\cite[Theorem~3.13]{assaf2017slide}}]
+  For a permutation $w\in S_\infty$, we have the formula
+  $$\sch_w(x) = \sum_{R} \mathfrak{F}_{\wtt(R)}(x)$$
+  where the sum is over all quasi-Yamanouchi RC graphs $R$ for $w$.
+\end{theorem}
+% \section{Recursion for Schubert structure constants}
+\begin{corollary}
+  For a weak composition $c$ of length $p$, we have the formula
+  $$\mathfrak{F}_c^* = \sum_{R=\QY(R)} \dsch_{\wof{R}}^p$$
+  where the sum is over all quasi-Yamanouchi RC graphs $R$ such that $\wtt(R) = c$.
+\end{corollary}
+
+$$\sum_{R\in\RC(c)\atop R=\QY(R)} \Delta(\dsch_{\wof{R}}^p) = \Delta(\mathfrak{F}_c^*)$$
+
+$$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}\dsch_u^p\otimes \dsch_v^p = \mathrm{shuff}_{a,b}^c\mathfrak{F}_a^*\otimes\mathfrak{F}_b^*$$
+
+$$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}\dsch_u^p\otimes \dsch_v^p = \mathrm{shuff}_{a,b}^c\sum_{A\in\RC(u,a)\atop A=\QY(A)}\sum_{B\in\RC(v,b)\atop B=\QY(B)}\dsch_{u}^p\otimes\dsch_{v}^p$$
+
+$$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}=\mathrm{shuff}_{a,b}^c\#\{A\in\RC(u,a)\mid A=\QY(A)\}\#\{B\in\RC(v,b)\mid B=\QY(B)\}$$
+
+\begin{definition}
+For a weak composition $c$, define $\RC_\QY(c)$ to be the set of RC graphs with $\wtt(R) = c$ such that $\mathrm{word}(\QY(R))$ is minimal in lexicographical order among all RC graphs $R'$ with $\wtt(\QY(R')) = \wtt(\QY(R))$. 
+\end{definition}
+
+\begin{proposition}
+Let $c$ be a weak composition of length $p$.
+$$[c] = \sum_{R\in\RC_\QY(c)} \mathfrak{F}_{\wtt(\QY(R))}^*$$
+\end{proposition}
+
+\begin{theorem} \label{theorem:lrfslide}
+  Let $a,b$ be weak compositions of lengths $p$ and $q$. Write
+$$\mathfrak{F}_a^*\mathfrak{F}_b^*=\sum_c s_{a,b}^c \mathfrak{F}_c^*$$
+For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is the number of distinct RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ such that $\wtt(\QY(\clp^p(R))) = a$ and $\wtt(\QY(\trm^p(R))) = b$.
+\end{theorem}
+
+
+\appendix
+\section{Proof of Proposition \ref{proposition:pullindex}}
+
+
+\renewcommand{\theproposition2}{\Alph{proposition2}}
+\setcounter{lemma}{0}
+
+We dedicate this section to the otherwise distracting proof of Proposition \ref{proposition:pullindex}.
 
 \begin{proposition2}[Special case of Pieri formula {\cite[Theorem~7.1]{samuelmolev}}] \label{proposition:pieri}
 Suppose $k\geq 1$ and $u,w\in S_\infty$. If $u\not\tom{k} w$, then
