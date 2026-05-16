@@ -1636,6 +1636,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             combined_rc = combined_rc.zero_out_last_row()
         return combined_rc
 
+    @cache
     def zero_out_last_row(self) -> RCGraph:
         # this is important!
         # transition formula
@@ -1806,7 +1807,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return (front, back)
 
     def right_zero_act(self) -> set[RCGraph]:
-        # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
             return {type(self)([*self, ()])}
 

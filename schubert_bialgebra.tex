@@ -288,7 +288,9 @@ Our $\zeromap$ has an alternative description in terms of Little bumps on reduce
 \begin{theorem}[LR rule for dual keys] \label{theorem:LRkey}
 Let $a,b$ be weak compositions of lengths $p$ and $q$, respectively. Define integers $k_{a,b}^c$ for weak compositions $c$ of length $p+q$ by the equation
 $$\kappa_a^*\kappa_b^* = \sum_{c} k_{a,b}^c\kappa_c^*$$
-Fix an RC graph $C$ such that $\mathrm{extwt}(C) = c$. Then $k_{a, b}^c$ is the number of distinct $R\in \mathrm{Dem}(C)$ such that $\mathrm{extwt}(\clp^p(R))=a$ and $\mathrm{extwt}(\trm^p(R))=b$, and is in particular nonnegative.
+Fix an RC graph $C$ with $\mathrm{extwt}(C)=c$, and assume $C$ is a highest weight. Then $k_{a,b}^c$ is the number of RC graphs $R$ such that $\mathbb{Y}(R)=C$ satisfying $\mathrm{extwt}(\clp^p(R)) = a$ and $\mathrm{extwt}(\trm^p(R)) = b$ and $\clp^p(R),\trm^p(R)$ are highest weights.
+%Let $\mathbb{Y}_\RC(a)$ and $\mathbb{Y}_\RC(b)$ be the sets of highest weight RC graphs with the given extremal weight.
+%Then $k_{a, b}^c$ is the number of RC graphs $C\in\mathbb{Y}_\RC(c)$  such that $\mathbb{Y}(\clp^p(R))\in\mathbb{Y}_\RC(a)$ and $\mathbb{Y}(\trm^p(R))\in \mathbb{Y}_\RC(b)$.
 
 \end{theorem}
 
@@ -308,7 +310,7 @@ to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, t
 \begin{theorem}[LR rule for dual forests]\label{theorem:LRforest}
 Let $a,b$ be weak compositions of lengths $p$ and $q$, respectively. Define integers $f_{a,b}^c$ for weak compositions $c$ of length $p+q$ by the equation
 $$\forest_a^*\forest_b^* = \sum_{c} f_{a,b}^c\forest_c^*$$
-Fix an RC graph $C$ such that $\code_\forest(C) = c$. Then $f_{a, b}^c$ is the number of distinct $R\in[C]$ such that $[\clp^p(R)]\in \mathcal{C}_\forest(a)$ and $[\trm^p(R)]\in \mathcal{C}_\forest(b)$, and is in particular nonnegative.
+Fix an RC graph $C\in\mathcal{C}_\forest(c)$. Then $f_{a, b}^c$ is the number of $R\in[C]$ such that $\clp^p(R)\in \mathcal{C}_\forest(a)$ and $\trm^p(R)\in \mathcal{C}_\forest(b)$, satisfying the additional condition that $\wtt(\clp^p(R))=a$ and $\wtt(\trm^p(R))=b$, and is in particular nonnegative.
 \end{theorem}
 
 As with the dual key basis, Theorem \ref{theorem:LRforest} is equivalent to a positive combinatorial branching formula
@@ -2593,6 +2595,436 @@ it follows that $K_aK_b$ is a linear combination of the $K_c$, so the span of th
   The coefficient of $K_c$ in $K_aK_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are Demazure crystals of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
 
+\begin{example}[Computing $\kappa_a^*\kappa_b^*$ for $a=(0,1,2)$, $b=(0,1,0,2)$]\label{example:LRkey}
+Let $a=(0,1,2)$ (a $3$-row composition) and $b=(0,1,0,2)$ (a $4$-row composition), so $p=3$, $q=4$, and $p+q=7$. We illustrate the coefficient $k_{a,b}^c$ for $c=(0,0,0,1,2,0,3)$.
+
+The permutation $w_c$ whose principal RC graph has Demazure crystal highest weight $c$ is
+$$w_c = (1,2,3,5,7,4,10,6,8,9).$$
+The key element $K_c$ is the sum of all $7$-row RC graphs whose Demazure crystal highest weight equals $c$. Among these, exactly two satisfy $\clp^3(R)\in\mathcal{C}_a$ and $\trm^3(R)\in\mathcal{C}_b$:
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{cc}
+$R_1$ & $R_2$ \\[4pt]
+\begin{tikzpicture}[scale=0.45]
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (10,0);
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (10,1);
+  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (10,2);
+  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (10,3);
+  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (10,4);
+  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (10,5);
+  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (10,6);
+  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,7) -- (10,7);
+  \draw[lightgray, very thin, opacity=0.3] (7,0) -- (7,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,8) -- (10,8);
+  \draw[lightgray, very thin, opacity=0.3] (8,0) -- (8,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,9) -- (10,9);
+  \draw[lightgray, very thin, opacity=0.3] (9,0) -- (9,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,10) -- (10,10);
+  \draw[lightgray, very thin, opacity=0.3] (10,0) -- (10,10);
+  \draw[blue, line width=1.125pt] (10,9.5) .. controls (9.7,9.5) and (9.5,9.7) .. (9.5,10);
+  \draw[blue, line width=1.125pt] (9.5,9) .. controls (9.5,9.3) and (9.3,9.5) .. (9,9.5);
+  \draw[blue, line width=1.125pt] (9,9.5) .. controls (8.7,9.5) and (8.5,9.7) .. (8.5,10);
+  \draw[blue, line width=1.125pt] (8.5,9) .. controls (8.5,9.3) and (8.3,9.5) .. (8,9.5);
+  \draw[blue, line width=1.125pt] (8,9.5) .. controls (7.7,9.5) and (7.5,9.7) .. (7.5,10);
+  \draw[blue, line width=1.125pt] (7.5,9) .. controls (7.5,9.3) and (7.3,9.5) .. (7,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (7,9.5) -- (6,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (6.5,9) -- (6.5,10);
+  \draw[blue, line width=1.125pt] (6,9.5) .. controls (5.7,9.5) and (5.5,9.7) .. (5.5,10);
+  \draw[blue, line width=1.125pt] (5.5,9) .. controls (5.5,9.3) and (5.3,9.5) .. (5,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (5,9.5) -- (4,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.5,9) -- (4.5,10);
+  \draw[blue, line width=1.125pt] (4,9.5) .. controls (3.7,9.5) and (3.5,9.7) .. (3.5,10);
+  \draw[blue, line width=1.125pt] (3.5,9) .. controls (3.5,9.3) and (3.3,9.5) .. (3,9.5);
+  \draw[blue, line width=1.125pt] (3,9.5) .. controls (2.7,9.5) and (2.5,9.7) .. (2.5,10);
+  \draw[blue, line width=1.125pt] (2.5,9) .. controls (2.5,9.3) and (2.3,9.5) .. (2,9.5);
+  \draw[blue, line width=1.125pt] (2,9.5) .. controls (1.7,9.5) and (1.5,9.7) .. (1.5,10);
+  \draw[blue, line width=1.125pt] (1.5,9) .. controls (1.5,9.3) and (1.3,9.5) .. (1,9.5);
+  \draw[blue, line width=1.125pt] (1,9.5) .. controls (0.7,9.5) and (0.5,9.7) .. (0.5,10);
+  \draw[blue, line width=1.125pt] (10,8.5) .. controls (9.7,8.5) and (9.5,8.7) .. (9.5,9);
+  \draw[blue, line width=1.125pt] (9.5,8) .. controls (9.5,8.3) and (9.3,8.5) .. (9,8.5);
+  \draw[blue, line width=1.125pt] (9,8.5) .. controls (8.7,8.5) and (8.5,8.7) .. (8.5,9);
+  \draw[blue, line width=1.125pt] (8.5,8) .. controls (8.5,8.3) and (8.3,8.5) .. (8,8.5);
+  \draw[blue, line width=1.125pt] (8,8.5) .. controls (7.7,8.5) and (7.5,8.7) .. (7.5,9);
+  \draw[blue, line width=1.125pt] (7.5,8) .. controls (7.5,8.3) and (7.3,8.5) .. (7,8.5);
+  \draw[blue, line width=1.125pt] (7,8.5) .. controls (6.7,8.5) and (6.5,8.7) .. (6.5,9);
+  \draw[blue, line width=1.125pt] (6.5,8) .. controls (6.5,8.3) and (6.3,8.5) .. (6,8.5);
+  \draw[blue, line width=1.125pt] (6,8.5) .. controls (5.7,8.5) and (5.5,8.7) .. (5.5,9);
+  \draw[blue, line width=1.125pt] (5.5,8) .. controls (5.5,8.3) and (5.3,8.5) .. (5,8.5);
+  \draw[blue, line width=1.125pt] (5,8.5) .. controls (4.7,8.5) and (4.5,8.7) .. (4.5,9);
+  \draw[blue, line width=1.125pt] (4.5,8) .. controls (4.5,8.3) and (4.3,8.5) .. (4,8.5);
+  \draw[blue, line width=1.125pt] (4,8.5) .. controls (3.7,8.5) and (3.5,8.7) .. (3.5,9);
+  \draw[blue, line width=1.125pt] (3.5,8) .. controls (3.5,8.3) and (3.3,8.5) .. (3,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3,8.5) -- (2,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2.5,8) -- (2.5,9);
+  \draw[blue, line width=1.125pt] (2,8.5) .. controls (1.7,8.5) and (1.5,8.7) .. (1.5,9);
+  \draw[blue, line width=1.125pt] (10,7.5) .. controls (9.7,7.5) and (9.5,7.7) .. (9.5,8);
+  \draw[blue, line width=1.125pt] (9.5,7) .. controls (9.5,7.3) and (9.3,7.5) .. (9,7.5);
+  \draw[blue, line width=1.125pt] (9,7.5) .. controls (8.7,7.5) and (8.5,7.7) .. (8.5,8);
+  \draw[blue, line width=1.125pt] (8.5,7) .. controls (8.5,7.3) and (8.3,7.5) .. (8,7.5);
+  \draw[blue, line width=1.125pt] (8,7.5) .. controls (7.7,7.5) and (7.5,7.7) .. (7.5,8);
+  \draw[blue, line width=1.125pt] (7.5,7) .. controls (7.5,7.3) and (7.3,7.5) .. (7,7.5);
+  \draw[blue, line width=1.125pt] (7,7.5) .. controls (6.7,7.5) and (6.5,7.7) .. (6.5,8);
+  \draw[blue, line width=1.125pt] (6.5,7) .. controls (6.5,7.3) and (6.3,7.5) .. (6,7.5);
+  \draw[blue, line width=1.125pt] (6,7.5) .. controls (5.7,7.5) and (5.5,7.7) .. (5.5,8);
+  \draw[blue, line width=1.125pt] (5.5,7) .. controls (5.5,7.3) and (5.3,7.5) .. (5,7.5);
+  \draw[blue, line width=1.125pt] (5,7.5) .. controls (4.7,7.5) and (4.5,7.7) .. (4.5,8);
+  \draw[blue, line width=1.125pt] (4.5,7) .. controls (4.5,7.3) and (4.3,7.5) .. (4,7.5);
+  \draw[blue, line width=1.125pt] (4,7.5) .. controls (3.7,7.5) and (3.5,7.7) .. (3.5,8);
+  \draw[blue, line width=1.125pt] (3.5,7) .. controls (3.5,7.3) and (3.3,7.5) .. (3,7.5);
+  \draw[blue, line width=1.125pt] (3,7.5) .. controls (2.7,7.5) and (2.5,7.7) .. (2.5,8);
+  \draw[blue, line width=1.125pt] (10,6.5) .. controls (9.7,6.5) and (9.5,6.7) .. (9.5,7);
+  \draw[blue, line width=1.125pt] (9.5,6) .. controls (9.5,6.3) and (9.3,6.5) .. (9,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (9,6.5) -- (8,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (8.5,6) -- (8.5,7);
+  \draw[blue, line width=1.125pt] (8,6.5) .. controls (7.7,6.5) and (7.5,6.7) .. (7.5,7);
+  \draw[blue, line width=1.125pt] (7.5,6) .. controls (7.5,6.3) and (7.3,6.5) .. (7,6.5);
+  \draw[blue, line width=1.125pt] (7,6.5) .. controls (6.7,6.5) and (6.5,6.7) .. (6.5,7);
+  \draw[blue, line width=1.125pt] (6.5,6) .. controls (6.5,6.3) and (6.3,6.5) .. (6,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (6,6.5) -- (5,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (5.5,6) -- (5.5,7);
+  \draw[blue, line width=1.125pt] (5,6.5) .. controls (4.7,6.5) and (4.5,6.7) .. (4.5,7);
+  \draw[blue, line width=1.125pt] (4.5,6) .. controls (4.5,6.3) and (4.3,6.5) .. (4,6.5);
+  \draw[blue, line width=1.125pt] (4,6.5) .. controls (3.7,6.5) and (3.5,6.7) .. (3.5,7);
+  \draw[blue, line width=1.125pt] (10,5.5) .. controls (9.7,5.5) and (9.5,5.7) .. (9.5,6);
+  \draw[blue, line width=1.125pt] (9.5,5) .. controls (9.5,5.3) and (9.3,5.5) .. (9,5.5);
+  \draw[blue, line width=1.125pt] (9,5.5) .. controls (8.7,5.5) and (8.5,5.7) .. (8.5,6);
+  \draw[blue, line width=1.125pt] (8.5,5) .. controls (8.5,5.3) and (8.3,5.5) .. (8,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (8,5.5) -- (7,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (7.5,5) -- (7.5,6);
+  \draw[blue, line width=1.125pt] (7,5.5) .. controls (6.7,5.5) and (6.5,5.7) .. (6.5,6);
+  \draw[blue, line width=1.125pt] (6.5,5) .. controls (6.5,5.3) and (6.3,5.5) .. (6,5.5);
+  \draw[blue, line width=1.125pt] (6,5.5) .. controls (5.7,5.5) and (5.5,5.7) .. (5.5,6);
+  \draw[blue, line width=1.125pt] (5.5,5) .. controls (5.5,5.3) and (5.3,5.5) .. (5,5.5);
+  \draw[blue, line width=1.125pt] (5,5.5) .. controls (4.7,5.5) and (4.5,5.7) .. (4.5,6);
+  \draw[blue, line width=1.125pt] (10,4.5) .. controls (9.7,4.5) and (9.5,4.7) .. (9.5,5);
+  \draw[blue, line width=1.125pt] (9.5,4) .. controls (9.5,4.3) and (9.3,4.5) .. (9,4.5);
+  \draw[blue, line width=1.125pt] (9,4.5) .. controls (8.7,4.5) and (8.5,4.7) .. (8.5,5);
+  \draw[blue, line width=1.125pt] (8.5,4) .. controls (8.5,4.3) and (8.3,4.5) .. (8,4.5);
+  \draw[blue, line width=1.125pt] (8,4.5) .. controls (7.7,4.5) and (7.5,4.7) .. (7.5,5);
+  \draw[blue, line width=1.125pt] (7.5,4) .. controls (7.5,4.3) and (7.3,4.5) .. (7,4.5);
+  \draw[blue, line width=1.125pt] (7,4.5) .. controls (6.7,4.5) and (6.5,4.7) .. (6.5,5);
+  \draw[blue, line width=1.125pt] (6.5,4) .. controls (6.5,4.3) and (6.3,4.5) .. (6,4.5);
+  \draw[blue, line width=1.125pt] (6,4.5) .. controls (5.7,4.5) and (5.5,4.7) .. (5.5,5);
+  \draw[blue, line width=1.125pt] (10,3.5) .. controls (9.7,3.5) and (9.5,3.7) .. (9.5,4);
+  \draw[blue, line width=1.125pt] (9.5,3) .. controls (9.5,3.3) and (9.3,3.5) .. (9,3.5);
+  \draw[blue, line width=1.125pt] (9,3.5) .. controls (8.7,3.5) and (8.5,3.7) .. (8.5,4);
+  \draw[blue, line width=1.125pt] (8.5,3) .. controls (8.5,3.3) and (8.3,3.5) .. (8,3.5);
+  \draw[blue, line width=1.125pt] (8,3.5) .. controls (7.7,3.5) and (7.5,3.7) .. (7.5,4);
+  \draw[blue, line width=1.125pt] (7.5,3) .. controls (7.5,3.3) and (7.3,3.5) .. (7,3.5);
+  \draw[blue, line width=1.125pt] (7,3.5) .. controls (6.7,3.5) and (6.5,3.7) .. (6.5,4);
+  \draw[blue, line width=1.125pt] (10,2.5) .. controls (9.7,2.5) and (9.5,2.7) .. (9.5,3);
+  \draw[blue, line width=1.125pt] (9.5,2) .. controls (9.5,2.3) and (9.3,2.5) .. (9,2.5);
+  \draw[blue, line width=1.125pt] (9,2.5) .. controls (8.7,2.5) and (8.5,2.7) .. (8.5,3);
+  \draw[blue, line width=1.125pt] (8.5,2) .. controls (8.5,2.3) and (8.3,2.5) .. (8,2.5);
+  \draw[blue, line width=1.125pt] (8,2.5) .. controls (7.7,2.5) and (7.5,2.7) .. (7.5,3);
+  \draw[blue, line width=1.125pt] (10,1.5) .. controls (9.7,1.5) and (9.5,1.7) .. (9.5,2);
+  \draw[blue, line width=1.125pt] (9.5,1) .. controls (9.5,1.3) and (9.3,1.5) .. (9,1.5);
+  \draw[blue, line width=1.125pt] (9,1.5) .. controls (8.7,1.5) and (8.5,1.7) .. (8.5,2);
+  \draw[blue, line width=1.125pt] (10,0.5) .. controls (9.7,0.5) and (9.5,0.7) .. (9.5,1);
+  \node[font=\bfseries, text=blue, anchor=south] at (9.5,10.3) {1};
+  \node[font=\bfseries, text=blue, anchor=south] at (8.5,10.3) {2};
+  \node[font=\bfseries, text=blue, anchor=south] at (7.5,10.3) {3};
+  \node[font=\bfseries, text=blue, anchor=south] at (6.5,10.3) {4};
+  \node[font=\bfseries, text=blue, anchor=south] at (5.5,10.3) {5};
+  \node[font=\bfseries, text=blue, anchor=south] at (4.5,10.3) {6};
+  \node[font=\bfseries, text=blue, anchor=south] at (3.5,10.3) {7};
+  \node[font=\bfseries, text=blue, anchor=south] at (2.5,10.3) {8};
+  \node[font=\bfseries, text=blue, anchor=south] at (1.5,10.3) {9};
+  \node[font=\bfseries, text=blue, anchor=south] at (0.5,10.3) {10};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,9.5) {1};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,8.5) {2};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,7.5) {3};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,6.5) {5};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,5.5) {7};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,4.5) {4};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,3.5) {10};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,2.5) {6};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,1.5) {8};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,0.5) {9};
+  \draw[black, line width=1.35pt] (0,7) rectangle (10,10);
+\end{tikzpicture}
+&
+\begin{tikzpicture}[scale=0.45]
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (10,0);
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (10,1);
+  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (10,2);
+  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (10,3);
+  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (10,4);
+  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (10,5);
+  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (10,6);
+  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,7) -- (10,7);
+  \draw[lightgray, very thin, opacity=0.3] (7,0) -- (7,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,8) -- (10,8);
+  \draw[lightgray, very thin, opacity=0.3] (8,0) -- (8,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,9) -- (10,9);
+  \draw[lightgray, very thin, opacity=0.3] (9,0) -- (9,10);
+  \draw[lightgray, very thin, opacity=0.3] (0,10) -- (10,10);
+  \draw[lightgray, very thin, opacity=0.3] (10,0) -- (10,10);
+  \draw[blue, line width=1.125pt] (10,9.5) .. controls (9.7,9.5) and (9.5,9.7) .. (9.5,10);
+  \draw[blue, line width=1.125pt] (9.5,9) .. controls (9.5,9.3) and (9.3,9.5) .. (9,9.5);
+  \draw[blue, line width=1.125pt] (9,9.5) .. controls (8.7,9.5) and (8.5,9.7) .. (8.5,10);
+  \draw[blue, line width=1.125pt] (8.5,9) .. controls (8.5,9.3) and (8.3,9.5) .. (8,9.5);
+  \draw[blue, line width=1.125pt] (8,9.5) .. controls (7.7,9.5) and (7.5,9.7) .. (7.5,10);
+  \draw[blue, line width=1.125pt] (7.5,9) .. controls (7.5,9.3) and (7.3,9.5) .. (7,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (7,9.5) -- (6,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (6.5,9) -- (6.5,10);
+  \draw[blue, line width=1.125pt] (6,9.5) .. controls (5.7,9.5) and (5.5,9.7) .. (5.5,10);
+  \draw[blue, line width=1.125pt] (5.5,9) .. controls (5.5,9.3) and (5.3,9.5) .. (5,9.5);
+  \draw[blue, line width=1.125pt] (5,9.5) .. controls (4.7,9.5) and (4.5,9.7) .. (4.5,10);
+  \draw[blue, line width=1.125pt] (4.5,9) .. controls (4.5,9.3) and (4.3,9.5) .. (4,9.5);
+  \draw[blue, line width=1.125pt] (4,9.5) .. controls (3.7,9.5) and (3.5,9.7) .. (3.5,10);
+  \draw[blue, line width=1.125pt] (3.5,9) .. controls (3.5,9.3) and (3.3,9.5) .. (3,9.5);
+  \draw[blue, line width=1.125pt] (3,9.5) .. controls (2.7,9.5) and (2.5,9.7) .. (2.5,10);
+  \draw[blue, line width=1.125pt] (2.5,9) .. controls (2.5,9.3) and (2.3,9.5) .. (2,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2,9.5) -- (1,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.5,9) -- (1.5,10);
+  \draw[blue, line width=1.125pt] (1,9.5) .. controls (0.7,9.5) and (0.5,9.7) .. (0.5,10);
+  \draw[blue, line width=1.125pt] (10,8.5) .. controls (9.7,8.5) and (9.5,8.7) .. (9.5,9);
+  \draw[blue, line width=1.125pt] (9.5,8) .. controls (9.5,8.3) and (9.3,8.5) .. (9,8.5);
+  \draw[blue, line width=1.125pt] (9,8.5) .. controls (8.7,8.5) and (8.5,8.7) .. (8.5,9);
+  \draw[blue, line width=1.125pt] (8.5,8) .. controls (8.5,8.3) and (8.3,8.5) .. (8,8.5);
+  \draw[blue, line width=1.125pt] (8,8.5) .. controls (7.7,8.5) and (7.5,8.7) .. (7.5,9);
+  \draw[blue, line width=1.125pt] (7.5,8) .. controls (7.5,8.3) and (7.3,8.5) .. (7,8.5);
+  \draw[blue, line width=1.125pt] (7,8.5) .. controls (6.7,8.5) and (6.5,8.7) .. (6.5,9);
+  \draw[blue, line width=1.125pt] (6.5,8) .. controls (6.5,8.3) and (6.3,8.5) .. (6,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (6,8.5) -- (5,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (5.5,8) -- (5.5,9);
+  \draw[blue, line width=1.125pt] (5,8.5) .. controls (4.7,8.5) and (4.5,8.7) .. (4.5,9);
+  \draw[blue, line width=1.125pt] (4.5,8) .. controls (4.5,8.3) and (4.3,8.5) .. (4,8.5);
+  \draw[blue, line width=1.125pt] (4,8.5) .. controls (3.7,8.5) and (3.5,8.7) .. (3.5,9);
+  \draw[blue, line width=1.125pt] (3.5,8) .. controls (3.5,8.3) and (3.3,8.5) .. (3,8.5);
+  \draw[blue, line width=1.125pt] (3,8.5) .. controls (2.7,8.5) and (2.5,8.7) .. (2.5,9);
+  \draw[blue, line width=1.125pt] (2.5,8) .. controls (2.5,8.3) and (2.3,8.5) .. (2,8.5);
+  \draw[blue, line width=1.125pt] (2,8.5) .. controls (1.7,8.5) and (1.5,8.7) .. (1.5,9);
+  \draw[blue, line width=1.125pt] (10,7.5) .. controls (9.7,7.5) and (9.5,7.7) .. (9.5,8);
+  \draw[blue, line width=1.125pt] (9.5,7) .. controls (9.5,7.3) and (9.3,7.5) .. (9,7.5);
+  \draw[blue, line width=1.125pt] (9,7.5) .. controls (8.7,7.5) and (8.5,7.7) .. (8.5,8);
+  \draw[blue, line width=1.125pt] (8.5,7) .. controls (8.5,7.3) and (8.3,7.5) .. (8,7.5);
+  \draw[blue, line width=1.125pt] (8,7.5) .. controls (7.7,7.5) and (7.5,7.7) .. (7.5,8);
+  \draw[blue, line width=1.125pt] (7.5,7) .. controls (7.5,7.3) and (7.3,7.5) .. (7,7.5);
+  \draw[blue, line width=1.125pt] (7,7.5) .. controls (6.7,7.5) and (6.5,7.7) .. (6.5,8);
+  \draw[blue, line width=1.125pt] (6.5,7) .. controls (6.5,7.3) and (6.3,7.5) .. (6,7.5);
+  \draw[blue, line width=1.125pt] (6,7.5) .. controls (5.7,7.5) and (5.5,7.7) .. (5.5,8);
+  \draw[blue, line width=1.125pt] (5.5,7) .. controls (5.5,7.3) and (5.3,7.5) .. (5,7.5);
+  \draw[blue, line width=1.125pt] (5,7.5) .. controls (4.7,7.5) and (4.5,7.7) .. (4.5,8);
+  \draw[blue, line width=1.125pt] (4.5,7) .. controls (4.5,7.3) and (4.3,7.5) .. (4,7.5);
+  \draw[blue, line width=1.125pt] (4,7.5) .. controls (3.7,7.5) and (3.5,7.7) .. (3.5,8);
+  \draw[blue, line width=1.125pt] (3.5,7) .. controls (3.5,7.3) and (3.3,7.5) .. (3,7.5);
+  \draw[blue, line width=1.125pt] (3,7.5) .. controls (2.7,7.5) and (2.5,7.7) .. (2.5,8);
+  \draw[blue, line width=1.125pt] (10,6.5) .. controls (9.7,6.5) and (9.5,6.7) .. (9.5,7);
+  \draw[blue, line width=1.125pt] (9.5,6) .. controls (9.5,6.3) and (9.3,6.5) .. (9,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (9,6.5) -- (8,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (8.5,6) -- (8.5,7);
+  \draw[blue, line width=1.125pt] (8,6.5) .. controls (7.7,6.5) and (7.5,6.7) .. (7.5,7);
+  \draw[blue, line width=1.125pt] (7.5,6) .. controls (7.5,6.3) and (7.3,6.5) .. (7,6.5);
+  \draw[blue, line width=1.125pt] (7,6.5) .. controls (6.7,6.5) and (6.5,6.7) .. (6.5,7);
+  \draw[blue, line width=1.125pt] (6.5,6) .. controls (6.5,6.3) and (6.3,6.5) .. (6,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (6,6.5) -- (5,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (5.5,6) -- (5.5,7);
+  \draw[blue, line width=1.125pt] (5,6.5) .. controls (4.7,6.5) and (4.5,6.7) .. (4.5,7);
+  \draw[blue, line width=1.125pt] (4.5,6) .. controls (4.5,6.3) and (4.3,6.5) .. (4,6.5);
+  \draw[blue, line width=1.125pt] (4,6.5) .. controls (3.7,6.5) and (3.5,6.7) .. (3.5,7);
+  \draw[blue, line width=1.125pt] (10,5.5) .. controls (9.7,5.5) and (9.5,5.7) .. (9.5,6);
+  \draw[blue, line width=1.125pt] (9.5,5) .. controls (9.5,5.3) and (9.3,5.5) .. (9,5.5);
+  \draw[blue, line width=1.125pt] (9,5.5) .. controls (8.7,5.5) and (8.5,5.7) .. (8.5,6);
+  \draw[blue, line width=1.125pt] (8.5,5) .. controls (8.5,5.3) and (8.3,5.5) .. (8,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (8,5.5) -- (7,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (7.5,5) -- (7.5,6);
+  \draw[blue, line width=1.125pt] (7,5.5) .. controls (6.7,5.5) and (6.5,5.7) .. (6.5,6);
+  \draw[blue, line width=1.125pt] (6.5,5) .. controls (6.5,5.3) and (6.3,5.5) .. (6,5.5);
+  \draw[blue, line width=1.125pt] (6,5.5) .. controls (5.7,5.5) and (5.5,5.7) .. (5.5,6);
+  \draw[blue, line width=1.125pt] (5.5,5) .. controls (5.5,5.3) and (5.3,5.5) .. (5,5.5);
+  \draw[blue, line width=1.125pt] (5,5.5) .. controls (4.7,5.5) and (4.5,5.7) .. (4.5,6);
+  \draw[blue, line width=1.125pt] (10,4.5) .. controls (9.7,4.5) and (9.5,4.7) .. (9.5,5);
+  \draw[blue, line width=1.125pt] (9.5,4) .. controls (9.5,4.3) and (9.3,4.5) .. (9,4.5);
+  \draw[blue, line width=1.125pt] (9,4.5) .. controls (8.7,4.5) and (8.5,4.7) .. (8.5,5);
+  \draw[blue, line width=1.125pt] (8.5,4) .. controls (8.5,4.3) and (8.3,4.5) .. (8,4.5);
+  \draw[blue, line width=1.125pt] (8,4.5) .. controls (7.7,4.5) and (7.5,4.7) .. (7.5,5);
+  \draw[blue, line width=1.125pt] (7.5,4) .. controls (7.5,4.3) and (7.3,4.5) .. (7,4.5);
+  \draw[blue, line width=1.125pt] (7,4.5) .. controls (6.7,4.5) and (6.5,4.7) .. (6.5,5);
+  \draw[blue, line width=1.125pt] (6.5,4) .. controls (6.5,4.3) and (6.3,4.5) .. (6,4.5);
+  \draw[blue, line width=1.125pt] (6,4.5) .. controls (5.7,4.5) and (5.5,4.7) .. (5.5,5);
+  \draw[blue, line width=1.125pt] (10,3.5) .. controls (9.7,3.5) and (9.5,3.7) .. (9.5,4);
+  \draw[blue, line width=1.125pt] (9.5,3) .. controls (9.5,3.3) and (9.3,3.5) .. (9,3.5);
+  \draw[blue, line width=1.125pt] (9,3.5) .. controls (8.7,3.5) and (8.5,3.7) .. (8.5,4);
+  \draw[blue, line width=1.125pt] (8.5,3) .. controls (8.5,3.3) and (8.3,3.5) .. (8,3.5);
+  \draw[blue, line width=1.125pt] (8,3.5) .. controls (7.7,3.5) and (7.5,3.7) .. (7.5,4);
+  \draw[blue, line width=1.125pt] (7.5,3) .. controls (7.5,3.3) and (7.3,3.5) .. (7,3.5);
+  \draw[blue, line width=1.125pt] (7,3.5) .. controls (6.7,3.5) and (6.5,3.7) .. (6.5,4);
+  \draw[blue, line width=1.125pt] (10,2.5) .. controls (9.7,2.5) and (9.5,2.7) .. (9.5,3);
+  \draw[blue, line width=1.125pt] (9.5,2) .. controls (9.5,2.3) and (9.3,2.5) .. (9,2.5);
+  \draw[blue, line width=1.125pt] (9,2.5) .. controls (8.7,2.5) and (8.5,2.7) .. (8.5,3);
+  \draw[blue, line width=1.125pt] (8.5,2) .. controls (8.5,2.3) and (8.3,2.5) .. (8,2.5);
+  \draw[blue, line width=1.125pt] (8,2.5) .. controls (7.7,2.5) and (7.5,2.7) .. (7.5,3);
+  \draw[blue, line width=1.125pt] (10,1.5) .. controls (9.7,1.5) and (9.5,1.7) .. (9.5,2);
+  \draw[blue, line width=1.125pt] (9.5,1) .. controls (9.5,1.3) and (9.3,1.5) .. (9,1.5);
+  \draw[blue, line width=1.125pt] (9,1.5) .. controls (8.7,1.5) and (8.5,1.7) .. (8.5,2);
+  \draw[blue, line width=1.125pt] (10,0.5) .. controls (9.7,0.5) and (9.5,0.7) .. (9.5,1);
+  \node[font=\bfseries, text=blue, anchor=south] at (9.5,10.3) {1};
+  \node[font=\bfseries, text=blue, anchor=south] at (8.5,10.3) {2};
+  \node[font=\bfseries, text=blue, anchor=south] at (7.5,10.3) {3};
+  \node[font=\bfseries, text=blue, anchor=south] at (6.5,10.3) {4};
+  \node[font=\bfseries, text=blue, anchor=south] at (5.5,10.3) {5};
+  \node[font=\bfseries, text=blue, anchor=south] at (4.5,10.3) {6};
+  \node[font=\bfseries, text=blue, anchor=south] at (3.5,10.3) {7};
+  \node[font=\bfseries, text=blue, anchor=south] at (2.5,10.3) {8};
+  \node[font=\bfseries, text=blue, anchor=south] at (1.5,10.3) {9};
+  \node[font=\bfseries, text=blue, anchor=south] at (0.5,10.3) {10};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,9.5) {1};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,8.5) {2};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,7.5) {3};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,6.5) {5};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,5.5) {7};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,4.5) {4};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,3.5) {10};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,2.5) {6};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,1.5) {8};
+  \node[font=\bfseries, text=blue, anchor=west] at (10.3,0.5) {9};
+  \draw[black, line width=1.35pt] (0,7) rectangle (10,10);
+\end{tikzpicture}
+\end{tabular}
+\caption{The two $7$-row RC graphs $R_1$ (left) and $R_2$ (right) in $\mathcal{C}_c$ satisfying $\clp^3(R_i)\in\mathcal{C}_a$ and $\trm^3(R_i)\in\mathcal{C}_b$. The outlined box marks the top $3$ rows (the clip region).}
+\label{fig:LRkey_example}
+\end{figure}
+
+Both graphs have permutation $w_c=(1,2,3,5,7,4,10,6,8,9)$. They differ only in their first two rows: $R_1$ has row data $[(6,4),(9,),()]$ in the top three rows, while $R_2$ has $[(9,4),(6,),()]$. Applying $\clp^3$ (retaining only the top $3$ rows and re-indexing) to each yields the same $3$-row graph with highest weight $a=(0,1,2)$:
+$$\clp^3(R_1)=\clp^3(R_2)=
+\begin{tikzpicture}[scale=0.45, baseline=(current bounding box.center)]
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
+  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
+  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
+  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
+  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
+  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
+  \draw[blue, line width=1.125pt] (5,4.5) .. controls (4.7,4.5) and (4.5,4.7) .. (4.5,5);
+  \draw[blue, line width=1.125pt] (4.5,4) .. controls (4.5,4.3) and (4.3,4.5) .. (4,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4,4.5) -- (3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.5,4) -- (3.5,5);
+  \draw[blue, line width=1.125pt] (3,4.5) .. controls (2.7,4.5) and (2.5,4.7) .. (2.5,5);
+  \draw[blue, line width=1.125pt] (2.5,4) .. controls (2.5,4.3) and (2.3,4.5) .. (2,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2,4.5) -- (1,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.5,4) -- (1.5,5);
+  \draw[blue, line width=1.125pt] (1,4.5) .. controls (0.7,4.5) and (0.5,4.7) .. (0.5,5);
+  \draw[blue, line width=1.125pt] (5,3.5) .. controls (4.7,3.5) and (4.5,3.7) .. (4.5,4);
+  \draw[blue, line width=1.125pt] (4.5,3) .. controls (4.5,3.3) and (4.3,3.5) .. (4,3.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4,3.5) -- (3,3.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.5,3) -- (3.5,4);
+  \draw[blue, line width=1.125pt] (3,3.5) .. controls (2.7,3.5) and (2.5,3.7) .. (2.5,4);
+  \draw[blue, line width=1.125pt] (2.5,3) .. controls (2.5,3.3) and (2.3,3.5) .. (2,3.5);
+  \draw[blue, line width=1.125pt] (2,3.5) .. controls (1.7,3.5) and (1.5,3.7) .. (1.5,4);
+  \draw[blue, line width=1.125pt] (5,2.5) .. controls (4.7,2.5) and (4.5,2.7) .. (4.5,3);
+  \draw[blue, line width=1.125pt] (4.5,2) .. controls (4.5,2.3) and (4.3,2.5) .. (4,2.5);
+  \draw[blue, line width=1.125pt] (4,2.5) .. controls (3.7,2.5) and (3.5,2.7) .. (3.5,3);
+  \draw[blue, line width=1.125pt] (3.5,2) .. controls (3.5,2.3) and (3.3,2.5) .. (3,2.5);
+  \draw[blue, line width=1.125pt] (3,2.5) .. controls (2.7,2.5) and (2.5,2.7) .. (2.5,3);
+  \draw[blue, line width=1.125pt] (5,1.5) .. controls (4.7,1.5) and (4.5,1.7) .. (4.5,2);
+  \draw[blue, line width=1.125pt] (4.5,1) .. controls (4.5,1.3) and (4.3,1.5) .. (4,1.5);
+  \draw[blue, line width=1.125pt] (4,1.5) .. controls (3.7,1.5) and (3.5,1.7) .. (3.5,2);
+  \draw[blue, line width=1.125pt] (5,0.5) .. controls (4.7,0.5) and (4.5,0.7) .. (4.5,1);
+  \node[font=\bfseries, text=blue, anchor=south] at (4.5,5.3) {1};
+  \node[font=\bfseries, text=blue, anchor=south] at (3.5,5.3) {2};
+  \node[font=\bfseries, text=blue, anchor=south] at (2.5,5.3) {3};
+  \node[font=\bfseries, text=blue, anchor=south] at (1.5,5.3) {4};
+  \node[font=\bfseries, text=blue, anchor=south] at (0.5,5.3) {5};
+  \node[font=\bfseries, text=blue, anchor=west] at (5.3,4.5) {1};
+  \node[font=\bfseries, text=blue, anchor=west] at (5.3,3.5) {3};
+  \node[font=\bfseries, text=blue, anchor=west] at (5.3,2.5) {5};
+  \node[font=\bfseries, text=blue, anchor=west] at (5.3,1.5) {2};
+  \node[font=\bfseries, text=blue, anchor=west] at (5.3,0.5) {4};
+\end{tikzpicture}
+$$
+Applying $\trm^3$ (keeping the bottom $4$ rows) gives the same $4$-row graph with highest weight $b=(0,1,0,2)$:
+$$\trm^3(R_1)=\trm^3(R_2)=
+\begin{tikzpicture}[scale=0.45, baseline=(current bounding box.center)]
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (6,0);
+  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (6,1);
+  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (6,2);
+  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (6,3);
+  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (6,4);
+  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (6,5);
+  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (6,6);
+  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,6);
+  \draw[blue, line width=1.125pt] (6,5.5) .. controls (5.7,5.5) and (5.5,5.7) .. (5.5,6);
+  \draw[blue, line width=1.125pt] (5.5,5) .. controls (5.5,5.3) and (5.3,5.5) .. (5,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (5,5.5) -- (4,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.5,5) -- (4.5,6);
+  \draw[blue, line width=1.125pt] (4,5.5) .. controls (3.7,5.5) and (3.5,5.7) .. (3.5,6);
+  \draw[blue, line width=1.125pt] (3.5,5) .. controls (3.5,5.3) and (3.3,5.5) .. (3,5.5);
+  \draw[blue, line width=1.125pt] (3,5.5) .. controls (2.7,5.5) and (2.5,5.7) .. (2.5,6);
+  \draw[blue, line width=1.125pt] (2.5,5) .. controls (2.5,5.3) and (2.3,5.5) .. (2,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2,5.5) -- (1,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.5,5) -- (1.5,6);
+  \draw[blue, line width=1.125pt] (1,5.5) .. controls (0.7,5.5) and (0.5,5.7) .. (0.5,6);
+  \draw[blue, line width=1.125pt] (6,4.5) .. controls (5.7,4.5) and (5.5,4.7) .. (5.5,5);
+  \draw[blue, line width=1.125pt] (5.5,4) .. controls (5.5,4.3) and (5.3,4.5) .. (5,4.5);
+  \draw[blue, line width=1.125pt] (5,4.5) .. controls (4.7,4.5) and (4.5,4.7) .. (4.5,5);
+  \draw[blue, line width=1.125pt] (4.5,4) .. controls (4.5,4.3) and (4.3,4.5) .. (4,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4,4.5) -- (3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.5,4) -- (3.5,5);
+  \draw[blue, line width=1.125pt] (3,4.5) .. controls (2.7,4.5) and (2.5,4.7) .. (2.5,5);
+  \draw[blue, line width=1.125pt] (2.5,4) .. controls (2.5,4.3) and (2.3,4.5) .. (2,4.5);
+  \draw[blue, line width=1.125pt] (2,4.5) .. controls (1.7,4.5) and (1.5,4.7) .. (1.5,5);
+  \draw[blue, line width=1.125pt] (6,3.5) .. controls (5.7,3.5) and (5.5,3.7) .. (5.5,4);
+  \draw[blue, line width=1.125pt] (5.5,3) .. controls (5.5,3.3) and (5.3,3.5) .. (5,3.5);
+  \draw[blue, line width=1.125pt] (5,3.5) .. controls (4.7,3.5) and (4.5,3.7) .. (4.5,4);
+  \draw[blue, line width=1.125pt] (4.5,3) .. controls (4.5,3.3) and (4.3,3.5) .. (4,3.5);
+  \draw[blue, line width=1.125pt] (4,3.5) .. controls (3.7,3.5) and (3.5,3.7) .. (3.5,4);
+  \draw[blue, line width=1.125pt] (3.5,3) .. controls (3.5,3.3) and (3.3,3.5) .. (3,3.5);
+  \draw[blue, line width=1.125pt] (3,3.5) .. controls (2.7,3.5) and (2.5,3.7) .. (2.5,4);
+  \draw[blue, line width=1.125pt] (6,2.5) .. controls (5.7,2.5) and (5.5,2.7) .. (5.5,3);
+  \draw[blue, line width=1.125pt] (5.5,2) .. controls (5.5,2.3) and (5.3,2.5) .. (5,2.5);
+  \draw[blue, line width=1.125pt] (5,2.5) .. controls (4.7,2.5) and (4.5,2.7) .. (4.5,3);
+  \draw[blue, line width=1.125pt] (4.5,2) .. controls (4.5,2.3) and (4.3,2.5) .. (4,2.5);
+  \draw[blue, line width=1.125pt] (4,2.5) .. controls (3.7,2.5) and (3.5,2.7) .. (3.5,3);
+  \draw[blue, line width=1.125pt] (6,1.5) .. controls (5.7,1.5) and (5.5,1.7) .. (5.5,2);
+  \draw[blue, line width=1.125pt] (5.5,1) .. controls (5.5,1.3) and (5.3,1.5) .. (5,1.5);
+  \draw[blue, line width=1.125pt] (5,1.5) .. controls (4.7,1.5) and (4.5,1.7) .. (4.5,2);
+  \draw[blue, line width=1.125pt] (6,0.5) .. controls (5.7,0.5) and (5.5,0.7) .. (5.5,1);
+  \node[font=\bfseries, text=blue, anchor=south] at (5.5,6.3) {1};
+  \node[font=\bfseries, text=blue, anchor=south] at (4.5,6.3) {2};
+  \node[font=\bfseries, text=blue, anchor=south] at (3.5,6.3) {3};
+  \node[font=\bfseries, text=blue, anchor=south] at (2.5,6.3) {4};
+  \node[font=\bfseries, text=blue, anchor=south] at (1.5,6.3) {5};
+  \node[font=\bfseries, text=blue, anchor=south] at (0.5,6.3) {6};
+  \node[font=\bfseries, text=blue, anchor=west] at (6.3,5.5) {1};
+  \node[font=\bfseries, text=blue, anchor=west] at (6.3,4.5) {3};
+  \node[font=\bfseries, text=blue, anchor=west] at (6.3,3.5) {2};
+  \node[font=\bfseries, text=blue, anchor=west] at (6.3,2.5) {6};
+  \node[font=\bfseries, text=blue, anchor=west] at (6.3,1.5) {4};
+  \node[font=\bfseries, text=blue, anchor=west] at (6.3,0.5) {5};
+\end{tikzpicture}
+$$
+
+Since there are exactly $2$ such RC graphs, Theorem~\ref{theorem:LRkey} gives $k_{a,b}^c = 2$.
+\end{example}
+
 
 
 \section{The ring of forest classes of RC graphs}
@@ -2736,6 +3168,62 @@ it follows that $F_aF_b$ is a linear combination of the $F_c$, so the span of th
   The coefficient of $F_c$ in $F_aF_b$ is the same as the coefficient of $\forest_c^*$ in $\forest_a^*\forest_b^*$, which is $f_{a,b}^c$ by definition. Since each of the summands of $F_c$ that are equivalence classes of RC graphs are distinct from the summands of any other forest element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
 
+\begin{example}[Computing $\forest_a^*\forest_b^*$ for $a=(0,0,2,0,2)$, $b=(0,1,0,0,2)$]\label{example:LRforest}
+Let
+$$a=(0,0,2,0,2),\qquad b=(0,1,0,0,2),\qquad c=(0,0,1,0,1,0,2,0,0,3).$$
+Here $p=q=5$, so we count $10$-row RC graphs in the class indexed by $c$ whose top and bottom parts lie in the forest classes for $a$ and $b$ respectively.
+
+The relevant set is
+\[
+\mathcal{S}_{a,b}^c=
+\{(R,R_1,R_2)\in\texttt{spinach}:
+R_1.\texttt{forest\_weight}=a,\ R_2.\texttt{forest\_weight}=b,
+R_1.\texttt{length\_vector}=R_1.\texttt{forest\_weight},
+R_2.\texttt{length\_vector}=R_2.\texttt{forest\_weight}\}.
+\]
+Its two witness graphs are
+\[
+\begin{aligned}
+R_1 &= \mathrm{RCGraph}([(),(),(5,3),(),(12,8),(),(7,),(),(),(11,10)]),\\
+R_2 &= \mathrm{RCGraph}([(),(),(8,3),(),(12,5),(),(7,),(),(),(11,10)]).
+\end{aligned}
+\]
+Both have permutation
+$$\wof{R_1}=\wof{R_2}=(1,2,4,3,6,5,9,7,8,13,10,11,12).$$
+
+With your corrected clip/trim condition,
+\[
+(\clp^5(R_i),\trm^5(R_i))=
+\bigl(\mathrm{RCGraph}([(),(),(4,3),(),(6,5)]),\ \mathrm{RCGraph}([(),(2,),(),(),(6,5)])\bigr)
+\]
+for $i=1,2$, and these representatives have forest weights $a$ and $b$ respectively.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{cc}
+\resizebox{0.43\textwidth}{!}{\input{images/forest_lr_R1.tikz}} &
+\resizebox{0.43\textwidth}{!}{\input{images/forest_lr_R2.tikz}} \\
+$(R_1)$ & $(R_2)$
+\end{tabular}
+\caption{The two $10$-row witness pipe dreams in the forest class for $c$.}
+\label{fig:forest_lr_witnesses}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{cc}
+\resizebox{0.35\textwidth}{!}{\input{images/forest_lr_clip.tikz}} &
+\resizebox{0.35\textwidth}{!}{\input{images/forest_lr_trim.tikz}} \\
+$\clp^5(R_i)$ & $\trm^5(R_i)$
+\end{tabular}
+\caption{Common clip/trim pair for both witnesses $R_1,R_2$.}
+\label{fig:forest_lr_cliptrim}
+\end{figure}
+
+Therefore $\#\mathcal{S}_{a,b}^c=2$, so Theorem~\ref{theorem:LRforest} gives
+$$f_{a,b}^c=2.$$ 
+\end{example}
+
 
 % $$\dsch_u = [\code_1(u)]\dsch_{\downarrow u} - \sum_{\substack{u'\downvar{1} \downarrow u\\ \ell(\downarrow u,u')=\code_1(u)\\u'\neq u}}\dsch_{u'}$$
 % where $\downarrow u$ is the unique permutation such that $\code_i(\downarrow u) = \code_{i+1}(u)$.
@@ -2788,6 +3276,56 @@ $$[c] = \sum_{R\in\RC_\QY(c)} \mathfrak{F}_{\wtt(\QY(R))}^*$$
 $$\mathfrak{F}_a^*\mathfrak{F}_b^*=\sum_c s_{a,b}^c \mathfrak{F}_c^*$$
 For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is the number of distinct RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ such that $\wtt(\QY(\clp^p(R))) = a$ and $\wtt(\QY(\trm^p(R))) = b$.
 \end{theorem}
+
+\subsection{A general ideal-quotient Littlewood--Richardson principle}
+
+The previous sections suggest a common mechanism behind the dual Schubert, dual key, dual forest, and (conjecturally in full detail) dual slide formulas. We record it here as a template theorem.
+
+\begin{theorem}[General LR principle via quotients of $\BRC$]\label{theorem:general_lr_template}
+Fix integers $p,q\geq 0$. Suppose the following data are given.
+\begin{itemize}
+\item[(1)] A two-sided ideal $I\subseteq \BRC$ such that $I\subseteq \Omega$, where $\Omega=\ker(\alpha)$ from Theorem~\ref{theorem:semidirect}.
+\item[(2)] A set $\Lambda_n$ for each length $n$, and for each $\lambda\in\Lambda_n$ a multiplicity-free element
+$$E_\lambda = \sum_{R\in\mathcal{C}_\lambda} R \in \BRC/I$$
+where the sets $\{\mathcal{C}_\lambda\}_{\lambda\in\Lambda_n}$ partition the basis elements of $\BRC/I$ (lifted from $\RC_n$ in the quotient), each $R\in\mathcal{C}_\lambda$ appearing with coefficient 1. The family $\{E_\lambda\}_{\lambda\in\Lambda_n}$ then forms a linearly independent set spanning a subring $\mathcal{E}^{(I)}\subseteq \BRC/I$.
+\item[(3)] A basis $\{b_\lambda^*\}_{\lambda\in\Lambda_n}$ of $\dcoma_n$ such that
+$$\alpha_I(E_\lambda)=b_\lambda^*,$$
+where $\alpha_I:\BRC/I\to\dcoma$ is the induced homomorphism.
+\item[(4)] For every $\lambda\in\Lambda_{p+q}$, choose a representative set $\mathcal{C}_\lambda\subseteq \RC_{p+q}$ whose image in $\BRC/I$ sums to $E_\lambda$.
+\item[(5)] Membership conditions of the form
+$$\clp^p(R)\in \mathcal{C}_\mu^{\mathrm{top}},\qquad \trm^p(R)\in \mathcal{C}_\nu^{\mathrm{bot}}$$
+that depend only on the class of $R$ in $\BRC/I$ and characterize the products $E_\mu E_\nu$ by counting classes.
+\end{itemize}
+Then the structure constants
+$$b_\mu^*b_\nu^*=\sum_{\lambda\in\Lambda_{p+q}} c_{\mu,\nu}^{\lambda}\, b_\lambda^*$$
+satisfy
+$$c_{\mu,\nu}^{\lambda}=\#\Bigl\{R\in\mathcal{C}_\lambda:\ \clp^p(R)\in \mathcal{C}_\mu^{\mathrm{top}},\ \trm^p(R)\in \mathcal{C}_\nu^{\mathrm{bot}}\Bigr\},$$
+hence $c_{\mu,\nu}^{\lambda}\geq 0$.
+\end{theorem}
+
+\begin{proof}[Proof attempt]
+Since $I\subseteq\Omega=\ker(\alpha)$, the map $\alpha:\BRC\to\dcoma$ factors through a ring homomorphism
+$$\alpha_I:\BRC/I\to\dcoma.$$
+By hypothesis (2), the sets $\mathcal{C}_\lambda$ partition the basis elements of $\BRC/I$ in each length, so the $E_\lambda$ are automatically linearly independent (disjoint supports, unit coefficients). By hypothesis (3), $\alpha_I(E_\lambda)=b_\lambda^*$, so
+$$\alpha_I(E_\mu E_\nu)=b_\mu^*b_\nu^*=\sum_\lambda c_{\mu,\nu}^{\lambda}b_\lambda^*.$$
+Because the $b_\lambda^*$ are linearly independent, $c_{\mu,\nu}^{\lambda}$ is the coefficient of $E_\lambda$ in the product $E_\mu E_\nu$ in $\BRC/I$.
+
+Expand $E_\mu E_\nu$ by multiplying chosen representatives from each $\mathcal{C}$ set using the product $\diamond$ and the $(\clp^p,\trm^p)$ decomposition (Definition and Theorem~\ref{theorem:modactrc}). By hypothesis (5), the condition for an RC graph $R$ to contribute to the $\lambda$-component depends only on its class in $\BRC/I$, ensuring that the coefficient of $E_\lambda$ is well-defined and equals the cardinality of the fiber
+$$\Bigl\{R\in\mathcal{C}_\lambda:\ \clp^p(R)\in \mathcal{C}_\mu^{\mathrm{top}},\ \trm^p(R)\in \mathcal{C}_\nu^{\mathrm{bot}}\Bigr\}.$$
+Since this is a cardinality, $c_{\mu,\nu}^{\lambda}\geq 0$.
+
+The argument is modular: once hypotheses (1)--(5) are verified for a quotient theory (Schubert, key, forest, slide), the corresponding Littlewood--Richardson rule and positivity follow.
+\end{proof}
+
+\begin{remark}
+In the present paper, Theorem~\ref{theorem:general_lr_template} is instantiated by
+\begin{itemize}
+\item $I=\Omega$ for the dual Schubert basis,
+\item $I=\Theta$ for the dual key basis,
+\item $I=\Gamma$ for the dual forest basis.
+\end{itemize}
+For dual slide polynomials, this theorem indicates the remaining formal step: identify the corresponding ideal and verify the analogue of (1)--(5) explicitly.
+\end{remark}
 
 
 \appendix
