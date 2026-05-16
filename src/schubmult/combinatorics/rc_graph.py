@@ -455,6 +455,107 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     break
         return rc, tuple(raise_seq)
 
+    def extract_demazure_atom(self):
+        """
+        Extract the Demazure atom associated with this RC graph.
+
+        The Demazure atom is indexed by the right key of the weight tableau,
+        computed using the Willis algorithm with Earliest Weakly Increasing Subsequences (EWIS).
+
+        It consists of all RC graphs with the same permutation and length whose
+        weight tableaux have the same right key.
+
+        Returns a list of RC graphs forming the Demazure atom.
+        """
+        # Compute the right key using the Willis algorithm
+        weight_tab = self.weight_tableau
+        right_key = self._compute_right_key(weight_tab)
+
+        # Get all RC graphs with the same permutation and length
+        all_graphs = RCGraph.all_rc_graphs(self.perm, len(self))
+
+        # Filter to those with the same right key
+        atom = [rc for rc in all_graphs if self._compute_right_key(rc.weight_tableau) == right_key]
+
+        return atom
+
+    @staticmethod
+    def _compute_right_key(tableau):
+        """
+        Compute the right key of a semistandard Young tableau using the Willis algorithm.
+        Based on: "A Direct Way to Find the Right Key of a Semistandard Young Tableau"
+        by Matthew J. Willis (arXiv:1110.6184)
+        """
+        # Extract tableau data
+        grid = tableau._grid
+        rows, cols = grid.shape
+        shape = []
+        for j in range(cols):
+            col_len = 0
+            for i in range(rows):
+                if grid[i, j] is not None and grid[i, j] != 0:
+                    col_len = i + 1
+            if col_len > 0:
+                shape.append(col_len)
+
+        if len(shape) == 0:
+            return ()
+
+        # Initialize result as empty tableau of same shape
+        result = [[] for _ in range(len(shape))]
+
+        # Process each column
+        remaining_tab = tableau
+        for col_idx in range(len(shape)):
+            # Extract bottom entries from remaining columns (left to right)
+            bottom_entries = []
+            col_positions = []
+            for j in range(col_idx, len(shape)):
+                for i in range(rows - 1, -1, -1):
+                    if remaining_tab._grid[i, j] is not None and remaining_tab._grid[i, j] != 0:
+                        bottom_entries.append(remaining_tab._grid[i, j])
+                        col_positions.append((i, j))
+                        break
+
+            if not bottom_entries:
+                break
+
+            # Compute EWIS repeatedly
+            marked_positions = set()
+            while bottom_entries:
+                # Find EWIS
+                ewis_indices = []
+                last_val = None
+                for idx, val in enumerate(bottom_entries):
+                    if last_val is None or val >= last_val:
+                        ewis_indices.append(idx)
+                        last_val = val
+
+                if not ewis_indices:
+                    break
+
+                # Record last member of this EWIS
+                last_ewis_idx = ewis_indices[-1]
+                result[col_idx].append(bottom_entries[last_ewis_idx])
+
+                # Mark these positions for removal
+                for idx in ewis_indices:
+                    marked_positions.add(col_positions[idx])
+
+                # Remove marked entries and rebuild
+                new_bottom_entries = []
+                new_col_positions = []
+                for idx, (val, pos) in enumerate(zip(bottom_entries, col_positions)):
+                    if pos not in marked_positions:
+                        new_bottom_entries.append(val)
+                        new_col_positions.append(pos)
+
+                bottom_entries = new_bottom_entries
+                col_positions = new_col_positions
+
+        # Return as tuple of tuples (comparable and hashable)
+        return tuple(tuple(col) for col in result)
+
     @staticmethod
     def raise_seq_word(raise_seq):
         last_elem = None
@@ -572,7 +673,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @cache
     def _extremal_weight(cls, hw_rc):
         import numpy as np
-        #hw_rc = nilp.hw_rc(len(nilp.perm.trimcode))
+
+        # hw_rc = nilp.hw_rc(len(nilp.perm.trimcode))
         # min_vec = hw_rc.length_vector
         # min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
         properly_sortable = [rc for rc in hw_rc.full_crystal if rc.sorted_length_vector == hw_rc.length_vector]
@@ -1309,8 +1411,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         for monom, coeff in the_pa.items():
             pair_list = []
             for pos, exponent in enumerate(monom, start=1):
+                p, k = inv_elem_sym_pos(pos)
                 if exponent > 0:
-                    p, k = inv_elem_sym_pos(pos)
                     pair_list.extend([(p, k)] * exponent)
             for rc_list in itertools.product(*[cls.elem_sym_rcs(p, k) for p, k in pair_list]):
                 rc_tup = tuple(rc_list)
@@ -1367,19 +1469,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         ret = {}
         for monom, coeff in the_pa.items():
             pair_list = []
-            # index_list = []
             for pos, exponent in enumerate(monom, start=1):
                 p, k = inv_elem_sym_pos(pos)
                 if exponent > 0:
                     pair_list.extend([(p, k)] * exponent)
-                    # index_list.extend([pos] * exponent)
             for rc_list in itertools.product(*[cls.elem_sym_rcs(p, k) for p, k in pair_list]):
                 rc_tup = tuple(rc_list)
                 rc = rc_list[0]
                 for other in rc_list[1:]:
                     rc = rc.resize(len(other)).squash_product(other)
-                # if rc.perm != perm:
-                #     continue
+                if rc.perm != perm:
+                    continue
                 rc = rc.resize(length)
                 toadd_dict = ret.get(rc, {})
                 toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
@@ -2147,11 +2247,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @classmethod
     @cache
     def all_forest_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
-        #return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.forest_weight == comp}
+        # return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.forest_weight == comp}
         from schubmult.rings.free_algebra import ForestDual, SchubertBasis
+
         ret_set = set()
         perms = set(ForestDual(*comp).change_basis(SchubertBasis).keys())
-        for (perm, length) in perms:
+        for perm, length in perms:
             if length != len(comp):
                 raise ValueError(f"Permutation {perm} has length {length} not equal to expected {len(comp)}")
             ret_set.update({rc for rc in cls.all_rc_graphs(perm, length, weight=weight) if rc.forest_weight == tuple(comp)})
@@ -2161,10 +2262,11 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @cache
     def all_key_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
         from schubmult.rings.free_algebra import FreeAlgebra, KeyBasis, SchubertBasis
+
         ret_set = set()
         KeyDual = FreeAlgebra(KeyBasis)
         perms = set(KeyDual(*comp).change_basis(SchubertBasis).keys())
-        for (perm, length) in perms:
+        for perm, length in perms:
             if length != len(comp):
                 raise ValueError(f"Permutation {perm} has length {length} not equal to expected {len(comp)}")
             ret_set.update({rc for rc in cls.all_rc_graphs(perm, length, weight=weight) if rc.extremal_weight == tuple(comp)})

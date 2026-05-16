@@ -3238,7 +3238,7 @@ is a linear extension, and $\alpha:I(w)\to \mathbb{Z}_{>0}$ is a compatible sequ
 \begin{definition}
 Slide polynomials $\mathfrak{F}(\mathbf{r})$ for a word $\mathbf{r}$ are defined by summing over all compatible sequences of $\mathbf{r}$. They can be characterized as follows.
 
-A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as it's smallest element. We then define
+A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as its smallest element. We then define
 $$\QY(A)=R$$
 \end{definition}
 
@@ -3254,13 +3254,13 @@ $$\QY(A)=R$$
   where the sum is over all quasi-Yamanouchi RC graphs $R$ such that $\wtt(R) = c$.
 \end{corollary}
 
-$$\sum_{R\in\RC(c)\atop R=\QY(R)} \Delta(\dsch_{\wof{R}}^p) = \Delta(\mathfrak{F}_c^*)$$
+% $$\sum_{R\in\RC(c)\atop R=\QY(R)} \Delta(\dsch_{\wof{R}}^p) = \Delta(\mathfrak{F}_c^*)$$
 
-$$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}\dsch_u^p\otimes \dsch_v^p = \mathrm{shuff}_{a,b}^c\mathfrak{F}_a^*\otimes\mathfrak{F}_b^*$$
+% $$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}\dsch_u^p\otimes \dsch_v^p = \mathrm{shuff}_{a,b}^c\mathfrak{F}_a^*\otimes\mathfrak{F}_b^*$$
 
-$$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}\dsch_u^p\otimes \dsch_v^p = \mathrm{shuff}_{a,b}^c\sum_{A\in\RC(u,a)\atop A=\QY(A)}\sum_{B\in\RC(v,b)\atop B=\QY(B)}\dsch_{u}^p\otimes\dsch_{v}^p$$
+% $$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}\dsch_u^p\otimes \dsch_v^p = \mathrm{shuff}_{a,b}^c\sum_{A\in\RC(u,a)\atop A=\QY(A)}\sum_{B\in\RC(v,b)\atop B=\QY(B)}\dsch_{u}^p\otimes\dsch_{v}^p$$
 
-$$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}=\mathrm{shuff}_{a,b}^c\#\{A\in\RC(u,a)\mid A=\QY(A)\}\#\{B\in\RC(v,b)\mid B=\QY(B)\}$$
+% $$\sum_{R\in\RC(c)\atop R=\QY(R)} c_{u,v}^{\wof{R}}=\mathrm{shuff}_{a,b}^c\#\{A\in\RC(u,a)\mid A=\QY(A)\}\#\{B\in\RC(v,b)\mid B=\QY(B)\}$$
 
 \begin{definition}
 For a weak composition $c$, define $\RC_\QY(c)$ to be the set of RC graphs with $\wtt(R) = c$ such that $\mathrm{word}(\QY(R))$ is minimal in lexicographical order among all RC graphs $R'$ with $\wtt(\QY(R')) = \wtt(\QY(R))$. 
@@ -3282,37 +3282,32 @@ For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is t
 The previous sections suggest a common mechanism behind the dual Schubert, dual key, dual forest, and (conjecturally in full detail) dual slide formulas. We record it here as a template theorem.
 
 \begin{theorem}[General LR principle via quotients of $\BRC$]\label{theorem:general_lr_template}
-Fix integers $p,q\geq 0$. Suppose the following data are given.
+Suppose for each permutation $w$ and integer $n\geq \maxd(w)$ we have an equivalence relation $\sim$ satisfying the following:
 \begin{itemize}
-\item[(1)] A two-sided ideal $I\subseteq \BRC$ such that $I\subseteq \Omega$, where $\Omega=\ker(\alpha)$ from Theorem~\ref{theorem:semidirect}.
-\item[(2)] A set $\Lambda_n$ for each length $n$, and for each $\lambda\in\Lambda_n$ a multiplicity-free element
-$$E_\lambda = \sum_{R\in\mathcal{C}_\lambda} R \in \BRC/I$$
-where the sets $\{\mathcal{C}_\lambda\}_{\lambda\in\Lambda_n}$ partition the basis elements of $\BRC/I$ (lifted from $\RC_n$ in the quotient), each $R\in\mathcal{C}_\lambda$ appearing with coefficient 1. The family $\{E_\lambda\}_{\lambda\in\Lambda_n}$ then forms a linearly independent set spanning a subring $\mathcal{E}^{(I)}\subseteq \BRC/I$.
-\item[(3)] A basis $\{b_\lambda^*\}_{\lambda\in\Lambda_n}$ of $\dcoma_n$ such that
-$$\alpha_I(E_\lambda)=b_\lambda^*,$$
-where $\alpha_I:\BRC/I\to\dcoma$ is the induced homomorphism.
-\item[(4)] For every $\lambda\in\Lambda_{p+q}$, choose a representative set $\mathcal{C}_\lambda\subseteq \RC_{p+q}$ whose image in $\BRC/I$ sums to $E_\lambda$.
-\item[(5)] Membership conditions of the form
-$$\clp^p(R)\in \mathcal{C}_\mu^{\mathrm{top}},\qquad \trm^p(R)\in \mathcal{C}_\nu^{\mathrm{bot}}$$
-that depend only on the class of $R$ in $\BRC/I$ and characterize the products $E_\mu E_\nu$ by counting classes.
+\item[(1)] If $R_1\sim R_2$ and $1\leq p\leq \hr(R_1)$, then
+$$\clp^p(R_1)\sim \clp^p(R_2),\qquad \trm^p(R_1)\sim \trm^p(R_2).$$
+%two-sided ideal $I\subseteq \BRC$ such that $I\subseteq \Omega$, where $\Omega=\ker(\alpha)$ from Theorem~\ref{theorem:semidirect}.
+\item[(2)] The set of all $\mathfrak{B}_R\in\coma_n$ for $R\in\RC_n$ such that
+$$\mathfrak{B}_R = \sum_{R'\sim R} \wtt(R')$$
+forms a $\mathbb{Z}$-basis of $\coma_n$.
 \end{itemize}
 Then the structure constants
-$$b_\mu^*b_\nu^*=\sum_{\lambda\in\Lambda_{p+q}} c_{\mu,\nu}^{\lambda}\, b_\lambda^*$$
+$$\mathfrak{B}_\mu^*\mathfrak{B}_\nu^*=\sum b_{\mu,\nu}^{\lambda}\, \mathfrak{B}_\lambda^*$$
 satisfy
-$$c_{\mu,\nu}^{\lambda}=\#\Bigl\{R\in\mathcal{C}_\lambda:\ \clp^p(R)\in \mathcal{C}_\mu^{\mathrm{top}},\ \trm^p(R)\in \mathcal{C}_\nu^{\mathrm{bot}}\Bigr\},$$
-hence $c_{\mu,\nu}^{\lambda}\geq 0$.
+$$b_{\mu,\nu}^{\lambda}=\#\Bigl\{R\sim R_\lambda:\ \mathfrak{B}_{\clp^p(R)}=\mathfrak{B}_\mu,\ \mathfrak{B}_{\trm^p(R)}=\mathfrak{B}_\nu\Bigr\},$$
+where $R_\lambda$ is an arbitrary fixed RC graph such that $\mathfrak{B}_{R_\lambda}=\mathfrak{B}_\lambda$. Hence $b_{\mu,\nu}^{\lambda}\geq 0$.
 \end{theorem}
 
 \begin{proof}[Proof attempt]
 Since $I\subseteq\Omega=\ker(\alpha)$, the map $\alpha:\BRC\to\dcoma$ factors through a ring homomorphism
 $$\alpha_I:\BRC/I\to\dcoma.$$
-By hypothesis (2), the sets $\mathcal{C}_\lambda$ partition the basis elements of $\BRC/I$ in each length, so the $E_\lambda$ are automatically linearly independent (disjoint supports, unit coefficients). By hypothesis (3), $\alpha_I(E_\lambda)=b_\lambda^*$, so
-$$\alpha_I(E_\mu E_\nu)=b_\mu^*b_\nu^*=\sum_\lambda c_{\mu,\nu}^{\lambda}b_\lambda^*.$$
-Because the $b_\lambda^*$ are linearly independent, $c_{\mu,\nu}^{\lambda}$ is the coefficient of $E_\lambda$ in the product $E_\mu E_\nu$ in $\BRC/I$.
+By hypothesis (1), the sets $\mathcal{C}_\lambda$ partition the basis elements of $\BRC/I$ in each length, so the $E_\lambda$ are automatically linearly independent (disjoint supports, unit coefficients). By hypothesis (3), $\alpha_I(E_\lambda)=\mathfrak{B}_\lambda^*$, so
+$$\alpha_I(E_\mu E_\nu)=\mathfrak{B}_\mu^*\mathfrak{B}_\nu^*=\sum_\lambda b_{\mu,\nu}^{\lambda}\mathfrak{B}_\lambda^*.$$
+Because the $\mathfrak{B}_\lambda^*$ are linearly independent, $b_{\mu,\nu}^{\lambda}$ is the coefficient of $E_\lambda$ in the product $E_\mu E_\nu$ in $\BRC/I$.
 
 Expand $E_\mu E_\nu$ by multiplying chosen representatives from each $\mathcal{C}$ set using the product $\diamond$ and the $(\clp^p,\trm^p)$ decomposition (Definition and Theorem~\ref{theorem:modactrc}). By hypothesis (5), the condition for an RC graph $R$ to contribute to the $\lambda$-component depends only on its class in $\BRC/I$, ensuring that the coefficient of $E_\lambda$ is well-defined and equals the cardinality of the fiber
-$$\Bigl\{R\in\mathcal{C}_\lambda:\ \clp^p(R)\in \mathcal{C}_\mu^{\mathrm{top}},\ \trm^p(R)\in \mathcal{C}_\nu^{\mathrm{bot}}\Bigr\}.$$
-Since this is a cardinality, $c_{\mu,\nu}^{\lambda}\geq 0$.
+$$\Bigl\{R\in\mathcal{C}_\lambda:\ \clp^p(R)/I\in \mathcal{C}_\mu,\ \trm^p(R)/I\in \mathcal{C}_\nu\Bigr\}.$$
+Since this is a cardinality, $b_{\mu,\nu}^{\lambda}\geq 0$.
 
 The argument is modular: once hypotheses (1)--(5) are verified for a quotient theory (Schubert, key, forest, slide), the corresponding Littlewood--Richardson rule and positivity follow.
 \end{proof}

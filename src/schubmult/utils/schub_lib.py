@@ -373,7 +373,7 @@ def divdiffable(v, u):
 #     return full_perm_list
 
 
-def kdown_perms(perm, monoperm, p, k):
+def kdown_perms(perm: Permutation, monoperm: Permutation, p: int, k: int) -> list[tuple[Permutation, int, int]]:
     perm = Permutation(perm)
     monoperm = Permutation(monoperm)
     inv_m = monoperm.inv

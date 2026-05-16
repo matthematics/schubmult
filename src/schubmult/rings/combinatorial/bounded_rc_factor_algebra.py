@@ -202,6 +202,38 @@ class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
             result += coeff * r(rc)
         return result
 
+    def _to_top_forest_weight_graph(self, rc):
+        return next(iter([rc2 for rc2 in RCGraph.all_forest_rcs(rc.forest_weight, weight=rc.length_vector) if rc2.forest_weight == rc.forest_weight and rc2.omega_invariant[1] == rc.omega_invariant[1] and rc2.perm.pad_code(len(rc2)) == rc2.forest_weight]))
+
+    def prune(self):
+        """Merge terms whose evaluated RC graphs share forest/omega invariants.
+
+        Terms are grouped by
+        ``(rc.forest_weight, rc.omega_invariant[1])`` where
+        ``rc = self.ring.key_to_rc_graph(key)``.
+        One key per group is kept (first encountered), and coefficients are summed.
+        """
+        representative_for_signature = {}
+        coeff_by_representative = {}
+
+        for key, coeff in self.items():
+            if coeff == 0:
+                continue
+            rc = self._to_top_forest_weight_graph(self.ring.key_to_rc_graph(key))
+            signature = rc#(rc.forest_weight, rc.length_vector, rc.omega_invariant[1])
+            representative = representative_for_signature.get(signature)
+            if representative is None:
+                representative_for_signature[signature] = key
+                coeff_by_representative[key] = coeff
+            else:
+                coeff_by_representative[representative] += coeff
+
+        result = self.ring.zero
+        for key, coeff in coeff_by_representative.items():
+            if coeff != 0:
+                result += coeff * self.ring(key)
+        return result
+
     def dual_product(self, other):
         result = self.ring.zero
         for key1, coeff1 in self.items():
@@ -797,8 +829,9 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         key = self._ensure_valid_key(key)
         if len(key) == 0:
             return key
-        if not legacy:
-            return self._check_normal_key(self._sort_and_merge(key, legacy=False))
+        # if legacy:
+        #     return key
+            #return self._check_normal_key(self._sort_and_merge(key, legacy=False))
         size = key.size
         #hw_key, raise_seq = key.to_highest_weight()
         factors = list(key)
@@ -813,33 +846,33 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             # Phase 2: normalize individual RCGraphs and strip identities
             #factors = [rc.normalize() for rc in hw_key if rc.perm.inv != 0]
 
-            peeled = False
-            for i in range(len(factors) - 1, -1, -1):
-                if not _is_full_grassmannian_rc(factors[i]):
-                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}\n{factors=}")
-                factor = factors[i]
-                if len(factor) < size and len(factor.perm) - 1 > len(factor):
-                    max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
-                    max_rc = max_rc.normalize()
-                    elem_rc = elem_rc.normalize()
-                    if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
-                        continue
-                    # if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
-                    addup_list = [elem_rc]
-                    working_rc = max_rc.normalize()
-                    while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
-                        working_rc_base, working_elem_rc = working_rc.squash_decomp()
-                        working_elem_rc = working_elem_rc.normalize()
-                        working_rc_base = working_rc_base.normalize()
-                        addup_list = [working_elem_rc.normalize(), *addup_list]
-                        working_rc = working_rc_base.normalize()
-                    if working_rc.perm.inv > 0:
-                        if not _is_full_grassmannian_rc(working_rc):
-                            raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
-                        addup_list = [working_rc.normalize(), *addup_list]
-                    factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
-                    peeled = True
-                    break
+            # peeled = False
+            # for i in range(len(factors) - 1, -1, -1):
+            #     if not _is_full_grassmannian_rc(factors[i]):
+            #         raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}\n{factors=}")
+            #     factor = factors[i]
+            #     if len(factor) < size and len(factor.perm) - 1 > len(factor):
+            #         max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
+            #         max_rc = max_rc.normalize()
+            #         elem_rc = elem_rc.normalize()
+            #         if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
+            #             continue
+            #         # if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
+            #         addup_list = [elem_rc]
+            #         working_rc = max_rc.normalize()
+            #         while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
+            #             working_rc_base, working_elem_rc = working_rc.squash_decomp()
+            #             working_elem_rc = working_elem_rc.normalize()
+            #             working_rc_base = working_rc_base.normalize()
+            #             addup_list = [working_elem_rc.normalize(), *addup_list]
+            #             working_rc = working_rc_base.normalize()
+            #         if working_rc.perm.inv > 0:
+            #             if not _is_full_grassmannian_rc(working_rc):
+            #                 raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
+            #             addup_list = [working_rc.normalize(), *addup_list]
+            #         factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
+            #         peeled = True
+            #         break
 
         #     #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
         #     #         #     factor = factors[i].resize(len(factors[i]) + 1)
@@ -872,8 +905,8 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #     #         # if len(set(factors[i].perm.trimcode)) > 2:
         #     #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
             #factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
-            if not peeled:
-                break
+#            if not peeled:
+            break
 
         # # for fact in factors:
         # #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
