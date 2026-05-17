@@ -744,6 +744,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         pass
 
     @property
+    @cache
     def omega_invariant(self):
         from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 

@@ -58,18 +58,18 @@ def safe_load_recording(filename):
 
 def verify_pair(perm1, perm2, n, forest):
     from schubmult import BoundedRCFactorAlgebra, RCGraph, RCGraphRing, Sx, uncode
-    from schubmult.rings.combinatorial.bounded_rc_forest_factor_algebra import BoundedRCForestFactorAlgebra
+    from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
     from schubmult.utils.tuple_utils import pad_tuple
     from sympy import Add, Mul, expand, Pow, sympify, pretty_print
     from schubmult.rings.polynomial_algebra import PolynomialAlgebra, ForestPolyBasis
 
     ForestPoly = PolynomialAlgebra(ForestPolyBasis(Sx.genset))
 
-    if not forest:
-        g = BoundedRCFactorAlgebra()
-    else:
-        g = BoundedRCForestFactorAlgebra()
-    r = RCGraphRing()
+    #if not forest:
+    g = BoundedRCFactorAlgebra()
+    # else:
+    #     g = BoundedRCForestFactorAlgebra()
+    r = ForestRCGraphRing()
 
     # def cem_schub(perm, n):
     #     return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
@@ -130,8 +130,16 @@ def verify_pair(perm1, perm2, n, forest):
         # decomp1 = cem_schub_schur_decomp(perm1, length)
         schub1 = g.schub_elem(perm1, length)
         schub2 = g.schub_elem(perm2, length)
-        forest1 = g.from_dict({rc: coeff for rc, coeff in schub1.items() if g.key_to_rc_graph(rc).resize(length).forest_weight == g.key_to_rc_graph(rc).perm.pad_code(length)}).prune()
-        forest2 = g.from_dict({rc: coeff for rc, coeff in schub2.items() if g.key_to_rc_graph(rc).resize(length).forest_weight == g.key_to_rc_graph(rc).perm.pad_code(length)}).prune()
+        forest1 = g.from_dict({rc: coeff for rc, coeff in schub1.items() if g.key_to_rc_graph(rc).resize(length).forest_weight == g.key_to_rc_graph(rc).perm.pad_code(length) and \
+            g.key_to_rc_graph(rc).perm == perm1})#.prune()
+        forest2 = g.from_dict({rc: coeff for rc, coeff in schub2.items() if g.key_to_rc_graph(rc).resize(length).forest_weight == g.key_to_rc_graph(rc).perm.pad_code(length) and \
+            g.key_to_rc_graph(rc).perm == perm2})#.prune()
+        if any(v < 0 for v in forest1.values()):
+            print(f"Negative coefficient in forest1 for {perm1}: {forest1}")
+            return False
+        if any(v < 0 for v in forest2.values()):
+            print(f"Negative coefficient in forest2 for {perm2}: {forest2}")
+            return False
         # if forest:
         #     schub1 = de_unforest(perm1, schub1)
         #     schub2 = de_unforest(perm2, schub2)
@@ -175,7 +183,8 @@ def verify_pair(perm1, perm2, n, forest):
                         
 
         
-        result = g_result.prune().to_rc_graph_ring_element().resize(length)
+        result = r.from_dict(g_result.to_rc_graph_ring_element().resize(length),snap=True)
+        #result = r.from_dict({rc: coeff for rc, coeff in result.items() if rc.perm == perm1 and rc.forest_weight == rc.perm.pad_code(len(rc))})
         
         # if forest:
         #     result = r.from_dict({rc: coeff for rc, coeff in result.items() if rc.forest_weight == rc.perm.pad_code(len(rc))})

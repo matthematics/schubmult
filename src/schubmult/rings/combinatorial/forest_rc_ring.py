@@ -12,7 +12,7 @@ def _canonical_rc(rc):
     #         return rc0
     #     print(rc0, rc0.forest_invariant, omega_park(tuple(reversed(rc0.perm_word))))
     # raise ValueError(f"Failed to find canonical RC graph for {rc}, which has forest weight {rc.forest_weight} and forest invariant {rc.forest_invariant}")
-    return next(iter([rc0 for rc0 in RCGraph.all_forest_rcs(rc.forest_weight) if rc0.forest_weight == rc0.length_vector and rc0.forest_invariant == rc.forest_invariant]))
+    return next(iter([rc0 for rc0 in RCGraph.all_forest_rcs(rc.forest_weight) if rc0.omega_invariant[1] == rc.omega_invariant[1] and rc0.length_vector == rc.length_vector]))
 
 class ForestRCGraphRingElement(RCGraphRingElement):
     def to_free_algebra_element(self, basis=None):
