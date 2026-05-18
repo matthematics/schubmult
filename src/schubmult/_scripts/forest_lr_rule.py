@@ -5,19 +5,41 @@ import json
 import os
 import shutil
 import time
-from multiprocessing import Event, Manager, Process
+import uuid
+import inspect
+import sys
+from joblib import Parallel, delayed
+
+
+def _as_jsonable_key_part(value):
+    """Convert key parts into JSON-safe values.
+
+    Lists/tuples are serialized as lists so tuple-based keys survive JSON round-trips.
+    """
+    if isinstance(value, (tuple, list)):
+        return [_as_jsonable_key_part(v) for v in value]
+    return value
+
+
+def _as_hashable_key_part(value):
+    """Convert JSON-loaded key parts back into hashable Python values."""
+    if isinstance(value, list):
+        return tuple(_as_hashable_key_part(v) for v in value)
+    return value
 
 
 def _key_to_str(k):
-    """(perm1, perm2, n) -> JSON-safe string key using list representations."""
-    perm1, perm2, n = k
-    return json.dumps([list(perm1), list(perm2), n])
+    """Tuple key -> JSON-safe string key.
+
+    Supports tuple keys of any arity.
+    """
+    return json.dumps([_as_jsonable_key_part(part) for part in k])
 
 
 def _str_to_key(s):
-    """Inverse of _key_to_str -> tuple of (tuple, tuple, int)."""
-    perm1, perm2, n = json.loads(s)
-    return (tuple(perm1), tuple(perm2), n)
+    """Inverse of _key_to_str -> hashable tuple key of any supported arity."""
+    parts = json.loads(s)
+    return tuple(_as_hashable_key_part(part) for part in parts)
 
 
 def safe_save_recording(obj, filename, meta=None):
@@ -37,27 +59,44 @@ def safe_save_recording(obj, filename, meta=None):
             os.remove(temp_json)
 
 
+def randomized_backup_copy(path, tag="backup"):
+    if not os.path.exists(path):
+        return None
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    backup_path = f"{path}.{tag}.{stamp}.{uuid.uuid4().hex[:8]}"
+    shutil.copy2(path, backup_path)
+    return backup_path
+
+
 def safe_load_recording(filename):
     json_file = f"{filename}.json"
     if os.path.exists(json_file):
-        with open(json_file) as f:
-            loaded = json.load(f)
-        if isinstance(loaded, dict) and "records" in loaded:
-            raw_records = loaded.get("records", {})
-            meta = loaded.get("meta", {}) or {}
-        else:
-            raw_records = loaded
-            meta = {}
-        dct = {}
-        for k, v in raw_records.items():
-            tp = _str_to_key(k)
-            dct[tp] = v
-        return dct, meta
+        try:
+            with open(json_file) as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict) and "records" in loaded:
+                raw_records = loaded.get("records", {})
+                meta = loaded.get("meta", {}) or {}
+            else:
+                raw_records = loaded
+                meta = {}
+            dct = {}
+            for k, v in raw_records.items():
+                tp = _str_to_key(k)
+                dct[tp] = v
+            return dct, meta
+        except Exception as exc:
+            backup_path = randomized_backup_copy(json_file, tag="parsefail")
+            print(f"Failed to parse existing verification JSON: {json_file}", flush=True)
+            print(f"Parse error: {exc}", flush=True)
+            if backup_path:
+                print(f"Copied unreadable file to: {backup_path}", flush=True)
+            return {}, {"parse_failed": True, "parse_backup": backup_path}
     return {}, {}
 
 
-def verify_pair(perm1, perm2, n, forest):
-    from schubmult import BoundedRCFactorAlgebra, RCGraph, RCGraphRing, Sx, uncode
+def verify_pair(perm1, perm2, n):
+    from schubmult import Sx, uncode
     from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
     from schubmult.utils.tuple_utils import pad_tuple
     from sympy import Add, Mul, expand, Pow, sympify, pretty_print
@@ -65,143 +104,35 @@ def verify_pair(perm1, perm2, n, forest):
 
     ForestPoly = PolynomialAlgebra(ForestPolyBasis(Sx.genset))
 
-    #if not forest:
-    g = BoundedRCFactorAlgebra()
-    # else:
-    #     g = BoundedRCForestFactorAlgebra()
+    
     r = ForestRCGraphRing()
 
-    # def cem_schub(perm, n):
-    #     return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
-
-    # def cem_schub_schur_decomp(perm, n):
-        
-    #     result = Sx.zero @ Sx.zero
-    #     cd = ((perm.strict_mul_dominant(n))).trimcode
-    #     if any(a < n for a in cd):
-    #         toadd = min(n - a for a in cd if a < n)
-    #         cd = [a + toadd for a in cd]
-    #     domperm = uncode(cd)
-    #     reppy = sympify(expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False))
-    #     for arg in Add.make_args(reppy):
-    #         coeff, schur_part = arg.as_coeff_Mul()
-    #         part1 = Sx.one
-    #         part2 = Sx.one
-    #         for elem_arg in Mul.make_args(schur_part):
-    #             if isinstance(elem_arg, Pow):
-    #                 base, exp = elem_arg.as_base_exp()
-    #             else:
-    #                 base = elem_arg
-    #                 exp = 1
-    #             for _ in range(exp):
-    #                 if base.numvars < n:
-    #                     part1 *= base
-    #                 else:
-    #                     part2 *= base
-    #             # if elem_arg.numvars < n:
-    #             #     part1 *= elem_arg
-    #             # else:
-    #             #     part2 *= elem_arg
-    #         result += coeff * part1 @ part2
-    #     return result
-
-    def de_unforest(perm, brcf_elem):
-        new_elem = 0
-        for key, coeff in brcf_elem.items():
-            rc = g.key_to_rc_graph(key)
-            if rc.perm != perm or rc.forest_weight == rc.perm.pad_code(len(rc)):
-                new_elem += coeff * g(key)
-        return new_elem
+    
 
     try:
-        # g_result = g.zero
         result = r.zero
         
         prd = 0
-        #Sx(perm1) * Sx(perm2)
+    
         length = max(len(perm1), len(perm2)) - 1
-        # length = max(len(perm1.trimcode), len(perm2.trimcode))
+    
         prd = ForestPoly(perm1.pad_code(length)) * ForestPoly(perm2.pad_code(length))
-        # else:
-        #     prd = Sx(perm1) * Sx(perm2)
-        #length = n
-        # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
-        # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
-        # decomp1 = cem_schub_schur_decomp(perm1, length)
-        schub1 = g.schub_elem(perm1, length)
-        schub2 = g.schub_elem(perm2, length)
-        forest1 = g.from_dict({rc: coeff for rc, coeff in schub1.items() if g.key_to_rc_graph(rc).resize(length).forest_weight == g.key_to_rc_graph(rc).perm.pad_code(length) and \
-            g.key_to_rc_graph(rc).perm == perm1})#.prune()
-        forest2 = g.from_dict({rc: coeff for rc, coeff in schub2.items() if g.key_to_rc_graph(rc).resize(length).forest_weight == g.key_to_rc_graph(rc).perm.pad_code(length) and \
-            g.key_to_rc_graph(rc).perm == perm2})#.prune()
+        
+        comp1 = perm1.pad_code(length)
+        comp2 = perm2.pad_code(length)
+        forest1 = r.forest_poly(comp1)
+        forest2 = r.forest_poly(comp2)
         if any(v < 0 for v in forest1.values()):
             print(f"Negative coefficient in forest1 for {perm1}: {forest1}")
             return False
         if any(v < 0 for v in forest2.values()):
             print(f"Negative coefficient in forest2 for {perm2}: {forest2}")
             return False
-        # if forest:
-        #     schub1 = de_unforest(perm1, schub1)
-        #     schub2 = de_unforest(perm2, schub2)
-        # schub1 = g.schub_elem(perm1, length)
-        # schub2 = g.schub_elem(perm2, length)
-        # schub1 = g.zero
-        # for (p1, p2), coeff in decomp1.items():
-        #     schub1 += coeff * g.schub_elem(p1, length) * g.schub_elem(p2, length, partition=tuple((~(p2.mul_dominant())).trimcode))
-        # decomp2 = cem_schub_schur_decomp(perm2, length)
-        # schub2 = g.zero
-        # for (p1, p2), coeff in decomp2.items():
-        #     schub2 += coeff * g.schub_elem(p1, length) * g.schub_elem(p2, length, partition=tuple((~(p2.mul_dominant())).trimcode))
-        g_result = forest1 * forest2
-        #schub2 = g.from_tensor_dict(schub2_base, size=length)
-        # tensor_result = r.zero @ r.zero
-        # for key1, coeff1 in schub1.items():
-        #     # rc1 = next(iter(g(key1).to_rc_graph_ring_element().resize(n)))
-        #     # if rc1.perm != perm1:
-        #     #     continue
-        #     sumup = r.zero
-        #     # if not key1.is_highest_weight:
-        #     #     continue
-        #     for key2, coeff2 in schub2.items():
-        #         # rc2 = next(iter(g(key2).to_rc_graph_ring_element().resize(n)))
-        #         # if rc2.perm != perm2:
-        #         #     continue
-        #         graph_base = (g(key1) * g(key2))
-        #         for the_key, _ in graph_base.items():
-        #             if the_key.is_highest_weight:
-        #                 rc = next(iter(g(the_key).to_rc_graph_ring_element().resize(n)))
-        #             #if prd.get(rc.perm, 0) != 0:
-        #                 #if rc.is_principal:
-        #                 sumup += coeff1 * coeff2 * r(rc)
-        #     # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
-        #     #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
-        #     #     return False
-        #     result += sumup
-        #     # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
-        #     #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
-        #     #     return False
-                        
+        result = r.dual_product(forest1, forest2)
 
-        
-        result = r.from_dict(g_result.to_rc_graph_ring_element().resize(length),snap=True)
-        #result = r.from_dict({rc: coeff for rc, coeff in result.items() if rc.perm == perm1 and rc.forest_weight == rc.perm.pad_code(len(rc))})
-        
-        # if forest:
-        #     result = r.from_dict({rc: coeff for rc, coeff in result.items() if rc.forest_weight == rc.perm.pad_code(len(rc))})
-        # pretty_print(result)
         if any(v < 0 for v in result.values()):
-            #if not forest:
             print(f"Negative coefficient in result for {perm1} and {perm2}: {result}")
             return False
-            # else:
-            #     new_elem = 0
-            #     for key, coeff in result.items():
-            #         #rc = g.key_to_rc_graph(key)
-            #         if coeff > 0:
-            #             new_elem += coeff * r(key)
-            #         else:
-            #             new_elem += coeff * r(next(iter(RCGraph.all_forest_rcs(key.length_vector, key.length_vector))))
-            #     result = new_elem
 
         prd2 = 0
         for rc, coeff in result.items():
@@ -216,8 +147,7 @@ def verify_pair(perm1, perm2, n, forest):
         if not prd.almosteq(prd2):
             print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")
             return False
-        #from sympy import pretty_print
-        #pretty_print(result)
+
         return True
     except Exception as e:
         import traceback
@@ -225,89 +155,126 @@ def verify_pair(perm1, perm2, n, forest):
         return False
 
 
-def worker(shared_recording_dict, lock, task_queue):
-    while True:
-        try:
-            item = task_queue.get()
-            if item is None:
-                break
-            perm1, perm2, n, forest = item
-        except Exception:
-            import traceback
-            traceback.print_exc()
-            break
+def clear_rcgraph_caches():
+    """Clear all known RCGraph and related caches to reduce memory overhead."""
+    from schubmult.combinatorics import rc_graph
+    RCGraph = rc_graph.RCGraph
+    cleared = set()
+    # Clear all cache-decorated methods
+    for name, obj in inspect.getmembers(RCGraph):
+        if hasattr(obj, "cache_clear") and callable(obj.cache_clear):
+            try:
+                obj.cache_clear()
+                cleared.add(name)
+            except Exception:
+                pass
+    # Explicitly clear static-level caches
+    static_caches = [
+        "_graph_cache",
+        "_cache_by_weight",
+        "_z_cache",
+        "w_key_cache",
+        "rc_cache",
+        "_rc_cache",
+    ]
+    for cache_name in static_caches:
+        if hasattr(RCGraph, cache_name):
+            try:
+                cache_obj = getattr(RCGraph, cache_name)
+                if hasattr(cache_obj, "clear"):
+                    cache_obj.clear()
+                elif isinstance(cache_obj, set):
+                    cache_obj.clear()
+                elif isinstance(cache_obj, dict):
+                    cache_obj.clear()
+                cleared.add(cache_name)
+            except Exception:
+                pass
+    # Clear module-level caches if any
+    for name, obj in inspect.getmembers(sys.modules[rc_graph.__name__]):
+        if hasattr(obj, "cache_clear") and callable(obj.cache_clear):
+            try:
+                obj.cache_clear()
+                cleared.add(name)
+            except Exception:
+                pass
+    return cleared
 
-        key = (tuple(perm1), tuple(perm2), n, forest)
-        with lock:
-            if shared_recording_dict.get(key) is True:
-                continue
 
-        good = verify_pair(perm1, perm2, n, forest)
-
-        with lock:
-            shared_recording_dict[key] = good
-
-        status = "Success" if good else "FAIL"
-        print(f"{status} ({perm1.trimcode}, {perm2.trimcode}, {n}) at {time.ctime()}", flush=True)
+def run_single_test(perm1, perm2, n):
+    key = (tuple(perm1), tuple(perm2), n)
+    good = verify_pair(perm1, perm2, n)
+    status = "Success" if good else "FAIL"
+    print(f"{status} ({perm1.trimcode}, {perm2.trimcode}, {n}) at {time.ctime()}", flush=True)
+    return key, good
 
 
-def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, meta=None, sleep_time=10):
-    last_len = -1
+def recording_saver(shared_updates_dict, lock, verification_filename, stop_event, base_recording=None, meta=None, sleep_time=10):
+    full_recording = dict(base_recording or {})
     while not stop_event.is_set():
-        try:
-            new_len = len(shared_recording_dict)
-        except Exception:
-            new_len = last_len
-
-        if new_len > last_len:
-            last_len = new_len
-            print(f"Saving {new_len} entries to {verification_filename} at {time.ctime()}", flush=True)
-            with lock:
-                keys = list(shared_recording_dict.keys())
-            recording_copy = {}
+        with lock:
+            keys = list(shared_updates_dict.keys())
             for k in keys:
                 try:
-                    recording_copy[k] = shared_recording_dict[k]
+                    full_recording[k] = shared_updates_dict[k]
                 except Exception:
                     continue
-            safe_save_recording(recording_copy, verification_filename, meta=meta or {})
+            for k in keys:
+                try:
+                    del shared_updates_dict[k]
+                except Exception:
+                    continue
+
+        if keys:
+            print(f"Saving {len(full_recording)} entries to {verification_filename} at {time.ctime()} ({len(keys)} new)", flush=True)
+            safe_save_recording(full_recording, verification_filename, meta=meta or {})
+            gc.collect()
 
         time.sleep(sleep_time)
 
-    # Final save
+    # Final flush and save
     with lock:
-        keys = list(shared_recording_dict.keys())
-    recording_copy = {}
-    for k in keys:
-        try:
-            recording_copy[k] = shared_recording_dict[k]
-        except Exception:
-            continue
-    safe_save_recording(recording_copy, verification_filename, meta=meta or {})
+        keys = list(shared_updates_dict.keys())
+        for k in keys:
+            try:
+                full_recording[k] = shared_updates_dict[k]
+            except Exception:
+                continue
+        for k in keys:
+            try:
+                del shared_updates_dict[k]
+            except Exception:
+                continue
+
+    safe_save_recording(full_recording, verification_filename, meta=meta or {})
+    gc.collect()
 
 
-def queue_producer(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, forest, shared_recording_dict):
-    task_count = 0
+
+def generate_test_cases(perms, n, skip_id, completed_true_keys):
     left_factor = perms
     right_factor = perms
-    bad_patterns = [[4,1,3,2],[1,4,3,2],[3,1,4,2]]
-    if grass_left_factor:
-        left_factor = [p for p in perms if all(not p.has_pattern(pat) for pat in bad_patterns)]
-    if grass_right_factor:
-        right_factor = [p for p in perms if all(not p.has_pattern(pat) for pat in bad_patterns)]
-    for perm1, perm2 in itertools.product(left_factor, right_factor):
+    product_set = set(itertools.product(left_factor, right_factor))
+    product_set = {key for key in product_set if (tuple(key[0]), tuple(key[1]), n) not in completed_true_keys}
+    for perm1, perm2 in product_set:
         if skip_id and (perm1.inv == 0 or perm2.inv == 0):
             continue
-        key = (tuple(perm1), tuple(perm2), n, forest)
-        if shared_recording_dict.get(key) is True:
+        key = (tuple(perm1), tuple(perm2), n)
+        if key in completed_true_keys:
             continue
-        task_queue.put((perm1, perm2, n, forest))
-        task_count += 1
-        if task_count % 100 == 0:
-            gc.collect()
+        yield perm1, perm2, n
 
-    for _ in range(num_processors):
-        task_queue.put(None)
+
+def _merge_with_updates(base_recording, shared_updates_dict, lock):
+    merged = dict(base_recording)
+    with lock:
+        keys = list(shared_updates_dict.keys())
+    for k in keys:
+        try:
+            merged[k] = shared_updates_dict[k]
+        except Exception:
+            continue
+    return merged
 
 
 def main():
@@ -318,85 +285,78 @@ def main():
     parser.add_argument("num_processors", type=int, help="Number of worker processes")
     parser.add_argument("filename", nargs="?", help="Base filename for verification output (json will be <filename>.verification.json)")
     parser.add_argument("--skip-id", action="store_true", default=True, help="Skip identity permutations (default: True)")
-    parser.add_argument("--grass_left_factor", action="store_true", default=False, help="Use Grassmann left factor (default: False)")
-    parser.add_argument("--grass_right_factor", action="store_true", default=False, help="Use Grassmann right factor (default: False)")
     parser.add_argument("--no-skip-id", dest="skip_id", action="store_false", help="Include identity permutations")
-    parser.add_argument("--extra", type=int, default=0, help="Extra size for permutation generation (default: 1)")
-    parser.add_argument("--forest", action="store_true", default=False, help="Use forest factor (default: False)")
 
     args = parser.parse_args()
     n = args.n
     num_processors = args.num_processors
-    extra = args.extra
     skip_id = args.skip_id
-    grass_left_factor = args.grass_left_factor
-    grass_right_factor = args.grass_right_factor
-    forest = args.forest
     filename = args.filename
     verification_filename = filename + ".verification" if filename else None
 
-    meta = {"n": n, "extra": extra, "skip_id": skip_id, "forest": forest, "grass_left_factor": grass_left_factor, "grass_right_factor": grass_right_factor}
+    meta = {"n": n, "skip_id": skip_id}
 
     loaded_recording = {}
+    load_meta = {}
     if verification_filename:
-        loaded_recording, _ = safe_load_recording(verification_filename)
+        json_file = f"{verification_filename}.json"
+        if os.path.exists(json_file):
+            preload_backup = randomized_backup_copy(json_file, tag="preload")
+            if preload_backup:
+                print(f"Pre-load backup created: {preload_backup}", flush=True)
+        loaded_recording, load_meta = safe_load_recording(verification_filename)
+        if load_meta.get("parse_failed"):
+            print("Parse failed for existing verification file; continuing without persistence to avoid overwrite.", flush=True)
+            verification_filename = None
+            loaded_recording = {}
 
-    perms = [p for p in Permutation.all_permutations(n + extra) if len(p.trimcode) <= n]
-    perms.sort(key=lambda p: (p.inv, p.trimcode))
+    perms = Permutation.all_permutations(n)
+    #perms.sort(key=lambda p: (p.inv, p.trimcode))
 
-    print(f"Final LR rule verification: n={n}, extra={extra}, {len(perms)} permutations, {num_processors} workers", flush=True)
+    print(f"Final LR rule verification: n={n}, {len(perms)} permutations, {num_processors} workers", flush=True)
 
-    with Manager() as manager:
-        shared_recording_dict = manager.dict()
-        lock = manager.Lock()
-        stop_event = Event()
+    completed_true_keys = {k for k, v in loaded_recording.items() if v is True}
 
-        if loaded_recording:
-            shared_recording_dict.update(loaded_recording)
-            already_done = sum(1 for v in loaded_recording.values() if v is True)
-            print(f"Loaded {len(loaded_recording)} existing results ({already_done} verified)", flush=True)
 
-        if verification_filename:
-            saver_proc = Process(
-                target=recording_saver,
-                args=(shared_recording_dict, lock, verification_filename, stop_event, meta),
-            )
-            saver_proc.start()
+    if loaded_recording:
+        already_done = sum(1 for v in loaded_recording.values() if v is True)
+        print(f"Loaded {len(loaded_recording)} existing results ({already_done} verified)", flush=True)
 
-        task_queue = manager.Queue()
+    # Prepare test cases
+    test_cases = list(generate_test_cases(perms, n, skip_id, completed_true_keys))
+    total = len(test_cases)
+    print(f"Running {total} test cases using joblib with {num_processors} workers", flush=True)
 
-        producer_proc = Process(
-            target=queue_producer,
-            args=(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, forest, shared_recording_dict),
+    # Run in parallel with joblib, saving after each batch
+    batch_size = 10
+    final_recording = dict(loaded_recording)
+    total = len(test_cases)
+    for batch_start in range(0, total, batch_size):
+        batch = test_cases[batch_start:batch_start+batch_size]
+        results = Parallel(n_jobs=num_processors, batch_size=1, verbose=10)(
+            delayed(run_single_test)(perm1, perm2, n) for (perm1, perm2, n) in batch
         )
-        producer_proc.start()
-
-        workers = []
-        for _ in range(num_processors):
-            p = Process(target=worker, args=(shared_recording_dict, lock, task_queue))
-            p.start()
-            workers.append(p)
-
-        producer_proc.join()
-        for p in workers:
-            p.join()
-
-        stop_event.set()
+        for key, good in results:
+            final_recording[key] = good
         if verification_filename:
-            saver_proc.join()
+            safe_save_recording(final_recording, verification_filename, meta=meta)
+        print(f"Saved progress: {min(batch_start+batch_size, total)}/{total} cases complete", flush=True)
 
-        # Report
-        total = len(shared_recording_dict)
-        failures = sum(1 for v in shared_recording_dict.values() if v is False)
-        successes = sum(1 for v in shared_recording_dict.values() if v is True)
+    if verification_filename:
+        final_recording, _ = safe_load_recording(verification_filename)
 
-        if failures:
-            print(f"\n{failures} FAILURES out of {total}:")
-            for k, v in shared_recording_dict.items():
-                if v is False:
-                    print(f"  {k}")
-        else:
-            print(f"\nAll {successes} pairs verified successfully!")
+    # Report
+    total = len(final_recording)
+    failures = sum(1 for v in final_recording.values() if v is False)
+    successes = sum(1 for v in final_recording.values() if v is True)
+
+    if failures:
+        print(f"\n{failures} FAILURES out of {total}:")
+        for k, v in final_recording.items():
+            if v is False:
+                print(f"  {k}")
+    else:
+        print(f"\nAll {successes} pairs verified successfully!")
 
 
 if __name__ == "__main__":
