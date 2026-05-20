@@ -15,7 +15,13 @@ def _canonical_rc(rc):
     #         return rc0
     #     print(rc0, rc0.forest_invariant, omega_park(tuple(reversed(rc0.perm_word))))
     # raise ValueError(f"Failed to find canonical RC graph for {rc}, which has forest weight {rc.forest_weight} and forest invariant {rc.forest_invariant}")
-    return next(iter([rc0 for rc0 in RCGraph.all_forest_rcs(rc.forest_weight) if rc0.omega_invariant[1] == rc.omega_invariant[1] and rc0.length_vector == rc.length_vector]))
+    st = [rc0 for rc0 in RCGraph.all_rc_graphs(uncode(rc.forest_weight), len(rc)) if rc0.omega_invariant[1] == rc.omega_invariant[1] and rc0.length_vector == rc.length_vector and rc0.forest_weight == rc.forest_weight]
+    if len(st) != 1:
+        raise ValueError(f"Failed to find unique canonical RC graph for {rc}, which has forest weight {rc.forest_weight} and omega invariant {rc.omega_invariant}. Candidates were: {st}")
+    return st[0]
+    # qy_rc = crc(rc)
+    # the_real_qy = RCGraph.principal_rc(uncode(qy_rc.length_vector), len(rc))
+    # return next(iter([rcc for rcc in RCGraph.all_rc_graphs(the_real_qy.perm, len(rc)) if crc(rcc) == the_real_qy and rcc.length_vector == rc.length_vector]))
 
 
 class ForestRCGraphRingElement(RCGraphRingElement):
@@ -60,15 +66,37 @@ class ForestRCGraphRing(RCGraphRing):
     def mul(self, a, b):
         return self.from_dict(super().mul(a, b), snap=True)
 
-    def dual_product(self, a, b):
-        from schubmult.rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
 
+    @staticmethod
+    @cache
+    def _forest_brc(comp, length):
+        from schubmult.rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
         r = BoundedRCFactorAlgebra()
+        #sb = r.full_schub_elem(uncode(comp), length)
+        sb = r.schub_elem(uncode(comp), length)
+        ret = r.from_tensor_dict({key: val for key, val in sb.items() if r.key_to_rc_graph(key).forest_weight == tuple(comp)}, size=length)
+        if any(val < 0 for val in ret.values()):
+            raise ValueError(f"Negative coefficient in forest BRC for {comp} of length {length}: {ret}")
+        return ret
+
+    @staticmethod
+    @cache
+    def _forest_brc_lookup(rc):
+        brc = ForestRCGraphRing._forest_brc(rc.forest_weight, len(rc))
+        return sum([coeff * brc.ring(key) for key, coeff in brc.items() if _canonical_rc(brc.ring.key_to_rc_graph(key)).resize(len(rc)) == _canonical_rc(rc)])
+
+    def dual_product(self, a, b):
         result = self.zero
         for rc1, coeff1 in a.items():
             for rc2, coeff2 in b.items():
-                prd = r.from_tensor_dict(rc1.sem_rep(), len(rc1)) * r.from_tensor_dict(rc2.sem_rep(), len(rc2))
-                result += coeff1 * coeff2 * self._snap(prd.to_rc_graph_ring_element())
+                if len(rc1) != len(rc2):
+                    raise ValueError(f"Cannot multiply RC graphs of different lengths: {rc1} has length {len(rc1)}, while {rc2} has length {len(rc2)}")
+                    continue
+                snap_size = max(len(rc1.perm.trimcode), len(rc2.perm.trimcode))
+                rc1_resized = rc1.resize(snap_size)
+                rc2_resized = rc2.resize(snap_size)
+                prd = (self._forest_brc_lookup(rc1_resized) * self._forest_brc_lookup(rc2_resized))
+                result += coeff1 * coeff2 * self._snap(prd.to_rc_graph_ring_element()).resize(len(rc1))
         return result
 
     @cache
@@ -86,3 +114,4 @@ class ForestRCGraphRing(RCGraphRing):
             elem = self._snap(elem)
         # elem.ring = self
         return self.dtype({k: v for k, v in elem.items() if v != 0})
+

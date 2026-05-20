@@ -463,7 +463,9 @@ class BoundedRCForestFactorAlgebra(CrystalGraphRing):
 
         if partition is None:
             # partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
-            partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
+            #partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
+            #partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
+            partition = tuple(range(max(size,len(perm) - 1), 0, -1))
 
         return self._schub_elem_cached(Permutation(perm), size, partition)
 

@@ -1344,7 +1344,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def cem_rep(self):
         if len(self) == 0:
             return {(): 1}
-        bas = RCGraph.in_CEM_basis(self.perm, len(self), tuple((~(self.perm.mul_dominant())).trimcode))
+        bas = RCGraph.in_CEM_basis(self.perm, len(self), tuple((~(self.perm.strict_mul_dominant(len(self)))).trimcode))
         # print(bas)
         return bas[self]
 
@@ -1495,6 +1495,18 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         for elem_sym_rc in RCGraph.elem_sym_rcs(p, len(self)):
             result += self.double_elem_sym_squash(p, elem_sym_rc.length_vector, yvars, zvars)
         return result
+
+    def snap_qy(self):
+        for i in range(1, len(self)):
+            if max(self[i], default=0) < min(self[i - 1], default=0) and min(self[i - 1], default=0) >= i + 1:
+                new_rc = [*self]
+                new_rc[i] = (*self[i - 1], *self[i])
+                new_rc[i - 1] = ()
+                return RCGraph(new_rc).snap_qy()
+        if self.is_quasi_yamanouchi:
+            return self
+        raise ValueError("Could not snap to quasi-yamanouchi, should have been able to")
+
 
     def double_elem_rep(self, yvars, size):
         from ..rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
@@ -1730,6 +1742,37 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         shift_rc = RCGraph([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
         rc_self = self.resize(len(rc) + N)
         return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+
+    @classmethod
+    @cache
+    def principal_rc_factorization(cls, perm: Permutation) -> tuple[RCGraph]:
+        n = len(perm)
+        length = n - 1
+        if perm.inv == 0:
+            return (cls([()] * length),)
+        cd = [*perm.trimcode] + [0] * (n - len(perm.trimcode))
+        inv = sum(cd)
+        index = n
+        spum = []
+        while index > 0 and inv > 0:
+            if cd[index - 1] == 0:
+                index -= 1
+                continue
+            index -= 1
+            spots = [0] * (index)
+            num_spots = 0
+            for i in range(index):
+                if cd[i] > 0:
+                    spots[i] = 1
+                    cd[i] -= 1
+                    num_spots += 1
+            inv -= num_spots
+
+            elem_rc = next(iter(cls.all_rc_graphs(uncode([0] * (index - num_spots) + [1] * num_spots), index, weight=tuple(spots))))
+            #buildup_rc = buildup_rc.resize(len(elem_rc)).squash_product(elem_rc)
+            spum = [elem_rc, *spum]
+
+        return tuple(spum)
 
     def squash_product(self, rc: RCGraph) -> RCGraph:
         combined_rc = self.disjoint_union(rc)
