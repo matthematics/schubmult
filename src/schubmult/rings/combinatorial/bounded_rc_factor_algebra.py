@@ -935,9 +935,11 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         return True
 
     def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
+        size = left_key.size
         if left_key.size != right_key.size:
-            raise ValueError(f"Cannot multiply keys of different sizes: {left_key.size} vs {right_key.size}")
-        new_key = self._normalize_key(self.make_key((*left_key, *right_key), left_key.size))
+            size = max(left_key.size, right_key.size)
+            #raise ValueError(f"Cannot multiply keys of different sizes: {left_key.size} vs {right_key.size}")
+        new_key = self._normalize_key(self.make_key((*left_key, *right_key), size))
         # if not self._check_in_coprod(left_key, right_key, new_key):
         #     return None
         return new_key

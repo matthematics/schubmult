@@ -64,7 +64,18 @@ class ForestRCGraphRing(RCGraphRing):
         return ret
 
     def mul(self, a, b):
-        return self.from_dict(super().mul(a, b), snap=True)
+        result = self.zero
+        for rc1, coeff1 in a.items():
+            for rc2, coeff2 in b.items():
+                if len(rc1) != len(rc2):
+                    raise ValueError(f"Cannot multiply RC graphs of different lengths: {rc1} has length {len(rc1)}, while {rc2} has length {len(rc2)}")
+                    continue
+                snap_size = max(len(rc1.perm.trimcode), len(rc2.perm.trimcode))
+                rc1_resized = rc1.resize(snap_size)
+                rc2_resized = rc2.resize(snap_size)
+                prd = (self._forest_brc_lookup(rc1_resized) * self._forest_brc_lookup(rc2_resized))
+                result += coeff1 * coeff2 * self._snap(prd.to_rc_graph_ring_element()).resize(len(rc1))
+        return result
 
 
     @staticmethod
@@ -86,18 +97,7 @@ class ForestRCGraphRing(RCGraphRing):
         return sum([coeff * brc.ring(key) for key, coeff in brc.items() if _canonical_rc(brc.ring.key_to_rc_graph(key)).resize(len(rc)) == _canonical_rc(rc)])
 
     def dual_product(self, a, b):
-        result = self.zero
-        for rc1, coeff1 in a.items():
-            for rc2, coeff2 in b.items():
-                if len(rc1) != len(rc2):
-                    raise ValueError(f"Cannot multiply RC graphs of different lengths: {rc1} has length {len(rc1)}, while {rc2} has length {len(rc2)}")
-                    continue
-                snap_size = max(len(rc1.perm.trimcode), len(rc2.perm.trimcode))
-                rc1_resized = rc1.resize(snap_size)
-                rc2_resized = rc2.resize(snap_size)
-                prd = (self._forest_brc_lookup(rc1_resized) * self._forest_brc_lookup(rc2_resized))
-                result += coeff1 * coeff2 * self._snap(prd.to_rc_graph_ring_element()).resize(len(rc1))
-        return result
+        pass
 
     @cache
     def forest_poly(self, comp):
