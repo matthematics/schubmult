@@ -58,7 +58,8 @@ class SlideRCGraphRing(RCGraphRing):
     def _factor_rc(self, rc):
         from .bounded_rc_factor_algebra import BoundedRCFactorAlgebra
         r = BoundedRCFactorAlgebra()
-        return r.from_dict({key: val for key, val in self._factor_schub(rc.snap_qy().length_vector).items() if r.key_to_rc_graph(key).length_vector == rc.length_vector})
+        #return r.from_dict({key: val for key, val in self._factor_schub(rc.snap_qy().length_vector).items() if r.key_to_rc_graph(key).length_vector == rc.length_vector})
+        return r.from_rc_graph(rc, len(rc.perm))
 
     def mul(self, a, b):
         result = 0

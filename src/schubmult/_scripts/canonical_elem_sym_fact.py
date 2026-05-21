@@ -31,7 +31,6 @@ def elem_factor_from_rc(rc):
         try_rc = old_rc.squash_product(elem_sym_rc)
         if try_rc == rc.resize(len(try_rc)):
             return elem_factor_from_rc(old_rc) | {descent: weight_diff}
-    #return {rc.perm: target_perm}
     raise ValueError(f"Could not find element factorization for RC graph {rc} with target permutation {target_perm}")
 
 if __name__ == "__main__":

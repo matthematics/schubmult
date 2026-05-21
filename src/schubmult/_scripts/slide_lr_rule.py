@@ -96,7 +96,7 @@ def safe_load_recording(filename):
 
 
 def verify_pair(perm1, perm2, n):
-    from schubmult import Sx, uncode
+    from schubmult import Sx, uncode, BoundedRCFactorAlgebra, RCGraph
     from schubmult.rings.combinatorial.slide_rc_ring import SlideRCGraphRing
     from schubmult.utils.tuple_utils import pad_tuple
     from sympy import Add, Mul, expand, Pow, sympify, pretty_print
@@ -104,51 +104,60 @@ def verify_pair(perm1, perm2, n):
 
     SlidePoly = PolynomialAlgebra(FundamentalSlidePolyBasis(Sx.genset))
 
-    
-    r = SlideRCGraphRing()
+    br = BoundedRCFactorAlgebra()
+    sr = SlideRCGraphRing()
 
     
 
     try:
-        result = r.zero
+        #result = r.zero
         
         prd = 0
     
         length = n - 1#max(len(perm1), len(perm2)) - 1
     
         
-        
-        comp1 = perm1.pad_code(length)
-        comp2 = perm2.pad_code(length)
-
-        prd = SlidePoly(*comp1) * SlidePoly(*comp2)
-        slide1 = r.slide_poly(comp1)
-        slide2 = r.slide_poly(comp2)
-        if any(v < 0 for v in slide1.values()):
-            print(f"Negative coefficient in slide1 for {comp1}: {slide1}")
-            return False
-        if any(v < 0 for v in slide2.values()):
-            print(f"Negative coefficient in slide2 for {comp2}: {slide2}")
-            return False
-        result = slide1 * slide2
-
-        if any(v < 0 for v in result.values()):
-            print(f"Negative coefficient in result for {comp1} and {comp2}: {result}")
-            return False
-
-        prd2 = 0
-        for rc, coeff in result.items():
-            if coeff != prd.get(rc.snap_qy().length_vector, 0):
-                print(f"Coeff mismatch for {comp1}, {comp2} at {rc.snap_qy().length_vector}: got {coeff}, expected {prd.get(rc.snap_qy().length_vector, 0)}")
+        def qy_portion(comp, perm, length):
+            return [rcc for rcc in RCGraph.all_rc_graphs(perm, length) if rcc.snap_qy().length_vector == comp]
+        # comp1 = perm1.pad_code(length)
+        # comp2 = perm2.pad_code(length)
+        for rc1, rc2 in itertools.product([rcc for rcc in RCGraph.all_rc_graphs(perm1, length) if rcc.is_quasi_yamanouchi], [rccc for rccc in RCGraph.all_rc_graphs(perm2, length) if rccc.is_quasi_yamanouchi]):
+            test_prod = (sr.slide_poly(rc1.length_vector) * sr.slide_poly(rc2.length_vector)).resize(length)
+            prd = 0
+            for rc_left, rc_right in itertools.product(qy_portion(rc1.length_vector, perm1, length), qy_portion(rc2.length_vector, perm2, length)):
+                prd += sr.from_dict((br.from_rc_graph(rc_left, n) * br.from_rc_graph(rc_right, n)).to_rc_graph_ring_element(), snap=True).resize(length)
+            if not test_prod.almosteq(prd):
+                print(f"Mismatch for {perm1}, {perm2} at length {length}: expected {test_prod}, got {prd}")
                 return False
+
+        # prd = SlidePoly(*comp1) * SlidePoly(*comp2)
+        # slide1 = r.slide_poly(comp1)
+        # slide2 = r.slide_poly(comp2)
+        # if any(v < 0 for v in slide1.values()):
+        #     print(f"Negative coefficient in slide1 for {comp1}: {slide1}")
+        #     return False
+        # if any(v < 0 for v in slide2.values()):
+        #     print(f"Negative coefficient in slide2 for {comp2}: {slide2}")
+        #     return False
+        # result = slide1 * slide2
+
+        # if any(v < 0 for v in result.values()):
+        #     print(f"Negative coefficient in result for {comp1} and {comp2}: {result}")
+        #     return False
+
+        # prd2 = 0
+        # for rc, coeff in result.items():
+        #     if coeff != prd.get(rc.snap_qy().length_vector, 0):
+        #         print(f"Coeff mismatch for {comp1}, {comp2} at {rc.snap_qy().length_vector}: got {coeff}, expected {prd.get(rc.snap_qy().length_vector, 0)}")
+        #         return False
             
-            if rc.snap_qy().length_vector == rc.length_vector:
-                prd2 += coeff * SlidePoly(*rc.snap_qy().length_vector)
+        #     if rc.snap_qy().length_vector == rc.length_vector:
+        #         prd2 += coeff * SlidePoly(*rc.snap_qy().length_vector)
 
         
-        if not prd.almosteq(prd2):
-            print(f"Product mismatch for {comp1}, {comp2}: expected {prd}, got {prd2}")
-            return False
+        # if not prd.almosteq(prd2):
+        #     print(f"Product mismatch for {comp1}, {comp2}: expected {prd}, got {prd2}")
+        #     return False
 
         return True
     except Exception as e:
