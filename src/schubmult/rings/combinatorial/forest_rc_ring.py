@@ -93,8 +93,11 @@ class ForestRCGraphRing(RCGraphRing):
     @staticmethod
     @cache
     def _forest_brc_lookup(rc):
-        brc = ForestRCGraphRing._forest_brc(rc.forest_weight, len(rc))
-        return sum([coeff * brc.ring(key) for key, coeff in brc.items() if _canonical_rc(brc.ring.key_to_rc_graph(key)).resize(len(rc)) == _canonical_rc(rc)])
+        from schubmult.rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
+        r = BoundedRCFactorAlgebra()
+        # brc = ForestRCGraphRing._forest_brc(rc.forest_weight, len(rc))
+        # return sum([coeff * brc.ring(key) for key, coeff in brc.items() if _canonical_rc(brc.ring.key_to_rc_graph(key)).resize(len(rc)) == _canonical_rc(rc)])
+        return r.from_rc_graph(rc, size=len(rc.perm))
 
     def dual_product(self, a, b):
         pass
