@@ -122,10 +122,10 @@ def verify_pair(perm1, perm2, n):
         # comp1 = perm1.pad_code(length)
         # comp2 = perm2.pad_code(length)
         for rc1, rc2 in itertools.product([rcc for rcc in RCGraph.all_rc_graphs(perm1, length) if rcc.is_quasi_yamanouchi], [rccc for rccc in RCGraph.all_rc_graphs(perm2, length) if rccc.is_quasi_yamanouchi]):
-            test_prod = (sr.slide_poly(rc1.length_vector) * sr.slide_poly(rc2.length_vector)).resize(length)
+            test_prod = sum([br.from_rc_graph(rc1, size=len(rc1.perm)) for rc1 in qy_portion(*rc1.length_vector, perm1, length)]) * (sum([br.from_rc_graph(rc2, size=len(rc2.perm)) for rc2 in qy_portion(*rc2.length_vector, perm2, length)])).resize(length)
             prd = 0
             for rc_left, rc_right in itertools.product(qy_portion(rc1.length_vector, perm1, length), qy_portion(rc2.length_vector, perm2, length)):
-                prd += sr.from_dict((br.from_rc_graph(rc_left, n) * br.from_rc_graph(rc_right, n)).to_rc_graph_ring_element(), snap=True).resize(length)
+                prd += (br.from_rc_graph(rc_left, n) * br.from_rc_graph(rc_right, n)).to_rc_graph_ring_element()#, snap=True).resize(length)
             if not test_prod.almosteq(prd):
                 print(f"Mismatch for {perm1}, {perm2} at length {length}: expected {test_prod}, got {prd}")
                 return False

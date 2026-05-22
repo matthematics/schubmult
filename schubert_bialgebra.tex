@@ -3326,7 +3326,7 @@ In the present paper, Theorem~\ref{theorem:general_lr_template} is instantiated 
 For dual slide polynomials, this theorem indicates the remaining formal step: identify the corresponding ideal and verify the analogue of (1)--(5) explicitly.
 \end{remark}
 
-\section{A ring modeling {$\coma$}}
+\section{The Littlewood-Richardson rule for forest polynomials}
 
 \subsection{The elementary tensor algebra}
 \begin{definition}
@@ -3453,150 +3453,169 @@ It may be unsurprising to the reader at this point that the kernel of $\RC:\math
 $$\mathcal{S}_u(n)\cdot \mathcal{S}_v(n) = \sum_{w} c_{uv}^w \mathcal{S}_w(n)$$
 and the problem of finding a positive formula for the Schubert structure constants would be solved, due to the fact that $\mathcal{S}_u(n)$ and $\mathcal{S}_v(n)$ have completely nonnegative coefficients. Unfortunately, this is simply not true. The negative terms in $\mathcal{S}_u(n)$ are essential in making the product work.
 
-\subsection{The slide ring}
+\begin{example}[Descending to the RC graph level: not associative]
+
+\end{example}
+
+\subsection{The lift product}
+
+We now define a product on $\BRC_n$ that is associative, but wrong, in the sense that it does not correctly model Schubert polynomial multiplication. However, we will see that it is correct enough to give a Littlewood-Richardson rule for forest polynomials.
+
+\begin{proposition} \label{proposition:elemfactor}
+  Let $w\in S_{n+1}$ be a permutation and suppose $R\in \RC_n(w)$. Then there is a unique sequence of elementary symmetric RC graphs $E_1, E_2,\ldots, E_n$ such that $\hr(E_i) = i$ and $|E_i|=i - \code_{n + 2 - i}(ww_0(n))$ for each $i$ satisfying
+  $$E_1\boxtimes\cdots\boxtimes E_n = R$$
+\end{proposition}
+
+
+
 \begin{definition}
   Define a function $\mathrm{lift}_n:\RC_n(S_{n+1})\to \mathcal{T}_n$ as follows. For an RC graph $R\in \RC_n(S_{n+1})$, let $c$ be the code of the permutation $\wof{R}w_0(n + 1)$. Then we define
-$$\mathrm{lift}_n(R) = A_1\otimes \cdots \otimes A_{\ell(c)}$$
-where $|A_i| = i - c_{n + 2 - i}$ and $\hr(A_i) = i$ for all $i$, with $A_i$ all elementary symmetric full $i$-Grassmannian RC graphs. There is a unique such representation.
+$$\mathrm{lift}_n(R) = E_1\otimes \cdots \otimes E_{\ell(c)}$$
+where $|E_i| = i - c_{n + 2 - i}$ and $\hr(E_i) = i$ for all $i$, with $E_i$ all elementary symmetric full $i$-Grassmannian RC graphs, which is guaranteed to exist and be unique by Proposition \ref{proposition:elemfactor}.
 
-Define a linear homomorphism
-$$\RC_n^\QY:\mathcal{T}_n\to \BRC_n$$
-defined as follows. Suppose $\RC_n(T)=R$. Then we map $R\mapsto R_\QY$, where 
-$$\wtt(R)=\wtt(R_\QY)$$
-and
-$$\code(\wof{R_\QY}) = \wtt(\QY(R))$$
-
-Let $R$ be a quasi-yamanouchi RC graph. Define
-$$\mathfrak{F}(R) = \sum_{\substack{A\in\RC_n(\wof{R})\\\QY(A)=R}} \RC_n^\QY(A)$$
-Then we define a bilinear map $*$ by
-$$\mathfrak{F}(A)* \mathfrak{F}(B) = \RC_n^\QY(\mathrm{lift}_n(\mathfrak{F}(A))\mathrm{lift}_n(\mathfrak{F}(B)))$$
+We define a product $*$ on $\BRC_n$ by
+$$R_1*R_2 = \RC_n(\mathrm{lift}_n(R_1)\mathrm{lift}_n(R_2))$$
 \end{definition}
+
+Such a tensor $A_1\otimes\cdots\otimes A_n$ is highest weight if for each $i,j$ we have that either there is a crossing in row $j+1$ but none in row $j$ in $A_i$, or there is no crossing in row $j$ in $A_{i+1}$,  or there are crossings in both rows $j$ and $j+1$ in $A_{i+1}$.
+
+
+\begin{theorem}
+The product $*:\BRC_n\times\BRC_n\to\BRC_n$ is associative.
+\end{theorem}
+\begin{proof}
+We want to prove that for RC graphs $R_1$, $R_2$, and $R_3$,
+$$R_1*(R_2*R_3) = (R_1*R_2)*R_3$$
+Assume first that $R_3$ is elementary symmetric of length $k$. We may uniquely factorize 
+$$R_1 = R_1^{\mathrm{left}}* R_1^{\mathrm{right}}$$
+$$R_2 = R_2^{\mathrm{left}}* R_2^{\mathrm{right}}$$
+where $\hr(R_1^{\mathrm{left}}) \leq k$ and $\hr(R_1^{\mathrm{right}}) > k$, and similarly for $R_2^{\mathrm{left}}$ and $R_2^{\mathrm{right}}$. 
+Since the $-^{\mathrm{left}}$ factors commute with the $-^{\mathrm{right}}$ factors, we have that
+\begin{align*}
+R_1*(R_2*R_3)
+&= (R_1^{\mathrm{left}}*R_1^{\mathrm{right}})*\big((R_2^{\mathrm{left}}*R_2^{\mathrm{right}})*R_3\big)\\
+&= (R_1^{\mathrm{left}}*R_2^{\mathrm{left}})*R_3*(R_1^{\mathrm{right}}*R_2^{\mathrm{right}}),
+\end{align*}
+and similarly
+\begin{align*}
+(R_1*R_2)*R_3
+&= \big((R_1^{\mathrm{left}}*R_1^{\mathrm{right}})*(R_2^{\mathrm{left}}*R_2^{\mathrm{right}})\big)*R_3\\
+&= (R_1^{\mathrm{left}}*R_2^{\mathrm{left}})*R_3*(R_1^{\mathrm{right}}*R_2^{\mathrm{right}}).
+\end{align*}
+Thus both bracketings are consistently written as
+$$
+(R_1^{\mathrm{left}}*R_2^{\mathrm{left}})*R_3*(R_1^{\mathrm{right}}*R_2^{\mathrm{right}}),
+$$
+so they are equal. The key point is that the corresponding lift factors commute, so this regrouping is canonical.
+
+An arbitrary RC graph is itself a product of elementary symmetric RC graphs of distinct heights, so an induction argument proves the result for arbitrary $R_3$.
+\end{proof}
+
+
+\subsection{The slide quotient}
+
 
 \begin{definition}
 Define a QY-component of $\RC_n(w)$ to be a maximal subset of $\RC_n(w)$ consisting of RC graphs that have the same word. We define $QY(\mathbf{w})$ to be the unique QY-component of $\RC_n(w)$ such that the word of any element of $QY(\mathbf{w})$ is $\mathbf{w}$, if such a component exists.
 \end{definition}
 
 \begin{proposition}
-  Let $w\in S_\infty$ be a permutation such that $\maxd(w)\leq n$. Then for any RC graph $R\in\RC_n(w)$, the map $\RC_n^\QY:QY(\mathrm{word}(R)))\to \BRC_n$ is an isomorphism of crystal graphs onto its image.
+Let $A = A_1\otimes\cdots \otimes A_m$ be an elementary tensor of full Grassmannian elementary symmetric polynomial RC graphs in weakly increasing order of height, considered as an element of the tensor product of Demazure crystals. Then 
+$$A\mapsto\RC_n(A)$$
+extends to an isomorphism of Demazure crystals onto the connected component of $A$.
 \end{proposition}
+
+% \begin{corollary}
+%   Suppose $R_1,R_2$ are RC graphs such that if $d$ is a descent of $\wof{R_2}$, then $d\geq \maxd(\wof{R_1})$ (separated descents). Then the action of the raising/lowering operators intertwines with the product homomorphism
+%   $$R_1\otimes R_2\mapsto R_1*R_2$$
+% \end{corollary}
+
+\begin{proposition}
+  Let $A,B$ be RC graphs. Then the map
+  $$A\otimes B\mapsto A * B$$
+extends to an isomorphism of quasi-crystals onto the connected component of its image.
+\end{proposition}
+\begin{proof}
+  When $B$ is elementary symmetric, we may assume without loss of generality that $\hr(A)\leq \hr(B)$, in which case the result follows from the Demazure case. Associativity of the quasi-crystal tensor product extends to the full result, where we need to invoke that the tensor product of quasi-crystals decomposes into a direct sum of quasi-crystals.
+\end{proof}
+
+% \begin{proposition}
+%   Let $w\in S_\infty$ be a permutation such that $\maxd(w)\leq n$. Then for any RC graph $R\in\RC_n(w)$, the map $\RC_n^\QY:QY(\mathrm{word}(R)))\to \BRC_n$ is an isomorphism of crystal graphs onto its image.
+% \end{proposition}
 
 \begin{theorem}
 Let $A$, $B$ be quasi-Yamanouchi RC graphs. Then
 $$\mathfrak{F}(A)*\mathfrak{F}(B) = \sum_{R=\QY(R)} \mathfrak{F}(R)$$
-where the sum is over all pairs $A'$, $B'$ such that 
-$$\RC_n(\mathrm{lift}_n(A')\mathrm{lift}_n(B'))=R$$
+where the sum is over all pairs $A',B'$ with $\mathrm{word}(A')=\mathrm{word}(A)$, $\mathrm{word}(B')=\mathrm{word}(B)$ such that 
+$$A'*B'=R$$
+with $R$ being quasi-Yamanouchi.
 \end{theorem}
-
-\begin{definition}
-Define $\phi_\QY:\BRC\to\BRC$ by sending $R$ to the unique RC graph $R_\QY$ such that
-$$\wtt(\QY(R)) = \code(\wof{R_\QY})$$ 
-$$\code(\wof{R_\QY}) = \code_\QY(R)$$
-\end{definition}
-
-\begin{proposition} \label{proposition:slideiso}
-  The linear map $\phi_\QY:\mathrm{Schub}_n\to\mathrm{Slide}_n$ is an isomorphism of right $\Lambda_n$-modules. Specifically,
-  $$\phi_\QY(\mathcal{S}_w(n)) = \sum_{R\in\RC_n^{\QY}(w)} \phi_\QY(R)$$
-\end{proposition}
-\begin{proof}
-\end{proof}
-
-\begin{definition}
-  Define $\mathrm{Slide}_n$ to be the submodule of $\BRC_n$ spanned by
-$$F_a(n) = \sum_{\substack{R\in\RC_n(w)\\code(w)=a\\\wtt(\QY(R))=a}} \phi_\QY(R)$$
-\end{definition}
-\begin{theorem}
-  $\mathrm{Slide}_n$ is a ring under $\boxtimes$.
-\end{theorem}
-\subsection{The forest quotient}
-
-
-\begin{definition}
-  Define a linear homomorphism
-$$\RC_n^\forest:\mathcal{T}_n\to \BRC_n$$
-such that a tensor is sent to the unique RC graph $R_\forest\in \RC_n$ such that, defining $\RC_n(T) = R$, we have that
-$$Q_\forest(\mathrm{word}(\RC_n^\forest(T))) = Q_\forest(\mathrm{word}(R))$$ 
-$$\code(\wof{\RC_n^\forest(T)}) = \code_\forest(R)$$
-where $\code_\forest(R)$ is the forest weight of $R$, and 
-$$\wtt(\RC_n^\forest(T)) = \wtt(R)$$
-Define the forest element $\mathbf{P}_a(n)\in \mathcal{T}_n$ for a weak composition $a$ of length $n$ by
-$$\mathbf{P}_a(n) = \sum_{\substack{R=\RC_n(A_1\otimes\cdots \otimes A_m)\\\code(\wof{R})=a\\\code_\forest(R)=a\\\wtt(A_i)=\code_i(\wof{R})}} A_1\otimes\cdots\otimes A_m$$
-where each $A_1\otimes\cdots\otimes A_m$ is an elementary tensor of generating elementary RC graphs, and define
-$$\mathscr{P}_a(n) = \sum_{\substack{R\in\RC_n\\\code(\wof{R})=a\\\code_\forest(R)=a}} R$$
-\emph{Note that $\mathbf{P}_a(n)$ has nonnegative integer coefficients}, unlike $\mathbf{S}_w(n)$.
-\end{definition}
-
-\begin{definition}
-Define $\phi_\forest:\BRC\to\BRC$ by sending $R$ to the unique RC graph $R_\forest$ such that
-$$Q_\forest(\mathrm{word}(R)) = Q_\forest(\mathrm{word}(R_\forest))$$ 
-$$\code(\wof{R_\forest}) = \code_\forest(R)$$
-and
-$$\wtt(R_\forest) = \wtt(R)$$
-\end{definition}
-
-\begin{proposition} \label{proposition:forestiso}
-  The linear map $\phi_\forest:\mathrm{Schub}_n\to\mathrm{Forest}_n$ is an isomorphism of right $\Lambda_n$-modules. Specifically,
-  $$\phi_\forest(\mathcal{S}_w(n)) = \sum_{a\in\mathrm{Comp}(n)} \gamma_w^a \mathscr{P}_a(n)$$
-  where $\gamma_w^a$ are the coefficients such that
-$$\sch_w(x) = \sum_{a\in\mathrm{Comp}(n)} \gamma_w^a \forest_a(x)$$
-\end{proposition}
-\begin{proof}
-From \cite{nadeau2024forest}, the insertion algorithm ensures that $\RC_n(w)$ decomposes into a disjoint union of forest equivalence classes of reduced words and that each such equivalence class maps to a unique $\mathcal{P}_a(n)$ via $\RC_n^\forest$. Composing with the weight homomorphism to $\mathbb{Z}[x_1,\ldots,x_n]$ does not change the result, and since $\phi_\forest$ is surjective and injective, it is a linear isomorphism. Consider now $\Lambda_n$ as generated by elementary full-Grassmannian RC graphs, since most Schur polynomials are not forest polynomials. To prove that $\phi_\forest$ is a $\Lambda_n$-module isomorphism, we need only consider multiplication by a single elementary full $n$-Grassmannian RC graph. The action of such an RC graph on $\mathcal{S}_w(n)$ is given by the box product and the Pieri formula. We are ensured therefore that $\mathcal{S}_w(n)\boxtimes A\in \mathrm{Schub}_n$, from which it follows from \cite[Proposition~5.10]{nadeau2024forest} that the result contains precisely the correct forest polynomial terms, since the RC graphs form complete $\equiv_\forest$-classes of words, even after descending to the canonical forest polynomial representatives. That is,
-$$\phi_\forest(\mathcal{S}_w(n)\boxtimes A) = \sum_{a} \gamma_w^a \mathscr{P}_{a}(n)\boxtimes A$$
-and the result follows.
-%and since the weight homomorphism $\mathrm{Schub}_n\to\mathbb{Z}[x_1,\ldots,x_n]$ is an isomorphism factoring through a surjective homomorphism onto the submodule $\mathrm{Forest}_n$, the $\mathscr{P}_a(n)$ are linearly independent. The result follows.
-\end{proof}
-
-\begin{theorem}
-Let $a,b\in \mathrm{Comp}(n)$. Then
-$$\RC_\forest(\mathbf{P}_a(n)\mathbf{P}_b(n)) = \sum_{c} \beta_{ab}^c \mathscr{P}_c(n)$$
-where $\beta_{ab}^c$ are the multiplicative structure constants of forest polynomials.
-\end{theorem}
-\begin{proof}
-Let $F_a^{w;n}$ be the transition coefficients such that
-$$\forest_a(x) = \sum_{w} F_a^{w;n} \sch_w(x)$$
-Notice that these may be negative. Define
-$$\mathbf{P}'_a(n) = \sum_{w} F_a^{w;n} \mathbf{S}_w(n)$$
-Then, by Theorem \ref{theorem:schubproduct}, we have that
-$$\RC(\mathbf{P}'_a(n)\mathbf{P}'_b(n)) = \sum_{u,v} c_{u,v}^w F_a^{u;n} F_b^{v;n} \mathcal{S}_w(n)$$
-Applying $\phi_\forest$ to both sides, we have that
-$$\RC_\forest(\mathbf{P}'_a(n)\mathbf{P}'_b(n)) = \sum_{u,v} c_{u,v}^w F_a^{u;n} F_b^{v;n} \sum_{c} \gamma_w^c \mathscr{P}_c(n)$$
-which is equal to
-$$\sum_{c} \beta_{ab}^c \mathscr{P}_c(n)$$
-We claim that
-$$\RC_\forest(\mathbf{P}_a(n)\mathbf{P}_b(n)) = \RC_\forest(\mathbf{P}'_a(n)\mathbf{P}'_b(n))$$
-Consider
-$$\RC_n(\mathbf{P}'_a(n)) = \mathcal{P}_a(n) - (\mathcal{P}_a(n) - \sum_{w} F_a^{w;n} \mathcal{S}_w(n))$$
-and
-$$\RC_n(\mathbf{P}'_a(n)\mathbf{P}'_b(n)) = \RC_n(\mathbf{P}_a(n)\mathbf{P}_b(n)) - \RC_n((\mathbf{P}_a(n) - \sum_{w} F_a^{w;n} \mathbf{S}_w(n))\mathbf{P}'_b(n)) - \RC_n(\mathbf{P}_a(n)(\mathbf{P}_a(n) - \sum_{w} F_b^{w;n} \mathbf{S}_w(n)))$$
-% Thus,
-% $$
-% \begin{aligned}
-% \RC_\forest(\mathbf{P}_a(n)\mathbf{P}_b(n))
-% &= \RC_\forest(\mathbf{P}'_a(n)\mathbf{P}'_b(n)) \\
-% &\quad - \RC_\forest\!\left(\mathbf{P}_a(n)\left(\mathbf{P}_b(n) - \sum_{w} F_b^{w;n} \mathbf{S}_w(n)\right)\right) \\
-% &\quad - \RC_\forest\!\left(\left(\mathbf{P}_a(n) - \sum_{w} F_a^{w;n} \mathbf{S}_w(n)\right)\mathbf{P}_b(n)\right) \\
-% &\quad + \RC_\forest\!\left(\left(\mathbf{P}_a(n) - \sum_{w} F_a^{w;n} \mathbf{S}_w(n)\right)\left(\mathbf{P}_b(n) - \sum_{w} F_b^{w;n} \mathbf{S}_w(n)\right)\right)
-% \end{aligned}
-% $$
-% which simplifies to
-% $$
-% \begin{aligned}
-% \RC_\forest(\mathbf{P}_a(n)\mathbf{P}_b(n))
-% &= \RC_\forest(\mathbf{P}'_a(n)\mathbf{P}'_b(n)) \\
-% &\quad - \RC_\forest\!\left(\mathbf{P}_a(n)\mathbf{P}_b(n))
-% &\quad - \RC_\forest\!\left(\mathbf{P}_a(n)\mathbf{P}_b'(n))
-% &\quad - \RC_\forest\!\left(\left(\mathbf{P}_a(n) - \sum_{w} F_a^{w;n} \mathbf{S}_w(n)\right)\left(\mathbf{P}_b(n) - \sum_{w} F_b^{w;n} \mathbf{S}_w(n)\right)\right)
-% \end{aligned}
-% $$
-\end{proof}
-
-
-
 
 % \begin{definition}
-% Let $c$ be a composition. Define $\mathbf{F}_c(n)\in \mathcal{T}_n$ by
-% $$\mathbf{F}_c(n) = \sum_{\substack{A\in\mathbf{E}_{\code^{-1}(c)}^{\alpha;n}\\\code_\forest(\RC(A)) = c}} A$$
+% Define $\phi_\QY:\BRC\to\BRC$ by sending $R$ to the unique RC graph $R_\QY$ such that
+% $$\wtt(\QY(R)) = \code(\wof{R_\QY})$$ 
+% $$\code(\wof{R_\QY}) = \code_\QY(R)$$
 % \end{definition}
+
+% \begin{proposition} \label{proposition:slideiso}
+%   The linear map $\phi_\QY:\mathrm{Schub}_n\to\mathrm{Slide}_n$ is an isomorphism of right $\Lambda_n$-modules. Specifically,
+%   $$\phi_\QY(\mathcal{S}_w(n)) = \sum_{R\in\RC_n^{\QY}(w)} \phi_\QY(R)$$
+% \end{proposition}
+% \begin{proof}
+% \end{proof}
+
+% \begin{definition}
+%   Define $\mathrm{Slide}_n$ to be the submodule of $\BRC_n$ spanned by
+% $$F_a(n) = \sum_{\substack{R\in\RC_n(w)\\code(w)=a\\\wtt(\QY(R))=a}} \phi_\QY(R)$$
+% \end{definition}
+% \begin{theorem}
+%   $\mathrm{Slide}_n$ is a ring under $\boxtimes$.
+% \end{theorem}
+\subsection{The forest polynomial LR rule}
+
+
+\begin{definition}
+%   Define a linear homomorphism
+% $$\RC_n^\forest:\mathcal{T}_n\to \BRC_n$$
+% such that a tensor is sent to the unique RC graph $R_\forest\in \RC_n$ such that, defining $\RC_n(T) = R$, we have that
+% $$Q_\forest(\mathrm{word}(\RC_n^\forest(T))) = Q_\forest(\mathrm{word}(R))$$ 
+% $$\code(\wof{\RC_n^\forest(T)}) = \code_\forest(R)$$
+% where $\code_\forest(R)$ is the forest weight of $R$, and 
+% $$\wtt(\RC_n^\forest(T)) = \wtt(R)$$
+% Define the forest element $\mathbf{P}_a(n)\in \mathcal{T}_n$ for a weak composition $a$ of length $n$ by
+% $$\mathbf{P}_a(n) = \sum_{\substack{R=\RC_n(A_1\otimes\cdots \otimes A_m)\\\code(\wof{R})=a\\\code_\forest(R)=a\\\wtt(A_i)=\code_i(\wof{R})}} A_1\otimes\cdots\otimes A_m$$
+% where each $A_1\otimes\cdots\otimes A_m$ is an elementary tensor of generating elementary RC graphs, and define
+% $$\mathscr{P}_a(n) = \sum_{\substack{R\in\RC_n\\\code(\wof{R})=a\\\code_\forest(R)=a}} R$$
+%\emph{Note that $\mathbf{P}_a(n)$ has nonnegative integer coefficients}, unlike $\mathbf{S}_w(n)$.
+Define
+$$\forest(R) = \sum_{A\equiv_\forest R} A$$
+A \emph{forest RC graph} is an RC graph such that $\code_\forest(R) = \wtt(R)$.
+\end{definition}
+
+
+\begin{theorem}
+  Let $A, B$ be forest RC graphs. Then
+$$\forest(A)*\forest(B) = \sum_{R} \forest(R)$$
+where the sum is over all pairs $A'\equiv_\forest A$, $B'\equiv_\forest B$ such that
+$$A'*B'=R$$
+with $R$ being a forest RC graph.
+\end{theorem}
+
+
+\begin{theorem}[Forest polynomial LR rule]
+  Let $a,b$ be weak compositions of length $n$. Then
+  $$\forest_a\forest_b = \sum_c \beta_{ab}^c \forest_c$$
+  where $\beta_{ab}^c$ is the number of pairs $A,B$ of RC graphs such that
+  $$\code(\wof{A}) = \code_\forest(A) = a, \code(\wof{B}) = \code_\forest(B) = b$$
+  and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
+\end{theorem}
+
+\subsection{Failure for Schubert polynomial}
+
+It is perhaps unsurprising that the Schubert polynomials manage to ``dodge'' this method. The product is associative, but Monk's formula is not satisfied:
+
+
+
 \appendix
 \section{Proof of Proposition \ref{proposition:pullindex}}
 

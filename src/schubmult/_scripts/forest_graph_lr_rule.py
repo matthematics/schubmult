@@ -96,7 +96,7 @@ def safe_load_recording(filename):
 
 
 def verify_pair(perm1, perm2, n):
-    from schubmult import Sx, uncode
+    from schubmult import Sx, uncode, RCGraphRing
     from schubmult.rings.combinatorial.schubert_rc_ring import SchubertRCGraphRing
     from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
     from schubmult.utils.tuple_utils import pad_tuple
@@ -105,15 +105,12 @@ def verify_pair(perm1, perm2, n):
 
     ForestPoly = PolynomialAlgebra(ForestPolyBasis(Sx.genset))
 
-    
     r = SchubertRCGraphRing()
     f = ForestRCGraphRing()
 
     
 
     try:
-        result = r.zero
-        
         prd = 0
     
         length = n - 1#max(len(perm1), len(perm2)) - 1
@@ -129,9 +126,9 @@ def verify_pair(perm1, perm2, n):
         prd2 = 0
         for rc1, coeff1 in forest1.items():
             for rc2, coeff2 in forest2.items():
-                prop = f(rc1) * f(rc2)
+                prop = r(rc1) * r(rc2)
                 for the_rc, coeff in prop.items():
-                    if the_rc.is_principal:
+                    if the_rc.forest_weight == the_rc.length_vector:
                         prd2 += ForestPoly(*the_rc.forest_weight)
         
         if not prd.almosteq(prd2):

@@ -169,3 +169,33 @@ def test_eg_plactic_product_iso():
     rc2 = RCGraph([(1,), (4, 3, 2), (4,), ()])
     rc_elem = rc_ring(rc) * rc_ring(rc2)
     assert rc_elem.almosteq((eg_ring.from_rc_graph(rc) * eg_ring.from_rc_graph(rc2)).to_rc_graph_ring_element())
+
+
+def test_rc_graph_empty_list_constructor_has_zero_rows():
+    from schubmult import RCGraph
+
+    assert len(RCGraph([])) == 0
+
+
+def test_rc_graph_ring_resize_resizes_empty_graph_too():
+    from schubmult import RCGraph
+    from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
+
+    ring = RCGraphRing()
+    resized = ring(RCGraph([])).resize(3)
+
+    assert len(resized) == 1
+    only_key = next(iter(resized.keys()))
+    assert len(only_key) == 3
+    assert resized[only_key] == 1
+
+
+def test_rc_graph_ring_empty_basis_not_scalar_one_term():
+    from schubmult import RCGraph
+    from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
+    from schubmult.symbolic import S
+
+    ring = RCGraphRing()
+    term = ring(RCGraph([])).as_ordered_terms()[0]
+
+    assert term != S.One

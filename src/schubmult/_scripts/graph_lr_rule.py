@@ -96,7 +96,7 @@ def safe_load_recording(filename):
 
 
 def verify_pair(perm1, perm2, n):
-    from schubmult import Sx, uncode
+    from schubmult import Sx, uncode, RCGraphRing, BoundedRCFactorAlgebra, RCGraph
     from schubmult.rings.combinatorial.schubert_rc_ring import SchubertRCGraphRing
     from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
     from schubmult.utils.tuple_utils import pad_tuple
@@ -106,7 +106,8 @@ def verify_pair(perm1, perm2, n):
     SlidePoly = PolynomialAlgebra(FundamentalSlidePolyBasis(Sx.genset))
 
     
-    r = SchubertRCGraphRing()
+    r = RCGraphRing()
+    br = BoundedRCFactorAlgebra()
     f = ForestRCGraphRing()
 
     
@@ -122,23 +123,29 @@ def verify_pair(perm1, perm2, n):
         
         
         prd = Sx(perm1) * Sx(perm2)
-        slide1 = r.schubert_poly(perm1, length)
-        slide2 = r.schubert_poly(perm2, length)
+        # slide1 = br.from_rc_graph_ring_element(r.schub(perm1, n), size=n)
+        # slide2 = br.from_rc_graph_ring_element(r.schub(perm2, n), size=n)
+        slide1 = br.full_schub_elem(perm1, n)
+        slide2 = br.full_schub_elem(perm2, n)
         
+        prdrc2 = r.from_dict((slide1 * slide2).to_rc_graph_ring_element())
         prd2 = 0
-        for rc1, coeff1 in slide1.items():
-            for rc2, coeff2 in slide2.items():
-                prop = r(rc1) * r(rc2)
-                for the_rc, coeff in prop.items():
-                    if the_rc.is_principal:
-                        alt_rc1 = f(rc1)
-                        alt_rc2 = f(rc2)
-                        alt_prop = alt_rc1 * alt_rc2
-                        if next(iter(prop.keys())) == the_rc:
-                            prd2 += Sx(the_rc.perm)
+        for rc, coeff in prdrc2.items():
+            if rc.is_principal:
+                prd2 += coeff * Sx(rc.perm)
+        # for rc1, coeff1 in slide1.items():
+        #     for rc2, coeff2 in slide2.items():
+        #         prop = r(rc1) * r(rc2)
+        #         for the_rc, coeff in prop.items():
+        #             if the_rc.is_principal:
+        #                 alt_rc1 = f(rc1)
+        #                 alt_rc2 = f(rc2)
+        #                 alt_prop = alt_rc1 * alt_rc2
+        #                 if next(iter(prop.keys())) == the_rc:
+        #                     prd2 += Sx(the_rc.perm)
         
         if not prd.almosteq(prd2):
-            print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")
+            print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}\n{prdrc2=}")
             return False
 
         return True

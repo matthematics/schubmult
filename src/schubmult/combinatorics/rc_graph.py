@@ -917,6 +917,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return len(numeros)
 
     def __new__(cls, *args):
+        # Normalize RCGraph([]) to the true empty (zero-row) RC graph.
+        if len(args) == 1:
+            try:
+                if len(args[0]) == 0:
+                    args = ()
+            except TypeError:
+                pass
         new_args = tuple(tuple(arg) for arg in args)
         return RCGraph.__xnew_cached__(cls, *new_args)
 
@@ -1064,6 +1071,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         import random
 
         return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
+
+    @classmethod
+    def all_rcs_with_word(cls, perm: Permutation, word: tuple[int, ...]) -> set[RCGraph]:
+        return {rc for rc in RCGraph.all_rc_graphs(perm) if rc.perm_word == word}
 
     @classmethod
     def all_rc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None, *, check_length=False) -> set[RCGraph]:

@@ -3,7 +3,7 @@ from functools import cache
 from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.rings.free_algebra import WordBasis
-from schubmult.symbolic import S
+from schubmult.symbolic import S, sympify_sympy, sympy_Mul
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 
@@ -31,6 +31,18 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
     # ----------------------
     # Presentation helpers
     # ----------------------
+
+    def as_terms(self):
+        if len(self.keys()) == 0:
+            return [sympify_sympy(S.Zero)]
+        # Keep RCGraph([]) as a basis monomial rather than collapsing to scalar 1.
+        return [sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k)) for k in self.keys()]
+
+    def as_ordered_terms(self, *_, **__):
+        if len(self.keys()) == 0:
+            return [sympify_sympy(S.Zero)]
+        # Keep RCGraph([]) as a basis monomial rather than collapsing to scalar 1.
+        return [sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k)) for k in sorted(self.keys())]
 
     @property
     def vex(self):

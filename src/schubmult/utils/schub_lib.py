@@ -913,3 +913,58 @@ def partitions_with_sum_at_most(max_sum: int, max_parts: int) -> list[tuple[int,
     for part in rec(max_sum, max_sum, max_parts):
         seen.add(part)
     return sorted(seen, key=lambda p: (sum(p), len(p), p), reverse=False)
+
+
+def hw_elementary_tensors(c):
+    """Enumerate all sequences (A_1, ..., A_n) with A_i subset of [i], |A_i| = c[i-1],
+    such that for every j the column sum d_j = #{i : j in A_i} is weakly decreasing in j.
+
+    Parameters
+    ----------
+    c : sequence of nonnegative ints of length n
+        A weak composition. Each c[i-1] must satisfy c[i-1] <= i.
+
+    Yields
+    ------
+    tuple of tuples
+        One tuple (A_1, ..., A_n) per valid family; each A_i is a sorted tuple of
+        ints in [1, i] of length c[i-1].
+    """
+    from itertools import combinations
+
+    c = tuple(c)
+    n = len(c)
+    if any(c[i] > i + 1 for i in range(n)):
+        return
+
+    A = [None] * n
+    d = [0] * (n + 2)  # 1-indexed; d[0] and d[n+1] sentinels
+
+    def cap(j, i_done):
+        # Max extra 1's column j can still receive from rows i_done+1..n.
+        # Row i' contributes to column j iff j <= i'.
+        return max(0, n - max(i_done, j - 1))
+
+    def feasible(i_done):
+        for j in range(1, n + 1):
+            if d[j] + cap(j, i_done) < d[j + 1]:
+                return False
+        return True
+
+    def recurse(i):
+        if i == n:
+            for j in range(1, n + 1):
+                if d[j] < d[j + 1]:
+                    return
+            yield tuple(A)
+            return
+        for subset in combinations(range(1, i + 2), c[i]):
+            for j in subset:
+                d[j] += 1
+            A[i] = subset
+            if feasible(i + 1):
+                yield from recurse(i + 1)
+            for j in subset:
+                d[j] -= 1
+
+    yield from recurse(0)
