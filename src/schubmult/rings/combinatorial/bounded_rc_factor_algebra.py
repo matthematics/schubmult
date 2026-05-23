@@ -13,41 +13,60 @@ from schubmult.rings.printing import PrintingTerm, TypedPrintingTerm
 from schubmult.symbolic import S
 
 
-def _elem_factor_from_rc_old(rc):
-    from schubmult.combinatorics.permutation import uncode
-    from schubmult.utils.schub_lib import elem_sym_perms_op
-    # find maximal downard path
-    # target_perm = None
-    descent = len(rc.perm.trimcode)
-    if descent == 0:
-        return {1: RCGraph(())}
-    target_perm = rc.perm
-    working_descent = len(rc.perm) - 1
-    while True:
-        results = elem_sym_perms_op(rc.perm, working_descent, working_descent)
-        new_results = [permperm for permperm in results if len(permperm[0].trimcode) < working_descent and permperm[0].inv < rc.perm.inv]
-        if len(new_results) == 0:
-            working_descent -= 1
-            continue
-        target_perm = min(new_results, key=lambda p: (len(p[0].trimcode), p[0].inv), default=target_perm)[0]
-        break
+def _tensor_to_rcs(weight_tensor, descents):
+    from schubmult import uncode
+    rcs = []
+    for i, desc in enumerate(descents):
+        wt = len(weight_tensor[i])
+        weight = [0] * desc
+        for w in weight_tensor[i]:
+            weight[w - 1] = 1
+        elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0]*(desc - wt) + [1] * wt), desc, weight=tuple(weight))))
+        rcs.append(elem_rc)
+    return CrystalGraphTensor(*rcs)
 
-    descent = working_descent
-    #except ValueError:
-    #print(f"{rc.perm.trimcode}: {target_perm.trimcode}")
-    if target_perm.inv == 0:
-        return {descent: rc.resize(descent)}
-    # awful slow way
-    for old_rc in RCGraph.all_rc_graphs(target_perm, descent):
-        weight_diff = tuple(rc.resize(descent).length_vector[i] - old_rc.length_vector[i] for i in range(descent))
-        try:
-            elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (descent - sum(weight_diff)) + [1] * sum(weight_diff)), descent, weight=weight_diff)))
-        except StopIteration:
-            continue
-        try_rc = old_rc.squash_product(elem_sym_rc)
-        if try_rc == rc.resize(len(try_rc)):
-            return _elem_factor_from_rc(old_rc) | {descent: elem_sym_rc}
-    raise ValueError(f"Could not find element factorization for RC graph {rc} with target permutation {target_perm}")
+def _all_tensors(weights, descents):
+    from schubmult.utils.schub_lib import hw_elementary_tensors
+    hw_tensors = hw_elementary_tensors(weights, descents)
+    for hw_tensor_weight in hw_tensors:
+        hw_tensor = _tensor_to_rcs(hw_tensor_weight, descents)
+        yield from hw_tensor.full_crystal
+
+# def _elem_factor_from_rc_old(rc):
+#     from schubmult.combinatorics.permutation import uncode
+#     from schubmult.utils.schub_lib import elem_sym_perms_op
+#     # find maximal downard path
+#     # target_perm = None
+#     descent = len(rc.perm.trimcode)
+#     if descent == 0:
+#         return {1: RCGraph(())}
+#     target_perm = rc.perm
+#     working_descent = len(rc.perm) - 1
+#     while True:
+#         results = elem_sym_perms_op(rc.perm, working_descent, working_descent)
+#         new_results = [permperm for permperm in results if len(permperm[0].trimcode) < working_descent and permperm[0].inv < rc.perm.inv]
+#         if len(new_results) == 0:
+#             working_descent -= 1
+#             continue
+#         target_perm = min(new_results, key=lambda p: (len(p[0].trimcode), p[0].inv), default=target_perm)[0]
+#         break
+
+#     descent = working_descent
+#     #except ValueError:
+#     #print(f"{rc.perm.trimcode}: {target_perm.trimcode}")
+#     if target_perm.inv == 0:
+#         return {descent: rc.resize(descent)}
+#     # awful slow way
+#     for old_rc in RCGraph.all_rc_graphs(target_perm, descent):
+#         weight_diff = tuple(rc.resize(descent).length_vector[i] - old_rc.length_vector[i] for i in range(descent))
+#         try:
+#             elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (descent - sum(weight_diff)) + [1] * sum(weight_diff)), descent, weight=weight_diff)))
+#         except StopIteration:
+#             continue
+#         try_rc = old_rc.squash_product(elem_sym_rc)
+#         if try_rc == rc.resize(len(try_rc)):
+#             return _elem_factor_from_rc(old_rc) | {descent: elem_sym_rc}
+#     raise ValueError(f"Could not find element factorization for RC graph {rc} with target permutation {target_perm}")
 
 def _squash_it_up(tup):
     ret = RCGraph([()])
@@ -56,24 +75,15 @@ def _squash_it_up(tup):
     return ret
 
 def _elem_factor_from_rc(rc):
-    from schubmult.combinatorics.permutation import Permutation, uncode
-    from schubmult.utils.schub_lib import hw_elementary_tensors
-    # find maximal downard path
-    # target_perm = None
+    from schubmult.combinatorics.permutation import Permutation
     if rc.perm.inv == 0:
         return {}
     n = len(rc.perm)
     weight = tuple(reversed([n - 1 - j - w for j, w in enumerate((rc.perm * Permutation.w0(n)).pad_code(n - 1))]))
     hw_rc, raise_seq = rc.to_highest_weight()
     good_tensor = None
-    for tensor in hw_elementary_tensors(weight):
-        real_weight = [0] * (n - 1)
-        for j, w in enumerate(tensor):
-            real_weight[w - 1] += 1
-        if tuple(real_weight) != hw_rc.length_vector:
-            continue
-        elem_sym_rcs = [next(iter(RCGraph.all_rc_graphs(uncode([0] * (i + 1 - real_weight[i] + [1] * real_weight[i]), n - 1, weight=tuple(real_weight))))) for i in range(n - 1)]
-        if _squash_it_up(elem_sym_rcs).resize(len(hw_rc)) == hw_rc:
+    for tensor in _all_tensors(weight, tuple(range(1,n))):
+        if _squash_it_up(tensor).resize(len(hw_rc)) == hw_rc:
             good_tensor = tensor
             break
     if good_tensor is None:
