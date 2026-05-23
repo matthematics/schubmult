@@ -915,50 +915,65 @@ def partitions_with_sum_at_most(max_sum: int, max_parts: int) -> list[tuple[int,
     return sorted(seen, key=lambda p: (sum(p), len(p), p), reverse=False)
 
 
-def hw_elementary_tensors(c):
-    """Enumerate all sequences (A_1, ..., A_n) with A_i subset of [i], |A_i| = c[i-1],
+def hw_elementary_tensors(c, bounds=None):
+    """Enumerate all sequences (A_1, ..., A_n) with A_i subset of [a_i] and |A_i| = c[i-1],
     such that for every j the column sum d_j = #{i : j in A_i} is weakly decreasing in j.
 
     Parameters
     ----------
     c : sequence of nonnegative ints of length n
-        A weak composition. Each c[i-1] must satisfy c[i-1] <= i.
+        A weak composition. Each c[i-1] must satisfy c[i-1] <= a_i.
+    bounds : sequence of positive ints of length n, optional
+        A weakly increasing sequence a_1 <= a_2 <= ... <= a_n of positive integers.
+        Defaults to (1, 2, ..., n).
 
     Yields
     ------
     tuple of tuples
         One tuple (A_1, ..., A_n) per valid family; each A_i is a sorted tuple of
-        ints in [1, i] of length c[i-1].
+        ints in [1, a_i] of length c[i-1].
     """
     from itertools import combinations
 
     c = tuple(c)
     n = len(c)
-    if any(c[i] > i + 1 for i in range(n)):
+    if bounds is None:
+        bounds = tuple(range(1, n + 1))
+    else:
+        bounds = tuple(bounds)
+        if len(bounds) != n:
+            raise ValueError("bounds must have the same length as c")
+        if any(bounds[i] <= 0 for i in range(n)):
+            raise ValueError("bounds must be positive integers")
+        if any(bounds[i] > bounds[i + 1] for i in range(n - 1)):
+            raise ValueError("bounds must be weakly increasing")
+    if any(c[i] > bounds[i] for i in range(n)):
         return
 
+    m = bounds[-1] if n > 0 else 0  # maximum column index
+
     A = [None] * n
-    d = [0] * (n + 2)  # 1-indexed; d[0] and d[n+1] sentinels
+    d = [0] * (m + 2)  # 1-indexed; d[0] and d[m+1] sentinels
 
     def cap(j, i_done):
         # Max extra 1's column j can still receive from rows i_done+1..n.
-        # Row i' contributes to column j iff j <= i'.
-        return max(0, n - max(i_done, j - 1))
+        # Row i' (1-indexed) contributes to column j iff j <= bounds[i'-1].
+        return sum(1 for ip in range(i_done, n) if j <= bounds[ip])
 
     def feasible(i_done):
-        for j in range(1, n + 1):
+        for j in range(1, m + 1):
             if d[j] + cap(j, i_done) < d[j + 1]:
                 return False
         return True
 
     def recurse(i):
         if i == n:
-            for j in range(1, n + 1):
+            for j in range(1, m + 1):
                 if d[j] < d[j + 1]:
                     return
             yield tuple(A)
             return
-        for subset in combinations(range(1, i + 2), c[i]):
+        for subset in combinations(range(1, bounds[i] + 1), c[i]):
             for j in subset:
                 d[j] += 1
             A[i] = subset

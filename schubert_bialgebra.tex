@@ -3462,23 +3462,47 @@ and the problem of finding a positive formula for the Schubert structure constan
 We now define a product on $\BRC_n$ that is associative, but wrong, in the sense that it does not correctly model Schubert polynomial multiplication. However, we will see that it is correct enough to give a Littlewood-Richardson rule for forest polynomials.
 
 \begin{proposition} \label{proposition:elemfactor}
-  Let $w\in S_{n+1}$ be a permutation and suppose $R\in \RC_n(w)$. Then there is a unique sequence of elementary symmetric RC graphs $E_1, E_2,\ldots, E_n$ such that $\hr(E_i) = i$ and $|E_i|=i - \code_{n + 2 - i}(ww_0(n))$ for each $i$ satisfying
-  $$E_1\boxtimes\cdots\boxtimes E_n = R$$
+  Let $u\in S_\infty$ be a permutation and suppose $R\in \RC_n(u)$. Let $\lambda$ be a partition and let $w$ be the corresponding dominant permutation with $\code^*(w)=\lambda$. Assume that $\ell(uw^{-1}) = \ell(w)-\ell(u)$. Let $c$ be a composition such that $c_i\leq \lambda_{N + 1 - i}$ for all $i$, where $N=\ell(\lambda)$. Then the number of sequences of elementary symmetric RC graphs $A_1,\ldots,A_N$ such that $|A_i| = c_i$ and $\hr(A_i) = \lambda_{N + 1 - i}$ satisfying
+  $$A_1\boxtimes\cdots\boxtimes A_N = R$$
+is equal to the coefficient of $x^c$ in $\sch_{w\mathrm{dom}_\lambda^{-1}}(x)$.
 \end{proposition}
+\begin{proof}
+  Recall the Cauchy formula for $\sch_w(x;-y)$:
+  $$\sch_w(x;-y)=\sum_u \sch_u(x)\sch_{uw^{-1}}(y)$$
+  Also,
+  $$\sch_w(x;-y) = E_{\lambda_1,\lambda_1}(x;-y_1)\cdots E_{\lambda_N,\lambda_N}(x;-y_N)$$
+
+Replace the factorial elementary symmetric polynomial $E_{p,p}(x;-y_i)$ for each $p$ with $\mathbf{E}_{p,p}(-y_i)\in \mathcal{T}_n[y_1,\ldots,y_N]$ defined by
+$$\mathbf{E}_{p,p}(-y_i) = \sum_{j=0}^p y_i^j \mathbf{E}_{p-j,p}^n$$
+The result follows from Proposition \ref{proposition:eproductworks}.
+\end{proof}
 
 
 
 \begin{definition}
-  Define a function $\mathrm{lift}_n:\RC_n(S_{n+1})\to \mathcal{T}_n$ as follows. For an RC graph $R\in \RC_n(S_{n+1})$, let $c$ be the code of the permutation $\wof{R}w_0(n + 1)$. Then we define
+  Define a function $\mathrm{lift}_n:\RC_n\to \mathcal{T}_n$ as follows. For an RC graph $R\in \RC_n$, let $\lambda$ be a partition of the form 
+$$(\overbrace{n,\ldots,n}^{p},n-1,n-2,\ldots,1)$$
+where $p$ is sufficiently large such that if $\mu$ is the dominant permutation with $\code^*(\mu)=\lambda$, then $\ell(\wof{R}\mu^{-1}) = \ell(\mu) - \ell(\wof{R})$.  Let $c$ be the code of the permutation $\wof{R}\mu^{-1}$. Then we define
 $$\mathrm{lift}_n(R) = E_1\otimes \cdots \otimes E_{\ell(c)}$$
-where $|E_i| = i - c_{n + 2 - i}$ and $\hr(E_i) = i$ for all $i$, with $E_i$ all elementary symmetric full $i$-Grassmannian RC graphs, which is guaranteed to exist and be unique by Proposition \ref{proposition:elemfactor}.
+where $|E_i| = \lambda_{N + 1 - i} - c_{N + 1 - i}$ and $\hr(E_i) = \lambda_{N+1-i}$ for all $i$, with $E_i$ all elementary symmetric full Grassmannian RC graphs, which is guaranteed to exist and be unique by Proposition \ref{proposition:elemfactor}. We can see that this does not depend on the choice of $\lambda$, provided it is in the above form.
 
 We define a product $*$ on $\BRC_n$ by
 $$R_1*R_2 = \RC_n(\mathrm{lift}_n(R_1)\mathrm{lift}_n(R_2))$$
 \end{definition}
 
-Such a tensor $A_1\otimes\cdots\otimes A_n$ is highest weight if for each $i,j$ we have that either there is a crossing in row $j+1$ but none in row $j$ in $A_i$, or there is no crossing in row $j$ in $A_{i+1}$,  or there are crossings in both rows $j$ and $j+1$ in $A_{i+1}$.
-
+%Such a tensor $A_1\otimes\cdots\otimes A_n$ is highest weight if for each $i,j$ we have that either there is a crossing in row $j+1$ but none in row $j$ in $A_i$, or there is no crossing in row $j$ in $A_{i+1}$,  or there are crossings in both rows $j$ and $j+1$ in $A_{i+1}$.
+\begin{lemma}
+  Let $R$ be an RC graph and suppose
+$$\mathrm{lift}_n(R) = A_1\otimes\cdots\otimes A_n$$
+Let $1\leq j\leq n$ and let 
+$$R^{\mathrm{left}} = \RC_n(A_1\otimes\cdots \otimes A_j)$$
+and
+$$R^{\mathrm{right}} = \RC_n(A_{j+1}\otimes\cdots \otimes A_n)$$
+Then
+$$\mathrm{lift}_n(R^{\mathrm{left}}) = A_1\otimes\cdots \otimes A_j$$
+and
+$$\mathrm{lift}_n(R^{\mathrm{right}}) = A_{j+1}\otimes\cdots \otimes A_n$$
+\end{lemma}
 
 \begin{theorem}
 The product $*:\BRC_n\times\BRC_n\to\BRC_n$ is associative.
@@ -3508,7 +3532,7 @@ $$
 $$
 so they are equal. The key point is that the corresponding lift factors commute, so this regrouping is canonical.
 
-An arbitrary RC graph is itself a product of elementary symmetric RC graphs of distinct heights, so an induction argument proves the result for arbitrary $R_3$.
+An arbitrary RC graph is itself a product of elementary symmetric RC graphs of weakly increasing heights, so an induction argument proves the result for arbitrary $R_3$.
 \end{proof}
 
 
@@ -3530,13 +3554,29 @@ extends to an isomorphism of Demazure crystals onto the connected component of $
 %   $$R_1\otimes R_2\mapsto R_1*R_2$$
 % \end{corollary}
 
+\begin{definition}[Quasi-crystal structure on $\RC_n(w)$]
+Define operators $\ddot{e}_i$ and $\ddot{f}_i$ on $\RC_n(w)$ by
+$$\ddot{e}_i(R) = \begin{cases}
+  e_i(R) & \text{ if }\mathrm{word}(R) = \mathrm{word}(e_i(R))\\
+  \perp & \text{ otherwise}
+\end{cases}$$
+$$\ddot{f}_i(R) = \begin{cases}
+  f_i(R) & \text{ if }\mathrm{word}(R) = \mathrm{word}(f_i(R))\\
+  \perp & \text{ otherwise}
+\end{cases}$$
+These satisfy the axiom of \emph{quasi-crystal operators} defined in \cite{cain2023quasicrystals}. The same article defines a notion of the quasi-tensor product of quasi-crystals, which is the same as the usual tensor product of crystals except that if there is an $i$ such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, then we require that $\ddot{e}_i(A\ddot{\otimes} B) =\ddot{f}_i(A\ddot{\otimes} B)= \perp$.
+\end{definition}
+
 \begin{proposition}
   Let $A,B$ be RC graphs. Then the map
-  $$A\otimes B\mapsto A * B$$
+  $$A\ddot{\otimes} B\mapsto A * B$$
 extends to an isomorphism of quasi-crystals onto the connected component of its image.
 \end{proposition}
 \begin{proof}
-  When $B$ is elementary symmetric, we may assume without loss of generality that $\hr(A)\leq \hr(B)$, in which case the result follows from the Demazure case. Associativity of the quasi-crystal tensor product extends to the full result, where we need to invoke that the tensor product of quasi-crystals decomposes into a direct sum of quasi-crystals.
+  When $B$ is elementary symmetric, we may assume without loss of generality that $\hr(A)\leq \hr(B)$, in which case the fact that Little bumps preserve the crystal structure allows us to instead consider $A\sqcup B$. Thus, we need only check the additional condition of the quasi-tensor product of quasi-crystals that prohibits changing the inversions. In the case that there is an $i$ such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, we can only have that $\ddot{\varphi}_i(A)\geq \ddot{\varepsilon}_i(B)$ because $\ddot{\varepsilon}_i(B)\in \{0,1\}$. In that case,
+  $$\ddot{e}_i(A\sqcup B) = \perp$$
+  since such an operator would move a crossing in $A$ from row $i+1$ to row $i$, and similarly for $\ddot{f}_i$, so the result follows in the case where $B$ is elementary. The general case follows by induction on the number of factors in $B$, where we apply the base case to the rightmost factor and then invoke associativity of the quasi-crystal tensor product. The proof that the tensor product is itself a quasi-crystal is \cite[Theorem~5.1]{cain2023quasicrystals}, from which the partitioning into components (and hence surjectivity) follows from \cite[Proposition~4.6]{cain2023quasicrystals}.
+  %the result follows from the Demazure case. Associativity of the quasi-crystal tensor product extends to the full result, where we need to invoke that the tensor product of quasi-crystals decomposes into a direct sum of quasi-crystals.
 \end{proof}
 
 % \begin{proposition}
@@ -3545,11 +3585,14 @@ extends to an isomorphism of quasi-crystals onto the connected component of its 
 
 \begin{theorem}
 Let $A$, $B$ be quasi-Yamanouchi RC graphs. Then
-$$\mathfrak{F}(A)*\mathfrak{F}(B) = \sum_{R=\QY(R)} \mathfrak{F}(R)$$
+$$\mathfrak{F}(A)*\mathfrak{F}(B) = \sum_{R} \mathfrak{F}(R)$$
 where the sum is over all pairs $A',B'$ with $\mathrm{word}(A')=\mathrm{word}(A)$, $\mathrm{word}(B')=\mathrm{word}(B)$ such that 
 $$A'*B'=R$$
 with $R$ being quasi-Yamanouchi.
 \end{theorem}
+\begin{proof}
+We have that for each such $A',B'$, $A'\ddot{\otimes} B'\mapsto A'*B'$ extends to an isomorphism of quasi-crystals. In particular, the connected components of the terms in the sum partition into quasi-crystals, each with a unique quasi-Yamanouchi element. The sum is then previsely as stated.
+\end{proof}
 
 % \begin{definition}
 % Define $\phi_\QY:\BRC\to\BRC$ by sending $R$ to the unique RC graph $R_\QY$ such that
@@ -3589,17 +3632,58 @@ with $R$ being quasi-Yamanouchi.
 %\emph{Note that $\mathbf{P}_a(n)$ has nonnegative integer coefficients}, unlike $\mathbf{S}_w(n)$.
 Define
 $$\forest(R) = \sum_{A\equiv_\forest R} A$$
-A \emph{forest RC graph} is an RC graph such that $\code_\forest(R) = \wtt(R)$.
+A \emph{forest RC graph} is an RC graph such that $\code_\forest(R) = \wtt(R)$. 
 \end{definition}
 
+\begin{lemma}
+Let $A,B\in \BRC_n$. Then the set
+$$S=\{A'*B'\mid A\equiv_\forest A', B\equiv_\forest B'\}$$
+is stable under forest equivalence.
+\end{lemma}
+\begin{proof}
+If $B$ is elementary symmetric, we may assume $\hr(A)\leq \hr(B)$, in which case we have that if $A\equiv_\forest A'$, then $A\sqcup B\equiv_\forest A'\sqcup B$. It follows that $A'*B\equiv_\forest A*B$. By induction, this follows for any $B$. The argument is symmetric enough that this also applies on the left. Other equivalences are achieved by changes in the weights of $A$ or $B$ in ways that are disallowed by $\ddot{\otimes}$. In that case the quasi-crystal component may change, however clearly the product is still in $S$ by definition. The result follows.
+\end{proof}
+% Let $\BRC_n^\forest$ be the submodule of $\BRC_n$ spanned by the RC graphs $A$ such that $\code_\forest(A) = \code(\wof{A})$. Define $\pi_\forest:\BRC_n\to \BRC_n^\forest$ by sending an RC graph $R$ to the unique RC graph $R_\forest$ such that $\code_\forest(R_\forest) = \code(\wof{R})$ and $Q_\forest(R_\forest) = Q_\forest(R)$.
+% \end{definition}
 
-\begin{theorem}
+% \begin{theorem}
+% The map $\pi_\forest:\BRC_n\to \BRC_n^\forest$ is an idempotent homomorphism of right $\mathcal{T}_n$-modules.
+% \end{theorem}
+
+% \begin{definition}
+% Define $\mathbf{P}_a(n)$ for a weak composition $a$ of length $n$ by
+% $$\mathbf{P}_a(n) = \sum_{w} f_a^w\mathbf{S}_w(n)$$
+% and define
+% $$\mathbf{P}_a^+(n) = \mathrm{lift}_n(\mathfrak{P}_a(n))$$
+% \end{definition}
+
+% It is clear that 
+% $$\pi_\forest(\mathbf{P}_a(n)\mathbf{P}_b(n)) = \sum_{c}\beta_{ab}^c \mathfrak{P}_c(n)$$
+% However, we also have
+% \begin{proposition}
+% $$\pi_\forest(\mathbf{P}_a^+(n)\mathbf{P}_b^+(n)) = \sum_{c}\beta_{ab}^c \mathfrak{P}_c(n)$$
+% \end{proposition}
+% \begin{proof}
+% We have
+% $$\mathbf{P}_a(n)\mathbf{P}_b(n) - \mathbf{P}_a^+(n)\mathbf{P}_b^+(n) = (\mathbf{P}_a(n) - \mathbf{P}_a^+(n))\mathbf{P}_b(n) + \mathbf{P}_a^+(n)(\mathbf{P}_b(n) - \mathbf{P}_b^+(n))$$
+% Set
+% $$T = \mathbf{P}_a(n)\ddot{\otimes}\mathbf{P}_b(n) - \mathbf{P}_a^+(n)\ddot{\otimes}\mathbf{P}_b(n)$$
+% Suppose
+% $$\mathbf{P}_a(n) = \sum_{c_A} c_A A$$
+% $$\mathbf{P}_a(n) = \sum_{d_B} d_B B$$
+% where $A\in \mathcal{T}_n$. Then in the Grothendieck group we may write
+% $$\mathbf{P}_a(n)\ddot{\otimes}\mathbf{P}_b(n) = \sum_{A,B} c_Ad_B A\ddot{\otimes} B$$
+% We note that
+% $$A\ddot{\otimes} B\mapsto \RC_n(A)*\RC_n(B)$$
+% extends to an isomorphism of quasi-crystals onto the connected component of its image.
+% \end{proof}
+\begin{corollary}
   Let $A, B$ be forest RC graphs. Then
 $$\forest(A)*\forest(B) = \sum_{R} \forest(R)$$
 where the sum is over all pairs $A'\equiv_\forest A$, $B'\equiv_\forest B$ such that
 $$A'*B'=R$$
 with $R$ being a forest RC graph.
-\end{theorem}
+\end{corollary}
 
 
 \begin{theorem}[Forest polynomial LR rule]
@@ -3610,9 +3694,6 @@ with $R$ being a forest RC graph.
   and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
 \end{theorem}
 
-\subsection{Failure for Schubert polynomial}
-
-It is perhaps unsurprising that the Schubert polynomials manage to ``dodge'' this method. The product is associative, but Monk's formula is not satisfied:
 
 
 

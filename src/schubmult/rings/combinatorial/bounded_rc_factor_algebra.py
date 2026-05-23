@@ -49,39 +49,62 @@ def _elem_factor_from_rc_old(rc):
             return _elem_factor_from_rc(old_rc) | {descent: elem_sym_rc}
     raise ValueError(f"Could not find element factorization for RC graph {rc} with target permutation {target_perm}")
 
+def _squash_it_up(tup):
+    ret = RCGraph([()])
+    for rc in tup:
+        ret = ret.resize(len(rc)).squash_product(rc)
+    return ret
+
 def _elem_factor_from_rc(rc):
     from schubmult.combinatorics.permutation import Permutation, uncode
-    from schubmult.utils.schub_lib import elem_sym_perms_op
+    from schubmult.utils.schub_lib import hw_elementary_tensors
     # find maximal downard path
     # target_perm = None
     if rc.perm.inv == 0:
         return {}
     n = len(rc.perm)
-    weight = [*(rc.perm * Permutation.w0(n)).pad_code(n - 1)]
-    #target_perm = rc.perm
-    descent_index = min([i for i, w in enumerate(weight) if n - 1 - i - w > 0])
-
-    descent = n - 1 - descent_index
-    weight_diff_1 = descent - weight[descent_index]
-    results = elem_sym_perms_op(rc.perm, descent, descent)
-    new_results = [permperm for permperm in results if len(permperm[0].trimcode) < descent and permperm[0].inv == rc.perm.inv - weight_diff_1]
-    if len(new_results) == 0:
-        raise ValueError(f"Failed to find downward path for RC graph {rc} at descent {descent} with weight {weight} {descent_index=} {weight_diff_1=}")
-    target_perm = min(new_results, key=lambda p: (len(p[0].trimcode), p[0].inv))[0]
-
-    if target_perm.inv == 0:
-        return {descent: rc.resize(descent)}
-    # awful slow way
-    for old_rc in RCGraph.all_rc_graphs(target_perm, descent):
-        weight_diff = tuple(rc.resize(descent).length_vector[i] - old_rc.length_vector[i] for i in range(descent))
-        try:
-            elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (descent - sum(weight_diff)) + [1] * sum(weight_diff)), descent, weight=weight_diff)))
-        except StopIteration:
+    weight = tuple(reversed([n - 1 - j - w for j, w in enumerate((rc.perm * Permutation.w0(n)).pad_code(n - 1))]))
+    hw_rc, raise_seq = rc.to_highest_weight()
+    good_tensor = None
+    for tensor in hw_elementary_tensors(weight):
+        real_weight = [0] * (n - 1)
+        for j, w in enumerate(tensor):
+            real_weight[w - 1] += 1
+        if tuple(real_weight) != hw_rc.length_vector:
             continue
-        try_rc = old_rc.squash_product(elem_sym_rc)
-        if try_rc == rc.resize(len(try_rc)):
-            return _elem_factor_from_rc(old_rc) | {descent: elem_sym_rc}
-    raise ValueError(f"Could not find element factorization for RC graph {rc} with target permutation {target_perm}")
+        elem_sym_rcs = [next(iter(RCGraph.all_rc_graphs(uncode([0] * (i + 1 - real_weight[i] + [1] * real_weight[i]), n - 1, weight=tuple(real_weight))))) for i in range(n - 1)]
+        if _squash_it_up(elem_sym_rcs).resize(len(hw_rc)) == hw_rc:
+            good_tensor = tensor
+            break
+    if good_tensor is None:
+        raise ValueError(f"Could not find good tensor for RC graph {rc}")
+    to_lower = CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)
+    return to_lower
+    #real_weight = tuple([len([w for j, w in enumerate(tensor)) if tensor[j][i] == 1) for i in range(n - 1)])
+    #target_perm = rc.perm
+    # descent_index = min([i for i, w in enumerate(weight) if n - 1 - i - w > 0])
+
+    # descent = n - 1 - descent_index
+    # weight_diff_1 = descent - weight[descent_index]
+    # results = elem_sym_perms_op(rc.perm, descent, descent)
+    # new_results = [permperm for permperm in results if len(permperm[0].trimcode) < descent and permperm[0].inv == rc.perm.inv - weight_diff_1]
+    # if len(new_results) == 0:
+    #     raise ValueError(f"Failed to find downward path for RC graph {rc} at descent {descent} with weight {weight} {descent_index=} {weight_diff_1=}")
+    # target_perm = min(new_results, key=lambda p: (len(p[0].trimcode), p[0].inv))[0]
+
+    # if target_perm.inv == 0:
+    #     return {descent: rc.resize(descent)}
+    # # awful slow way
+    # for old_rc in RCGraph.all_rc_graphs(target_perm, descent):
+    #     weight_diff = tuple(rc.resize(descent).length_vector[i] - old_rc.length_vector[i] for i in range(descent))
+    #     try:
+    #         elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (descent - sum(weight_diff)) + [1] * sum(weight_diff)), descent, weight=weight_diff)))
+    #     except StopIteration:
+    #         continue
+    #     try_rc = old_rc.squash_product(elem_sym_rc)
+    #     if try_rc == rc.resize(len(try_rc)):
+    #         return _elem_factor_from_rc(old_rc) | {descent: elem_sym_rc}
+    # raise ValueError(f"Could not find element factorization for RC graph {rc} with target permutation {target_perm}")
 
 
 def _is_full_grassmannian_rc(rc: RCGraph) -> bool:
@@ -367,7 +390,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         self.dtype = type("BoundedRCFactorAlgebraElement", (BoundedRCFactorAlgebraElement,), {"ring": self})
 
     def from_rc_graph(self, rc, size):
-        tensor = self._normalize_key(self.make_key(tuple(_elem_factor_from_rc(rc).values()), size))
+        tensor = self._normalize_key(self.make_key(tuple(_elem_factor_from_rc(rc)), size))
         return self.from_dict({tensor: 1})
 
     def from_rc_graph_ring_element(self, elem, size):
