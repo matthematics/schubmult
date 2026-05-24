@@ -230,8 +230,14 @@
 %\makeglossaries
 
 \begin{document}
+
+\begin{abstract}
+We introduce the ``Schubert bialgebra,'' a ring-theoretic direct sum of polynomial rings, whose Schubert basis recovers the classical structure constants $c_{u,v}^w$, and lift the product structure on the graded dual to a product structure on RC graphs. We present Littlewood-Richardson-style rules for the dual bases of each of the Schubert polynomials, key polynomials, slide polynomials, and forest polynomials that count certain RC graphs. We also give a positive, manifestly combinatorial Littlewood-Richardson rule for the structure constants of forest polynomials (also in terms of RC graphs), and in turn the cohomology ring of the quasisymmetric flag variety.
+\end{abstract}
+
 	\maketitle
-	
+
+
 \section{Introduction}
 
 \subsection*{The Schubert bialgebra and its dual} In this article we introduce a bialgebra $\coma$ that we call the Schubert bialgebra. This bialgebra has a basis of Schubert polynomials $\sch_u^n$ for $u\in S_\infty$, where the last descent of $u$ is not past index $n$. The structure constants for multiplication in this basis are the same as the structure constants for multiplication of Schubert polynomials. The difference from the usual realm of study of Schubert polynomials, which is the polynomial ring in infinitely many variables, is that this algebra is graded into length components that interact trivially. That is,
@@ -248,7 +254,7 @@ Combinatorially, $\dcoma$ is interesting, but not fundamentally new at this poin
 $$\langle \dsch_u^m, \sch_v^n\rangle = \delta_{u,v}\delta_{m,n}$$
 where we take $\langle -,-\rangle$ to be the pairing implied by the assertion that for a composition $c\in\mathrm{Comp}_n$ we have that
 $$\langle c, x_a\rangle = \delta_{c,a}$$
-where $a$ is any composition. We present an explicit formula for the dual Schubert basis in $\dcoma$ with integer coefficients. These are extremely similar to the dual Schubert polynomials of Postnikov and Stanley defined in \cite{postnikov2009chains}, and in fact are related by a scalar factor and a trivial change of basis. The dual Schubert polynomials of Stanley and Postinkov however do not naturally posses the multiplicative structure of $\dcoma$, but do come with an integral formula that mimics the action of divided difference operators on Schubert polynomials. In principle these structures should be transferrable to our dual Schubert basis, but we have not yet explored this.
+where $a$ is any composition. We present an explicit formula for the dual Schubert basis in $\dcoma$ with integer coefficients. These are extremely similar to the dual Schubert polynomials of Postnikov and Stanley defined in \cite{postnikov2009chains}, and in fact seem to be related by a scalar factor and a basis transition according to our empirical tests, which were suggested by Hamaker in connection to \cite{hamaker2023dual}. The dual Schubert polynomials of Stanley and Postnikov however do not naturally possess the multiplicative structure of $\dcoma$, but do come with an integral formula that mimics the action of divided difference operators on Schubert polynomials. In principle these structures should be transferrable to our dual Schubert basis, but we have not yet explored this.
 % Then $\dcoma$ has a basis indexed by $\bigcup_{n=0}^\infty \mathrm{Comp}_n$, and the product of two basis elements is given by concatenation of the corresponding weak compositions. Hence, as an algebra, $\dcoma$ is isomorphic to the free associative algebra on a countable set of generators indexed by nonnegative integers. The coproduct on $\dcoma$ is given by deconcatenation, that is to say
 
 %Multiplicatively, the algebra is free on a countable set of generators indexed by nonnegative integers, with the degree of the generator being its index. We identify the basis dual to the Schubert polynomials in $\dcoma$, which we index as $\dsch_u^n$ for $u\in S_\infty$ and $n$ is at least as large as the last descent of $u$. This is closely related to, yet subtly distinct from, the dual basis to the Schubert polynomials in the polynomial ring considered by Postnikov and Stanley in \cite{postnikov2009chains}, identified with an explicit formula in said article. 
@@ -259,7 +265,7 @@ The combinatorial objects that we use to express this formula are RC graphs, the
 
 It is important to note that while it is common to consider two RC graphs to be the same if they have the same set of crossings, we add a datum, the number of rows, that can distinguish two RC graphs that would otherwise be considered identical. It is a key feature in this exposition that we limit our focus to cases with finitely many rows/variables.
 
-For an RC graph $R$ with $n$ rows and an integer $0\leq p\leq n$, we associate to $R$ two RC graphs $\clp^p(R)\in\RC_p$ and $\trm^p(R)\in\RC_{n-p}$, which the reader should picture as a decomposition of $R$ across the horizontal cut between rows $p$ and $p+1$. The map $\trm^p$ is genuinely simple: it discards the top $p$ rows and keeps the remaining $n-p$ rows (suitably reindexed). The map $\clp^p$ is the subtler partner. It is built by iterating an auxiliary map $\zeromap:\RC_n^0\to\RC_{n-1}$ (Definition \ref{definition:zeromap}), where $\RC_n^0$ denotes the set of RC graphs whose last row is empty. The map $\zeromap$ realises, on the level of RC graphs, the Lascoux--Schützenberger transition formula for Schubert polynomials (see \cite{notes}): when the last row is already empty there is nothing to do; otherwise an insertion procedure moves the crossings of the last row into the rows above it. Repeatedly applying $\zeromap$ to the truncation of $R$ down to its top $p$ rows produces $\clp^p(R)$. The whole construction preserves a wealth of additional structure (crystal operators, forest invariants) that we exploit later.
+For an RC graph $R$ with $n$ rows and an integer $0\leq p\leq n$, we associate to $R$ two RC graphs $\clp^p(R)\in\RC_p$ and $\trm^p(R)\in\RC_{n-p}$, which the reader should picture as a decomposition of $R$ across the horizontal cut between rows $p$ and $p+1$. The map $\trm^p$ is genuinely simple: it discards the top $p$ rows and keeps the remaining $n-p$ rows (suitably reindexed). The map $\clp^p$ is the subtler partner. It is built by iterating an auxiliary map $\zeromap:\RC_n^0\to\RC_{n-1}$ (Definition \ref{definition:zeromap}), where $\RC_n^0$ denotes the set of RC graphs whose last row is empty. The map $\zeromap$ realizes, on the level of RC graphs, the Lascoux--Schützenberger transition formula for Schubert polynomials (see \cite{notes}), and ends up being a generalization of the main result of \cite{little2003combinatorial}, though this was not intentional. The whole construction preserves a wealth of additional structure (crystal operators, forest invariants) that we exploit later.
 
 Our main theorem is the following.
 
@@ -272,7 +278,7 @@ Then for any fixed choices of RC graphs $U\in \RC_p(u)$, $V\in\RC_q(v)$, and a p
 
 We note that, when restricted to Grassmannian permutations, Theorem \ref{theorem:LR} reduces directly to a Littlewood--Richardson rule for Schur polynomials: if $u$, $v$, $w$ are Grassmannian with unique descents at $p$, $q$, $p+q$ corresponding to partitions $\lambda$, $\mu$, $\nu$, then $\dsch^p_u$, $\dsch^q_v$, $\dsch^{p+q}_w$ are precisely the Schur polynomials $s_\lambda(x_1,\ldots,x_p)$, $s_\mu(x_{p+1},\ldots,x_{p+q})$, $s_\nu(x_1,\ldots,x_{p+q})$, and the classical splitting
 $$s_\nu(x_1,\ldots,x_{p+q}) = \sum_{\lambda,\mu} c^{\nu}_{\lambda,\mu}\, s_\lambda(x_1,\ldots,x_p)\, s_\mu(x_{p+1},\ldots,x_{p+q})$$
-identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} thus gives an alternative positive combinatorial rule for the classical Littlewood--Richardson coefficients in terms of RC graphs and the $\clp^p / \trm^p$ decomposition.
+identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} thus gives an alternative positive combinatorial rule for the classical Littlewood--Richardson coefficients in terms of RC graphs and the $\clp^p / \trm^p$ decomposition, which themselves naturally correspond to semistandard Young tableaux in French notation.
 \newcommand{\forest}{\mathfrak{P}}
 \newcommand{\fcode}{\mathfrak{c}_f}
 \subsection*{Key polynomials}
@@ -283,7 +289,7 @@ A purely combinatorial development of key polynomials was carried out by Lascoux
 $$\kappa_a = \sum_{T} x^{\wtt(T)}$$
 where the sum runs over semistandard Young tableaux $T$ of shape $\mathrm{sort}(a)$ whose right key $K_+(T)$ is bounded above (entrywise) by the key tableau associated to $a$. They additionally proved that Schubert polynomials decompose as a positive sum of key polynomials, which was given a combinatorial proof in terms of compatible sequences and the right-key map by Reiner and Shimozono \cite{reiner1995key}. The intermediate basis of \emph{Demazure atoms} (the ``standard bases'' of \cite{lascoux1990keys}) was later given an explicit nonnegative monomial expansion by Mason \cite{mason2009explicit} via semi-skyline augmented fillings.
 
-From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from the highest weight element by closure under the operators $\{f_{i_k}^n : n\geq 0\}$, and Kashiwara proved that its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. In type $A$, this means $\kappa_a$ is precisely the character of a Demazure crystal inside a tensor product of fundamental crystals, and the key polynomial expansion of any nonnegative-on-Demazure-crystals polynomial is forced to be nonnegative. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs (equivalently, pipe dreams) of a permutation $w$, thereby giving a representation-theoretic proof of the Lascoux--Schützenberger key-positivity of Schubert polynomials. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
+From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from the highest weight element by closure under the operators $\{f_{i_k}^n : n\geq 0\}$, and Kashiwara proved that its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. In type $A$, this means $\kappa_a$ is precisely the character of a Demazure crystal inside a tensor product of fundamental crystals, and the key polynomial expansion of any nonnegative-on-Demazure-crystals polynomial is forced to be nonnegative. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs (equivalently, pipe dreams) of a permutation $w$, thereby giving a representation-theoretic proof of the Lascoux-Schützenberger key-positivity of Schubert polynomials. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
 
 There is a dual key basis $\{\kappa_a^*\}$ of $\dcoma$ defined by $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$, where as before we are restricting to fixed lengths of compositions, and we give an explicit formula for these dual key polynomials in terms of RC graphs. Specifically, for an RC graph $R$, we define the \emph{extremal weight} $\mathrm{extwt}(R)$ to be the extremal weight of the Demazure crystal of $R$, which is the unique lowest weight element that generates the crystal, and we define $\mathrm{Dem}(R)$ to be the set of RC graphs in the same Demazure crystal as $R$.
 
@@ -301,7 +307,7 @@ Fix an RC graph $C$ with $\mathrm{extwt}(C)=c$, and assume $C$ is a highest weig
 
 Equivalently, Theorem \ref{theorem:LRkey} is a positive combinatorial branching rule
 $$\kappa_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} k_{a,b}^c\,\kappa_a(x_1,\ldots,x_p)\,\kappa_b(x_{p+1},\ldots,x_{p+q})$$
-expressing a key polynomial in $p+q$ variables as a nonnegative integer combination of products of key polynomials in the first $p$ and last $q$ variables. The coefficients $k_{a,b}^c$ may be regarded as the Demazure analogue of the $GL_{p+q}\downarrow GL_p\times GL_q$ Littlewood--Richardson branching coefficients: in the full-Demazure (Schur) case they reduce to the classical $c_{\mu,\nu}^{\lambda}$. Their nonnegativity is, in retrospect, a consequence of the theory of \emph{excellent filtrations} for $B$-modules introduced by Polo \cite{polo1989excellent} and van der Kallen \cite{vanderkallen1989longest}, with existence of such filtrations on tensor products of Demazure modules established in general by Mathieu \cite{mathieu1990filtrations}; see also Joseph \cite{joseph1985demazure}. Restricting a Demazure module $V_c(\lambda)$ for $GL_{p+q}$ to the Borel of the Levi $GL_p\times GL_q$ yields a $B$-module with an excellent filtration whose Demazure subquotients account for the $k_{a,b}^c$. While this abstract nonnegativity is classical, no explicit positive combinatorial rule for these coefficients appears in the literature to our knowledge, and the dual key basis itself does not appear to have been studied before.
+expressing a key polynomial in $p+q$ variables as a nonnegative integer combination of products of key polynomials in the first $p$ and last $q$ variables. The coefficients $k_{a,b}^c$ may be regarded as the Demazure analogue of the $GL_{p+q}\downarrow GL_p\times GL_q$ Littlewood--Richardson branching coefficients: in the full-Demazure (Schur) case they reduce to the classical $c_{\mu,\nu}^{\lambda}$. Their nonnegativity is, in retrospect, a consequence of the theory of \emph{excellent filtrations} for $B$-modules introduced by Polo \cite{polo1989excellent} and van der Kallen \cite{vanderkallen1989longest}, with existence of such filtrations on tensor products of Demazure modules established in general by Mathieu \cite{mathieu1990filtrations}; see also Joseph \cite{joseph1985demazure}. Restricting a Demazure module $V_c(\lambda)$ for $GL_{p+q}$ to the Borel of the Levi $GL_p\times GL_q$ yields a $B$-module with an excellent filtration whose Demazure subquotients account for the $k_{a,b}^c$. This was pointed out by the anonymous user ``Henry V'' on MathOverflow \cite{henrymath}. While this abstract nonnegativity is classical, no explicit positive combinatorial rule for these coefficients appears in the literature to our knowledge, and the dual key basis itself does not appear to have been studied before.
 
 \subsection*{Forest polynomials}
 
@@ -322,20 +328,28 @@ As with the dual key basis, Theorem \ref{theorem:LRforest} is equivalent to a po
 $$\forest_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} f_{a,b}^c\,\forest_a(x_1,\ldots,x_p)\,\forest_b(x_{p+1},\ldots,x_{p+q})$$
 expressing a forest polynomial in $p+q$ variables as a nonnegative integer combination of products of forest polynomials in the first $p$ and last $q$ variables. To the best of our knowledge, no such positive combinatorial splitting rule for forest polynomials has previously appeared in the literature, and the dual forest basis itself does not appear to have been studied before.
 
+\subsection*{A positive Littlewood--Richardson rule for forest polynomials}
+
+The centerpiece of the paper is, in our view, Theorem \ref{theorem:forestpolyLR}: a positive, combinatorial Littlewood--Richardson rule for the product of two forest polynomials \emph{themselves}, not merely for the dual basis. Concretely, the structure constants $\beta_{ab}^c$ in
+$$\forest_a\,\forest_b = \sum_c \beta_{ab}^c\,\forest_c$$
+are cardinalities of explicit sets of pairs of RC graphs: $\beta_{ab}^c$ counts pairs $(A,B)$ of \emph{forest} RC graphs of forest-code $a$ and $b$ whose lift product $A*B$ lands on some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$. The proof requires substantially more machinery than the dual rules: we introduce the \emph{squash product} $\boxtimes$ and an auxiliary \emph{lift product} $*$ on $\BRC_n$ that lives in a multiplactic algebra $\mathcal{T}_n$ of elementary RC factors, exploit a Cauchy-type factorization through the slide quotient of \S\ref{section:slide}, and combine all of this with the forest equivalence of \cite{nadeau2024forest}.
+
+We wish to emphasize how unusual this is. Even for Schubert polynomials themselves, no positive combinatorial formula for the structure constants is known in full generality. The forest polynomials are a basis of $\coma$ that interpolates between key polynomials and Schubert polynomials, and for this basis Theorem \ref{theorem:forestpolyLR} provides a complete, manifestly positive answer. We are unaware of any prior result giving a positive combinatorial Littlewood--Richardson rule for any natural Schubert-like polynomial basis of $\coma$ (other than Schur polynomials themselves) at this level of generality.
+
 \subsection*{The ring of RC graphs}
 
 Perhaps the strongest indication that this is the ``correct'' way to decompose RC graphs is that these formulas are proved by the fact that if we define
 $$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\RC_n}$$
 then there is an associative product $\diamond$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
 $$\alpha(R) = \dsch_u^n$$
-where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\diamond$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintining the projection to $\dcoma$ and leveraging this to find the formula.
+where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\diamond$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintaining the projection to $\dcoma$ and leveraging this to find the formula.
 
 \subsection*{Conjectures}
 
 Beyond this, there is potentially much to explore. For example, the coproduct of $\dcoma$ has as its structure constants the structure constants of Schubert polynomials, which have evaded expression in terms of positive formulas for decades, and at the time of this writing no positive, combinatorial formula is known for the structure constants of Schubert polynomials that applies in all cases. At the very least, this coproduct is a new potential method of attack on this and related problems, since as far as we know it is new. An expression for $\dsch_w^n$ in the composition basis leads to a simple, purely mechanical method for computing all $c_{u,v}^w$ (generalized Littlewood-Richardson coefficients for Schubert polynomials) by leveraging the extremely simple form the coproduct takes on the weak composition basis, as well as a neat positive formula for the expansion of a weak composition $[a]$ in the Schubert basis.
 %It is a nearly trivial observation that if a basis of the polynomial ring is such that the Schubert polynomials have a nonnegative expression in terms of that basis, then the dual Schubert elements can be expressed nonnegatively in terms of the corresponding dual basis.
 
-For the reader familiar with bumpless pipe dreams \cite{lam2021back}, we state without proof that our apparently complex transition algorithm for RC graphs can be realized almost trivially for bumpless pipe dreams. Specifically, while (reduced) bumpless pipe dreams are typically defined in such a way that they cannot deviate from a square shape, there is indeed a consistent way to remove rows from a bumpless pipe dream unambiguously. This was observed by Yu in \cite[Lemma~3.18]{Yu2025EmbeddingBP} in the definition of a $k$-row BPD. Wiengandt in \cite{Weigandt2021} defines a transition formula $\mathbf{t}:\mathrm{BPD}_n\to\mathrm{BPD}_{n-1}$ and while the image is realized as square, it agrees with Yu's notion of an $n-1$-row BPD.
+For the reader familiar with bumpless pipe dreams \cite{lam2021back}, we state without proof that our apparently complex transition algorithm for RC graphs can be realized almost trivially for bumpless pipe dreams. Specifically, while (reduced) bumpless pipe dreams are typically defined in such a way that they cannot deviate from a square shape, there is indeed a consistent way to remove rows from a bumpless pipe dream unambiguously. This was observed by Yu in \cite[Lemma~3.18]{Yu2025EmbeddingBP} in the definition of a $k$-row BPD. Weigandt in \cite{Weigandt2021} defines a transition formula $\mathbf{t}:\mathrm{BPD}_n\to\mathrm{BPD}_{n-1}$ and while the image is realized as square, it agrees with Yu's notion of an $n-1$-row BPD.
 
 Gao and Huang in \cite{GaoHuang2023} defined a natural bijection between RC graphs and bumpless pipe dreams. Given a bumpless pipe dream $B$ with $n$ rows, we define $\phi(B)$ to be the corresponding RC graph under this bijection.
 \begin{conjecture}
@@ -355,7 +369,7 @@ $$\zeromap(\phi(B)) = \phi(\mathbf{t}(B))$$
 
 \subsection*{Outline of the paper}
 
-Section \ref{section:bialgebra} (\nameref{section:bialgebra}) constructs the Schubert bialgebra $\coma$, identifies its Schubert basis $\sch_u^n$, and exhibits the elementary basis $\mathcal{E}_n$ of $\coma_n$. Section \ref{section:dualalgebra} (\nameref{section:dualalgebra}) builds the graded dual $\dcoma$, identifies the dual Schubert basis $\dsch_u^n$, and records the coproduct. Section \ref{section:brc} (\nameref{section:brc}) defines the module $\BRC$ of bounded RC graphs, the row-decomposition maps $\zeromap$, $\clp^p$, $\trm^p$, and the associative product $\diamond$ on $\BRC$; this culminates in Theorem \ref{theorem:LR}, the Littlewood--Richardson rule for the dual Schubert basis. Section \ref{section:crystals} (\nameref{section:crystals}) imports the Demazure crystal structure on RC graphs from \cite{assaf2018demazure} and identifies an ideal $\Theta\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRkey}, the LR rule for the dual key basis. Section \ref{section:forest} (\nameref{section:forest}) does the analogous construction for the forest invariant of \cite{nadeau2024forest}, producing an ideal $\Gamma\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRforest}, the LR rule for the dual forest basis. Sections \ref{section:slide} and \ref{section:forestrule} (\nameref{section:slide} and \nameref{section:forestrule}) extract from these results a positive product rule for dual slide polynomials and a positive quasi-crystal Monk formula. The final section is devoted to the proof of Proposition \ref{proposition:pullindex}.
+Section \ref{section:bialgebra} (\nameref{section:bialgebra}) constructs the Schubert bialgebra $\coma$, identifies its Schubert basis $\sch_u^n$, and exhibits the elementary basis $\mathcal{E}_n$ of $\coma_n$. Section \ref{section:dualalgebra} (\nameref{section:dualalgebra}) builds the graded dual $\dcoma$, identifies the dual Schubert basis $\dsch_u^n$, and records the coproduct. Section \ref{section:brc} (\nameref{section:brc}) defines the module $\BRC$ of bounded RC graphs, the row-decomposition maps $\zeromap$, $\clp^p$, $\trm^p$, and the associative product $\diamond$ on $\BRC$; this culminates in Theorem \ref{theorem:LR}, the Littlewood--Richardson rule for the dual Schubert basis. Section \ref{section:crystals} (\nameref{section:crystals}) imports the Demazure crystal structure on RC graphs from \cite{assaf2018demazure} and identifies an ideal $\Theta\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRkey}, the LR rule for the dual key basis. Section \ref{section:forest} (\nameref{section:forest}) does the analogous construction for the forest invariant of \cite{nadeau2024forest}, producing an ideal $\Gamma\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRforest}, the LR rule for the dual forest basis. Section \ref{section:slide} (\nameref{section:slide}) introduces the quasi-Yamanouchi map $\QY$ and the corresponding ideal $\Sigma\subset\BRC$, yielding Theorem \ref{theorem:lrfslide}, a positive product rule for the dual slide basis; the section closes with Theorem \ref{theorem:general_lr_template}, a general ideal-quotient Littlewood--Richardson template that unifies the dual Schubert, key, forest, and slide rules under a single set of axioms on an equivalence relation $\sim$ on $\BRC$. Section \ref{section:forestrule} (\nameref{section:forestrule}) proves what we regard as the main theorem of the paper: Theorem \ref{theorem:forestpolyLR}, a positive, manifestly combinatorial Littlewood--Richardson rule for the forest polynomials \emph{themselves} (not merely their duals). The proof leverages the squash product $\boxtimes$, an auxiliary lift product $*$ on a multiplactic algebra $\mathcal{T}_n$ of elementary RC factors, and the slide quotient of Section \ref{section:slide}. The final section is devoted to the proof of Proposition \ref{proposition:pullindex}.
 
 \clearpage
 \subsection*{Notation and conventions}
@@ -376,11 +390,11 @@ $\RC_n(w)$ & The set of $R\in\RC_n$ with $\wof{R}=w$.\\
 $\RC_n^0$ & The set of $R\in\RC_n$ whose last row is empty.\\
 $\wof{R}$ & The permutation of an RC graph $R$.\\
 $\hr(R)$ & The number of rows of $R$.\\
-$\wtt(R)$ & The (column-wise) weight composition of $R$.\\
+$\wtt(R)$ & The row weight composition of $R$.\\
 $\mathrm{word}(R)$ & The reduced word read from $R$.\\
 \\
 \multicolumn{2}{@{}l}{\emph{Row maps on RC graphs.}}\\
-$\zeromap$ & The transition map $\RC_n^0\to\RC_{n-1}$ of Definition \ref{definition:zeromap}; it realises the Lascoux--Schützenberger transition formula on the last row.\\
+$\zeromap$ & The transition map $\RC_n^0\to\RC_{n-1}$ of Definition \ref{definition:zeromap}; it realizes the Lascoux--Schützenberger transition formula on the last row.\\
 $\trm^p(R)$ & ``Truncate'': the RC graph obtained from the last $\hr(R)-p$ rows of $R$.\\
 $\clp^p(R)$ & ``Clip'': the RC graph in $\RC_p$ obtained from $R$ by an insertion algorithm based on $\zeromap$; the dual partner of $\trm^p$.\\
 $\shup^p$ & Shift indices up by $p$ (applied to permutations or letters).\\
@@ -424,12 +438,25 @@ $f_{a,b}^c$ & Dual forest structure constants of Theorem \ref{theorem:LRforest}.
 $\BRC$ & $\bigoplus_{n\geq 0}\mathbb{Z}^{\oplus\RC_n}$, with the product $\diamond$.\\
 $\diamond$ & The associative product on $\BRC$ built from $\clp^p$ and $\trm^p$ (Definition in §\ref{section:ringproduct}).\\
 $*$ & The auxiliary ``lift product'' on $\BRC_n$ used in the forest LR rule (§\ref{section:liftproduct}).\\
-$\boxtimes$ & Concatenation of elementary RC factors (Cauchy factorisation).\\
+$\boxtimes$ & The squash product of RC graphs\\
 $\alpha:\BRC\to\dcoma$ & Ring homomorphism with $\alpha(R)=\dsch_{\wof{R}}^{\hr(R)}$.\\
 $\Omega$ & $\ker\alpha$.\\
 $\Theta$, $\Gamma$ & Ideals of $\BRC$ whose quotients are indexed by Demazure crystals, resp.\ forest classes (yielding Theorems \ref{theorem:LRkey}, \ref{theorem:LRforest}).\\
-$\mathcal{T}_n$ & The tensor algebra of elementary RC factors used to define $*$.\\
+$\mathcal{T}_n$ & The multiplactic algebra of full Grassmannian RC graphs.\\
 $\mathcal{E}_n$ & The elementary basis of $\coma_n$.\\
+\\
+\multicolumn{2}{@{}l}{\emph{Slide polynomials and the general LR template.}}\\
+$\mathfrak{F}_a(x)$, $\mathfrak{F}_a^*$ & Slide polynomial in $\coma$ (Assaf--Searles) indexed by a weak composition $a$; its dual in $\dcoma$.\\
+$\QY(R)$ & Quasi-Yamanouchi representative of $R$ in its $(\mathrm{word},\hr)$-class; smallest element under the dominance/refinement order on weights.\\
+$\RC_\QY(c)$ & Set of RC graphs $R$ with $\wtt(R)=c$ such that $\mathrm{word}(\QY(R))$ is lex-minimal among $R'$ with $\wtt(\QY(R'))=\wtt(\QY(R))$.\\
+$\Sigma$ & Two-sided ideal of $\BRC$ generated by $R_1-R_2$ with $\QY(R_1)=\QY(R_2)$ (Lemma \ref{lemma:slideideal}).\\
+$\mathcal{F}_a$ & The element $\sum_{R=\QY(R),\,\wtt(R)=a} R\in\BRC/\Sigma$, a representative of the slide basis under $\alpha$.\\
+$s_{a,b}^c$ & Dual slide structure constants of Theorem \ref{theorem:lrfslide}.\\
+$\sim$ & A generic equivalence relation on $\bigsqcup_n\RC_n$ satisfying (H1)--(H4) of Theorem \ref{theorem:general_lr_template}.\\
+$I_\sim$ & The two-sided ideal $\mathrm{span}_{\mathbb{Z}}\{R_1-R_2:R_1\sim R_2\}\subseteq\BRC$.\\
+$J$, $\lambda$ & Index set, resp.\ labeling map $(\RC/\!\sim)\to J$ in the general LR template.\\
+$E_\lambda$ & The class sum $\sum_{[R]:\,\lambda([R])=\lambda}[R]\in\BRC/I_\sim$.\\
+$\mathfrak{B}_\lambda^*$, $b_{\mu,\nu}^\lambda$ & Image $\alpha(E_\lambda)\in\dcoma$ and the corresponding structure constants in Theorem \ref{theorem:general_lr_template}.\\
 \end{tabular}
 \end{center}
 \renewcommand{\arraystretch}{1.0}
@@ -798,6 +825,42 @@ $$[a]\cdot \dsch_{w}^{n} = \sum_{w'\downvar{1} w\atop\ell(w,w')=a} \dsch_{w'}^{n
 \end{proof}
 
 \subsection{The coproduct}
+
+The dual bialgebra $\dcoma$ carries two compatible coproducts: the deconcatenation coproduct dual to concatenation on $\dcoma$ (which is just the restriction of $\Delta$ from $\coma$, viewed under the self-duality of the free module), and the coproduct dual to the \emph{product} on $\coma$. It is this second coproduct that is of primary interest here. We will denote it by
+$$\Delta^*:\dcoma\to \dcoma\otimes\dcoma,$$
+and we recall that it is characterized by the pairing identity
+$$\langle \Delta^*(\alpha), x\otimes y\rangle = \langle \alpha, xy\rangle$$
+for all $\alpha\in\dcoma$ and $x,y\in\coma$. Since the product on $\coma$ preserves the length grading (multiplication of polynomials within a fixed $\coma_n$, zero across $\coma_p\otimes\coma_q$ for $p\neq q$ with $p,q>0$), $\Delta^*$ sends $\dcoma_n$ into $\dcoma_n\otimes\dcoma_n$ for each $n$.
+
+The Schubert structure constants now reappear as the coefficients of $\Delta^*$ in the dual Schubert basis.
+
+\begin{theorem}[Schubert LR coefficients as dual Schubert coproduct]\label{theorem:dschcoproduct}
+Let $w\in S_\infty$ with $\maxd(w)\leq n$. Then in $\dcoma_n\otimes\dcoma_n$,
+$$\Delta^*(\dsch_w^n) \;=\; \sum_{u,v} c_{u,v}^w\, \dsch_u^n\otimes \dsch_v^n,$$
+where $c_{u,v}^w$ are the Schubert structure constants $\sch_u^n\sch_v^n=\sum_w c_{u,v}^w\sch_w^n$, and the sum runs over pairs $u,v\in S_\infty$ with $\maxd(u),\maxd(v)\leq n$.
+\end{theorem}
+\begin{proof}
+Expand $\Delta^*(\dsch_w^n) = \sum_{u,v}\lambda_{u,v}\,\dsch_u^n\otimes\dsch_v^n$ in the basis $\{\dsch_u^n\otimes\dsch_v^n\}$ of $\dcoma_n\otimes\dcoma_n$. Pairing with $\sch_u^n\otimes\sch_v^n$ and using the defining identity of $\Delta^*$,
+$$\lambda_{u,v}\;=\;\langle \Delta^*(\dsch_w^n), \sch_u^n\otimes\sch_v^n\rangle\;=\;\langle \dsch_w^n,\sch_u^n\sch_v^n\rangle\;=\;\langle \dsch_w^n,\textstyle\sum_z c_{u,v}^z \sch_z^n\rangle\;=\;c_{u,v}^w.$$
+\end{proof}
+
+\begin{remark}
+In particular, the Schubert Littlewood--Richardson coefficients are the structure constants of the coproduct $\Delta^*$ on $\dcoma$ in the dual Schubert basis. Thus the otherwise mysterious nonnegativity of $c_{u,v}^w$ has the bialgebra-theoretic content that $\Delta^*$ has nonnegative integer coefficients in the basis $\{\dsch_u^n\}$. We will see in Corollary~\ref{corollary:dforestcoproduct} that the same phenomenon recurs for the dual forest basis, with structure constants $\beta_{ab}^c$ of Theorem~\ref{theorem:forestpolyLR}.
+\end{remark}
+
+\begin{example}\label{example:dschcoproduct}
+Take $w=24135\in S_5$ (so $\maxd(w)=2$) and $n=2$. Then in $\dcoma_2\otimes\dcoma_2$,
+\begin{align*}
+\Delta^*(\dsch_{24135}^2) \;=\;& 1\otimes \dsch_{2413}^2 + \dsch_{2413}^2\otimes 1\\
+&{}+ \dsch_{132}^2\otimes \dsch_{1423}^2 + \dsch_{1423}^2\otimes \dsch_{132}^2\\
+&{}+ \dsch_{132}^2\otimes \dsch_{231}^2 + \dsch_{231}^2\otimes \dsch_{132}^2\\
+&{}+ \dsch_{21}^2\otimes \dsch_{1423}^2 + \dsch_{1423}^2\otimes \dsch_{21}^2.
+\end{align*}
+By Theorem~\ref{theorem:dschcoproduct}, the coefficient of $\dsch_u^2\otimes\dsch_v^2$ is the Schubert structure constant $c_{u,v}^{24135}$; for instance, $c_{132,\,1423}^{24135} = c_{21,\,1423}^{24135} = 1$, while $c_{u,v}^{24135}=0$ for every pair $(u,v)$ not appearing above.
+\end{example}
+
+The same argument applies verbatim to any basis of $\coma_n$ whose product structure constants are known; we record the consequence for the forest basis as Corollary~\ref{corollary:dforestcoproduct} below, after Theorem~\ref{theorem:forestpolyLR} has been established.
+
 \section{The ring of bounded RC graphs}\label{section:brc}
 
 \subsection{The module of bounded RC graphs}
@@ -1498,7 +1561,7 @@ Let $(R, n)$ be a bounded RC graph with $n\geq 2$ such that row $n$ is empty. Th
 $$\zeromap(\trm(R)) = \trm(\zeromap(R))$$
 \end{lemma}
 \begin{proof}
-This is almost a trivial observation. In terms of the word of $R$, $\trm(R, n)$ preserves a suffix. Removing all of the initial roots before trimming is therefore the same as removing the initial roots that still remain after trimming, by the exchange property. Afterwards, in perfoming the insertion algorithm, there is no dependency on rows with a lower index, the modification only proceeds downward in row number. Therefore, trimming the first row at any point only stops the process earlier, and does not change rows with higher index than $1$ in the outcome.
+This is almost a trivial observation. In terms of the word of $R$, $\trm(R, n)$ preserves a suffix. Removing all of the initial roots before trimming is therefore the same as removing the initial roots that still remain after trimming, by the exchange property. Afterwards, in performing the insertion algorithm, there is no dependency on rows with a lower index, the modification only proceeds downward in row number. Therefore, trimming the first row at any point only stops the process earlier, and does not change rows with higher index than $1$ in the outcome.
 \end{proof}
 
 \begin{lemma} \label{lemma:zero_injective}
@@ -1554,23 +1617,39 @@ This follows by iterated application of Theorem \ref{theorem:zero_bijection} if 
 	 The product $\diamond$ is associative and $\BRC$ is a ring when equipped with $\diamond$.%, and $\Xi:\BRC\to \dcoma$ and $\omega:\BRC\to \dcoma$ are homomorphisms of rings.
 \end{theorem}
 \begin{proof}
-Suppose we have three bounded RC graphs $R_1$ with $\hr(R_1)=p$, $R_2$ with $\hr(R_2)=q$, and $R_3$ with $\hr(R_3)=r$, and we want to show that the order of bracketing the product is irrelevant. Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. By Lemma \ref{lemma:injap}, we have that
-$$A_{p+q}(R)=(P_1, R_3, \wof{R})$$
+Suppose we have three bounded RC graphs $R_1$ with $\hr(R_1)=p$, $R_2$ with $\hr(R_2)=q$, and $R_3$ with $\hr(R_3)=r$, and we want to show that the order of bracketing the product is irrelevant. Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. By Lemma \ref{lemma:injap},
+\[
+  A_{p+q}(R)=(P_1, R_3, \wof{R})
+\]
 is a unique representation of $R$, where $\hr(P_1)=p+q$ and $\hr(R_3)=r$. Applying $A_p$ to the first coordinate, we obtain
-$$(A_p(P_1), R_3, \wof{R})=((R_1, R_2, \wof{P_1}), R_3, \wof{R})$$
-where $\hr(R_1)=p$, $\hr(R_2)=q$. We also have
-$$A_{p}(R)=(R_1', P_2, \wof{R})$$
-where $P_2$ is a unique RC graph with $\hr(P_2) = q+r$. Applying $A_q$ to the second coordinate, we have
-$$(R_1', A_q(P_2), \wof{R})=(R_1', (R_2', R_3', \wof{P_2}), \wof{R})$$
-We may immediately conclude that $R_3=R_3'$. Now observe that the third factor $R_3$ enters the two bracketings only as the final coordinate that has just been matched, and not as input to either of the inner maps $A_p$ or $A_q$ that produced $R_1, R_2, R_1', R_2'$. Replacing $R_3$ by the empty RC graph of the same height therefore changes neither side of the identity we are trying to establish; we may accordingly assume without loss of generality that $R_3$ is empty. The two representations therefore become
-$$((R_1, R_2, \wof{P_1}), \emptyset, \wof{R})$$
-and
-$$(R_1', (R_2', \emptyset, \wof{P_2}), \wof{R})$$
-Consider the change in representation when we clip $R$ to $p+q$ rows. We can see that the first representation becomes simply
-$$(R_1, R_2,\wof{P_1})$$
+\[
+  (A_p(P_1), R_3, \wof{R})=((R_1, R_2, \wof{P_1}), R_3, \wof{R}),
+\]
+where $\hr(R_1)=p$ and $\hr(R_2)=q$. We also have
+\[
+  A_{p}(R)=(R_1', P_2, \wof{R}),
+\]
+where $P_2$ is a unique RC graph with $\hr(P_2) = q+r$. Applying $A_q$ to the second coordinate yields
+\[
+  (R_1', A_q(P_2), \wof{R})=(R_1', (R_2', R_3', \wof{P_2}), \wof{R}).
+\]
+
+We may immediately conclude that $R_3=R_3'$. Now observe that the third factor $R_3$ enters the two bracketings only as the final coordinate that has just been matched, and not as input to either of the inner maps $A_p$ or $A_q$ that produced $R_1$, $R_2$, $R_1'$, $R_2'$. Replacing $R_3$ by the empty RC graph of the same height therefore changes neither side of the identity we are trying to establish; we may accordingly assume without loss of generality that $R_3$ is empty. The two representations therefore become
+\[
+  ((R_1, R_2, \wof{P_1}), \emptyset, \wof{R})
+  \qquad\text{and}\qquad
+  (R_1', (R_2', \emptyset, \wof{P_2}), \wof{R}).
+\]
+
+Consider the change in representation when we clip $R$ to $p+q$ rows. The first representation becomes simply
+\[
+  (R_1, R_2, \wof{P_1}),
+\]
 and the RC graph $P_2$ is clipped in the second representation, obtaining
-$$(R_1', R_2', \wof{R})$$
-since $R_2'=\clp^q(P_2)$. These represent the same RC graph $\clp^{p+q}(R)$. It follows that $R_1=R_1'$ and $R_2=R_2'$ from Lemma \ref{lemma:injap}. We may conclude that if we know the RC graphs $R_1, R_2, R_3$, then the RC graphs that appear as terms in the product $(R_1\diamond R_2)\diamond R_3 = R_1\diamond(R_2\diamond R_3)$ do not depend on the bracketing.
+\[
+  (R_1', R_2', \wof{R}),
+\]
+since $R_2'=\clp^q(P_2)$. These represent the same RC graph $\clp^{p+q}(R)$. It follows from Lemma \ref{lemma:injap} that $R_1=R_1'$ and $R_2=R_2'$. We may conclude that if we know the RC graphs $R_1, R_2, R_3$, then the RC graphs that appear as terms in the product $(R_1\diamond R_2)\diamond R_3 = R_1\diamond(R_2\diamond R_3)$ do not depend on the bracketing.
 %Then $A_{p+q}(R)$ is uniquely determined by a term in $R_1\diamond R_2$ and the RC graph $R_3$. The term in $R_1\diamond R_2$ is uniquely determined by $R_1$, $R_2$, and the permutation of $\clp^{p+q}(R)$. We conclude therefore that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$. If we consider the bracketing $R_1\diamond (R_2\diamond R_3)$, we have that $A_p(R)$ is uniquely determined by $R_1$ and a term in $R_2\diamond R_3$, which is uniquely determined by $R_2$, $R_3$, and the permutation of $\clp^p(R)$. We conclude that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$, as before. By Lemma \ref{lemma:injap}, this implies that the two products are equal, establishing associativity.
 
 % The fact that $\omega$ is a homomorphism of rings follows from the observation that for any $R$ that occurs as a term in $R_1\diamond R_2$, we have that 
@@ -2699,295 +2778,295 @@ The key element $K_c$ is the sum of all $7$-row RC graphs whose Demazure crystal
 \begin{tabular}{cc}
 $R_1$ & $R_2$ \\[4pt]
 \begin{tikzpicture}[scale=0.45]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (10,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (10,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (10,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (10,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (10,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (10,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (10,6);
-  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,7) -- (10,7);
-  \draw[lightgray, very thin, opacity=0.3] (7,0) -- (7,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,8) -- (10,8);
-  \draw[lightgray, very thin, opacity=0.3] (8,0) -- (8,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,9) -- (10,9);
-  \draw[lightgray, very thin, opacity=0.3] (9,0) -- (9,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,10) -- (10,10);
-  \draw[lightgray, very thin, opacity=0.3] (10,0) -- (10,10);
-  \draw[blue, line width=1.125pt] (10,9.5) .. controls (9.7,9.5) and (9.5,9.7) .. (9.5,10);
-  \draw[blue, line width=1.125pt] (9.5,9) .. controls (9.5,9.3) and (9.3,9.5) .. (9,9.5);
-  \draw[blue, line width=1.125pt] (9,9.5) .. controls (8.7,9.5) and (8.5,9.7) .. (8.5,10);
-  \draw[blue, line width=1.125pt] (8.5,9) .. controls (8.5,9.3) and (8.3,9.5) .. (8,9.5);
-  \draw[blue, line width=1.125pt] (8,9.5) .. controls (7.7,9.5) and (7.5,9.7) .. (7.5,10);
-  \draw[blue, line width=1.125pt] (7.5,9) .. controls (7.5,9.3) and (7.3,9.5) .. (7,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (7,9.5) -- (6,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (6.5,9) -- (6.5,10);
-  \draw[blue, line width=1.125pt] (6,9.5) .. controls (5.7,9.5) and (5.5,9.7) .. (5.5,10);
-  \draw[blue, line width=1.125pt] (5.5,9) .. controls (5.5,9.3) and (5.3,9.5) .. (5,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (5,9.5) -- (4,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (4.5,9) -- (4.5,10);
-  \draw[blue, line width=1.125pt] (4,9.5) .. controls (3.7,9.5) and (3.5,9.7) .. (3.5,10);
-  \draw[blue, line width=1.125pt] (3.5,9) .. controls (3.5,9.3) and (3.3,9.5) .. (3,9.5);
-  \draw[blue, line width=1.125pt] (3,9.5) .. controls (2.7,9.5) and (2.5,9.7) .. (2.5,10);
-  \draw[blue, line width=1.125pt] (2.5,9) .. controls (2.5,9.3) and (2.3,9.5) .. (2,9.5);
-  \draw[blue, line width=1.125pt] (2,9.5) .. controls (1.7,9.5) and (1.5,9.7) .. (1.5,10);
-  \draw[blue, line width=1.125pt] (1.5,9) .. controls (1.5,9.3) and (1.3,9.5) .. (1,9.5);
-  \draw[blue, line width=1.125pt] (1,9.5) .. controls (0.7,9.5) and (0.5,9.7) .. (0.5,10);
-  \draw[blue, line width=1.125pt] (10,8.5) .. controls (9.7,8.5) and (9.5,8.7) .. (9.5,9);
-  \draw[blue, line width=1.125pt] (9.5,8) .. controls (9.5,8.3) and (9.3,8.5) .. (9,8.5);
-  \draw[blue, line width=1.125pt] (9,8.5) .. controls (8.7,8.5) and (8.5,8.7) .. (8.5,9);
-  \draw[blue, line width=1.125pt] (8.5,8) .. controls (8.5,8.3) and (8.3,8.5) .. (8,8.5);
-  \draw[blue, line width=1.125pt] (8,8.5) .. controls (7.7,8.5) and (7.5,8.7) .. (7.5,9);
-  \draw[blue, line width=1.125pt] (7.5,8) .. controls (7.5,8.3) and (7.3,8.5) .. (7,8.5);
-  \draw[blue, line width=1.125pt] (7,8.5) .. controls (6.7,8.5) and (6.5,8.7) .. (6.5,9);
-  \draw[blue, line width=1.125pt] (6.5,8) .. controls (6.5,8.3) and (6.3,8.5) .. (6,8.5);
-  \draw[blue, line width=1.125pt] (6,8.5) .. controls (5.7,8.5) and (5.5,8.7) .. (5.5,9);
-  \draw[blue, line width=1.125pt] (5.5,8) .. controls (5.5,8.3) and (5.3,8.5) .. (5,8.5);
-  \draw[blue, line width=1.125pt] (5,8.5) .. controls (4.7,8.5) and (4.5,8.7) .. (4.5,9);
-  \draw[blue, line width=1.125pt] (4.5,8) .. controls (4.5,8.3) and (4.3,8.5) .. (4,8.5);
-  \draw[blue, line width=1.125pt] (4,8.5) .. controls (3.7,8.5) and (3.5,8.7) .. (3.5,9);
-  \draw[blue, line width=1.125pt] (3.5,8) .. controls (3.5,8.3) and (3.3,8.5) .. (3,8.5);
-  \draw[blue, line width=1.125pt, line cap=round] (3,8.5) -- (2,8.5);
-  \draw[blue, line width=1.125pt, line cap=round] (2.5,8) -- (2.5,9);
-  \draw[blue, line width=1.125pt] (2,8.5) .. controls (1.7,8.5) and (1.5,8.7) .. (1.5,9);
-  \draw[blue, line width=1.125pt] (10,7.5) .. controls (9.7,7.5) and (9.5,7.7) .. (9.5,8);
-  \draw[blue, line width=1.125pt] (9.5,7) .. controls (9.5,7.3) and (9.3,7.5) .. (9,7.5);
-  \draw[blue, line width=1.125pt] (9,7.5) .. controls (8.7,7.5) and (8.5,7.7) .. (8.5,8);
-  \draw[blue, line width=1.125pt] (8.5,7) .. controls (8.5,7.3) and (8.3,7.5) .. (8,7.5);
-  \draw[blue, line width=1.125pt] (8,7.5) .. controls (7.7,7.5) and (7.5,7.7) .. (7.5,8);
-  \draw[blue, line width=1.125pt] (7.5,7) .. controls (7.5,7.3) and (7.3,7.5) .. (7,7.5);
-  \draw[blue, line width=1.125pt] (7,7.5) .. controls (6.7,7.5) and (6.5,7.7) .. (6.5,8);
-  \draw[blue, line width=1.125pt] (6.5,7) .. controls (6.5,7.3) and (6.3,7.5) .. (6,7.5);
-  \draw[blue, line width=1.125pt] (6,7.5) .. controls (5.7,7.5) and (5.5,7.7) .. (5.5,8);
-  \draw[blue, line width=1.125pt] (5.5,7) .. controls (5.5,7.3) and (5.3,7.5) .. (5,7.5);
-  \draw[blue, line width=1.125pt] (5,7.5) .. controls (4.7,7.5) and (4.5,7.7) .. (4.5,8);
-  \draw[blue, line width=1.125pt] (4.5,7) .. controls (4.5,7.3) and (4.3,7.5) .. (4,7.5);
-  \draw[blue, line width=1.125pt] (4,7.5) .. controls (3.7,7.5) and (3.5,7.7) .. (3.5,8);
-  \draw[blue, line width=1.125pt] (3.5,7) .. controls (3.5,7.3) and (3.3,7.5) .. (3,7.5);
-  \draw[blue, line width=1.125pt] (3,7.5) .. controls (2.7,7.5) and (2.5,7.7) .. (2.5,8);
-  \draw[blue, line width=1.125pt] (10,6.5) .. controls (9.7,6.5) and (9.5,6.7) .. (9.5,7);
-  \draw[blue, line width=1.125pt] (9.5,6) .. controls (9.5,6.3) and (9.3,6.5) .. (9,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (9,6.5) -- (8,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (8.5,6) -- (8.5,7);
-  \draw[blue, line width=1.125pt] (8,6.5) .. controls (7.7,6.5) and (7.5,6.7) .. (7.5,7);
-  \draw[blue, line width=1.125pt] (7.5,6) .. controls (7.5,6.3) and (7.3,6.5) .. (7,6.5);
-  \draw[blue, line width=1.125pt] (7,6.5) .. controls (6.7,6.5) and (6.5,6.7) .. (6.5,7);
-  \draw[blue, line width=1.125pt] (6.5,6) .. controls (6.5,6.3) and (6.3,6.5) .. (6,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (6,6.5) -- (5,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (5.5,6) -- (5.5,7);
-  \draw[blue, line width=1.125pt] (5,6.5) .. controls (4.7,6.5) and (4.5,6.7) .. (4.5,7);
-  \draw[blue, line width=1.125pt] (4.5,6) .. controls (4.5,6.3) and (4.3,6.5) .. (4,6.5);
-  \draw[blue, line width=1.125pt] (4,6.5) .. controls (3.7,6.5) and (3.5,6.7) .. (3.5,7);
-  \draw[blue, line width=1.125pt] (10,5.5) .. controls (9.7,5.5) and (9.5,5.7) .. (9.5,6);
-  \draw[blue, line width=1.125pt] (9.5,5) .. controls (9.5,5.3) and (9.3,5.5) .. (9,5.5);
-  \draw[blue, line width=1.125pt] (9,5.5) .. controls (8.7,5.5) and (8.5,5.7) .. (8.5,6);
-  \draw[blue, line width=1.125pt] (8.5,5) .. controls (8.5,5.3) and (8.3,5.5) .. (8,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (8,5.5) -- (7,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (7.5,5) -- (7.5,6);
-  \draw[blue, line width=1.125pt] (7,5.5) .. controls (6.7,5.5) and (6.5,5.7) .. (6.5,6);
-  \draw[blue, line width=1.125pt] (6.5,5) .. controls (6.5,5.3) and (6.3,5.5) .. (6,5.5);
-  \draw[blue, line width=1.125pt] (6,5.5) .. controls (5.7,5.5) and (5.5,5.7) .. (5.5,6);
-  \draw[blue, line width=1.125pt] (5.5,5) .. controls (5.5,5.3) and (5.3,5.5) .. (5,5.5);
-  \draw[blue, line width=1.125pt] (5,5.5) .. controls (4.7,5.5) and (4.5,5.7) .. (4.5,6);
-  \draw[blue, line width=1.125pt] (10,4.5) .. controls (9.7,4.5) and (9.5,4.7) .. (9.5,5);
-  \draw[blue, line width=1.125pt] (9.5,4) .. controls (9.5,4.3) and (9.3,4.5) .. (9,4.5);
-  \draw[blue, line width=1.125pt] (9,4.5) .. controls (8.7,4.5) and (8.5,4.7) .. (8.5,5);
-  \draw[blue, line width=1.125pt] (8.5,4) .. controls (8.5,4.3) and (8.3,4.5) .. (8,4.5);
-  \draw[blue, line width=1.125pt] (8,4.5) .. controls (7.7,4.5) and (7.5,4.7) .. (7.5,5);
-  \draw[blue, line width=1.125pt] (7.5,4) .. controls (7.5,4.3) and (7.3,4.5) .. (7,4.5);
-  \draw[blue, line width=1.125pt] (7,4.5) .. controls (6.7,4.5) and (6.5,4.7) .. (6.5,5);
-  \draw[blue, line width=1.125pt] (6.5,4) .. controls (6.5,4.3) and (6.3,4.5) .. (6,4.5);
-  \draw[blue, line width=1.125pt] (6,4.5) .. controls (5.7,4.5) and (5.5,4.7) .. (5.5,5);
-  \draw[blue, line width=1.125pt] (10,3.5) .. controls (9.7,3.5) and (9.5,3.7) .. (9.5,4);
-  \draw[blue, line width=1.125pt] (9.5,3) .. controls (9.5,3.3) and (9.3,3.5) .. (9,3.5);
-  \draw[blue, line width=1.125pt] (9,3.5) .. controls (8.7,3.5) and (8.5,3.7) .. (8.5,4);
-  \draw[blue, line width=1.125pt] (8.5,3) .. controls (8.5,3.3) and (8.3,3.5) .. (8,3.5);
-  \draw[blue, line width=1.125pt] (8,3.5) .. controls (7.7,3.5) and (7.5,3.7) .. (7.5,4);
-  \draw[blue, line width=1.125pt] (7.5,3) .. controls (7.5,3.3) and (7.3,3.5) .. (7,3.5);
-  \draw[blue, line width=1.125pt] (7,3.5) .. controls (6.7,3.5) and (6.5,3.7) .. (6.5,4);
-  \draw[blue, line width=1.125pt] (10,2.5) .. controls (9.7,2.5) and (9.5,2.7) .. (9.5,3);
-  \draw[blue, line width=1.125pt] (9.5,2) .. controls (9.5,2.3) and (9.3,2.5) .. (9,2.5);
-  \draw[blue, line width=1.125pt] (9,2.5) .. controls (8.7,2.5) and (8.5,2.7) .. (8.5,3);
-  \draw[blue, line width=1.125pt] (8.5,2) .. controls (8.5,2.3) and (8.3,2.5) .. (8,2.5);
-  \draw[blue, line width=1.125pt] (8,2.5) .. controls (7.7,2.5) and (7.5,2.7) .. (7.5,3);
-  \draw[blue, line width=1.125pt] (10,1.5) .. controls (9.7,1.5) and (9.5,1.7) .. (9.5,2);
-  \draw[blue, line width=1.125pt] (9.5,1) .. controls (9.5,1.3) and (9.3,1.5) .. (9,1.5);
-  \draw[blue, line width=1.125pt] (9,1.5) .. controls (8.7,1.5) and (8.5,1.7) .. (8.5,2);
-  \draw[blue, line width=1.125pt] (10,0.5) .. controls (9.7,0.5) and (9.5,0.7) .. (9.5,1);
-  \node[font=\bfseries, text=blue, anchor=south] at (9.5,10.3) {1};
-  \node[font=\bfseries, text=blue, anchor=south] at (8.5,10.3) {2};
-  \node[font=\bfseries, text=blue, anchor=south] at (7.5,10.3) {3};
-  \node[font=\bfseries, text=blue, anchor=south] at (6.5,10.3) {4};
-  \node[font=\bfseries, text=blue, anchor=south] at (5.5,10.3) {5};
-  \node[font=\bfseries, text=blue, anchor=south] at (4.5,10.3) {6};
-  \node[font=\bfseries, text=blue, anchor=south] at (3.5,10.3) {7};
-  \node[font=\bfseries, text=blue, anchor=south] at (2.5,10.3) {8};
-  \node[font=\bfseries, text=blue, anchor=south] at (1.5,10.3) {9};
-  \node[font=\bfseries, text=blue, anchor=south] at (0.5,10.3) {10};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,9.5) {1};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,8.5) {2};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,7.5) {3};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,6.5) {5};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,5.5) {7};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,4.5) {4};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,3.5) {10};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,2.5) {6};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,1.5) {8};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,0.5) {9};
-  \draw[black, line width=1.35pt] (0,7) rectangle (10,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,0) -- (0.3,0);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,0) -- (10.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,1) -- (0.3,1);
+  \draw[lightgray, very thin, opacity=0.3] (9.3,0) -- (9.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,2) -- (0.3,2);
+  \draw[lightgray, very thin, opacity=0.3] (8.3,0) -- (8.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,3) -- (0.3,3);
+  \draw[lightgray, very thin, opacity=0.3] (7.3,0) -- (7.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,4) -- (0.3,4);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,0) -- (6.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,5) -- (0.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,0) -- (5.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,6) -- (0.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (4.3,0) -- (4.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,7) -- (0.3,7);
+  \draw[lightgray, very thin, opacity=0.3] (3.3,0) -- (3.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,8) -- (0.3,8);
+  \draw[lightgray, very thin, opacity=0.3] (2.3,0) -- (2.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,9) -- (0.3,9);
+  \draw[lightgray, very thin, opacity=0.3] (1.3,0) -- (1.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,10) -- (0.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (0.3,0) -- (0.3,10);
+  \draw[blue, line width=1.125pt] (0.3,9.5) .. controls (0.6,9.5) and (0.8,9.7) .. (0.8,10);
+  \draw[blue, line width=1.125pt] (0.8,9) .. controls (0.8,9.3) and (1,9.5) .. (1.3,9.5);
+  \draw[blue, line width=1.125pt] (1.3,9.5) .. controls (1.6,9.5) and (1.8,9.7) .. (1.8,10);
+  \draw[blue, line width=1.125pt] (1.8,9) .. controls (1.8,9.3) and (2,9.5) .. (2.3,9.5);
+  \draw[blue, line width=1.125pt] (2.3,9.5) .. controls (2.6,9.5) and (2.8,9.7) .. (2.8,10);
+  \draw[blue, line width=1.125pt] (2.8,9) .. controls (2.8,9.3) and (3,9.5) .. (3.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.3,9.5) -- (4.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.8,9) -- (3.8,10);
+  \draw[blue, line width=1.125pt] (4.3,9.5) .. controls (4.6,9.5) and (4.8,9.7) .. (4.8,10);
+  \draw[blue, line width=1.125pt] (4.8,9) .. controls (4.8,9.3) and (5,9.5) .. (5.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (5.3,9.5) -- (6.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (5.8,9) -- (5.8,10);
+  \draw[blue, line width=1.125pt] (6.3,9.5) .. controls (6.6,9.5) and (6.8,9.7) .. (6.8,10);
+  \draw[blue, line width=1.125pt] (6.8,9) .. controls (6.8,9.3) and (7,9.5) .. (7.3,9.5);
+  \draw[blue, line width=1.125pt] (7.3,9.5) .. controls (7.6,9.5) and (7.8,9.7) .. (7.8,10);
+  \draw[blue, line width=1.125pt] (7.8,9) .. controls (7.8,9.3) and (8,9.5) .. (8.3,9.5);
+  \draw[blue, line width=1.125pt] (8.3,9.5) .. controls (8.6,9.5) and (8.8,9.7) .. (8.8,10);
+  \draw[blue, line width=1.125pt] (8.8,9) .. controls (8.8,9.3) and (9,9.5) .. (9.3,9.5);
+  \draw[blue, line width=1.125pt] (9.3,9.5) .. controls (9.6,9.5) and (9.8,9.7) .. (9.8,10);
+  \draw[blue, line width=1.125pt] (0.3,8.5) .. controls (0.6,8.5) and (0.8,8.7) .. (0.8,9);
+  \draw[blue, line width=1.125pt] (0.8,8) .. controls (0.8,8.3) and (1,8.5) .. (1.3,8.5);
+  \draw[blue, line width=1.125pt] (1.3,8.5) .. controls (1.6,8.5) and (1.8,8.7) .. (1.8,9);
+  \draw[blue, line width=1.125pt] (1.8,8) .. controls (1.8,8.3) and (2,8.5) .. (2.3,8.5);
+  \draw[blue, line width=1.125pt] (2.3,8.5) .. controls (2.6,8.5) and (2.8,8.7) .. (2.8,9);
+  \draw[blue, line width=1.125pt] (2.8,8) .. controls (2.8,8.3) and (3,8.5) .. (3.3,8.5);
+  \draw[blue, line width=1.125pt] (3.3,8.5) .. controls (3.6,8.5) and (3.8,8.7) .. (3.8,9);
+  \draw[blue, line width=1.125pt] (3.8,8) .. controls (3.8,8.3) and (4,8.5) .. (4.3,8.5);
+  \draw[blue, line width=1.125pt] (4.3,8.5) .. controls (4.6,8.5) and (4.8,8.7) .. (4.8,9);
+  \draw[blue, line width=1.125pt] (4.8,8) .. controls (4.8,8.3) and (5,8.5) .. (5.3,8.5);
+  \draw[blue, line width=1.125pt] (5.3,8.5) .. controls (5.6,8.5) and (5.8,8.7) .. (5.8,9);
+  \draw[blue, line width=1.125pt] (5.8,8) .. controls (5.8,8.3) and (6,8.5) .. (6.3,8.5);
+  \draw[blue, line width=1.125pt] (6.3,8.5) .. controls (6.6,8.5) and (6.8,8.7) .. (6.8,9);
+  \draw[blue, line width=1.125pt] (6.8,8) .. controls (6.8,8.3) and (7,8.5) .. (7.3,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (7.3,8.5) -- (8.3,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (7.8,8) -- (7.8,9);
+  \draw[blue, line width=1.125pt] (8.3,8.5) .. controls (8.6,8.5) and (8.8,8.7) .. (8.8,9);
+  \draw[blue, line width=1.125pt] (0.3,7.5) .. controls (0.6,7.5) and (0.8,7.7) .. (0.8,8);
+  \draw[blue, line width=1.125pt] (0.8,7) .. controls (0.8,7.3) and (1,7.5) .. (1.3,7.5);
+  \draw[blue, line width=1.125pt] (1.3,7.5) .. controls (1.6,7.5) and (1.8,7.7) .. (1.8,8);
+  \draw[blue, line width=1.125pt] (1.8,7) .. controls (1.8,7.3) and (2,7.5) .. (2.3,7.5);
+  \draw[blue, line width=1.125pt] (2.3,7.5) .. controls (2.6,7.5) and (2.8,7.7) .. (2.8,8);
+  \draw[blue, line width=1.125pt] (2.8,7) .. controls (2.8,7.3) and (3,7.5) .. (3.3,7.5);
+  \draw[blue, line width=1.125pt] (3.3,7.5) .. controls (3.6,7.5) and (3.8,7.7) .. (3.8,8);
+  \draw[blue, line width=1.125pt] (3.8,7) .. controls (3.8,7.3) and (4,7.5) .. (4.3,7.5);
+  \draw[blue, line width=1.125pt] (4.3,7.5) .. controls (4.6,7.5) and (4.8,7.7) .. (4.8,8);
+  \draw[blue, line width=1.125pt] (4.8,7) .. controls (4.8,7.3) and (5,7.5) .. (5.3,7.5);
+  \draw[blue, line width=1.125pt] (5.3,7.5) .. controls (5.6,7.5) and (5.8,7.7) .. (5.8,8);
+  \draw[blue, line width=1.125pt] (5.8,7) .. controls (5.8,7.3) and (6,7.5) .. (6.3,7.5);
+  \draw[blue, line width=1.125pt] (6.3,7.5) .. controls (6.6,7.5) and (6.8,7.7) .. (6.8,8);
+  \draw[blue, line width=1.125pt] (6.8,7) .. controls (6.8,7.3) and (7,7.5) .. (7.3,7.5);
+  \draw[blue, line width=1.125pt] (7.3,7.5) .. controls (7.6,7.5) and (7.8,7.7) .. (7.8,8);
+  \draw[blue, line width=1.125pt] (0.3,6.5) .. controls (0.6,6.5) and (0.8,6.7) .. (0.8,7);
+  \draw[blue, line width=1.125pt] (0.8,6) .. controls (0.8,6.3) and (1,6.5) .. (1.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.3,6.5) -- (2.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.8,6) -- (1.8,7);
+  \draw[blue, line width=1.125pt] (2.3,6.5) .. controls (2.6,6.5) and (2.8,6.7) .. (2.8,7);
+  \draw[blue, line width=1.125pt] (2.8,6) .. controls (2.8,6.3) and (3,6.5) .. (3.3,6.5);
+  \draw[blue, line width=1.125pt] (3.3,6.5) .. controls (3.6,6.5) and (3.8,6.7) .. (3.8,7);
+  \draw[blue, line width=1.125pt] (3.8,6) .. controls (3.8,6.3) and (4,6.5) .. (4.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.3,6.5) -- (5.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.8,6) -- (4.8,7);
+  \draw[blue, line width=1.125pt] (5.3,6.5) .. controls (5.6,6.5) and (5.8,6.7) .. (5.8,7);
+  \draw[blue, line width=1.125pt] (5.8,6) .. controls (5.8,6.3) and (6,6.5) .. (6.3,6.5);
+  \draw[blue, line width=1.125pt] (6.3,6.5) .. controls (6.6,6.5) and (6.8,6.7) .. (6.8,7);
+  \draw[blue, line width=1.125pt] (0.3,5.5) .. controls (0.6,5.5) and (0.8,5.7) .. (0.8,6);
+  \draw[blue, line width=1.125pt] (0.8,5) .. controls (0.8,5.3) and (1,5.5) .. (1.3,5.5);
+  \draw[blue, line width=1.125pt] (1.3,5.5) .. controls (1.6,5.5) and (1.8,5.7) .. (1.8,6);
+  \draw[blue, line width=1.125pt] (1.8,5) .. controls (1.8,5.3) and (2,5.5) .. (2.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2.3,5.5) -- (3.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2.8,5) -- (2.8,6);
+  \draw[blue, line width=1.125pt] (3.3,5.5) .. controls (3.6,5.5) and (3.8,5.7) .. (3.8,6);
+  \draw[blue, line width=1.125pt] (3.8,5) .. controls (3.8,5.3) and (4,5.5) .. (4.3,5.5);
+  \draw[blue, line width=1.125pt] (4.3,5.5) .. controls (4.6,5.5) and (4.8,5.7) .. (4.8,6);
+  \draw[blue, line width=1.125pt] (4.8,5) .. controls (4.8,5.3) and (5,5.5) .. (5.3,5.5);
+  \draw[blue, line width=1.125pt] (5.3,5.5) .. controls (5.6,5.5) and (5.8,5.7) .. (5.8,6);
+  \draw[blue, line width=1.125pt] (0.3,4.5) .. controls (0.6,4.5) and (0.8,4.7) .. (0.8,5);
+  \draw[blue, line width=1.125pt] (0.8,4) .. controls (0.8,4.3) and (1,4.5) .. (1.3,4.5);
+  \draw[blue, line width=1.125pt] (1.3,4.5) .. controls (1.6,4.5) and (1.8,4.7) .. (1.8,5);
+  \draw[blue, line width=1.125pt] (1.8,4) .. controls (1.8,4.3) and (2,4.5) .. (2.3,4.5);
+  \draw[blue, line width=1.125pt] (2.3,4.5) .. controls (2.6,4.5) and (2.8,4.7) .. (2.8,5);
+  \draw[blue, line width=1.125pt] (2.8,4) .. controls (2.8,4.3) and (3,4.5) .. (3.3,4.5);
+  \draw[blue, line width=1.125pt] (3.3,4.5) .. controls (3.6,4.5) and (3.8,4.7) .. (3.8,5);
+  \draw[blue, line width=1.125pt] (3.8,4) .. controls (3.8,4.3) and (4,4.5) .. (4.3,4.5);
+  \draw[blue, line width=1.125pt] (4.3,4.5) .. controls (4.6,4.5) and (4.8,4.7) .. (4.8,5);
+  \draw[blue, line width=1.125pt] (0.3,3.5) .. controls (0.6,3.5) and (0.8,3.7) .. (0.8,4);
+  \draw[blue, line width=1.125pt] (0.8,3) .. controls (0.8,3.3) and (1,3.5) .. (1.3,3.5);
+  \draw[blue, line width=1.125pt] (1.3,3.5) .. controls (1.6,3.5) and (1.8,3.7) .. (1.8,4);
+  \draw[blue, line width=1.125pt] (1.8,3) .. controls (1.8,3.3) and (2,3.5) .. (2.3,3.5);
+  \draw[blue, line width=1.125pt] (2.3,3.5) .. controls (2.6,3.5) and (2.8,3.7) .. (2.8,4);
+  \draw[blue, line width=1.125pt] (2.8,3) .. controls (2.8,3.3) and (3,3.5) .. (3.3,3.5);
+  \draw[blue, line width=1.125pt] (3.3,3.5) .. controls (3.6,3.5) and (3.8,3.7) .. (3.8,4);
+  \draw[blue, line width=1.125pt] (0.3,2.5) .. controls (0.6,2.5) and (0.8,2.7) .. (0.8,3);
+  \draw[blue, line width=1.125pt] (0.8,2) .. controls (0.8,2.3) and (1,2.5) .. (1.3,2.5);
+  \draw[blue, line width=1.125pt] (1.3,2.5) .. controls (1.6,2.5) and (1.8,2.7) .. (1.8,3);
+  \draw[blue, line width=1.125pt] (1.8,2) .. controls (1.8,2.3) and (2,2.5) .. (2.3,2.5);
+  \draw[blue, line width=1.125pt] (2.3,2.5) .. controls (2.6,2.5) and (2.8,2.7) .. (2.8,3);
+  \draw[blue, line width=1.125pt] (0.3,1.5) .. controls (0.6,1.5) and (0.8,1.7) .. (0.8,2);
+  \draw[blue, line width=1.125pt] (0.8,1) .. controls (0.8,1.3) and (1,1.5) .. (1.3,1.5);
+  \draw[blue, line width=1.125pt] (1.3,1.5) .. controls (1.6,1.5) and (1.8,1.7) .. (1.8,2);
+  \draw[blue, line width=1.125pt] (0.3,0.5) .. controls (0.6,0.5) and (0.8,0.7) .. (0.8,1);
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (0.8,10.3) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (1.8,10.3) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (2.8,10.3) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (3.8,10.3) {4};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (4.8,10.3) {5};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (5.8,10.3) {6};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (6.8,10.3) {7};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (7.8,10.3) {8};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (8.8,10.3) {9};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (9.8,10.3) {10};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,9.5) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,8.5) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,7.5) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,6.5) {5};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,5.5) {7};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,4.5) {4};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,3.5) {10};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,2.5) {6};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {8};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {9};
+  \draw[black, line width=1.35pt] (10.3,7) rectangle (0.3,10);
 \end{tikzpicture}
 &
 \begin{tikzpicture}[scale=0.45]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (10,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (10,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (10,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (10,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (10,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (10,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (10,6);
-  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,7) -- (10,7);
-  \draw[lightgray, very thin, opacity=0.3] (7,0) -- (7,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,8) -- (10,8);
-  \draw[lightgray, very thin, opacity=0.3] (8,0) -- (8,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,9) -- (10,9);
-  \draw[lightgray, very thin, opacity=0.3] (9,0) -- (9,10);
-  \draw[lightgray, very thin, opacity=0.3] (0,10) -- (10,10);
-  \draw[lightgray, very thin, opacity=0.3] (10,0) -- (10,10);
-  \draw[blue, line width=1.125pt] (10,9.5) .. controls (9.7,9.5) and (9.5,9.7) .. (9.5,10);
-  \draw[blue, line width=1.125pt] (9.5,9) .. controls (9.5,9.3) and (9.3,9.5) .. (9,9.5);
-  \draw[blue, line width=1.125pt] (9,9.5) .. controls (8.7,9.5) and (8.5,9.7) .. (8.5,10);
-  \draw[blue, line width=1.125pt] (8.5,9) .. controls (8.5,9.3) and (8.3,9.5) .. (8,9.5);
-  \draw[blue, line width=1.125pt] (8,9.5) .. controls (7.7,9.5) and (7.5,9.7) .. (7.5,10);
-  \draw[blue, line width=1.125pt] (7.5,9) .. controls (7.5,9.3) and (7.3,9.5) .. (7,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (7,9.5) -- (6,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (6.5,9) -- (6.5,10);
-  \draw[blue, line width=1.125pt] (6,9.5) .. controls (5.7,9.5) and (5.5,9.7) .. (5.5,10);
-  \draw[blue, line width=1.125pt] (5.5,9) .. controls (5.5,9.3) and (5.3,9.5) .. (5,9.5);
-  \draw[blue, line width=1.125pt] (5,9.5) .. controls (4.7,9.5) and (4.5,9.7) .. (4.5,10);
-  \draw[blue, line width=1.125pt] (4.5,9) .. controls (4.5,9.3) and (4.3,9.5) .. (4,9.5);
-  \draw[blue, line width=1.125pt] (4,9.5) .. controls (3.7,9.5) and (3.5,9.7) .. (3.5,10);
-  \draw[blue, line width=1.125pt] (3.5,9) .. controls (3.5,9.3) and (3.3,9.5) .. (3,9.5);
-  \draw[blue, line width=1.125pt] (3,9.5) .. controls (2.7,9.5) and (2.5,9.7) .. (2.5,10);
-  \draw[blue, line width=1.125pt] (2.5,9) .. controls (2.5,9.3) and (2.3,9.5) .. (2,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (2,9.5) -- (1,9.5);
-  \draw[blue, line width=1.125pt, line cap=round] (1.5,9) -- (1.5,10);
-  \draw[blue, line width=1.125pt] (1,9.5) .. controls (0.7,9.5) and (0.5,9.7) .. (0.5,10);
-  \draw[blue, line width=1.125pt] (10,8.5) .. controls (9.7,8.5) and (9.5,8.7) .. (9.5,9);
-  \draw[blue, line width=1.125pt] (9.5,8) .. controls (9.5,8.3) and (9.3,8.5) .. (9,8.5);
-  \draw[blue, line width=1.125pt] (9,8.5) .. controls (8.7,8.5) and (8.5,8.7) .. (8.5,9);
-  \draw[blue, line width=1.125pt] (8.5,8) .. controls (8.5,8.3) and (8.3,8.5) .. (8,8.5);
-  \draw[blue, line width=1.125pt] (8,8.5) .. controls (7.7,8.5) and (7.5,8.7) .. (7.5,9);
-  \draw[blue, line width=1.125pt] (7.5,8) .. controls (7.5,8.3) and (7.3,8.5) .. (7,8.5);
-  \draw[blue, line width=1.125pt] (7,8.5) .. controls (6.7,8.5) and (6.5,8.7) .. (6.5,9);
-  \draw[blue, line width=1.125pt] (6.5,8) .. controls (6.5,8.3) and (6.3,8.5) .. (6,8.5);
-  \draw[blue, line width=1.125pt, line cap=round] (6,8.5) -- (5,8.5);
-  \draw[blue, line width=1.125pt, line cap=round] (5.5,8) -- (5.5,9);
-  \draw[blue, line width=1.125pt] (5,8.5) .. controls (4.7,8.5) and (4.5,8.7) .. (4.5,9);
-  \draw[blue, line width=1.125pt] (4.5,8) .. controls (4.5,8.3) and (4.3,8.5) .. (4,8.5);
-  \draw[blue, line width=1.125pt] (4,8.5) .. controls (3.7,8.5) and (3.5,8.7) .. (3.5,9);
-  \draw[blue, line width=1.125pt] (3.5,8) .. controls (3.5,8.3) and (3.3,8.5) .. (3,8.5);
-  \draw[blue, line width=1.125pt] (3,8.5) .. controls (2.7,8.5) and (2.5,8.7) .. (2.5,9);
-  \draw[blue, line width=1.125pt] (2.5,8) .. controls (2.5,8.3) and (2.3,8.5) .. (2,8.5);
-  \draw[blue, line width=1.125pt] (2,8.5) .. controls (1.7,8.5) and (1.5,8.7) .. (1.5,9);
-  \draw[blue, line width=1.125pt] (10,7.5) .. controls (9.7,7.5) and (9.5,7.7) .. (9.5,8);
-  \draw[blue, line width=1.125pt] (9.5,7) .. controls (9.5,7.3) and (9.3,7.5) .. (9,7.5);
-  \draw[blue, line width=1.125pt] (9,7.5) .. controls (8.7,7.5) and (8.5,7.7) .. (8.5,8);
-  \draw[blue, line width=1.125pt] (8.5,7) .. controls (8.5,7.3) and (8.3,7.5) .. (8,7.5);
-  \draw[blue, line width=1.125pt] (8,7.5) .. controls (7.7,7.5) and (7.5,7.7) .. (7.5,8);
-  \draw[blue, line width=1.125pt] (7.5,7) .. controls (7.5,7.3) and (7.3,7.5) .. (7,7.5);
-  \draw[blue, line width=1.125pt] (7,7.5) .. controls (6.7,7.5) and (6.5,7.7) .. (6.5,8);
-  \draw[blue, line width=1.125pt] (6.5,7) .. controls (6.5,7.3) and (6.3,7.5) .. (6,7.5);
-  \draw[blue, line width=1.125pt] (6,7.5) .. controls (5.7,7.5) and (5.5,7.7) .. (5.5,8);
-  \draw[blue, line width=1.125pt] (5.5,7) .. controls (5.5,7.3) and (5.3,7.5) .. (5,7.5);
-  \draw[blue, line width=1.125pt] (5,7.5) .. controls (4.7,7.5) and (4.5,7.7) .. (4.5,8);
-  \draw[blue, line width=1.125pt] (4.5,7) .. controls (4.5,7.3) and (4.3,7.5) .. (4,7.5);
-  \draw[blue, line width=1.125pt] (4,7.5) .. controls (3.7,7.5) and (3.5,7.7) .. (3.5,8);
-  \draw[blue, line width=1.125pt] (3.5,7) .. controls (3.5,7.3) and (3.3,7.5) .. (3,7.5);
-  \draw[blue, line width=1.125pt] (3,7.5) .. controls (2.7,7.5) and (2.5,7.7) .. (2.5,8);
-  \draw[blue, line width=1.125pt] (10,6.5) .. controls (9.7,6.5) and (9.5,6.7) .. (9.5,7);
-  \draw[blue, line width=1.125pt] (9.5,6) .. controls (9.5,6.3) and (9.3,6.5) .. (9,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (9,6.5) -- (8,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (8.5,6) -- (8.5,7);
-  \draw[blue, line width=1.125pt] (8,6.5) .. controls (7.7,6.5) and (7.5,6.7) .. (7.5,7);
-  \draw[blue, line width=1.125pt] (7.5,6) .. controls (7.5,6.3) and (7.3,6.5) .. (7,6.5);
-  \draw[blue, line width=1.125pt] (7,6.5) .. controls (6.7,6.5) and (6.5,6.7) .. (6.5,7);
-  \draw[blue, line width=1.125pt] (6.5,6) .. controls (6.5,6.3) and (6.3,6.5) .. (6,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (6,6.5) -- (5,6.5);
-  \draw[blue, line width=1.125pt, line cap=round] (5.5,6) -- (5.5,7);
-  \draw[blue, line width=1.125pt] (5,6.5) .. controls (4.7,6.5) and (4.5,6.7) .. (4.5,7);
-  \draw[blue, line width=1.125pt] (4.5,6) .. controls (4.5,6.3) and (4.3,6.5) .. (4,6.5);
-  \draw[blue, line width=1.125pt] (4,6.5) .. controls (3.7,6.5) and (3.5,6.7) .. (3.5,7);
-  \draw[blue, line width=1.125pt] (10,5.5) .. controls (9.7,5.5) and (9.5,5.7) .. (9.5,6);
-  \draw[blue, line width=1.125pt] (9.5,5) .. controls (9.5,5.3) and (9.3,5.5) .. (9,5.5);
-  \draw[blue, line width=1.125pt] (9,5.5) .. controls (8.7,5.5) and (8.5,5.7) .. (8.5,6);
-  \draw[blue, line width=1.125pt] (8.5,5) .. controls (8.5,5.3) and (8.3,5.5) .. (8,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (8,5.5) -- (7,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (7.5,5) -- (7.5,6);
-  \draw[blue, line width=1.125pt] (7,5.5) .. controls (6.7,5.5) and (6.5,5.7) .. (6.5,6);
-  \draw[blue, line width=1.125pt] (6.5,5) .. controls (6.5,5.3) and (6.3,5.5) .. (6,5.5);
-  \draw[blue, line width=1.125pt] (6,5.5) .. controls (5.7,5.5) and (5.5,5.7) .. (5.5,6);
-  \draw[blue, line width=1.125pt] (5.5,5) .. controls (5.5,5.3) and (5.3,5.5) .. (5,5.5);
-  \draw[blue, line width=1.125pt] (5,5.5) .. controls (4.7,5.5) and (4.5,5.7) .. (4.5,6);
-  \draw[blue, line width=1.125pt] (10,4.5) .. controls (9.7,4.5) and (9.5,4.7) .. (9.5,5);
-  \draw[blue, line width=1.125pt] (9.5,4) .. controls (9.5,4.3) and (9.3,4.5) .. (9,4.5);
-  \draw[blue, line width=1.125pt] (9,4.5) .. controls (8.7,4.5) and (8.5,4.7) .. (8.5,5);
-  \draw[blue, line width=1.125pt] (8.5,4) .. controls (8.5,4.3) and (8.3,4.5) .. (8,4.5);
-  \draw[blue, line width=1.125pt] (8,4.5) .. controls (7.7,4.5) and (7.5,4.7) .. (7.5,5);
-  \draw[blue, line width=1.125pt] (7.5,4) .. controls (7.5,4.3) and (7.3,4.5) .. (7,4.5);
-  \draw[blue, line width=1.125pt] (7,4.5) .. controls (6.7,4.5) and (6.5,4.7) .. (6.5,5);
-  \draw[blue, line width=1.125pt] (6.5,4) .. controls (6.5,4.3) and (6.3,4.5) .. (6,4.5);
-  \draw[blue, line width=1.125pt] (6,4.5) .. controls (5.7,4.5) and (5.5,4.7) .. (5.5,5);
-  \draw[blue, line width=1.125pt] (10,3.5) .. controls (9.7,3.5) and (9.5,3.7) .. (9.5,4);
-  \draw[blue, line width=1.125pt] (9.5,3) .. controls (9.5,3.3) and (9.3,3.5) .. (9,3.5);
-  \draw[blue, line width=1.125pt] (9,3.5) .. controls (8.7,3.5) and (8.5,3.7) .. (8.5,4);
-  \draw[blue, line width=1.125pt] (8.5,3) .. controls (8.5,3.3) and (8.3,3.5) .. (8,3.5);
-  \draw[blue, line width=1.125pt] (8,3.5) .. controls (7.7,3.5) and (7.5,3.7) .. (7.5,4);
-  \draw[blue, line width=1.125pt] (7.5,3) .. controls (7.5,3.3) and (7.3,3.5) .. (7,3.5);
-  \draw[blue, line width=1.125pt] (7,3.5) .. controls (6.7,3.5) and (6.5,3.7) .. (6.5,4);
-  \draw[blue, line width=1.125pt] (10,2.5) .. controls (9.7,2.5) and (9.5,2.7) .. (9.5,3);
-  \draw[blue, line width=1.125pt] (9.5,2) .. controls (9.5,2.3) and (9.3,2.5) .. (9,2.5);
-  \draw[blue, line width=1.125pt] (9,2.5) .. controls (8.7,2.5) and (8.5,2.7) .. (8.5,3);
-  \draw[blue, line width=1.125pt] (8.5,2) .. controls (8.5,2.3) and (8.3,2.5) .. (8,2.5);
-  \draw[blue, line width=1.125pt] (8,2.5) .. controls (7.7,2.5) and (7.5,2.7) .. (7.5,3);
-  \draw[blue, line width=1.125pt] (10,1.5) .. controls (9.7,1.5) and (9.5,1.7) .. (9.5,2);
-  \draw[blue, line width=1.125pt] (9.5,1) .. controls (9.5,1.3) and (9.3,1.5) .. (9,1.5);
-  \draw[blue, line width=1.125pt] (9,1.5) .. controls (8.7,1.5) and (8.5,1.7) .. (8.5,2);
-  \draw[blue, line width=1.125pt] (10,0.5) .. controls (9.7,0.5) and (9.5,0.7) .. (9.5,1);
-  \node[font=\bfseries, text=blue, anchor=south] at (9.5,10.3) {1};
-  \node[font=\bfseries, text=blue, anchor=south] at (8.5,10.3) {2};
-  \node[font=\bfseries, text=blue, anchor=south] at (7.5,10.3) {3};
-  \node[font=\bfseries, text=blue, anchor=south] at (6.5,10.3) {4};
-  \node[font=\bfseries, text=blue, anchor=south] at (5.5,10.3) {5};
-  \node[font=\bfseries, text=blue, anchor=south] at (4.5,10.3) {6};
-  \node[font=\bfseries, text=blue, anchor=south] at (3.5,10.3) {7};
-  \node[font=\bfseries, text=blue, anchor=south] at (2.5,10.3) {8};
-  \node[font=\bfseries, text=blue, anchor=south] at (1.5,10.3) {9};
-  \node[font=\bfseries, text=blue, anchor=south] at (0.5,10.3) {10};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,9.5) {1};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,8.5) {2};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,7.5) {3};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,6.5) {5};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,5.5) {7};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,4.5) {4};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,3.5) {10};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,2.5) {6};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,1.5) {8};
-  \node[font=\bfseries, text=blue, anchor=west] at (10.3,0.5) {9};
-  \draw[black, line width=1.35pt] (0,7) rectangle (10,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,0) -- (0.3,0);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,0) -- (10.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,1) -- (0.3,1);
+  \draw[lightgray, very thin, opacity=0.3] (9.3,0) -- (9.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,2) -- (0.3,2);
+  \draw[lightgray, very thin, opacity=0.3] (8.3,0) -- (8.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,3) -- (0.3,3);
+  \draw[lightgray, very thin, opacity=0.3] (7.3,0) -- (7.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,4) -- (0.3,4);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,0) -- (6.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,5) -- (0.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,0) -- (5.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,6) -- (0.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (4.3,0) -- (4.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,7) -- (0.3,7);
+  \draw[lightgray, very thin, opacity=0.3] (3.3,0) -- (3.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,8) -- (0.3,8);
+  \draw[lightgray, very thin, opacity=0.3] (2.3,0) -- (2.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,9) -- (0.3,9);
+  \draw[lightgray, very thin, opacity=0.3] (1.3,0) -- (1.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (10.3,10) -- (0.3,10);
+  \draw[lightgray, very thin, opacity=0.3] (0.3,0) -- (0.3,10);
+  \draw[blue, line width=1.125pt] (0.3,9.5) .. controls (0.6,9.5) and (0.8,9.7) .. (0.8,10);
+  \draw[blue, line width=1.125pt] (0.8,9) .. controls (0.8,9.3) and (1,9.5) .. (1.3,9.5);
+  \draw[blue, line width=1.125pt] (1.3,9.5) .. controls (1.6,9.5) and (1.8,9.7) .. (1.8,10);
+  \draw[blue, line width=1.125pt] (1.8,9) .. controls (1.8,9.3) and (2,9.5) .. (2.3,9.5);
+  \draw[blue, line width=1.125pt] (2.3,9.5) .. controls (2.6,9.5) and (2.8,9.7) .. (2.8,10);
+  \draw[blue, line width=1.125pt] (2.8,9) .. controls (2.8,9.3) and (3,9.5) .. (3.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.3,9.5) -- (4.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.8,9) -- (3.8,10);
+  \draw[blue, line width=1.125pt] (4.3,9.5) .. controls (4.6,9.5) and (4.8,9.7) .. (4.8,10);
+  \draw[blue, line width=1.125pt] (4.8,9) .. controls (4.8,9.3) and (5,9.5) .. (5.3,9.5);
+  \draw[blue, line width=1.125pt] (5.3,9.5) .. controls (5.6,9.5) and (5.8,9.7) .. (5.8,10);
+  \draw[blue, line width=1.125pt] (5.8,9) .. controls (5.8,9.3) and (6,9.5) .. (6.3,9.5);
+  \draw[blue, line width=1.125pt] (6.3,9.5) .. controls (6.6,9.5) and (6.8,9.7) .. (6.8,10);
+  \draw[blue, line width=1.125pt] (6.8,9) .. controls (6.8,9.3) and (7,9.5) .. (7.3,9.5);
+  \draw[blue, line width=1.125pt] (7.3,9.5) .. controls (7.6,9.5) and (7.8,9.7) .. (7.8,10);
+  \draw[blue, line width=1.125pt] (7.8,9) .. controls (7.8,9.3) and (8,9.5) .. (8.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (8.3,9.5) -- (9.3,9.5);
+  \draw[blue, line width=1.125pt, line cap=round] (8.8,9) -- (8.8,10);
+  \draw[blue, line width=1.125pt] (9.3,9.5) .. controls (9.6,9.5) and (9.8,9.7) .. (9.8,10);
+  \draw[blue, line width=1.125pt] (0.3,8.5) .. controls (0.6,8.5) and (0.8,8.7) .. (0.8,9);
+  \draw[blue, line width=1.125pt] (0.8,8) .. controls (0.8,8.3) and (1,8.5) .. (1.3,8.5);
+  \draw[blue, line width=1.125pt] (1.3,8.5) .. controls (1.6,8.5) and (1.8,8.7) .. (1.8,9);
+  \draw[blue, line width=1.125pt] (1.8,8) .. controls (1.8,8.3) and (2,8.5) .. (2.3,8.5);
+  \draw[blue, line width=1.125pt] (2.3,8.5) .. controls (2.6,8.5) and (2.8,8.7) .. (2.8,9);
+  \draw[blue, line width=1.125pt] (2.8,8) .. controls (2.8,8.3) and (3,8.5) .. (3.3,8.5);
+  \draw[blue, line width=1.125pt] (3.3,8.5) .. controls (3.6,8.5) and (3.8,8.7) .. (3.8,9);
+  \draw[blue, line width=1.125pt] (3.8,8) .. controls (3.8,8.3) and (4,8.5) .. (4.3,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.3,8.5) -- (5.3,8.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.8,8) -- (4.8,9);
+  \draw[blue, line width=1.125pt] (5.3,8.5) .. controls (5.6,8.5) and (5.8,8.7) .. (5.8,9);
+  \draw[blue, line width=1.125pt] (5.8,8) .. controls (5.8,8.3) and (6,8.5) .. (6.3,8.5);
+  \draw[blue, line width=1.125pt] (6.3,8.5) .. controls (6.6,8.5) and (6.8,8.7) .. (6.8,9);
+  \draw[blue, line width=1.125pt] (6.8,8) .. controls (6.8,8.3) and (7,8.5) .. (7.3,8.5);
+  \draw[blue, line width=1.125pt] (7.3,8.5) .. controls (7.6,8.5) and (7.8,8.7) .. (7.8,9);
+  \draw[blue, line width=1.125pt] (7.8,8) .. controls (7.8,8.3) and (8,8.5) .. (8.3,8.5);
+  \draw[blue, line width=1.125pt] (8.3,8.5) .. controls (8.6,8.5) and (8.8,8.7) .. (8.8,9);
+  \draw[blue, line width=1.125pt] (0.3,7.5) .. controls (0.6,7.5) and (0.8,7.7) .. (0.8,8);
+  \draw[blue, line width=1.125pt] (0.8,7) .. controls (0.8,7.3) and (1,7.5) .. (1.3,7.5);
+  \draw[blue, line width=1.125pt] (1.3,7.5) .. controls (1.6,7.5) and (1.8,7.7) .. (1.8,8);
+  \draw[blue, line width=1.125pt] (1.8,7) .. controls (1.8,7.3) and (2,7.5) .. (2.3,7.5);
+  \draw[blue, line width=1.125pt] (2.3,7.5) .. controls (2.6,7.5) and (2.8,7.7) .. (2.8,8);
+  \draw[blue, line width=1.125pt] (2.8,7) .. controls (2.8,7.3) and (3,7.5) .. (3.3,7.5);
+  \draw[blue, line width=1.125pt] (3.3,7.5) .. controls (3.6,7.5) and (3.8,7.7) .. (3.8,8);
+  \draw[blue, line width=1.125pt] (3.8,7) .. controls (3.8,7.3) and (4,7.5) .. (4.3,7.5);
+  \draw[blue, line width=1.125pt] (4.3,7.5) .. controls (4.6,7.5) and (4.8,7.7) .. (4.8,8);
+  \draw[blue, line width=1.125pt] (4.8,7) .. controls (4.8,7.3) and (5,7.5) .. (5.3,7.5);
+  \draw[blue, line width=1.125pt] (5.3,7.5) .. controls (5.6,7.5) and (5.8,7.7) .. (5.8,8);
+  \draw[blue, line width=1.125pt] (5.8,7) .. controls (5.8,7.3) and (6,7.5) .. (6.3,7.5);
+  \draw[blue, line width=1.125pt] (6.3,7.5) .. controls (6.6,7.5) and (6.8,7.7) .. (6.8,8);
+  \draw[blue, line width=1.125pt] (6.8,7) .. controls (6.8,7.3) and (7,7.5) .. (7.3,7.5);
+  \draw[blue, line width=1.125pt] (7.3,7.5) .. controls (7.6,7.5) and (7.8,7.7) .. (7.8,8);
+  \draw[blue, line width=1.125pt] (0.3,6.5) .. controls (0.6,6.5) and (0.8,6.7) .. (0.8,7);
+  \draw[blue, line width=1.125pt] (0.8,6) .. controls (0.8,6.3) and (1,6.5) .. (1.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.3,6.5) -- (2.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.8,6) -- (1.8,7);
+  \draw[blue, line width=1.125pt] (2.3,6.5) .. controls (2.6,6.5) and (2.8,6.7) .. (2.8,7);
+  \draw[blue, line width=1.125pt] (2.8,6) .. controls (2.8,6.3) and (3,6.5) .. (3.3,6.5);
+  \draw[blue, line width=1.125pt] (3.3,6.5) .. controls (3.6,6.5) and (3.8,6.7) .. (3.8,7);
+  \draw[blue, line width=1.125pt] (3.8,6) .. controls (3.8,6.3) and (4,6.5) .. (4.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.3,6.5) -- (5.3,6.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.8,6) -- (4.8,7);
+  \draw[blue, line width=1.125pt] (5.3,6.5) .. controls (5.6,6.5) and (5.8,6.7) .. (5.8,7);
+  \draw[blue, line width=1.125pt] (5.8,6) .. controls (5.8,6.3) and (6,6.5) .. (6.3,6.5);
+  \draw[blue, line width=1.125pt] (6.3,6.5) .. controls (6.6,6.5) and (6.8,6.7) .. (6.8,7);
+  \draw[blue, line width=1.125pt] (0.3,5.5) .. controls (0.6,5.5) and (0.8,5.7) .. (0.8,6);
+  \draw[blue, line width=1.125pt] (0.8,5) .. controls (0.8,5.3) and (1,5.5) .. (1.3,5.5);
+  \draw[blue, line width=1.125pt] (1.3,5.5) .. controls (1.6,5.5) and (1.8,5.7) .. (1.8,6);
+  \draw[blue, line width=1.125pt] (1.8,5) .. controls (1.8,5.3) and (2,5.5) .. (2.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2.3,5.5) -- (3.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2.8,5) -- (2.8,6);
+  \draw[blue, line width=1.125pt] (3.3,5.5) .. controls (3.6,5.5) and (3.8,5.7) .. (3.8,6);
+  \draw[blue, line width=1.125pt] (3.8,5) .. controls (3.8,5.3) and (4,5.5) .. (4.3,5.5);
+  \draw[blue, line width=1.125pt] (4.3,5.5) .. controls (4.6,5.5) and (4.8,5.7) .. (4.8,6);
+  \draw[blue, line width=1.125pt] (4.8,5) .. controls (4.8,5.3) and (5,5.5) .. (5.3,5.5);
+  \draw[blue, line width=1.125pt] (5.3,5.5) .. controls (5.6,5.5) and (5.8,5.7) .. (5.8,6);
+  \draw[blue, line width=1.125pt] (0.3,4.5) .. controls (0.6,4.5) and (0.8,4.7) .. (0.8,5);
+  \draw[blue, line width=1.125pt] (0.8,4) .. controls (0.8,4.3) and (1,4.5) .. (1.3,4.5);
+  \draw[blue, line width=1.125pt] (1.3,4.5) .. controls (1.6,4.5) and (1.8,4.7) .. (1.8,5);
+  \draw[blue, line width=1.125pt] (1.8,4) .. controls (1.8,4.3) and (2,4.5) .. (2.3,4.5);
+  \draw[blue, line width=1.125pt] (2.3,4.5) .. controls (2.6,4.5) and (2.8,4.7) .. (2.8,5);
+  \draw[blue, line width=1.125pt] (2.8,4) .. controls (2.8,4.3) and (3,4.5) .. (3.3,4.5);
+  \draw[blue, line width=1.125pt] (3.3,4.5) .. controls (3.6,4.5) and (3.8,4.7) .. (3.8,5);
+  \draw[blue, line width=1.125pt] (3.8,4) .. controls (3.8,4.3) and (4,4.5) .. (4.3,4.5);
+  \draw[blue, line width=1.125pt] (4.3,4.5) .. controls (4.6,4.5) and (4.8,4.7) .. (4.8,5);
+  \draw[blue, line width=1.125pt] (0.3,3.5) .. controls (0.6,3.5) and (0.8,3.7) .. (0.8,4);
+  \draw[blue, line width=1.125pt] (0.8,3) .. controls (0.8,3.3) and (1,3.5) .. (1.3,3.5);
+  \draw[blue, line width=1.125pt] (1.3,3.5) .. controls (1.6,3.5) and (1.8,3.7) .. (1.8,4);
+  \draw[blue, line width=1.125pt] (1.8,3) .. controls (1.8,3.3) and (2,3.5) .. (2.3,3.5);
+  \draw[blue, line width=1.125pt] (2.3,3.5) .. controls (2.6,3.5) and (2.8,3.7) .. (2.8,4);
+  \draw[blue, line width=1.125pt] (2.8,3) .. controls (2.8,3.3) and (3,3.5) .. (3.3,3.5);
+  \draw[blue, line width=1.125pt] (3.3,3.5) .. controls (3.6,3.5) and (3.8,3.7) .. (3.8,4);
+  \draw[blue, line width=1.125pt] (0.3,2.5) .. controls (0.6,2.5) and (0.8,2.7) .. (0.8,3);
+  \draw[blue, line width=1.125pt] (0.8,2) .. controls (0.8,2.3) and (1,2.5) .. (1.3,2.5);
+  \draw[blue, line width=1.125pt] (1.3,2.5) .. controls (1.6,2.5) and (1.8,2.7) .. (1.8,3);
+  \draw[blue, line width=1.125pt] (1.8,2) .. controls (1.8,2.3) and (2,2.5) .. (2.3,2.5);
+  \draw[blue, line width=1.125pt] (2.3,2.5) .. controls (2.6,2.5) and (2.8,2.7) .. (2.8,3);
+  \draw[blue, line width=1.125pt] (0.3,1.5) .. controls (0.6,1.5) and (0.8,1.7) .. (0.8,2);
+  \draw[blue, line width=1.125pt] (0.8,1) .. controls (0.8,1.3) and (1,1.5) .. (1.3,1.5);
+  \draw[blue, line width=1.125pt] (1.3,1.5) .. controls (1.6,1.5) and (1.8,1.7) .. (1.8,2);
+  \draw[blue, line width=1.125pt] (0.3,0.5) .. controls (0.6,0.5) and (0.8,0.7) .. (0.8,1);
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (0.8,10.3) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (1.8,10.3) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (2.8,10.3) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (3.8,10.3) {4};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (4.8,10.3) {5};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (5.8,10.3) {6};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (6.8,10.3) {7};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (7.8,10.3) {8};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (8.8,10.3) {9};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (9.8,10.3) {10};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,9.5) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,8.5) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,7.5) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,6.5) {5};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,5.5) {7};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,4.5) {4};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,3.5) {10};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,2.5) {6};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {8};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {9};
+  \draw[black, line width=1.35pt] (10.3,7) rectangle (0.3,10);
 \end{tikzpicture}
 \end{tabular}
 \caption{The two $7$-row RC graphs $R_1$ (left) and $R_2$ (right) in $\mathcal{C}_c$ satisfying $\clp^3(R_i)\in\mathcal{C}_a$ and $\trm^3(R_i)\in\mathcal{C}_b$. The outlined box marks the top $3$ rows (the clip region).}
@@ -2997,120 +3076,120 @@ $R_1$ & $R_2$ \\[4pt]
 Both graphs have permutation $w_c=(1,2,3,5,7,4,10,6,8,9)$. They differ only in their first two rows: $R_1$ has row data $[(6,4),(9,),()]$ in the top three rows, while $R_2$ has $[(9,4),(6,),()]$. Applying $\clp^3$ (retaining only the top $3$ rows and re-indexing) to each yields the same $3$-row graph with highest weight $a=(0,1,2)$:
 $$\clp^3(R_1)=\clp^3(R_2)=
 \begin{tikzpicture}[scale=0.45, baseline=(current bounding box.center)]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=1.125pt] (5,4.5) .. controls (4.7,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=1.125pt] (4.5,4) .. controls (4.5,4.3) and (4.3,4.5) .. (4,4.5);
-  \draw[blue, line width=1.125pt, line cap=round] (4,4.5) -- (3,4.5);
-  \draw[blue, line width=1.125pt, line cap=round] (3.5,4) -- (3.5,5);
-  \draw[blue, line width=1.125pt] (3,4.5) .. controls (2.7,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=1.125pt] (2.5,4) .. controls (2.5,4.3) and (2.3,4.5) .. (2,4.5);
-  \draw[blue, line width=1.125pt, line cap=round] (2,4.5) -- (1,4.5);
-  \draw[blue, line width=1.125pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=1.125pt] (1,4.5) .. controls (0.7,4.5) and (0.5,4.7) .. (0.5,5);
-  \draw[blue, line width=1.125pt] (5,3.5) .. controls (4.7,3.5) and (4.5,3.7) .. (4.5,4);
-  \draw[blue, line width=1.125pt] (4.5,3) .. controls (4.5,3.3) and (4.3,3.5) .. (4,3.5);
-  \draw[blue, line width=1.125pt, line cap=round] (4,3.5) -- (3,3.5);
-  \draw[blue, line width=1.125pt, line cap=round] (3.5,3) -- (3.5,4);
-  \draw[blue, line width=1.125pt] (3,3.5) .. controls (2.7,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=1.125pt] (2.5,3) .. controls (2.5,3.3) and (2.3,3.5) .. (2,3.5);
-  \draw[blue, line width=1.125pt] (2,3.5) .. controls (1.7,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=1.125pt] (5,2.5) .. controls (4.7,2.5) and (4.5,2.7) .. (4.5,3);
-  \draw[blue, line width=1.125pt] (4.5,2) .. controls (4.5,2.3) and (4.3,2.5) .. (4,2.5);
-  \draw[blue, line width=1.125pt] (4,2.5) .. controls (3.7,2.5) and (3.5,2.7) .. (3.5,3);
-  \draw[blue, line width=1.125pt] (3.5,2) .. controls (3.5,2.3) and (3.3,2.5) .. (3,2.5);
-  \draw[blue, line width=1.125pt] (3,2.5) .. controls (2.7,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=1.125pt] (5,1.5) .. controls (4.7,1.5) and (4.5,1.7) .. (4.5,2);
-  \draw[blue, line width=1.125pt] (4.5,1) .. controls (4.5,1.3) and (4.3,1.5) .. (4,1.5);
-  \draw[blue, line width=1.125pt] (4,1.5) .. controls (3.7,1.5) and (3.5,1.7) .. (3.5,2);
-  \draw[blue, line width=1.125pt] (5,0.5) .. controls (4.7,0.5) and (4.5,0.7) .. (4.5,1);
-  \node[font=\bfseries, text=blue, anchor=south] at (4.5,5.3) {1};
-  \node[font=\bfseries, text=blue, anchor=south] at (3.5,5.3) {2};
-  \node[font=\bfseries, text=blue, anchor=south] at (2.5,5.3) {3};
-  \node[font=\bfseries, text=blue, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=blue, anchor=south] at (0.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=west] at (5.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=west] at (5.3,3.5) {3};
-  \node[font=\bfseries, text=blue, anchor=west] at (5.3,2.5) {5};
-  \node[font=\bfseries, text=blue, anchor=west] at (5.3,1.5) {2};
-  \node[font=\bfseries, text=blue, anchor=west] at (5.3,0.5) {4};
+  \draw[lightgray, very thin, opacity=0.3] (5.3,0) -- (0.3,0);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,0) -- (5.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,1) -- (0.3,1);
+  \draw[lightgray, very thin, opacity=0.3] (4.3,0) -- (4.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,2) -- (0.3,2);
+  \draw[lightgray, very thin, opacity=0.3] (3.3,0) -- (3.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,3) -- (0.3,3);
+  \draw[lightgray, very thin, opacity=0.3] (2.3,0) -- (2.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,4) -- (0.3,4);
+  \draw[lightgray, very thin, opacity=0.3] (1.3,0) -- (1.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,5) -- (0.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (0.3,0) -- (0.3,5);
+  \draw[blue, line width=1.125pt] (0.3,4.5) .. controls (0.6,4.5) and (0.8,4.7) .. (0.8,5);
+  \draw[blue, line width=1.125pt] (0.8,4) .. controls (0.8,4.3) and (1,4.5) .. (1.3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.3,4.5) -- (2.3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.8,4) -- (1.8,5);
+  \draw[blue, line width=1.125pt] (2.3,4.5) .. controls (2.6,4.5) and (2.8,4.7) .. (2.8,5);
+  \draw[blue, line width=1.125pt] (2.8,4) .. controls (2.8,4.3) and (3,4.5) .. (3.3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.3,4.5) -- (4.3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (3.8,4) -- (3.8,5);
+  \draw[blue, line width=1.125pt] (4.3,4.5) .. controls (4.6,4.5) and (4.8,4.7) .. (4.8,5);
+  \draw[blue, line width=1.125pt] (0.3,3.5) .. controls (0.6,3.5) and (0.8,3.7) .. (0.8,4);
+  \draw[blue, line width=1.125pt] (0.8,3) .. controls (0.8,3.3) and (1,3.5) .. (1.3,3.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.3,3.5) -- (2.3,3.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.8,3) -- (1.8,4);
+  \draw[blue, line width=1.125pt] (2.3,3.5) .. controls (2.6,3.5) and (2.8,3.7) .. (2.8,4);
+  \draw[blue, line width=1.125pt] (2.8,3) .. controls (2.8,3.3) and (3,3.5) .. (3.3,3.5);
+  \draw[blue, line width=1.125pt] (3.3,3.5) .. controls (3.6,3.5) and (3.8,3.7) .. (3.8,4);
+  \draw[blue, line width=1.125pt] (0.3,2.5) .. controls (0.6,2.5) and (0.8,2.7) .. (0.8,3);
+  \draw[blue, line width=1.125pt] (0.8,2) .. controls (0.8,2.3) and (1,2.5) .. (1.3,2.5);
+  \draw[blue, line width=1.125pt] (1.3,2.5) .. controls (1.6,2.5) and (1.8,2.7) .. (1.8,3);
+  \draw[blue, line width=1.125pt] (1.8,2) .. controls (1.8,2.3) and (2,2.5) .. (2.3,2.5);
+  \draw[blue, line width=1.125pt] (2.3,2.5) .. controls (2.6,2.5) and (2.8,2.7) .. (2.8,3);
+  \draw[blue, line width=1.125pt] (0.3,1.5) .. controls (0.6,1.5) and (0.8,1.7) .. (0.8,2);
+  \draw[blue, line width=1.125pt] (0.8,1) .. controls (0.8,1.3) and (1,1.5) .. (1.3,1.5);
+  \draw[blue, line width=1.125pt] (1.3,1.5) .. controls (1.6,1.5) and (1.8,1.7) .. (1.8,2);
+  \draw[blue, line width=1.125pt] (0.3,0.5) .. controls (0.6,0.5) and (0.8,0.7) .. (0.8,1);
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (0.8,5.3) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (1.8,5.3) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (2.8,5.3) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (3.8,5.3) {4};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (4.8,5.3) {5};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,4.5) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,3.5) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,2.5) {5};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {4};
 \end{tikzpicture}
 $$
 Applying $\trm^3$ (keeping the bottom $4$ rows) gives the same $4$-row graph with highest weight $b=(0,1,0,2)$:
 $$\trm^3(R_1)=\trm^3(R_2)=
 \begin{tikzpicture}[scale=0.45, baseline=(current bounding box.center)]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (6,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,6);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (6,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,6);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (6,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,6);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (6,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,6);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (6,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,6);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (6,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,6);
-  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (6,6);
-  \draw[lightgray, very thin, opacity=0.3] (6,0) -- (6,6);
-  \draw[blue, line width=1.125pt] (6,5.5) .. controls (5.7,5.5) and (5.5,5.7) .. (5.5,6);
-  \draw[blue, line width=1.125pt] (5.5,5) .. controls (5.5,5.3) and (5.3,5.5) .. (5,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (5,5.5) -- (4,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (4.5,5) -- (4.5,6);
-  \draw[blue, line width=1.125pt] (4,5.5) .. controls (3.7,5.5) and (3.5,5.7) .. (3.5,6);
-  \draw[blue, line width=1.125pt] (3.5,5) .. controls (3.5,5.3) and (3.3,5.5) .. (3,5.5);
-  \draw[blue, line width=1.125pt] (3,5.5) .. controls (2.7,5.5) and (2.5,5.7) .. (2.5,6);
-  \draw[blue, line width=1.125pt] (2.5,5) .. controls (2.5,5.3) and (2.3,5.5) .. (2,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (2,5.5) -- (1,5.5);
-  \draw[blue, line width=1.125pt, line cap=round] (1.5,5) -- (1.5,6);
-  \draw[blue, line width=1.125pt] (1,5.5) .. controls (0.7,5.5) and (0.5,5.7) .. (0.5,6);
-  \draw[blue, line width=1.125pt] (6,4.5) .. controls (5.7,4.5) and (5.5,4.7) .. (5.5,5);
-  \draw[blue, line width=1.125pt] (5.5,4) .. controls (5.5,4.3) and (5.3,4.5) .. (5,4.5);
-  \draw[blue, line width=1.125pt] (5,4.5) .. controls (4.7,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=1.125pt] (4.5,4) .. controls (4.5,4.3) and (4.3,4.5) .. (4,4.5);
-  \draw[blue, line width=1.125pt, line cap=round] (4,4.5) -- (3,4.5);
-  \draw[blue, line width=1.125pt, line cap=round] (3.5,4) -- (3.5,5);
-  \draw[blue, line width=1.125pt] (3,4.5) .. controls (2.7,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=1.125pt] (2.5,4) .. controls (2.5,4.3) and (2.3,4.5) .. (2,4.5);
-  \draw[blue, line width=1.125pt] (2,4.5) .. controls (1.7,4.5) and (1.5,4.7) .. (1.5,5);
-  \draw[blue, line width=1.125pt] (6,3.5) .. controls (5.7,3.5) and (5.5,3.7) .. (5.5,4);
-  \draw[blue, line width=1.125pt] (5.5,3) .. controls (5.5,3.3) and (5.3,3.5) .. (5,3.5);
-  \draw[blue, line width=1.125pt] (5,3.5) .. controls (4.7,3.5) and (4.5,3.7) .. (4.5,4);
-  \draw[blue, line width=1.125pt] (4.5,3) .. controls (4.5,3.3) and (4.3,3.5) .. (4,3.5);
-  \draw[blue, line width=1.125pt] (4,3.5) .. controls (3.7,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=1.125pt] (3.5,3) .. controls (3.5,3.3) and (3.3,3.5) .. (3,3.5);
-  \draw[blue, line width=1.125pt] (3,3.5) .. controls (2.7,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=1.125pt] (6,2.5) .. controls (5.7,2.5) and (5.5,2.7) .. (5.5,3);
-  \draw[blue, line width=1.125pt] (5.5,2) .. controls (5.5,2.3) and (5.3,2.5) .. (5,2.5);
-  \draw[blue, line width=1.125pt] (5,2.5) .. controls (4.7,2.5) and (4.5,2.7) .. (4.5,3);
-  \draw[blue, line width=1.125pt] (4.5,2) .. controls (4.5,2.3) and (4.3,2.5) .. (4,2.5);
-  \draw[blue, line width=1.125pt] (4,2.5) .. controls (3.7,2.5) and (3.5,2.7) .. (3.5,3);
-  \draw[blue, line width=1.125pt] (6,1.5) .. controls (5.7,1.5) and (5.5,1.7) .. (5.5,2);
-  \draw[blue, line width=1.125pt] (5.5,1) .. controls (5.5,1.3) and (5.3,1.5) .. (5,1.5);
-  \draw[blue, line width=1.125pt] (5,1.5) .. controls (4.7,1.5) and (4.5,1.7) .. (4.5,2);
-  \draw[blue, line width=1.125pt] (6,0.5) .. controls (5.7,0.5) and (5.5,0.7) .. (5.5,1);
-  \node[font=\bfseries, text=blue, anchor=south] at (5.5,6.3) {1};
-  \node[font=\bfseries, text=blue, anchor=south] at (4.5,6.3) {2};
-  \node[font=\bfseries, text=blue, anchor=south] at (3.5,6.3) {3};
-  \node[font=\bfseries, text=blue, anchor=south] at (2.5,6.3) {4};
-  \node[font=\bfseries, text=blue, anchor=south] at (1.5,6.3) {5};
-  \node[font=\bfseries, text=blue, anchor=south] at (0.5,6.3) {6};
-  \node[font=\bfseries, text=blue, anchor=west] at (6.3,5.5) {1};
-  \node[font=\bfseries, text=blue, anchor=west] at (6.3,4.5) {3};
-  \node[font=\bfseries, text=blue, anchor=west] at (6.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=west] at (6.3,2.5) {6};
-  \node[font=\bfseries, text=blue, anchor=west] at (6.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=west] at (6.3,0.5) {5};
+  \draw[lightgray, very thin, opacity=0.3] (6.3,0) -- (0.3,0);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,0) -- (6.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,1) -- (0.3,1);
+  \draw[lightgray, very thin, opacity=0.3] (5.3,0) -- (5.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,2) -- (0.3,2);
+  \draw[lightgray, very thin, opacity=0.3] (4.3,0) -- (4.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,3) -- (0.3,3);
+  \draw[lightgray, very thin, opacity=0.3] (3.3,0) -- (3.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,4) -- (0.3,4);
+  \draw[lightgray, very thin, opacity=0.3] (2.3,0) -- (2.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,5) -- (0.3,5);
+  \draw[lightgray, very thin, opacity=0.3] (1.3,0) -- (1.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (6.3,6) -- (0.3,6);
+  \draw[lightgray, very thin, opacity=0.3] (0.3,0) -- (0.3,6);
+  \draw[blue, line width=1.125pt] (0.3,5.5) .. controls (0.6,5.5) and (0.8,5.7) .. (0.8,6);
+  \draw[blue, line width=1.125pt] (0.8,5) .. controls (0.8,5.3) and (1,5.5) .. (1.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.3,5.5) -- (2.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (1.8,5) -- (1.8,6);
+  \draw[blue, line width=1.125pt] (2.3,5.5) .. controls (2.6,5.5) and (2.8,5.7) .. (2.8,6);
+  \draw[blue, line width=1.125pt] (2.8,5) .. controls (2.8,5.3) and (3,5.5) .. (3.3,5.5);
+  \draw[blue, line width=1.125pt] (3.3,5.5) .. controls (3.6,5.5) and (3.8,5.7) .. (3.8,6);
+  \draw[blue, line width=1.125pt] (3.8,5) .. controls (3.8,5.3) and (4,5.5) .. (4.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.3,5.5) -- (5.3,5.5);
+  \draw[blue, line width=1.125pt, line cap=round] (4.8,5) -- (4.8,6);
+  \draw[blue, line width=1.125pt] (5.3,5.5) .. controls (5.6,5.5) and (5.8,5.7) .. (5.8,6);
+  \draw[blue, line width=1.125pt] (0.3,4.5) .. controls (0.6,4.5) and (0.8,4.7) .. (0.8,5);
+  \draw[blue, line width=1.125pt] (0.8,4) .. controls (0.8,4.3) and (1,4.5) .. (1.3,4.5);
+  \draw[blue, line width=1.125pt] (1.3,4.5) .. controls (1.6,4.5) and (1.8,4.7) .. (1.8,5);
+  \draw[blue, line width=1.125pt] (1.8,4) .. controls (1.8,4.3) and (2,4.5) .. (2.3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2.3,4.5) -- (3.3,4.5);
+  \draw[blue, line width=1.125pt, line cap=round] (2.8,4) -- (2.8,5);
+  \draw[blue, line width=1.125pt] (3.3,4.5) .. controls (3.6,4.5) and (3.8,4.7) .. (3.8,5);
+  \draw[blue, line width=1.125pt] (3.8,4) .. controls (3.8,4.3) and (4,4.5) .. (4.3,4.5);
+  \draw[blue, line width=1.125pt] (4.3,4.5) .. controls (4.6,4.5) and (4.8,4.7) .. (4.8,5);
+  \draw[blue, line width=1.125pt] (0.3,3.5) .. controls (0.6,3.5) and (0.8,3.7) .. (0.8,4);
+  \draw[blue, line width=1.125pt] (0.8,3) .. controls (0.8,3.3) and (1,3.5) .. (1.3,3.5);
+  \draw[blue, line width=1.125pt] (1.3,3.5) .. controls (1.6,3.5) and (1.8,3.7) .. (1.8,4);
+  \draw[blue, line width=1.125pt] (1.8,3) .. controls (1.8,3.3) and (2,3.5) .. (2.3,3.5);
+  \draw[blue, line width=1.125pt] (2.3,3.5) .. controls (2.6,3.5) and (2.8,3.7) .. (2.8,4);
+  \draw[blue, line width=1.125pt] (2.8,3) .. controls (2.8,3.3) and (3,3.5) .. (3.3,3.5);
+  \draw[blue, line width=1.125pt] (3.3,3.5) .. controls (3.6,3.5) and (3.8,3.7) .. (3.8,4);
+  \draw[blue, line width=1.125pt] (0.3,2.5) .. controls (0.6,2.5) and (0.8,2.7) .. (0.8,3);
+  \draw[blue, line width=1.125pt] (0.8,2) .. controls (0.8,2.3) and (1,2.5) .. (1.3,2.5);
+  \draw[blue, line width=1.125pt] (1.3,2.5) .. controls (1.6,2.5) and (1.8,2.7) .. (1.8,3);
+  \draw[blue, line width=1.125pt] (1.8,2) .. controls (1.8,2.3) and (2,2.5) .. (2.3,2.5);
+  \draw[blue, line width=1.125pt] (2.3,2.5) .. controls (2.6,2.5) and (2.8,2.7) .. (2.8,3);
+  \draw[blue, line width=1.125pt] (0.3,1.5) .. controls (0.6,1.5) and (0.8,1.7) .. (0.8,2);
+  \draw[blue, line width=1.125pt] (0.8,1) .. controls (0.8,1.3) and (1,1.5) .. (1.3,1.5);
+  \draw[blue, line width=1.125pt] (1.3,1.5) .. controls (1.6,1.5) and (1.8,1.7) .. (1.8,2);
+  \draw[blue, line width=1.125pt] (0.3,0.5) .. controls (0.6,0.5) and (0.8,0.7) .. (0.8,1);
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (0.8,6.3) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (1.8,6.3) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (2.8,6.3) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (3.8,6.3) {4};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (4.8,6.3) {5};
+  \node[font=\tiny\bfseries, text=blue, anchor=south] at (5.8,6.3) {6};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,5.5) {1};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,4.5) {3};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,3.5) {2};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,2.5) {6};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {4};
+  \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {5};
 \end{tikzpicture}
 $$
 
@@ -3310,16 +3389,12 @@ $$f_{a,b}^c=2.$$
 \section{Product rule for dual slide polynomials}\label{section:slide}
 \subsection{Slide polynomials}
 
-RC graph is a triple $(w,E,\alpha)$ where $w$ is a permutation, 
-$$E:I(w)\to [\ell(w)]$$
-is a linear extension, and $\alpha:I(w)\to \mathbb{Z}_{>0}$ is a compatible sequence.
-
 \begin{definition}
 For a word $\mathbf{r}=\mathbf{r}_1\mathbf{r}_2\cdots \mathbf{r}_k$, a sequences of positive integers $a_1a_2\cdots a_k$ is \emph{compatible} with $\mathbf{r}$ if $a_i\leq \mathbf{r}_i$ for all $i$, $a_i\leq a_{i+1}$ for all $i$, and $a_i<a_{i+1}$ if $\mathbf{r}_i<\mathbf{r}_{i+1}$.
 
 Slide polynomials $\mathfrak{F}(\mathbf{r})$ for a word $\mathbf{r}$ are defined by summing the monomials $x^a$ over all compatible sequences $a$ of $\mathbf{r}$.
 
-Assaf and Searles \cite{assaf2017slide} derived an expasion of Schubert polynomials in terms of slide polynomials as follows. A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as its smallest element. We then define
+Assaf and Searles \cite{assaf2017slide} derived an expansion of Schubert polynomials in terms of slide polynomials as follows. A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as its smallest element. We then define
 $$\QY(A)=R$$
 \end{definition}
 
@@ -3390,7 +3465,7 @@ the product $\mathcal{F}_a\mathcal{F}_b$ lies in the span of the $\mathcal{F}_c$
 \begin{theorem} \label{theorem:lrfslide}
   Let $a,b$ be weak compositions of lengths $p$ and $q$. Write
 $$\mathfrak{F}_a^*\mathfrak{F}_b^*=\sum_c s_{a,b}^c \mathfrak{F}_c^*$$
-For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is the number of distinct RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ such that $\wtt(\QY(\clp^p(R))) = a$ and $\wtt(\QY(\trm^p(R))) = b$, and is in particular nonnegative.
+For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is the number of distinct RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ with $\wtt(\clp^p(R)) = a,\wtt(\trm^p(R)) = b$ such that $\clp^p(R),\trm^p(R)$ are quasi-Yamanouchi, and is in particular nonnegative.
 \end{theorem}
 \begin{proof}
 The coefficient of $\mathcal{F}_c$ in $\mathcal{F}_a\mathcal{F}_b$ equals the coefficient of $\mathfrak{F}_c^*$ in $\mathfrak{F}_a^*\mathfrak{F}_b^*$, namely $s_{a,b}^c$, by Proposition \ref{proposition:slidebasis}. Expanding the product $\mathcal{F}_a\mathcal{F}_b$ via the $(\clp^p,\trm^p)$-decomposition of $\diamond$ (Theorem \ref{theorem:modactrc}) and reading off the coefficient of $\mathcal{F}_c$ from a fixed representative $C$ with $\wtt(\QY(C))=c$, the contributing terms are precisely the RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ whose clip and trim have quasi-Yamanouchi weights $a$ and $b$ respectively.
@@ -3409,20 +3484,28 @@ Let $\sim$ be an equivalence relation on $\bigsqcup_n \RC_n$ satisfying:
 \item[(H4)] There is an index set $J$ and a function $\lambda:(\RC/\!\sim)\to J$ such that, writing $I_\sim=\mathrm{span}_{\mathbb{Z}}\{R_1-R_2:R_1\sim R_2\}\subseteq\BRC$ and
 $$E_\lambda := \sum_{[R]:\,\lambda([R])=\lambda} [R] \in \BRC/I_\sim,$$
 the family $\{\alpha(E_\lambda)\}_{\lambda\in J}$ is a $\mathbb{Z}$-basis of $\dcoma$.
+
 \end{itemize}
 Then $I_\sim$ is a two-sided ideal of $\BRC$ contained in $\Omega=\ker\alpha$, the elements $\{E_\lambda\}$ span a subring of $\BRC/I_\sim$ isomorphic to $\dcoma$ via $\alpha$, and the structure constants $b_{\mu,\nu}^\lambda$ defined by
 $$\mathfrak{B}_\mu^*\mathfrak{B}_\nu^* = \sum_\lambda b_{\mu,\nu}^\lambda\,\mathfrak{B}_\lambda^*,\qquad \mathfrak{B}_\lambda^*:=\alpha(E_\lambda),$$
-admit the positive combinatorial formula
-$$b_{\mu,\nu}^\lambda = \#\bigl\{R\sim C\ :\ \lambda([\clp^p(R)])=\mu,\ \lambda([\trm^p(R)])=\nu\bigr\}$$
-for any fixed $C$ with $\lambda([C])=\lambda$.
+are nonnegative integers. More precisely, for any function $\mathrm{rep}\colon\RC\to\RC$ that sends every element of a $\sim$-class to a single common representative of that class (that is, $\mathrm{rep}(R)\sim R$ for all $R$, and $\mathrm{rep}(R)=\mathrm{rep}(S)$ whenever $R\sim S$), we have the positive combinatorial formula
+\begin{align*}
+b_{\mu,\nu}^\lambda \;=\; \#\bigl\{\,R\sim C\ :\ &\clp^p(R)=\mathrm{rep}(\clp^p(R)),\;\;\trm^p(R)=\mathrm{rep}(\trm^p(R)),\\
+&\lambda([\clp^p(R)])=\mu,\;\;\lambda([\trm^p(R)])=\nu\,\bigr\}
+\end{align*}
+for any fixed $C$ with $\lambda([C])=\lambda$. The count is independent of the choice of $\mathrm{rep}$.
 \end{theorem}
 \begin{proof}
 By (H1) every generator $R_1-R_2$ of $I_\sim$ lies in $\Omega=\ker\alpha$, so $I_\sim\subseteq\Omega$ and $\alpha$ descends to a surjective ring homomorphism $\overline\alpha:\BRC/I_\sim\to\dcoma$. By (H2), $I_\sim$ is a two-sided ideal of $\BRC$, so $\BRC/I_\sim$ inherits a ring structure.
 
-The summands of $E_\lambda$ are pairwise disjoint $\sim$-cosets, and distinct $E_\lambda$ have disjoint supports in $\BRC/I_\sim$; in particular the $\{E_\lambda\}$ are linearly independent. Under $\overline\alpha$ they map to the $\mathbb{Z}$-basis $\{\mathfrak{B}_\lambda^*\}$ of $\dcoma$ by (H4), so $\overline\alpha$ restricts to a $\mathbb{Z}$-module isomorphism $\bigoplus_\lambda\mathbb{Z}E_\lambda\xrightarrow{\;\cong\;}\dcoma$. Since $\overline\alpha$ is a ring homomorphism, the span of the $E_\lambda$ is closed under multiplication and the isomorphism is one of rings. Consequently
+By construction of $E_\lambda$ in (H4), each $\sim$-class $[R]$ appears in $E_\lambda$ with multiplicity exactly $1$ (when $\lambda([R])=\lambda$) or $0$ (otherwise), and the supports of $E_\lambda$ and $E_{\lambda'}$ in $\BRC/I_\sim$ are disjoint whenever $\lambda\neq\lambda'$; consequently the coefficient $b_{\mu,\nu}^\lambda$ may be read off from the contribution to a single chosen class $[C]$ with $\lambda([C])=\lambda$. In particular the $\{E_\lambda\}$ are linearly independent. Under $\overline\alpha$ they map to the $\mathbb{Z}$-basis $\{\mathfrak{B}_\lambda^*\}$ of $\dcoma$ by (H4), so $\overline\alpha$ restricts to a $\mathbb{Z}$-module isomorphism $\bigoplus_\lambda\mathbb{Z}E_\lambda\xrightarrow{\;\cong\;}\dcoma$. Since $\overline\alpha$ is a ring homomorphism, the span of the $E_\lambda$ is closed under multiplication and the isomorphism is one of rings. Consequently
 $$E_\mu E_\nu = \sum_\lambda b_{\mu,\nu}^\lambda\, E_\lambda \quad\text{in } \BRC/I_\sim.$$
 
-To read off $b_{\mu,\nu}^\lambda$, fix any $C$ with $\lambda([C])=\lambda$ and any representatives in the $\sim$-classes of $\mu$ and $\nu$. By Theorem~\ref{theorem:modactrc} the product $\diamond$ on $\BRC$ admits a $(\clp^p,\trm^p)$-decomposition: for any $S_1,S_2$ with $\hr(S_1)=p$, $\hr(S_2)=q$, the set $\{R\in\RC_{p+q}:\clp^p(R)=S_1,\,\trm^p(R)=S_2\}$ enumerates the summands of $S_1\diamond S_2$ with multiplicity one. Applying this to representatives of $\mu$ and $\nu$ and projecting to $\BRC/I_\sim$, (H3) ensures that the predicate ``$\clp^p(R)$ lies in the $\mu$-class and $\trm^p(R)$ lies in the $\nu$-class'' depends only on the $\sim$-class of $R$. Since the $\sim$-cosets within $E_\lambda$ are disjoint, the coefficient of $E_\lambda$ in $E_\mu E_\nu$ is exactly the count of $R\sim C$ (any chosen $C$) for which $\clp^p(R)$ and $\trm^p(R)$ lie in the prescribed classes. Being a cardinality, this is nonnegative.
+To read off $b_{\mu,\nu}^\lambda$, fix any $C$ with $\lambda([C])=\lambda$ and let $S_1=\mathrm{rep}(R_1)$, $S_2=\mathrm{rep}(R_2)$ be the chosen representatives of the $\mu$- and $\nu$-classes (for any $R_1,R_2$ in those classes). By Theorem~\ref{theorem:modactrc} the product $\diamond$ on $\BRC$ admits a $(\clp^p,\trm^p)$-decomposition: for any $S_1,S_2$ with $\hr(S_1)=p$, $\hr(S_2)=q$, the set $\{R\in\RC_{p+q}:\clp^p(R)=S_1,\,\trm^p(R)=S_2\}$ enumerates the summands of $S_1\diamond S_2$ with multiplicity one. Projecting to $\BRC/I_\sim$, (H3) ensures that the class of $R$ depends only on the classes of $\clp^p(R)$ and $\trm^p(R)$, so the contribution of $S_1\cdot S_2$ to the coefficient of $[C]$ in $E_\lambda$ is exactly the count of $R\sim C$ for which $\clp^p(R)=S_1$ and $\trm^p(R)=S_2$, i.e.\ for which $\clp^p(R)$ and $\trm^p(R)$ are themselves fixed points of $\mathrm{rep}$ and represent the $\mu$- and $\nu$-classes. This is the stated formula. Being a cardinality, it is nonnegative.
+
+Finally, the count is independent of the choice of $\mathrm{rep}$. The element $E_\lambda\in\BRC/I_\sim$ is defined directly as $\sum_{[R]:\lambda([R])=\lambda}[R]$, with no reference to $\mathrm{rep}$, so the structure constants in $E_\mu E_\nu=\sum_\lambda b_{\mu,\nu}^\lambda E_\lambda$ are intrinsic. To see that the formula computes the correct value for every valid $\mathrm{rep}$, fix classes $[T_1],[T_2]$ with $\lambda([T_1])=\mu$, $\lambda([T_2])=\nu$, and consider, for any $S_1\in[T_1]$ and $S_2\in[T_2]$, the count
+$$N(S_1,S_2):=\#\{R\sim C\,:\,\clp^p(R)=S_1,\ \trm^p(R)=S_2\}.$$
+By the $(\clp^p,\trm^p)$-decomposition of Theorem~\ref{theorem:modactrc}, $N(S_1,S_2)$ equals the coefficient of $[C]$ in the product $[S_1]\cdot[S_2]\in\BRC/I_\sim$ (using (H2) to make the product well-defined and (H3) to ensure each summand of $S_1\diamond S_2$ has $\sim$-class depending only on $[S_1]$ and $[S_2]$). In particular $N(S_1,S_2)$ depends only on the classes $[T_1],[T_2]$ and on $[C]$, not on the choice of representatives $S_1,S_2$. The $\mathrm{rep}$-formula selects, for each such class-pair, the single representative pair $(\mathrm{rep}(T_1),\mathrm{rep}(T_2))$ and counts $N(\mathrm{rep}(T_1),\mathrm{rep}(T_2))$; another valid $\mathrm{rep}'$ counts $N(\mathrm{rep}'(T_1),\mathrm{rep}'(T_2))$, and these are equal. Summing over class-pairs yields the same total $b_{\mu,\nu}^\lambda$.
 \end{proof}
 
 \begin{remark}\label{remark:general_lr_instances}
@@ -3433,7 +3516,7 @@ In the present paper, Theorem~\ref{theorem:general_lr_template} is instantiated 
 \item $\sim\,=\,\equiv_\forest$, with $I_\sim=\Gamma$ and $\lambda=\fcode$, recovering Theorem~\ref{theorem:LRforest} (dual forest basis);
 \item $\sim$ = ``same reduced word and same $\hr$'' on $\RC$, with $\lambda([R])=\wtt(\QY(R))$, recovering Theorem~\ref{theorem:lrfslide} (dual slide basis).
 \end{itemize}
-The verifications of (H1)--(H4) in each case are precisely the lemmas and propositions of \S\ref{section:bialgebra}, \S\ref{section:crystals}, \S\ref{section:forest}, and \S\ref{section:slide}. Note that the slide instance uses the strictly finer relation ``same reduced word'' rather than the QY-equivalence used to define $\Sigma$; the latter is a coarser congruence on $\RC$ that also satisfies (H1)--(H3) but groups together multiple reduced words at once.
+The verifications of (H1)--(H4) in each case are precisely the lemmas and propositions of \S\ref{section:bialgebra}, \S\ref{section:crystals}, \S\ref{section:forest}, and \S\ref{section:slide}.
 \end{remark}
 
 \section{The Littlewood-Richardson rule for forest polynomials}\label{section:forestrule}
@@ -3506,7 +3589,7 @@ The fact that $\BRC_n$ is a right $\grass_n$ module follows from Proposition \re
 Consider the ring $\mathcal{T}_n$ defined as
 $$\mathcal{T}_n = \bigotimes_{k=1}^n \grass_k$$
 %where $\sim$ is the equivalence relation generated by the following:
-%the tensor algebra on the free abelian groups generated by the set of full $k$-Grassmannian elementary symmetric polynomial RC graphs (i.e. single columns), satisfying the additional condition that if $ A\otimes B$ are such that $\hr(A)\neq \hr(B)$, then
+%the multiplactic algebra on the free abelian groups generated by the set of full $k$-Grassmannian elementary symmetric polynomial RC graphs (i.e. single columns), satisfying the additional condition that if $ A\otimes B$ are such that $\hr(A)\neq \hr(B)$, then
 
 We then define a linear homomorphism
 $$\mathcal{T}_n\to \BRC_n$$
@@ -3601,7 +3684,7 @@ $$\mathrm{lift}_n(R) = E_1 \cdots  E_{\ell(c)}$$
 where $|E_i| = \lambda_{N + 1 - i} - c_{N + 1 - i}$ and $\hr(E_i) = \lambda_{N+1-i}$ for all $i$, with $E_i$ all elementary symmetric full Grassmannian RC graphs, which is guaranteed to exist and be unique by Proposition \ref{proposition:elemfactor}. 
 \end{definition}
 
-Some justifiation that $\mathrm{lift}_n$ is well-defined is in order. For each choice of $\lambda$, the existence and uniqueness of the factorization follows from Proposition \ref{proposition:elemfactor}. However, $\lambda$ depends on a choice of $p$ ``sufficiently large.'' We must show that the factorization is independent of this choice. If we increase $p$ by one, then $\lambda$ is replaced by $\lambda' = (\overbrace{n,\ldots,n}^{p+1},n-1,n-2,\ldots,1)$. The code of $\wof{R}(\mu')^{-1}$ is then obtained from the code of $\wof{R}\mu^{-1}$ by prepending $n$, so the same factorization works for both choices of $p$.
+Some justification that $\mathrm{lift}_n$ is well-defined is in order. For each choice of $\lambda$, the existence and uniqueness of the factorization follows from Proposition \ref{proposition:elemfactor}. However, $\lambda$ depends on a choice of $p$ ``sufficiently large.'' We must show that the factorization is independent of this choice. If we increase $p$ by one, then $\lambda$ is replaced by $\lambda' = (\overbrace{n,\ldots,n}^{p+1},n-1,n-2,\ldots,1)$. The code of $\wof{R}(\mu')^{-1}$ is then obtained from the code of $\wof{R}\mu^{-1}$ by prepending $n$, so the same factorization works for both choices of $p$.
 
 \begin{definition}
 We define a product $*$ on $\BRC_n$ by
@@ -3611,15 +3694,15 @@ $$R_1*R_2 = \RC_n(\mathrm{lift}_n(R_1)\mathrm{lift}_n(R_2))$$
 %Such a tensor $A_1\otimes\cdots\otimes A_n$ is highest weight if for each $i,j$ we have that either there is a crossing in row $j+1$ but none in row $j$ in $A_i$, or there is no crossing in row $j$ in $A_{i+1}$,  or there are crossings in both rows $j$ and $j+1$ in $A_{i+1}$.
 \begin{lemma}
   Let $R$ be an RC graph and suppose
-$$\mathrm{lift}_n(R) = A_1\otimes\cdots\otimes A_n$$
+$$\mathrm{lift}_n(R) = A_1\cdots A_n$$
 Let $1\leq j\leq n$ and let 
-$$R^{\mathrm{left}} = \RC_n(A_1\otimes\cdots \otimes A_j)$$
+$$R^{\mathrm{left}} = \RC_n(A_1\cdots  A_j)$$
 and
-$$R^{\mathrm{right}} = \RC_n(A_{j+1}\otimes\cdots \otimes A_n)$$
+$$R^{\mathrm{right}} = \RC_n(A_{j+1}\cdots  A_n)$$
 Then
-$$\mathrm{lift}_n(R^{\mathrm{left}}) = A_1\otimes\cdots \otimes A_j$$
+$$\mathrm{lift}_n(R^{\mathrm{left}}) = A_1\cdots  A_j$$
 and
-$$\mathrm{lift}_n(R^{\mathrm{right}}) = A_{j+1}\otimes\cdots \otimes A_n$$
+$$\mathrm{lift}_n(R^{\mathrm{right}}) = A_{j+1}\cdots  A_n$$
 \end{lemma}
 \begin{proof}
 This follows from the fact that if a partition $\lambda$ is split into an initial section $\lambda_1$ of length $n-j$ and a final section $\lambda_2$ of length $j$, if we define $w_1$ and $w_2$ to be the dominant permutations with $\code^*(w_i)=\lambda_i$, and if we define $c_1$ and $c_2$ to be the codes of $\wof{R^{\mathrm{left}}}w_1^{-1}$ and $\wof{R^{\mathrm{right}}}w_2^{-1}$, then the code of $\wof{R}(w_1w_2)^{-1}$ is obtained by concatenating $c_1$ and $c_2$. The result then follows from Proposition \ref{proposition:elemfactor}.
@@ -3628,14 +3711,16 @@ This follows from the fact that if a partition $\lambda$ is split into an initia
 \begin{lemma}[Lift factors at disjoint height ranges commute]\label{lemma:liftcommute}
 Let $A\in\mathcal{T}_n$ be a tensor of elementary RC factors all of whose heights are at most $k$, and let $B\in\mathcal{T}_n$ be a tensor of elementary RC factors all of whose heights are strictly greater than $k$. Then
 $$A\cdot B = B\cdot A\qquad\text{in }\mathcal{T}_n,$$
-where the product is the lift product $*$ on $\BRC_n$ transferred to $\mathcal{T}_n$ via $\mathrm{lift}_n$. Equivalently, given any RC graph $R$ admitting a lift-factorisation $R=R^{\mathrm{left}}*R^{\mathrm{right}}$ with $\hr(R^{\mathrm{left}})\leq k<\hr(R^{\mathrm{right}})$, the factors $R^{\mathrm{left}}$ and $R^{\mathrm{right}}$ commute under $*$ with any analogous factors arising from other RC graphs.
+where the product is the lift product $*$ on $\BRC_n$ transferred to $\mathcal{T}_n$ via $\mathrm{lift}_n$. Equivalently, given any RC graph $R$ admitting a lift-factorization $R=R^{\mathrm{left}}*R^{\mathrm{right}}$ with $\hr(R^{\mathrm{left}})\leq k<\hr(R^{\mathrm{right}})$, the factors $R^{\mathrm{left}}$ and $R^{\mathrm{right}}$ commute under $*$ with any analogous factors arising from other RC graphs.
 \end{lemma}
 \begin{proof}
 Elementary symmetric RC graphs of different heights commute trivially, and the lift map turns this into commutativity of the corresponding $\boxtimes$-factors in $\mathcal{T}_n$.
 \end{proof}
 
+
+
 \begin{theorem}
-The product $*:\BRC_n\times\BRC_n\to\BRC_n$ is associative.
+The product $*:\BRC_n\times\BRC_n\to\BRC_n$ is associative and is generated by the elementary symmetric full-Grassmannian RC graphs of height at most $n$.
 \end{theorem}
 \begin{proof}
 We want to prove that for RC graphs $R_1$, $R_2$, and $R_3$,
@@ -3662,22 +3747,22 @@ $$
 $$
 so they are equal. The key point is that the corresponding lift factors commute, so this regrouping is canonical.
 
-An arbitrary RC graph is itself a product of elementary symmetric RC graphs of weakly increasing heights, so an induction argument proves the result for arbitrary $R_3$.
+An arbitrary RC graph is itself a product of elementary symmetric RC graphs of weakly increasing heights according to Proposition \ref{proposition:elemfactor}, so an induction argument proves the result for arbitrary $R_3$.
 \end{proof}
 
 
 \subsection{The slide quotient}
 
 
-\begin{definition}
-Define a QY-component of $\RC_n(w)$ to be a maximal subset of $\RC_n(w)$ consisting of RC graphs that have the same word. We define $QY(\mathbf{w})$ to be the unique QY-component of $\RC_n(w)$ such that the word of any element of $QY(\mathbf{w})$ is $\mathbf{w}$, if such a component exists.
-\end{definition}
 
 \begin{proposition}
 Let $A = A_1\otimes\cdots \otimes A_m$ be an elementary tensor of full Grassmannian elementary symmetric polynomial RC graphs in weakly increasing order of height, considered as an element of the tensor product of Demazure crystals. Then 
 $$A\mapsto\RC_n(A)$$
 extends to an isomorphism of Demazure crystals onto the connected component of $A$.
 \end{proposition}
+\begin{proof}
+This is seen to be true by invoking Proposition \ref{proposition:boxproduct}, associativity of the tensor product of crystals, and the fact that the Demazure crystal generated by $A$ is isomorphic to the connected component of $A$ in the case of complete Kashiwara crystals of left to right increasing lengths \cite{kouno2020decomposition}.
+\end{proof}
 
 % \begin{corollary}
 %   Suppose $R_1,R_2$ are RC graphs such that if $d$ is a descent of $\wof{R_2}$, then $d\geq \maxd(\wof{R_1})$ (separated descents). Then the action of the raising/lowering operators intertwines with the product homomorphism
@@ -3694,7 +3779,7 @@ $$\ddot{f}_i(R) = \begin{cases}
   f_i(R) & \text{ if }\mathrm{word}(R) = \mathrm{word}(f_i(R))\\
   \perp & \text{ otherwise}
 \end{cases}$$
-These satisfy the axiom of \emph{quasi-crystal operators} defined in \cite{cain2023quasicrystals}. The same article defines a notion of the quasi-tensor product of quasi-crystals, which is the same as the usual tensor product of crystals except that if there is an $i$ such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, then we require that $\ddot{e}_i(A\ddot{\otimes} B) =\ddot{f}_i(A\ddot{\otimes} B)= \perp$.
+These satisfy the axioms of \emph{quasi-crystal operators} defined by Cain, Guilherme, and Malheiro in \cite{cain2023quasicrystals}. The same article defines a notion of the quasi-tensor product of quasi-crystals, which is the same as the usual tensor product of crystals except that if there is an $i$ such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, then we require that $\ddot{e}_i(A\ddot{\otimes} B) =\ddot{f}_i(A\ddot{\otimes} B)= \perp$.
 \end{definition}
 
 \begin{proposition}
@@ -3724,6 +3809,7 @@ with $R$ being quasi-Yamanouchi.
 We have that for each such $A',B'$, $A'\ddot{\otimes} B'\mapsto A'*B'$ extends to an isomorphism of quasi-crystals. In particular, the connected components of the terms in the sum partition into quasi-crystals, each with a unique quasi-Yamanouchi element. The sum is then precisely as stated.
 \end{proof}
 
+From this we may recover \cite[Theorem~5.11]{assaf2017slide}.
 % \begin{definition}
 % Define $\phi_\QY:\BRC\to\BRC$ by sending $R$ to the unique RC graph $R_\QY$ such that
 % $$\wtt(\QY(R)) = \code(\wof{R_\QY})$$ 
@@ -3816,13 +3902,50 @@ with $R$ being a forest RC graph.
 \end{corollary}
 
 
-\begin{theorem}[Forest polynomial LR rule]
+\begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR}
   Let $a,b$ be weak compositions of length $n$. Then
   $$\forest_a\forest_b = \sum_c \beta_{ab}^c \forest_c$$
   where $\beta_{ab}^c$ is the number of pairs $A,B$ of RC graphs such that
   $$\code(\wof{A}) = \code_\forest(A) = a, \code(\wof{B}) = \code_\forest(B) = b$$
   and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
 \end{theorem}
+
+\begin{corollary}[Dual forest coproduct]\label{corollary:dforestcoproduct}
+Let $c$ be a weak composition of length $n$. Then in $\dcoma_n\otimes\dcoma_n$,
+$$\Delta^*(\forest_c^*) \;=\; \sum_{a,b}\beta_{ab}^c\,\forest_a^*\otimes\forest_b^*,$$
+where $\beta_{ab}^c$ is the forest Littlewood--Richardson coefficient of Theorem~\ref{theorem:forestpolyLR}. In particular, the dual forest coproduct has nonnegative integer structure constants in the dual forest basis, and these are exactly the structure constants of the forest polynomial LR rule.
+\end{corollary}
+\begin{proof}
+Exactly as in the proof of Theorem~\ref{theorem:dschcoproduct}, pairing the expansion $\Delta^*(\forest_c^*) = \sum_{a,b}\lambda_{a,b}\forest_a^*\otimes\forest_b^*$ with $\forest_a\otimes\forest_b$ and using the defining identity $\langle\Delta^*(\alpha),x\otimes y\rangle = \langle \alpha, xy\rangle$ together with the duality $\langle \forest_a^*,\forest_b\rangle = \delta_{a,b}$ yields
+$$\lambda_{a,b}\;=\;\langle \forest_c^*,\forest_a\forest_b\rangle\;=\;\langle \forest_c^*,\textstyle\sum_{c'}\beta_{ab}^{c'}\forest_{c'}\rangle\;=\;\beta_{ab}^c,$$
+where the second equality is Theorem~\ref{theorem:forestpolyLR}.
+\end{proof}
+
+\subsection{Geometric interpretation: cup product on the quasisymmetric flag variety}
+
+The forest polynomials acquire a geometric meaning through the recent work of Bergeron, Gagnon, Nadeau, Spink, and Tewari \cite{bergeron2025qsymflag}, in which the authors introduce the \emph{quasisymmetric flag variety} $\mathrm{QFl}_n\subset \mathrm{Fl}_n$. This is a (reducible) toric complex built as a union
+$$\mathrm{QFl}_n \;=\; \bigcup_{T\in\mathrm{Tree}_n} X(T)$$
+of left-translated Richardson varieties indexed by $n$-leaf planar binary trees. Their main results give a Borel-type presentation
+$$H^\bullet(\mathrm{QFl}_n) \;\cong\; \mathbb{Z}[x_1,\ldots,x_n]/\mathrm{QSym}_n^+,$$
+where $\mathrm{QSym}_n^+$ is the ideal of quasisymmetric polynomials with no constant term \cite[Theorem~A and Corollary~12.5]{bergeron2025qsymflag}, and identify the forest polynomials $\{\forest_F : F\in \mathsf{Forest}_n\}$ as a free $\mathbb{Z}$-basis of this ring \cite[Corollary~12.5]{bergeron2025qsymflag}, Kronecker dual to the homology basis $\{[X(F)] : F\in\mathsf{Forest}_n\}$ of $H_\bullet(\mathrm{QFl}_n)$ \cite[Corollary~11.6, Theorem~12.12]{bergeron2025qsymflag}. Under the standard bijection between $\mathsf{Forest}_n$ and weak compositions of length $n$ (compare \cite{nadeau2024forest}), the basis $\forest_F$ matches our composition-indexed basis $\forest_a$.
+
+In this geometric language, the product $\forest_a\,\forest_b$ in $\coma_n$ corresponds to the cup product of cohomology classes in $H^\bullet(\mathrm{QFl}_n)$, and Theorem~\ref{theorem:forestpolyLR} translates immediately into the following statement.
+
+\begin{corollary}[Cup product of forest classes on $\mathrm{QFl}_n$]\label{corollary:cupforest}
+Let $[\forest_a], [\forest_b]\in H^\bullet(\mathrm{QFl}_n)$ denote the cohomology classes corresponding to the forest polynomials $\forest_a, \forest_b$ under the Borel isomorphism of \cite[Theorem~A]{bergeron2025qsymflag}. Then
+$$[\forest_a]\cup [\forest_b] \;=\; \sum_c \beta_{ab}^c\,[\forest_c]\qquad\text{in } H^\bullet(\mathrm{QFl}_n),$$
+where $\beta_{ab}^c\in\mathbb{Z}_{\geq 0}$ is the cardinality
+$$\beta_{ab}^c = \#\bigl\{(A,B) \,:\, \code(\wof{A})=\code_\forest(A)=a,\ \code(\wof{B})=\code_\forest(B)=b,\ A*B=R \text{ a forest RC graph with } \code_\forest(R)=\wtt(R)=c\bigr\}.$$
+Equivalently, the intersection number $\int_{[X(F_c)]} [\forest_a]\cup [\forest_b]$, where $F_c\in\mathsf{Forest}_n$ corresponds to the composition $c$ under \cite[Corollary~11.6, Theorem~12.12]{bergeron2025qsymflag}, equals $\beta_{ab}^c$.
+\end{corollary}
+
+\begin{proof}
+The Borel isomorphism $\coma_n=\mathbb{Z}[x_1,\ldots,x_n]\twoheadrightarrow H^\bullet(\mathrm{QFl}_n)$ of \cite[Theorem~A and Corollary~12.5]{bergeron2025qsymflag} is a surjective ring homomorphism that sends the forest-polynomial basis of $\coma_n$ to the cohomology classes $[\forest_a]$, and is in particular a bijection on this basis. Applying it to the identity $\forest_a\forest_b = \sum_c \beta_{ab}^c \forest_c$ of Theorem~\ref{theorem:forestpolyLR} gives the displayed cup product formula. The intersection-number reformulation follows from the Kronecker duality between $\{[\forest_c]\}$ and the homology basis $\{[X(F_c)]\}$ \cite[Theorem~12.12]{bergeron2025qsymflag}.
+\end{proof}
+
+\begin{remark}
+To our knowledge, Corollary~\ref{corollary:cupforest} provides the first positive combinatorial formula for the cup product structure constants of $H^\bullet(\mathrm{QFl}_n)$ in any natural geometric basis. The corresponding question for $H^\bullet(\mathrm{Fl}_n)$ in the Schubert basis is the classical (and open) problem of finding a manifestly positive combinatorial rule for Schubert structure constants. The presence of such a rule for the quasisymmetric flag variety $\mathrm{QFl}_n$, despite the absence of one for $\mathrm{Fl}_n$, reflects the special combinatorial rigidity of the forest equivalence relation $\equiv_\forest$ on RC graphs.
+\end{remark}
 
 % \subsection{A positive quasi-crystal Monk formula}
 
@@ -3875,7 +3998,28 @@ $$v'(p-1)=v(p)$$
 Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, which is exactly $Q_i(v',v)$, and we are done.
 \end{proof}
 
+\section{Concluding remarks}\label{section:conclusion}
 
+The picture that emerges from this article is that the Schubert basis, the key basis, the forest basis, and the slide basis are not four parallel stories but four faces of a single object: the bounded RC graph ring $\BRC$, equipped with a family of congruences on RC graphs (equality of the underlying permutation $\wof{R}$, which recovers the dual Schubert basis; equality of the reduced word, which is the slide/QY congruence; Edelman--Greene equivalence on reduced words \cite{edelman1987balanced}, which gives the dual key basis; and the forest equivalence $\equiv_\forest$) and quotiented accordingly. At heart, this paper is really about \emph{words}: each of the four congruences above is encoded by a natural invariant of the reduced word of an RC graph (its end permutation, the word itself, its Edelman--Greene $P$-tableau, or its forest $P$-LBS), and each of the corresponding LR rules is, ultimately, a statement about counting representatives in a word class. The RC graph itself, as a geometric, compatible-sequence-decorated object distinct from its reduced word, is remembered only by the unquotiented ring $(\BRC,\diamond)$; every one of the quotients $\BRC/I_\sim$ studied here forgets the compatible-sequence data and retains only an invariant of the underlying reduced word.  The identification of what we have called the Demazure-crystal equivalence on RC graphs with $P$-equivalence under Edelman--Greene insertion is due to \cite{hamaker2014relating} and \cite{morse2016crystal} (we thank Z. Hamaker for pointing us to this connection). 
+
+We should emphasize that the Little-bump perspective is in a real sense the conceptual core of the present work: the result of Hamaker--Young that Little bumps preserve Coxeter--Knuth equivalence hinted at the fact that Little bumps preserve all of the equivalence relations considered here, so that the entire multiplicative structure of $\BRC$ can be expressed directly through Little bumps on reduced words, which was essentially Little's original intention in \cite{little2003combinatorial} in introducing the bumping algorithm to model the transition formula. We arrived at this structure independently through the insertion algorithm of \S\ref{section:brc}, but in hindsight Little bumps are the most natural language for it at the word level, with the new information being that it simultaneously preserves the weight. Each quotient produces a positive Littlewood--Richardson rule on the corresponding dual basis (Theorems \ref{theorem:LR}, \ref{theorem:LRkey}, \ref{theorem:LRforest}, \ref{theorem:lrfslide}), and the general template of Theorem \ref{theorem:general_lr_template} makes precise the sense in which these four rules are the same theorem evaluated at four different ideals $I_\sim\subset\BRC$. The dual coproducts $\Delta^*$ on $\dcoma$ inherit positivity in the dual Schubert and dual forest bases (Theorem \ref{theorem:dschcoproduct} and Corollary \ref{corollary:dforestcoproduct}); we note that the dual key coproduct is by contrast known to be non-positive in general, with the cases in which it does expand positively already classified in the literature \cite{kouno2020decomposition}, so it is fitting that the dual Schubert and dual forest coproducts behave well precisely where the dual key coproduct does not. The construction descends to the cohomology of the quasisymmetric flag variety of \cite{bergeron2025qsymflag} via Corollary \ref{corollary:cupforest}.
+
+We hope that Theorem \ref{theorem:forestpolyLR} will be of independent interest: it gives a positive combinatorial formula for the structure constants $\beta_{ab}^c$ of the forest polynomials themselves, not their duals. We should be careful here about exactly what is and is not quotiented: the lift product $*$ on the multiplactic algebra $\mathcal{T}$ descends to an associative product on a composition-indexed compatible-sequence slide polynomial ring, but it does \emph{not} descend associatively along the map sending an RC graph to its $Q$-LBS in the forest case, nor to the RC graph itself. In other words, the forest invariant or the reduced word (retaining the compatible sequence) not a congruence for $*$, and Theorem \ref{theorem:forestpolyLR} cannot be obtained by passing to a quotient on which the forest LR coefficients $\beta_{ab}^c$ are themselves structure constants of an induced product; this is precisely the obstruction that the squash product $\boxtimes$ and the apparatus of \S\ref{section:forestrule} are designed to circumvent. 
+
+It is worth pointing out that this obstruction is not absolute: if one is willing to keep RC graphs factored as tensors and to work with an SEM-style expansion, then the lift product $*$ \emph{does} preserve associativity term by term as it descends both to forest RC graphs and, ultimately, to the RC graphs themselves. The price one pays is that the resulting expansion is signed, with cancellations that only collapse to the manifestly positive $\beta_{ab}^c$ and $c_{u,v}^w$ at the very end. We mention it here because the signed term-by-term descent is, in its own right, a useful viewpoint (one that is likely \emph{very} familiar to every researcher in the field), and because it makes precise the sense in which the failure of $*$ to be compatible with the forest invariant or the permutation is a failure only at the level of positivity, not of associativity. \emph{It is potentially possible that a term-by-term correct RC graph product could exist despite the failure of $*$.} The fact that one has not yet been found is probably only an indication of the deep subtlety of the problem, not necessarily that a positive rule is fundamentally impossible (which is potentially consistent with ZFC, but proved false assuming GRH and MVA in \cite{pak2025positivity}).
+
+% None of this work exists in a vacuum; the constructions of \S\S\ref{section:bialgebra}--\ref{section:forestrule} rest on a substantial body of prior work, which we have tried to cite carefully throughout. The most interesting questions raised by the present article are, in our view, the ones it leaves open. Among these:
+% \begin{itemize}
+%   \item Is there a manifestly positive geometric model for $\beta_{ab}^c$ on $\mathrm{QFl}_n$, perhaps via an intersection of explicit subvarieties, paralleling the classical Schubert calculus picture on $\mathrm{Fl}_n$?
+%   \item Does the squash product $\boxtimes$ admit a Hopf-theoretic interpretation, and is there an antipode somewhere in this story that the ``fat identities'' of Remark \ref{remark:fatidentity} are obstructing us from seeing?
+%   \item Theorem \ref{theorem:general_lr_template} axiomatizes four equivalence relations on $\BRC$; are there others? In particular, is there a quotient of $\BRC$ whose image is a known basis we have not considered (Grothendieck, quantum, double, $K$-theoretic)?
+%   \item Does the entire construction $\BRC\twoheadrightarrow \BRC/\sim$ admit an analogue in which $\BRC$ is replaced by a ring of pipe dreams for $K$-theory or equivariant cohomology, yielding LR rules in those settings? This question, we believe, is not as out of reach as it might first appear: pipe-dream models for Grothendieck polynomials and for the $K$-theory of the flag variety already exist in the literature, and bumpless pipe dreams \cite{Weigandt2021,GaoHuang2023,fan2025bumpless} have proved to be a remarkably flexible substrate for $K$-theoretic and double Schubert calculus. The hypotheses (H1)--(H4) of Theorem \ref{theorem:general_lr_template} are written in sufficient generality that we see no \emph{a priori} obstruction to porting them, with appropriate modifications, to either of these settings.
+% \end{itemize}
+% We will be content if the present article serves as an invitation to pursue some of these.
+
+\section*{Acknowledgements}
+
+The author is deeply grateful to Zachary Hamaker for many illuminating conversations during the development of this work, and in particular for introducing the author to forest polynomials in the first place and pointing out the connections to  Little's bumping algorithm that is tacitly central to the present article. Thanks are also due to Frank Sottile, whose work, much of it now classical, has been a sustained guiding influence on the author's thinking about Schubert calculus, and whose generosity with his time over the years has shaped the perspective taken here.
 
 \bibliographystyle{acm}
 \bibliography{schubert_bialgebra}
