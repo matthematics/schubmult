@@ -3575,7 +3575,7 @@ extends to an isomorphism of quasi-crystals onto the connected component of its 
 \begin{proof}
   When $B$ is elementary symmetric, we may assume without loss of generality that $\hr(A)\leq \hr(B)$, in which case the fact that Little bumps preserve the crystal structure allows us to instead consider $A\sqcup B$. Thus, we need only check the additional condition of the quasi-tensor product of quasi-crystals that prohibits changing the inversions. In the case that there is an $i$ such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, we can only have that $\ddot{\varphi}_i(A)\geq \ddot{\varepsilon}_i(B)$ because $\ddot{\varepsilon}_i(B)\in \{0,1\}$. In that case,
   $$\ddot{e}_i(A\sqcup B) = \perp$$
-  since such an operator would move a crossing in $A$ from row $i+1$ to row $i$, and similarly for $\ddot{f}_i$, so the result follows in the case where $B$ is elementary. The general case follows by induction on the number of factors in $B$, where we apply the base case to the rightmost factor and then invoke associativity of the quasi-crystal tensor product. The proof that the tensor product is itself a quasi-crystal is \cite[Theorem~5.1]{cain2023quasicrystals}, from which the partitioning into components (and hence surjectivity) follows from \cite[Proposition~4.6]{cain2023quasicrystals}.
+  since such an operator would move a crossing in $A$ from row $i+1$ to row $i$, passing a crossing in row $i$ coming from $B$, which is disallowed by the quasi-crystal operators. Similarly for $\ddot{f}_i$, so the result follows in the case where $B$ is elementary. The general case follows by induction on the number of factors in $B$, where we apply the base case to the rightmost factor and then invoke associativity of the quasi-crystal tensor product. The proof that the tensor product is itself a quasi-crystal is \cite[Theorem~5.1]{cain2023quasicrystals}, from which the partitioning into components (and hence surjectivity) follows from \cite[Proposition~4.6]{cain2023quasicrystals}.
   %the result follows from the Demazure case. Associativity of the quasi-crystal tensor product extends to the full result, where we need to invoke that the tensor product of quasi-crystals decomposes into a direct sum of quasi-crystals.
 \end{proof}
 
@@ -3694,6 +3694,7 @@ with $R$ being a forest RC graph.
   and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
 \end{theorem}
 
+\subsection{A positive quasi-crystal Monk formula}
 
 
 

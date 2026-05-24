@@ -42,12 +42,16 @@ def split_on_indices(perm, indices):
     mu2 = uncode(mu_A(Permutation.w0(n).trimcode, [j - 1  for j in range(1, n) if j not in indices]))
     # mu1 = uncode(mu_A(Permutation.w0(n).trimcode, [j - 1 for j in descents_in]))
     # mu2 = uncode(mu_A(Permutation.w0(n).trimcode, [j - 1 for j in descents_out]))
-    for weights0, coeff in poly.items():
+    for perm_rc in RCGraph.all_rc_graphs(perm, n - 1):
         
-        weights1 = weights0
-        if len(weights1) != n - 1:
-            weights1 =  weights1 + (0,)*(n - 1 - len(weights1))
-        weights = tuple(reversed([n - 1 - j - w for j, w in enumerate(weights1)]))
+        weights1 = perm_rc.length_vector
+        #weights = tuple(reversed([n - 1 - j - w for j, w in enumerate(weights1)]))
+        comp_weight = [0] * (n - 1)
+        for row in range(n - 1):
+            for col in range(n - 1 - row):
+                if not perm_rc.has_element(row + 1, col + 1):
+                    comp_weight[col] += 1
+        weights = tuple(reversed(comp_weight))
         # weights = tuple(reversed([n - 1 - j - w for j, w in enumerate((perm_coefficient).pad_code(n - 1))]))
         #weights = perm_coefficient.pad_code(n - 1)
         # print(descents_in, descents_out)

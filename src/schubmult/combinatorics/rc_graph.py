@@ -1906,6 +1906,18 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return None
         return ret_rc
 
+    def quasi_raising_operator(self, row: int) -> RCGraph | None:
+        new_rc = self.raising_operator(row)
+        if new_rc is not None and new_rc.perm_word != self.perm_word:
+            return None
+        return new_rc
+
+    def quasi_lowering_operator(self, row: int) -> RCGraph | None:
+        new_rc = self.lowering_operator(row)
+        if new_rc is not None and new_rc.perm_word != self.perm_word:
+            return None
+        return new_rc
+
     def raising_operator(self, row: int) -> RCGraph | None:
         # RF word is just the RC word backwards
         if row >= len(self):
