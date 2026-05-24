@@ -1,6 +1,6 @@
 from itertools import zip_longest
 
-from .crystal_graph import CrystalGraph, CrystalGraphTensor
+from .crystal_graph import CrystalGraph
 
 
 class QuasiCrystalGraph(CrystalGraph):
