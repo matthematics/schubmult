@@ -257,10 +257,11 @@ where $a$ is any composition. We present an explicit formula for the dual Schube
 $$\dsch_u^p\dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\dsch_w^{p+q}$$
 The combinatorial objects that we use to express this formula are RC graphs, the definition of which can be found, for example, in \cite{bbrc}. The reader may be more familiar with the term ``pipe dreams,'' introduced as a catchier name for the same objects by Knutson and Miller in \cite{knutson2005grobner}. We retain the name RC graphs since this method of approaching the objects (thought of as reduced words paired with compatible sequences, with the generators arranged in rows) is far more tractable for our purposes, most of the time. The original intention was indeed to model such biwords, initially presented as a positive formula for Schubert polynomials in \cite{bjs}.
 
-It is important to note that while it common to consider two RC graphs to be the same if they have the same set of crossings, we add an datum, the number of rows, that can distinguish two RC graphs that would otherwise be considered identical. It is a key feature in this exposition that we limit our focus to cases with finitely many rows/variables.
+It is important to note that while it is common to consider two RC graphs to be the same if they have the same set of crossings, we add a datum, the number of rows, that can distinguish two RC graphs that would otherwise be considered identical. It is a key feature in this exposition that we limit our focus to cases with finitely many rows/variables.
 
-For an RC graph $R$ with $n$ rows, we define two associated RC graphs $\clp^p(R)$ and $\trm^p(R)$ such that $\trm^p(R)$ is obtained directly from the last $n - p$ rows of $R$, whereas $\clp^p(R)$ is obtained by an insertion algorithm that combinatorially models the Lascoux-Schützenberger transition formula for Schubert polynomials, the latter of which is expounded upon in detail by Macdonald in \cite{notes}, with the algorithm maintaining numerous structures that can be imposed on RC graphs. We point out the definition of the function $\zeromap:\RC_n^0\to \RC_{n-1}$ in Definition \ref{definition:zeromap}, where $\RC_n^0$ indicates the set of RC graphs with $n$ rows such that row $n$ is empty, that realizes the transition formula, for discussion below.
- Our main theorem is the following.
+For an RC graph $R$ with $n$ rows and an integer $0\leq p\leq n$, we associate to $R$ two RC graphs $\clp^p(R)\in\RC_p$ and $\trm^p(R)\in\RC_{n-p}$, which the reader should picture as a decomposition of $R$ across the horizontal cut between rows $p$ and $p+1$. The map $\trm^p$ is genuinely simple: it discards the top $p$ rows and keeps the remaining $n-p$ rows (suitably reindexed). The map $\clp^p$ is the subtler partner. It is built by iterating an auxiliary map $\zeromap:\RC_n^0\to\RC_{n-1}$ (Definition \ref{definition:zeromap}), where $\RC_n^0$ denotes the set of RC graphs whose last row is empty. The map $\zeromap$ realises, on the level of RC graphs, the Lascoux--Schützenberger transition formula for Schubert polynomials (see \cite{notes}): when the last row is already empty there is nothing to do; otherwise an insertion procedure moves the crossings of the last row into the rows above it. Repeatedly applying $\zeromap$ to the truncation of $R$ down to its top $p$ rows produces $\clp^p(R)$. The whole construction preserves a wealth of additional structure (crystal operators, forest invariants) that we exploit later.
+
+Our main theorem is the following.
 
 
 \begin{theorem}\label{theorem:LR}
@@ -352,7 +353,90 @@ $$\zeromap(\phi(B)) = \phi(\mathbf{t}(B))$$
 % \end{conjecture}
 % This is a strengthening of Theorem \ref{theorem:zero_bijection} below, which only asserts that the bijection is weight-preserving.
 
-\section{The Schubert Bialgebra and its dual}
+\subsection*{Outline of the paper}
+
+Section \ref{section:bialgebra} (\nameref{section:bialgebra}) constructs the Schubert bialgebra $\coma$, identifies its Schubert basis $\sch_u^n$, and exhibits the elementary basis $\mathcal{E}_n$ of $\coma_n$. Section \ref{section:dualalgebra} (\nameref{section:dualalgebra}) builds the graded dual $\dcoma$, identifies the dual Schubert basis $\dsch_u^n$, and records the coproduct. Section \ref{section:brc} (\nameref{section:brc}) defines the module $\BRC$ of bounded RC graphs, the row-decomposition maps $\zeromap$, $\clp^p$, $\trm^p$, and the associative product $\diamond$ on $\BRC$; this culminates in Theorem \ref{theorem:LR}, the Littlewood--Richardson rule for the dual Schubert basis. Section \ref{section:crystals} (\nameref{section:crystals}) imports the Demazure crystal structure on RC graphs from \cite{assaf2018demazure} and identifies an ideal $\Theta\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRkey}, the LR rule for the dual key basis. Section \ref{section:forest} (\nameref{section:forest}) does the analogous construction for the forest invariant of \cite{nadeau2024forest}, producing an ideal $\Gamma\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRforest}, the LR rule for the dual forest basis. Sections \ref{section:slide} and \ref{section:forestrule} (\nameref{section:slide} and \nameref{section:forestrule}) extract from these results a positive product rule for dual slide polynomials and a positive quasi-crystal Monk formula. The final section is devoted to the proof of Proposition \ref{proposition:pullindex}.
+
+\clearpage
+\subsection*{Notation and conventions}
+
+For the reader's convenience we collect here, in one place, the principal symbols used throughout the article. All notation is reintroduced in context where it is needed; this table is meant as a navigational aid rather than a definition.
+
+\renewcommand{\arraystretch}{1.2}
+\begin{center}
+\begin{tabular}{@{}lp{0.78\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{Permutations and combinatorial objects.}}\\
+$S_\infty$ & The group of permutations of $\mathbb{Z}_{>0}$ fixing all but finitely many elements.\\
+$\ell(w)$ & The Coxeter length of $w\in S_\infty$.\\
+$\code(w)$, $\code^*(w)$ & The (right) Lehmer code of $w$; the code of $w^{-1}$.\\
+$\maxd(w)$ & The position of the last descent of $w$.\\
+$\dom_\lambda$ & The dominant permutation with $\code^*(\dom_\lambda)=\lambda$.\\
+$\RC_n$ & The set of bounded RC graphs with $n$ rows.\\
+$\RC_n(w)$ & The set of $R\in\RC_n$ with $\wof{R}=w$.\\
+$\RC_n^0$ & The set of $R\in\RC_n$ whose last row is empty.\\
+$\wof{R}$ & The permutation of an RC graph $R$.\\
+$\hr(R)$ & The number of rows of $R$.\\
+$\wtt(R)$ & The (column-wise) weight composition of $R$.\\
+$\mathrm{word}(R)$ & The reduced word read from $R$.\\
+\\
+\multicolumn{2}{@{}l}{\emph{Row maps on RC graphs.}}\\
+$\zeromap$ & The transition map $\RC_n^0\to\RC_{n-1}$ of Definition \ref{definition:zeromap}; it realises the Lascoux--Schützenberger transition formula on the last row.\\
+$\trm^p(R)$ & ``Truncate'': the RC graph obtained from the last $\hr(R)-p$ rows of $R$.\\
+$\clp^p(R)$ & ``Clip'': the RC graph in $\RC_p$ obtained from $R$ by an insertion algorithm based on $\zeromap$; the dual partner of $\trm^p$.\\
+$\shup^p$ & Shift indices up by $p$ (applied to permutations or letters).\\
+$A_p(R)$ & The triple $(\clp^p(R),\trm^p(R),\wof{R})$; injective by Lemma \ref{lemma:injap}.\\
+\\
+\multicolumn{2}{@{}l}{\emph{Crystal and forest structures.}}\\
+$e_i,f_i$ & Crystal raising and lowering operators on RC graphs.\\
+$\mathrm{Dem}(R)$ & The Demazure crystal of $R$ (Assaf--Schilling).\\
+$\mathrm{extwt}(R)$ & The extremal weight of $\mathrm{Dem}(R)$, i.e.\ the weight of its unique lowest weight element.\\
+$\mathbb{Y}(R)$ & The highest-weight (Coxeter--Knuth) representative of $R$ in its Demazure crystal.\\
+$\mathcal{F}(R)$ & The forest invariant of $R$, an indexed forest (Nadeau--Tewari).\\
+$\fcode(R)$ & The composition associated to $\mathcal{F}(R)$.\\
+$\mathcal{C}_\forest(a)$ & The set of forest classes of RC graphs with $\fcode=a$.\\
+$\equiv_\forest$ & Forest equivalence: $R\equiv_\forest R'$ iff $\mathcal{F}(R)=\mathcal{F}(R')$.\\
+\end{tabular}
+\end{center}
+
+\clearpage
+
+\begin{center}
+\begin{tabular}{@{}lp{0.78\textwidth}@{}}
+\multicolumn{2}{@{}l}{\emph{The Schubert bialgebra and its dual.}}\\
+$\coma_n$ & The polynomial ring $\mathbb{Z}[x_1,\ldots,x_n]$.\\
+$\coma$ & The Schubert bialgebra $\bigoplus_{n\geq 0}\coma_n$, with $\coma_m\cdot\coma_n=0$ when $m\neq n>0$.\\
+$\dcoma$ & The graded dual bialgebra of $\coma$.\\
+$\sch_u^n$ & Schubert polynomial in $\coma_n$, $\maxd(u)\leq n$.\\
+$\dsch_u^n$ & Element of $\dcoma$ dual to $\sch_u^n$.\\
+$\kappa_a$, $\kappa_a^*$ & Key polynomial / its dual; $a\in\mathrm{Comp}_n$.\\
+$\forest_a$, $\forest_a^*$ & Forest polynomial / its dual; $a\in\mathrm{Comp}_n$.\\
+$x_a$, $[a]$ & The monomial $x_1^{a_1}\cdots x_n^{a_n}$; its dual basis element.\\
+$\mathrm{Comp}_n$ & The set of weak compositions of length $n$.\\
+$\Delta$, $\nabla$, $\varepsilon$ & Coproduct, product, counit on $\coma$.\\
+\\
+\multicolumn{2}{@{}l}{\emph{Structure constants.}}\\
+$c_{u,v}^w$ & Schubert structure constants: $\sch_u\sch_v=\sum c_{u,v}^w\sch_w$.\\
+$d_{u,v}^w(p,q)$ & Dual Schubert structure constants of Theorem \ref{theorem:LR}.\\
+$k_{a,b}^c$ & Dual key structure constants of Theorem \ref{theorem:LRkey}.\\
+$f_{a,b}^c$ & Dual forest structure constants of Theorem \ref{theorem:LRforest}.\\
+\\
+\multicolumn{2}{@{}l}{\emph{The ring of RC graphs and its quotients.}}\\
+$\BRC$ & $\bigoplus_{n\geq 0}\mathbb{Z}^{\oplus\RC_n}$, with the product $\diamond$.\\
+$\diamond$ & The associative product on $\BRC$ built from $\clp^p$ and $\trm^p$ (Definition in §\ref{section:ringproduct}).\\
+$*$ & The auxiliary ``lift product'' on $\BRC_n$ used in the forest LR rule (§\ref{section:liftproduct}).\\
+$\boxtimes$ & Concatenation of elementary RC factors (Cauchy factorisation).\\
+$\alpha:\BRC\to\dcoma$ & Ring homomorphism with $\alpha(R)=\dsch_{\wof{R}}^{\hr(R)}$.\\
+$\Omega$ & $\ker\alpha$.\\
+$\Theta$, $\Gamma$ & Ideals of $\BRC$ whose quotients are indexed by Demazure crystals, resp.\ forest classes (yielding Theorems \ref{theorem:LRkey}, \ref{theorem:LRforest}).\\
+$\mathcal{T}_n$ & The tensor algebra of elementary RC factors used to define $*$.\\
+$\mathcal{E}_n$ & The elementary basis of $\coma_n$.\\
+\end{tabular}
+\end{center}
+\renewcommand{\arraystretch}{1.0}
+
+\clearpage
+
+\section{The Schubert Bialgebra and its dual}\label{section:bialgebra}
 \subsection{Some preliminaries}
 
 \begin{definition}[Two Pieri relations $\tom{k}$ and $\Tom{k}$]
@@ -439,7 +523,11 @@ We define a commutative algebra $\coma$ over the integers as follows. For each $
 $$\coma =\bigoplus_{n=0}^\infty \coma_n$$
 The multiplication within $\coma_n$ is as usually defined for the polynomial ring. However, if $a\in \coma_m$ and $b\in \coma_n$ with $m\neq n$ and $m,n>0$,  then
 $$ab = 0$$
-Otherwise, the component for $n=0$ is identified with the coefficient ring. Note that the ``identity element'' for positive $n$ is not an identity element of $\coma$ (we may think of it as a ``fat identity'').
+Otherwise, the component for $n=0$ is identified with the coefficient ring.
+
+\begin{remark}[Fat identities]\label{remark:fatidentity}
+The constant polynomial $1\in\coma_n$ for $n>0$ acts as a unit on $\coma_n$ itself but is \emph{not} a unit of $\coma$ as a whole: by the rule above it annihilates every $\coma_m$ with $m\neq n$ and $m>0$. We will refer to these length-$n$ units informally as ``fat identities''. This is the conceptual hinge that makes $\coma$ a bialgebra rather than a Hopf algebra. The triviality of cross-length products is precisely what allows the deconcatenation coproduct $\Delta$ defined below to be a homomorphism of rings; conversely, it forces $\coma$ to fail to be connected, so $\coma$ admits no antipode. Every theorem in this article should be read in light of this length-grading: the length component never mixes under multiplication, only under the coproduct.
+\end{remark}
 
 Each $\coma_n$ has a basis consisting of elements $x_a$, where $a$ is a weak composition of length $n$, and the notation indicates that
 $$x_a = x_1^{a_1}\cdots x_n^{a_n}$$
@@ -642,7 +730,7 @@ This transition formula from the Schubert basis to the elementary basis can be u
 
 
 
-\section{The dual algebra}
+\section{The dual algebra}\label{section:dualalgebra}
 
 We examine the graded dual algebra $\dcoma$ more closely now. This is a graded ring generated by countably many elements that we denote by $[i]$, where $i$ is a nonnegative integer. The product, as mentioned previously, is concatenation of sequences. Thus
 $$[a_1\cdots a_p][b_1\cdots b_q]=[a_1\cdots a_pb_1\cdots b_q]$$
@@ -710,7 +798,7 @@ $$[a]\cdot \dsch_{w}^{n} = \sum_{w'\downvar{1} w\atop\ell(w,w')=a} \dsch_{w'}^{n
 \end{proof}
 
 \subsection{The coproduct}
-\section{The ring of bounded RC graphs}
+\section{The ring of bounded RC graphs}\label{section:brc}
 
 \subsection{The module of bounded RC graphs}
 
@@ -1442,7 +1530,7 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 
 
 
-\subsection{Definition of the ring product}
+\subsection{Definition of the ring product}\label{section:ringproduct}
 
 \begin{definition}
 Suppose we have two bounded RC graphs $R_1$ with $\hr(R_1)=m$ and $R_2$ with $\hr(R_2)=n$. The product of these is defined by
@@ -1474,7 +1562,7 @@ where $\hr(R_1)=p$, $\hr(R_2)=q$. We also have
 $$A_{p}(R)=(R_1', P_2, \wof{R})$$
 where $P_2$ is a unique RC graph with $\hr(P_2) = q+r$. Applying $A_q$ to the second coordinate, we have
 $$(R_1', A_q(P_2), \wof{R})=(R_1', (R_2', R_3', \wof{P_2}), \wof{R})$$
-We may immediately conclude that $R_3=R_3'$. Without loss of generality, we may therefore assume that $R_3$ is empty. The two representations therefore become
+We may immediately conclude that $R_3=R_3'$. Now observe that the third factor $R_3$ enters the two bracketings only as the final coordinate that has just been matched, and not as input to either of the inner maps $A_p$ or $A_q$ that produced $R_1, R_2, R_1', R_2'$. Replacing $R_3$ by the empty RC graph of the same height therefore changes neither side of the identity we are trying to establish; we may accordingly assume without loss of generality that $R_3$ is empty. The two representations therefore become
 $$((R_1, R_2, \wof{P_1}), \emptyset, \wof{R})$$
 and
 $$(R_1', (R_2', \emptyset, \wof{P_2}), \wof{R})$$
@@ -2424,7 +2512,7 @@ The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=
 % Then
 % $$D = \sum_{w} c_w \wtt(\dsch_w^n(\mathtt{row}))$$
 
-\section{The ring of RC graph crystals}
+\section{The ring of RC graph crystals}\label{section:crystals}
 
 \subsection{Little bumps and the crystal action on RC graphs}
 
@@ -3031,7 +3119,7 @@ Since there are exactly $2$ such RC graphs, Theorem~\ref{theorem:LRkey} gives $k
 
 
 
-\section{The ring of forest classes of RC graphs}
+\section{The ring of forest classes of RC graphs}\label{section:forest}
 
 \subsection{Indexed forests, forest invariant}
 
@@ -3175,38 +3263,25 @@ it follows that $F_aF_b$ is a linear combination of the $F_c$, so the span of th
 \begin{example}[Computing $\forest_a^*\forest_b^*$ for $a=(0,0,2,0,2)$, $b=(0,1,0,0,2)$]\label{example:LRforest}
 Let
 $$a=(0,0,2,0,2),\qquad b=(0,1,0,0,2),\qquad c=(0,0,1,0,1,0,2,0,0,3).$$
-Here $p=q=5$, so we count $10$-row RC graphs in the class indexed by $c$ whose top and bottom parts lie in the forest classes for $a$ and $b$ respectively.
+Here $p=q=5$, so by Theorem~\ref{theorem:LRforest} the coefficient $f_{a,b}^c$ counts the $R$ in a fixed forest class $\mathcal{C}_\forest(c)$ of $10$-row RC graphs satisfying
+$$\clp^{5}(R)\in\mathcal{C}_\forest(a),\quad \trm^{5}(R)\in\mathcal{C}_\forest(b),\quad \wtt(\clp^{5}(R))=a,\quad \wtt(\trm^{5}(R))=b.$$
 
-The relevant set is
-\[
-\mathcal{S}_{a,b}^c=
-\{(R,R_1,R_2)\in\texttt{spinach}:
-R_1.\texttt{forest\_weight}=a,\ R_2.\texttt{forest\_weight}=b,
-R_1.\texttt{length\_vector}=R_1.\texttt{forest\_weight},
-R_2.\texttt{length\_vector}=R_2.\texttt{forest\_weight}\}.
-\]
-Its two witness graphs are
-\[
-\begin{aligned}
-R_1 &= \mathrm{RCGraph}([(),(),(5,3),(),(12,8),(),(7,),(),(),(11,10)]),\\
-R_2 &= \mathrm{RCGraph}([(),(),(8,3),(),(12,5),(),(7,),(),(),(11,10)]).
-\end{aligned}
-\]
+Writing an RC graph as the set of ordered pairs $(i,j)\in\mathbb{Z}_{>0}\times\mathbb{Z}_{>0}$ recording the (row,\,column) of each crossing, there are exactly two such $R$, namely
+\begin{align*}
+R_1 &= \{(3,1),(3,2),(5,3),(5,8),(7,1),(10,1),(10,2)\},\\
+R_2 &= \{(3,1),(3,6),(5,1),(5,8),(7,1),(10,1),(10,2)\}.
+\end{align*}
 Both have permutation
-$$\wof{R_1}=\wof{R_2}=(1,2,4,3,6,5,9,7,8,13,10,11,12).$$
-
-With your corrected clip/trim condition,
-\[
-(\clp^5(R_i),\trm^5(R_i))=
-\bigl(\mathrm{RCGraph}([(),(),(4,3),(),(6,5)]),\ \mathrm{RCGraph}([(),(2,),(),(),(6,5)])\bigr)
-\]
-for $i=1,2$, and these representatives have forest weights $a$ and $b$ respectively.
+$$\wof{R_1}=\wof{R_2}=(1,2,4,3,6,5,9,7,8,13,10,11,12),$$
+and they share a common clip/trim pair
+$$\clp^{5}(R_i)=\{(3,1),(3,2),(5,1),(5,2)\},\qquad \trm^{5}(R_i)=\{(2,1),(5,1),(5,2)\},$$
+with $\wtt(\clp^{5}(R_i))=a$ and $\wtt(\trm^{5}(R_i))=b$.
 
 \begin{figure}[h]
 \centering
 \begin{tabular}{cc}
-\resizebox{0.43\textwidth}{!}{\input{images/forest_lr_R1.tikz}} &
-\resizebox{0.43\textwidth}{!}{\input{images/forest_lr_R2.tikz}} \\
+\resizebox{0.43\textwidth}{!}{\input{forest_lr_R1.tikz}} &
+\resizebox{0.43\textwidth}{!}{\input{forest_lr_R2.tikz}} \\
 $(R_1)$ & $(R_2)$
 \end{tabular}
 \caption{The two $10$-row witness pipe dreams in the forest class for $c$.}
@@ -3216,15 +3291,15 @@ $(R_1)$ & $(R_2)$
 \begin{figure}[h]
 \centering
 \begin{tabular}{cc}
-\resizebox{0.35\textwidth}{!}{\input{images/forest_lr_clip.tikz}} &
-\resizebox{0.35\textwidth}{!}{\input{images/forest_lr_trim.tikz}} \\
+\resizebox{0.35\textwidth}{!}{\input{forest_lr_clip.tikz}} &
+\resizebox{0.35\textwidth}{!}{\input{forest_lr_trim.tikz}} \\
 $\clp^5(R_i)$ & $\trm^5(R_i)$
 \end{tabular}
 \caption{Common clip/trim pair for both witnesses $R_1,R_2$.}
 \label{fig:forest_lr_cliptrim}
 \end{figure}
 
-Therefore $\#\mathcal{S}_{a,b}^c=2$, so Theorem~\ref{theorem:LRforest} gives
+Therefore Theorem~\ref{theorem:LRforest} gives
 $$f_{a,b}^c=2.$$ 
 \end{example}
 
@@ -3232,7 +3307,7 @@ $$f_{a,b}^c=2.$$
 % $$\dsch_u = [\code_1(u)]\dsch_{\downarrow u} - \sum_{\substack{u'\downvar{1} \downarrow u\\ \ell(\downarrow u,u')=\code_1(u)\\u'\neq u}}\dsch_{u'}$$
 % where $\downarrow u$ is the unique permutation such that $\code_i(\downarrow u) = \code_{i+1}(u)$.
 
-\section{Product rule for dual slide polynomials}
+\section{Product rule for dual slide polynomials}\label{section:slide}
 \subsection{Slide polynomials}
 
 RC graph is a triple $(w,E,\alpha)$ where $w$ is a permutation, 
@@ -3240,9 +3315,11 @@ $$E:I(w)\to [\ell(w)]$$
 is a linear extension, and $\alpha:I(w)\to \mathbb{Z}_{>0}$ is a compatible sequence.
 
 \begin{definition}
-Slide polynomials $\mathfrak{F}(\mathbf{r})$ for a word $\mathbf{r}$ are defined by summing over all compatible sequences of $\mathbf{r}$. They can be characterized as follows.
+For a word $\mathbf{r}=\mathbf{r}_1\mathbf{r}_2\cdots \mathbf{r}_k$, a sequences of positive integers $a_1a_2\cdots a_k$ is \emph{compatible} with $\mathbf{r}$ if $a_i\leq \mathbf{r}_i$ for all $i$, $a_i\leq a_{i+1}$ for all $i$, and $a_i<a_{i+1}$ if $\mathbf{r}_i<\mathbf{r}_{i+1}$.
 
-A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as its smallest element. We then define
+Slide polynomials $\mathfrak{F}(\mathbf{r})$ for a word $\mathbf{r}$ are defined by summing the monomials $x^a$ over all compatible sequences $a$ of $\mathbf{r}$.
+
+Assaf and Searles \cite{assaf2017slide} derived an expasion of Schubert polynomials in terms of slide polynomials as follows. A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as its smallest element. We then define
 $$\QY(A)=R$$
 \end{definition}
 
@@ -3275,60 +3352,93 @@ Let $c$ be a weak composition of length $p$.
 $$[c] = \sum_{R\in\RC_\QY(c)} \mathfrak{F}_{\wtt(\QY(R))}^*$$
 \end{proposition}
 
+\begin{definition}[The submodule $\Sigma\subseteq \BRC$]
+Let $\Sigma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $\QY(R_1)=\QY(R_2)$.
+\end{definition}
+
+\begin{lemma}\label{lemma:slideideal}
+$\Sigma$ is a two-sided ideal of $\BRC$.
+\end{lemma}
+\begin{proof}
+That $\Sigma$ is a left ideal follows from the same mechanism used for $\Theta$: in $R\diamond R_1$ and $R\diamond R_2$, the first $\hr(R)$ rows agree, while the trailing rows are shifts of $R_1$ and $R_2$. Since the crystal operators act on adjacent rows, they descend in the same way to the trailing block. The quasi-Yamanouchi map $\QY$ is defined by applying a sequence of crystal raising operators determined by the weight (\cite{assaf2017slide}); hence applying $\QY$ to $R\diamond R_1$ and to $R\diamond R_2$ produces graphs whose trailing rows have a common partial quasi-Yamanouchi reduction $R\diamond \QY(R_1)=R\diamond \QY(R_2)$, and so $\QY(R\diamond R_1)=\QY(R\diamond R_2)$.
+
+That $\Sigma$ is a right ideal follows from Corollary \ref{corollary:crystaliso}: multiplication on the right by a fixed $R$ induces an isomorphism of crystal graphs on the relevant subblock, and the $\QY$ images of corresponding terms therefore agree.
+\end{proof}
+
+\begin{lemma}
+The homomorphism $\alpha:\BRC\to\dcoma$ factors through the quotient $\BRC/\Sigma$.
+\end{lemma}
+\begin{proof}
+This is because the generators of $\Sigma$ are all in $\Omega$: if $\QY(R_1)=\QY(R_2)$ then $\wof{R_1}=\wof{\QY(R_1)}=\wof{\QY(R_2)}=\wof{R_2}$ and $\hr(R_1)=\hr(R_2)$, so $\alpha(R_1)=\alpha(R_2)$.
+\end{proof}
+
+\begin{definition}
+For a weak composition $a$, define an element $\mathcal{F}_a\in\BRC/\Sigma$ by
+$$\mathcal{F}_a=\sum_{R: \QY(R)=R,\ \wtt(R)=a} R.$$
+\end{definition}
+
+\begin{proposition}\label{proposition:slidebasis}
+The elements $\mathcal{F}_a\in\BRC/\Sigma$ form an additive basis of a subring isomorphic to $\dcoma$ under the homomorphism $\alpha:\BRC/\Sigma\to\dcoma$, and
+$$\alpha(\mathcal{F}_a)=\mathfrak{F}_a^*.$$
+\end{proposition}
+\begin{proof}
+The last identity is the Corollary above. Distinct $\mathcal{F}_a$ are supported on disjoint sets of quasi-Yamanouchi RC graphs (indexed by their common weight $a$), so the $\mathcal{F}_a$ are linearly independent in $\BRC/\Sigma$. Considering the homomorphism $\alpha:\BRC/\Sigma\to\dcoma$, since the $\mathfrak{F}_a^*$ are linearly independent, the kernel of $\alpha$ intersects the span of the $\mathcal{F}_a$ trivially; hence $\alpha$ is injective on $\sum_a \mathbb{Z}\mathcal{F}_a$. Since
+$$\alpha(\mathcal{F}_a)\alpha(\mathcal{F}_b)=\mathfrak{F}_a^*\mathfrak{F}_b^*=\sum_c s_{a,b}^c \mathfrak{F}_c^*=\sum_c s_{a,b}^c\,\alpha(\mathcal{F}_c),$$
+the product $\mathcal{F}_a\mathcal{F}_b$ lies in the span of the $\mathcal{F}_c$, so this span is closed under multiplication and the restriction of $\alpha$ is a ring isomorphism.
+\end{proof}
+
 \begin{theorem} \label{theorem:lrfslide}
   Let $a,b$ be weak compositions of lengths $p$ and $q$. Write
 $$\mathfrak{F}_a^*\mathfrak{F}_b^*=\sum_c s_{a,b}^c \mathfrak{F}_c^*$$
-For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is the number of distinct RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ such that $\wtt(\QY(\clp^p(R))) = a$ and $\wtt(\QY(\trm^p(R))) = b$.
+For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is the number of distinct RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ such that $\wtt(\QY(\clp^p(R))) = a$ and $\wtt(\QY(\trm^p(R))) = b$, and is in particular nonnegative.
 \end{theorem}
+\begin{proof}
+The coefficient of $\mathcal{F}_c$ in $\mathcal{F}_a\mathcal{F}_b$ equals the coefficient of $\mathfrak{F}_c^*$ in $\mathfrak{F}_a^*\mathfrak{F}_b^*$, namely $s_{a,b}^c$, by Proposition \ref{proposition:slidebasis}. Expanding the product $\mathcal{F}_a\mathcal{F}_b$ via the $(\clp^p,\trm^p)$-decomposition of $\diamond$ (Theorem \ref{theorem:modactrc}) and reading off the coefficient of $\mathcal{F}_c$ from a fixed representative $C$ with $\wtt(\QY(C))=c$, the contributing terms are precisely the RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ whose clip and trim have quasi-Yamanouchi weights $a$ and $b$ respectively.
+\end{proof}
 
 \subsection{A general ideal-quotient Littlewood--Richardson principle}
 
-The previous sections suggest a common mechanism behind the dual Schubert, dual key, dual forest, and (conjecturally in full detail) dual slide formulas. We record it here as a template theorem.
+The dual Schubert, dual key, and dual forest LR rules of the previous sections all fit a common template, which we record here.
 
-\begin{theorem}[General LR principle via quotients of $\BRC$]\label{theorem:general_lr_template}
-Suppose for each permutation $w$ and integer $n\geq \maxd(w)$ we have an equivalence relation $\sim$ satisfying the following:
+\begin{theorem}[General LR principle via ideals of $\BRC$]\label{theorem:general_lr_template}
+Let $\sim$ be an equivalence relation on $\bigsqcup_n \RC_n$ satisfying:
 \begin{itemize}
-\item[(1)] If $R_1\sim R_2$ and $1\leq p\leq \hr(R_1)$, then
-$$\clp^p(R_1)\sim \clp^p(R_2),\qquad \trm^p(R_1)\sim \trm^p(R_2).$$
-%two-sided ideal $I\subseteq \BRC$ such that $I\subseteq \Omega$, where $\Omega=\ker(\alpha)$ from Theorem~\ref{theorem:semidirect}.
-\item[(2)] The set of all $\mathfrak{B}_R\in\coma_n$ for $R\in\RC_n$ such that
-$$\mathfrak{B}_R = \sum_{R'\sim R} \wtt(R')$$
-forms a $\mathbb{Z}$-basis of $\coma_n$.
+\item[(H1)] If $R_1\sim R_2$ then $\hr(R_1)=\hr(R_2)$ and $\wof{R_1}=\wof{R_2}$ (in particular $\alpha(R_1)=\alpha(R_2)$).
+\item[(H2)] $\sim$ is a congruence for $\diamond$: $R_1\sim R_2$ implies $R\diamond R_1\sim R\diamond R_2$ and $R_1\diamond R\sim R_2\diamond R$ for every $R$.
+\item[(H3)] $\clp^p$ and $\trm^p$ descend to $\sim$: if $R_1\sim R_2$ and $1\leq p\leq \hr(R_1)$, then $\clp^p(R_1)\sim \clp^p(R_2)$ and $\trm^p(R_1)\sim \trm^p(R_2)$.
+\item[(H4)] There is an index set $J$ and a function $\lambda:(\RC/\!\sim)\to J$ such that, writing $I_\sim=\mathrm{span}_{\mathbb{Z}}\{R_1-R_2:R_1\sim R_2\}\subseteq\BRC$ and
+$$E_\lambda := \sum_{[R]:\,\lambda([R])=\lambda} [R] \in \BRC/I_\sim,$$
+the family $\{\alpha(E_\lambda)\}_{\lambda\in J}$ is a $\mathbb{Z}$-basis of $\dcoma$.
 \end{itemize}
-Then the structure constants
-$$\mathfrak{B}_\mu^*\mathfrak{B}_\nu^*=\sum b_{\mu,\nu}^{\lambda}\, \mathfrak{B}_\lambda^*$$
-satisfy
-$$b_{\mu,\nu}^{\lambda}=\#\Bigl\{R\sim R_\lambda:\ \mathfrak{B}_{\clp^p(R)}=\mathfrak{B}_\mu,\ \mathfrak{B}_{\trm^p(R)}=\mathfrak{B}_\nu\Bigr\},$$
-where $R_\lambda$ is an arbitrary fixed RC graph such that $\mathfrak{B}_{R_\lambda}=\mathfrak{B}_\lambda$. Hence $b_{\mu,\nu}^{\lambda}\geq 0$.
+Then $I_\sim$ is a two-sided ideal of $\BRC$ contained in $\Omega=\ker\alpha$, the elements $\{E_\lambda\}$ span a subring of $\BRC/I_\sim$ isomorphic to $\dcoma$ via $\alpha$, and the structure constants $b_{\mu,\nu}^\lambda$ defined by
+$$\mathfrak{B}_\mu^*\mathfrak{B}_\nu^* = \sum_\lambda b_{\mu,\nu}^\lambda\,\mathfrak{B}_\lambda^*,\qquad \mathfrak{B}_\lambda^*:=\alpha(E_\lambda),$$
+admit the positive combinatorial formula
+$$b_{\mu,\nu}^\lambda = \#\bigl\{R\sim C\ :\ \lambda([\clp^p(R)])=\mu,\ \lambda([\trm^p(R)])=\nu\bigr\}$$
+for any fixed $C$ with $\lambda([C])=\lambda$.
 \end{theorem}
+\begin{proof}
+By (H1) every generator $R_1-R_2$ of $I_\sim$ lies in $\Omega=\ker\alpha$, so $I_\sim\subseteq\Omega$ and $\alpha$ descends to a surjective ring homomorphism $\overline\alpha:\BRC/I_\sim\to\dcoma$. By (H2), $I_\sim$ is a two-sided ideal of $\BRC$, so $\BRC/I_\sim$ inherits a ring structure.
 
-\begin{proof}[Proof attempt]
-Since $I\subseteq\Omega=\ker(\alpha)$, the map $\alpha:\BRC\to\dcoma$ factors through a ring homomorphism
-$$\alpha_I:\BRC/I\to\dcoma.$$
-By hypothesis (1), the sets $\mathcal{C}_\lambda$ partition the basis elements of $\BRC/I$ in each length, so the $E_\lambda$ are automatically linearly independent (disjoint supports, unit coefficients). By hypothesis (3), $\alpha_I(E_\lambda)=\mathfrak{B}_\lambda^*$, so
-$$\alpha_I(E_\mu E_\nu)=\mathfrak{B}_\mu^*\mathfrak{B}_\nu^*=\sum_\lambda b_{\mu,\nu}^{\lambda}\mathfrak{B}_\lambda^*.$$
-Because the $\mathfrak{B}_\lambda^*$ are linearly independent, $b_{\mu,\nu}^{\lambda}$ is the coefficient of $E_\lambda$ in the product $E_\mu E_\nu$ in $\BRC/I$.
+The summands of $E_\lambda$ are pairwise disjoint $\sim$-cosets, and distinct $E_\lambda$ have disjoint supports in $\BRC/I_\sim$; in particular the $\{E_\lambda\}$ are linearly independent. Under $\overline\alpha$ they map to the $\mathbb{Z}$-basis $\{\mathfrak{B}_\lambda^*\}$ of $\dcoma$ by (H4), so $\overline\alpha$ restricts to a $\mathbb{Z}$-module isomorphism $\bigoplus_\lambda\mathbb{Z}E_\lambda\xrightarrow{\;\cong\;}\dcoma$. Since $\overline\alpha$ is a ring homomorphism, the span of the $E_\lambda$ is closed under multiplication and the isomorphism is one of rings. Consequently
+$$E_\mu E_\nu = \sum_\lambda b_{\mu,\nu}^\lambda\, E_\lambda \quad\text{in } \BRC/I_\sim.$$
 
-Expand $E_\mu E_\nu$ by multiplying chosen representatives from each $\mathcal{C}$ set using the product $\diamond$ and the $(\clp^p,\trm^p)$ decomposition (Definition and Theorem~\ref{theorem:modactrc}). By hypothesis (5), the condition for an RC graph $R$ to contribute to the $\lambda$-component depends only on its class in $\BRC/I$, ensuring that the coefficient of $E_\lambda$ is well-defined and equals the cardinality of the fiber
-$$\Bigl\{R\in\mathcal{C}_\lambda:\ \clp^p(R)/I\in \mathcal{C}_\mu,\ \trm^p(R)/I\in \mathcal{C}_\nu\Bigr\}.$$
-Since this is a cardinality, $b_{\mu,\nu}^{\lambda}\geq 0$.
-
-The argument is modular: once hypotheses (1)--(5) are verified for a quotient theory (Schubert, key, forest, slide), the corresponding Littlewood--Richardson rule and positivity follow.
+To read off $b_{\mu,\nu}^\lambda$, fix any $C$ with $\lambda([C])=\lambda$ and any representatives in the $\sim$-classes of $\mu$ and $\nu$. By Theorem~\ref{theorem:modactrc} the product $\diamond$ on $\BRC$ admits a $(\clp^p,\trm^p)$-decomposition: for any $S_1,S_2$ with $\hr(S_1)=p$, $\hr(S_2)=q$, the set $\{R\in\RC_{p+q}:\clp^p(R)=S_1,\,\trm^p(R)=S_2\}$ enumerates the summands of $S_1\diamond S_2$ with multiplicity one. Applying this to representatives of $\mu$ and $\nu$ and projecting to $\BRC/I_\sim$, (H3) ensures that the predicate ``$\clp^p(R)$ lies in the $\mu$-class and $\trm^p(R)$ lies in the $\nu$-class'' depends only on the $\sim$-class of $R$. Since the $\sim$-cosets within $E_\lambda$ are disjoint, the coefficient of $E_\lambda$ in $E_\mu E_\nu$ is exactly the count of $R\sim C$ (any chosen $C$) for which $\clp^p(R)$ and $\trm^p(R)$ lie in the prescribed classes. Being a cardinality, this is nonnegative.
 \end{proof}
 
-\begin{remark}
+\begin{remark}\label{remark:general_lr_instances}
 In the present paper, Theorem~\ref{theorem:general_lr_template} is instantiated by
 \begin{itemize}
-\item $I=\Omega$ for the dual Schubert basis,
-\item $I=\Theta$ for the dual key basis,
-\item $I=\Gamma$ for the dual forest basis.
+\item $\sim$ = equality on $\RC$, with $I_\sim=0$ and $\lambda([R])=(\wof{R},\hr(R))$, recovering Theorem~\ref{theorem:LR} (dual Schubert basis);
+\item $\sim$ = Demazure-crystal equivalence, with $I_\sim=\Theta$ and $\lambda$ the extremal weight, recovering Theorem~\ref{theorem:LRkey} (dual key basis);
+\item $\sim\,=\,\equiv_\forest$, with $I_\sim=\Gamma$ and $\lambda=\fcode$, recovering Theorem~\ref{theorem:LRforest} (dual forest basis);
+\item $\sim$ = ``same reduced word and same $\hr$'' on $\RC$, with $\lambda([R])=\wtt(\QY(R))$, recovering Theorem~\ref{theorem:lrfslide} (dual slide basis).
 \end{itemize}
-For dual slide polynomials, this theorem indicates the remaining formal step: identify the corresponding ideal and verify the analogue of (1)--(5) explicitly.
+The verifications of (H1)--(H4) in each case are precisely the lemmas and propositions of \S\ref{section:bialgebra}, \S\ref{section:crystals}, \S\ref{section:forest}, and \S\ref{section:slide}. Note that the slide instance uses the strictly finer relation ``same reduced word'' rather than the QY-equivalence used to define $\Sigma$; the latter is a coarser congruence on $\RC$ that also satisfies (H1)--(H3) but groups together multiple reduced words at once.
 \end{remark}
 
-\section{The Littlewood-Richardson rule for forest polynomials}
+\section{The Littlewood-Richardson rule for forest polynomials}\label{section:forestrule}
 
-\subsection{The elementary tensor algebra}
+\subsection{The multiplactic algebra}
 \begin{definition}
 Let $R_1$ and $R_2$ be RC graphs with $\hr(R_1)=\hr(R_2)$. Let $N$ be the position of the last unfixed point of $\wof{R_1}$. We define
 $$R_1\sqcup R_2 = R_1\cup \{(i,j+N)\mid (i,j)\in R_2\}$$
@@ -3394,7 +3504,7 @@ The fact that $\BRC_n$ is a right $\grass_n$ module follows from Proposition \re
 
 \begin{definition}
 Consider the ring $\mathcal{T}_n$ defined as
-$$\mathcal{T}_n = \bigotimes_{k=1}^n \grass_k^{\otimes k}$$
+$$\mathcal{T}_n = \bigotimes_{k=1}^n \grass_k$$
 %where $\sim$ is the equivalence relation generated by the following:
 %the tensor algebra on the free abelian groups generated by the set of full $k$-Grassmannian elementary symmetric polynomial RC graphs (i.e. single columns), satisfying the additional condition that if $ A\otimes B$ are such that $\hr(A)\neq \hr(B)$, then
 
@@ -3404,28 +3514,30 @@ by
 $$\RC(A_1\otimes A_2\otimes \cdots \otimes A_k) = A_1\boxtimes A_2\boxtimes \cdots \boxtimes A_k$$
 where we increase the size of the left factor to match the right factor as needed, finally resizing the end result to height $n$.
 
-Define $\mathbf{E}_{p,k}^n$ to be the sum of all full $k$-Grassmannian elementary symmetric polynomial RC graphs of degree $p$, considered as an element of $\mathcal{T}_n$.
+We may avoid the clunky tensor product notation by noting that we may identify which tensor factor an element of $\mathcal{T}_n$ belongs to by its height, and so we may write elements of $\mathcal{T}_n$ as formal products of full-Grassmannian RC graphs, with the understanding that the $k$-th factor of the product is the submodule $\grass_k$.
+
+Define $\mathbf{E}_{p}^k$ to be the sum of all full $k$-Grassmannian elementary symmetric polynomial RC graphs of degree $p$, considered as an element of $\mathcal{T}_n$.
 \end{definition}
 
 \begin{proposition} \label{proposition:eproductworks}
 For any $p_1,p_2,\ldots,p_m$ and $k_1\leq k_2\leq\ldots\leq k_m\leq n$ with $p_i\leq k_i$ for all $i$, we have that
-$$\RC_n(\mathbf{E}_{p_1,k_1}^n\otimes \mathbf{E}_{p_2,k_2}^n\otimes \cdots \otimes \mathbf{E}_{p_m,k_m}^n) = \sum_{w} c_w\mathcal{S}_w(n)$$
+$$\RC_n(\mathbf{E}_{p_1}^{k_1}\mathbf{E}_{p_2}^{k_2}\cdots\mathbf{E}_{p_m}^{k_m}) = \sum_{w} c_w\mathcal{S}_w(n)$$
 where $c_w\in \mathbb{Z}_{\geq 0}$ are the coefficients such that
 $$e_{p_1,k_1}^n\cdots e_{p_m,k_m}^n = \sum_w c_w \sch_w^n(x)\in \coma_n$$
 \end{proposition}
 \begin{proof}
 We prove this by induction on $m$. For an elementary tensor $A_1\otimes \cdots \otimes A_m$, the result follows directly from the definition of $\RC_n$. Assuming the inductive hypothesis that this formula holds for tensors of length less than $m$, then for a tensor of length $m$ we have that
-$$\RC_n(\mathbf{E}_{p_1,k_1}^n\otimes \cdots \otimes \mathbf{E}_{p_m,k_m}^n) = \RC_n(\mathbf{E}_{p_1,k_1}^n\otimes \cdots \otimes \mathbf{E}_{p_{m-1},k_{m-1}}^n)\boxtimes \RC_n(\mathbf{E}_{p_m,k_m}^n)=\sum_{w'} c_{w'}' \mathcal{S}_{w'}(n)\boxtimes \mathbf{E}_{p_m,k_m}^n$$
-by Theorem \ref{theorem:schubmoduleiso}, since $\mathbf{E}_{p_m,k_m}^n\in\grass_{k_m}$, and we are ensured by the increasing order of $k_i$ that the left factor can be clipped to height $k_m$ without the permutation changing. We then apply Proposition \ref{proposition:boxproduct} to obtain the result for a single term of this type by induction. Invoking the fact that the image lies in $\mathrm{Schub}_n$, the result follows by applying Theorem \ref{theorem:schubmoduleiso}.
+$$\RC_n(\mathbf{E}_{p_1}^{k_1}\mathbf{E}_{p_2}^{k_2}\cdots\mathbf{E}_{p_m}^{k_m}) = \RC_n(\mathbf{E}_{p_1}^{k_1}\mathbf{E}_{p_2}^{k_2}\cdots\mathbf{E}_{p_{m-1}}^{k_{m-1}})\boxtimes \RC_n(\mathbf{E}_{p_m}^{k_m})=\sum_{w'} c_{w'}' \mathcal{S}_{w'}(n)\boxtimes \mathbf{E}_{p_m}^{k_m}$$
+by Theorem \ref{theorem:schubmoduleiso}, since $\mathbf{E}_{p_m}^{k_m}\in\grass_{k_m}$, and we are ensured by the increasing order of $k_i$ that the left factor can be clipped to height $k_m$ without the permutation changing. We then apply Proposition \ref{proposition:boxproduct} to obtain the result for a single term of this type by induction. Invoking the fact that the image lies in $\mathrm{Schub}_n$, the result follows by applying Theorem \ref{theorem:schubmoduleiso}.
 \end{proof}
 
-We impose further relations as follows. Suppose we have $A\otimes B$, where $\hr(A)=\hr(B)$ and $A$ and $B$ are both full Grassmannian. If $\hr(A) = n$, then we use $A\boxtimes B$ as the relation of equality. If $\hr(A)<n$, compute the RC graph
-$$R = A\boxtimes B$$
-If this is elementary symmetric, declare
-$$A\otimes B = R$$
-Otherwise,
-$$R\in \RC_k(w)$$
-for some $w\notin S_k$.
+% We impose further relations as follows. Suppose we have $A\otimes B$, where $\hr(A)=\hr(B)$ and $A$ and $B$ are both full Grassmannian. If $\hr(A) = n$, then we use $A\boxtimes B$ as the relation of equality. If $\hr(A)<n$, compute the RC graph
+% $$R = A\boxtimes B$$
+% If this is elementary symmetric, declare
+% $$A\otimes B = R$$
+% Otherwise,
+% $$R\in \RC_k(w)$$
+% for some $w\notin S_k$.
 % \begin{theorem} \label{theorem:productworks}
 % The projection $\mathcal{T}_n\to \mathbb{Z}[x_1,\ldots,x_n]$ is a surjective homomorphism of rings such that the subring generated by the $\mathbf{E}_{p,k}^n$ factors via $\RC$ through the isomorphism of $\Lambda_n$-modules $\mathbb{Z}\mathcal{S}_w(n)\to\mathbb{Z}[x_1,\ldots,x_n]$ sending $\mathcal{S}_w(n)$ to $\sch_w(x)$.
 % \end{theorem}
@@ -3435,7 +3547,7 @@ for some $w\notin S_k$.
 
 \begin{definition}
   Suppose $\maxd(w)\leq n$. We define an element $\mathbf{S}_w(n)\in \mathcal{T}_n$ by
-  $$\mathbf{S}_w(n) = \sum_{\alpha} E_w^{\alpha;n}\mathbf{E}_{\alpha_1,1}^1\otimes \mathbf{E}_{\alpha_2,2}^2\otimes \cdots \otimes \mathbf{E}_{\alpha_n,n}^n\otimes \mathbf{E}_{\alpha_{n+1}, n}^n\otimes\cdots \otimes \mathbf{E}_{\alpha_N,n}^n$$
+  $$\mathbf{S}_w(n) = \sum_{\alpha} E_w^{\alpha;n}\mathbf{E}_{\alpha_1,1}^1 \mathbf{E}_{\alpha_2,2}^2 \cdots  \mathbf{E}_{\alpha_n,n}^n\mathbf{E}_{\alpha_{n+1}, n}^n\cdots \mathbf{E}_{\alpha_N,n}^n$$
 \end{definition}
 
 \begin{theorem} \label{theorem:schubproduct}
@@ -3445,26 +3557,28 @@ where $c_{uv}^w$ are the Schubert structure constants.
 \end{theorem}
 \begin{proof}
   Explicitly, write
-  $$\mathbf{S}_u(n)\mathbf{S}_v(n) = \sum_{\alpha,\beta} E_u^{\alpha;n}E_v^{\beta;n} \mathbf{E}_{\alpha_1,1}^1\otimes \cdots \otimes \mathbf{E}_{\alpha_N,n}^n\otimes \mathbf{E}_{\beta_1,1}^1\otimes \cdots \otimes \mathbf{E}_{\beta_N,n}^n$$
-  The relations of the ring allow us to slide smaller terms in $\mathbf{S}_v(n)$ past strictly larger terms in $\mathbf{S}_u(n)$, so we may rearrange the tensor into one that is in increasing order. The result then follows from Proposition \ref{proposition:eproductworks} and the fact that the image of $\RC$ lies in $\mathrm{Schub}_n$, so that we may invoke Theorem \ref{theorem:schubmoduleiso}.
+  $$\mathbf{S}_u(n)\mathbf{S}_v(n) = \sum_{\alpha,\beta} E_u^{\alpha;n}E_v^{\beta;n} \mathbf{E}_{\alpha_1,1}^1 \cdots  \mathbf{E}_{\alpha_N,n}^n \mathbf{E}_{\beta_1,1}^1 \cdots  \mathbf{E}_{\beta_N,n}^n$$
+  The relations of the ring allow us to slide smaller terms in $\mathbf{S}_v(n)$ past strictly larger terms in $\mathbf{S}_u(n)$, so we may rearrange the product in increasing order of height. The result then follows from Proposition \ref{proposition:eproductworks} and the fact that the image of the element under $\RC_n$ lies in $\mathrm{Schub}_n$, so that we may invoke Theorem \ref{theorem:schubmoduleiso}.
 \end{proof}
 
-It may be unsurprising to the reader at this point that the kernel of $\RC:\mathcal{T}_n\to \BRC_n$ \emph{is not an ideal}. If it were, then the product on $\mathcal{T}_n$ would descend to a term by term product such that
+\begin{remark}
+It may be unsurprising to the reader at this point that the kernel of $\RC_n:\mathcal{T}_n\to \BRC_n$ \emph{is not an ideal}. If it were, then the product on $\mathcal{T}_n$ would descend to a term by term product such that
 $$\mathcal{S}_u(n)\cdot \mathcal{S}_v(n) = \sum_{w} c_{uv}^w \mathcal{S}_w(n)$$
 and the problem of finding a positive formula for the Schubert structure constants would be solved, due to the fact that $\mathcal{S}_u(n)$ and $\mathcal{S}_v(n)$ have completely nonnegative coefficients. Unfortunately, this is simply not true. The negative terms in $\mathcal{S}_u(n)$ are essential in making the product work.
+\end{remark}
 
-\begin{example}[Descending to the RC graph level: not associative]
+% \begin{example}[Descending to the RC graph level: not associative]
 
-\end{example}
+% \end{example}
 
-\subsection{The lift product}
+\subsection{The lift product}\label{section:liftproduct}
 
-We now define a product on $\BRC_n$ that is associative, but wrong, in the sense that it does not correctly model Schubert polynomial multiplication. However, we will see that it is correct enough to give a Littlewood-Richardson rule for forest polynomials.
+We now define a product on $\BRC_n$ that is associative, but as necessitated by the remark above does not correctly model Schubert polynomial multiplication. However, we will see that it is correct enough to give a Littlewood-Richardson rule for forest polynomials.
 
 \begin{proposition} \label{proposition:elemfactor}
   Let $u\in S_\infty$ be a permutation and suppose $R\in \RC_n(u)$. Let $\lambda$ be a partition and let $w$ be the corresponding dominant permutation with $\code^*(w)=\lambda$. Assume that $\ell(uw^{-1}) = \ell(w)-\ell(u)$. Let $c$ be a composition such that $c_i\leq \lambda_{N + 1 - i}$ for all $i$, where $N=\ell(\lambda)$. Then the number of sequences of elementary symmetric RC graphs $A_1,\ldots,A_N$ such that $|A_i| = c_i$ and $\hr(A_i) = \lambda_{N + 1 - i}$ satisfying
   $$A_1\boxtimes\cdots\boxtimes A_N = R$$
-is equal to the coefficient of $x^c$ in $\sch_{w\mathrm{dom}_\lambda^{-1}}(x)$.
+is equal to the coefficient of $x^c$ in $\sch_{uw^{-1}}(x)$.
 \end{proposition}
 \begin{proof}
   Recall the Cauchy formula for $\sch_w(x;-y)$:
@@ -3472,8 +3586,8 @@ is equal to the coefficient of $x^c$ in $\sch_{w\mathrm{dom}_\lambda^{-1}}(x)$.
   Also,
   $$\sch_w(x;-y) = E_{\lambda_1,\lambda_1}(x;-y_1)\cdots E_{\lambda_N,\lambda_N}(x;-y_N)$$
 
-Replace the factorial elementary symmetric polynomial $E_{p,p}(x;-y_i)$ for each $p$ with $\mathbf{E}_{p,p}(-y_i)\in \mathcal{T}_n[y_1,\ldots,y_N]$ defined by
-$$\mathbf{E}_{p,p}(-y_i) = \sum_{j=0}^p y_i^j \mathbf{E}_{p-j,p}^n$$
+Replace the factorial elementary symmetric polynomial $E_{p,p}(x;-y_i)$ for each $p$ with $\mathbf{E}_p^p(-y_i)\in \mathcal{T}_n[y_1,\ldots,y_N]$ defined by
+$$\mathbf{E}_p^p(-y_i) = \sum_{j=0}^p y_i^j \mathbf{E}_{p-j}^p$$
 The result follows from Proposition \ref{proposition:eproductworks}.
 \end{proof}
 
@@ -3483,9 +3597,13 @@ The result follows from Proposition \ref{proposition:eproductworks}.
   Define a function $\mathrm{lift}_n:\RC_n\to \mathcal{T}_n$ as follows. For an RC graph $R\in \RC_n$, let $\lambda$ be a partition of the form 
 $$(\overbrace{n,\ldots,n}^{p},n-1,n-2,\ldots,1)$$
 where $p$ is sufficiently large such that if $\mu$ is the dominant permutation with $\code^*(\mu)=\lambda$, then $\ell(\wof{R}\mu^{-1}) = \ell(\mu) - \ell(\wof{R})$.  Let $c$ be the code of the permutation $\wof{R}\mu^{-1}$. Then we define
-$$\mathrm{lift}_n(R) = E_1\otimes \cdots \otimes E_{\ell(c)}$$
-where $|E_i| = \lambda_{N + 1 - i} - c_{N + 1 - i}$ and $\hr(E_i) = \lambda_{N+1-i}$ for all $i$, with $E_i$ all elementary symmetric full Grassmannian RC graphs, which is guaranteed to exist and be unique by Proposition \ref{proposition:elemfactor}. We can see that this does not depend on the choice of $\lambda$, provided it is in the above form.
+$$\mathrm{lift}_n(R) = E_1 \cdots  E_{\ell(c)}$$
+where $|E_i| = \lambda_{N + 1 - i} - c_{N + 1 - i}$ and $\hr(E_i) = \lambda_{N+1-i}$ for all $i$, with $E_i$ all elementary symmetric full Grassmannian RC graphs, which is guaranteed to exist and be unique by Proposition \ref{proposition:elemfactor}. 
+\end{definition}
 
+Some justifiation that $\mathrm{lift}_n$ is well-defined is in order. For each choice of $\lambda$, the existence and uniqueness of the factorization follows from Proposition \ref{proposition:elemfactor}. However, $\lambda$ depends on a choice of $p$ ``sufficiently large.'' We must show that the factorization is independent of this choice. If we increase $p$ by one, then $\lambda$ is replaced by $\lambda' = (\overbrace{n,\ldots,n}^{p+1},n-1,n-2,\ldots,1)$. The code of $\wof{R}(\mu')^{-1}$ is then obtained from the code of $\wof{R}\mu^{-1}$ by prepending $n$, so the same factorization works for both choices of $p$.
+
+\begin{definition}
 We define a product $*$ on $\BRC_n$ by
 $$R_1*R_2 = \RC_n(\mathrm{lift}_n(R_1)\mathrm{lift}_n(R_2))$$
 \end{definition}
@@ -3503,6 +3621,18 @@ $$\mathrm{lift}_n(R^{\mathrm{left}}) = A_1\otimes\cdots \otimes A_j$$
 and
 $$\mathrm{lift}_n(R^{\mathrm{right}}) = A_{j+1}\otimes\cdots \otimes A_n$$
 \end{lemma}
+\begin{proof}
+This follows from the fact that if a partition $\lambda$ is split into an initial section $\lambda_1$ of length $n-j$ and a final section $\lambda_2$ of length $j$, if we define $w_1$ and $w_2$ to be the dominant permutations with $\code^*(w_i)=\lambda_i$, and if we define $c_1$ and $c_2$ to be the codes of $\wof{R^{\mathrm{left}}}w_1^{-1}$ and $\wof{R^{\mathrm{right}}}w_2^{-1}$, then the code of $\wof{R}(w_1w_2)^{-1}$ is obtained by concatenating $c_1$ and $c_2$. The result then follows from Proposition \ref{proposition:elemfactor}.
+\end{proof}
+
+\begin{lemma}[Lift factors at disjoint height ranges commute]\label{lemma:liftcommute}
+Let $A\in\mathcal{T}_n$ be a tensor of elementary RC factors all of whose heights are at most $k$, and let $B\in\mathcal{T}_n$ be a tensor of elementary RC factors all of whose heights are strictly greater than $k$. Then
+$$A\cdot B = B\cdot A\qquad\text{in }\mathcal{T}_n,$$
+where the product is the lift product $*$ on $\BRC_n$ transferred to $\mathcal{T}_n$ via $\mathrm{lift}_n$. Equivalently, given any RC graph $R$ admitting a lift-factorisation $R=R^{\mathrm{left}}*R^{\mathrm{right}}$ with $\hr(R^{\mathrm{left}})\leq k<\hr(R^{\mathrm{right}})$, the factors $R^{\mathrm{left}}$ and $R^{\mathrm{right}}$ commute under $*$ with any analogous factors arising from other RC graphs.
+\end{lemma}
+\begin{proof}
+Elementary symmetric RC graphs of different heights commute trivially, and the lift map turns this into commutativity of the corresponding $\boxtimes$-factors in $\mathcal{T}_n$.
+\end{proof}
 
 \begin{theorem}
 The product $*:\BRC_n\times\BRC_n\to\BRC_n$ is associative.
@@ -3514,7 +3644,7 @@ Assume first that $R_3$ is elementary symmetric of length $k$. We may uniquely f
 $$R_1 = R_1^{\mathrm{left}}* R_1^{\mathrm{right}}$$
 $$R_2 = R_2^{\mathrm{left}}* R_2^{\mathrm{right}}$$
 where $\hr(R_1^{\mathrm{left}}) \leq k$ and $\hr(R_1^{\mathrm{right}}) > k$, and similarly for $R_2^{\mathrm{left}}$ and $R_2^{\mathrm{right}}$. 
-Since the $-^{\mathrm{left}}$ factors commute with the $-^{\mathrm{right}}$ factors, we have that
+By Lemma \ref{lemma:liftcommute}, the ``left'' factors commute with the ``right'' factors, so we have that
 \begin{align*}
 R_1*(R_2*R_3)
 &= (R_1^{\mathrm{left}}*R_1^{\mathrm{right}})*\big((R_2^{\mathrm{left}}*R_2^{\mathrm{right}})*R_3\big)\\
@@ -3591,7 +3721,7 @@ $$A'*B'=R$$
 with $R$ being quasi-Yamanouchi.
 \end{theorem}
 \begin{proof}
-We have that for each such $A',B'$, $A'\ddot{\otimes} B'\mapsto A'*B'$ extends to an isomorphism of quasi-crystals. In particular, the connected components of the terms in the sum partition into quasi-crystals, each with a unique quasi-Yamanouchi element. The sum is then previsely as stated.
+We have that for each such $A',B'$, $A'\ddot{\otimes} B'\mapsto A'*B'$ extends to an isomorphism of quasi-crystals. In particular, the connected components of the terms in the sum partition into quasi-crystals, each with a unique quasi-Yamanouchi element. The sum is then precisely as stated.
 \end{proof}
 
 % \begin{definition}
@@ -3694,7 +3824,7 @@ with $R$ being a forest RC graph.
   and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
 \end{theorem}
 
-\subsection{A positive quasi-crystal Monk formula}
+% \subsection{A positive quasi-crystal Monk formula}
 
 
 
