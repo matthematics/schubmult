@@ -40,6 +40,11 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
 
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
+
+    @property
+    def is_elem_sym(self):
+        return self.perm.inv == 0 or (len(self.perm.descents()) == 1 and set(self.perm.trimcode).issubset({0,1}))
+
     def left_squash(self, other_rc):
         from .anti_rc_graph import AntiRCGraph
 
@@ -939,6 +944,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def __init__(self, *args: object) -> None:
         pass
 
+    def _rebuild(self, rows=()) -> RCGraph:
+        """Construct a fresh instance of this RC graph's concrete type from the given row data.
+
+        All in-class reconstructions (extend, normalize, transpose helpers, raising/lowering
+        operators, products, etc.) route through this hook so subclasses that need extra
+        construction state (e.g. :class:`DecoratedRCGraph`) only have to override this one method.
+        """
+        return type(self)(rows)
+
     @cached_property
     def perm_word(self) -> tuple[int, ...]:
         ret = []
@@ -1045,8 +1059,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if not end:
             end = len(self)
         if start == end:
-            return type(self)(())
-        return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
+            return self._rebuild(())
+        return self._rebuild([tuple([a - start for a in row]) for row in self[start:end]])
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
         ret = S.One
@@ -1124,10 +1138,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return ret
 
     def extend(self, extra_rows: int) -> RCGraph:
-        return type(self)([*self, *tuple([()] * extra_rows)])
+        return self._rebuild([*self, *tuple([()] * extra_rows)])
 
     def prepend(self, extra_rows: int) -> RCGraph:
-        return type(self)([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
+        return self._rebuild([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
 
     def _pieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None, left=False):
         working_rc = self
@@ -1277,7 +1291,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         # row is descent
         # inserting times
 
-        working_rc = type(self)([*self])
+        working_rc = self._rebuild([*self])
         if len(rows) == 0:
             if return_reflections:
                 return working_rc, ()
@@ -1636,10 +1650,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     #     return ret
 
     @classmethod
-    def elem_sym_rcs(cls, p, k, length=None):
+    def elem_sym_rcs(cls, p, k, length=None, weight=None) -> set[RCGraph]:
         if length is None:
             length = k
-        return cls.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=length)
+        return cls.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=length, weight=weight)
 
     def transpose(self, length: int | None = None) -> RCGraph:
         newrc = []
@@ -1661,7 +1675,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             new_row.reverse()
             newrc.append(tuple(new_row))
             i += 1
-        new_rc = (type(self)(newrc)).normalize()
+        new_rc = (self._rebuild(newrc)).normalize()
         new_rc = new_rc.resize(length)
         # import numpy as np
 
@@ -1735,7 +1749,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 while index < len(new_row) and new_row[index] > i + j - 1:
                     index += 1
             new_row.insert(index, i + j - 1)
-        return type(self)([*self[: i - 1], tuple(new_row), *self[i:]])
+        return self._rebuild([*self[: i - 1], tuple(new_row), *self[i:]])
 
     # # THIS IS KEY
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
@@ -1752,7 +1766,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         N = max(rowmax)
         shift_rc = RCGraph([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
         rc_self = self.resize(len(rc) + N)
-        return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+        return self._rebuild([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
 
     @classmethod
     @cache
@@ -1802,7 +1816,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
-        interim = type(self)([*self])
+        interim = self._rebuild([*self])
 
         diff_rows = []
         descs = []
@@ -1813,7 +1827,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
 
-        interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
+        interim2 = self._rebuild([*interim[:-1], tuple(sorted(descs, reverse=True))])
         interim = interim2.pieri_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
 
         ret = interim.rowrange(0, len(self) - 1)
@@ -1829,7 +1843,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return self
         if self.perm.inv == 0:
             return self
-        interim = type(self)([*self])
+        interim = self._rebuild([*self])
 
         diff_rows = []
         descs = []
@@ -1840,7 +1854,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             interim, row = interim.exchange_property(len((~interim.perm).trimcode), return_row=True, left=True)
             diff_rows += [row]
         dorpletrans = interim.transpose(length=width)
-        interim2 = type(self)([*dorpletrans[:-1], tuple(sorted(descs, reverse=True))]).transpose()
+        interim2 = self._rebuild([*dorpletrans[:-1], tuple(sorted(descs, reverse=True))]).transpose()
         interim = interim2.pieri_insert(len((~self.perm).trimcode) - extend_amount, diff_rows, left=True)
 
         return interim.transpose().resize(width - 1).transpose().resize(len(self))
@@ -1901,7 +1915,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return None
         new_row_i = [s for s in row_i if s != b]
         new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
-        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
+        ret_rc = self._rebuild([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
@@ -1948,7 +1962,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return None
         new_row_ip1 = [let for let in row_ip1 if let != a]
         new_row_i = sorted([a + s, *row_i], reverse=True)
-        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
+        ret_rc = self._rebuild([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
@@ -1962,20 +1976,20 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return self, RCGraph()
         if row >= len(self):
             raise ValueError("Row out of range")
-        front = type(self)([*self[:row]])
+        front = self._rebuild([*self[:row]])
         front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
         flen = len(front)
         for _ in range(flen - row):
             front = front.zero_out_last_row()
         if row == len(self):
-            back = type(self)()
+            back = self._rebuild()
         else:
             back = self.rowrange(row, len(self))
         return (front, back)
 
     def right_zero_act(self) -> set[RCGraph]:
         if self.perm.inv == 0:
-            return {type(self)([*self, ()])}
+            return {self._rebuild([*self, ()])}
 
         if self in RCGraph._z_cache:
             return RCGraph._z_cache[self]
@@ -2127,7 +2141,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         """Compute the product of this RC graph with another."""
         self_len = len(self)
         if self.perm.inv == 0:
-            return {type(self)([*self, *other.shiftup(self_len)]): 1}
+            return {self._rebuild([*self, *other.shiftup(self_len)]): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= self_len, f"{self=}, {self.perm=}"
         base_rc = self
@@ -2213,7 +2227,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             perm2 = k[0]
             new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
             new_row.sort(reverse=True)
-            nrc = type(self)([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
+            nrc = self._rebuild([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
             assert nrc.perm == perm2
             ret.add(nrc)
         assert ret == self.iterative_act(p), f"{ret=}\n{self.iterative_act(p)=}"
@@ -2222,8 +2236,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def iterative_act(self, p: int, insert: bool = True) -> set[RCGraph]:
         if p == 0:
             if insert:
-                return {type(self)([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
-            return {type(self)([*self])}
+                return {self._rebuild([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
+            return {self._rebuild([*self])}
         last = self.iterative_act(p - 1, insert=insert)
         ret = set()
         for rc in last:
@@ -2635,3 +2649,138 @@ class InverseRCGraph(CrystalGraph):
 
     def crystal_length(self) -> int:
         return self.base_graph.transpose().crystal_length()
+
+
+class DecoratedRCGraph(RCGraph):
+    """An RC graph decorated with a generating set used as the default ``y`` argument in :meth:`polyvalue`.
+
+    The decoration is preserved across all in-class reconstructions (``extend``, ``normalize``,
+    ``transpose``, raising/lowering operators, products, ...) via the :meth:`_rebuild` hook,
+    which is the single override point subclasses of :class:`RCGraph` use to thread extra
+    construction state through helper methods.
+    """
+
+    def __new__(cls, rows=(), generating_set: tuple | None = None) -> DecoratedRCGraph:
+        # Bypass RCGraph's value-keyed cache so that decorations with distinct
+        # generating sets remain distinct objects.
+        if rows is None or len(rows) == 0:
+            new_args = ()
+        else:
+            new_args = (tuple(tuple(row) for row in rows),)
+        obj = tuple.__new__(cls, *new_args)
+        obj._generating_set = tuple(generating_set) if generating_set is not None else None
+        return obj
+
+    def __init__(self, rows=(), generating_set: tuple | None = None) -> None:  # noqa: ARG002
+        super().__init__()
+
+    @property
+    def generating_set(self) -> tuple | None:
+        return self._generating_set
+
+    def _rebuild(self, rows=()) -> DecoratedRCGraph:
+        return type(self)(rows, self._generating_set)
+
+    def elem_squash(self, other: DecoratedRCGraph, coeff=1) -> DecoratedRCGraph:
+        if not other.is_elem_sym:
+            raise ValueError("Other RC graph must be elem-symmetric")
+        if other.perm.inv == 0:
+            return {self: coeff}
+        normalized_other = other.normalize()
+        normalized_self = self.normalize()
+        if len(normalized_self) > len(normalized_other):
+            raise ValueError("Other RC graph must have length at least as large as self")
+        normalized_self = normalized_self.resize(len(normalized_other))
+
+        base_term = normalized_self.squash_product(normalized_other)
+        ret = {}
+        ret[base_term] = 1
+
+        for i in range(other.perm.inv):
+            row, col = other.left_to_right_inversion_coords(i)
+            # if normalized_other.length_vector[row - 1] != 1:
+            #     raise ValueError(f"bagisn {other=}, {row=}, {normalized_other.length_vector=} {row, col=}")
+            wtt = tuple([0 if i + 1 == row else value for i, value in enumerate(normalized_other.length_vector)])
+            new_elem_sym = next(iter(RCGraph.elem_sym_rcs(other.perm.inv - 1, len(normalized_other), len(normalized_other), weight=wtt)))
+            new_elem_sym = DecoratedRCGraph(new_elem_sym, other.generating_set)
+            new_base = normalized_self.elem_squash(new_elem_sym)
+            for new_rc, coeff2 in new_base.items():
+                ret[new_rc] = ret.get(new_rc, 0) + coeff2 * coeff * (self.generating_set[new_rc.perm[row - 1]] - other.generating_set[col])
+            #ret.update(self.elem_squash(new_elem_sym, coeff=coeff * (self.generating_set[new_base.perm[row - 1]] - other.generating_set[col])))
+            #ret[new_base] = ret.get(new_base, 0) + self.generating_set[new_base.perm[row - 1]] - other.generating_set[col]
+        return ret
+
+    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
+        if y is None:
+            y = self._generating_set
+        return super().polyvalue(x, y=y, crystal=crystal)
+
+    @classmethod
+    @cache
+    def full_CEM_double(cls, perm: Permutation, length: int, partition: tuple[int] | None = None, *, generating_set) -> dict[RCGraph, dict[tuple[DecoratedRCGraph], int]]:
+        import itertools
+
+        from sympy import Add, Mul, Pow, expand, sympify
+
+        from schubmult import Sx
+        from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
+
+        the_ring = DoubleSchubertRing(Sx.genset, generating_set)
+
+        if perm.inv == 0:
+            return {cls([()] * length, generating_set=generating_set): {(): 1}}
+        if partition is None:
+            partition = (~(perm.strict_mul_dominant())).trimcode
+        mu = uncode(partition)
+
+        # Fully distribute Mul-over-Add but DO NOT call _eval_expand_func on the
+        # ElemSym leaves (that would destroy the FactorialElemSym objects whose
+        # `coeffvars` we need to decorate each RC graph factor with).
+        cem_expr = sympify(the_ring(perm).cem_rep(mumu=mu, elem_func=the_ring.symbol_elem_func))
+        cem_expr = expand(cem_expr, func=False)
+
+        ret: dict = {}
+        for term in Add.make_args(cem_expr):
+            coeff, rest = term.as_coeff_Mul()
+            # Flatten the product into a list of ElemSym factors repeated by exponent.
+            elem_factors: list = []
+            if rest != 1:
+                for factor in Mul.make_args(rest):
+                    if isinstance(factor, Pow):
+                        base, exponent = factor.as_base_exp()
+                        elem_factors.extend([base] * int(exponent))
+                    else:
+                        elem_factors.append(factor)
+            # Cartesian product over the elem-sym RC-graph choices for each factor,
+            # threading the factor index through so we can pull the right coeffvars.
+            # Use RCGraph (not cls) here: elem_sym_rcs goes through all_rc_graphs
+            # which would construct cls(rows) with no generating_set, invalid
+            # for DecoratedRCGraph. We wrap with proper coeffvars below.
+            choice_iters = [RCGraph.elem_sym_rcs(f.degree, f.numvars) for f in elem_factors]
+            for rc_choice in itertools.product(*choice_iters):
+                rc_tup = tuple(
+                    DecoratedRCGraph(rc, generating_set=(generating_set[0], *elem_factors[i].coeffvars, *generating_set[len(elem_factors[i].coeffvars)+ 2:]))
+                    for i, rc in enumerate(rc_choice)
+                )
+                # Squash-multiply the underlying (undecorated) RC graphs to get
+                # the aggregate graph that this monomial contributes to.
+                if not rc_choice:
+                    continue
+                rc = rc_choice[0]
+                for other in rc_choice[1:]:
+                    rc = rc.resize(len(other)).squash_product(other)
+                # if rc.perm != perm:
+                #     continue
+                rc = rc.resize(length)
+                toadd_dict = ret.get(rc, {})
+                toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
+                ret[rc] = toadd_dict
+        return ret
+
+if __name__ == "__main__":
+    from schubmult import uncode
+    from schubmult.abc import y, z
+
+    rc1 = DecoratedRCGraph([(3, 1), (4, 2),(),()], y)
+    rc2 = DecoratedRCGraph(RCGraph.random_rc_graph(uncode([0,0,1,1])), z)
+    print(rc1.elem_squash(rc2))
