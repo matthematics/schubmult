@@ -425,6 +425,7 @@ class BoundedDoubleRCFactorAlgebra(CrystalGraphRing):
     def _schub_elem_cached(self, perm, size, partition, genset):
         dct = DecoratedRCGraph.full_CEM_double(perm, size, partition=partition, generating_set=genset)
         # dct = RCGraph.full_CEM(perm, size)
+        print(f"DEBUG: {dct=}")
         elem = self.zero
         for _, cem_dict in dct.items():
             for key, coeff in cem_dict.items():
@@ -1037,4 +1038,4 @@ if __name__ == "__main__":
     from schubmult import uncode
     from schubmult.abc import y
     r = BoundedDoubleRCFactorAlgebra()
-    pretty_print(r.schub_elem(uncode([0,2]), 2, genset=y).to_rc_graph_ring_element(y))
+    pretty_print(r.schub_elem(uncode([0,2, 1]), 3, genset=y).to_rc_graph_ring_element(y))

@@ -22,6 +22,8 @@ images/
 *.swo
 *~
 
+FACEBOOK_POST.md
+
 # Package specific
 test_data/
 schubmult.egg-info/

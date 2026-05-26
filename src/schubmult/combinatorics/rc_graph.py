@@ -2694,7 +2694,7 @@ class DecoratedRCGraph(RCGraph):
 
         base_term = normalized_self.squash_product(normalized_other)
         ret = {}
-        ret[base_term] = 1
+        ret[base_term] = coeff
 
         for i in range(other.perm.inv):
             row, col = other.left_to_right_inversion_coords(i)
@@ -2705,7 +2705,7 @@ class DecoratedRCGraph(RCGraph):
             new_elem_sym = DecoratedRCGraph(new_elem_sym, other.generating_set)
             new_base = normalized_self.elem_squash(new_elem_sym)
             for new_rc, coeff2 in new_base.items():
-                ret[new_rc] = ret.get(new_rc, 0) + coeff2 * coeff * (self.generating_set[new_rc.perm[row - 1]] - other.generating_set[col])
+                ret[new_rc] = ret.get(new_rc, 0) + coeff * coeff2 * (self.generating_set[new_rc.perm[row - 1]] - other.generating_set[col])
             #ret.update(self.elem_squash(new_elem_sym, coeff=coeff * (self.generating_set[new_base.perm[row - 1]] - other.generating_set[col])))
             #ret[new_base] = ret.get(new_base, 0) + self.generating_set[new_base.perm[row - 1]] - other.generating_set[col]
         return ret

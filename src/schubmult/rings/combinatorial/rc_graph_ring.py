@@ -1,11 +1,11 @@
 from functools import cache
 
 from schubmult.combinatorics.rc_graph import RCGraph
-from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.rings.free_algebra import WordBasis
 from schubmult.symbolic import S, sympify_sympy, sympy_Mul
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
+from .schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 
 # from .crystal_graph_ring import CrystalTensorRing
 
@@ -419,6 +419,28 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             n = len(perm.trimcode)
         return self.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm, n), S.One))
 
+    def double_schub(self, perm, coeff_genset, n=None):
+        """
+        Return the RCGraphRing element corresponding to the double Schubert polynomial
+        indexed by `perm` in `S_n` (if n is None, n = len(perm) is used), with `coeff_genset`
+        as the set of variables for the double part.
+        """
+        from schubmult import Sx
+        from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
+        from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+
+        ring = DoubleSchubertRing(Sx.genset, coeff_genset)
+
+        poly = Sx([]) * ring(perm)
+        Sy = SingleSchubertRing(y)
+        result = 0
+        for perm, coeff in poly.items():
+            result += Sy.from_expr(coeff) @ self.schub(perm, n=n)
+        # if n is None:
+        #     n = len(perm.trimcode)
+        # return self.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm, n), S.One)).double_elem_sym_squash(perm.length_vector, coeff_genset, coeff_genset)
+        return result
+
     # def weight_coproduct(self, elem):
 
     def trim_operator(self, i, rc):
@@ -760,3 +782,41 @@ class GrassRCGraphRing(RCGraphRing):
     def one(self):
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})
+
+
+if __name__ == "__main__":
+    from sympy import pretty_print
+
+    from schubmult import uncode
+    from schubmult.abc import y
+    from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
+    from schubmult.rings.polynomial_algebra import ForestPolyBasis, MonomialBasis, PolynomialAlgebra
+    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+
+    PAy = PolynomialAlgebra(MonomialBasis(y))
+    r = RCGraphRing()
+    fr = ForestRCGraphRing()
+    elem_comp = (0, 1, 1)
+    comp = (0, 1, 1)
+    n = 4
+    Sy = SingleSchubertRing(y)
+    dschub1 = r.double_schub(uncode(comp), y, n=n)
+    elem_schub = r.double_schub(uncode(elem_comp), y, n=n)
+    ForestPoly = PolynomialAlgebra(ForestPolyBasis(Sy.genset))
+    dfor1 = 0
+    efor1 = 0
+    for (perm, rc), coeff in dschub1.items():
+        if rc.forest_weight == rc.perm.pad_code(len(rc)):
+            dfor1 += PAy.from_expr(Sy(perm).expand(deep=True),length=n).change_basis(ForestPolyBasis) @ fr(rc)
+
+    for (perm, rc), coeff in elem_schub.items():
+        if rc.forest_weight == rc.perm.pad_code(len(rc)):
+            efor1 += PAy.from_expr(Sy(perm).expand(deep=True),length=n).change_basis(ForestPolyBasis) @ fr(rc)
+
+    result = 0
+    for (sperm, rc), coeff in dfor1.items():
+        for (eperm, rc2), coeff2 in efor1.items():
+            result += coeff * coeff2 * (ForestPoly(*sperm) * ForestPoly(*eperm)) @ fr(rc.squash_product(rc2))
+
+    pretty_print(result)
+    #mul_rc = dschub1 % elem_schub
