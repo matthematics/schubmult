@@ -108,6 +108,20 @@ class MonomialBasis(PolynomialBasis):
             ret = add_perm_dict(ret, schub_dict_with_length)
         return ret
 
+    def transition_double_forest(self, dct, other_basis):
+        """Transition monomials to DoubleForestPolyBasis via ForestPolyBasis."""
+        from ._core import PolynomialAlgebra
+        from .forest_poly_basis import ForestPolyBasis
+
+        if len(dct) == 0:
+            return {}
+
+        length = max(len(k) for k in dct)
+        poly = Add(*[v * self.expand_monom(k) for k, v in dct.items()])
+        forest_ring = PolynomialAlgebra(ForestPolyBasis(other_basis.genset))
+        forest_dct = forest_ring.from_expr(poly, length=length)
+        return other_basis.from_forest_dict(forest_dct, length=length)
+
     @classmethod
     def dual_basis(cls):
         """Return the dual free algebra basis class (:class:`WordBasis`)."""
@@ -117,6 +131,7 @@ class MonomialBasis(PolynomialBasis):
     def transition(self, other_basis):
         """Return a transition function from monomial basis to *other_basis*."""
         from .anti_schubert_poly_basis import AntiSchubertPolyBasis
+        from .double_forest_poly_basis import DoubleForestPolyBasis
         from .monomial_slide_poly_basis import MonomialSlidePolyBasis
         from .schubert_poly_basis import SchubertPolyBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
@@ -127,6 +142,8 @@ class MonomialBasis(PolynomialBasis):
             return lambda x: self.transition_schubert(x, other_basis)
         if isinstance(other_basis, MonomialSlidePolyBasis):
             return lambda x: self.transition_slide(x, other_basis)
+        if isinstance(other_basis, DoubleForestPolyBasis):
+            return lambda x: self.transition_double_forest(x, other_basis)
         if isinstance(other_basis, SepDescPolyBasis):
             bonky_basis = SchubertPolyBasis(genset=other_basis.genset)
             return lambda x: other_basis.attach_key(bonky_basis.transition(other_basis)(bonky_basis.attach_key(bonky_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))))

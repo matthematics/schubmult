@@ -1,6 +1,7 @@
 """Re-export hub for all polynomial basis classes."""
 
 from .base_polynomial_basis import PolynomialBasis
+from .double_forest_poly_basis import DoubleForestPolyBasis
 from .elem_sym_poly_basis import ElemSymPolyBasis
 from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis
 from .monomial_basis import MonomialBasis
@@ -9,6 +10,7 @@ from .schubert_poly_basis import SchubertPolyBasis
 from .sepdesc_poly_basis import SepDescPolyBasis
 
 __all__ = [
+    "DoubleForestPolyBasis",
     "ElemSymPolyBasis",
     "FundamentalSlidePolyBasis",
     "MonomialBasis",

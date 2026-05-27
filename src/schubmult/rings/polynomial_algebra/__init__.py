@@ -10,9 +10,10 @@ classes as well as ready-to-use ring instances:
 - ``Monomial`` — Standard monomial basis
 """
 
-from ...abc import x
+from ...abc import x, y
 from ..schubert.schubert_ring import Sx
 from ._core import PA, PolynomialAlgebra, PolynomialAlgebraElement
+from .double_forest_poly_basis import DoubleForestPolyBasis
 from .forest_poly_basis import ForestPolyBasis
 from .key_poly_basis import KeyPolyBasis
 from .polynomial_basis import ElemSymPolyBasis, FundamentalSlidePolyBasis, MonomialBasis, MonomialSlidePolyBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
@@ -22,9 +23,12 @@ Schub = PolynomialAlgebra(SchubertPolyBasis(x))
 Key = PolynomialAlgebra(KeyPolyBasis(x))
 FSlide = PolynomialAlgebra(FundamentalSlidePolyBasis(x))
 Monomial = PolynomialAlgebra(MonomialBasis(x))
+DoubleForest = PolynomialAlgebra(DoubleForestPolyBasis(x, y))
 
 __all__ = [
     "PA",
+    "DoubleForest",
+    "DoubleForestPolyBasis",
     "ElemSymPolyBasis",
     "FSlide",
     "Forest",
