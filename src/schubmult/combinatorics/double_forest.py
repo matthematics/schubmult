@@ -65,6 +65,70 @@ def forest_from_code(code):
     return tuple(F)
 
 
+def forest_qdes(code):
+    """Return the left terminal set (qdes) of the forest with the given code.
+
+    qdes(F) = {i : c_i > 0 and c_{i+1} = 0}, using 1-based indexing.
+
+    These are the descents of the forest, analogous to descent set of a
+    permutation (Nadeau-Spink-Tewari, arXiv:2406.01510, §3.2).
+    """
+    c = list(code)
+    result = []
+    for idx, val in enumerate(c):
+        if val > 0:
+            next_val = c[idx + 1] if idx + 1 < len(c) else 0
+            if next_val == 0:
+                result.append(idx + 1)  # 1-based
+    return result
+
+
+def forest_code_from_trimming_sequence(trimming_seq):
+    """Return the forest composition sfc(F) for the unique indexed forest F
+    whose set of trimming sequences contains ``trimming_seq``.
+
+    A trimming sequence (i_1, ..., i_k) for F ∈ IndexedForests is defined
+    recursively: i_k ∈ qdes(F) and (i_1,...,i_{k-1}) ∈ Trim(F/i_k).
+    (Nadeau-Spink-Tewari, arXiv:2406.01510, Definition 3.8.)
+
+    Recovery uses the inverse operation (blossoming):
+        sfc(F · i) = (c_1,...,c_{i-1}, c_i+1, 0, c_{i+1}, c_{i+2},...)
+    i.e. increment position i and insert a 0 immediately after.
+    Starting from the empty forest and blossoming left-to-right through
+    (i_1,...,i_k) reconstructs F.
+
+    Parameters
+    ----------
+    trimming_seq : iterable of int
+        Sequence of positive integers (1-based leaf positions).
+
+    Returns
+    -------
+    tuple of int
+        The composition sfc(F); trailing zeros are kept to preserve the
+        ambient length implied by the sequence.
+
+    Examples
+    --------
+    >>> forest_code_from_trimming_sequence([1, 1, 2, 4, 7])
+    (2, 1, 0, 1, 0, 0, 1, 0)
+    >>> forest_code_from_trimming_sequence([3])
+    (0, 0, 1, 0)
+    >>> forest_code_from_trimming_sequence([])
+    ()
+    """
+    sfc = []
+    for i in trimming_seq:
+        idx = i - 1  # convert to 0-based
+        # extend if needed
+        while len(sfc) <= idx:
+            sfc.append(0)
+        # blossom: increment at idx, then insert 0 immediately after
+        sfc[idx] += 1
+        sfc.insert(idx + 1, 0)
+    return tuple(sfc)
+
+
 def sylvester_word(forest):
     """Return one Sylvester word of `forest` via pre-order traversal."""
     word = []
@@ -137,9 +201,9 @@ def letter_weight(letter, x_gen, t_gen):
 
 def double_forest_polynomial(code, x_gen, t_gen, n=None):
     """Compute P_F(x;t) for indexed forest F with code c(F)=code."""
+    # Preserve the ambient composition length exactly as passed; do not trim
+    # trailing zeros (matches ForestPolyBasis conventions).
     code = list(code)
-    while code and code[-1] == 0:
-        code.pop()
     F = forest_from_code(code)
     target = canonical_forest_from_word(sylvester_word(F))
     sz = sum(code)

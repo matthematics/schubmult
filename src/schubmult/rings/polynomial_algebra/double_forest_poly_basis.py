@@ -66,9 +66,16 @@ class DoubleForestPolyBasis(PolynomialBasis):
     def _clean_dict(self, dct):
         return {tuple(k): expand(v) for k, v in dct.items() if expand(v) != 0}
 
+    def _pad_and_combine(self, dct, length):
+        out = {}
+        for k, v in dct.items():
+            kk = pad_tuple(tuple(k), length)
+            out[kk] = expand(out.get(kk, 0) + v)
+        return self._clean_dict(out)
+
     def _straighten_from_forest_dict(self, forest_dct, length):
         """Peel top x-degree terms in Forest basis until residual vanishes."""
-        residual = self._clean_dict({pad_tuple(tuple(k), length): v for k, v in forest_dct.items()})
+        residual = self._pad_and_combine(forest_dct, length)
         out = {}
 
         for _ in range(10000):
@@ -86,7 +93,7 @@ class DoubleForestPolyBasis(PolynomialBasis):
 
                 df_as_forest = self.basis_forest_expansion(key, length)
                 residual = add_perm_dict_with_coeff(residual, df_as_forest, coeff=-coeff)
-                residual = self._clean_dict(residual)
+                residual = self._pad_and_combine(residual, length)
                 progressed = True
 
             if not progressed:
@@ -109,7 +116,7 @@ class DoubleForestPolyBasis(PolynomialBasis):
         res = {}
         for k, v in dct.items():
             poly = self.basis_polynomial(k)
-            monoms = genset_dict_from_expr(poly, self.genset)
+            monoms = genset_dict_from_expr(poly, self.genset, length=len(k))
             res = add_perm_dict_with_coeff(res, monoms, coeff=v)
         return res
 

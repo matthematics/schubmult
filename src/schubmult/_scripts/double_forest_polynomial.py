@@ -612,13 +612,13 @@ if __name__ == "__main__":
     from sympy import pretty_print
     from symengine import symbols
     from schubmult.abc import x, y
-    from schubmult.rings.polynomial_algebra import ForestPolyBasis, PolynomialAlgebra
+    from schubmult.rings.polynomial_algebra import ForestPolyBasis, PolynomialAlgebra, Forest
     t = [symbols(f"t_{i}") for i in range(1, 10)]
     #from schubmult._scripts.double_forest_polynomial import double_forest_polynomial, extract_double_forest_coefficients, extract_double_forest_coefficient
     # from schubmult.abc import x,y
 
-    poly = double_forest_polynomial([2,0,1], lambda i: x[i], lambda j: y[j]) * double_forest_polynomial([0,1, 0], lambda i: x[i], lambda j: t[j])
-    coeffs = extract_double_forest_coefficients(poly, x_genset=x, length=4)
-    print('coeffs:\n', coeffs)
+    poly = double_forest_polynomial([2,0,1], lambda i: x[i], lambda j: y[j])
+    # coeffs = extract_double_forest_coefficients(poly, x_genset=x, length=4)
+    # print('coeffs:\n', coeffs)
     # print('main coeff:', coeffs.get((2,0,1,0)))
     # print('single helper:', extract_double_forest_coefficient(poly, [2,0,1], x_genset=x, length=4))
