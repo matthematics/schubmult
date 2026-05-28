@@ -267,7 +267,7 @@ where we take $\langle -,-\rangle$ to be the pairing implied by the assertion th
 $$\langle c, x_a\rangle = \delta_{c,a}$$
 where $a$ is any composition. We present an explicit formula for the dual Schubert basis in $\dcoma$ with integer coefficients.
 
-A dual basis to the Schubert polynomials is of course not itself new: Postnikov and Stanley \cite{postnikov2009chains} introduced a family of dual Schubert polynomials $\mathfrak{D}_w$ in the polynomial ring with respect to a particular integral pairing, characterized by a formula that mimics the action of divided difference operators on Schubert polynomials. The relationship between the two bases is that the coefficients of $\mathfrak{D}_u$ in the divided power algebra are, up to a scalar factor, the same as the coefficients of $\dsch_u^n$ in the weak composition basis.
+A dual basis to the Schubert polynomials is of course not itself new: Postnikov and Stanley \cite{postnikov2009chains} introduced a family of dual Schubert polynomials in the polynomial ring with respect to a particular integral pairing, characterized by a formula that mimics the action of divided difference operators on Schubert polynomials. The difference with our $\dsch_u^n$ is structural rather than computational. The Postnikov--Stanley dual lives in the polynomial ring, and any product structure it carries is the ordinary one inherited from that ring; ours lives in $\dcoma$, where it forms a basis of a free associative algebra under the concatenation product $\sqcupplus$. The two thus encode the same duality but ``see'' different multiplicative information. Empirically the two are related by a scalar factor and a basis transition (a connection pointed out to us by Hamaker in connection to \cite{hamaker2023dual}); the divided-difference-style integral formula of \cite{postnikov2009chains} should in principle transfer to our setting, but we have not pursued this.
 % Then $\dcoma$ has a basis indexed by $\bigcup_{n=0}^\infty \mathrm{Comp}_n$, and the product of two basis elements is given by concatenation of the corresponding weak compositions. Hence, as an algebra, $\dcoma$ is isomorphic to the free associative algebra on a countable set of generators indexed by nonnegative integers. The coproduct on $\dcoma$ is given by deconcatenation, that is to say
 
 %Multiplicatively, the algebra is free on a countable set of generators indexed by nonnegative integers, with the degree of the generator being its index. We identify the basis dual to the Schubert polynomials in $\dcoma$, which we index as $\dsch_u^n$ for $u\in S_\infty$ and $n$ is at least as large as the last descent of $u$. This is closely related to, yet subtly distinct from, the dual basis to the Schubert polynomials in the polynomial ring considered by Postnikov and Stanley in \cite{postnikov2009chains}, identified with an explicit formula in said article. 
@@ -363,9 +363,9 @@ Theorem \ref{theorem:forestpolyLR} is of a different character. It does not refi
 
 Perhaps the strongest indication that this is the ``correct'' way to decompose RC graphs is that these formulas are proved by the fact that if we define
 $$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\RC_n}$$
-then there is an associative product $\sqcupplus$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
+then there is an associative product $\diamond$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
 $$\alpha(R) = \dsch_u^n$$
-where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\sqcupplus$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintaining the projection to $\dcoma$ and leveraging this to find the formula.
+where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\diamond$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintaining the projection to $\dcoma$ and leveraging this to find the formula.
 
 \subsection*{Conjectures}
 
@@ -392,7 +392,7 @@ $$\zeromap(\phi(B)) = \phi(\mathbf{t}(B))$$
 
 \subsection*{Outline of the paper}
 
-Section \ref{section:bialgebra} (\nameref{section:bialgebra}) constructs the Schubert bialgebra $\coma$, identifies its Schubert basis $\sch_u^n$, and exhibits the elementary basis $\mathcal{E}_n$ of $\coma_n$. Section \ref{section:dualalgebra} (\nameref{section:dualalgebra}) builds the graded dual $\dcoma$, identifies the dual Schubert basis $\dsch_u^n$, and records the coproduct. Section \ref{section:brc} (\nameref{section:brc}) defines the module $\BRC$ of bounded RC graphs, the row-decomposition maps $\zeromap$, $\clp^p$, $\trm^p$, and the associative product $\sqcupplus$ on $\BRC$; this culminates in Theorem \ref{theorem:LR}, the Littlewood--Richardson rule for the dual Schubert basis. Section \ref{section:crystals} (\nameref{section:crystals}) imports the Demazure crystal structure on RC graphs from \cite{assaf2018demazure} and identifies an ideal $\Theta\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRkey}, the LR rule for the dual key basis. Section \ref{section:forest} (\nameref{section:forest}) does the analogous construction for the forest invariant of \cite{nadeau2024forest}, producing an ideal $\Gamma\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRforest}, the LR rule for the dual forest basis. Section \ref{section:slide} (\nameref{section:slide}) introduces the quasi-Yamanouchi map $\QY$ and the corresponding ideal $\Sigma\subset\BRC$, yielding Theorem \ref{theorem:lrfslide}, a positive product rule for the dual slide basis; the section closes with Theorem \ref{theorem:general_lr_template}, a general ideal-quotient Littlewood--Richardson template that unifies the dual Schubert, key, forest, and slide rules under a single set of axioms on an equivalence relation $\sim$ on $\BRC$. Section \ref{section:forestrule} (\nameref{section:forestrule}) proves what we regard as the main theorem of the paper: Theorem \ref{theorem:forestpolyLR}, a positive, manifestly combinatorial Littlewood--Richardson rule for the forest polynomials \emph{themselves} (not merely their duals). The proof leverages the squash product $\boxtimes$, an auxiliary lift product $*$ on a multiplactic algebra $\mathcal{M}_n$ of elementary RC factors, and the slide quotient of Section \ref{section:slide}. The final section is devoted to the proof of Proposition \ref{proposition:pullindex}.
+Section \ref{section:bialgebra} (\nameref{section:bialgebra}) constructs the Schubert bialgebra $\coma$, identifies its Schubert basis $\sch_u^n$, and exhibits the elementary basis $\mathcal{E}_n$ of $\coma_n$. Section \ref{section:dualalgebra} (\nameref{section:dualalgebra}) builds the graded dual $\dcoma$, identifies the dual Schubert basis $\dsch_u^n$, and records the coproduct. Section \ref{section:brc} (\nameref{section:brc}) defines the module $\BRC$ of bounded RC graphs, the row-decomposition maps $\zeromap$, $\clp^p$, $\trm^p$, and the associative product $\diamond$ on $\BRC$; this culminates in Theorem \ref{theorem:LR}, the Littlewood--Richardson rule for the dual Schubert basis. Section \ref{section:crystals} (\nameref{section:crystals}) imports the Demazure crystal structure on RC graphs from \cite{assaf2018demazure} and identifies an ideal $\Theta\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRkey}, the LR rule for the dual key basis. Section \ref{section:forest} (\nameref{section:forest}) does the analogous construction for the forest invariant of \cite{nadeau2024forest}, producing an ideal $\Gamma\subset\BRC$ whose quotient yields Theorem \ref{theorem:LRforest}, the LR rule for the dual forest basis. Section \ref{section:slide} (\nameref{section:slide}) introduces the quasi-Yamanouchi map $\QY$ and the corresponding ideal $\Sigma\subset\BRC$, yielding Theorem \ref{theorem:lrfslide}, a positive product rule for the dual slide basis; the section closes with Theorem \ref{theorem:general_lr_template}, a general ideal-quotient Littlewood--Richardson template that unifies the dual Schubert, key, forest, and slide rules under a single set of axioms on an equivalence relation $\sim$ on $\BRC$. Section \ref{section:forestrule} (\nameref{section:forestrule}) proves what we regard as the main theorem of the paper: Theorem \ref{theorem:forestpolyLR}, a positive, manifestly combinatorial Littlewood--Richardson rule for the forest polynomials \emph{themselves} (not merely their duals). The proof leverages the squash product $\boxtimes$, an auxiliary lift product $*$ on a multiplactic algebra $\mathcal{M}_n$ of elementary RC factors, and the slide quotient of Section \ref{section:slide}. The final section is devoted to the proof of Proposition \ref{proposition:pullindex}.
 
 \clearpage
 \subsection*{Notation and conventions}
@@ -458,8 +458,8 @@ $k_{a,b}^c$ & Dual key structure constants of Theorem \ref{theorem:LRkey}.\\
 $f_{a,b}^c$ & Dual forest structure constants of Theorem \ref{theorem:LRforest}.\\
 \\
 \multicolumn{2}{@{}l}{\emph{The ring of RC graphs and its quotients.}}\\
-$\BRC$ & $\bigoplus_{n\geq 0}\mathbb{Z}^{\oplus\RC_n}$, with the product $\sqcupplus$.\\
-$\sqcupplus$ & The associative concatenation product, used on $\BRC$, on $\dcoma$, and on the quotients $\BRC/I_\sim$; built from $\clp^p$ and $\trm^p$ on $\BRC$ (Definition in §\ref{section:ringproduct}).\\
+$\BRC$ & $\bigoplus_{n\geq 0}\mathbb{Z}^{\oplus\RC_n}$, with the product $\diamond$.\\
+$\diamond$ & The associative product on $\BRC$ built from $\clp^p$ and $\trm^p$ (Definition in §\ref{section:ringproduct}).\\
 $*$ & The auxiliary ``lift product'' on $\BRC_n$ used in the forest LR rule (§\ref{section:liftproduct}).\\
 $\boxtimes$ & The squash product of RC graphs\\
 $\alpha:\BRC\to\dcoma$ & Ring homomorphism with $\alpha(R)=\dsch_{\wof{R}}^{\hr(R)}$.\\
@@ -1620,7 +1620,7 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 
 \begin{definition}
 Suppose we have two bounded RC graphs $R_1$ with $\hr(R_1)=m$ and $R_2$ with $\hr(R_2)=n$. The product of these is defined by
-$$R_1\sqcupplus R_2 = \sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}}R'$$  
+$$R_1\diamond R_2 = \sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}}R'$$  
 where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
 \end{definition}
 
@@ -1637,7 +1637,7 @@ This follows by iterated application of Theorem \ref{theorem:zero_bijection} if 
 \end{proof}
 
 \begin{theorem}
-	 The product $\sqcupplus$ is associative and $\BRC$ is a ring when equipped with $\sqcupplus$.%, and $\Xi:\BRC\to \dcoma$ and $\omega:\BRC\to \dcoma$ are homomorphisms of rings.
+	 The product $\diamond$ is associative and $\BRC$ is a ring when equipped with $\diamond$.%, and $\Xi:\BRC\to \dcoma$ and $\omega:\BRC\to \dcoma$ are homomorphisms of rings.
 \end{theorem}
 \begin{proof}
 Suppose we have three bounded RC graphs $R_1$ with $\hr(R_1)=p$, $R_2$ with $\hr(R_2)=q$, and $R_3$ with $\hr(R_3)=r$, and we want to show that the order of bracketing the product is irrelevant. Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. By Lemma \ref{lemma:injap},
@@ -1672,10 +1672,10 @@ and the RC graph $P_2$ is clipped in the second representation, obtaining
 \[
   (R_1', R_2', \wof{R}),
 \]
-since $R_2'=\clp^q(P_2)$. These represent the same RC graph $\clp^{p+q}(R)$. It follows from Lemma \ref{lemma:injap} that $R_1=R_1'$ and $R_2=R_2'$. We may conclude that if we know the RC graphs $R_1, R_2, R_3$, then the RC graphs that appear as terms in the product $(R_1\sqcupplus R_2)\sqcupplus R_3 = R_1\sqcupplus(R_2\sqcupplus R_3)$ do not depend on the bracketing.
-%Then $A_{p+q}(R)$ is uniquely determined by a term in $R_1\sqcupplus R_2$ and the RC graph $R_3$. The term in $R_1\sqcupplus R_2$ is uniquely determined by $R_1$, $R_2$, and the permutation of $\clp^{p+q}(R)$. We conclude therefore that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$. If we consider the bracketing $R_1\sqcupplus (R_2\sqcupplus R_3)$, we have that $A_p(R)$ is uniquely determined by $R_1$ and a term in $R_2\sqcupplus R_3$, which is uniquely determined by $R_2$, $R_3$, and the permutation of $\clp^p(R)$. We conclude that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$, as before. By Lemma \ref{lemma:injap}, this implies that the two products are equal, establishing associativity.
+since $R_2'=\clp^q(P_2)$. These represent the same RC graph $\clp^{p+q}(R)$. It follows from Lemma \ref{lemma:injap} that $R_1=R_1'$ and $R_2=R_2'$. We may conclude that if we know the RC graphs $R_1, R_2, R_3$, then the RC graphs that appear as terms in the product $(R_1\diamond R_2)\diamond R_3 = R_1\diamond(R_2\diamond R_3)$ do not depend on the bracketing.
+%Then $A_{p+q}(R)$ is uniquely determined by a term in $R_1\diamond R_2$ and the RC graph $R_3$. The term in $R_1\diamond R_2$ is uniquely determined by $R_1$, $R_2$, and the permutation of $\clp^{p+q}(R)$. We conclude therefore that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$. If we consider the bracketing $R_1\diamond (R_2\diamond R_3)$, we have that $A_p(R)$ is uniquely determined by $R_1$ and a term in $R_2\diamond R_3$, which is uniquely determined by $R_2$, $R_3$, and the permutation of $\clp^p(R)$. We conclude that $R$ is uniquely determined by $\clp^p(R)$, $\clp^{p+q}(R)$, and $\trm^p(R)$, as before. By Lemma \ref{lemma:injap}, this implies that the two products are equal, establishing associativity.
 
-% The fact that $\omega$ is a homomorphism of rings follows from the observation that for any $R$ that occurs as a term in $R_1\sqcupplus R_2$, we have that 
+% The fact that $\omega$ is a homomorphism of rings follows from the observation that for any $R$ that occurs as a term in $R_1\diamond R_2$, we have that 
 % $$\wtt(R)=\wtt(R_1)\wtt(R_2)$$
 % To prove that $\Xi$ is a homomorphism, note that for a weak composition $a$ of length $n$ we have
 % $$\sum_{R\in\RC_n\wtt(R)=a}\Xi(R) = [a]$$
@@ -1736,7 +1736,7 @@ We compute the product of two bounded RC graphs $(R_1, 2)\in\BRC(2413,2)$ and $(
   \node[font=\scriptsize, text=black, anchor=east] at (-0.3,2.5) {2};
   \draw[black, line width=1.2000000000000002pt] (0,2) rectangle (4,4);
 \end{tikzpicture}}}
-  \sqcupplus
+  \diamond
   \vcenter{\hbox{\begin{tikzpicture}[scale=0.55]
   \draw[lightgray, very thin, opacity=0.3] (0,1) -- (3,1);
   \draw[lightgray, very thin, opacity=0.3] (0,2) -- (3,2);
@@ -2532,7 +2532,7 @@ We compute the product of two bounded RC graphs $(R_1, 2)\in\BRC(2413,2)$ and $(
 % \newcommand{\BRCC}{\overline{\BRC}}
 % % multiplying by empty row ordering
 % We enlarge the module $\BRC$ to include bounded RC graphs $R$ with $\hr(R)=n$ that do not necessarily satisfy the condition that $\maxd(\wof{R})\leq n$, only that $R$ has at most $n$ rows. We denote this larger module by $\BRCC$. For $(R, p)\in \BRCC$, define $(R, p)^T\in \BRC$ by $(R^T,\maxd(\wof{R}^{-1}))$. We may define an associative product on $\BRCC$ by
-% $$(R_1, p)\spadesuit(R_2,q) = \mathtt{sz}_{p+q}(((R_1, p)^T\sqcupplus (R_2, q)^T)^T)$$
+% $$(R_1, p)\spadesuit(R_2,q) = \mathtt{sz}_{p+q}(((R_1, p)^T\diamond (R_2, q)^T)^T)$$
 % where $\mathtt{sz}_n:\BRCC\to \BRCC$ is defined on basis elements by 
 % $$\mathtt{sz}_n(R, m) = \begin{cases}(R, n) & \text{if } i\leq n\text{ for all }(i, j)\in R\\
 % 0 & \text{otherwise}\end{cases}$$
@@ -2567,9 +2567,9 @@ Let $\Omega$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the RC graphs 
 $\Omega$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-  The fact that $\Omega$ is a left ideal follows from the fact that a product $R\sqcupplus R_1$ is uniquely determines by $R\sqcupplus \mathrm{empty}(\hr(R_1))$ and $R_1$, and the contribution of $R_1$ is precisely that it replaces the last $\hr(R_1)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R_1$ is added as the last $\hr(R_1)$ rows. It follows that $R\sqcupplus R_1 - R\sqcupplus R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a left ideal.
+  The fact that $\Omega$ is a left ideal follows from the fact that a product $R\diamond R_1$ is uniquely determines by $R\diamond \mathrm{empty}(\hr(R_1))$ and $R_1$, and the contribution of $R_1$ is precisely that it replaces the last $\hr(R_1)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R_1$ is added as the last $\hr(R_1)$ rows. It follows that $R\diamond R_1 - R\diamond R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a left ideal.
 
-  The fact that $\Omega$ is a right ideal follows from the fact that a product $R_1\sqcupplus R$ is uniquely determined by $R_1\sqcupplus \mathrm{empty}(\hr(R))$ and $R$, and the contribution of $R$ is precisely that it replaces the last $\hr(R)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R$ is added as the last $\hr(R)$ rows. It follows that $R_1\sqcupplus R - R_2\sqcupplus R$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a right ideal.
+  The fact that $\Omega$ is a right ideal follows from the fact that a product $R_1\diamond R$ is uniquely determined by $R_1\diamond \mathrm{empty}(\hr(R))$ and $R$, and the contribution of $R$ is precisely that it replaces the last $\hr(R)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R$ is added as the last $\hr(R)$ rows. It follows that $R_1\diamond R - R_2\diamond R$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a right ideal.
 \end{proof}
 
 \begin{theorem} \label{theorem:semidirect}
@@ -2594,9 +2594,9 @@ $$d_{U, V}^w = \#\{R\in \RC(w, p + q): \clp^p(R)=U,\trm^p(R)=V\}$$
 
 \begin{proof}[Proof of Theorem \ref{theorem:LR}]
 For any choice of RC graphs $U_1,U_2\in \RC_p(u)$ and $V_1,V_2\in\RC_q(v)$ and a permutation $w$, we have $\alpha(U_1) = \alpha(U_2)$ and $\alpha(V_1)=\alpha(V_2)$, so that $\alpha(U_1)\alpha(V_1) = \alpha(U_2)\alpha(V_2)$. We have
-$$U_1\sqcupplus V_1 = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} R$$
+$$U_1\diamond V_1 = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} R$$
 Applying $\alpha$, we then have that
-$$\dsch_u^p\sqcupplus \dsch_v^q = \alpha(U_1)\sqcupplus\alpha(V_1) = \alpha(U_1\sqcupplus V_1) = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \alpha(R)=\sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \dsch_{\wof{R}}^{p+q}$$
+$$\dsch_u^p\sqcupplus \dsch_v^q = \alpha(U_1)\sqcupplus\alpha(V_1) = \alpha(U_1\diamond V_1) = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \alpha(R)=\sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \dsch_{\wof{R}}^{p+q}$$
 The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=d_{U_2, V_2}^w$ by definition, and we have the result.
 \end{proof}
 
@@ -2756,9 +2756,9 @@ $$[c] = \sum_{R\in\RC_{\mathbb{Y}}(c)} \kappa_{\mathrm{extwt}(\mathbb{Y}(R))}^*$
   $\Theta$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-  The fact that $\Theta$ is a left ideal follows from the fact that the products $R\sqcupplus R_1$ and $R\sqcupplus R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. Since the crystal raising/lowering operators act directly on adjacent rows, the same crystal operators will apply to the rows below, so that $R\sqcupplus R_1$ and $R\sqcupplus R_2$ have the same crystal structure in the trailing rows. In passing to highest weights $\mathbb{Y}(R\sqcupplus R_1)$ and $\mathbb{Y}(R\sqcupplus R_2)$, we may pass through the partial highest weights $R\sqcupplus Y(R_1) = R\sqcupplus Y(R_2)$, so that in particular the highest weights of the bijectively corresponding terms of $R\sqcupplus R_1$ and $R\sqcupplus R_2$ are the same.
+  The fact that $\Theta$ is a left ideal follows from the fact that the products $R\diamond R_1$ and $R\diamond R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. Since the crystal raising/lowering operators act directly on adjacent rows, the same crystal operators will apply to the rows below, so that $R\diamond R_1$ and $R\diamond R_2$ have the same crystal structure in the trailing rows. In passing to highest weights $\mathbb{Y}(R\diamond R_1)$ and $\mathbb{Y}(R\diamond R_2)$, we may pass through the partial highest weights $R\diamond Y(R_1) = R\diamond Y(R_2)$, so that in particular the highest weights of the bijectively corresponding terms of $R\diamond R_1$ and $R\diamond R_2$ are the same.
   
-  %, so that $R\sqcupplus R_1 - R\sqcupplus R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\mathbb{Y}(R_1') = \mathbb{Y}(R_2')$, and $\Theta$ is a left ideal.
+  %, so that $R\diamond R_1 - R\diamond R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\mathbb{Y}(R_1') = \mathbb{Y}(R_2')$, and $\Theta$ is a left ideal.
 
   To prove that $\Theta$ is a right ideal, the same argument applies, but we must invoke Corollary \ref{corollary:crystaliso} to guarantee that the crystals remain isomorphic as needed.
 \end{proof}
@@ -2782,11 +2782,11 @@ $$\alpha(K_a) = \kappa_a^*$$
 \begin{proof}
 The last statement is simply Theorem \ref{theorem:keyformula}. The $K_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Theta\to \dcoma$. We have that $\alpha(K_a)=\kappa_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $K_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $K_a$, and since 
 $$\alpha(K_a)\sqcupplus\alpha(K_b) = \kappa_a^*\sqcupplus\kappa_b^*=\sum_{c}k_{ab}^c\,\kappa_c^*=\sum k_{a,b}^c\,\alpha(K_c),$$ 
-it follows that $K_a\sqcupplus K_b$ is a linear combination of the $K_c$, so the span of the $K_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
+it follows that $K_a\diamond K_b$ is a linear combination of the $K_c$, so the span of the $K_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
 \end{proof}
 
 \begin{proof}[Proof of Theorem \ref{theorem:LRkey}]
-  The coefficient of $K_c$ in $K_a\sqcupplus K_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\sqcupplus\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are Demazure crystals of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
+  The coefficient of $K_c$ in $K_a\diamond K_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\sqcupplus\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are Demazure crystals of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
 
 \begin{example}[Computing $\kappa_a^*\sqcupplus\kappa_b^*$ for $a=(0,1,2)$, $b=(0,1,0,2)$]\label{example:LRkey}
@@ -3329,10 +3329,10 @@ $$[c] = \sum_{R\in\RC_\forest(c)} \forest_{\code_\forest(R)}^*$$
   $\Gamma$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-  The fact that $\Gamma$ is a left ideal follows from the fact that the products $R\sqcupplus R_1$ and $R\sqcupplus R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. In terms of the resulting words, the shifted $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ are suffixes of $\mathrm{word}(R\sqcupplus R_1)$ and $\mathrm{word}(R\sqcupplus R_2)$. The $\equiv_\forest$ equivalence is determined by local swaps of pairs of letters that are related in a shift-invariant \cite[Proposition~5.8]{nadeau2024forest} and prefix-invariant \cite[Lemma~5.9]{nadeau2024forest} way, from which the result follows, since the prefixes are identical and the suffixes are related in the same way as $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$.
+  The fact that $\Gamma$ is a left ideal follows from the fact that the products $R\diamond R_1$ and $R\diamond R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. In terms of the resulting words, the shifted $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ are suffixes of $\mathrm{word}(R\diamond R_1)$ and $\mathrm{word}(R\diamond R_2)$. The $\equiv_\forest$ equivalence is determined by local swaps of pairs of letters that are related in a shift-invariant \cite[Proposition~5.8]{nadeau2024forest} and prefix-invariant \cite[Lemma~5.9]{nadeau2024forest} way, from which the result follows, since the prefixes are identical and the suffixes are related in the same way as $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$.
 
   To prove that $\Gamma$ is a right ideal, assume $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ differ by a single local swap of adjacent letters $a$ and $b$ in the same equivalence class, with $a$ to the left of $b$ in $\mathrm{word}(R_1)$ and to the right of $b$ in $\mathrm{word}(R_2)$. It suffices to consider only the case where $R$ is empty to show that
-  $$R_1\sqcupplus R - R_2\sqcupplus R\in \Gamma$$
+  $$R_1\diamond R - R_2\diamond R\in \Gamma$$
   for any $R$. According to \cite{nadeau2024forest}, the local swap of $a$ and $b$ is a commutation move, and we may reduce to the case where $a$ and $b$ are the last two letters of $\mathrm{word}(R_1)$, and that $b$ is the last descent of $\wof{R_1}$. For any empty $R$, the position $a$ will remain the same. For any term not identical to $R_1$, the suffix of the word will be $ab'$ where $b'>b$. For each $b'$, there will be precisely one matching term with suffix $b'a$ and identical prefix. The local swap of $a$ and $b'$ in the suffix is a valid local swap, so the resulting terms are all in $\Gamma$, and we are done.
 \end{proof}
 
@@ -3355,11 +3355,11 @@ $$\alpha(F_a) = \forest_a^*$$
 \begin{proof}
 As before, the last statement is simply Theorem \ref{theorem:forestformula}. The $F_a$ actually consist of pairwise disjoint sets of RC graphs, the set of all such is clearly independent. To show that they span a subring, consider the homomorphism $\alpha:\BRC/\Gamma\to \dcoma$. We have that $\alpha(F_a)=\forest_a^*$, and since these are linearly independent, it follows that the kernel of $\alpha$ intersects trivially with the span of the $F_a$. Since $\alpha$ is a homomorphism, it follows that $\alpha$ is injective on the span of the $F_a$, and since 
 $$\alpha(F_a)\sqcupplus\alpha(F_b) = \forest_a^*\sqcupplus\forest_b^*=\sum_{c}f_{ab}^c\,\forest_c^*=\sum f_{a,b}^c\,\alpha(F_c),$$ 
-it follows that $F_a\sqcupplus F_b$ is a linear combination of the $F_c$, so the span of the $F_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
+it follows that $F_a\diamond F_b$ is a linear combination of the $F_c$, so the span of the $F_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
 \end{proof}
 
 \begin{proof}[Proof of Theorem \ref{theorem:LRforest}]
-  The coefficient of $F_c$ in $F_a\sqcupplus F_b$ is the same as the coefficient of $\forest_c^*$ in $\forest_a^*\sqcupplus\forest_b^*$, which is $f_{a,b}^c$ by definition. Since each of the summands of $F_c$ that are equivalence classes of RC graphs are distinct from the summands of any other forest element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
+  The coefficient of $F_c$ in $F_a\diamond F_b$ is the same as the coefficient of $\forest_c^*$ in $\forest_a^*\sqcupplus\forest_b^*$, which is $f_{a,b}^c$ by definition. Since each of the summands of $F_c$ that are equivalence classes of RC graphs are distinct from the summands of any other forest element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
 
 \begin{example}[Computing $\forest_a^*\sqcupplus\forest_b^*$ for $a=(0,0,2,0,2)$, $b=(0,1,0,0,2)$]\label{example:LRforest}
@@ -3458,7 +3458,7 @@ Let $\Sigma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $
 $\Sigma$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-That $\Sigma$ is a left ideal follows from the same mechanism used for $\Theta$: in $R\sqcupplus R_1$ and $R\sqcupplus R_2$, the first $\hr(R)$ rows agree, while the trailing rows are shifts of $R_1$ and $R_2$. Since the crystal operators act on adjacent rows, they descend in the same way to the trailing block. The quasi-Yamanouchi map $\QY$ is defined by applying a sequence of crystal raising operators determined by the weight (\cite{assaf2017slide}); hence applying $\QY$ to $R\sqcupplus R_1$ and to $R\sqcupplus R_2$ produces graphs whose trailing rows have a common partial quasi-Yamanouchi reduction $R\sqcupplus \QY(R_1)=R\sqcupplus \QY(R_2)$, and so $\QY(R\sqcupplus R_1)=\QY(R\sqcupplus R_2)$.
+That $\Sigma$ is a left ideal follows from the same mechanism used for $\Theta$: in $R\diamond R_1$ and $R\diamond R_2$, the first $\hr(R)$ rows agree, while the trailing rows are shifts of $R_1$ and $R_2$. Since the crystal operators act on adjacent rows, they descend in the same way to the trailing block. The quasi-Yamanouchi map $\QY$ is defined by applying a sequence of crystal raising operators determined by the weight (\cite{assaf2017slide}); hence applying $\QY$ to $R\diamond R_1$ and to $R\diamond R_2$ produces graphs whose trailing rows have a common partial quasi-Yamanouchi reduction $R\diamond \QY(R_1)=R\diamond \QY(R_2)$, and so $\QY(R\diamond R_1)=\QY(R\diamond R_2)$.
 
 That $\Sigma$ is a right ideal follows from Corollary \ref{corollary:crystaliso}: multiplication on the right by a fixed $R$ induces an isomorphism of crystal graphs on the relevant subblock, and the $\QY$ images of corresponding terms therefore agree.
 \end{proof}
@@ -3481,17 +3481,17 @@ $$\alpha(\mathcal{F}_a)=\mathfrak{F}_a^*.$$
 \end{proposition}
 \begin{proof}
 The last identity is the Corollary above. Distinct $\mathcal{F}_a$ are supported on disjoint sets of quasi-Yamanouchi RC graphs (indexed by their common weight $a$), so the $\mathcal{F}_a$ are linearly independent in $\BRC/\Sigma$. Considering the homomorphism $\alpha:\BRC/\Sigma\to\dcoma$, since the $\mathfrak{F}_a^*$ are linearly independent, the kernel of $\alpha$ intersects the span of the $\mathcal{F}_a$ trivially; hence $\alpha$ is injective on $\sum_a \mathbb{Z}\mathcal{F}_a$. Since
-$$\alpha(\mathcal{F}_a)\sqcupplus\alpha(\mathcal{F}_b)=\mathfrak{F}_a^*\sqcupplus\mathfrak{F}_b^*=\sum_c s_{a,b}^c\,\mathfrak{F}_c^*=\sum_c s_{a,b}^c\,\alpha(\mathcal{F}_c),$$
-the product $\mathcal{F}_a\sqcupplus\mathcal{F}_b$ lies in the span of the $\mathcal{F}_c$, so this span is closed under multiplication and the restriction of $\alpha$ is a ring isomorphism.
+$$\alpha(\mathcal{F}_a)\alpha(\mathcal{F}_b)=\mathfrak{F}_a^*\mathfrak{F}_b^*=\sum_c s_{a,b}^c \mathfrak{F}_c^*=\sum_c s_{a,b}^c\,\alpha(\mathcal{F}_c),$$
+the product $\mathcal{F}_a\mathcal{F}_b$ lies in the span of the $\mathcal{F}_c$, so this span is closed under multiplication and the restriction of $\alpha$ is a ring isomorphism.
 \end{proof}
 
 \begin{theorem} \label{theorem:lrfslide}
   Let $a,b$ be weak compositions of lengths $p$ and $q$. Write
-$$\mathfrak{F}_a^*\sqcupplus\mathfrak{F}_b^*=\sum_c s_{a,b}^c\,\mathfrak{F}_c^*$$
+$$\mathfrak{F}_a^*\mathfrak{F}_b^*=\sum_c s_{a,b}^c \mathfrak{F}_c^*$$
 For each $c$, fix an RC graph $C$ with $\wtt(\QY(C)) = c$. Then $s_{a,b}^c$ is the number of distinct RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ with $\wtt(\clp^p(R)) = a,\wtt(\trm^p(R)) = b$ such that $\clp^p(R),\trm^p(R)$ are quasi-Yamanouchi, and is in particular nonnegative.
 \end{theorem}
 \begin{proof}
-The coefficient of $\mathcal{F}_c$ in $\mathcal{F}_a\sqcupplus\mathcal{F}_b$ equals the coefficient of $\mathfrak{F}_c^*$ in $\mathfrak{F}_a^*\sqcupplus\mathfrak{F}_b^*$, namely $s_{a,b}^c$, by Proposition \ref{proposition:slidebasis}. Expanding the product $\mathcal{F}_a\sqcupplus\mathcal{F}_b$ via the $(\clp^p,\trm^p)$-decomposition of $\sqcupplus$ (Theorem \ref{theorem:modactrc}) and reading off the coefficient of $\mathcal{F}_c$ from a fixed representative $C$ with $\wtt(\QY(C))=c$, the contributing terms are precisely the RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ whose clip and trim have quasi-Yamanouchi weights $a$ and $b$ respectively.
+The coefficient of $\mathcal{F}_c$ in $\mathcal{F}_a\mathcal{F}_b$ equals the coefficient of $\mathfrak{F}_c^*$ in $\mathfrak{F}_a^*\mathfrak{F}_b^*$, namely $s_{a,b}^c$, by Proposition \ref{proposition:slidebasis}. Expanding the product $\mathcal{F}_a\mathcal{F}_b$ via the $(\clp^p,\trm^p)$-decomposition of $\diamond$ (Theorem \ref{theorem:modactrc}) and reading off the coefficient of $\mathcal{F}_c$ from a fixed representative $C$ with $\wtt(\QY(C))=c$, the contributing terms are precisely the RC graphs $R$ with $\mathrm{word}(R)=\mathrm{word}(C)$ whose clip and trim have quasi-Yamanouchi weights $a$ and $b$ respectively.
 \end{proof}
 
 \subsection{A general ideal-quotient Littlewood--Richardson principle}
@@ -3502,7 +3502,7 @@ The dual Schubert, dual key, and dual forest LR rules of the previous sections a
 Let $\sim$ be an equivalence relation on $\bigsqcup_n \RC_n$ satisfying:
 \begin{itemize}
 \item[(H1)] If $R_1\sim R_2$ then $\hr(R_1)=\hr(R_2)$ and $\wof{R_1}=\wof{R_2}$ (in particular $\alpha(R_1)=\alpha(R_2)$).
-\item[(H2)] $\sim$ is a congruence for $\sqcupplus$: $R_1\sim R_2$ implies $R\sqcupplus R_1\sim R\sqcupplus R_2$ and $R_1\sqcupplus R\sim R_2\sqcupplus R$ for every $R$.
+\item[(H2)] $\sim$ is a congruence for $\diamond$: $R_1\sim R_2$ implies $R\diamond R_1\sim R\diamond R_2$ and $R_1\diamond R\sim R_2\diamond R$ for every $R$.
 \item[(H3)] $\clp^p$ and $\trm^p$ descend to $\sim$: if $R_1\sim R_2$ and $1\leq p\leq \hr(R_1)$, then $\clp^p(R_1)\sim \clp^p(R_2)$ and $\trm^p(R_1)\sim \trm^p(R_2)$.
 \item[(H4)] There is an index set $J$ and a function $\lambda:(\RC/\!\sim)\to J$ such that, writing $I_\sim=\mathrm{span}_{\mathbb{Z}}\{R_1-R_2:R_1\sim R_2\}\subseteq\BRC$ and
 $$E_\lambda := \sum_{[R]:\,\lambda([R])=\lambda} [R] \in \BRC/I_\sim,$$
@@ -3510,7 +3510,7 @@ the family $\{\alpha(E_\lambda)\}_{\lambda\in J}$ is a $\mathbb{Z}$-basis of $\d
 
 \end{itemize}
 Then $I_\sim$ is a two-sided ideal of $\BRC$ contained in $\Omega=\ker\alpha$, the elements $\{E_\lambda\}$ span a subring of $\BRC/I_\sim$ isomorphic to $\dcoma$ via $\alpha$, and the structure constants $b_{\mu,\nu}^\lambda$ defined by
-$$\mathfrak{B}_\mu^*\sqcupplus\mathfrak{B}_\nu^* = \sum_\lambda b_{\mu,\nu}^\lambda\,\mathfrak{B}_\lambda^*,\qquad \mathfrak{B}_\lambda^*:=\alpha(E_\lambda),$$
+$$\mathfrak{B}_\mu^*\mathfrak{B}_\nu^* = \sum_\lambda b_{\mu,\nu}^\lambda\,\mathfrak{B}_\lambda^*,\qquad \mathfrak{B}_\lambda^*:=\alpha(E_\lambda),$$
 are nonnegative integers. More precisely, for any function $\mathrm{rep}\colon\RC\to\RC$ that sends every element of a $\sim$-class to a single common representative of that class (that is, $\mathrm{rep}(R)\sim R$ for all $R$, and $\mathrm{rep}(R)=\mathrm{rep}(S)$ whenever $R\sim S$), we have the positive combinatorial formula
 \begin{align*}
 b_{\mu,\nu}^\lambda \;=\; \#\bigl\{\,R\sim C\ :\ &\clp^p(R)=\mathrm{rep}(\clp^p(R)),\;\;\trm^p(R)=\mathrm{rep}(\trm^p(R)),\\
@@ -3522,13 +3522,13 @@ for any fixed $C$ with $\lambda([C])=\lambda$. The count is independent of the c
 By (H1) every generator $R_1-R_2$ of $I_\sim$ lies in $\Omega=\ker\alpha$, so $I_\sim\subseteq\Omega$ and $\alpha$ descends to a surjective ring homomorphism $\overline\alpha:\BRC/I_\sim\to\dcoma$. By (H2), $I_\sim$ is a two-sided ideal of $\BRC$, so $\BRC/I_\sim$ inherits a ring structure.
 
 By construction of $E_\lambda$ in (H4), each $\sim$-class $[R]$ appears in $E_\lambda$ with multiplicity exactly $1$ (when $\lambda([R])=\lambda$) or $0$ (otherwise), and the supports of $E_\lambda$ and $E_{\lambda'}$ in $\BRC/I_\sim$ are disjoint whenever $\lambda\neq\lambda'$; consequently the coefficient $b_{\mu,\nu}^\lambda$ may be read off from the contribution to a single chosen class $[C]$ with $\lambda([C])=\lambda$. In particular the $\{E_\lambda\}$ are linearly independent. Under $\overline\alpha$ they map to the $\mathbb{Z}$-basis $\{\mathfrak{B}_\lambda^*\}$ of $\dcoma$ by (H4), so $\overline\alpha$ restricts to a $\mathbb{Z}$-module isomorphism $\bigoplus_\lambda\mathbb{Z}E_\lambda\xrightarrow{\;\cong\;}\dcoma$. Since $\overline\alpha$ is a ring homomorphism, the span of the $E_\lambda$ is closed under multiplication and the isomorphism is one of rings. Consequently
-$$E_\mu \sqcupplus E_\nu = \sum_\lambda b_{\mu,\nu}^\lambda\, E_\lambda \quad\text{in } \BRC/I_\sim.$$
+$$E_\mu E_\nu = \sum_\lambda b_{\mu,\nu}^\lambda\, E_\lambda \quad\text{in } \BRC/I_\sim.$$
 
-To read off $b_{\mu,\nu}^\lambda$, fix any $C$ with $\lambda([C])=\lambda$ and let $S_1=\mathrm{rep}(R_1)$, $S_2=\mathrm{rep}(R_2)$ be the chosen representatives of the $\mu$- and $\nu$-classes (for any $R_1,R_2$ in those classes). By Theorem~\ref{theorem:modactrc} the product $\sqcupplus$ on $\BRC$ admits a $(\clp^p,\trm^p)$-decomposition: for any $S_1,S_2$ with $\hr(S_1)=p$, $\hr(S_2)=q$, the set $\{R\in\RC_{p+q}:\clp^p(R)=S_1,\,\trm^p(R)=S_2\}$ enumerates the summands of $S_1\sqcupplus S_2$ with multiplicity one. Projecting to $\BRC/I_\sim$, (H3) ensures that the class of $R$ depends only on the classes of $\clp^p(R)$ and $\trm^p(R)$, so the contribution of $S_1\sqcupplus S_2$ to the coefficient of $[C]$ in $E_\lambda$ is exactly the count of $R\sim C$ for which $\clp^p(R)=S_1$ and $\trm^p(R)=S_2$, i.e.\ for which $\clp^p(R)$ and $\trm^p(R)$ are themselves fixed points of $\mathrm{rep}$ and represent the $\mu$- and $\nu$-classes. This is the stated formula. Being a cardinality, it is nonnegative.
+To read off $b_{\mu,\nu}^\lambda$, fix any $C$ with $\lambda([C])=\lambda$ and let $S_1=\mathrm{rep}(R_1)$, $S_2=\mathrm{rep}(R_2)$ be the chosen representatives of the $\mu$- and $\nu$-classes (for any $R_1,R_2$ in those classes). By Theorem~\ref{theorem:modactrc} the product $\diamond$ on $\BRC$ admits a $(\clp^p,\trm^p)$-decomposition: for any $S_1,S_2$ with $\hr(S_1)=p$, $\hr(S_2)=q$, the set $\{R\in\RC_{p+q}:\clp^p(R)=S_1,\,\trm^p(R)=S_2\}$ enumerates the summands of $S_1\diamond S_2$ with multiplicity one. Projecting to $\BRC/I_\sim$, (H3) ensures that the class of $R$ depends only on the classes of $\clp^p(R)$ and $\trm^p(R)$, so the contribution of $S_1\cdot S_2$ to the coefficient of $[C]$ in $E_\lambda$ is exactly the count of $R\sim C$ for which $\clp^p(R)=S_1$ and $\trm^p(R)=S_2$, i.e.\ for which $\clp^p(R)$ and $\trm^p(R)$ are themselves fixed points of $\mathrm{rep}$ and represent the $\mu$- and $\nu$-classes. This is the stated formula. Being a cardinality, it is nonnegative.
 
 Finally, the count is independent of the choice of $\mathrm{rep}$. The element $E_\lambda\in\BRC/I_\sim$ is defined directly as $\sum_{[R]:\lambda([R])=\lambda}[R]$, with no reference to $\mathrm{rep}$, so the structure constants in $E_\mu E_\nu=\sum_\lambda b_{\mu,\nu}^\lambda E_\lambda$ are intrinsic. To see that the formula computes the correct value for every valid $\mathrm{rep}$, fix classes $[T_1],[T_2]$ with $\lambda([T_1])=\mu$, $\lambda([T_2])=\nu$, and consider, for any $S_1\in[T_1]$ and $S_2\in[T_2]$, the count
 $$N(S_1,S_2):=\#\{R\sim C\,:\,\clp^p(R)=S_1,\ \trm^p(R)=S_2\}.$$
-By the $(\clp^p,\trm^p)$-decomposition of Theorem~\ref{theorem:modactrc}, $N(S_1,S_2)$ equals the coefficient of $[C]$ in the product $[S_1]\sqcupplus[S_2]\in\BRC/I_\sim$ (using (H2) to make the product well-defined and (H3) to ensure each summand of $S_1\sqcupplus S_2$ has $\sim$-class depending only on $[S_1]$ and $[S_2]$). In particular $N(S_1,S_2)$ depends only on the classes $[T_1],[T_2]$ and on $[C]$, not on the choice of representatives $S_1,S_2$. The $\mathrm{rep}$-formula selects, for each such class-pair, the single representative pair $(\mathrm{rep}(T_1),\mathrm{rep}(T_2))$ and counts $N(\mathrm{rep}(T_1),\mathrm{rep}(T_2))$; another valid $\mathrm{rep}'$ counts $N(\mathrm{rep}'(T_1),\mathrm{rep}'(T_2))$, and these are equal. Summing over class-pairs yields the same total $b_{\mu,\nu}^\lambda$.
+By the $(\clp^p,\trm^p)$-decomposition of Theorem~\ref{theorem:modactrc}, $N(S_1,S_2)$ equals the coefficient of $[C]$ in the product $[S_1]\cdot[S_2]\in\BRC/I_\sim$ (using (H2) to make the product well-defined and (H3) to ensure each summand of $S_1\diamond S_2$ has $\sim$-class depending only on $[S_1]$ and $[S_2]$). In particular $N(S_1,S_2)$ depends only on the classes $[T_1],[T_2]$ and on $[C]$, not on the choice of representatives $S_1,S_2$. The $\mathrm{rep}$-formula selects, for each such class-pair, the single representative pair $(\mathrm{rep}(T_1),\mathrm{rep}(T_2))$ and counts $N(\mathrm{rep}(T_1),\mathrm{rep}(T_2))$; another valid $\mathrm{rep}'$ counts $N(\mathrm{rep}'(T_1),\mathrm{rep}'(T_2))$, and these are equal. Summing over class-pairs yields the same total $b_{\mu,\nu}^\lambda$.
 \end{proof}
 
 \begin{remark}\label{remark:general_lr_instances}
@@ -4093,7 +4093,7 @@ Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, whic
 
 \section{Concluding remarks}\label{section:conclusion}
 
-The picture that emerges from this article is that the Schubert basis, the key basis, the forest basis, and the slide basis are not four parallel stories but four faces of a single object: the bounded RC graph ring $\BRC$, equipped with a family of congruences on RC graphs (equality of the underlying permutation $\wof{R}$, which recovers the dual Schubert basis; equality of the reduced word, which is the slide/QY congruence; Edelman--Greene equivalence on reduced words \cite{edelman1987balanced}, which gives the dual key basis; and the forest equivalence $\equiv_\forest$) and quotiented accordingly. At heart, this paper is really about \emph{words}: each of the four congruences above is encoded by a natural invariant of the reduced word of an RC graph (its end permutation, the word itself, its Edelman--Greene $P$-tableau, or its forest $P$-LBS), and each of the corresponding LR rules is, ultimately, a statement about counting representatives in a word class. The RC graph itself, as a geometric, compatible-sequence-decorated object distinct from its reduced word, is remembered only by the unquotiented ring $(\BRC,\sqcupplus)$; every one of the quotients $\BRC/I_\sim$ studied here forgets the compatible-sequence data and retains only an invariant of the underlying reduced word.  The identification of what we have called the Demazure-crystal equivalence on RC graphs with $P$-equivalence under Edelman--Greene insertion is due to \cite{hamaker2014relating} and \cite{morse2016crystal} (we thank Z. Hamaker for pointing us to this connection). 
+The picture that emerges from this article is that the Schubert basis, the key basis, the forest basis, and the slide basis are not four parallel stories but four faces of a single object: the bounded RC graph ring $\BRC$, equipped with a family of congruences on RC graphs (equality of the underlying permutation $\wof{R}$, which recovers the dual Schubert basis; equality of the reduced word, which is the slide/QY congruence; Edelman--Greene equivalence on reduced words \cite{edelman1987balanced}, which gives the dual key basis; and the forest equivalence $\equiv_\forest$) and quotiented accordingly. At heart, this paper is really about \emph{words}: each of the four congruences above is encoded by a natural invariant of the reduced word of an RC graph (its end permutation, the word itself, its Edelman--Greene $P$-tableau, or its forest $P$-LBS), and each of the corresponding LR rules is, ultimately, a statement about counting representatives in a word class. The RC graph itself, as a geometric, compatible-sequence-decorated object distinct from its reduced word, is remembered only by the unquotiented ring $(\BRC,\diamond)$; every one of the quotients $\BRC/I_\sim$ studied here forgets the compatible-sequence data and retains only an invariant of the underlying reduced word.  The identification of what we have called the Demazure-crystal equivalence on RC graphs with $P$-equivalence under Edelman--Greene insertion is due to \cite{hamaker2014relating} and \cite{morse2016crystal} (we thank Z. Hamaker for pointing us to this connection). 
 
 We should emphasize that the Little-bump perspective is in a real sense the conceptual core of the present work: the result of Hamaker--Young that Little bumps preserve Coxeter--Knuth equivalence hinted at the fact that Little bumps preserve all of the equivalence relations considered here, so that the entire multiplicative structure of $\BRC$ can be expressed directly through Little bumps on reduced words, which was essentially Little's original intention in \cite{little2003combinatorial} in introducing the bumping algorithm to model the transition formula. We arrived at this structure independently through the insertion algorithm of \S\ref{section:brc}, but in hindsight Little bumps are the most natural language for it at the word level, with the new information being that it simultaneously preserves the weight. Each quotient produces a positive Littlewood--Richardson rule on the corresponding dual basis (Theorems \ref{theorem:LR}, \ref{theorem:LRkey}, \ref{theorem:LRforest}, \ref{theorem:lrfslide}), and the general template of Theorem \ref{theorem:general_lr_template} makes precise the sense in which these four rules are the same theorem evaluated at four different ideals $I_\sim\subset\BRC$. The dual coproducts $\Delta^*$ on $\dcoma$ inherit positivity in the dual Schubert and dual forest bases (Theorem \ref{theorem:dschcoproduct} and Corollary \ref{corollary:dforestcoproduct}); we note that the dual key coproduct is by contrast known to be non-positive in general, with the cases in which it does expand positively already classified in the literature \cite{kouno2020decomposition}, so it is fitting that the dual Schubert and dual forest coproducts behave well precisely where the dual key coproduct does not. The construction descends to the cohomology of the quasisymmetric flag variety of \cite{bergeron2025qsymflag} via Corollary \ref{corollary:cupforest}.
 
