@@ -299,7 +299,7 @@ identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} 
 
 The splitting reading places Theorem~\ref{theorem:LR} squarely inside what Ressayre and Richmond call \emph{branching Schubert calculus} \cite{ressayre2009branching}: given a connected reductive subgroup $\tilde G\subset G$ and a parabolic $P\subset G$ (with associated $\tilde P\subset \tilde G$), the equivariant embedding $\tilde G/\tilde P\hookrightarrow G/P$ induces a comorphism $\phi^*:H^\bullet(G/P)\to H^\bullet(\tilde G/\tilde P)$ that expands each Schubert class $[\Lambda_w]$ as a nonnegative integer combination $\sum_{\tilde w} d_w^{\tilde w}[\Lambda_{\tilde w}]$, with the ordinary Littlewood--Richardson problem recovered as the case of the diagonal embedding $G/P\hookrightarrow (G/P)^2$. Our setting is the type-A Levi inclusion $\mathrm{GL}_p\times \mathrm{GL}_q\hookrightarrow \mathrm{GL}_{p+q}$ with the full Borel ($P=B$), in which $\tilde G/\tilde B = \mathrm{Fl}_p\times \mathrm{Fl}_q$, $G/B=\mathrm{Fl}_{p+q}$, and the comorphism is exactly the splitting of $\sch_w(x_1,\ldots,x_{p+q})$ displayed above. The Ressayre--Richmond branching coefficients $d_w^{\tilde w}$ in this case are precisely our $d_{u,v}^w(p,q)$ with $\tilde w=(u,v)$, and Theorem~\ref{theorem:LR} gives for them an explicit cardinality formula --- a contribution not addressed in \cite{ressayre2009branching}, whose focus is on the algebraic side: a deformed comorphism $\phi^{\odot}$ that is a graded ring homomorphism for the Belkale--Kumar product $\odot_0$ on $H^\bullet(G/P)$ \cite{belkale2006eigenvalue}, retaining only the Levi-movable part of $\phi^*$ and yielding a compact reformulation of the eigencone inequalities for $\tilde G\subset G$. In type A with $P=B$ the Belkale--Kumar deformation is trivial ($\odot_0$ equals cup product), so every branching coefficient is Levi-movable and the deformed and ordinary comorphisms agree on the nose; our LR rule is then a positive cardinality formula for the same numbers $d_w^{\tilde w}$ that \cite{ressayre2009branching} treats algebraically.
 
-From this angle the algebra $(\dcoma,\sqcupplus)$ and its dual Schubert basis $\{\dsch_w^n\}$ package the entire family of branching ring homomorphisms $\phi^*:H^\bullet(\mathrm{Fl}_{p+q})\to H^\bullet(\mathrm{Fl}_p)\otimes H^\bullet(\mathrm{Fl}_q)$ into a single free associative algebra: associativity of $\sqcupplus$ encodes the compatibility of these splittings under composition across all $p,q\geq 0$ simultaneously, and the structure constants of the dual Schubert basis under $\sqcupplus$ are exactly the branching coefficients $d_w^{\tilde w}$. The LR rules for dual keys, forests, and slides (Theorems~\ref{theorem:LRkey}, \ref{theorem:LRforest}, \ref{theorem:lrfslide}) carry the same picture over to the smaller polynomial bases supported inside the polynomial ring, each giving a positive branching rule for the corresponding splitting across $\{x_1,\ldots,x_p\}\sqcup\{x_{p+1},\ldots,x_{p+q}\}$.
+From this angle the algebra $(\dcoma,\sqcupplus)$ and its dual Schubert basis $\{\dsch_w^n\}$ package the entire family of branching ring homomorphisms $\phi^*:H^\bullet(\mathrm{Fl}_{p+q})\to H^\bullet(\mathrm{Fl}_p)\otimes H^\bullet(\mathrm{Fl}_q)$ into a single free associative algebra: associativity of $\sqcupplus$ encodes the compatibility of these splittings under composition across all $p,q\geq 0$ simultaneously, and the structure constants of the dual Schubert basis under $\sqcupplus$ are exactly the branching coefficients $d_w^{\tilde w}$. The LR rules for dual keys, forests, and slides (Theorems~\ref{theorem:LRkey}, \ref{theorem:LRforest}, \ref{theorem:lrfslide}) carry the same picture over to the smaller polynomial bases supported inside the polynomial ring, each giving a positive branching rule for the corresponding splitting across $\{x_1,\ldots,x_p\}\sqcup\{x_{p+1},\ldots,x_{p+q}\}$. In the forest case this splitting descends to a ring homomorphism on the cohomology of the quasisymmetric flag variety $\mathrm{QFl}_n$ of \cite{bergeron2025qsymflag}, providing a literal branching Schubert calculus rule on $\mathrm{QFl}_n$ rather than merely an algebraic analogue; this is developed in the corresponding subsection below.
 \newcommand{\forest}{\mathfrak{P}}
 \newcommand{\fcode}{\mathfrak{c}_f}
 \subsection*{Key polynomials}
@@ -348,6 +348,16 @@ Fix an RC graph $C\in\mathcal{C}_\forest(c)$. Then $f_{a, b}^c$ is the number of
 As with the dual key basis, Theorem \ref{theorem:LRforest} is equivalent to a positive combinatorial branching formula
 $$\forest_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} f_{a,b}^c\,\forest_a(x_1,\ldots,x_p)\,\forest_b(x_{p+1},\ldots,x_{p+q})$$
 expressing a forest polynomial in $p+q$ variables as a nonnegative integer combination of products of forest polynomials in the first $p$ and last $q$ variables. To the best of our knowledge, no such positive combinatorial splitting rule for forest polynomials has previously appeared in the literature.
+
+This splitting lifts, on cohomology, to the quasisymmetric flag variety of \cite{bergeron2025qsymflag} in direct analogy with the Levi-embedding branching picture of \cite{ressayre2009branching} discussed above. Using the Borel-type presentation $H^\bullet(\mathrm{QFl}_n)\cong \mathbb{Z}[x_1,\ldots,x_n]/\mathrm{QSym}_n^+$ \cite[Theorem~A and Corollary~12.5]{bergeron2025qsymflag}, the variable-splitting substitution
+$$\rho_{p,q}:\;\mathbb{Z}[x_1,\ldots,x_{p+q}]\longrightarrow \mathbb{Z}[x_1,\ldots,x_p]\otimes \mathbb{Z}[x_{p+1},\ldots,x_{p+q}]$$
+descends to a well-defined ring homomorphism
+$$\iota_{p,q}^*:\;H^\bullet(\mathrm{QFl}_{p+q})\longrightarrow H^\bullet(\mathrm{QFl}_p)\otimes H^\bullet(\mathrm{QFl}_q).$$
+Indeed, for $f\in\mathrm{QSym}_{p+q}^+$ the standard alphabet-sum identity for the QSym coproduct writes $\rho_{p,q}(f) = \sum f_{(1)}(x_1,\ldots,x_p)\otimes f_{(2)}(x_{p+1},\ldots,x_{p+q})$ with each $f_{(1)}$, $f_{(2)}$ quasisymmetric in its variables; since $\deg f>0$ and the degrees add, each term has at least one tensor factor in $\mathrm{QSym}^+$, so $\rho_{p,q}(f)\in \mathrm{QSym}_p^+\otimes\mathbb{Z}[y] + \mathbb{Z}[x]\otimes \mathrm{QSym}_q^+$. The splitting reformulation of Theorem~\ref{theorem:LRforest} then says exactly that, in the forest-polynomial basis,
+$$\iota_{p,q}^*\,[\forest_c] \;=\; \sum_{a,b} f_{a,b}^c\;[\forest_a]\otimes [\forest_b]\qquad\text{in } H^\bullet(\mathrm{QFl}_p)\otimes H^\bullet(\mathrm{QFl}_q),$$
+and Theorem~\ref{theorem:LRforest} gives an explicit positive cardinality formula for each $f_{a,b}^c$.
+
+The map $\iota_{p,q}^*$ is the natural quasisymmetric-flag analogue of the type-A Levi comorphism $H^\bullet(\mathrm{Fl}_{p+q})\to H^\bullet(\mathrm{Fl}_p)\otimes H^\bullet(\mathrm{Fl}_q)$ of \cite{ressayre2009branching}, and the dual forest LR rule plays for it the role that Theorem~\ref{theorem:LR} plays for the Schubert basis. We do not know whether $\iota_{p,q}^*$ is induced by a geometric embedding $\mathrm{QFl}_p\times \mathrm{QFl}_q\hookrightarrow \mathrm{QFl}_{p+q}$ compatible with the Levi inclusion $\mathrm{Fl}_p\times \mathrm{Fl}_q\hookrightarrow \mathrm{Fl}_{p+q}$; the natural concatenation operation $\mathrm{Forest}_p\times \mathrm{Forest}_q\to \mathrm{Forest}_{p+q}$ on indexed forests, and the resulting matching $X(F)\times X(F')\subset \mathrm{QFl}_{p+q}$ one expects on the toric Richardson side, suggest that such an embedding should exist, but we do not pursue the geometric verification here. At the level of cohomology rings $\iota_{p,q}^*$ is in any case a well-defined ring homomorphism, and Theorem~\ref{theorem:LRforest} is, in this language, a manifestly positive branching Schubert calculus rule on the quasisymmetric flag variety, parallel to the one Theorem~\ref{theorem:LR} provides on $\mathrm{Fl}_n$. Dually, the family $\{\iota_{p,q}^*\}_{p,q\geq 0}$ assembles into a graded coproduct on $\bigoplus_n H_\bullet(\mathrm{QFl}_n)$ whose structure constants in the geometric forest basis $\{[X(F)]\}$ are again the $f_{a,b}^c$ of Theorem~\ref{theorem:LRforest}; this is the QFl shadow of the bialgebra structure on $\dcoma$ developed in the body of the paper, with the same combinatorial cardinality formula governing its structure constants.
 
 A word about duality is in order. The dual basis $\{\forest_a^*\}$ studied here is dual to $\{\forest_a\}$ inside $\dcoma$ under the concatenation product, and to the best of our knowledge has not been considered previously. A different and more geometric ``dual forest basis'' does appear in the literature: the homology classes $[X(F)]$ of the toric Richardson varieties $X(F)\subset \mathrm{QFl}_n$ studied by Bergeron, Gagnon, Nadeau, Spink, and Tewari \cite{bergeron2025qsymflag}, which form a $\mathbb{Z}$-basis of $H_\bullet(\mathrm{QFl}_n)$ Kronecker-dual to the forest polynomials in cohomology and admit a mixed-volume interpretation. The two ``duals'' are Kronecker-dual to the same basis, but live in genuinely different algebraic structures; the geometric basis records intersection-theoretic data on $\mathrm{QFl}_n$, while $\{\forest_a^*\}$ records the structure constants of the concatenation product in $\dcoma$. We make no claim that the two are otherwise related.
 
@@ -3825,7 +3835,7 @@ extends to an isomorphism of quasi-crystals onto the connected component of its 
 %   Let $w\in S_\infty$ be a permutation such that $\maxd(w)\leq n$. Then for any RC graph $R\in\RC_n(w)$, the map $\RC_n^\QY:QY(\mathrm{word}(R)))\to \BRC_n$ is an isomorphism of crystal graphs onto its image.
 % \end{proposition}
 
-\begin{theorem}
+\begin{theorem} \label{theorem:slideproduct}
 Let $A$, $B$ be quasi-Yamanouchi RC graphs. Then
 $$\mathfrak{F}(A)*\mathfrak{F}(B) = \sum_{R} \mathfrak{F}(R)$$
 where the sum is over all pairs $A',B'$ with $\mathrm{word}(A')=\mathrm{word}(A)$, $\mathrm{word}(B')=\mathrm{word}(B)$ such that 
@@ -3927,6 +3937,16 @@ where the sum is over all pairs $A'\equiv_\forest A$, $B'\equiv_\forest B$ such 
 $$A'*B'=R$$
 with $R$ being a forest RC graph.
 \end{corollary}
+\begin{proof}
+  We have that
+  $$\forest(A) = \sum_{A'=\QY(A')\equiv_\forest A} \mathfrak{F}(A')$$
+  $$\forest(B) = \sum_{B'=\QY(B')\equiv_\forest B} \mathfrak{F}(B')$$
+By Theorem \ref{theorem:slideproduct}, we have that
+$$\forest(A)*\forest(B) = \sum_{A'=\QY(A')\equiv_\forest A, B'=\QY(B')\equiv_\forest B} \mathfrak{F}(A')*\mathfrak{F}(B') = \sum_{A'=\QY(A')\equiv_\forest A, B'=\QY(B')\equiv_\forest B} \sum_{R} \mathfrak{F}(R)$$
+where the second sum is over all $R$ such that $A'*B'=R$ and $R$ is quasi-Yamanouchi. By the previous lemma, the set of such $R$ is stable under forest equivalence, so we may group the sum by forest equivalence classes to obtain
+$$\forest(A)*\forest(B) = \sum_{R} \forest(R)$$
+where the sum is over all $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$, $B'\equiv_\forest B$ and $R$ is a forest RC graph.
+\end{proof}
 
 
 \begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR}
@@ -3936,6 +3956,13 @@ with $R$ being a forest RC graph.
   $$\code(\wof{A}) = \code_\forest(A) = a, \code(\wof{B}) = \code_\forest(B) = b$$
   and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
 \end{theorem}
+\begin{proof}
+  The map $\BRC_n\mapsto \mathbb{Z}[x_1,\ldots,x_n]$ sending an RC graph $R$ to $x^{\wtt(R)}$ is a homomorphism of rings, so we have that
+$$\forest_a\forest_b = \sum_{A\equiv_\forest A', B\equiv_\forest B'} x^{\wtt(A)}x^{\wtt(B)} = \sum_{A\equiv_\forest A', B\equiv_\forest B'} x^{\wtt(A'*B')} = \sum_{R} \forest(R)$$
+where the sum is over all $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$, $B'\equiv_\forest B$ and $R$ is a forest RC graph. Grouping the sum by forest equivalence classes, we have that
+$$\forest_a\forest_b = \sum_{R} \forest(R)$$
+where the sum is over all forest RC graphs $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$, $B'\equiv_\forest B$. The result follows by noting that the coefficient of $\forest_c$ in the expansion of $\forest(R)$ is $1$ if $\code_\forest(R)=\wtt(R)=c$ and $0$ otherwise.
+\end{proof}
 
 \begin{corollary}[Dual forest coproduct]\label{corollary:dforestcoproduct}
 Let $c$ be a weak composition of length $n$. Then in $\dcoma_n\otimes\dcoma_n$,
@@ -4048,6 +4075,11 @@ deletion of the parameter \(t_i\). This characterization is equivalent to the
 vine/subword model construction in \cite[\S 5.1]{bergeron2025equivariant}.
 
 
+$$R_{i,A}^-(\sch_u(x;t))=\sum_{u\downvar{i} u'}\sch_{u'}(x;t)\prod_{j\in Q_i(u',u)}(t_{i,A} - t_j)$$
+$$R_{i,A}^+(\sch_u(x;t))=\sum_{u\downvar{i+1} u''}\sch_{u''}(x;t)\prod_{j\in Q_{i+1}(u'',u)}(t_{i,A} - t_j)$$
+
+$$E_{i,A}(\sch_u(x;t)) = \sch_{us_i}(x_1,\ldots,x_{i},t_{i,A},x_{i+1},\ldots,x_n;t)$$
+$$=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_n;t)\prod_{j\in Q_{i+1}(u',us_i)}(t_{i,A} - t_j)$$
 \appendix
 \section{Proof of Proposition \ref{proposition:pullindex}}
 
