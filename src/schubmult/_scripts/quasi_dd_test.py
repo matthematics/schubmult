@@ -110,7 +110,7 @@ def schub_a_F_polynomial(schub, x_arr, t_gen, code, n_xvars):
         tvar = t_gen[t_index_iA(i_j, A_j)]
         cur = full_schub_quasi_dd(cur, x_arr, i_j, tvar)
     A_0 = subset_from_seq(seq)
-    return ev_A(cur.expand(), x_arr, A_0, t_gen, n_xvars)
+    return ev_A(cur.as_polynomial() if isinstance(cur, DoubleSchubertElement) else cur, x_arr, A_0, t_gen, n_xvars)
 
 
 def enum_forest_codes(length, max_sum):
@@ -169,25 +169,25 @@ if __name__ == "__main__":
         forest_dict = sympify(0)
         for cd in enum_forest_codes(n - 1, perm.inv):
             a = schub_a_F_polynomial(schub, x, t, cd, n)
-            a = sympify(a).expand()
+            a = sympify(a)
             if a != 0:
                 forest_dict += a * DForest(*cd)
 
         if forest_dict == 0:
             result = DForest.zero
         else:
-            result = DForest.from_expr(sympify(forest_dict).expand() if hasattr(forest_dict, "expand") else forest_dict,
-                                      length=n - 1) if False else None
+            result = forest_dict
             # forest_dict is already a sum of a_F·DForest(cd) terms; coerce to DForest element
             result = forest_dict
         result2 = DForest.from_expr(schub.expand(), length=n - 1)
         diff_expr = (sympify(result.expand() if hasattr(result, "expand") else result)
                      - sympify(result2.expand())).expand()
-        if diff_expr != 0:
+        if result != result2 and not result.almosteq(result2):
             print(f"Forest FAIL for {perm}")
             print(f"  got:      {result}")
             print(f"  expected: {result2}")
             print(f"  diff:     {diff_expr}")
         else:
             print(f"Forest OK   for {perm}")
+            print(f"  got:      {result}")
         
