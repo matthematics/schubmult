@@ -40,10 +40,9 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
 
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
-
     @property
     def is_elem_sym(self):
-        return self.perm.inv == 0 or (len(self.perm.descents()) == 1 and set(self.perm.trimcode).issubset({0,1}))
+        return self.perm.inv == 0 or (len(self.perm.descents()) == 1 and set(self.perm.trimcode).issubset({0, 1}))
 
     def left_squash(self, other_rc):
         from .anti_rc_graph import AntiRCGraph
@@ -1532,7 +1531,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return self
         raise ValueError("Could not snap to quasi-yamanouchi, should have been able to")
 
-
     def double_elem_rep(self, yvars, size):
         from ..rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
 
@@ -1794,7 +1792,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             inv -= num_spots
 
             elem_rc = next(iter(cls.all_rc_graphs(uncode([0] * (index - num_spots) + [1] * num_spots), index, weight=tuple(spots))))
-            #buildup_rc = buildup_rc.resize(len(elem_rc)).squash_product(elem_rc)
+            # buildup_rc = buildup_rc.resize(len(elem_rc)).squash_product(elem_rc)
             spum = [elem_rc, *spum]
 
         return tuple(spum)
@@ -2624,6 +2622,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def inverse_crystal(self) -> InverseRCGraph:
         return InverseRCGraph(self)
 
+    def forest_poly_value(self, x: Sequence[Expr], y: Sequence[Expr] | None = None) -> Expr:
+        if y is None:
+            return self.polyvalue(x)
+        result = 1
+        for row, col in [self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]:
+            result *= x[row] - y[col - row + 1]
+        return result
+
 
 class InverseRCGraph(CrystalGraph):
     def __init__(self, base_graph: RCGraph):
@@ -2706,8 +2712,8 @@ class DecoratedRCGraph(RCGraph):
             new_base = normalized_self.elem_squash(new_elem_sym)
             for new_rc, coeff2 in new_base.items():
                 ret[new_rc] = ret.get(new_rc, 0) + coeff * coeff2 * (self.generating_set[new_rc.perm[row - 1]] - other.generating_set[col])
-            #ret.update(self.elem_squash(new_elem_sym, coeff=coeff * (self.generating_set[new_base.perm[row - 1]] - other.generating_set[col])))
-            #ret[new_base] = ret.get(new_base, 0) + self.generating_set[new_base.perm[row - 1]] - other.generating_set[col]
+            # ret.update(self.elem_squash(new_elem_sym, coeff=coeff * (self.generating_set[new_base.perm[row - 1]] - other.generating_set[col])))
+            # ret[new_base] = ret.get(new_base, 0) + self.generating_set[new_base.perm[row - 1]] - other.generating_set[col]
         return ret
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
@@ -2759,8 +2765,7 @@ class DecoratedRCGraph(RCGraph):
             choice_iters = [RCGraph.elem_sym_rcs(f.degree, f.numvars) for f in elem_factors]
             for rc_choice in itertools.product(*choice_iters):
                 rc_tup = tuple(
-                    DecoratedRCGraph(rc, generating_set=(generating_set[0], *elem_factors[i].coeffvars, *generating_set[len(elem_factors[i].coeffvars)+ 2:]))
-                    for i, rc in enumerate(rc_choice)
+                    DecoratedRCGraph(rc, generating_set=(generating_set[0], *elem_factors[i].coeffvars, *generating_set[len(elem_factors[i].coeffvars) + 2 :])) for i, rc in enumerate(rc_choice)
                 )
                 # Squash-multiply the underlying (undecorated) RC graphs to get
                 # the aggregate graph that this monomial contributes to.
@@ -2777,10 +2782,11 @@ class DecoratedRCGraph(RCGraph):
                 ret[rc] = toadd_dict
         return ret
 
+
 if __name__ == "__main__":
     from schubmult import uncode
     from schubmult.abc import y, z
 
-    rc1 = DecoratedRCGraph([(3, 1), (4, 2),(),()], y)
-    rc2 = DecoratedRCGraph(RCGraph.random_rc_graph(uncode([0,0,1,1])), z)
+    rc1 = DecoratedRCGraph([(3, 1), (4, 2), (), ()], y)
+    rc2 = DecoratedRCGraph(RCGraph.random_rc_graph(uncode([0, 0, 1, 1])), z)
     print(rc1.elem_squash(rc2))

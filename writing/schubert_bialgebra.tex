@@ -3787,6 +3787,38 @@ so they are equal. The key point is that the corresponding lift factors commute,
 An arbitrary RC graph is itself a product of elementary symmetric RC graphs of weakly increasing heights according to Proposition \ref{proposition:elemfactor}, so an induction argument proves the result for arbitrary $R_3$.
 \end{proof}
 
+\subsection{Explicit description of the lifting map}
+
+
+\begin{definition}
+Let $p\leq k$ be positive integers and let $w\in S_N$ be a permutation with $\maxd(w)\leq k$. Suppose $R\in \RC_k(w)$ and let $A\in\binom{p}{[k]}$. Define an RC graph $\sigma_k(R,A)$ as follows. Suppose $A=\{a_1<\cdots < a_p\}$ and let the reduced/compatible biword for $R$ be
+$$\binom{u_1\cdots u_m}{v_1\cdots v_m}$$
+For each $a_i$, assign an index $j_i$ to be the leftmost index such that $u_{j_i}=a_i$. Also define $\widetilde{b}_i = k - p + i + N$. Create a new biword
+$$\binom{u_1\cdots a_1 u_{j_1} \cdots a_p u_{j_p} \cdots u_m}{v_1\cdots \widetilde{b}_1 v_{j_1}\cdots \widetilde{b}_p v_{j_p} \cdots v_m}$$
+Then apply $\lzeromap_k$ to this biword to obtain $\sigma(R,A)$.
+\end{definition}
+
+\begin{lemma} \label{lemma:liftpieri}
+We have that 
+$$\sigma_k:\RC_k(w)\times \binom{p}{[k]}\to \bigcup_{\substack{w\tom{k} w'\\\ell(w,w')=p}}\RC_k(w')$$ 
+is an isomorphism of Demazure crystals.
+\end{lemma}
+
+\begin{definition}
+Let $R\in \RC_n(w)$ be an RC graph. A marked Pieri chain compatible with $R$ is a sequence of permutations
+$$1=w_0\leq w_1\leq w_2\leq \cdots\leq w_r=w$$
+and a weakly increasing sequence of positive integers $k_1\leq\cdots\leq k_r$ such that $w_{i-1}\tom{k_i} w_i$ for all $i$ and the implied Pieri deletion at each step has valid weights. Denote the set of marked Pieri chains from the identity to $w$ of steps $k_1\leq\cdots\leq k_r$ compatible with $R$ by
+$$\mathrm{Pieri}_R(w; k_1,\ldots,k_r)$$ 
+\end{definition}
+
+\begin{theorem}
+The map 
+$$\sigma:\prod_{i=1}^r 2^{[k_i]}\to\{(R,C)\mid R\in \RC_n(w),C\in\mathrm{Pieri}_R(w;k_1,\ldots,k_r)\}$$
+given by Pieri insertion is a bijection.
+\end{theorem}
+
+To find the lift of an RC graph $R\in \RC_n(w)$, suppose $\code(ww_0(n + 1)) = a$. We need to peel off $n+1-a_1$ reflections in an $n$-Pieri manner, yielding an RC graph $R'\in\RC_n(w')$ where $w'\in S_n$ is uniquely determined by $\code(w'w_0(n))=(a_2,\ldots,a_n)$. By Lemma \ref{lemma:liftpieri}, there is precisely one RC graph $R'\in\RC_{n-1}(w')$ and one subset $A\subseteq [n]$ of size $n+1-a_1$ such that $\sigma_{n}(R',A)=R$. This subset $A$ tells us precisely which reflections to remove from $R$ to obtain the $(n-1)$st tensor component of $\mathrm{lift}_n(R)$. We then repeat this process with $R'$ to obtain the next tensor component, recursively, until we have peeled off all $n$ steps. The result is the unique lift of $R$.
+
 
 \subsection{The slide quotient}
 
@@ -3984,33 +4016,15 @@ We will single out the case that $|b|=1$ for special attention.
 % $$\code
 % \end{theorem}
 
-\subsection{Explicit description of the lifting map}
 
-\begin{definition}
-%Define $\mathcal{E}_
-Let $a = (a_1,\ldots,a_n)$ be a weak composition of length $n$ satisfying $a_i\leq i$ for all $i$. Define $\mathcal{E}_a$ to be the Demazure crystal
-$$\mathbf{E}_{a_1}^1\otimes \mathbf{E}_{a_2}^2\otimes \cdots \otimes \mathbf{E}_{a_n}^n$$
 
-Given a biword
-$$\binom{u_1\cdots u_m}{v_1\cdots v_m},$$
-a positive integer $k$, and a positive integer $p\leq k$, we define an insertion algorithm as follows. Find the leftmost $i$ such that $u_i\leq p$. Insert a $p$ between position $i - 1$ and position $i$ in the top row, and insert $N$ between position $i - 1$ and position $i$ in the bottom row, where $N>v_j$ for all $j$. Apply Little's algorithm until the maximum descent of the bottom row is at most the maximum of the maximum descent of $v_1\cdots v_m$ and $k$.
+% We will single out the case that $|b|=1$ for special attention. 
 
-A Pieri $(p,k)$-deletion from a biword is a set of positive integers $c_1<\cdots < c_p\leq k$ such that the deletion of the indices $i_1, \ldots, i_p$ of the leftmost occurrences in $u$ such that $u_{i_j} = c_j$ yields a reduced word for a permutation with exactly $p$ fewer inversions, and if $t_{a_1,b_1},\cdots,t_{a_p,b_p}$ are the right reflections deleted at successive steps, then $a_i\leq k < b_i$ for all $i$ and $a_i\neq a_j$ if $i\neq j$.
-
-For a partition $\lambda$ and a weak composition $\alpha$ with $\alpha_i\leq \lambda_i$ for all $i$, an $(\alpha,\lambda)$-Pieri factorization of a biword is $\ell(\lambda)$ successive Pieri $(\alpha_i,\lambda_i)$-deletions, where $|\alpha|$ is the total length of the word.
-
-Suppose $A_1\otimes A_2\otimes \cdots \otimes A_N$ is an elementary tensor of elementary symmetric RC graphs in weakly increasing order of height $(\lambda_N,\ldots,\lambda_1)$, and define
-$$\mathrm{Pieri}(A_1\otimes A_2\otimes \cdots \otimes A_N) = (\wtt(A_1),\ldots,\wtt(A_N))$$
-
-\end{definition}
-
-We will single out the case that $|b|=1$ for special attention. 
-
-\begin{theorem}[Forest Monk formula]
-Suppose $a$ is a weak composition of length $n$ and $b$ is the weak composition with a single 1 in position $k$ and $0$'s elsewhere. Then we have
-$$\forest_a\forest_b = \sum_c \forest_c,$$
-for each $c$ such that there is an RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$ and there is a $k$-Pieri deletion from $R$ for a label $i\leq k$ that yields an RC graph $A$ with $\code_\forest(A)=\code(\wof{A})=a$.
-\end{theorem}
+% \begin{theorem}[Forest Monk formula]
+% Suppose $a$ is a weak composition of length $n$ and $b$ is the weak composition with a single 1 in position $k$ and $0$'s elsewhere. Then we have
+% $$\forest_a\forest_b = \sum_c \forest_c,$$
+% for each $c$ such that there is an RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$ and there is a $k$-Pieri deletion from $R$ for a label $i\leq k$ that yields an RC graph $A$ with $\code_\forest(A)=\code(\wof{A})=a$.
+% \end{theorem}
 
 
 
@@ -4042,6 +4056,8 @@ Corollary~\ref{corollary:cupforest} should be read in the same spirit as Theorem
 \end{remark}
 
 \section{The equivariant case}
+
+\subsection{Double forest polynomials} 
 In the equivariant setting one replaces the ordinary divided differences by the 
 \emph{equivariant quasisymmetric divided differences} of 
 \cite{nadeau2024quasisymmetric,bergeron2025equivariant}. In the notation of 
@@ -4074,12 +4090,48 @@ where \(a/i\) is the forest-trimming operation and \(\widehat t_i\) denotes
 deletion of the parameter \(t_i\). This characterization is equivalent to the
 vine/subword model construction in \cite[\S 5.1]{bergeron2025equivariant}.
 
+Define an operation $E_i(\tau):\mathbb{Z}[\tau][x,t]\to \mathbb{Z}[\tau][x,t]$ by
+$$E_i(\tau)(f) = \frac{f(x_1,\ldots,x_{i},\tau,x_{i+1},\ldots,x_n) - f(x_1,\ldots,x_{i-1},\tau,x_i,\ldots,x_n)}{x_i - \tau}$$
 
-$$R_{i,A}^-(\sch_u(x;t))=\sum_{u\downvar{i} u'}\sch_{u'}(x;t)\prod_{j\in Q_i(u',u)}(t_{i,A} - t_j)$$
-$$R_{i,A}^+(\sch_u(x;t))=\sum_{u\downvar{i+1} u''}\sch_{u''}(x;t)\prod_{j\in Q_{i+1}(u'',u)}(t_{i,A} - t_j)$$
 
-$$E_{i,A}(\sch_u(x;t)) = \sch_{us_i}(x_1,\ldots,x_{i},t_{i,A},x_{i+1},\ldots,x_n;t)$$
-$$=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_n;t)\prod_{j\in Q_{i+1}(u',us_i)}(t_{i,A} - t_j)$$
+$i$-th largest elem sym cannot exceed $k-1$.
+$$\sch_{w_0(n)}(x_1,\ldots,x_{i-1},t_k,x_{i},\ldots,x_{n-2};t) = E_{n-1}(x;t_1)\cdots$$ 
+
+\begin{lemma}
+Let $u\in S_\infty$, let $i\geq 1$, and let $\tau$ be an indeterminate. If $i$ is not a right descent of $u$, then
+$$E_i(\tau)(\sch_u(x;t)) = 0$$
+Otherwise,
+$$E_i(\tau)(\sch_u(x;t))=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_{n-1};t)\prod_{j\in Q_{i+1}(u',us_i)}(\tau - t_j)$$
+\end{lemma}
+\newcommand{\tdownvar}[1]{\mathrel{\stackrel{#1}{\rotatebox[origin=c]{-45}{$\Rightarrow$}}}}
+\begin{definition}
+Define a relation $u\tdownvar{i} u'$ if $\ell(us_i)<\ell(u)$ and $us_i\downvar{i} u'$.
+\end{definition}
+contract to maintain positivity
+\begin{corollary}
+Let $u\in S_\infty$, let $i_1,i_2,\ldots,i_m\geq 1$, and let $\tau_1,\tau_2,\ldots,\tau_m$ be indeterminates. Then we have that
+$$E_{i_1}(\tau_1)E_{i_{2}}(\tau_{2})\cdots E_{i_m}(\tau_m)(\sch_u(x;t))$$
+is equal to
+$$\sum_{u=u_m\tdownvar{i_m} u_{m-1}\tdownvar{i_{m-1}} u_{m-2}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_0}\sch_{u_0}(x_1,\ldots,x_n;t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(\tau_j - t_k)$$
+where $u_0=u$.
+\end{corollary}
+
+\begin{theorem}
+  $$a_F^u(t)=$$
+$$\sum_{u\tdownvar{i_m} u_m\tdownvar{i_{m-1}} u_{m-1}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_0}\sch_{u_0}(t_{L(F)};t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(t_{i_j, L_j(F)} - t_k)$$
+\end{theorem}
+
+
+% $$c_{\mu(i_1-1,\ldots,i_m-1),u}^{\mu(i_1,\ldots,i_m)}(x;t) = \sum_{u\tdownvar{i_m} u_m\tdownvar{i_{m-1}} u_{m-1}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_1}\sch_{u_1}(x_{m+1},\ldots,x_{m+n};t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(x_j - t_k)$$
+
+
+% $$c_{\mu(i_1-1,\ldots,i_m-1),u}^{\mu(i_1,\ldots,i_m)}(t_{i_1,A_1},\ldots,t_{i_m,A_m};t)$$
+
+% $$R_{i,A}^-(\sch_u(x;t))=\sum_{u\downvar{i} u'}\sch_{u'}(x;t)\prod_{j\in Q_i(u',u)}(t_{i,A} - t_j)$$
+% $$R_{i,A}^+(\sch_u(x;t))=\sum_{u\downvar{i+1} u''}\sch_{u''}(x;t)\prod_{j\in Q_{i+1}(u'',u)}(t_{i,A} - t_j)$$
+
+% $$E_{i,A}(\sch_u(x;t)) = \sch_{us_i}(x_1,\ldots,x_{i},t_{i,A},x_{i+1},\ldots,x_n;t)$$
+% $$=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_n;t)\prod_{j\in Q_{i+1}(u',us_i)}(t_{i,A} - t_j)$$
 \appendix
 \section{Proof of Proposition \ref{proposition:pullindex}}
 

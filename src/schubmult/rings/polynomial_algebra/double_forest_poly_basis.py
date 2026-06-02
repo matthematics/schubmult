@@ -47,7 +47,7 @@ class DoubleForestPolyBasis(PolynomialBasis):
 
         k = self.as_key(key)
         if k not in self._basis_poly_cache:
-            self._basis_poly_cache[k] = expand(double_forest_polynomial(k, self._x_gen, self._t_gen, n=self._n))
+            self._basis_poly_cache[k] = expand(double_forest_polynomial(k, self.genset, self.coeff_genset, n=self._n))
         return self._basis_poly_cache[k]
 
     def basis_forest_expansion(self, key, length):
