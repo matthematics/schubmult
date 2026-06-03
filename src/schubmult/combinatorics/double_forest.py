@@ -144,12 +144,14 @@ def sylvester_word(forest):
         pre(t)
     return word
 
+
 def sylvester_forest(code, genset, t):
     from schubmult import RCGraph, uncode
     # forest = forest_from_code(code)
     # word = tuple(reversed(sylvester_word(forest)))
-    perm = uncode(code)#Permutation.ref_product(*word)
+    perm = uncode(code)  # Permutation.ref_product(*word)
     return sum([rc0.polyvalue(genset, t) for rc0 in RCGraph.all_rc_graphs(perm, len(code)) if rc0.forest_weight == tuple(code)])
+
 
 def double_sylvester_forest(code, genset, t):
     import itertools
@@ -177,6 +179,7 @@ def double_sylvester_forest(code, genset, t):
     double_schub2 = 0
     for perm0, coeff in double_schub1.items():
         double_schub2 += Sx(perm0) @ St.from_expr(coeff)
+
     def _joint_weight(rc1, rc2):
         # Vine merged-row weight:
         #   rc1 row i (descending letters): crossing has column = letter - i,
@@ -211,6 +214,7 @@ def double_sylvester_forest(code, genset, t):
                 continue
             result += _joint_weight(rc1, rc2) * coeff
     return result
+
 
 def _bst_insert(t, a):
     if t is None:
@@ -336,6 +340,7 @@ def reflection_subword_polynomial(code, x_gen, t_gen, n=None, mode="forest"):
 
     if mode == "forest":
         sylv_target = canonical_forest_from_word(sylvester_word(F))
+
         def accept(values):
             return canonical_forest_from_word(list(values)) == sylv_target
     elif mode == "schubert":
@@ -436,9 +441,11 @@ def reflection_forest_polynomial(code, x_gen, t_gen, n=None, weight_rule=None):
 
 def debug_compare_models(code, x_gen, t_gen, n=None):
     """Print, for `code`, the subwords that survive in:
-      (A) the alphabet vine model (double_forest_polynomial), and
-      (B) the reflection-alphabet model with the omega-insertion filter
-          using the principal-RC reversed perm-word as target,
+
+    (A) the alphabet vine model (double_forest_polynomial), and
+    (B) the reflection-alphabet model with the omega-insertion filter
+        using the principal-RC reversed perm-word as target,
+
     so we can stare at the symmetric difference.
     """
     from schubmult import Permutation, RCGraph, uncode
