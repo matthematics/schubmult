@@ -10,6 +10,7 @@ def _eq_except_trailing_zeros(cd1, cd2):
         i2 -= 1
     return cd1[: i1 + 1] == cd2[: i2 + 1]
 
+
 class Node:
     def __init__(self, index, label=None):
         self.index = index
@@ -412,7 +413,7 @@ def weak_composition_to_indfor(c):
         else:
             if code_block[0] < 1:
                 raise ValueError(f"Invalid first code entry for block {tuple(code_block)}")
-            left_code = [code_block[0] - 1, *code_block[1 : root_pos - 1]]
+            left_code = [code_block[0] - 1, *code_block[1:root_pos - 1]]
 
         right_code = code_block[root_pos:]
 
@@ -473,7 +474,7 @@ def build_balanced_tree(labels):
     root = Node(labels[mid])
 
     root.left = build_balanced_tree(labels[:mid])
-    root.right = build_balanced_tree(labels[mid + 1 :])
+    root.right = build_balanced_tree(labels[mid + 1:])
 
     return root
 
@@ -546,6 +547,7 @@ def word_from_labeling(root, labeling):
     # print(f"Labeling: {labeling}, Perm: {perm}, Rhos: {[node.rho for node in trav]}")
     return tuple(trav[(~perm)[i] - 1].rho for i in range(len(trav)))
 
+
 class letterpair:
     def __init__(self, primary, secondary):
         self.primary = primary
@@ -558,28 +560,28 @@ class letterpair:
         if not isinstance(other, letterpair | int):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) < (other, 0) # TODO: check!
+            return (self.primary, self.secondary) < (other, 0)  # TODO: check!
         return (self.primary, self.secondary) < (other.primary, other.secondary)
 
     def __le__(self, other):
         if not isinstance(other, letterpair | int):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) < (other, 0) # TODO: check!
+            return (self.primary, self.secondary) < (other, 0)  # TODO: check!
         return (self.primary, self.secondary) <= (other.primary, other.secondary)
 
     def __gt__(self, other):
         if not isinstance(other, letterpair | int):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) > (other, 0) # TODO: check!
+            return (self.primary, self.secondary) > (other, 0)  # TODO: check!
         return (self.primary, self.secondary) > (other.primary, other.secondary)
 
     def __ge__(self, other):
         if not isinstance(other, letterpair | int):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) > (other, 0) # TODO: check!
+            return (self.primary, self.secondary) > (other, 0)  # TODO: check!
         return (self.primary, self.secondary) >= (other.primary, other.secondary)
 
     def __eq__(self, other):
@@ -589,6 +591,7 @@ class letterpair:
 
     def __hash__(self):
         return hash((self.primary, self.secondary))
+
 
 class LabeledForest:
     def __init__(self, forest):
@@ -617,6 +620,7 @@ class LabeledForest:
     def __hash__(self):
         return hash((self.forest, tuple(self(node) for node in self.forest.inorder_traversal)))
 
+
 class DecLabeling(LabeledForest):
     def __init__(self, forest):
         super().__init__(forest)
@@ -640,6 +644,7 @@ class DecLabeling(LabeledForest):
 
     def __hash__(self):
         return hash((self.forest, tuple(self(node) for node in self.forest.inorder_traversal)))
+
 
 class LBS(LabeledForest):
     def __init__(self, forest):
@@ -747,7 +752,7 @@ def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabe
             new_q_root.left = q_root
             roots_to_remove.append(root)
             q_roots_to_remove.append(q_root)
-            if interval[1] + 2 in S_prime: # TODO: check!
+            if interval[1] + 2 in S_prime:  # TODO: check!
                 right_interval = interval_containing(intervals, interval[1] + 2)
                 right_q_interval = interval_containing(q_intervals, interval[1] + 2)
                 if right_interval is None:
@@ -763,7 +768,7 @@ def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabe
             new_q_root.right = q_root
             roots_to_remove.append(root)
             q_roots_to_remove.append(q_root)
-            if interval[0] - 2 in S_prime: # TODO: check!
+            if interval[0] - 2 in S_prime:  # TODO: check!
                 left_interval = interval_containing(intervals, interval[0] - 2)
                 left_q_interval = interval_containing(q_intervals, interval[0] - 2)
                 if left_interval is None:
@@ -790,7 +795,7 @@ def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabe
     new_P = LBS(new_forest)
 
     assert new_P.is_valid, f"Internal error: P-labeling is not valid after insertion of {next_letter}"
-    #q_forest = IndexedForest(roots=(new_q_root, *Q.forest))
+    # q_forest = IndexedForest(roots=(new_q_root, *Q.forest))
     # for node in q_forest.inorder_traversal:
     #     if node.label is None:
     #         node.label = len(word_of_pairs)
@@ -830,6 +835,7 @@ def omega_park(word):
         occupied[spot] = i
         parked_at[i] = spot
     return set(occupied.keys())
+
 
 if __name__ == "__main__":
     # Example usage
