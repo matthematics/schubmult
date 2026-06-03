@@ -2,6 +2,19 @@ from schubmult import *
 from schubmult.abc import *
 from sympy import expand, Add, Mul, S, sympify, pretty_print, Pow
 
+r = RCGraphRing()
+
+def double_elem_sym_rc(p, k, yvars):
+    from schubmult.abc import H
+    from schubmult.symbolic import expand_func
+    
+    result = 0
+    for q in range(p + 1):
+        elem_rcs = RCGraph.elem_sym_rcs(q, k)
+        for rc in elem_rcs:
+            result += expand_func(H(p - q, k + 1 - p, [-yy for yy in yvars], [0 for i in range(50)])) * r(rc)
+    return result
+
 if __name__ == "__main__":
     import sys
     import itertools
@@ -14,7 +27,7 @@ if __name__ == "__main__":
         # print("=" * 80)
 
         the_cem1 = expand(DSx(perm1).in_SEM_basis())
-        the_cem2 = expand(DSx(perm2).in_SEM_basis())
+        the_cem2 = expand(DSx(perm2, "z").in_SEM_basis())
         # print(f"  CEM expansion (in_SEM_basis): {the_cem}")
         the_cem = expand(the_cem1 * the_cem2)
         terms = []
@@ -56,7 +69,8 @@ if __name__ == "__main__":
                 #print(f"\n    factor[{fi}]: {factor}  (p={p}, k={k})")
 
                 perm_for_elem = uncode([0] * (k - p) + [1] * p)
-                all_elem_rcs = list(RCGraph.all_rc_graphs(perm_for_elem))
+                #all_elem_rcs = list(RCGraph.all_rc_graphs(perm_for_elem))
+                elem_rc_elem = double_elem_sym_rc(p, k, factor.coeffvars)
                 #print(f"      all_rc_graphs count: {len(all_elem_rcs)}")
 
                 yvars = DSx([]).ring.coeff_genset[1:]
@@ -66,14 +80,15 @@ if __name__ == "__main__":
                 # print(f"      len(zvars)={len(zvars)}")
 
                 factor_result = r.zero
-                for ri, elem_sym_rc in enumerate(all_elem_rcs):
-                    weight = elem_sym_rc.length_vector
+                #for ri, elem_sym_rc in enumerate(all_elem_rcs):
+                for rcc, coeff in elem_rc_elem.items():
+                    # weight = elem_sym_rc.length_vector
                     # print(f"\n      elem_sym_rc[{ri}]: perm={elem_sym_rc.perm}, len={len(elem_sym_rc)}")
                     # print(f"        weight={weight}")
                     # print(f"        rows: {[tuple(row) for row in elem_sym_rc]}")
 
                     try:
-                        contribution = base.resize(k).double_elem_sym_squash(weight, yvars, zvars)
+                        contribution = coeff * base.resize(k).squash_product(rcc)
                         # print(f"        contribution keys ({len(list(contribution.keys()))} total): {list(contribution.keys())}")
                         # print(f"        contribution: {contribution}")
                         factor_result += contribution
@@ -92,11 +107,15 @@ if __name__ == "__main__":
 
         # print(f"\n  FINAL RESULT for {perm1} * {perm2}:")
         pretty_print(the_result)
-        prd = Sx(perm1) * Sx(perm2)
+        prd = DSx(perm1) * DSx(perm2)
         for rc, coeff in the_result.items():
-            prd_coeff = prd.get(rc.perm, S.Zero)
-            if expand(coeff-prd_coeff) != S.Zero:
-                print(f"  *** MISMATCH for {rc}: computed coeff={coeff}, expected coeff={prd_coeff}")
+            if rc.is_principal:
+                prd_coeff = prd.get(rc.perm, S.Zero)
+                if expand(coeff-prd_coeff) != S.Zero:
+                    #print(f"  *** MISMATCH for {rc}: computed coeff={coeff}, expected coeff={prd_coeff}")
+                    print("oops")
+                else:
+                    print("yay")
         #assert the_result.almosteq(r.schub(perm, len(next(iter(the_result)))))
         print("Success for permutations:", perm1, perm2)
         # print(f"\n  CEM expansion was:")

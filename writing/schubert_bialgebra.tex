@@ -4007,7 +4007,7 @@ $$\lambda_{a,b}\;=\;\langle \forest_c^*,\forest_a\forest_b\rangle\;=\;\langle \f
 where the second equality is Theorem~\ref{theorem:forestpolyLR}.
 \end{proof}
 
-We will single out the case that $|b|=1$ for special attention. 
+% We will single out the case that $|b|=1$ for special attention. 
 
 % \begin{theorem}[Forest Monk formula]
 % Suppose $a$ is a weak composition of length $n$ and $b$ is the weak composition with a single 1 in position $k$ and $0$'s elsewhere. Then we have
@@ -4056,6 +4056,44 @@ Corollary~\ref{corollary:cupforest} should be read in the same spirit as Theorem
 \end{remark}
 
 \section{The equivariant case}
+
+\subsection{Equivariant Grassmannian RC graph ring}
+We adjoin variables to $\mathcal{M}_n$ to obtain $\mathcal{M}_n[\mathbf{t}]$. 
+
+\begin{proposition}
+There exists a unique $\mathbb{Z}[\mathbf{t}]$-basis of $\grass_n[\mathbf{t}]$
+$$\{D_T(\mathbf{t})\mid T\in\mathrm{SSYT}_n\}$$
+such that for each single-box $m\in \mathrm{SSYT}_n$ we have the formula
+$$D_T(\mathbf{t})\cdot (m -t_{n + 1 - m + \lambda_m})= D_{T\boxtimes m}(\mathbf{t})$$
+where $\lambda=\mathrm{shape}(T)$.
+\end{proposition}
+% \begin{proof}
+%   Suppose $T\in\grass_n$ and $r_1<r_2<r_3$ are single-box Grassmannian RCs. We claim that
+%   $$T(r_2-t_{\wof{T}(r_2)})(r_1-t_{\wof{Tr_2}(r_1)})(r_3-t_{\wof{Tr_2r_1}(r_3)})=T(r_2-t_{\wof{T}(r_2)})(r_3-t_{\wof{Tr_2}(r_3)})(r_1-t_{\wof{Tr_2r_3}(r_1)})$$
+
+% \end{proof}
+
+% Let $M\in\BRC_k$ be an RC graph with a single crossing for the permutation $s_k$. Let $R\in \BRC_k[t]$. Then we define
+% $$R\cdot M = t_{\wof{R}(\wtt(M))}R + R\boxtimes M$$
+
+\subsection{The double RC graph module}
+
+Consider the action of $\grass_n[\mathbf{t}]$ on $\BRC_n[\mathbf{t}]$.
+
+\begin{proposition}
+  There is a unique $\mathbb{Z}[\mathbf{t}]$-basis of $\BRC_n[\mathbf{t}]$ given by
+  $$\{D_R(\mathbf{t})\mid R\in\RC_n\}$$
+  Satisfying
+  $$D_R(\mathbf{t})\cdot D_m^n(\mathbf{t}) = (t_{\wof{R}(m)} - t_m)D_R(\mathbf{t}) + D_{R\boxtimes m}(\mathbf{t})$$
+\end{proposition}
+
+\begin{proposition} \label{proposition:eproductworks}
+For any $p_1,p_2,\ldots,p_m$ and $k_1\leq k_2\leq\ldots\leq k_m\leq n$ with $p_i\leq k_i$ for all $i$, in addition to sets of formal indeterminates $\mathbf{t}^(m)$, we have that
+$$\RC_n(\mathbf{E}_{p_1}^{k_1}(\mathbf{t}^{(1)})\mathbf{E}_{p_2}^{k_2}(\mathbf{t}^{(2)})\cdots\mathbf{E}_{p_m}^{k_m}(\mathbf{t}^{(m)})) = \sum_{w} c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\mathcal{S}_w(n;\mathbf{t}^{(1)})$$
+where $c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\in \mathbb{Z}[\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}]$ are the coefficients such that
+$$E_{p_1,k_1}^n(x;\mathbf{t}^{(1)})\cdots E_{p_m,k_m}^n(x;\mathbf{t}^{(m)}) = \sum_w c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}) \sch_w^n(x;\mathbf{t}^{(1)})\in \coma_n$$
+\end{proposition}
+
 
 \subsection{Double forest polynomials} 
 In the equivariant setting one replaces the ordinary divided differences by the 
