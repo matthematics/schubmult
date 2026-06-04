@@ -2618,6 +2618,45 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     #         rc = self.extend(1).shiftup(1).crystal_reflection(i)
     #     return rc
 
+    @classmethod
+    def monk_rc(cls, row, descent):
+        weight = [0] * descent
+        weight[row - 1] = 1
+        return next(iter(cls.all_rc_graphs(uncode([0] * (descent - 1) + [1]), descent, weight=tuple(weight))))
+
+    def _double_squash_monk(self, row, descent, genset, subvar=None):
+        from schubmult.rings.combinatorial import RCGraphRing
+        if descent < len(self.perm.trimcode):
+            raise ValueError("Descent must be at least as large as length of trimcode")
+        r = RCGraphRing()
+        if subvar is not None:
+            return (genset[self.perm[row - 1]] - subvar)* r(self) + r(self.squash_product(RCGraph.monk_rc(row, descent).resize(len(self))))
+        return genset[self.perm[row - 1]]* r(self) + r(self.squash_product(RCGraph.monk_rc(row, descent).resize(len(self))))
+
+
+    def _double_elem_sym_squash(self, weight, descent, genset, coeff_subs=None):
+        from schubmult.rings.combinatorial import RCGraphRing
+        r = RCGraphRing()
+        result = r(self)
+        if len(weight) != descent or any(weight[i] not in {0,1} for i in range(len(weight))):
+            raise ValueError(f"Weight must be a tuple of 0s and 1s of length {descent=}")
+        index = 0
+        for i in range(len(weight)):
+            if weight[i] == 0:
+                continue
+            new_result = 0
+            subber = 0
+            if coeff_subs is not None:
+                subber = coeff_subs[index]
+                index += 1
+            for rc, coeff in result.items():
+                new_result += coeff * (rc._double_squash_monk(i + 1, descent, genset))
+                if subber != 0:
+                    new_result -= coeff * subber * r(rc)
+            result = new_result
+        return result
+
+
     @property
     def inverse_crystal(self) -> InverseRCGraph:
         return InverseRCGraph(self)

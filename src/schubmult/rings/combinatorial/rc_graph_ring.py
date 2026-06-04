@@ -316,9 +316,33 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
             ret += coeff * self.ring.grass_coaction(rc)
         return ret
 
+    @property
+    def broadcast(self):
+        class BroadcastWrapper:
+            def __init__(self, elem):
+                self.elem = elem
+
+            def __getattr__(self, attr):
+                def method(*args, **kwargs):
+                    res = self.elem.ring.zero
+                    for rc_graph, coeff in self.elem.items():
+                        func_result = getattr(rc_graph, attr)(*args, **kwargs)
+                        res += coeff * self.elem.ring(func_result)
+                    return res
+                return method
+        return BroadcastWrapper(self)
+
 
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
+
+    def __call__(self, x):
+        if isinstance(x, RCGraphRingElement):
+            return self.from_dict(x)
+        return self.new(x)
+
+    def new(self, x):
+        return self.from_dict({x: 1})
 
     def __init__(self, *_, **__):
         self._ID = RCGraphRing._id
@@ -692,6 +716,8 @@ class GrassRCGraphRing(RCGraphRing):
         return self.from_dict({x: 1})
 
     def __call__(self, x):
+        if isinstance(x, RCGraphRingElement):
+            return self.from_dict(x)
         return self.new(x)
 
     @property

@@ -4057,42 +4057,38 @@ Corollary~\ref{corollary:cupforest} should be read in the same spirit as Theorem
 
 \section{The equivariant case}
 
-\subsection{Equivariant Grassmannian RC graph ring}
-We adjoin variables to $\mathcal{M}_n$ to obtain $\mathcal{M}_n[\mathbf{t}]$. 
+\subsection{Double factor algebra}
 
-\begin{proposition}
-There exists a unique $\mathbb{Z}[\mathbf{t}]$-basis of $\grass_n[\mathbf{t}]$
-$$\{D_T(\mathbf{t})\mid T\in\mathrm{SSYT}_n\}$$
-such that for each single-box $m\in \mathrm{SSYT}_n$ we have the formula
-$$D_T(\mathbf{t})\cdot (m -t_{n + 1 - m + \lambda_m})= D_{T\boxtimes m}(\mathbf{t})$$
-where $\lambda=\mathrm{shape}(T)$.
-\end{proposition}
-% \begin{proof}
-%   Suppose $T\in\grass_n$ and $r_1<r_2<r_3$ are single-box Grassmannian RCs. We claim that
-%   $$T(r_2-t_{\wof{T}(r_2)})(r_1-t_{\wof{Tr_2}(r_1)})(r_3-t_{\wof{Tr_2r_1}(r_3)})=T(r_2-t_{\wof{T}(r_2)})(r_3-t_{\wof{Tr_2}(r_3)})(r_1-t_{\wof{Tr_2r_3}(r_1)})$$
+\begin{definition}
+We adjoin variables to $\grass_n$ to obtain $\grass_n[\mathbf{t}]$. Define
+$$\mathfrak{E}_n^n(\mathbf{t}) = \sum_{k=0}^n t_1^{n-k}\mathbf{E}_k^n$$
+Then define
+$$\mathfrak{E}_p^n(\mathbf{t}) = \partial^{s_{n - p}\cdots s_2s_1}(\mathbf{t})\mathfrak{E}_n^n(\mathbf{t})$$
 
-% \end{proof}
+Let $m_i$ denote the RC graph with a single crossing at row $i$ and column $n+1-i$. Define a \emph{straight double elementary RC graph} $E$ to be of the form
+$$E(\mathbf{t}) = (m_{i_1} - t_{n+1-i_1})(m_{i_2} - t_{n+1-i_2})\cdots (m_{i_p} - t_{n+1-i_p})$$
+where
+$$1\leq i_1 < i_2 < \cdots < i_p \leq n$$
+The virtue of this definition is that $E(\mathbf{t})$ is uniquely determined by its row weight.
+\end{definition}
 
-% Let $M\in\BRC_k$ be an RC graph with a single crossing for the permutation $s_k$. Let $R\in \BRC_k[t]$. Then we define
-% $$R\cdot M = t_{\wof{R}(\wtt(M))}R + R\boxtimes M$$
+% \subsection{The double RC graph module}
 
-\subsection{The double RC graph module}
+% Consider the action of $\grass_n[\mathbf{t}]$ on $\BRC_n[\mathbf{t}]$.
 
-Consider the action of $\grass_n[\mathbf{t}]$ on $\BRC_n[\mathbf{t}]$.
+% \begin{proposition}
+%   There is a unique $\mathbb{Z}[\mathbf{t}]$-basis of $\BRC_n[\mathbf{t}]$ given by
+%   $$\{D_R(\mathbf{t})\mid R\in\RC_n\}$$
+%   Satisfying
+%   $$D_R(\mathbf{t})\cdot D_m^n(\mathbf{t}) = (t_{\wof{R}(m)} - t_m)D_R(\mathbf{t}) + D_{R\boxtimes m}(\mathbf{t})$$
+% \end{proposition}
 
-\begin{proposition}
-  There is a unique $\mathbb{Z}[\mathbf{t}]$-basis of $\BRC_n[\mathbf{t}]$ given by
-  $$\{D_R(\mathbf{t})\mid R\in\RC_n\}$$
-  Satisfying
-  $$D_R(\mathbf{t})\cdot D_m^n(\mathbf{t}) = (t_{\wof{R}(m)} - t_m)D_R(\mathbf{t}) + D_{R\boxtimes m}(\mathbf{t})$$
-\end{proposition}
-
-\begin{proposition} \label{proposition:eproductworks}
-For any $p_1,p_2,\ldots,p_m$ and $k_1\leq k_2\leq\ldots\leq k_m\leq n$ with $p_i\leq k_i$ for all $i$, in addition to sets of formal indeterminates $\mathbf{t}^(m)$, we have that
-$$\RC_n(\mathbf{E}_{p_1}^{k_1}(\mathbf{t}^{(1)})\mathbf{E}_{p_2}^{k_2}(\mathbf{t}^{(2)})\cdots\mathbf{E}_{p_m}^{k_m}(\mathbf{t}^{(m)})) = \sum_{w} c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\mathcal{S}_w(n;\mathbf{t}^{(1)})$$
-where $c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\in \mathbb{Z}[\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}]$ are the coefficients such that
-$$E_{p_1,k_1}^n(x;\mathbf{t}^{(1)})\cdots E_{p_m,k_m}^n(x;\mathbf{t}^{(m)}) = \sum_w c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}) \sch_w^n(x;\mathbf{t}^{(1)})\in \coma_n$$
-\end{proposition}
+% \begin{proposition} \label{proposition:eproductworks}
+% For any $p_1,p_2,\ldots,p_m$ and $k_1\leq k_2\leq\ldots\leq k_m\leq n$ with $p_i\leq k_i$ for all $i$, in addition to sets of formal indeterminates $\mathbf{t}^(m)$, we have that
+% $$\RC_n(\mathbf{E}_{p_1}^{k_1}(\mathbf{t}^{(1)})\mathbf{E}_{p_2}^{k_2}(\mathbf{t}^{(2)})\cdots\mathbf{E}_{p_m}^{k_m}(\mathbf{t}^{(m)})) = \sum_{w} c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\mathcal{S}_w(n;\mathbf{t}^{(1)})$$
+% where $c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\in \mathbb{Z}[\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}]$ are the coefficients such that
+% $$E_{p_1,k_1}^n(x;\mathbf{t}^{(1)})\cdots E_{p_m,k_m}^n(x;\mathbf{t}^{(m)}) = \sum_w c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}) \sch_w^n(x;\mathbf{t}^{(1)})\in \coma_n$$
+% \end{proposition}
 
 
 \subsection{Double forest polynomials} 
