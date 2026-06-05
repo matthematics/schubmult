@@ -223,4 +223,11 @@
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (-0.3,1.5) {11};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (-0.3,0.5) {12};
   \draw[black, line width=1.2000000000000002pt] (13,8) rectangle (0,13);
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,10.5) {3};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (5.5,10.5) {8};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,8.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (7.5,8.5) {12};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,6.5) {7};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,3.5) {10};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5,3.5) {11};
 \end{tikzpicture}

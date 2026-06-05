@@ -243,7 +243,7 @@
 \begin{document}
 
 \begin{abstract}
-We introduce the ``Schubert bialgebra,'' a ring-theoretic direct sum of polynomial rings, whose Schubert basis recovers the classical structure constants $c_{u,v}^w$, and lift the product structure on the graded dual to a product structure on RC graphs. We present Littlewood--Richardson-style rules for the dual bases of the Schubert, key, slide, and forest polynomials that count certain RC graphs. We further give a Littlewood--Richardson rule for the forest polynomials themselves in which each structure constant is realized as the cardinality of an explicit finite set of pairs of RC graphs; positivity and a combinatorial characterization of these coefficients were already established in \cite{bergeron2025equivariant} by a positive straightening algorithm, and the rule presented here is, to our knowledge, the first such formula expressing them as a closed-form count of explicit combinatorial objects. The same rule descends to the cup product in the cohomology of the quasisymmetric flag variety of \cite{bergeron2025qsymflag}.
+We introduce the ``Schubert bialgebra,'' a ring-theoretic direct sum of polynomial rings, whose Schubert basis recovers the classical structure constants $c_{u,v}^w$, and lift the product structure on the graded dual to a product structure on RC graphs. We present Littlewood--Richardson-style rules for the dual bases of the Schubert, key, slide, and forest polynomials that count certain RC graphs. We further give a Littlewood--Richardson rule for the forest polynomials themselves in which each structure constant is realized as the cardinality of an explicit finite set of pairs of RC graphs. The same rule descends to the cup product in the cohomology of the quasisymmetric flag variety.
 \end{abstract}
 
 	\maketitle
@@ -268,9 +268,7 @@ $$\langle c, x_a\rangle = \delta_{c,a}$$
 where $a$ is any composition. We present an explicit formula for the dual Schubert basis in $\dcoma$ with integer coefficients.
 
 A dual basis to the Schubert polynomials is of course not itself new: Postnikov and Stanley \cite{postnikov2009chains} introduced a family of dual Schubert polynomials $\mathfrak{D}_w$ in the polynomial ring with respect to a particular integral pairing, characterized by a formula that mimics the action of divided difference operators on Schubert polynomials. The relationship between the two bases is that the coefficients of $\mathfrak{D}_u$ in the divided power algebra are, up to a scalar factor, the same as the coefficients of $\dsch_u^n$ in the weak composition basis.
-% Then $\dcoma$ has a basis indexed by $\bigcup_{n=0}^\infty \mathrm{Comp}_n$, and the product of two basis elements is given by concatenation of the corresponding weak compositions. Hence, as an algebra, $\dcoma$ is isomorphic to the free associative algebra on a countable set of generators indexed by nonnegative integers. The coproduct on $\dcoma$ is given by deconcatenation, that is to say
 
-%Multiplicatively, the algebra is free on a countable set of generators indexed by nonnegative integers, with the degree of the generator being its index. We identify the basis dual to the Schubert polynomials in $\dcoma$, which we index as $\dsch_u^n$ for $u\in S_\infty$ and $n$ is at least as large as the last descent of $u$. This is closely related to, yet subtly distinct from, the dual basis to the Schubert polynomials in the polynomial ring considered by Postnikov and Stanley in \cite{postnikov2009chains}, identified with an explicit formula in said article. 
 
 \subsection*{The Littlewood-Richardson rule for dual Schubert polynomials} The Schubert basis of $\dcoma$ has nonnegative structure constants. This is fundamentally a geometric fact: the Schubert structure constants $c_{u,v}^w$ are intersection multiplicities of Schubert varieties in the complete flag manifold $\mathrm{Fl}_n$, and are nonnegative because Schubert classes are represented by effective subvarieties that, after a generic translate, intersect transversely (Kleiman). Bergeron and Sottile \cite{coprod} showed that this positivity passes to the splitting identity satisfied by Schubert polynomials when the variables are partitioned into two blocks, which in our language amounts to nonnegativity of the structure constants of the dual Schubert basis under the concatenation product on $\dcoma$. Our main result is an explicit, manifestly positive combinatorial formula for these structure constants, the numbers $d_{u,v}^w(p, q)$ such that 
 $$\dsch_u^p \sqcupplus \dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\,\dsch_w^{p+q}.$$
@@ -304,13 +302,13 @@ From this angle the algebra $(\dcoma,\sqcupplus)$ and its dual Schubert basis $\
 \newcommand{\fcode}{\mathfrak{c}_f}
 \subsection*{Key polynomials}
 
-The \emph{key polynomials} (also called \emph{Demazure characters} in type $A$) form a $\mathbb{Z}$-basis $\{\kappa_a\}$ of the polynomial ring $\mathbb{Z}[x_1,x_2,\ldots]$ indexed by weak compositions $a$. Their origin lies in the work of Demazure \cite{demazure1974desingularisation,demazure1974nouvelle}, who introduced isobaric divided difference operators $\pi_i$ in order to compute the characters of the $B$-modules $H^0(X_w,\mathcal{L}_\lambda)$ associated to Schubert varieties $X_w$ in $G/B$. In type $A$, the resulting characters become polynomials in the $x_i$, and one obtains $\kappa_a$ for any weak composition $a$ by setting $\kappa_\lambda = x^\lambda$ when $\lambda$ is a partition (an antidominant weight in the convention used here) and applying the appropriate operator $\pi_i$ at each descent of $a$ to interpolate between rearrangements of $\lambda$.
+The \emph{key polynomials} (also called \emph{Demazure characters} in type $A$) form a $\mathbb{Z}$-basis $\{\kappa_a\}$ of the polynomial ring $\mathbb{Z}[x_1,x_2,\ldots]$ indexed by weak compositions $a$. Their origin lies in the work of Demazure \cite{demazure1974desingularisation,demazure1974nouvelle}, who introduced isobaric divided difference operators $\pi_i$ in order to compute the characters of the $B$-modules $H^0(X_w,\mathcal{L}_\lambda)$ associated to Schubert varieties $X_w$ in $G/B$. In type $A$, the resulting characters become polynomials in the $x_i$, and one obtains $\kappa_a$ for any weak composition $a$ by setting $\kappa_\lambda = x^\lambda$ when $\lambda$ is a partition (a dominant weight) and applying the appropriate operator $\pi_i$ at each descent of $a$ to interpolate between rearrangements of $\lambda$.
 
 A purely combinatorial development of key polynomials was carried out by Lascoux and Schützenberger in \cite{lascoux1990keys}, where they introduced the notion of the \emph{right key} $K_+(T)$ and \emph{left key} $K_-(T)$ of a semistandard Young tableau $T$, and proved that
 $$\kappa_a = \sum_{T} x^{\wtt(T)}$$
 where the sum runs over semistandard Young tableaux $T$ of shape $\mathrm{sort}(a)$ whose right key $K_+(T)$ is bounded above (entrywise) by the key tableau associated to $a$. They additionally proved that Schubert polynomials decompose as a positive sum of key polynomials, which was given a combinatorial proof in terms of compatible sequences and the right-key map by Reiner and Shimozono \cite{reiner1995key}. The intermediate basis of \emph{Demazure atoms} (the ``standard bases'' of \cite{lascoux1990keys}) was later given an explicit nonnegative monomial expansion by Mason \cite{mason2009explicit} via semi-skyline augmented fillings.
 
-From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from the highest weight element by closure under the operators $\{f_{i_k}^n : n\geq 0\}$, and Kashiwara proved that its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. In type $A$, this means $\kappa_a$ is precisely the character of a Demazure crystal inside a tensor product of fundamental crystals, and the key polynomial expansion of any nonnegative-on-Demazure-crystals polynomial is forced to be nonnegative. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs (equivalently, pipe dreams) of a permutation $w$, thereby giving a representation-theoretic proof of the Lascoux-Schützenberger key-positivity of Schubert polynomials. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
+From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from an extremal weight element by closure under the operators $\{e_{i_k}^n : n\geq 0\}$, and Kashiwara proved that its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. In type $A$, this means $\kappa_a$ is precisely the character of a Demazure crystal inside a tensor product of fundamental crystals, and the key polynomial expansion of any nonnegative-on-Demazure-crystals polynomial is forced to be nonnegative. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs (equivalently, pipe dreams) of a permutation $w$, thereby giving a representation-theoretic proof of the Lascoux-Schützenberger key-positivity of Schubert polynomials. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
 
 There is a dual key basis $\{\kappa_a^*\}$ of $\dcoma$ defined by $\langle \kappa_a^*, \kappa_b\rangle = \delta_{a,b}$, where as before we are restricting to fixed lengths of compositions, and we give an explicit formula for these dual key polynomials in terms of RC graphs. Specifically, for an RC graph $R$, we define the \emph{extremal weight} $\mathrm{extwt}(R)$ to be the extremal weight of the Demazure crystal of $R$, which is the unique lowest weight element that generates the crystal, and we define $\mathrm{Dem}(R)$ to be the set of RC graphs in the same Demazure crystal as $R$.
 
@@ -365,13 +363,13 @@ A word about duality is in order. The dual basis $\{\forest_a^*\}$ studied here 
 
 The present subsection is, in a precise sense, logically independent of the dual rules of the preceding three subsections. The statement concerns forest polynomials directly rather than their duals, and although the proof in \S\ref{section:forestrule} draws on machinery developed alongside the dual rules (the slide quotient of \S\ref{section:slide}, in particular), a reader interested only in this result need not work through the earlier LR rules first.
 
-The main combinatorial theorem of the paper is Theorem \ref{theorem:forestpolyLR}: a positive, combinatorial Littlewood--Richardson rule for the product of two forest polynomials themselves. Concretely, the structure constants $\beta_{ab}^c$ in
+The main combinatorial theorem of the paper is Theorem \ref{theorem:forestpolyLR}: an \emph{enumerative}, Schubert-calculus-style Littlewood--Richardson rule for the product of two forest polynomials themselves. Concretely, the structure constants $\beta_{ab}^c$ in
 $$\forest_a\,\forest_b = \sum_c \beta_{ab}^c\,\forest_c$$
 are cardinalities of explicit sets of pairs of RC graphs: $\beta_{ab}^c$ counts pairs $(A,B)$ of \emph{forest} RC graphs of forest-code $a$ and $b$ whose lift product $A*B$ lands on some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$. The proof requires substantially more machinery than the dual rules: we introduce the \emph{squash product} $\boxtimes$ and an auxiliary \emph{lift product} $*$ on $\BRC_n$ that lives in a multiplactic algebra $\mathcal{M}_n$ of elementary RC factors, exploit a Cauchy-type factorization through the slide quotient of \S\ref{section:slide}, and combine all of this with the forest equivalence of \cite{nadeau2024forest}.
 
-Positivity of the coefficients $\beta_{ab}^c$ is not new. Bergeron, Gagnon, Nadeau, Spink, and Tewari \cite{bergeron2025equivariant} prove that the forest polynomials multiply with nonnegative integer (in fact, in the equivariant setting, Graham-positive) structure constants, and they extract these coefficients constructively from a positive straightening algorithm: an iterative rewriting procedure in an augmented version of the positive Thompson monoid that produces, given $a$ and $b$, a positive expansion of $\forest_a \forest_b$. The output of that algorithm depends on the rewriting choices made along the way, and a given $\beta_{ab}^c$ is recovered only as the cumulative sum of contributions accumulated through the procedure.
+That the coefficients $\beta_{ab}^c$ are nonnegative integers is not new. Bergeron, Gagnon, Nadeau, Spink, and Tewari \cite{bergeron2025equivariant} prove constructively that the forest polynomials multiply with nonnegative integer (in fact, in the equivariant setting, Graham-positive) structure constants, by extracting them from a positive straightening algorithm: an iterative rewriting procedure in an augmented version of the positive Thompson monoid that produces, given $a$ and $b$, a positive expansion of $\forest_a \forest_b$. The authors of \cite{bergeron2025equivariant} are explicit, however, that this is not an enumerative rule in the spirit of Schubert calculus: the output of their algorithm depends on the rewriting choices made along the way, and a given $\beta_{ab}^c$ is recovered only as the cumulative sum of contributions accumulated through the procedure, rather than as the cardinality of any prescribed combinatorial set.
 
-Theorem \ref{theorem:forestpolyLR} is of a different character. It does not refine an algorithm; it provides an explicit combinatorial description in which $\beta_{ab}^c$ is the cardinality of a set of pairs $(A,B)$ of RC graphs. The triple $(a,b,c)$ enters the description only through fixed, easily checkable conditions on $A$, $B$, and the lift product $A*B$; no iterative procedure intervenes between the indices and the count. To our knowledge no formula of this type has previously appeared for $\beta_{ab}^c$, and for the analogous Schubert structure constants $c_{u,v}^w$ no such closed-form combinatorial count is known in any generality.
+Theorem \ref{theorem:forestpolyLR} is precisely such an enumerative rule. It does not refine an algorithm; it provides an explicit combinatorial description in which $\beta_{ab}^c$ is the cardinality of a set of pairs $(A,B)$ of RC graphs. The triple $(a,b,c)$ enters the description only through fixed, easily checkable conditions on $A$, $B$, and the lift product $A*B$; no iterative procedure intervenes between the indices and the count. The novelty of Theorem~\ref{theorem:forestpolyLR} is therefore not in establishing positivity (which is already a theorem of \cite{bergeron2025equivariant}) but in supplying the missing enumerative content: a description of $\beta_{ab}^c$ as $\#\{(A,B):\text{conditions}(a,b,c)\}$, of the same combinatorial type as the classical Littlewood--Richardson rule for Schur functions. To our knowledge no formula of this type has previously appeared for $\beta_{ab}^c$, and for the analogous Schubert structure constants $c_{u,v}^w$ no such combinatorial count is known in full generality.
 
 \subsection*{The ring of RC graphs}
 
@@ -381,7 +379,7 @@ then there is an associative product $\sqcupplus$ on $\BRC$ and a homomorphism o
 $$\alpha(R) = \dsch_u^n$$
 where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\sqcupplus$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintaining the projection to $\dcoma$ and leveraging this to find the formula.
 
-\subsection*{Conjectures}
+\subsection*{Further directions}
 
 Beyond this, there is potentially much to explore. For example, the coproduct of $\dcoma$ has as its structure constants the structure constants of Schubert polynomials, which have evaded expression in terms of positive formulas for decades, and at the time of this writing no positive, combinatorial formula is known for the structure constants of Schubert polynomials that applies in all cases. At the very least, this coproduct is a new potential method of attack on this and related problems, since as far as we know it is new. An expression for $\dsch_w^n$ in the composition basis leads to a simple, purely mechanical method for computing all $c_{u,v}^w$ (generalized Littlewood-Richardson coefficients for Schubert polynomials) by leveraging the extremely simple form the coproduct takes on the weak composition basis, as well as a neat positive formula for the expansion of a weak composition $[a]$ in the Schubert basis.
 %It is a nearly trivial observation that if a basis of the polynomial ring is such that the Schubert polynomials have a nonnegative expression in terms of that basis, then the dual Schubert elements can be expressed nonnegatively in terms of the corresponding dual basis.
@@ -393,6 +391,8 @@ Gao and Huang in \cite{GaoHuang2023} defined a natural bijection between RC grap
 Let $B$ be a $k$-row reduced bumpless pipe dream such that row $k$ has no blanks (``weighty tiles''). Then 
 $$\zeromap(\phi(B)) = \phi(\mathbf{t}(B))$$
 \end{conjecture}
+
+This simplicity does not come for free, however; the $\trm^p$ operation on BPDs is no longer trivial.
 
 % This may appear too strong to be a coincidence. Indeed, we believe that this is the case. There is a known bijection between RC graphs and RFC (reduced factorizations with cutoff), a subset of RFs (reduced factorizations), on which a crystal structure is imposed by Morse and Schilling in \cite{morse2016crystal}. This is then shown to realize the Demazure crystal structure of RFCs, essentially equivalent to RC graphs, in \cite{assaf2018demazure}. For another conjecture that would explain such an apparent coincidence, we posit the following.
 % \begin{conjecture}
@@ -863,7 +863,7 @@ $$[a]\cdot \dsch_{w}^{n} = \sum_{w'\downvar{1} w\atop\ell(w,w')=a} \dsch_{w'}^{n
 
 \subsection{The coproduct}
 
-The dual bialgebra $\dcoma$ carries two compatible coproducts: the deconcatenation coproduct dual to concatenation on $\dcoma$ (which is just the restriction of $\Delta$ from $\coma$, viewed under the self-duality of the free module), and the coproduct dual to the \emph{product} on $\coma$. It is this second coproduct that is of primary interest here. We will denote it by
+Consider the coproduct dual to the product on $\coma$. We will denote it by
 $$\Delta^*:\dcoma\to \dcoma\otimes\dcoma,$$
 and we recall that it is characterized by the pairing identity
 $$\langle \Delta^*(\alpha), x\otimes y\rangle = \langle \alpha, xy\rangle$$
@@ -2749,7 +2749,7 @@ whenever the left-hand sides are defined.
 
 
 \begin{theorem} \label{theorem:keyformula}
-  Let $c$ be a weak composition. Then dual key polynomial $\kappa^*_c$ is equal to
+  Let $c$ be a weak composition. Then the dual key polynomial $\kappa^*_c$ is equal to
 $$\kappa^*_c = \sum_{R=\mathbb{Y}(R)\atop\mathrm{extwt}(R)=c} \dsch_{\wof{R}}^{\hr(R)}$$
 \end{theorem}
 \begin{proof}
@@ -2958,6 +2958,12 @@ $R_1$ & $R_2$ \\[4pt]
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {8};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {9};
   \draw[black, line width=1.35pt] (10.3,7) rectangle (0.3,10);
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (3.8,9.5) {4};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (5.8,9.5) {6};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (7.8,8.5) {9};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.8,6.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.8,6.5) {8};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (2.8,5.5) {7};
 \end{tikzpicture}
 &
 \begin{tikzpicture}[scale=0.45]
@@ -3104,13 +3110,19 @@ $R_1$ & $R_2$ \\[4pt]
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {8};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {9};
   \draw[black, line width=1.35pt] (10.3,7) rectangle (0.3,10);
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (3.8,9.5) {4};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (8.8,9.5) {9};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.8,8.5) {6};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.8,6.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.8,6.5) {8};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (2.8,5.5) {7};
 \end{tikzpicture}
 \end{tabular}
 \caption{The two $7$-row RC graphs $R_1$ (left) and $R_2$ (right) in $\mathcal{C}_c$ satisfying $\clp^3(R_i)\in\mathcal{C}_a$ and $\trm^3(R_i)\in\mathcal{C}_b$. The outlined box marks the top $3$ rows (the clip region).}
 \label{fig:LRkey_example}
 \end{figure}
 
-Both graphs have permutation $w_c=(1,2,3,5,7,4,10,6,8,9)$. They differ only in their first two rows: $R_1$ has row data $[(6,4),(9,),()]$ in the top three rows, while $R_2$ has $[(9,4),(6,),()]$. Applying $\clp^3$ (retaining only the top $3$ rows and re-indexing) to each yields the same $3$-row graph with highest weight $a=(0,1,2)$:
+Both graphs have permutation $w_c=(1,2,3,5,7,4,10,6,8,9)$. They differ only in their first two rows: $R_1$ has row data $[(6,4),(9,),()]$ in the top three rows, while $R_2$ has $[(9,4),(6,),()]$. Applying $\clp^3$ (retaining only the top $3$ rows and re-indexing) to each yields the same $3$-row graph with extremal weight $a=(0,1,2)$:
 $$\clp^3(R_1)=\clp^3(R_2)=
 \begin{tikzpicture}[scale=0.45, baseline=(current bounding box.center)]
   \draw[lightgray, very thin, opacity=0.3] (5.3,0) -- (0.3,0);
@@ -3160,9 +3172,12 @@ $$\clp^3(R_1)=\clp^3(R_2)=
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,2.5) {5};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {2};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {4};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.8,4.5) {2};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (3.8,4.5) {4};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.8,3.5) {3};
 \end{tikzpicture}
 $$
-Applying $\trm^3$ (keeping the bottom $4$ rows) gives the same $4$-row graph with highest weight $b=(0,1,0,2)$:
+Applying $\trm^3$ (keeping the bottom $4$ rows) gives the same $4$-row graph with extremal weight $b=(0,1,0,2)$:
 $$\trm^3(R_1)=\trm^3(R_2)=
 \begin{tikzpicture}[scale=0.45, baseline=(current bounding box.center)]
   \draw[lightgray, very thin, opacity=0.3] (6.3,0) -- (0.3,0);
@@ -3227,6 +3242,9 @@ $$\trm^3(R_1)=\trm^3(R_2)=
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,2.5) {6};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,1.5) {4};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (0,0.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.8,5.5) {2};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (4.8,5.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (2.8,4.5) {4};
 \end{tikzpicture}
 $$
 
@@ -3316,7 +3334,7 @@ Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathb
 \item[I] Let $R\in \BRC$ be a bounded RC graph. Then the forest polynomial $\forest_{\fcode(R)}$ is equal to
 $$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
 
-\item[II] Let $c$ be a weak composition. Then dual forest polynomial $\forest^*_c$ is equal to
+\item[II] Let $c$ be a weak composition. Then the dual forest polynomial $\forest^*_c$ is equal to
 $$\forest^*_c = \sum_{[R]\in\mathcal{C}_\forest(c)} \dsch_{\wof{R}}^{\hr(R)}$$
   \end{itemize}
 \end{theorem}
@@ -3636,7 +3654,14 @@ where we increase the size of the left factor to match the right factor as neede
 
 We may avoid the clunky tensor product notation by noting that we may identify which tensor factor an element of $\mathcal{M}_n$ belongs to by its height, and so we may write elements of $\mathcal{M}_n$ as formal products of full-Grassmannian RC graphs, with the understanding that the $k$-th factor of the product is the submodule $\grass_k$.
 
-Define $\mathbf{E}_{p}^k$ to be the sum of all full $k$-Grassmannian elementary symmetric polynomial RC graphs of degree $p$, considered as an element of $\mathcal{M}_n$.
+For each $1\leq k\leq n$ and binary vector $\beta\in\{0,1\}^k$, define $\mathbf{E}^{k;\beta}$ to be the unique $k$-Grassmannian RC graph for a permutation with a single column satisfying
+$$\wtt_j(\mathbf{E}^{k;\beta}) = \beta_j$$
+for $1\leq j\leq k$. Equivalently, the rows of $\mathbf{E}^{k;\beta}$ that carry a crossing are exactly those indexed by the support of $\beta$, namely $\{j\in\{1,\ldots,k\}:\beta_j=1\}$, and the degree (column length) of $\mathbf{E}^{k;\beta}$ is $|\beta|:=\beta_1+\cdots+\beta_k$.
+
+Define $\mathbf{E}_{p}^k$ by
+$$\mathbf{E}_{p}^k = \sum_{\substack{\beta\in\{0,1\}^k\\ |\beta|=p}} \mathbf{E}^{k;\beta}$$
+where the sum is over all binary vectors of length $k$ with exactly $p$ ones, in bijection with the $\binom{k}{p}$ size-$p$ subsets of $\{1,\ldots,k\}$.
+%the sum of all full $k$-Grassmannian elementary symmetric polynomial RC graphs of degree $p$, considered as an element of $\mathcal{M}_n$.
 \end{definition}
 
 \begin{proposition} \label{proposition:eproductworks}
@@ -3696,8 +3721,8 @@ and the problem of finding a positive formula for the Schubert structure constan
 We now define a product on $\BRC_n$ that is associative, but as necessitated by the remark above does not correctly model Schubert polynomial multiplication. However, we will see that it is correct enough to give a Littlewood-Richardson rule for forest polynomials.
 
 \begin{proposition} \label{proposition:elemfactor}
-  Let $u\in S_\infty$ be a permutation and suppose $R\in \RC_n(u)$. Let $\lambda$ be a partition and let $w$ be the corresponding dominant permutation with $\code^*(w)=\lambda$. Assume that $\ell(uw^{-1}) = \ell(w)-\ell(u)$. Let $c$ be a composition such that $c_i\leq \lambda_{N + 1 - i}$ for all $i$, where $N=\ell(\lambda)$. Then the number of sequences of elementary symmetric RC graphs $A_1,\ldots,A_N$ such that $|A_i| = c_i$ and $\hr(A_i) = \lambda_{N + 1 - i}$ satisfying
-  $$A_1\boxtimes\cdots\boxtimes A_N = R$$
+  Let $u\in S_\infty$ be a permutation and suppose $R\in \RC_n(u)$. Let $\lambda$ be a partition and let $w$ be the corresponding dominant permutation with $\code^*(w)=\lambda$. Assume that $\ell(uw^{-1}) = \ell(w)-\ell(u)$. Let $c$ be a weak composition such that $c_i\leq \lambda_{N + 1 - i}$ for all $i$, where $N=\ell(\lambda)$. Then the number of sequences of binary vectors $\beta_1,\ldots,\beta_N$ such that $\beta_i\in\{0,1\}^{\lambda_{N + 1 - i}}$ with $|\beta_i|=c_i$ satisfying
+  $$\mathbf{E}^{\lambda_N;\beta_1}\boxtimes\cdots\boxtimes \mathbf{E}^{\lambda_1;\beta_N} = R$$
 is equal to the coefficient of $x^c$ in $\sch_{uw^{-1}}(x)$.
 \end{proposition}
 \begin{proof}
@@ -3727,6 +3752,25 @@ Some justification that $\mathrm{lift}_n$ is well-defined is in order. For each 
 We define a product $*$ on $\BRC_n$ by
 $$R_1*R_2 = \RC_n(\mathrm{lift}_n(R_1)\mathrm{lift}_n(R_2))$$
 \end{definition}
+
+\begin{lemma}[Weight-additivity of the lift product]\label{lemma:liftweight}
+For any $R_1, R_2\in\BRC_n$,
+$$\wtt(R_1 * R_2) = \wtt(R_1) + \wtt(R_2),$$
+where addition of weight vectors is componentwise. Equivalently, the weight-evaluation map
+$$\phi:\BRC_n\to\mathbb{Z}[x_1,\ldots,x_n],\qquad \phi(R) = x^{\wtt(R)},$$
+is a homomorphism of rings from $(\BRC_n,*)$ to the polynomial ring.
+\end{lemma}
+\begin{proof}
+We first observe that the squash product preserves row weights: by Definition of $\sqcup$, the columns of $R_2$ are shifted strictly past those of $R_1$ but their row indices are unchanged, so $\wtt(R_1\sqcup R_2)_i = \wtt(R_1)_i + \wtt(R_2)_i$ for $i\leq \hr(R_1)$ and $0$ otherwise. Since the rows beyond $\hr(R_1)$ of $R_1\sqcup R_2$ are empty, each iterate of $\zeromap$ used to form $\clp^{\hr(R_1)}(R_1\sqcup R_2)$ acts on an empty last row and merely truncates it; in particular the row weights for rows $1,\ldots,\hr(R_1)$ are preserved. Hence
+$$\wtt(R_1\boxtimes R_2)_i = \wtt(R_1)_i + \wtt(R_2)_i\qquad (1\leq i\leq \hr(R_1))$$
+whenever $R_1$ and $R_2$ have the same height. By induction, the same identity holds for any $\boxtimes$-product of RC graphs of common height: row weights add componentwise.
+
+Now apply this to elementary multiplactic factors. For $\beta\in\{0,1\}^k$, we have $\wtt_j(\mathbf{E}^{k;\beta}) = \beta_j$ by definition. If $\mathrm{lift}_n(R) = E_1\cdots E_m$ with $E_i = \mathbf{E}^{k_i;\beta_i}$ a full-Grassmannian elementary RC graph, then $R = \RC_n(E_1\otimes\cdots\otimes E_m)$ is the iterated $\boxtimes$-product of the $E_i$ (with each $E_i$ first padded by empty rows up to common height $n$), and the row-weight-additivity of $\boxtimes$ established above gives
+$$\wtt_j(R) = \sum_{i:\,k_i\geq j} (\beta_i)_j\qquad (1\leq j\leq n).$$
+Applying the same identity to $R_1*R_2 = \RC_n(\mathrm{lift}_n(R_1)\,\mathrm{lift}_n(R_2))$, whose multiplactic factorization is the concatenation of those of $R_1$ and $R_2$, yields
+$$\wtt(R_1*R_2) = \wtt(R_1) + \wtt(R_2)$$
+componentwise. The ring-homomorphism statement is immediate: $\phi(R_1*R_2) = x^{\wtt(R_1)+\wtt(R_2)} = x^{\wtt(R_1)}\,x^{\wtt(R_2)} = \phi(R_1)\phi(R_2)$.
+\end{proof}
 
 %Such a tensor $A_1\otimes\cdots\otimes A_n$ is highest weight if for each $i,j$ we have that either there is a crossing in row $j+1$ but none in row $j$ in $A_i$, or there is no crossing in row $j$ in $A_{i+1}$,  or there are crossings in both rows $j$ and $j+1$ in $A_{i+1}$.
 \begin{lemma}
@@ -3920,13 +3964,33 @@ $$\forest(R) = \sum_{A\equiv_\forest R} A$$
 A \emph{forest RC graph} is an RC graph such that $\code_\forest(R) = \wtt(R)$. 
 \end{definition}
 
-\begin{lemma}
+\begin{lemma}\label{lemma:foreststable}
 Let $A,B\in \BRC_n$. Then the set
 $$S=\{A'*B'\mid A\equiv_\forest A', B\equiv_\forest B'\}$$
-is stable under forest equivalence.
+is stable under forest equivalence: if $R\in S$ and $R\equiv_\forest R'$, then $R'\in S$.
 \end{lemma}
 \begin{proof}
-If $B$ is elementary symmetric, we may assume $\hr(A)\leq \hr(B)$, in which case we have that if $A\equiv_\forest A'$, then $A\sqcup B\equiv_\forest A'\sqcup B$. It follows that $A'*B\equiv_\forest A*B$. By induction, this follows for any $B$. The argument is symmetric enough that this also applies on the left. Other equivalences are achieved by changes in the weights of $A$ or $B$ in ways that are disallowed by $\ddot{\otimes}$. In that case the quasi-crystal component may change, however clearly the product is still in $S$ by definition. The result follows.
+We use the same description of $\equiv_\forest$ that underlies the proof of Lemma~\ref{lemma:forestideal}. By \cite[Proposition~5.8 and Lemma~5.9]{nadeau2024forest}, forest equivalence on injectified words is generated by \emph{pairwise commutations} of two adjacent letters $a, b\in\overline{\mathbb{Z}}$ — there are no triple-letter (Knuth-style) generators — and the validity of such a commutation depends only on $\mathrm{val}(a)$, $\mathrm{val}(b)$, and the (forest-related) letters strictly surrounding the pair. These generators enjoy two key invariances:
+\begin{itemize}
+\item \emph{Prefix-invariance} (\cite[Lemma~5.9]{nadeau2024forest}): a valid commutation of two adjacent letters in a suffix remains valid after prepending any common prefix; equivalently, $u\equiv_\forest u'\Rightarrow w\cdot u\equiv_\forest w\cdot u'$.
+\item \emph{Shift-invariance} (\cite[Proposition~5.8]{nadeau2024forest}): commutations are preserved under simultaneous translation of all letters by a fixed integer in the underlying $\mathbb{Z}$-coordinate.
+\end{itemize}
+
+We first establish
+$$(\ast)\qquad A\equiv_\forest A'\Rightarrow A*B\equiv_\forest A'*B,\qquad B\equiv_\forest B'\Rightarrow A*B\equiv_\forest A*B'.$$
+By definition of the lift product, $\overline{\mathrm{word}(A*B)}$ is the concatenation $u_A\cdot u_B$ obtained by reading the multiplactic factorizations of $A$ and $B$ in order, where $u_A = \overline{\mathrm{word}(A)}$ and $u_B$ is a column-shift (in the sense of shift-invariance) of $\overline{\mathrm{word}(B)}$ placing its letters strictly past those of $u_A$.
+
+For the second half of $(\ast)$, prefix-invariance applied with prefix $u_A$ gives $A*B\equiv_\forest A*B'$ directly from $\overline{\mathrm{word}(B)}\equiv_\forest \overline{\mathrm{word}(B')}$ (the column-shift commutes with $\equiv_\forest$ by shift-invariance).
+
+For the first half, we mirror the argument used to establish right-ideal closure in Lemma~\ref{lemma:forestideal}. It suffices to consider a single generating commutation that swaps adjacent letters $a, b$ in $u_A$, exhibiting $\overline{\mathrm{word}(A')}$. We may further reduce, as in that lemma, to the case where $a, b$ are the last two letters of $u_A$. Forming $A*B$ replaces the suffix $\cdots ab$ of $u_A$ with $\cdots ab\cdot u_B$. The strict column-separation of $u_B$ from $u_A$ ensures that no letter of $u_B$ lies in the forest-relatedness window between $a$ and $b$ (which depends only on values close to $\max(\mathrm{val}(a),\mathrm{val}(b))$, while $u_B$'s letters live at strictly larger column-shifted values). Hence the commutation $\cdots ab\cdots\leftrightarrow\cdots ba\cdots$ is still a valid generator of $\equiv_\forest$ acting on the longer word $u_A\cdot u_B$, and produces $\overline{\mathrm{word}(A'*B)}$. This establishes $A*B\equiv_\forest A'*B$.
+
+Iterating $(\ast)$ yields $A'*B'\equiv_\forest A*B$ for every $A'\equiv_\forest A$, $B'\equiv_\forest B$. Now let $R = A'*B'\in S$ and $R\equiv_\forest R'$ by a single generating commutation of letters $a, b$ adjacent in $\overline{\mathrm{word}(R)} = u_{A'}\cdot u_{B'}$. Three cases occur:
+\begin{enumerate}
+\item Both $a,b$ lie in $u_{A'}$. The commutation produces $u_{A''}\cdot u_{B'}$ with $A''\equiv_\forest A'$, hence $R' = A''*B'\in S$.
+\item Both $a,b$ lie in $u_{B'}$. Symmetric: $R' = A'*B''\in S$ with $B''\equiv_\forest B'$.
+\item The pair $(a,b)$ straddles the boundary: $a$ is the last letter of $u_{A'}$ and $b$ is the first letter of $u_{B'}$. By the same strict column-separation just noted, the only generating commutations available across the boundary are those whose forest-relatedness condition depends solely on $\mathrm{val}(a),\mathrm{val}(b)$ with no admissible separating letters; such a commutation reorganizes the multiplactic factorization by moving the boundary letter $a$ into the $B$-factor (or equivalently, $b$ into the $A$-factor), which by Lemma~\ref{lemma:liftcommute} yields multiplactic factorizations $A''*B''$ with $A''\equiv_\forest A'$ and $B''\equiv_\forest B'$. Hence $R'\in S$.
+\end{enumerate}
+A general forest move from $R$ to $R'$ is a finite composition of single commutations, so $R'\in S$ by induction.
 \end{proof}
 % Let $\BRC_n^\forest$ be the submodule of $\BRC_n$ spanned by the RC graphs $A$ such that $\code_\forest(A) = \code(\wof{A})$. Define $\pi_\forest:\BRC_n\to \BRC_n^\forest$ by sending an RC graph $R$ to the unique RC graph $R_\forest$ such that $\code_\forest(R_\forest) = \code(\wof{R})$ and $Q_\forest(R_\forest) = Q_\forest(R)$.
 % \end{definition}
@@ -3989,12 +4053,75 @@ where the sum is over all $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$,
   and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
 \end{theorem}
 \begin{proof}
-  The map $\BRC_n\mapsto \mathbb{Z}[x_1,\ldots,x_n]$ sending an RC graph $R$ to $x^{\wtt(R)}$ is a homomorphism of rings, so we have that
-$$\forest_a\forest_b = \sum_{A\equiv_\forest A', B\equiv_\forest B'} x^{\wtt(A)}x^{\wtt(B)} = \sum_{A\equiv_\forest A', B\equiv_\forest B'} x^{\wtt(A'*B')} = \sum_{R} \forest(R)$$
-where the sum is over all $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$, $B'\equiv_\forest B$ and $R$ is a forest RC graph. Grouping the sum by forest equivalence classes, we have that
-$$\forest_a\forest_b = \sum_{R} \forest(R)$$
-where the sum is over all forest RC graphs $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$, $B'\equiv_\forest B$. The result follows by noting that the coefficient of $\forest_c$ in the expansion of $\forest(R)$ is $1$ if $\code_\forest(R)=\wtt(R)=c$ and $0$ otherwise.
+Fix forest RC graphs $A, B$ with $\code_\forest(A)=\wtt(A)=a$ and $\code_\forest(B)=\wtt(B)=b$. By Theorem~\ref{theorem:forestformula}(I), the forest polynomial $\forest_a$ is the weight generating function over the forest class of $A$:
+$$\forest_a(x) = \sum_{A'\equiv_\forest A} x^{\wtt(A')},\qquad\text{and similarly}\qquad \forest_b(x) = \sum_{B'\equiv_\forest B} x^{\wtt(B')}.$$
+Multiplying these expressions in $\mathbb{Z}[x_1,\ldots,x_n]$ gives
+$$\forest_a(x)\,\forest_b(x) \;=\; \sum_{\substack{A'\equiv_\forest A\\ B'\equiv_\forest B}} x^{\wtt(A')}\,x^{\wtt(B')}\;=\;\sum_{\substack{A'\equiv_\forest A\\ B'\equiv_\forest B}} x^{\wtt(A')+\wtt(B')}.$$
+By Lemma~\ref{lemma:liftweight} (weight-additivity of $*$), each summand can be rewritten as $x^{\wtt(A'*B')}$, yielding
+$$\forest_a(x)\,\forest_b(x) \;=\; \sum_{\substack{A'\equiv_\forest A\\ B'\equiv_\forest B}} x^{\wtt(A'*B')}.$$
+
+Let $T = \{\,A'*B' : A'\equiv_\forest A,\ B'\equiv_\forest B\,\}$ (as a multiset). By Lemma~\ref{lemma:foreststable}, $T$ is closed under forest equivalence: every $R\in T$ has its full forest class $[R]_{\equiv_\forest}$ contained in $T$. Group the sum by forest class to obtain
+$$\forest_a(x)\,\forest_b(x) \;=\; \sum_{[R]} m_{[R]}\sum_{R''\in[R]} x^{\wtt(R'')},$$
+where $m_{[R]}$ is the (constant) number of pairs $(A',B')$ with $A'\equiv_\forest A$, $B'\equiv_\forest B$, and $A'*B'$ landing in the class $[R]$ at any specified representative; this multiplicity is independent of the choice of representative, again by Lemma~\ref{lemma:foreststable}.
+
+Applying Theorem~\ref{theorem:forestformula}(I) once more, the inner sum $\sum_{R''\in[R]}x^{\wtt(R'')}$ is exactly $\forest_{\fcode(R)}(x)$, so
+$$\forest_a(x)\,\forest_b(x) \;=\; \sum_{[R]} m_{[R]}\,\forest_{\fcode(R)}(x).$$
+The final step is to identify which forest classes $[R]$ contribute and to count $m_{[R]}$ explicitly. Fix a target weak composition $c$ and a representative forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$ (i.e.\ a \emph{forest} RC graph with forest code $c$). For any pair $(A',B')$ with $A'\equiv_\forest A$ and $B'\equiv_\forest B$, the lift product $A'*B'$ lies in the forest class of $R$ if and only if $A'*B'\equiv_\forest R$; by Lemma~\ref{lemma:foreststable}, this is equivalent to the existence of some pair $(A'',B'')$ with $A''*B''=R$, $A''\equiv_\forest A$, $B''\equiv_\forest B$. Hence the coefficient $\beta_{ab}^c$ of $\forest_c$ in $\forest_a\forest_b$ equals the number of such pairs $(A'',B'')$. Specializing the representative pair to one in which $A''$ and $B''$ are themselves forest RC graphs (which exists, since the class of $A$ contains the unique forest RC graph with $\code_\forest=\code=a$, and similarly for $B$), the conditions $A''\equiv_\forest A$ and $\code_\forest(A'')=a$ become equivalent to $\code(\wof{A''}) = \code_\forest(A'') = a$, and similarly for $B''$. This is the count claimed in the statement of the theorem.
 \end{proof}
+
+\providecommand{\pd}[3]{%
+  \begin{tikzpicture}[baseline=(current bounding box.center),scale=0.4,thick,line cap=round]
+    \foreach \i in {1,...,#1} {%
+      \foreach \j in {1,...,#2} {%
+        \draw[gray!30,very thin] ({\j-1},{#1-\i}) rectangle ({\j},{#1-\i+1});%
+        \draw[blue!70] ({\j-1},{#1-\i+0.5}) arc[start angle=270,end angle=360,radius=0.5];%
+        \draw[blue!70] ({\j-0.5},{#1-\i}) arc[start angle=180,end angle=90,radius=0.5];%
+      }%
+    }%
+    \foreach \i/\j in {#3} {%
+      \fill[white] ({\j-1},{#1-\i}) rectangle ({\j},{#1-\i+1});%
+      \draw[gray!30,very thin] ({\j-1},{#1-\i}) rectangle ({\j},{#1-\i+1});%
+      \draw[blue!70] ({\j-1},{#1-\i+0.5}) -- ({\j},{#1-\i+0.5});%
+      \draw[blue!70] ({\j-0.5},{#1-\i}) -- ({\j-0.5},{#1-\i+1});%
+      \pgfmathtruncatemacro{\pdlbl}{\i+\j-1}%
+      \node[font=\Large\bfseries,text=green!60!black,fill=white,inner sep=0.5pt,circle,transform shape] at ({\j-0.5},{#1-\i+0.5}) {\pdlbl};%
+    }%
+  \end{tikzpicture}}
+
+\begin{example}\label{example:forestlrproduct}
+We illustrate Theorem~\ref{theorem:forestpolyLR} by computing the coefficient of $\forest_{(4,3,2)}$ in the product
+$$\forest_{(0,2,3)}\cdot\forest_{(2,0,2)}.$$
+By the theorem, this coefficient $\beta_{(0,2,3),(2,0,2)}^{(4,3,2)}$ is the number of pairs $(A,B)$ of RC graphs satisfying $\code(\wof{A})=\code_\forest(A)=(0,2,3)$ and $\code(\wof{B})=\code_\forest(B)=(2,0,2)$ such that $A*B$ is a forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=(4,3,2)$. There turn out to be exactly two such pairs.
+
+\smallskip
+\noindent\emph{First pair.}\quad Drawing RC graphs as pipe dreams (rows indexed from the top, columns from the left, with crossings shown as $+$ tiles and elbows as bumped arcs), the first pair is
+$$A_1 \;=\; \pd{3}{4}{1/2,1/3,2/4,3/1,3/2}, \qquad B_1 \;=\; \pd{3}{3}{1/1,1/2,2/2,2/3},$$
+corresponding to the row tuples $A_1=((3,2),(5,),(4,3))$ and $B_1=((2,1),(4,3),())$, with weights $\wtt(A_1)=(2,1,2)$ and $\wtt(B_1)=(2,2,0)$. Here, in the schubmult row-tuple notation, an entry $s$ in row $r$ records a crossing in column $s-r+1$, and the entries within each row are listed right-to-left (largest column first). The multiplactic lifts of $A_1$ and $B_1$ in $\grass_3\otimes\grass_4\otimes\grass_5$ and $\grass_1\otimes\grass_3\otimes\grass_4$ (respectively) are
+$$A_1 \;\longmapsto\; \pd{3}{2}{1/2,3/1}\;\otimes\;\pd{4}{3}{1/3,3/2}\;\otimes\;\pd{5}{4}{2/4},$$
+$$B_1 \;\longmapsto\; \pd{1}{1}{1/1}\;\otimes\;\pd{3}{2}{1/2,2/2}\;\otimes\;\pd{4}{3}{2/3},$$
+encoding $A_1$ and $B_1$ as elementary tensors in the multiplactic algebra $\mathcal{M}_n$. Their lift product is
+$$A_1 * B_1 \;=\; \pd{3}{5}{1/1,1/2,1/3,1/4,2/2,2/4,2/5,3/1,3/2}\,, \qquad \wtt(A_1*B_1)=(4,3,2),$$
+the forest RC graph with row tuples $((4,3,2,1),(6,5,3),(4,3))$.
+
+\smallskip
+\noindent\emph{Second pair.}\quad The second pair is
+$$A_2 \;=\; \pd{3}{4}{1/2,1/3,2/2,2/3,2/4}, \qquad B_2 \;=\; \pd{3}{2}{1/1,1/2,3/1,3/2},$$
+with $A_2=((3,2),(5,4,3),())$ and $B_2=((2,1),(),(4,3))$, weights $\wtt(A_2)=(2,3,0)$ and $\wtt(B_2)=(2,0,2)$. Their multiplactic lifts are
+$$A_2 \;\longmapsto\; \pd{3}{2}{1/2,2/2}\;\otimes\;\pd{4}{3}{1/3,2/3}\;\otimes\;\pd{5}{4}{2/4},$$
+$$B_2 \;\longmapsto\; \pd{1}{1}{1/1}\;\otimes\;\pd{3}{2}{1/2,3/1}\;\otimes\;\pd{4}{2}{3/2}.$$
+Their lift product is
+$$A_2 * B_2 \;=\; \pd{3}{4}{1/1,1/2,1/3,1/4,2/1,2/2,2/4,3/1,3/2}\,, \qquad \wtt(A_2*B_2)=(4,3,2),$$
+the forest RC graph with row tuples $((4,3,2,1),(5,3,2),(4,3))$.
+
+\smallskip
+Both forest products are forest RC graphs of weight $(4,3,2)$, and one verifies that no other pair $(A,B)$ with the prescribed forest codes produces a forest RC graph of this weight. Hence
+$$\beta_{(0,2,3),(2,0,2)}^{(4,3,2)} \;=\; 2,$$
+so the coefficient of $\forest_{(4,3,2)}$ in $\forest_{(0,2,3)}\cdot\forest_{(2,0,2)}$ is $2$.
+
+\end{example}
+
+Notice that even in this small example, we have already run into a case where we have two distinct representatives for the corresponding equivalence class. Indeed, while we have achieved a consistent rule in this case by computing products in an associative algebra, it does not descend to a term-by-term associative product for labelings of indexed forests.
+
 
 \begin{corollary}[Dual forest coproduct]\label{corollary:dforestcoproduct}
 Let $c$ be a weak composition of length $n$. Then in $\dcoma_n\otimes\dcoma_n$,
@@ -4052,185 +4179,9 @@ The Borel isomorphism $\coma_n=\mathbb{Z}[x_1,\ldots,x_n]\twoheadrightarrow H^\b
 \end{proof}
 
 \begin{remark}
-Corollary~\ref{corollary:cupforest} should be read in the same spirit as Theorem~\ref{theorem:forestpolyLR}: positivity of the cup-product structure constants is implicit in \cite{bergeron2025equivariant,bergeron2025qsymflag}, and a positive combinatorial extraction of them via the straightening algorithm of \cite{bergeron2025equivariant} is already available. The new content is the closed-form realization of each coefficient as a single cardinality of an explicit set of pairs of RC graphs. The analogous question for $H^\bullet(\mathrm{Fl}_n)$ in the Schubert basis is the classical (and open) problem of producing such a count for the Schubert structure constants, and the contrast is striking: the forest equivalence $\equiv_\forest$ on RC graphs is rigid enough to permit a single-cardinality formula on $\mathrm{QFl}_n$, whereas the corresponding rigidification on $\mathrm{Fl}_n$ does not seem to be available.
+Corollary~\ref{corollary:cupforest} should be read in the same spirit as Theorem~\ref{theorem:forestpolyLR}: positivity of the cup-product structure constants is implicit in \cite{bergeron2025equivariant,bergeron2025qsymflag}, and a positive combinatorial extraction of them via the straightening algorithm of \cite{bergeron2025equivariant} is already available. The new content is the realization of each coefficient as a single cardinality of an explicit set of pairs of RC graphs. The analogous question for $H^\bullet(\mathrm{Fl}_n)$ in the Schubert basis is the classical (and open) problem of producing such a count for the Schubert structure constants, and the contrast is striking: the forest equivalence $\equiv_\forest$ on RC graphs is rigid enough to permit a single-cardinality formula on $\mathrm{QFl}_n$, whereas the corresponding rigidification on $\mathrm{Fl}_n$ does not seem to be available.
 \end{remark}
 
-\section{The equivariant case}
-
-\subsection{Double factor algebra}
-
-\begin{definition}
-We adjoin variables to $\grass_n$ to obtain $\grass_n[\mathbf{t}]$. Define
-$$\mathfrak{E}_n^n(\mathbf{t}) = \sum_{k=0}^n t_1^{n-k}\mathbf{E}_k^n$$
-Then define
-$$\mathfrak{E}_p^n(\mathbf{t}) = \partial^{s_{n - p}\cdots s_2s_1}(\mathbf{t})\mathfrak{E}_n^n(\mathbf{t})$$
-
-Let $m_i$ denote the RC graph with a single crossing at row $i$ and column $n+1-i$. Define a \emph{straight double elementary RC graph} $E$ to be of the form
-$$E(\mathbf{t}) = (m_{i_1} - t_{n+1-i_1})(m_{i_2} - t_{n+1-i_2})\cdots (m_{i_p} - t_{n+1-i_p})$$
-where
-$$1\leq i_1 < i_2 < \cdots < i_p \leq n$$
-The virtue of this definition is that $E(\mathbf{t})$ is uniquely determined by its row weight.
-\end{definition}
-
-% \subsection{The double RC graph module}
-
-% Consider the action of $\grass_n[\mathbf{t}]$ on $\BRC_n[\mathbf{t}]$.
-
-% \begin{proposition}
-%   There is a unique $\mathbb{Z}[\mathbf{t}]$-basis of $\BRC_n[\mathbf{t}]$ given by
-%   $$\{D_R(\mathbf{t})\mid R\in\RC_n\}$$
-%   Satisfying
-%   $$D_R(\mathbf{t})\cdot D_m^n(\mathbf{t}) = (t_{\wof{R}(m)} - t_m)D_R(\mathbf{t}) + D_{R\boxtimes m}(\mathbf{t})$$
-% \end{proposition}
-
-% \begin{proposition} \label{proposition:eproductworks}
-% For any $p_1,p_2,\ldots,p_m$ and $k_1\leq k_2\leq\ldots\leq k_m\leq n$ with $p_i\leq k_i$ for all $i$, in addition to sets of formal indeterminates $\mathbf{t}^(m)$, we have that
-% $$\RC_n(\mathbf{E}_{p_1}^{k_1}(\mathbf{t}^{(1)})\mathbf{E}_{p_2}^{k_2}(\mathbf{t}^{(2)})\cdots\mathbf{E}_{p_m}^{k_m}(\mathbf{t}^{(m)})) = \sum_{w} c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\mathcal{S}_w(n;\mathbf{t}^{(1)})$$
-% where $c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\in \mathbb{Z}[\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}]$ are the coefficients such that
-% $$E_{p_1,k_1}^n(x;\mathbf{t}^{(1)})\cdots E_{p_m,k_m}^n(x;\mathbf{t}^{(m)}) = \sum_w c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}) \sch_w^n(x;\mathbf{t}^{(1)})\in \coma_n$$
-% \end{proposition}
-
-
-\subsection{Double forest polynomials} 
-In the equivariant setting one replaces the ordinary divided differences by the 
-\emph{equivariant quasisymmetric divided differences} of 
-\cite{nadeau2024quasisymmetric,bergeron2025equivariant}. In the notation of 
-\cite[\S 2, \S 4]{bergeron2025equivariant}, these are operators 
-\(\mathfrak{D}_i^{\mathrm{eq}}\) acting on \(\mathbb{Z}[t_1,t_2,\ldots][x_1,x_2,\ldots]\),
-obtained from the equivariant Bergeron--Sottile maps, and they characterize
-equivariant quasisymmetry by the vanishing criterion
-\[
-f\text{ is equivariantly quasisymmetric }\Longleftrightarrow
-\mathfrak{D}_1^{\mathrm{eq}}f=\cdots=\mathfrak{D}_{n-1}^{\mathrm{eq}}f=0.
-\]
-
-The associated double forest polynomials are then singled out by the same
-philosophy as for double Schubert polynomials: a normalization at
-\(x=t\), together with a trimming recursion under the operators
-\(\mathfrak{D}_i^{\mathrm{eq}}\) indexed by forest descents. Equivalently
-\cite[Theorem~5.1]{bergeron2025equivariant}, there is a unique family
-\(\{\forest_a(x;t)\}\) (indexed by weak compositions, or indexed forests)
-satisfying
-\[
-\forest_a(t;t)=\delta_{a,\emptyset},
-\qquad
-\mathfrak{D}_i^{\mathrm{eq}}\,\forest_a(x;t)=
-\begin{cases}
-\forest_{a/i}(x;\widehat t_i), & i\text{ is a forest descent of }a,\\
-0, & \text{otherwise},
-\end{cases}
-\]
-where \(a/i\) is the forest-trimming operation and \(\widehat t_i\) denotes
-deletion of the parameter \(t_i\). This characterization is equivalent to the
-vine/subword model construction in \cite[\S 5.1]{bergeron2025equivariant}.
-
-Define an operation $E_i(\tau):\mathbb{Z}[\tau][x,t]\to \mathbb{Z}[\tau][x,t]$ by
-$$E_i(\tau)(f) = \frac{f(x_1,\ldots,x_{i},\tau,x_{i+1},\ldots,x_n) - f(x_1,\ldots,x_{i-1},\tau,x_i,\ldots,x_n)}{x_i - \tau}$$
-
-
-$i$-th largest elem sym cannot exceed $k-1$.
-$$\sch_{w_0(n)}(x_1,\ldots,x_{i-1},t_k,x_{i},\ldots,x_{n-2};t) = E_{n-1}(x;t_1)\cdots$$ 
-
-\begin{lemma}
-Let $u\in S_\infty$, let $i\geq 1$, and let $\tau$ be an indeterminate. If $i$ is not a right descent of $u$, then
-$$E_i(\tau)(\sch_u(x;t)) = 0$$
-Otherwise,
-$$E_i(\tau)(\sch_u(x;t))=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_{n-1};t)\prod_{j\in Q_{i+1}(u',us_i)}(\tau - t_j)$$
-\end{lemma}
-\newcommand{\tdownvar}[1]{\mathrel{\stackrel{#1}{\rotatebox[origin=c]{-45}{$\Rightarrow$}}}}
-\begin{definition}
-Define a relation $u\tdownvar{i} u'$ if $\ell(us_i)<\ell(u)$ and $us_i\downvar{i} u'$.
-\end{definition}
-contract to maintain positivity
-\begin{corollary}
-Let $u\in S_\infty$, let $i_1,i_2,\ldots,i_m\geq 1$, and let $\tau_1,\tau_2,\ldots,\tau_m$ be indeterminates. Then we have that
-$$E_{i_1}(\tau_1)E_{i_{2}}(\tau_{2})\cdots E_{i_m}(\tau_m)(\sch_u(x;t))$$
-is equal to
-$$\sum_{u=u_m\tdownvar{i_m} u_{m-1}\tdownvar{i_{m-1}} u_{m-2}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_0}\sch_{u_0}(x_1,\ldots,x_n;t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(\tau_j - t_k)$$
-where $u_0=u$.
-\end{corollary}
-
-\begin{theorem}
-  $$a_F^u(t)=$$
-$$\sum_{u\tdownvar{i_m} u_m\tdownvar{i_{m-1}} u_{m-1}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_0}\sch_{u_0}(t_{L(F)};t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(t_{i_j, L_j(F)} - t_k)$$
-\end{theorem}
-
-
-% $$c_{\mu(i_1-1,\ldots,i_m-1),u}^{\mu(i_1,\ldots,i_m)}(x;t) = \sum_{u\tdownvar{i_m} u_m\tdownvar{i_{m-1}} u_{m-1}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_1}\sch_{u_1}(x_{m+1},\ldots,x_{m+n};t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(x_j - t_k)$$
-
-
-% $$c_{\mu(i_1-1,\ldots,i_m-1),u}^{\mu(i_1,\ldots,i_m)}(t_{i_1,A_1},\ldots,t_{i_m,A_m};t)$$
-
-% $$R_{i,A}^-(\sch_u(x;t))=\sum_{u\downvar{i} u'}\sch_{u'}(x;t)\prod_{j\in Q_i(u',u)}(t_{i,A} - t_j)$$
-% $$R_{i,A}^+(\sch_u(x;t))=\sum_{u\downvar{i+1} u''}\sch_{u''}(x;t)\prod_{j\in Q_{i+1}(u'',u)}(t_{i,A} - t_j)$$
-
-% $$E_{i,A}(\sch_u(x;t)) = \sch_{us_i}(x_1,\ldots,x_{i},t_{i,A},x_{i+1},\ldots,x_n;t)$$
-% $$=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_n;t)\prod_{j\in Q_{i+1}(u',us_i)}(t_{i,A} - t_j)$$
-\appendix
-\section{Proof of Proposition \ref{proposition:pullindex}}
-
-
-\renewcommand{\theproposition2}{\Alph{proposition2}}
-\setcounter{lemma}{0}
-
-We dedicate this section to the otherwise distracting proof of Proposition \ref{proposition:pullindex}.
-
-\begin{proposition2}[Special case of Pieri formula {\cite[Theorem~7.1]{samuelmolev}}] \label{proposition:pieri}
-Suppose $k\geq 1$ and $u,w\in S_\infty$. If $u\not\tom{k} w$, then
-$$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=0$$
-If $u\tom{k} w$, define
-$$Q = \{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
-then
-$$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=\prod_{q\in Q}(x_1 - y_q)$$
-\end{proposition2}
-\begin{proof}
-	This is simply a change of variables from the original theorem.
-\end{proof}
-
-\begin{proof}[Proof of Proposition \ref{proposition:pullindex}]
-Suppose $v\in S_n$. We have
-$$\sch_v(x;y)=\ddv{y}^{vw_0(n)}(\sch_{w_0(n)}(x;y))$$
-This is equal to
-$$\ddv{y}^{vw_0(n)}\left(\sch_{s_{n+1-i}\cdots s_1w_0(n)}(x^{(i)};y)\prod_{j=1}^{n+1-i}(x_i - y_j)\right)$$
-and, applying the Leibniz formula, is also equal to
-$$\sum_{\substack{v'\in S_\infty\\\ell(v'w_0(n)s_1\cdots s_{n+1-i})=\ell(w_0(n)s_1\cdots s_{n+1-i})-\ell(v')}}\sch_{v'}(x^{(i)};y)\ddv{y}_{v'w_0(n)s_1\cdots s_{n+1-i}}^{vw_0(n)}\prod_{j=1}^{n+1-i}(x_i - y_j)$$
-By the restricted Pieri formula (Proposition \ref{proposition:pieri}), for this to be nonzero necessarily $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$. We note that $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$ if and only if 
-$$v\Tom{i}v'w_0(n)s_1\cdots s_{n+1-i}w_0(n)=v's_ns_{n-1}\cdots s_i$$
-We have that $v's_n\cdots s_i$ is exactly $\varphi_{i,n}(v')$ since $v'\in S_n$, so we require that
-$$v\Tom{i}\varphi_{i,n}(v')$$
-so the sum is over all $v'$ with $v\downvar{i} v'$.
-
-Applying Proposition \ref{proposition:pieri}, we obtain that the result is equal to
-$$\sum_{v\downvar{i} v'} \sch_{v'}(x^{(i)};y)\prod_{a\in A(v',v)}(x_i - y_a)$$
-where $A(v',v)$ is the set of all $vw_0(n)(j)$ such that $1\leq j\leq n+1-i$ and $v'w_0(n)s_1\cdots s_{n+1-i}(j)=vw_0(n)(j)$. These values are the same as at the indices that comprise the set of all $1\leq j\leq n+1-i$ such that
-$$v'(n+2-s_1\cdots s_{n+1-i}(j))=v(n+2-j)$$
-Applying the $s_1\cdots s_{n+1-i}$ to $j$, since $1\leq j\leq n+1-i$ we have that 
-$$s_1\cdots s_{n+1-i}(j)=j+1$$
-Hence we need
-$$v'(n+2-(j+1))=v'(n+1-j)=v(n+2-j)$$
-Replacing $j$ with $n+2-p$, the indices are the set of all $p$ such that $i<p\leq n+1$ and
-$$v'(p-1)=v(p)$$
-Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, which is exactly $Q_i(v',v)$, and we are done.
-\end{proof}
-
-\section{Concluding remarks}\label{section:conclusion}
-
-The picture that emerges from this article is that the Schubert basis, the key basis, the forest basis, and the slide basis are not four parallel stories but four faces of a single object: the bounded RC graph ring $\BRC$, equipped with a family of congruences on RC graphs (equality of the underlying permutation $\wof{R}$, which recovers the dual Schubert basis; equality of the reduced word, which is the slide/QY congruence; Edelman--Greene equivalence on reduced words \cite{edelman1987balanced}, which gives the dual key basis; and the forest equivalence $\equiv_\forest$) and quotiented accordingly. At heart, this paper is really about \emph{words}: each of the four congruences above is encoded by a natural invariant of the reduced word of an RC graph (its end permutation, the word itself, its Edelman--Greene $P$-tableau, or its forest $P$-LBS), and each of the corresponding LR rules is, ultimately, a statement about counting representatives in a word class. The RC graph itself, as a geometric, compatible-sequence-decorated object distinct from its reduced word, is remembered only by the unquotiented ring $(\BRC,\sqcupplus)$; every one of the quotients $\BRC/I_\sim$ studied here forgets the compatible-sequence data and retains only an invariant of the underlying reduced word.  The identification of what we have called the Demazure-crystal equivalence on RC graphs with $P$-equivalence under Edelman--Greene insertion is due to \cite{hamaker2014relating} and \cite{morse2016crystal} (we thank Z. Hamaker for pointing us to this connection). 
-
-We should emphasize that the Little-bump perspective is in a real sense the conceptual core of the present work: the result of Hamaker--Young that Little bumps preserve Coxeter--Knuth equivalence hinted at the fact that Little bumps preserve all of the equivalence relations considered here, so that the entire multiplicative structure of $\BRC$ can be expressed directly through Little bumps on reduced words, which was essentially Little's original intention in \cite{little2003combinatorial} in introducing the bumping algorithm to model the transition formula. We arrived at this structure independently through the insertion algorithm of \S\ref{section:brc}, but in hindsight Little bumps are the most natural language for it at the word level, with the new information being that it simultaneously preserves the weight. Each quotient produces a positive Littlewood--Richardson rule on the corresponding dual basis (Theorems \ref{theorem:LR}, \ref{theorem:LRkey}, \ref{theorem:LRforest}, \ref{theorem:lrfslide}), and the general template of Theorem \ref{theorem:general_lr_template} makes precise the sense in which these four rules are the same theorem evaluated at four different ideals $I_\sim\subset\BRC$. The dual coproducts $\Delta^*$ on $\dcoma$ inherit positivity in the dual Schubert and dual forest bases (Theorem \ref{theorem:dschcoproduct} and Corollary \ref{corollary:dforestcoproduct}); we note that the dual key coproduct is by contrast known to be non-positive in general, with the cases in which it does expand positively already classified in the literature \cite{kouno2020decomposition}, so it is fitting that the dual Schubert and dual forest coproducts behave well precisely where the dual key coproduct does not. The construction descends to the cohomology of the quasisymmetric flag variety of \cite{bergeron2025qsymflag} via Corollary \ref{corollary:cupforest}.
-
-We hope that Theorem \ref{theorem:forestpolyLR} will be of independent interest. Positivity of $\beta_{ab}^c$, and a constructive extraction of them via positive straightening rules in an augmented positive Thompson monoid, are due to \cite{bergeron2025equivariant}; what is added here is a description of each $\beta_{ab}^c$ as a single explicit cardinality, which we suspect will be useful for asymptotic, generating-function, and bijective arguments that an algorithmic positive rule does not directly support. We should be careful here about exactly what is and is not quotiented: the lift product $*$ on the multiplactic algebra $\mathcal{M}$ descends to an associative product on a composition-indexed compatible-sequence slide polynomial ring, but it does \emph{not} descend associatively along the map sending an RC graph to its $Q$-LBS in the forest case, nor to the RC graph itself. In other words, the forest invariant or the reduced word (retaining the compatible sequence) is not a congruence for $*$, and Theorem \ref{theorem:forestpolyLR} cannot be obtained by passing to a quotient on which the forest LR coefficients $\beta_{ab}^c$ are themselves structure constants of an induced product; this is precisely the obstruction that the squash product $\boxtimes$ and the apparatus of \S\ref{section:forestrule} are designed to circumvent. 
-
-It is worth pointing out that this obstruction is not absolute: if one is willing to keep RC graphs factored as tensors and to work with an SEM-style expansion, then the lift product $*$ \emph{does} preserve associativity term by term as it descends both to forest RC graphs and, ultimately, to the RC graphs themselves. The price one pays is that the resulting expansion is signed, with cancellations that only collapse to the manifestly positive $\beta_{ab}^c$ and $c_{u,v}^w$ at the very end. We mention it here because the signed term-by-term descent is, in its own right, a useful viewpoint (one that is likely \emph{very} familiar to every researcher in the field), and because it makes precise the sense in which the failure of $*$ to be compatible with the forest invariant or the permutation is a failure only at the level of positivity, not of associativity. \emph{It is potentially possible that a term-by-term correct RC graph product could exist despite the failure of $*$.} The fact that one has not yet been found is probably only an indication of the deep subtlety of the problem, not necessarily that a positive rule is fundamentally impossible (which is potentially consistent with ZFC, but proved false assuming GRH and MVA in \cite{pak2025positivity}).
-
-% None of this work exists in a vacuum; the constructions of \S\S\ref{section:bialgebra}--\ref{section:forestrule} rest on a substantial body of prior work, which we have tried to cite carefully throughout. The most interesting questions raised by the present article are, in our view, the ones it leaves open. Among these:
-% \begin{itemize}
-%   \item Is there a manifestly positive geometric model for $\beta_{ab}^c$ on $\mathrm{QFl}_n$, perhaps via an intersection of explicit subvarieties, paralleling the classical Schubert calculus picture on $\mathrm{Fl}_n$?
-%   \item Does the squash product $\boxtimes$ admit a Hopf-theoretic interpretation, and is there an antipode somewhere in this story that the ``fat identities'' of Remark \ref{remark:fatidentity} are obstructing us from seeing?
-%   \item Theorem \ref{theorem:general_lr_template} axiomatizes four equivalence relations on $\BRC$; are there others? In particular, is there a quotient of $\BRC$ whose image is a known basis we have not considered (Grothendieck, quantum, double, $K$-theoretic)?
-%   \item Does the entire construction $\BRC\twoheadrightarrow \BRC/\sim$ admit an analogue in which $\BRC$ is replaced by a ring of pipe dreams for $K$-theory or equivariant cohomology, yielding LR rules in those settings? This question, we believe, is not as out of reach as it might first appear: pipe-dream models for Grothendieck polynomials and for the $K$-theory of the flag variety already exist in the literature, and bumpless pipe dreams \cite{Weigandt2021,GaoHuang2023,fan2025bumpless} have proved to be a remarkably flexible substrate for $K$-theoretic and double Schubert calculus. The hypotheses (H1)--(H4) of Theorem \ref{theorem:general_lr_template} are written in sufficient generality that we see no \emph{a priori} obstruction to porting them, with appropriate modifications, to either of these settings.
-% \end{itemize}
-% We will be content if the present article serves as an invitation to pursue some of these.
 
 \section*{Acknowledgements}
 

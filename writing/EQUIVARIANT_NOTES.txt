@@ -1,0 +1,265 @@
+% \section{The equivariant case}
+
+% \subsection{Double factor algebra}
+
+% % \begin{definition}
+% % We adjoin variables to $\grass_n$ to obtain $\grass_n[\mathbf{t}]$, as well as to $\mathcal{M}_n$ to obtain $\mathcal{M}_n[\mathbf{t}]$. For $R\in \RC_n$ and $m\in \grass_n$ with precisely one box in row $m\leq n$, define
+% % $$R(\mathbf{y}) * m(t) = (y_{w^{(n)}(m)} - t)R(\mathbf{y}) + (R\boxtimes m)(\mathbf{y})$$
+
+% % \end{definition}
+% % For a binary vector $\beta\in\{0,1\}^n$ with $|\beta|=p$, let $j_1<j_2<\cdots<j_p$ denote the positions of the $1$'s of $\beta$ (i.e.\ the occupied rows of $\mathbf{E}^{n;\beta}$), and define
+% % % $$\mathbf{E}^n(\mathbf{t}) = \sum_{k=0}^n t_1^{n-k}\mathbf{E}_k^n$$
+% % % Then define
+% % % $$\mathfrak{E}_p^n(\mathbf{t}) = \partial^{s_{n - p}\cdots s_2s_1}(\mathbf{t})\mathfrak{E}_n^n(\mathbf{t})$$
+
+% % % Let $m_i$ denote the RC graph with a single crossing at row $i$ and column $n+1-i$. Define a \emph{straight double elementary RC graph} $E$ of degree $p$ and length $n$ to be of the form
+% % $$\mathbf{E}^{n;\beta}(\mathbf{t}) = \prod_{s=1}^{p}\bigl(\mathbf{E}^{(j_s)} - t_{n + 1 - p - j_s + s}\bigr)$$
+% % % where
+% % % $$1\leq i_1 < i_2 < \cdots < i_p \leq n$$
+% % where $\mathbf{E}^{(j)}:=\mathbf{E}^{j;e_j}$ is the height-$j$ Grassmannian elementary RC graph with a single crossing in row $j$ (binary indicator $e_j$ of $\{j\}\subseteq\{1,\ldots,j\}$). The virtue of this definition is that $\mathbf{E}^{n;\beta}(\mathbf{t})$ is uniquely determined by $\beta$.
+% % \end{definition}
+
+% % \begin{definition}
+% % We define a \emph{decorated RC graph} to be an element $E$ of $\mathcal{M}_n[\mathbf{t}]$ such that there exist binary vectors $\beta_1,\ldots,\beta_{n-1}$ and sequences 
+% % $$A_i = (a_{i,1},\ldots,a_{i,i + 1 - |\beta_i|})$$
+% % with $a_{i,1}\leq \cdots \leq a_{i,i + 1 - |\beta_i|}$ such that
+% % $$E = \mathbf{E}_{1;\beta_{1}}(\mathbf{t}_{A_{1}})\cdots \mathbf{E}^{n-1;\beta_{n}}(\mathbf{t}_{A_n})$$
+% % %$d$ is safe if and only if $n - i \leq a_{i,j} \leq n - |\beta_i|$ for all $i$ and $j$.
+% % \end{definition}
+
+% % \begin{proposition}
+% %   For each $R\in\RC_n(S_{n+1})$ and each factorization 
+% %   $$R = \RC_n(T^1\cdots T^n)$$
+% %   there is a unique decorated RC graph $R(T^1,\ldots,T^n;\mathbf{t})$ satisfying
+% %   $$\pi(R) = \prod_{(i,j)\in R} (x_i - t_j)$$
+% %   %up to permutation of adjacent factors with $i_k = i_{k+1}$ and $\beta_k = \beta_{k+1}$.
+% % \end{proposition}
+
+
+% % \begin{lemma}
+% %   Suppose $(R,d)$ is a safe decorated RC graph. Then there exist unique RC graphs $R_1,R_2,\ldots,R_m$ and positive-degree homogeneous Graham-positive coeffcients $c_1,c_2,\ldots,c_m$ such that $\mathrm{deg}(c_i) + |R_i| = |R|$ for all $i$ and
+% % $$\mathrm{wt}(R,d;\mathbf{x},\mathbf{t}) = \mathrm{wt}(R,\overline{d};\mathbf{x},\mathbf{t}) + \sum_{i=1}^m c_i \mathrm{wt}(R_i,\overline{d};\mathbf{x},\mathbf{t})$$
+% % \end{lemma}
+% % \begin{proof}
+% % Suppose first that $R = \mathbf{E}^{n;\beta}(t_{i_1},\ldots,t_{i_{n+1 - p}})$. If $(R,d)$ is safe, assume WLOG that $i_1\leq \cdots \leq i_{n+1-p}$. By the pigeonhole principle, there is some minimum $j$ such that $t_{i_j} = t_{i_{j+1}} = j$. Then
+% % \begin{eqnarray*}
+% % \mathbf{E}^{n;\beta}(t_{i_1},\ldots,t_{i_{n+1 - p}}) &=& \mathbf{E}^{n;\beta}(t_{i_1},\ldots,t_{i_{j-1}},t_j,t_{j+1},t_{i_{j+2}},\ldots,t_{i_{n+1-p}})\\ 
+% % &+&(t_{j+1}-t_j)\mathbf{E}^{n;\widehat{\beta}}(t_{i_1},\ldots,t_{j},j+1,t_{j+2},\ldots,t_{i_{n + 1 - p}})
+% % \end{eqnarray*}
+% % \end{proof}
+
+
+% % \begin{theorem}
+% % Suppose $(R_1,\overline{d})$ is a decorated RC graph with the standard decoration and $(R_2,d)$ is a safe decorated RC graph such that $\hr(R_2)=\hr(R_1)$ and $R_2$ is full Grassmannian. Then
+% % $$(R_1\boxtimes R_2, d)$$
+% % is a safe decorated RC graph with the inherited decoration.
+% % \end{theorem}
+
+% % \begin{definition}
+% % Define
+% % $$\mathfrak{D}_n(\mathbf{t}) = \mathbf{E}_1^1(\mathbf{t}^{n})\mathbf{E}_2^2(\mathbf{t}^{n-1})\cdots \mathbf{E}_n^n(\mathbf{t}^1)$$
+% % where
+% % $$\mathbf{t}^i = (t_i,t_{i+1},\ldots)$$
+% % Let $(v_0,v_1,v_2,\ldots)$ be a sequence of permutations such that $v_n=1$ and $v_{i+1}^{-1}v_{i}$ is $(n-i)$-anchored. Then an anchored RC graph for this path is defined as
+% % $$\mathbf{E}^{1;\beta_1}(\mathbf{t}_{v_0:v_1}^n)\,\mathbf{E}^{2;\beta_2}(\mathbf{t}_{v_1:v_2}^{n-1})\,\cdots\,\mathbf{E}^{n;\beta_n}(\mathbf{t}_{v_{n-1}:v_n}^1)$$
+% % where $\beta_i\in\{0,1\}^i$ with $|\beta_i| = i - \ell(v_{i+1},v_{i})$, and
+% % $$\mathbf{t}_{v_{i}:v_{i+1}}^i = (t_{q_1},\ldots,t_{q_n})$$
+% % where
+% % $$\{q_1<q_2<\cdots<q_n\} = \{v_{i+1}(i)\}\cup \{v_{i}(j)\mid v_i(j)\neq v_{i+1}(j)\}$$
+% % %Weight sum coefficient of monomial in $v^{-1}$
+% % \end{definition}
+
+
+
+% % \begin{lemma}
+% % Let $
+% % \end{lemma}
+
+% % \subsection{The double RC graph module}
+
+% % Consider the action of $\grass_n[\mathbf{t}]$ on $\BRC_n[\mathbf{t}]$.
+
+% % \begin{proposition}
+% %   There is a unique $\mathbb{Z}[\mathbf{t}]$-basis of $\BRC_n[\mathbf{t}]$ given by
+% %   $$\{D_R(\mathbf{t})\mid R\in\RC_n\}$$
+% %   Satisfying
+% %   $$D_R(\mathbf{t})\cdot D_m^n(\mathbf{t}) = (t_{\wof{R}(m)} - t_m)D_R(\mathbf{t}) + D_{R\boxtimes m}(\mathbf{t})$$
+% % \end{proposition}
+
+% % \begin{proposition} \label{proposition:eproductworks}
+% % For any $p_1,p_2,\ldots,p_m$ and $k_1\leq k_2\leq\ldots\leq k_m\leq n$ with $p_i\leq k_i$ for all $i$, in addition to sets of formal indeterminates $\mathbf{t}^(m)$, we have that
+% % $$\RC_n(\mathbf{E}_{p_1}^{k_1}(\mathbf{t}^{(1)})\mathbf{E}_{p_2}^{k_2}(\mathbf{t}^{(2)})\cdots\mathbf{E}_{p_m}^{k_m}(\mathbf{t}^{(m)})) = \sum_{w} c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\mathcal{S}_w(n;\mathbf{t}^{(1)})$$
+% % where $c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)})\in \mathbb{Z}[\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}]$ are the coefficients such that
+% % $$E_{p_1,k_1}^n(x;\mathbf{t}^{(1)})\cdots E_{p_m,k_m}^n(x;\mathbf{t}^{(m)}) = \sum_w c_w(\mathbf{t}^{(1)},\ldots,\mathbf{t}^{(m)}) \sch_w^n(x;\mathbf{t}^{(1)})\in \coma_n$$
+% % \end{proposition}
+
+% % \begin{theorem}
+% % Suppose $R$ is a decorated RC graph with $\hr(R)=n$ and $\wof{R}\in S_n$, and suppose that $\beta$ is a binary vector of length $n$, say with $|\beta|=p$. Then there is a $2$-safe decoration of $R$ such that 
+% % $$(R,d)\cdot \mathbf{E}^{n;\beta}(\mathbf{t}) = (R',\overline{d})$$
+% % where $R' = R\boxtimes \mathbf{E}^{n;\beta}$.
+% % \end{theorem}
+
+
+% \subsection{Double forest polynomials} 
+% In the equivariant setting one replaces the ordinary divided differences by the 
+% \emph{equivariant quasisymmetric divided differences} of 
+% \cite{nadeau2024quasisymmetric,bergeron2025equivariant}. In the notation of 
+% \cite[\S 2, \S 4]{bergeron2025equivariant}, these are operators 
+% \(\mathfrak{D}_i^{\mathrm{eq}}\) acting on \(\mathbb{Z}[t_1,t_2,\ldots][x_1,x_2,\ldots]\),
+% obtained from the equivariant Bergeron--Sottile maps, and they characterize
+% equivariant quasisymmetry by the vanishing criterion
+% \[
+% f\text{ is equivariantly quasisymmetric }\Longleftrightarrow
+% \mathfrak{D}_1^{\mathrm{eq}}f=\cdots=\mathfrak{D}_{n-1}^{\mathrm{eq}}f=0.
+% \]
+
+% The associated double forest polynomials are then singled out by the same
+% philosophy as for double Schubert polynomials: a normalization at
+% \(x=t\), together with a trimming recursion under the operators
+% \(\mathfrak{D}_i^{\mathrm{eq}}\) indexed by forest descents. Equivalently
+% \cite[Theorem~5.1]{bergeron2025equivariant}, there is a unique family
+% \(\{\forest_a(x;t)\}\) (indexed by weak compositions, or indexed forests)
+% satisfying
+% \[
+% \forest_a(t;t)=\delta_{a,\emptyset},
+% \qquad
+% \mathfrak{D}_i^{\mathrm{eq}}\,\forest_a(x;t)=
+% \begin{cases}
+% \forest_{a/i}(x;\widehat t_i), & i\text{ is a forest descent of }a,\\
+% 0, & \text{otherwise},
+% \end{cases}
+% \]
+% where \(a/i\) is the forest-trimming operation and \(\widehat t_i\) denotes
+% deletion of the parameter \(t_i\). This characterization is equivalent to the
+% vine/subword model construction in \cite[\S 5.1]{bergeron2025equivariant}.
+
+% \subsection{Pulling out variables again}
+
+% Define
+% $$R_i^+(f(\mathbf{x},\mathbf{t})) = f(x_1,\ldots,x_{i},t_{i},x_{i+1},\ldots,x_n;t)$$
+% and
+% $$R_i^-(f(\mathbf{x},\mathbf{t})) = f(x_1,\ldots,x_{i-1},t_{i},x_i,\ldots,x_n;t)$$
+
+
+
+% \subsection{Extended RC graphs}
+
+% An \emph{extended RC graph} is a set $R$ of pairs $(i,j)$ where $i$ is a positive integer and $j$ is any integer. We extend the definition of $s(i,j)$ as
+% $$s(i,j) = s_{i - j + 1}$$
+% if $j\leq 0$. For an extended RC graph $R$ and two sets of indeterminates $\mathbf{x}$, $\mathbf{t}$, we define the weight of an individual entry as
+% $$\widetilde{\wtt}_{i,j}(\mathbf{x},\mathbf{t})=\begin{cases}
+%   x_i - t_{i + j - 1}& j>0\\
+%   t_{i - j + 1} - t_i & j\leq 0
+% \end{cases}$$
+
+% \begin{definition}
+%   Let $\mathbf{w}$ be a word. This bijectively corresponds (possibly by injectification) to a $P$-tableau $P_\forest(\mathbf{w})$ and a $Q$-tableau $Q_\forest(\mathbf{w})$. We define a labeling $\mathrm{node}_i(\mathbf{w})$ to be the canonical labeling of the node in $\mathrm{IN}(Q_\forest(\mathbf{w}))$ that is labeled $i$. 
+% \end{definition}
+
+% % Define an operation $E_i(\tau):\mathbb{Z}[\tau][x,t]\to \mathbb{Z}[\tau][x,t]$ by
+% % $$E_i(\tau)(f) = \frac{f(x_1,\ldots,x_{i},\tau,x_{i+1},\ldots,x_n) - f(x_1,\ldots,x_{i-1},\tau,x_i,\ldots,x_n)}{x_i - \tau}$$
+
+
+% % $i$-th largest elem sym cannot exceed $k-1$.
+% % $$\sch_{w_0(n)}(x_1,\ldots,x_{i-1},t_k,x_{i},\ldots,x_{n-2};t) = E_{n-1}(x;t_1)\cdots$$ 
+
+% % \begin{lemma}
+% % Let $u\in S_\infty$, let $i\geq 1$, and let $\tau$ be an indeterminate. If $i$ is not a right descent of $u$, then
+% % $$E_i(\tau)(\sch_u(x;t)) = 0$$
+% % Otherwise,
+% % $$E_i(\tau)(\sch_u(x;t))=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_{n-1};t)\prod_{j\in Q_{i+1}(u',us_i)}(\tau - t_j)$$
+% % \end{lemma}
+% % \newcommand{\tdownvar}[1]{\mathrel{\stackrel{#1}{\rotatebox[origin=c]{-45}{$\Rightarrow$}}}}
+% % \begin{definition}
+% % Define a relation $u\tdownvar{i} u'$ if $\ell(us_i)<\ell(u)$ and $us_i\downvar{i} u'$.
+% % \end{definition}
+% % contract to maintain positivity
+% % \begin{corollary}
+% % Let $u\in S_\infty$, let $i_1,i_2,\ldots,i_m\geq 1$, and let $\tau_1,\tau_2,\ldots,\tau_m$ be indeterminates. Then we have that
+% % $$E_{i_1}(\tau_1)E_{i_{2}}(\tau_{2})\cdots E_{i_m}(\tau_m)(\sch_u(x;t))$$
+% % is equal to
+% % $$\sum_{u=u_m\tdownvar{i_m} u_{m-1}\tdownvar{i_{m-1}} u_{m-2}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_0}\sch_{u_0}(x_1,\ldots,x_n;t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(\tau_j - t_k)$$
+% % where $u_0=u$.
+% % \end{corollary}
+
+% % \begin{theorem}
+% %   $$a_F^u(t)=$$
+% % $$\sum_{u\tdownvar{i_m} u_m\tdownvar{i_{m-1}} u_{m-1}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_0}\sch_{u_0}(t_{L(F)};t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(t_{i_j, L_j(F)} - t_k)$$
+% % \end{theorem}
+
+
+% % $$c_{\mu(i_1-1,\ldots,i_m-1),u}^{\mu(i_1,\ldots,i_m)}(x;t) = \sum_{u\tdownvar{i_m} u_m\tdownvar{i_{m-1}} u_{m-1}\tdownvar{i_{m-2}}\cdots \tdownvar{i_1} u_1}\sch_{u_1}(x_{m+1},\ldots,x_{m+n};t)\prod_{j=1}^m\prod_{k\in Q_{i_j+1}(u_{j-1},u_{j}s_{i_j})}(x_j - t_k)$$
+
+
+% % $$c_{\mu(i_1-1,\ldots,i_m-1),u}^{\mu(i_1,\ldots,i_m)}(t_{i_1,A_1},\ldots,t_{i_m,A_m};t)$$
+
+% % $$R_{i,A}^-(\sch_u(x;t))=\sum_{u\downvar{i} u'}\sch_{u'}(x;t)\prod_{j\in Q_i(u',u)}(t_{i,A} - t_j)$$
+% % $$R_{i,A}^+(\sch_u(x;t))=\sum_{u\downvar{i+1} u''}\sch_{u''}(x;t)\prod_{j\in Q_{i+1}(u'',u)}(t_{i,A} - t_j)$$
+
+% % $$E_{i,A}(\sch_u(x;t)) = \sch_{us_i}(x_1,\ldots,x_{i},t_{i,A},x_{i+1},\ldots,x_n;t)$$
+% % $$=\sum_{us_i\downvar{i+1} u'}\sch_{u'}(x_1,\ldots,x_n;t)\prod_{j\in Q_{i+1}(u',us_i)}(t_{i,A} - t_j)$$
+% \appendix
+% \section{Proof of Proposition \ref{proposition:pullindex}}
+
+
+% \renewcommand{\theproposition2}{\Alph{proposition2}}
+% \setcounter{lemma}{0}
+
+% We dedicate this section to the otherwise distracting proof of Proposition \ref{proposition:pullindex}.
+
+% \begin{proposition2}[Special case of Pieri formula {\cite[Theorem~7.1]{samuelmolev}}] \label{proposition:pieri}
+% Suppose $k\geq 1$ and $u,w\in S_\infty$. If $u\not\tom{k} w$, then
+% $$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=0$$
+% If $u\tom{k} w$, define
+% $$Q = \{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
+% then
+% $$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=\prod_{q\in Q}(x_1 - y_q)$$
+% \end{proposition2}
+% \begin{proof}
+% 	This is simply a change of variables from the original theorem.
+% \end{proof}
+
+% \begin{proof}[Proof of Proposition \ref{proposition:pullindex}]
+% Suppose $v\in S_n$. We have
+% $$\sch_v(x;y)=\ddv{y}^{vw_0(n)}(\sch_{w_0(n)}(x;y))$$
+% This is equal to
+% $$\ddv{y}^{vw_0(n)}\left(\sch_{s_{n+1-i}\cdots s_1w_0(n)}(x^{(i)};y)\prod_{j=1}^{n+1-i}(x_i - y_j)\right)$$
+% and, applying the Leibniz formula, is also equal to
+% $$\sum_{\substack{v'\in S_\infty\\\ell(v'w_0(n)s_1\cdots s_{n+1-i})=\ell(w_0(n)s_1\cdots s_{n+1-i})-\ell(v')}}\sch_{v'}(x^{(i)};y)\ddv{y}_{v'w_0(n)s_1\cdots s_{n+1-i}}^{vw_0(n)}\prod_{j=1}^{n+1-i}(x_i - y_j)$$
+% By the restricted Pieri formula (Proposition \ref{proposition:pieri}), for this to be nonzero necessarily $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$. We note that $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$ if and only if 
+% $$v\Tom{i}v'w_0(n)s_1\cdots s_{n+1-i}w_0(n)=v's_ns_{n-1}\cdots s_i$$
+% We have that $v's_n\cdots s_i$ is exactly $\varphi_{i,n}(v')$ since $v'\in S_n$, so we require that
+% $$v\Tom{i}\varphi_{i,n}(v')$$
+% so the sum is over all $v'$ with $v\downvar{i} v'$.
+
+% Applying Proposition \ref{proposition:pieri}, we obtain that the result is equal to
+% $$\sum_{v\downvar{i} v'} \sch_{v'}(x^{(i)};y)\prod_{a\in A(v',v)}(x_i - y_a)$$
+% where $A(v',v)$ is the set of all $vw_0(n)(j)$ such that $1\leq j\leq n+1-i$ and $v'w_0(n)s_1\cdots s_{n+1-i}(j)=vw_0(n)(j)$. These values are the same as at the indices that comprise the set of all $1\leq j\leq n+1-i$ such that
+% $$v'(n+2-s_1\cdots s_{n+1-i}(j))=v(n+2-j)$$
+% Applying the $s_1\cdots s_{n+1-i}$ to $j$, since $1\leq j\leq n+1-i$ we have that 
+% $$s_1\cdots s_{n+1-i}(j)=j+1$$
+% Hence we need
+% $$v'(n+2-(j+1))=v'(n+1-j)=v(n+2-j)$$
+% Replacing $j$ with $n+2-p$, the indices are the set of all $p$ such that $i<p\leq n+1$ and
+% $$v'(p-1)=v(p)$$
+% Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, which is exactly $Q_i(v',v)$, and we are done.
+% \end{proof}
+
+% \section{Concluding remarks}\label{section:conclusion}
+
+% The picture that emerges from this article is that the Schubert basis, the key basis, the forest basis, and the slide basis are not four parallel stories but four faces of a single object: the bounded RC graph ring $\BRC$, equipped with a family of congruences on RC graphs (equality of the underlying permutation $\wof{R}$, which recovers the dual Schubert basis; equality of the reduced word, which is the slide/QY congruence; Edelman--Greene equivalence on reduced words \cite{edelman1987balanced}, which gives the dual key basis; and the forest equivalence $\equiv_\forest$) and quotiented accordingly. At heart, this paper is really about \emph{words}: each of the four congruences above is encoded by a natural invariant of the reduced word of an RC graph (its end permutation, the word itself, its Edelman--Greene $P$-tableau, or its forest $P$-LBS), and each of the corresponding LR rules is, ultimately, a statement about counting representatives in a word class. The RC graph itself, as a geometric, compatible-sequence-decorated object distinct from its reduced word, is remembered only by the unquotiented ring $(\BRC,\sqcupplus)$; every one of the quotients $\BRC/I_\sim$ studied here forgets the compatible-sequence data and retains only an invariant of the underlying reduced word.  The identification of what we have called the Demazure-crystal equivalence on RC graphs with $P$-equivalence under Edelman--Greene insertion is due to \cite{hamaker2014relating} and \cite{morse2016crystal} (we thank Z. Hamaker for pointing us to this connection). 
+
+% We should emphasize that the Little-bump perspective is in a real sense the conceptual core of the present work: the result of Hamaker--Young that Little bumps preserve Coxeter--Knuth equivalence hinted at the fact that Little bumps preserve all of the equivalence relations considered here, so that the entire multiplicative structure of $\BRC$ can be expressed directly through Little bumps on reduced words, which was essentially Little's original intention in \cite{little2003combinatorial} in introducing the bumping algorithm to model the transition formula. We arrived at this structure independently through the insertion algorithm of \S\ref{section:brc}, but in hindsight Little bumps are the most natural language for it at the word level, with the new information being that it simultaneously preserves the weight. Each quotient produces a positive Littlewood--Richardson rule on the corresponding dual basis (Theorems \ref{theorem:LR}, \ref{theorem:LRkey}, \ref{theorem:LRforest}, \ref{theorem:lrfslide}), and the general template of Theorem \ref{theorem:general_lr_template} makes precise the sense in which these four rules are the same theorem evaluated at four different ideals $I_\sim\subset\BRC$. The dual coproducts $\Delta^*$ on $\dcoma$ inherit positivity in the dual Schubert and dual forest bases (Theorem \ref{theorem:dschcoproduct} and Corollary \ref{corollary:dforestcoproduct}); we note that the dual key coproduct is by contrast known to be non-positive in general, with the cases in which it does expand positively already classified in the literature \cite{kouno2020decomposition}, so it is fitting that the dual Schubert and dual forest coproducts behave well precisely where the dual key coproduct does not. The construction descends to the cohomology of the quasisymmetric flag variety of \cite{bergeron2025qsymflag} via Corollary \ref{corollary:cupforest}.
+
+% We hope that Theorem \ref{theorem:forestpolyLR} will be of independent interest. Positivity of $\beta_{ab}^c$, and a constructive extraction of them via positive straightening rules in an augmented positive Thompson monoid, are due to \cite{bergeron2025equivariant}; what is added here is a description of each $\beta_{ab}^c$ as a single explicit cardinality, which we suspect will be useful for asymptotic, generating-function, and bijective arguments that an algorithmic positive rule does not directly support. We should be careful here about exactly what is and is not quotiented: the lift product $*$ on the multiplactic algebra $\mathcal{M}$ descends to an associative product on a composition-indexed compatible-sequence slide polynomial ring, but it does \emph{not} descend associatively along the map sending an RC graph to its $Q$-LBS in the forest case, nor to the RC graph itself. In other words, the forest invariant or the reduced word (retaining the compatible sequence) is not a congruence for $*$, and Theorem \ref{theorem:forestpolyLR} cannot be obtained by passing to a quotient on which the forest LR coefficients $\beta_{ab}^c$ are themselves structure constants of an induced product; this is precisely the obstruction that the squash product $\boxtimes$ and the apparatus of \S\ref{section:forestrule} are designed to circumvent. 
+
+% It is worth pointing out that this obstruction is not absolute: if one is willing to keep RC graphs factored as tensors and to work with an SEM-style expansion, then the lift product $*$ \emph{does} preserve associativity term by term as it descends both to forest RC graphs and, ultimately, to the RC graphs themselves. The price one pays is that the resulting expansion is signed, with cancellations that only collapse to the manifestly positive $\beta_{ab}^c$ and $c_{u,v}^w$ at the very end. We mention it here because the signed term-by-term descent is, in its own right, a useful viewpoint (one that is likely \emph{very} familiar to every researcher in the field), and because it makes precise the sense in which the failure of $*$ to be compatible with the forest invariant or the permutation is a failure only at the level of positivity, not of associativity. \emph{It is potentially possible that a term-by-term correct RC graph product could exist despite the failure of $*$.} The fact that one has not yet been found is probably only an indication of the deep subtlety of the problem, not necessarily that a positive rule is fundamentally impossible (which is potentially consistent with ZFC, but proved false assuming GRH and MVA in \cite{pak2025positivity}).
+
+% % None of this work exists in a vacuum; the constructions of \S\S\ref{section:bialgebra}--\ref{section:forestrule} rest on a substantial body of prior work, which we have tried to cite carefully throughout. The most interesting questions raised by the present article are, in our view, the ones it leaves open. Among these:
+% % \begin{itemize}
+% %   \item Is there a manifestly positive geometric model for $\beta_{ab}^c$ on $\mathrm{QFl}_n$, perhaps via an intersection of explicit subvarieties, paralleling the classical Schubert calculus picture on $\mathrm{Fl}_n$?
+% %   \item Does the squash product $\boxtimes$ admit a Hopf-theoretic interpretation, and is there an antipode somewhere in this story that the ``fat identities'' of Remark \ref{remark:fatidentity} are obstructing us from seeing?
+% %   \item Theorem \ref{theorem:general_lr_template} axiomatizes four equivalence relations on $\BRC$; are there others? In particular, is there a quotient of $\BRC$ whose image is a known basis we have not considered (Grothendieck, quantum, double, $K$-theoretic)?
+% %   \item Does the entire construction $\BRC\twoheadrightarrow \BRC/\sim$ admit an analogue in which $\BRC$ is replaced by a ring of pipe dreams for $K$-theory or equivariant cohomology, yielding LR rules in those settings? This question, we believe, is not as out of reach as it might first appear: pipe-dream models for Grothendieck polynomials and for the $K$-theory of the flag variety already exist in the literature, and bumpless pipe dreams \cite{Weigandt2021,GaoHuang2023,fan2025bumpless} have proved to be a remarkably flexible substrate for $K$-theoretic and double Schubert calculus. The hypotheses (H1)--(H4) of Theorem \ref{theorem:general_lr_template} are written in sufficient generality that we see no \emph{a priori} obstruction to porting them, with appropriate modifications, to either of these settings.
+% % \end{itemize}
+% % We will be content if the present article serves as an invitation to pursue some of these.

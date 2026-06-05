@@ -78,4 +78,8 @@
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (-0.3,2.5) {7};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
   \node[font=\tiny\bfseries, text=blue, anchor=east] at (-0.3,0.5) {6};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,4.5) {3};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5,4.5) {4};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,2.5) {5};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5,2.5) {6};
 \end{tikzpicture}
