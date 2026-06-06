@@ -189,6 +189,7 @@ verify_lr_rule = "schubmult._scripts.lr_verification:main"
 lr_rule_verify = "schubmult._scripts.lr_rule_verify:main"
 anti_rc_graph_showcase = "schubmult._scripts.anti_rc_graph_showcase:main"
 check_omega_last_row = "schubmult._scripts.check_omega_last_row:main"
+dual_forest_word = "schubmult._scripts.dual_forest_word:main"
 
 [tool.pytest.ini_options]
 addopts = [

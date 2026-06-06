@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+from schubmult import FreeAlgebra, WordBasis
+from schubmult.symbolic import S
+
 
 def _eq_except_trailing_zeros(cd1, cd2):
     i1 = len(cd1) - 1
@@ -148,6 +151,145 @@ class IndexedForest:
 
     def __hash__(self):
         return hash(self._roots)
+
+
+def draw_indexed_forest(
+    forest,
+    save_path=None,
+    show=True,
+    ax=None,
+    dpi=200,
+    node_size=900,
+    support_color="#1f77b4",
+    edge_color="#333333",
+):
+    """
+    Draw an indexed forest with support labels.
+
+    Parameters
+    ----------
+    forest : IndexedForest | iterable[Node]
+        Forest to draw. This can be the output of `weak_composition_to_indfor`.
+    save_path : str | None
+        If provided, save the figure (e.g. to a `.png` path).
+    show : bool
+        If True and no external axis is provided, display the figure window.
+    ax : matplotlib.axes.Axes | None
+        Optional existing axis to draw into.
+    dpi : int
+        DPI used when creating/saving a new figure.
+    node_size : int
+        Marker size for node circles.
+    support_color : str
+        Color used for support labels.
+    edge_color : str
+        Color used for edges.
+
+    Returns
+    -------
+    tuple
+        `(fig, ax)` for the rendered drawing.
+    """
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as exc:
+        raise ImportError("matplotlib is required for draw_indexed_forest (install schubmult[visualization]).") from exc
+
+    if isinstance(forest, IndexedForest):
+        roots = forest.roots
+        support = forest.support
+    else:
+        roots = tuple(sorted(forest))
+        support = tuple(sorted(node.index for root in roots for node in root.inorder_traversal))
+
+    if len(roots) == 0:
+        fig = None
+        made_figure = False
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(6, 2), dpi=dpi)
+            made_figure = True
+        else:
+            fig = ax.figure
+
+        ax.text(0.5, 0.5, "Empty indexed forest", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        if save_path is not None:
+            fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
+        if made_figure and show:
+            plt.show()
+        elif made_figure:
+            plt.close(fig)
+        return fig, ax
+
+    positions = {}
+    edges = []
+    labels = {}
+    aux_labels = {}
+
+    def visit(node, depth):
+        if node.left is not None:
+            edges.append((node.index, node.left.index))
+            visit(node.left, depth + 1)
+        if node.right is not None:
+            edges.append((node.index, node.right.index))
+            visit(node.right, depth + 1)
+        positions[node.index] = (node.index, -depth)
+        labels[node.index] = str(node.index)
+        if node.label is not None and node.label != node.index:
+            aux_labels[node.index] = str(node.label)
+
+    for root in roots:
+        visit(root, depth=0)
+
+    max_depth = -min(y for _, y in positions.values())
+
+    made_figure = False
+    if ax is None:
+        width = max(6.0, 0.8 * len(support) + 2.0)
+        height = max(3.0, 1.2 * (max_depth + 2))
+        fig, ax = plt.subplots(figsize=(width, height), dpi=dpi)
+        made_figure = True
+    else:
+        fig = ax.figure
+
+    for u, v in edges:
+        x1, y1 = positions[u]
+        x2, y2 = positions[v]
+        ax.plot([x1, x2], [y1, y2], color=edge_color, linewidth=1.7, zorder=1)
+
+    xs = [positions[i][0] for i in positions]
+    ys = [positions[i][1] for i in positions]
+    ax.scatter(xs, ys, s=node_size, facecolor="white", edgecolor=edge_color, linewidth=1.6, zorder=2)
+
+    for node_index, text in labels.items():
+        x, y = positions[node_index]
+        ax.text(x, y, text, ha="center", va="center", fontsize=10, color=support_color, fontweight="bold", zorder=3)
+
+    for node_index, text in aux_labels.items():
+        x, y = positions[node_index]
+        ax.text(x, y + 0.35, text, ha="center", va="bottom", fontsize=8, color="#555555", zorder=4)
+
+    support_text = ", ".join(str(i) for i in support)
+    ax.text(0.02, 0.02, f"support = ({support_text})", transform=ax.transAxes, ha="left", va="bottom", fontsize=9, color=support_color)
+
+    x_min = min(xs) - 1
+    x_max = max(xs) + 1
+    y_min = min(ys) - 1.2
+    y_max = max(ys) + 1
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_axis_off()
+
+    if save_path is not None:
+        fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
+
+    if made_figure and show:
+        plt.show()
+    elif made_figure:
+        plt.close(fig)
+
+    return fig, ax
 
 
 def _node_support(root):
@@ -460,6 +602,229 @@ def weak_composition_to_indfor(c):
         i = last_valid_j + 1
 
     return IndexedForest(tuple(forest_roots), code=c)
+
+
+# ---------------------------------------------------------------------------
+# Dual forest polynomials (Section 4 of arXiv:2306.10939, Nadeau-Tewari).
+#
+# The forest poset on internal(F) orients root = max, leaves = min.
+# A *lower order ideal* L is closed under taking descendants.
+# Given L, U := internal(F) \ L. A labeling kappa : internal(F) -> Z_{>0}
+# is *L-compatible* if (paper, sec. 4):
+#
+#   - on U (ordinary, *unflagged* P-partition):
+#       weak increase down left edges:    kappa(parent) <= kappa(left child)
+#       strict increase down right edges: kappa(parent) <  kappa(right child)
+#   - on L (dual, flagged):
+#       strict decrease down left edges:  kappa(parent) >  kappa(left child)
+#       weak  decrease down right edges:  kappa(parent) >= kappa(right child)
+#       and the flag                       kappa(v)     >  rho_F(v)  for v in L.
+#
+# Edges connecting a node in U to a node in L impose no order condition
+# (the two pieces are independent P-partitions).
+#
+# Definitions used in the paper:
+#
+#   eq. (4.1):  ~P_F  = sum_{internal(F)-compatible kappa} x^kappa
+#                    = sum over labelings with L = internal(F)  (unsigned)
+#
+#   Thm. 4.1 (forest_into_dual_forest):
+#       P_F = sum_{lower ideals L} (-1)^|L| sum_{L-compatible kappa} x^kappa
+#
+# We expose both as elements of FreeAlgebra(WordBasis), keyed by the
+# exponent (composition) tuple of length n.
+# ---------------------------------------------------------------------------
+
+
+def _forest_parent_and_preorder(roots):
+    """Return (parent_dict, preorder_tuple) for a list of root nodes."""
+    parent = {}
+    order = []
+
+    def walk(node, p):
+        parent[node] = p
+        order.append(node)
+        if node.left is not None:
+            walk(node.left, node)
+        if node.right is not None:
+            walk(node.right, node)
+
+    for root in roots:
+        walk(root, None)
+    return parent, tuple(order)
+
+
+def _lower_order_ideals(roots):
+    """Enumerate lower order ideals of the forest poset (child <= parent).
+
+    A lower ideal is closed under taking children: if v is included, every
+    descendant of v is included.
+    """
+
+    def ideals_of(node):
+        if node is None:
+            return [frozenset()]
+        out = []
+        # Option A: v not in L; left/right subtrees independent lower ideals.
+        for left in ideals_of(node.left):
+            for right in ideals_of(node.right):
+                out.append(left | right)
+        # Option B: v in L; both subtrees fully included.
+        full_left = _full_subtree(node.left)
+        full_right = _full_subtree(node.right)
+        out.append(frozenset({node}) | full_left | full_right)
+        return out
+
+    current = [frozenset()]
+    for root in roots:
+        nxt = []
+        for a in current:
+            for b in ideals_of(root):
+                nxt.append(a | b)
+        current = nxt
+    return tuple(current)
+
+
+def _full_subtree(node):
+    if node is None:
+        return frozenset()
+    return frozenset({node}) | _full_subtree(node.left) | _full_subtree(node.right)
+
+
+def _l_compatible_labelings(forest, L, n):
+    """Enumerate L-compatible labelings into [1..n] for a fixed lower ideal L.
+
+    Returns a tuple of dicts {node: label}. Implements the conditions stated
+    in the module-level comment above.
+    """
+    roots = forest.roots if isinstance(forest, IndexedForest) else tuple(forest)
+    parent, nodes = _forest_parent_and_preorder(roots)
+    L = frozenset(L)
+    assignment = {}
+    out = []
+
+    def search(i):
+        if i == len(nodes):
+            out.append(dict(assignment))
+            return
+        v = nodes[i]
+        p = parent[v]
+        v_in_L = v in L
+
+        # Range from the per-node condition.
+        if v_in_L:
+            low, high = int(v.rho) + 1, n          # flag: kappa(v) > rho(v)
+        else:
+            low, high = 1, n                       # ordinary P-partition: no flag
+
+        # Edge constraint: only when both endpoints lie on the same side.
+        if p is not None and p in assignment:
+            pv = assignment[p]
+            p_in_L = p in L
+            is_left = p.left is v
+            is_right = p.right is v
+            if v_in_L and p_in_L:
+                # Strict / weak DECREASE going down to v.
+                if is_left:
+                    high = min(high, pv - 1)
+                elif is_right:
+                    high = min(high, pv)
+            elif (not v_in_L) and (not p_in_L):
+                # Weak / strict INCREASE going down to v.
+                if is_left:
+                    low = max(low, pv)
+                elif is_right:
+                    low = max(low, pv + 1)
+
+        if low > high:
+            return
+        for val in range(low, high + 1):
+            assignment[v] = val
+            search(i + 1)
+            del assignment[v]
+
+    search(0)
+    return tuple(out)
+
+
+def _word_basis_element_from_labelings(forest, labelings, n, sign=S.One):
+    """Add sign * x^kappa for each labeling into a WordBasis coefficient dict."""
+    nodes = tuple(forest.inorder_traversal)
+    coeffs = {}
+    for lab in labelings:
+        comp = [0] * n
+        for v in nodes:
+            comp[lab[v] - 1] += 1
+        key = tuple(comp)
+        coeffs[key] = coeffs.get(key, S.Zero) + sign
+    return coeffs
+
+
+def minimum_n_for_dual_forest(forest_or_code):
+    """Smallest n for which the unsigned ~P_F (eq. 4.1) is nonzero.
+
+    With L = internal(F): kappa(v) > rho(v), left child < parent (strict),
+    right child <= parent (weak); we need labels to fit inside [1..n].
+    """
+    forest = weak_composition_to_indfor(forest_or_code) if not isinstance(forest_or_code, IndexedForest) else forest_or_code
+
+    def min_label(node):
+        base = int(node.rho) + 1
+        if node.left is not None:
+            base = max(base, min_label(node.left) + 1)
+        if node.right is not None:
+            base = max(base, min_label(node.right))
+        return base
+
+    if len(forest.roots) == 0:
+        return 1
+    return max(min_label(root) for root in forest.roots)
+
+
+def tilde_forest_polynomial(forest_or_code, n=None):
+    """Equation (4.1) of arXiv:2306.10939: the unsigned dual forest polynomial.
+
+        ~P_F = sum_{internal(F)-compatible kappa} x^kappa
+
+    Returned as an element of FreeAlgebra(WordBasis), keyed by the
+    composition (exponent tuple) of length n.
+    """
+    forest = weak_composition_to_indfor(forest_or_code) if not isinstance(forest_or_code, IndexedForest) else forest_or_code
+    if n is None:
+        n = minimum_n_for_dual_forest(forest)
+    nodes = tuple(forest.inorder_traversal)
+    labelings = _l_compatible_labelings(forest, set(nodes), n)
+    coeffs = _word_basis_element_from_labelings(forest, labelings, n, sign=S.One)
+    return FreeAlgebra(WordBasis).from_dict(coeffs)
+
+
+def dual_forest_polynomial(forest_or_code, n):
+    """Signed lower-ideal expansion equal to P_F (Thm. 4.1, arXiv:2306.10939).
+
+        P_F = sum_{lower ideals L of F} (-1)^|L| * sum_{L-compatible kappa} x^kappa
+
+    Returned as an element of FreeAlgebra(WordBasis). For comparison against
+    a directly-computed P_F, use the same n and check equality of the
+    resulting WordBasis dicts.
+    """
+    forest = weak_composition_to_indfor(forest_or_code) if not isinstance(forest_or_code, IndexedForest) else forest_or_code
+
+    coeffs = {}
+    for L in _lower_order_ideals(forest.roots):
+        sign = S.One if len(L) % 2 == 0 else -S.One
+        labelings = _l_compatible_labelings(forest, L, n)
+        contrib = _word_basis_element_from_labelings(forest, labelings, n, sign=sign)
+        for k, v in contrib.items():
+            coeffs[k] = coeffs.get(k, S.Zero) + v
+
+    # Strip zero entries left over from cancellation.
+    coeffs = {k: v for k, v in coeffs.items() if v != 0}
+    return FreeAlgebra(WordBasis).from_dict(coeffs)
+
+
+# Backwards-compatible aliases used by older scripts/tests.
+dual_forest_word_expansion = tilde_forest_polynomial
+signed_forest_word_expansion = dual_forest_polynomial
 
 
 def build_balanced_tree(labels):

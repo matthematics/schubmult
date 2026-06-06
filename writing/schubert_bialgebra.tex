@@ -3318,7 +3318,7 @@ $$\forest^*_c = \sum_{[R]\in\mathcal{C}_\forest(c)} \dsch_{\wof{R}}^{\hr(R)}$$
 
 
 \begin{proof}[Proof of Theorem \ref{theorem:forestformula}]
-  Part I of this theorem follows from the fact that for any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$, which are simply the RC graphs in the corresponding equivalence class of RC graphs. Part II follows from Theorem \ref{theorem:forestforest} and the definition of the dual Schubert basis.
+  Part I of this theorem follows from the fact that for any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$ (\cite[Proposition~5.10]{nadeau2024forest}), which are simply the RC graphs in the corresponding equivalence class of RC graphs. Part II follows from Theorem \ref{theorem:forestforest} and the definition of the dual Schubert basis.
 \end{proof}
 
 Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph formula for forest polynomials.
@@ -4027,6 +4027,13 @@ $$\forest(A)*\forest(B) = \sum_{R} \forest(R)$$
 where the sum is over all $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$, $B'\equiv_\forest B$ and $R$ is a forest RC graph.
 \end{proof}
 
+\begin{lemma}
+Let $R\in \RC_n$, and suppose $\code_\forest(R) = c$. Then there is precisely one RC graph $C$ satisfying $C\equiv_\forest R$ and $\wtt(C) = c$.
+\end{lemma}
+
+\begin{lemma} \label{lemma:forestchoice}
+  Let $c$ be a weak composition of length $n$. Then there is precisely one forest class of RC graphs in $\RC_n(w)$ for the permutation $w$ such that $\code(w)=c$ that has forest code $c$.
+\end{lemma}
 
 \begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR}
   Let $a,b$ be weak compositions of length $n$. Then
@@ -4049,7 +4056,9 @@ where $m_{[R]}$ is the (constant) number of pairs $(A',B')$ with $A'\equiv_\fore
 
 Applying Theorem~\ref{theorem:forestformula}(I) once more, the inner sum $\sum_{R''\in[R]}x^{\wtt(R'')}$ is exactly $\forest_{\fcode(R)}(x)$, so
 $$\forest_a(x)\,\forest_b(x) \;=\; \sum_{[R]} m_{[R]}\,\forest_{\fcode(R)}(x).$$
-The final step is to identify which forest classes $[R]$ contribute and to count $m_{[R]}$ explicitly. Fix a target weak composition $c$ and a representative forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$ (i.e.\ a \emph{forest} RC graph with forest code $c$). For any pair $(A',B')$ with $A'\equiv_\forest A$ and $B'\equiv_\forest B$, the lift product $A'*B'$ lies in the forest class of $R$ if and only if $A'*B'\equiv_\forest R$; by Lemma~\ref{lemma:foreststable}, this is equivalent to the existence of some pair $(A'',B'')$ with $A''*B''=R$, $A''\equiv_\forest A$, $B''\equiv_\forest B$. Hence the coefficient $\beta_{ab}^c$ of $\forest_c$ in $\forest_a\forest_b$ equals the number of such pairs $(A'',B'')$. Specializing the representative pair to one in which $A''$ and $B''$ are themselves forest RC graphs (which exists, since the class of $A$ contains the unique forest RC graph with $\code_\forest=\code=a$, and similarly for $B$), the conditions $A''\equiv_\forest A$ and $\code_\forest(A'')=a$ become equivalent to $\code(\wof{A''}) = \code_\forest(A'') = a$, and similarly for $B''$. This is the count claimed in the statement of the theorem.
+The final step is to identify which forest classes $[R]$ contribute and to count $m_{[R]}$ explicitly. Fix a target weak composition $c$ and a representative forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$ (i.e.\ a \emph{forest} RC graph with forest code $c$). For any pair $(A',B')$ with $A'\equiv_\forest A$ and $B'\equiv_\forest B$, the lift product $A'*B'$ lies in the forest class of $R$ if and only if $A'*B'\equiv_\forest R$; by Lemma~\ref{lemma:foreststable}, this is equivalent to the existence of some pair $(A'',B'')$ with $A''*B''=R$, $A''\equiv_\forest A$, $B''\equiv_\forest B$. Hence the coefficient $\beta_{ab}^c$ of $\forest_c$ in $\forest_a\forest_b$ equals the number of such pairs $(A'',B'')$. We make the canonical choices as in Lemma \ref{lemma:forestchoice} above, which is 
+$$\code(\wof{A})=\code_\forest(A)=a,\qquad \code(\wof{B})=\code_\forest(B)=b,$$
+so the count of pairs $(A'',B'')$ with $A''*B''=R$ is exactly as stated in the theorem.
 \end{proof}
 
 \providecommand{\pd}[3]{%
