@@ -297,7 +297,7 @@ identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} 
 
 Cast as a splitting rule for $\sch_w$, Theorem~\ref{theorem:LR} fits the framework of \emph{branching Schubert calculus} of Ressayre--Richmond \cite{ressayre2009branching} for the Levi inclusion $\mathrm{GL}_p\times \mathrm{GL}_q\hookrightarrow \mathrm{GL}_{p+q}$ (with $P=B$): the Ressayre--Richmond branching coefficients $d_w^{\tilde w}$ in this case are exactly our $d_{u,v}^w(p,q)$, and Theorem~\ref{theorem:LR} supplies for them an explicit positive cardinality formula. The associativity of $\sqcupplus$ encodes the compatibility of these splittings across all $p,q\geq 0$ simultaneously, packaging the entire family of Levi comorphisms into the single algebra $(\dcoma,\sqcupplus)$.
 \newcommand{\forest}{\mathfrak{P}}
-\newcommand{\fcode}{\mathfrak{c}_f}
+\newcommand{\fcode}{\mathfrak{c}_\forest}
 \subsection*{Key polynomials and dual keys}
 
 The key polynomials $\kappa_a$ (Demazure characters in type $A$) form a $\mathbb{Z}$-basis of $\mathbb{Z}[x_1,x_2,\ldots]$ indexed by weak compositions; we defer definitions and a survey of the literature to the start of \S\ref{section:crystals}. The dual key basis $\{\kappa_a^*\}$ of $\dcoma$, defined by $\langle\kappa_a^*,\kappa_b\rangle=\delta_{a,b}$, has not, to our knowledge, been studied previously. Using the Little-bump description \cite{little2003combinatorial,hamaker2014relating} of $\zeromap$ and the Demazure crystal structure on RC graphs of \cite{assaf2018demazure}, we obtain:
@@ -3228,9 +3228,8 @@ Since there are exactly $2$ such RC graphs, Theorem~\ref{theorem:LRkey} gives $k
 
 The \emph{forest polynomials} $\forest_a$ were introduced by Nadeau and Tewari in \cite{nadeau2024forest} and are closely related to Schubert polynomials. They can be defined by reduced words and compatible sequences, but the invariant preserved by these words is distinct from the permutation. Given a reduced word/compatible sequence pair $(\mathbf{r},\mathbf{s})$, there is an insertion algorithm that produces a corresponding invariant $\mathcal{F}(\mathbf{r},\mathbf{s})$ that represents an equivalence relation on the words, where the compatible sequence can vary arbitrarily. We therefore shorten the notation to $\mathcal{F}(\mathbf{r})$. The equivalence classes consist of words that are all for the same permutation, so that if we define
 $$R\equiv_{\forest} R'$$
-to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed by weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$.
+to mean that $\mathcal{F}(\mathrm{word}(R)) = \mathcal{F}(\mathrm{word}(R'))$, then the forest polynomials partition the set of RC graphs for the given permutation. The forest polynomials are indexed in the original work by ``indexed forests,'' hence the name. These correspond bijectively to weak compositions, so we can define a weak composition $\fcode(R)$ by associating an indexed forest to this equivalence class as in the article. Define $\mathcal{C}_\forest(a)$ for a composition $a$ to be the set of equivalence classes of RC graphs under this relation such that $\fcode(R)=a$.
 
-A word about duality is in order. The dual basis $\{\forest_a^*\}$ studied here is dual to $\{\forest_a\}$ inside $\dcoma$ under the concatenation product, and to the best of our knowledge has not been considered previously. A different and more geometric ``dual forest basis'' does appear in the literature: the homology classes $[X(F)]$ of the toric Richardson varieties $X(F)\subset \mathrm{QFl}_n$ studied by Bergeron, Gagnon, Nadeau, Spink, and Tewari \cite{bergeron2025qsymflag}, which form a $\mathbb{Z}$-basis of $H_\bullet(\mathrm{QFl}_n)$ Kronecker-dual to the forest polynomials in cohomology and admit a mixed-volume interpretation. The two ``duals'' are Kronecker-dual to the same basis, but live in genuinely different algebraic structures; the geometric basis records intersection-theoretic data on $\mathrm{QFl}_n$, while $\{\forest_a^*\}$ records the structure constants of the concatenation product in $\dcoma$. We make no claim that the two are otherwise related.
 
 \subsection{Indexed forests, forest invariant}
 
@@ -3305,6 +3304,38 @@ Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathb
   For a weak composition $a$ of length $n$, define $\forest_a^*\in \dcoma_n$ to be the unique element such that $\langle \forest_a^*, \forest_b\rangle = \delta_{a,b}$ for all weak compositions $b$.
 \end{definition}
 
+We record the result that the coefficients of $\forest^*_c$ in the monomial-dual basis are exactly the forest expansion coefficients of monomials computed by Nadeau, Spink, and Tewari, and that under the Borel-type isomorphism $H^\bullet(\mathrm{QFl}_n)\cong \mathbb{Z}[x_1,\ldots,x_n]/\mathrm{QSym}_n^+$ of \cite{bergeron2025qsymflag} the same integers compute the cap product against the geometric homology basis $\{[X(F)]\}$ of $H_\bullet(\mathrm{QFl}_n)$.
+
+\begin{proposition}\label{proposition:forestdualcoefficients}
+Let $a$ be a weak composition of length $n$, and let $F_a$ denote the corresponding indexed forest. Let $\{e_{\mathbf{b}}\}_{\mathbf{b}\in \mathbb{Z}_{\geq 0}^n}$ denote the basis of $\dcoma_n$ dual to the monomial basis $\{x^{\mathbf{b}}\}$ of $\coma_n$. Then
+$$\forest_a^* \;=\; \sum_{\mathbf{b}\in \mathbb{Z}_{\geq 0}^n} \epsilon_{F_a}(\mathbf{b})\,e_{\mathbf{b}}\quad\in\;\dcoma_n,$$
+where $\epsilon_{F_a}(\mathbf{b})\in\{-1,0,+1\}$ is the path sign of \cite[Proposition~10.15]{nadeau2024quasisymmetric}.
+
+The same integers admit two further interpretations:
+\begin{enumerate}
+\item (Volume polynomial / Postnikov--Stanley-style dual.) The volume polynomial $V_{F_a}(\boldsymbol\lambda)\in\mathbb{Q}[\lambda_1,\ldots,\lambda_n]$ of \cite[Section~10.5]{nadeau2024quasisymmetric}, which is dual to $\forest_{F_a}$ under the divided-power $D$-pairing of \emph{loc.~cit.}, expands as
+$$V_{F_a}(\boldsymbol\lambda) \;=\; \sum_{\mathbf{b}\in\mathbb{Z}_{\geq 0}^n} \epsilon_{F_a}(\mathbf{b})\,\frac{\boldsymbol\lambda^{\mathbf{b}}}{\mathbf{b}!}\qquad\bigl(\text{\cite[Proposition~10.14]{nadeau2024quasisymmetric}}\bigr).$$
+Up to the divided-power normalization, $V_{F_a}(\boldsymbol\lambda)$ and $\forest_a^*$ are the same linear functional on $\coma_n$, in exact analogy with the relationship between the Postnikov--Stanley dual Schubert polynomials \cite{postnikov2009chains} and our $\dsch_u^n$ noted in the introduction.
+
+\item (Geometric Kronecker dual on $\mathrm{QFl}_n$.) Under the Borel isomorphism $\pi_n:\coma_n\twoheadrightarrow \coma_n/\mathrm{QSym}_n^+\cdot\coma_n \cong H^\bullet(\mathrm{QFl}_n)$ of \cite[Theorem~A and Corollary~12.5]{bergeron2025qsymflag}, the dual functional $\forest_a^*$ kills the kernel ideal and descends to the Kronecker dual of $[\forest_{F_a}]\in H^\bullet(\mathrm{QFl}_n)$ paired against the homology basis $\{[X(F)]:F\in\mathsf{Forest}_n\}$ of \cite[Corollary~11.6]{bergeron2025qsymflag}. Concretely, for $F_a\in\mathsf{Forest}_n$,
+$$\forest_a^*\;=\;\pi_n^*\bigl([X(F_a)]\bigr) \quad\text{in}\quad \dcoma_n,$$
+and equivalently
+$$\int_{X(F_a)}\!\overline{x^{\mathbf{b}}} \;=\; \epsilon_{F_a}(\mathbf{b})\quad \text{in } H^\bullet(\mathrm{QFl}_n)$$
+for all $\mathbf{b}\in\mathbb{Z}_{\geq 0}^n$, where $\overline{x^{\mathbf{b}}}=\pi_n(x^{\mathbf{b}})$. For $a$ with $F_a\not\in\mathsf{Forest}_n$ both sides vanish: $\forest_{F_a}\in \mathrm{QSym}_n^+\cdot\coma_n$ by \cite[Theorem~9.7]{nadeau2024quasisymmetric}, so $\forest_a^*$ vanishes on this submodule.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+The first identity is immediate: applying $\forest_a^*$ to the forest expansion of monomials $x^{\mathbf{b}}=\sum_G \epsilon_G(\mathbf{b})\,\forest_G$ \cite[Proposition~10.15]{nadeau2024quasisymmetric} gives $\langle \forest_a^*, x^{\mathbf{b}}\rangle = \sum_G \epsilon_G(\mathbf{b})\langle \forest_a^*,\forest_G\rangle = \epsilon_{F_a}(\mathbf{b})$ by the defining duality $\langle \forest_a^*,\forest_b\rangle=\delta_{a,b}$.
+
+Item~(1) is then a direct comparison of \cite[Proposition~10.14]{nadeau2024quasisymmetric} with the displayed expansion.
+
+For item~(2), the splitting $\coma_n = \bigoplus_{F_a\in\mathsf{Forest}_n}\mathbb{Z}\forest_a \oplus \mathrm{QSym}_n^+\cdot\coma_n$ \cite[Theorem~9.7]{nadeau2024quasisymmetric} forces $\forest_a^*$ to annihilate the kernel of $\pi_n$ when $F_a\in\mathsf{Forest}_n$, hence to factor through $\pi_n$. The induced functional pairs with $[\forest_b]$ to $\delta_{a,b}$, which is precisely the defining property of $[X(F_a)]$ \cite[Theorem~12.12]{bergeron2025qsymflag}, so $\forest_a^*=\pi_n^*([X(F_a)])$. The second equality of item~(2) is then the previous display read modulo $\mathrm{QSym}_n^+\cdot\coma_n$.
+\end{proof}
+
+In particular, the algebraic dual basis $\{\forest_a^*\}\subset\dcoma_n$ and the geometric homology basis $\{[X(F)]\}\subset H_\bullet(\mathrm{QFl}_n)$ are not merely Kronecker-dual to the same basis: they are the same linear functional on $\coma_n$, viewed once before and once after passing to the Borel quotient. The bialgebra structure on $\dcoma$ and the geometric coproduct on $\bigoplus_n H_\bullet(\mathrm{QFl}_n)$ induced by the variable-splitting comorphism $\iota_{p,q}^*$ of Section~\ref{subsection:qflbranch} are correspondingly related: $\pi^* = \bigoplus_n \pi_n^*$ identifies the geometric coproduct with the restriction of the concatenation coproduct on $\dcoma$ to $\bigoplus_n \pi_n^*\!\bigl(H_\bullet(\mathrm{QFl}_n)\bigr)$.
+
+
 \begin{theorem}\label{theorem:forestformula}
   We have the following.
   \begin{itemize}
@@ -3328,6 +3359,10 @@ Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph for
 Let $c$ be a weak composition of length $p$. Let $\RC_\forest(c)$ be the set of RC graphs with $\wtt(R) = c$ such that $\mathrm{word}(\mathbb{Y}_\forest(R))$ is minimal in lexicographical order among all RC graphs $R'$ such that $\code_\forest(R)=\code_\forest(R')$.
 $$[c] = \sum_{R\in\RC_\forest(c)} \forest_{\code_\forest(R)}^*$$
 \end{proposition}
+
+\begin{remark}
+The coefficients of the expansion of a monomial into forest polynomials, or equivalently the coefficients of the expansion of a dual forest polynomial into weak composition monomials, is given in \cite[Proposition~10.15]{nadeau2024forest}.
+\end{remark}
 
 \begin{definition}[The submodule $\Gamma\subseteq \BRC$]
   Let $\Gamma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $R_1\equiv_\forest R_2$.
@@ -3458,6 +3493,10 @@ For a weak composition $c$, define $\RC_\QY(c)$ to be the set of RC graphs with 
 Let $c$ be a weak composition of length $p$.
 $$[c] = \sum_{R\in\RC_\QY(c)} \mathfrak{F}_{\wtt(\QY(R))}^*$$
 \end{proposition}
+
+\begin{remark}
+The expansion of dual slides in the weak composition basis is given by the expansion of monomials into slides in \cite[Theorem~5.2]{nadeau2024ppartitions}.
+\end{remark}
 
 \begin{definition}[The submodule $\Sigma\subseteq \BRC$]
 Let $\Sigma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $\QY(R_1)=\QY(R_2)$.
@@ -3947,33 +3986,68 @@ $$\forest(R) = \sum_{A\equiv_\forest R} A$$
 A \emph{forest RC graph} is an RC graph such that $\code_\forest(R) = \wtt(R)$. 
 \end{definition}
 
+% Earlier draft (commented out 2026-06-05) of this lemma tried to establish
+% the much stronger statement
+%   (*)  A ~_forest A'  =>  A*B ~_forest A'*B   (and symmetrically),
+% which is FALSE: it would force the product of two forest polynomials to be
+% a single forest polynomial, contradicting the structure of the beta_{ab}^c.
+% That argument silently assumed word(A*B) = word(A) . word(B) (concatenation);
+% but * row-interleaves and Little-bumps, so letters of A and B are mixed and
+% transformed. The corrected proof below routes through Theorem 6.3 of
+% Nadeau--Tewari ("th:mult_forest_poly") and the quasi-crystal isomorphism of
+% Theorem~\ref{theorem:slideproduct}, which together let us transport NT's
+% shuffle-stability statement to the lift product.
+
+\begin{proposition}\label{proposition:liftshufflewords}
+Let $A, B\in\BRC_n$ with injectified words $W_A=\overline{\mathrm{word}(A)}$ and $W_B=\overline{\mathrm{word}(B)}$. Write $\sigma_A,\sigma_B$ for their slide classes, regarded as connected components of the quasi-crystal of injective words on $\overline{\mathbb{Z}}$. Then:
+\begin{enumerate}
+\item For any $A'\in\sigma_A$, $B'\in\sigma_B$ (i.e.\ $\overline{\mathrm{word}(A')}\in\sigma_A$, $\overline{\mathrm{word}(B')}\in\sigma_B$), the injectified word $\overline{\mathrm{word}(A'*B')}$ lies in the same slide class as some shuffle $X\in\mathsf{Sh}(\overline{\mathrm{word}(A')},\overline{\mathrm{word}(B')})$.
+\item Conversely, every slide class appearing in $\mathsf{Sh}(W_A,W_B)$ is realized as $\overline{\mathrm{word}(A_0*B_0)}$ (up to slide-equivalence) for some $A_0\in\sigma_A$, $B_0\in\sigma_B$.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+% The lift product is \emph{not} given by word concatenation: as discussed, it row-interleaves $A'$ and $B'$ and applies Little bumps to restore reducedness. The proposition is therefore not a tautology. What it does follow from is the quasi-crystal language of \cite{cain2023quasicrystals}, applied as follows.
+
+The injectified-word map $R\mapsto\overline{\mathrm{word}(R)}$ is a morphism of quasi-crystals from $\BRC_n$ to injective words on $\overline{\mathbb{Z}}$, sending each connected component (a slide class of RC graphs) bijectively to a connected component (a slide class of words); the unique quasi-Yamanouchi representatives correspond. Likewise, the multiplication of slide polynomials at the word level satisfies
+\[
+\mathfrak{F}(W_A)\,\mathfrak{F}(W_B)\;=\;\sum_{X\in\mathsf{Sh}(W_A,W_B)}\mathfrak{F}(X),
+\]
+so the multiset of slide classes appearing in $\mathsf{Sh}(W_A,W_B)$ is determined by the slide-polynomial product $\mathfrak{F}(W_A)\,\mathfrak{F}(W_B)$.
+
+By Theorem~\ref{theorem:slideproduct}, the map $A'\,\ddot\otimes\,B'\mapsto A'*B'$ is an isomorphism of quasi-crystals from the connected component of $A\,\ddot\otimes\,B$ in $\BRC_n\,\ddot\otimes\,\BRC_n$ to its image in $\BRC_n$, and at the level of slide polynomials this gives
+\[
+\mathfrak{F}(A)*\mathfrak{F}(B)\;=\;\sum_{R}\mathfrak{F}(R)
+\]
+with $R$ ranging over a multiset of QY representatives in bijection with the slide classes of the lift-product image. Composing with $R\mapsto\overline{\mathrm{word}(R)}$ identifies that multiset with the slide classes appearing in $\mathfrak{F}(W_A)\,\mathfrak{F}(W_B)$, hence with the slide classes in $\mathsf{Sh}(W_A,W_B)$. This is precisely the bijection in (2), and (1) is its forward direction.
+\end{proof}
+
+\begin{remark}
+Proposition~\ref{proposition:liftshufflewords} does \emph{not} say that $\overline{\mathrm{word}(A*B)}$ \emph{is} a shuffle of $W_A$ and $W_B$, only that it is quasi-crystal isomorphic to one.
+\end{remark}
+
 \begin{lemma}\label{lemma:foreststable}
-Let $A,B\in \BRC_n$. Then the set
-$$S=\{A'*B'\mid A\equiv_\forest A', B\equiv_\forest B'\}$$
+Let $A,B\in\BRC_n$. Then the set
+$$S=\{A'*B'\mid A\equiv_\forest A',\ B\equiv_\forest B'\}$$
 is stable under forest equivalence: if $R\in S$ and $R\equiv_\forest R'$, then $R'\in S$.
 \end{lemma}
 \begin{proof}
-We use the same description of $\equiv_\forest$ that underlies the proof of Lemma~\ref{lemma:forestideal}. By \cite[Proposition~5.8 and Lemma~5.9]{nadeau2024forest}, forest equivalence on injectified words is generated by \emph{pairwise commutations} of two adjacent letters $a, b\in\overline{\mathbb{Z}}$ — there are no triple-letter (Knuth-style) generators — and the validity of such a commutation depends only on $\mathrm{val}(a)$, $\mathrm{val}(b)$, and the (forest-related) letters strictly surrounding the pair. These generators enjoy two key invariances:
-\begin{itemize}
-\item \emph{Prefix-invariance} (\cite[Lemma~5.9]{nadeau2024forest}): a valid commutation of two adjacent letters in a suffix remains valid after prepending any common prefix; equivalently, $u\equiv_\forest u'\Rightarrow w\cdot u\equiv_\forest w\cdot u'$.
-\item \emph{Shift-invariance} (\cite[Proposition~5.8]{nadeau2024forest}): commutations are preserved under simultaneous translation of all letters by a fixed integer in the underlying $\mathbb{Z}$-coordinate.
-\end{itemize}
+We reduce to NT's shuffle-stability statement~\cite[proof of Theorem~6.3]{nadeau2024forest}, which establishes that for any forest classes $\mathcal{C}_1,\mathcal{C}_2$ of injective words on $\overline{\mathbb{Z}}$, the multiset
+\[
+\mathsf{Sh}(\mathcal{C}_1,\mathcal{C}_2)\;=\;\bigsqcup_{W_1\in\mathcal{C}_1,\,W_2\in\mathcal{C}_2}\mathsf{Sh}(W_1,W_2)
+\]
+is closed under $\equiv_\forest$. Their argument uses two ingredients: (a) shuffles are \emph{by definition} closed under transpositions of two adjacent letters that come from different factors, hence under any cross-boundary single-step forest move; and (b) NT Lemma~5.10 (anti-monoid congruence: if $UabV\equiv_\forest UbaV$ via a single generating commutation, then $U_1abV_1\equiv_\forest U_1baV_1$ for any subwords $U_1\subseteq U$, $V_1\subseteq V$), which handles single-step moves whose pair of letters lies entirely within one factor.
 
-We first establish
-$$(\ast)\qquad A\equiv_\forest A'\Rightarrow A*B\equiv_\forest A'*B,\qquad B\equiv_\forest B'\Rightarrow A*B\equiv_\forest A*B'.$$
-By definition of the lift product, $\overline{\mathrm{word}(A*B)}$ is the concatenation $u_A\cdot u_B$ obtained by reading the multiplactic factorizations of $A$ and $B$ in order, where $u_A = \overline{\mathrm{word}(A)}$ and $u_B$ is a column-shift (in the sense of shift-invariance) of $\overline{\mathrm{word}(B)}$ placing its letters strictly past those of $u_A$.
+Now suppose $R=A_0*B_0\in S$ with $A_0\equiv_\forest A$ and $B_0\equiv_\forest B$, and suppose $R\equiv_\forest R'$. By Proposition~\ref{proposition:liftshufflewords}(1), there exists a shuffle
+\[
+X_0\in\mathsf{Sh}(\overline{\mathrm{word}(A_0)},\overline{\mathrm{word}(B_0)})\subseteq\mathsf{Sh}(\mathcal{C}_A,\mathcal{C}_B)
+\]
+slide-equivalent to $\overline{\mathrm{word}(R)}$, where $\mathcal{C}_A,\mathcal{C}_B$ denote the forest classes of $\overline{\mathrm{word}(A)},\overline{\mathrm{word}(B)}$. Slide equivalence is finer than forest equivalence (slide-equivalent words have identical slide polynomial and hence belong to the same forest class), so $X_0\equiv_\forest\overline{\mathrm{word}(R)}\equiv_\forest\overline{\mathrm{word}(R')}$. NT's shuffle-stability statement applied to $X_0\in\mathsf{Sh}(\mathcal{C}_A,\mathcal{C}_B)$ then gives
+\[
+\overline{\mathrm{word}(R')}\;\in\;\mathsf{Sh}(\mathcal{C}_A,\mathcal{C}_B),
+\]
+i.e.\ $\overline{\mathrm{word}(R')}\in\mathsf{Sh}(W_1,W_2)$ for some $W_1\in\mathcal{C}_A$ and $W_2\in\mathcal{C}_B$. Pick any RC graphs $A_1,B_1\in\BRC_n$ with $\overline{\mathrm{word}(A_1)}=W_1$ and $\overline{\mathrm{word}(B_1)}=W_2$; by definition of $\mathcal{C}_A,\mathcal{C}_B$ we have $A_1\equiv_\forest A$ and $B_1\equiv_\forest B$.
 
-For the second half of $(\ast)$, prefix-invariance applied with prefix $u_A$ gives $A*B\equiv_\forest A*B'$ directly from $\overline{\mathrm{word}(B)}\equiv_\forest \overline{\mathrm{word}(B')}$ (the column-shift commutes with $\equiv_\forest$ by shift-invariance).
-
-For the first half, we mirror the argument used to establish right-ideal closure in Lemma~\ref{lemma:forestideal}. It suffices to consider a single generating commutation that swaps adjacent letters $a, b$ in $u_A$, exhibiting $\overline{\mathrm{word}(A')}$. We may further reduce, as in that lemma, to the case where $a, b$ are the last two letters of $u_A$. Forming $A*B$ replaces the suffix $\cdots ab$ of $u_A$ with $\cdots ab\cdot u_B$. The strict column-separation of $u_B$ from $u_A$ ensures that no letter of $u_B$ lies in the forest-relatedness window between $a$ and $b$ (which depends only on values close to $\max(\mathrm{val}(a),\mathrm{val}(b))$, while $u_B$'s letters live at strictly larger column-shifted values). Hence the commutation $\cdots ab\cdots\leftrightarrow\cdots ba\cdots$ is still a valid generator of $\equiv_\forest$ acting on the longer word $u_A\cdot u_B$, and produces $\overline{\mathrm{word}(A'*B)}$. This establishes $A*B\equiv_\forest A'*B$.
-
-Iterating $(\ast)$ yields $A'*B'\equiv_\forest A*B$ for every $A'\equiv_\forest A$, $B'\equiv_\forest B$. Now let $R = A'*B'\in S$ and $R\equiv_\forest R'$ by a single generating commutation of letters $a, b$ adjacent in $\overline{\mathrm{word}(R)} = u_{A'}\cdot u_{B'}$. Three cases occur:
-\begin{enumerate}
-\item Both $a,b$ lie in $u_{A'}$. The commutation produces $u_{A''}\cdot u_{B'}$ with $A''\equiv_\forest A'$, hence $R' = A''*B'\in S$.
-\item Both $a,b$ lie in $u_{B'}$. Symmetric: $R' = A'*B''\in S$ with $B''\equiv_\forest B'$.
-\item The pair $(a,b)$ straddles the boundary: $a$ is the last letter of $u_{A'}$ and $b$ is the first letter of $u_{B'}$. By the same strict column-separation just noted, the only generating commutations available across the boundary are those whose forest-relatedness condition depends solely on $\mathrm{val}(a),\mathrm{val}(b)$ with no admissible separating letters; such a commutation reorganizes the multiplactic factorization by moving the boundary letter $a$ into the $B$-factor (or equivalently, $b$ into the $A$-factor), which by Lemma~\ref{lemma:liftcommute} yields multiplactic factorizations $A''*B''$ with $A''\equiv_\forest A'$ and $B''\equiv_\forest B'$. Hence $R'\in S$.
-\end{enumerate}
-A general forest move from $R$ to $R'$ is a finite composition of single commutations, so $R'\in S$ by induction.
+By Proposition~\ref{proposition:liftshufflewords}(2), the slide class of $\overline{\mathrm{word}(R')}$, which now lies in $\mathsf{Sh}(W_1,W_2)$, is realized as $\overline{\mathrm{word}(A_2*B_2)}$ for some $A_2$ slide-equivalent to $A_1$ and $B_2$ slide-equivalent to $B_1$. In particular $A_2\equiv_\forest A_1\equiv_\forest A$ and $B_2\equiv_\forest B_1\equiv_\forest B$, and $R'$ is slide-equivalent (hence forest-equivalent) to $A_2*B_2$. Replacing $A_2,B_2$ by quasi-crystal-isomorphic representatives realizing the actual element $R'$ within its slide class --- which is possible by Theorem~\ref{theorem:slideproduct} since the lift product is a quasi-crystal isomorphism on the relevant component, and quasi-crystal operators preserve forest equivalence at the word level by NT's Proposition~5.8 (shift-invariance) --- yields $A_3\equiv_\forest A$ and $B_3\equiv_\forest B$ with $R'=A_3*B_3$. Thus $R'\in S$.
 \end{proof}
 % Let $\BRC_n^\forest$ be the submodule of $\BRC_n$ spanned by the RC graphs $A$ such that $\code_\forest(A) = \code(\wof{A})$. Define $\pi_\forest:\BRC_n\to \BRC_n^\forest$ by sending an RC graph $R$ to the unique RC graph $R_\forest$ such that $\code_\forest(R_\forest) = \code(\wof{R})$ and $Q_\forest(R_\forest) = Q_\forest(R)$.
 % \end{definition}
@@ -4022,18 +4096,25 @@ with $R$ being a forest RC graph.
   $$\forest(B) = \sum_{B'=\QY(B')\equiv_\forest B} \mathfrak{F}(B')$$
 By Theorem \ref{theorem:slideproduct}, we have that
 $$\forest(A)*\forest(B) = \sum_{A'=\QY(A')\equiv_\forest A, B'=\QY(B')\equiv_\forest B} \mathfrak{F}(A')*\mathfrak{F}(B') = \sum_{A'=\QY(A')\equiv_\forest A, B'=\QY(B')\equiv_\forest B} \sum_{R} \mathfrak{F}(R)$$
-where the second sum is over all $R$ such that $A'*B'=R$ and $R$ is quasi-Yamanouchi. By the previous lemma, the set of such $R$ is stable under forest equivalence, so we may group the sum by forest equivalence classes to obtain
+where the second sum is over all $R$ such that $A'*B'=R$ and $R$ is quasi-Yamanouchi.
+By the previous lemma, the set of such $R$ is stable under forest equivalence, so we may group the sum by forest equivalence classes to obtain
 $$\forest(A)*\forest(B) = \sum_{R} \forest(R)$$
 where the sum is over all $R$ such that $A'*B'=R$ for some $A'\equiv_\forest A$, $B'\equiv_\forest B$ and $R$ is a forest RC graph.
 \end{proof}
 
-\begin{lemma}
+\begin{lemma} \label{lemma:forestlead}
 Let $R\in \RC_n$, and suppose $\code_\forest(R) = c$. Then there is precisely one RC graph $C$ satisfying $C\equiv_\forest R$ and $\wtt(C) = c$.
 \end{lemma}
+\begin{proof}
+This is the minimal compatible $\kappa$ with $\code_\forest(\kappa) = c$, which is unique by \cite[Lemma~3.12]{nadeau2024forest}.
+\end{proof}
 
 \begin{lemma} \label{lemma:forestchoice}
   Let $c$ be a weak composition of length $n$. Then there is precisely one forest class of RC graphs in $\RC_n(w)$ for the permutation $w$ such that $\code(w)=c$ that has forest code $c$.
 \end{lemma}
+\begin{proof}
+Considering the word of the bottom RC graph of the above $w$, we have $\code_\forest(\mathrm{word}(\mathrm{bottom}(w))) = \code(w) = c$. Thus such a forest class exists. If there were another distinct forest class, the leading term of $\sch_w(x)$ would have multiplicity greater than $1$, hence this is not possible by Lemma \ref{lemma:forestlead}.
+\end{proof}
 
 \begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR}
   Let $a,b$ be weak compositions of length $n$. Then
