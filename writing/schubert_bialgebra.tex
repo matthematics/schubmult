@@ -306,7 +306,7 @@ The key polynomials $\kappa_a$ (Demazure characters in type $A$) form a $\mathbb
 \begin{theorem}[LR rule for dual keys] \label{theorem:LRkey}
 Let $a,b$ be weak compositions of lengths $p$ and $q$, respectively. Define integers $k_{a,b}^c$ for weak compositions $c$ of length $p+q$ by the equation
 $$\kappa_a^* \sqcupplus \kappa_b^* = \sum_{c} k_{a,b}^c\,\kappa_c^*$$
-Fix an RC graph $C$ with $\mathrm{extwt}(C)=c$, and assume $C$ is a highest weight. Then $k_{a,b}^c$ is the number of RC graphs $R$ such that $\mathbb{Y}(R)=C$ satisfying $\mathrm{extwt}(\clp^p(R)) = a$ and $\mathrm{extwt}(\trm^p(R)) = b$ and $\clp^p(R),\trm^p(R)$ are highest weights.
+Fix an RC graph $C$ with $\mathrm{extwt}(C)=c$, and assume $C$ is a highest weight. Then $k_{a,b}^c$ is the number of RC graphs $R$ such that $\mathbb{Y}(R)=C$ satisfying $\mathrm{extwt}(\clp^p(R)) = a$ and $\mathrm{extwt}(\trm^p(R)) = b$ and $\clp^p(R),\trm^p(R)$ are highest weights. The count is independent of the choice of $C$.
 \end{theorem}
 
 Equivalently, Theorem~\ref{theorem:LRkey} is a positive combinatorial splitting rule
@@ -320,7 +320,7 @@ The \emph{forest polynomials} $\forest_a$ of Nadeau and Tewari \cite{nadeau2024f
 \begin{theorem}[LR rule for dual forests]\label{theorem:LRforest}
 Let $a,b$ be weak compositions of lengths $p$ and $q$, respectively. Define integers $f_{a,b}^c$ for weak compositions $c$ of length $p+q$ by the equation
 $$\forest_a^* \sqcupplus \forest_b^* = \sum_{c} f_{a,b}^c\,\forest_c^*$$
-Fix an RC graph $C\in\mathcal{C}_\forest(c)$. Then $f_{a, b}^c$ is the number of $R\in[C]$ such that $\clp^p(R)\in \mathcal{C}_\forest(a)$ and $\trm^p(R)\in \mathcal{C}_\forest(b)$, satisfying the additional condition that $\wtt(\clp^p(R))=a$ and $\wtt(\trm^p(R))=b$, and is in particular nonnegative.
+Fix an RC graph $C\in\mathcal{C}_\forest(c)$. Then $f_{a, b}^c$ is the number of $R\in[C]$ such that $\clp^p(R)\in \mathcal{C}_\forest(a)$ and $\trm^p(R)\in \mathcal{C}_\forest(b)$, satisfying the additional condition that $\wtt(\clp^p(R))=a$ and $\wtt(\trm^p(R))=b$, and is in particular nonnegative. The count is independent of the choice of $C$.
 \end{theorem}
 
 As with the dual key basis, Theorem~\ref{theorem:LRforest} is equivalent to a positive combinatorial splitting rule
@@ -779,7 +779,9 @@ The same argument applies verbatim to any basis of $\coma_n$ whose product struc
 	$$\wof{R} = s_{r_1}\cdots s_{r_m}$$
 	If $\ell(\wof{R}) = m$, then we say that $R$ is an \emph{RC-graph}.
 	
-	A \emph{bounded RC-graph} is an RC-graph $R$ together with a specified number of rows $n\geq \max\{i: (i,j)\in R\text{ for some }j\}$ such that $\wof{R}$ has no right descent larger than $n$. The definition is as an ordered pair $(R, n)$, but it will be far more convenient to abuse notation and consider the number of rows a property of $R$ itself. To denote the number of rows, we define the \emph{height} of $R$ to be $\hr(R)=n$. A bounded RC graph has an associated weight vector $\wtt(R)$ where $\wtt_i(R)$ is the number of elements in row $i$.
+	A \emph{bounded RC-graph} is an RC-graph $R$ together with a specified number of rows $n\geq \max\{i: (i,j)\in R\text{ for some }j\}$, with the added condition that $\maxd(\wof{R})\leq n$. The definition is as an ordered pair $(R, n)$, but it will be far more convenient to abuse notation and consider the number of rows a property of $R$ itself. To denote the number of rows, we define the \emph{height} of $R$ to be $\hr(R)=n$. A bounded RC graph has an associated weight vector $\wtt(R)$ where $\wtt_i(R)$ is the number of elements in row $i$.
+
+  
 	
 	To a bounded RC graph $R$ with $\hr(R)\geq 1$, we define the \emph{trim} operation $\trm(R)$ to be the bounded RC graph with height $\hr(R)-1$ and underlying set $\{(i-1, j-1): (i,j)\in R, i\geq 2\}$. We also define
 	$$\shup^m R=\{(i+m, j)| (i,j)\in R\}$$
@@ -1503,10 +1505,10 @@ has the same cardinality as $\mathcal{RC}_n(w)^0$ by injectivity, and is a subse
 
 We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(R) = 0$ if the last row of $R$ is not empty. Then we have the following result.
 
-\begin{theorem} \label{theorem:transition}
+\begin{corollary}
 	Let $w$ be a permutation with last descent at most $n$. Then
 	$$\zeromap(\mathcal{S}_w(n))=\sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}\mathcal{S}_{w'}(n-1)$$
-\end{theorem} 
+\end{corollary}
 
 
 
@@ -2489,11 +2491,25 @@ $$d_{U, V}^w = \#\{R\in \RC(w, p + q): \clp^p(R)=U,\trm^p(R)=V\}$$
 \end{definition}
 
 \begin{proof}[Proof of Theorem \ref{theorem:LR}]
-For any choice of RC graphs $U_1,U_2\in \RC_p(u)$ and $V_1,V_2\in\RC_q(v)$ and a permutation $w$, we have $\alpha(U_1) = \alpha(U_2)$ and $\alpha(V_1)=\alpha(V_2)$, so that $\alpha(U_1)\alpha(V_1) = \alpha(U_2)\alpha(V_2)$. We have
-$$U_1\sqcupplus V_1 = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} R$$
-Applying $\alpha$, we then have that
-$$\dsch_u^p\sqcupplus \dsch_v^q = \alpha(U_1)\sqcupplus\alpha(V_1) = \alpha(U_1\sqcupplus V_1) = \sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \alpha(R)=\sum_{\clp^p(R)=U_1,\trm^p(R)=V_1} \dsch_{\wof{R}}^{p+q}$$
-The coefficient of $\dsch_w^{p+q}$ in this product is precisely $d_{U_1, V_1}^w=d_{U_2, V_2}^w$ by definition, and we have the result.
+Fix $u,v\in S_\infty$ with last descents at most $p,q$ respectively. The element
+$$\dsch_u^p\sqcupplus\dsch_v^q\;\in\;\dcoma_{p+q}$$
+depends only on $u,v,p,q$, so its expansion coefficients $d_{u,v}^w(p,q)$ in the dual Schubert basis are well defined and \emph{a priori} independent of any auxiliary RC-graph choices.
+
+Choose any $U\in\RC_p(u)$ and $V\in\RC_q(v)$; such graphs exist because $u$ and $v$ have last descents at most $p$ and $q$. By definition of $\alpha$,
+$$\alpha(U)=\dsch_u^p,\qquad \alpha(V)=\dsch_v^q.$$
+By Theorem \ref{theorem:semidirect}, $\alpha:\BRC\to\dcoma$ is a ring homomorphism, hence
+$$\dsch_u^p\sqcupplus\dsch_v^q\;=\;\alpha(U)\sqcupplus\alpha(V)\;=\;\alpha\bigl(U\sqcupplus V\bigr).$$
+By the definition of $\sqcupplus$ on $\BRC$,
+$$U\sqcupplus V\;=\;\sum_{\substack{R\in\RC_{p+q}\\ \clp^p(R)=U,\ \trm^p(R)=V}} R,$$
+and applying $\alpha$ termwise,
+\begin{equation}\label{eq:LRexpansion}
+\dsch_u^p\sqcupplus\dsch_v^q\;=\;\sum_{\substack{R\in\RC_{p+q}\\ \clp^p(R)=U,\ \trm^p(R)=V}}\dsch_{\wof{R}}^{p+q}.
+\end{equation}
+The dual Schubert polynomials $\{\dsch_w^{p+q}\}_{\maxd(w)\leq p+q}$ are linearly independent in $\dcoma_{p+q}$. Comparing coefficients of $\dsch_w^{p+q}$ in \eqref{eq:LRexpansion} with the defining expansion
+$$\dsch_u^p\sqcupplus\dsch_v^q\;=\;\sum_w d_{u,v}^w(p,q)\,\dsch_w^{p+q}$$
+yields
+$$d_{u,v}^w(p,q)\;=\;d_{U,V}^w\;=\;\#\bigl\{R\in\RC_{p+q}(w):\clp^p(R)=U,\ \trm^p(R)=V\bigr\}.$$
+Since the LHS is independent of the choices of $U,V$, so is the RHS; this gives the theorem and shows in particular that $d_{u,v}^w(p,q)\in\mathbb{Z}_{\geq 0}$.
 \end{proof}
 
 % Let $R$ be an RC graph with $\wof{R}=w$ and $\hr(R)=n$. Then for any $m\leq n$,
@@ -3838,7 +3854,7 @@ $$\ddot{f}_i(R) = \begin{cases}
 These satisfy the axioms of \emph{quasi-crystal operators} defined by Cain, Guilherme, and Malheiro in \cite{cain2023quasicrystals}. The same article defines a notion of the quasi-tensor product of quasi-crystals, which is the same as the usual tensor product of crystals except that if there is an $i$ such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, then we require that $\ddot{e}_i(A\ddot{\otimes} B) =\ddot{f}_i(A\ddot{\otimes} B)= \perp$.
 \end{definition}
 
-\begin{proposition}
+\begin{proposition} \label{proposition:quasiprod}
   Let $A,B$ be RC graphs. Then the map
   $$A\ddot{\otimes} B\mapsto A * B$$
 extends to an isomorphism of quasi-crystals onto the connected component of its image.
@@ -4054,7 +4070,7 @@ $$\forest_a(x)\,\forest_b(x) \;=\; \sum_{\substack{A'\equiv_\forest A\\ B'\equiv
 
 Let $T = \{\,A'*B' : A'\equiv_\forest A,\ B'\equiv_\forest B\,\}$ (as a multiset). By Lemma~\ref{lemma:foreststable}, $T$ is closed under forest equivalence: every $R\in T$ has its full forest class $[R]_{\equiv_\forest}$ contained in $T$. Group the sum by forest class to obtain
 $$\forest_a(x)\,\forest_b(x) \;=\; \sum_{[R]} m_{[R]}\sum_{R''\in[R]} x^{\wtt(R'')},$$
-where $m_{[R]}$ is the (constant) number of pairs $(A',B')$ with $A'\equiv_\forest A$, $B'\equiv_\forest B$, and $A'*B'$ landing in the class $[R]$ at any specified representative; this multiplicity is independent of the choice of representative, again by Lemma~\ref{lemma:foreststable}.
+where $m_{[R]}$ is the (constant) number of pairs $(A',B')$ with $A'\equiv_\forest A$, $B'\equiv_\forest B$, and $A'*B'$ landing in the class $[R]$ at any specified representative; this multiplicity is independent of the choice of representative by the quasi-crystal isomorphism of Proposition \ref{proposition:quasiprod}, which in particular ensures that isomorphic classes have equal cardinality.
 
 Applying Theorem~\ref{theorem:forestformula}(I) once more, the inner sum $\sum_{R''\in[R]}x^{\wtt(R'')}$ is exactly $\forest_{\fcode(R)}(x)$, so
 $$\forest_a(x)\,\forest_b(x) \;=\; \sum_{[R]} m_{[R]}\,\forest_{\fcode(R)}(x).$$
