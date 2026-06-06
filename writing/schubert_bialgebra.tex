@@ -1483,11 +1483,21 @@ If $n=2$ this is clear. Suppose now that $n > 2$ and that the result holds for $
 $$\zeromap(R) = \zeromap(R')$$
 then by Lemma \ref{lemma:ztrim}, we have
 $$\zeromap(\trm(R)) = \zeromap(\trm(R'))$$
-hence $R$ and $R'$ agree on all rows except possibly row $1$ by the inductive hypothesis. Since $\wof{R} = \wof{R'}$, it follows that $R = R'$, establishing injectivity. 
+hence $R$ and $R'$ agree on all rows except possibly row $1$ by the inductive hypothesis. Since $\wof{R} = \wof{R'}$, it follows that $R = R'$ from Theorem \ref{theorem:modactrc}, establishing injectivity.
 \end{proof}
 
 \begin{proof}[Proof of Theorem \ref{theorem:zero_bijection}]
-By the previous lemma, it suffices to show that $\zeromap$ is surjective. However, this follows from the pigeonhole principle and the well-known transition formula for Schubert polynomials.
+By the previous lemma, it suffices to show that $\zeromap$ is surjective. We have by the transition formula that if $\maxd(w)\leq n$, then
+$$\sch_w(x_1,\ldots,x_{n-1},0) = \sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}\sch_{w'}(x_1,\ldots,x_{n-1})$$
+Note that this sum is without multiplicity. The right hand side is equal to
+$$\sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}\sum_{R'\in \RC_{n-1}(w')}x^{\wtt(R')}$$
+and the left hand side is equal to
+$$\sum_{R\in \mathcal{RC}(w, n)^0}x^{\wtt(R)}$$
+since the only RC graphs that contribute to the left hand side are those with row $n$ empty. This implies that
+$$|\RC_n^0(w)| = \sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}|\RC_{n-1}(w')|$$
+Now, the set 
+$$\{\zeromap(R) \mid R\in \mathcal{RC}_n(w)^0\}$$
+has the same cardinality as $\mathcal{RC}_n(w)^0$ by injectivity, and is a subset of $\bigcup_{w\downvar{n} w'}\mathcal{RC}_{n-1}(w')$. Since the right hand side has the same cardinality as $\mathcal{RC}_n(w)^0$, we conclude that $\zeromap$ is surjective, as desired.
 \end{proof}
 
 
