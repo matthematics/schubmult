@@ -212,7 +212,7 @@
 %%
 %% This is the end of the preamble.
 %% 
-\title{The Schubert Bialgebra and the ring of RC graphs}
+\title{A Littlewood--Richardson rule for forest polynomials via the Schubert bialgebra}
 \author{Matthew J. Samuel}
 
 %\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
@@ -223,6 +223,9 @@
 \newcommand{\ldom}{\dom^*}
 \newcommand{\code}{\mathfrak{c}}
 \newcommand{\ducode}{\overline{\mathfrak{c}}}
+\newcommand{\forest}{\mathfrak{P}}
+\newcommand{\fcode}{\mathfrak{c}_\forest}
+\newcommand{\finv}{P_{\forest}}
 
 \newcommand{\maxd}{\mathfrak{m}}
 %\newcommand{\ddv}[1]{{{}_{{\scriptscriptstyle (#1)}}\partial}}
@@ -244,13 +247,33 @@
 \begin{document}
 
 \begin{abstract}
-We introduce the ``Schubert bialgebra,'' a ring-theoretic direct sum of polynomial rings, whose Schubert basis recovers the classical structure constants $c_{u,v}^w$, and lift the product structure on the graded dual to a product structure on RC graphs. We present Littlewood--Richardson-style rules for the dual bases of the Schubert, key, slide, and forest polynomials that count certain RC graphs. We further give a Littlewood--Richardson rule for the forest polynomials themselves in which each structure constant is realized as the cardinality of an explicit finite set of pairs of RC graphs. The same rule descends to the cup product in the cohomology of the quasisymmetric flag variety.
+The forest polynomials $\forest_a$ of Nadeau--Tewari form a $\mathbb{Z}$-basis of $\mathbb{Z}[x_1,x_2,\ldots]$ that plays the role for the cohomology of the quasisymmetric flag variety that Schubert polynomials play for the classical flag variety. Nonnegativity of the structure constants $\beta_{a,b}^c$ in $\forest_a\,\forest_b = \sum_c \beta_{a,b}^c\,\forest_c$ was established by Nadeau--Tewari via the forest equivalence class structure on monomials, with a later constructive straightening proof by Bergeron--Gagnon--Nadeau--Spink--Tewari, but no Littlewood--Richardson-style enumerative rule has been available. We give such a rule: $\beta_{a,b}^c$ counts pairs of forest RC graphs of forest-codes $a$ and $b$ whose lift product lands on a forest RC graph of forest-code and weight both equal to $c$. The same rule descends to the cup product on $H^\bullet(\mathrm{QFl}_n)$.
+
+The proof develops a unifying ring-theoretic framework that we believe is of independent interest. We introduce the \emph{Schubert bialgebra} $\coma$, a graded direct sum of polynomial rings with the Schubert basis as structure-constant carrier, and lift the multiplication on its graded dual $\dcoma$ to a product on a free abelian group $\BRC$ of bounded RC graphs. As consequences of the same machinery we obtain enumerative Littlewood--Richardson rules for the dual Schubert, dual key, dual forest, and dual slide bases of $\dcoma$, each realizing its structure constants as cardinalities of explicit sets of RC graphs.
 \end{abstract}
 
 	\maketitle
 
 
 \section{Introduction}
+
+\subsection*{The forest polynomial Littlewood--Richardson rule}
+
+The \emph{forest polynomials} $\forest_a$ of Nadeau and Tewari \cite{nadeau2024forest}, indexed by weak compositions $a$, form a $\mathbb{Z}$-basis of the polynomial ring whose role for the cohomology of the quasisymmetric flag variety $\mathrm{QFl}_n$ \cite{bergeron2025qsymflag} parallels that of Schubert polynomials for the classical flag variety $\mathrm{Fl}_n$. The structure constants $\beta_{a,b}^c$ of multiplication of forest polynomials,
+$$\forest_a\,\forest_b \;=\; \sum_c \beta_{a,b}^c\,\forest_c,$$
+are nonnegative integers; this was first established by Nadeau and Tewari \cite{nadeau2024forest} via the forest equivalence class structure on monomials, and was given a constructive straightening algorithm by Bergeron--Gagnon--Nadeau--Spink--Tewari \cite{bergeron2025equivariant}. A combinatorial Littlewood--Richardson-style rule realizing each $\beta_{a,b}^c$ as the cardinality of an explicit finite set --- in the spirit of the classical LR rule for Schur functions --- has been raised as a natural question in this circle of work \cite{nadeau2024forest,nadeau2024quasisymmetric,bergeron2025qsymflag}, but no such rule has been available.
+
+The combinatorial centerpiece of this paper is such a rule. The forest-code map $\code_\forest$ partitions $\RC_n$ into Nadeau--Tewari forest equivalence classes whose generating polynomials are the $\forest_a$. Within each such class we single out a distinguished choice of representative: call an RC graph $R$ a \emph{forest RC graph} if its forest-code equals its weight, $\code_\forest(R) = \wtt(R)$. Forest RC graphs are not the only sensible choice of class representatives in general, but they are a particularly clean one and the choice that drives our proof.
+
+\begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR-intro}
+Let $a,b$ be weak compositions of length $n$. Then
+$$\forest_a\,\forest_b \;=\; \sum_c \beta_{a,b}^c\,\forest_c,$$
+where $\beta_{a,b}^c$ is the number of pairs $(A,B)$ of RC graphs such that $\code(\wof{A}) = \code_\forest(A) = a$, $\code(\wof{B}) = \code_\forest(B) = b$, and $A*B = R$ for some forest RC graph $R$ with $\code_\forest(R) = \wtt(R) = c$.
+\end{theorem}
+
+Here $A*B$ is the \emph{lift product} (\S\ref{section:liftproduct}), a binary operation on RC graphs introduced in this paper for the purpose. Under the Borel-type surjection $\coma_n\twoheadrightarrow \coma_n/\mathrm{QSym}_n^+\cdot\coma_n\cong H^\bullet(\mathrm{QFl}_n)$ of \cite{bergeron2025qsymflag}, the forest polynomials descend to a basis of $H^\bullet(\mathrm{QFl}_n)$, so the same rule computes the cup product there.
+
+The proof requires substantial machinery, which we develop in its own right because it appears to be of independent interest: a Schubert bialgebra $\coma$ with a graded dual $\dcoma$ whose product captures branching of Schubert polynomials; an associative product $\sqcupplus$ on the free abelian group $\BRC$ of bounded RC graphs that realizes $\dcoma$ as a homomorphic image; the squash product $\boxtimes$ and the lift product $*$ on $\BRC_n$; a multiplactic algebra $\mathcal{M}_n$ of elementary RC factors; a Cauchy-type factorization through a slide quotient; and an application of the quasi-crystal framework of Cain--Guilherme--Malheiro \cite{cain2023quasicrystals} to RC graphs. Along the way, the same apparatus produces four further Littlewood--Richardson rules of independent interest --- for the dual Schubert, dual key, dual forest, and dual slide bases of $\dcoma$ --- which we record as Theorems~\ref{theorem:LR}, \ref{theorem:LRkey}, \ref{theorem:LRforest}, and \ref{theorem:lrfslide} below. The dual forest rule is itself the keystone bridge to the forest polynomial rule above. These dual rules form a coherent family of branching/splitting formulas for Schubert, key, forest, and slide polynomials under the partition of variables into two blocks $\{x_1,\ldots,x_p\}$ and $\{x_{p+1},\ldots,x_{p+q}\}$.
 
 \subsection*{The Schubert bialgebra and its dual} In this article we introduce a bialgebra $\coma$ that we call the Schubert bialgebra. This bialgebra has a basis of Schubert polynomials $\sch_u^n$ for $u\in S_\infty$, where the last descent of $u$ is not past index $n$. The structure constants for multiplication in this basis are the same as the structure constants for multiplication of Schubert polynomials. The difference from the usual realm of study of Schubert polynomials, which is the polynomial ring in infinitely many variables, is that this algebra is graded into length components that interact trivially. That is,
 $$\coma = \bigoplus_{n=0}^\infty \mathbb{Z}[x_1,\ldots,x_n]$$
@@ -297,9 +320,6 @@ $$s_\nu(x_1,\ldots,x_{p+q}) = \sum_{\lambda,\mu} c^{\nu}_{\lambda,\mu}\, s_\lamb
 identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} thus gives an alternative positive combinatorial rule for the classical Littlewood--Richardson coefficients in terms of RC graphs and the $\clp^p / \trm^p$ decomposition, which themselves naturally correspond to semistandard Young tableaux in French notation.
 
 Cast as a splitting rule for $\sch_w$, Theorem~\ref{theorem:LR} fits the framework of \emph{branching Schubert calculus} of Ressayre--Richmond \cite{ressayre2009branching} for the Levi inclusion $\mathrm{GL}_p\times \mathrm{GL}_q\hookrightarrow \mathrm{GL}_{p+q}$ (with $P=B$): the Ressayre--Richmond branching coefficients $d_w^{\tilde w}$ in this case are exactly our $d_{u,v}^w(p,q)$, and Theorem~\ref{theorem:LR} supplies for them an explicit positive cardinality formula. The associativity of $\sqcupplus$ encodes the compatibility of these splittings across all $p,q\geq 0$ simultaneously, packaging the entire family of Levi comorphisms into the single algebra $(\dcoma,\sqcupplus)$.
-\newcommand{\forest}{\mathfrak{P}}
-\newcommand{\fcode}{\mathfrak{c}_\forest}
-\newcommand{\finv}{P_{\forest}}
 \subsection*{Key polynomials and dual keys}
 
 The key polynomials $\kappa_a$ (Demazure characters in type $A$) form a $\mathbb{Z}$-basis of $\mathbb{Z}[x_1,x_2,\ldots]$ indexed by weak compositions; we defer definitions and a survey of the literature to the start of \S\ref{section:crystals}. The dual key basis $\{\kappa_a^*\}$ of $\dcoma$ is defined by $\langle\kappa_a^*,\kappa_b\rangle=\delta_{a,b}$. Linear functionals on $\coma_n$ that pair to $\delta_{a,b}$ against the $\kappa_b$ are implicit in the literature on Demazure characters (see, e.g., Joseph \cite{joseph1985demazure} and Mason \cite{mason2009explicit}); what appears to be new here is the structure of these duals as a basis of a bialgebra, and in particular the product $\sqcupplus$ on $\dcoma$ in the dual key basis. Using the Little-bump description \cite{little2003combinatorial,hamaker2014relating} of $\zeromap$ and the Demazure crystal structure on RC graphs of \cite{assaf2018demazure}, we obtain:
@@ -318,7 +338,7 @@ Nonnegativity of the $k_{a,b}^c$ is in retrospect a consequence of Mathieu's exi
 
 \subsection*{Forest polynomials and dual forests}
 
-The \emph{forest polynomials} $\forest_a$ of Nadeau and Tewari \cite{nadeau2024forest}, indexed by weak compositions $a$, form a $\mathbb{Z}$-basis of the polynomial ring whose role for the cohomology of the quasisymmetric flag variety \cite{bergeron2025qsymflag} parallels that of Schubert polynomials for $\mathrm{Fl}_n$. Forest polynomials are governed by an equivalence relation $\equiv_\forest$ on words (Nadeau--Tewari forest classes); we collect background and definitions at the start of \S\ref{section:forest}. The dual forest basis $\{\forest_a^*\}$ of $\dcoma$ is defined by $\langle\forest_a^*,\forest_b\rangle=\delta_{a,b}$. As we record in Proposition~\ref{proposition:forestdualcoefficients}, this dual basis coincides --- up to a divided-power normalization --- with the volume polynomials of Nadeau--Spink--Tewari \cite{nadeau2024quasisymmetric} and, geometrically, with the Kronecker dual of the homology basis $\{[X(F)]\}\subset H_\bullet(\mathrm{QFl}_n)$ of Bergeron--Gagnon--Nadeau--Spink--Tewari \cite{bergeron2025qsymflag}. What appears to be new here is the product structure: the concatenation product $\sqcupplus$ on $\dcoma$, restricted to $\{\forest_a^*\}$, has not previously been studied, and our main result for this basis is an explicit positive combinatorial rule for its structure constants.
+Forest polynomials are governed by an equivalence relation $\equiv_\forest$ on words (Nadeau--Tewari forest classes); we collect background and definitions at the start of \S\ref{section:forest}. The dual forest basis $\{\forest_a^*\}$ of $\dcoma$ is defined by $\langle\forest_a^*,\forest_b\rangle=\delta_{a,b}$. As we record in Proposition~\ref{proposition:forestdualcoefficients}, this dual basis coincides --- up to a divided-power normalization --- with the volume polynomials of Nadeau--Spink--Tewari \cite{nadeau2024quasisymmetric} and, geometrically, with the Kronecker dual of the homology basis $\{[X(F)]\}\subset H_\bullet(\mathrm{QFl}_n)$ of Bergeron--Gagnon--Nadeau--Spink--Tewari \cite{bergeron2025qsymflag}. What appears to be new here is the product structure: the concatenation product $\sqcupplus$ on $\dcoma$, restricted to $\{\forest_a^*\}$, has not previously been studied, and our main result for this basis is an explicit positive combinatorial rule for its structure constants.
 
 \begin{theorem}[LR rule for dual forests]\label{theorem:LRforest}
 Let $a,b$ be weak compositions of lengths $p$ and $q$, and let $c$ be a weak composition of length $p+q$. Define integers $f_{a,b}^c$ by
@@ -330,13 +350,7 @@ in particular $f_{a,b}^c\in\mathbb{Z}_{\geq 0}$.
 
 As with the dual key basis, Theorem~\ref{theorem:LRforest} is equivalent to a positive combinatorial splitting rule
 $$\forest_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} f_{a,b}^c\,\forest_a(x_1,\ldots,x_p)\,\forest_b(x_{p+1},\ldots,x_{p+q}).$$
-This splitting lifts, on cohomology, to a ring homomorphism $\iota_{p,q}^*:H^\bullet(\mathrm{QFl}_{p+q})\to H^\bullet(\mathrm{QFl}_p)\otimes H^\bullet(\mathrm{QFl}_q)$ that is the natural quasisymmetric-flag analogue of the Levi comorphism of \cite{ressayre2009branching}; we develop this in \S\ref{subsection:qflbranch}.
-
-\subsection*{An enumerative Littlewood--Richardson rule for forest polynomials}
-
-The combinatorial centerpiece of the paper is a Schubert-calculus-style enumerative LR rule for the product of two forest polynomials themselves (Theorem~\ref{theorem:forestpolyLR} in \S\ref{section:forestrule}). The structure constants $\beta_{ab}^c$ in
-$$\forest_a\,\forest_b = \sum_c \beta_{ab}^c\,\forest_c$$
-are realized as cardinalities of explicit sets of pairs of RC graphs: $\beta_{ab}^c$ counts pairs $(A,B)$ of \emph{forest} RC graphs of forest-code $a$ and $b$ whose lift product $A*B$ lands on some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$. Nonnegativity of the $\beta_{ab}^c$ is already known constructively, by the straightening algorithm of Bergeron--Gagnon--Nadeau--Spink--Tewari \cite{bergeron2025equivariant}; what is new in Theorem~\ref{theorem:forestpolyLR} is the realization of each coefficient as a single cardinality of an explicit set, in the spirit of the classical Littlewood--Richardson rule for Schur functions. The proof requires substantial extra machinery (the squash product $\boxtimes$, the lift product $*$, a multiplactic algebra $\mathcal{M}_n$, a Cauchy-type factorization through the slide quotient of \S\ref{section:slide}, and the Nadeau--Tewari forest equivalence). Rather than develop the full theory of these constructs, we treat them as means to an end, leaving further development for the future.
+This splitting lifts, on cohomology, to a ring homomorphism $\iota_{p,q}^*:H^\bullet(\mathrm{QFl}_{p+q})\to H^\bullet(\mathrm{QFl}_p)\otimes H^\bullet(\mathrm{QFl}_q)$ that is the natural quasisymmetric-flag analogue of the Levi comorphism of \cite{ressayre2009branching}; we develop this in \S\ref{subsection:qflbranch}. The dual forest LR rule is also the keystone bridge to the forest polynomial LR rule announced in the lead subsection: Theorem~\ref{theorem:forestpolyLR-intro} is restated as Theorem~\ref{theorem:forestpolyLR} in \S\ref{section:forestrule} once the lift product $*$ has been formally defined, and its proof passes through the dual forest rule together with the squash product $\boxtimes$, the multiplactic algebra $\mathcal{M}_n$, a Cauchy-type factorization through the slide quotient of \S\ref{section:slide}, and the Nadeau--Tewari forest equivalence.
 
 \subsection*{The ring of RC graphs}
 
@@ -409,6 +423,16 @@ Notice that necessarily $m\leq k$ for $\tom{k}$, but there is no upper bound on 
 
 \end{definition}
 
+\begin{definition}[Lehmer code, dual code, dominant permutations]\label{definition:codestuff}
+For a permutation $w\in S_\infty$, the \emph{(right) Lehmer code} of $w$ is the sequence $\code(w)=(c_1,c_2,\ldots)$ defined by
+$$c_i \;=\; \#\{\,j>i : w(j)<w(i)\,\}.$$
+This is a weak composition with $\sum_i c_i=\ell(w)$, and the map $w\mapsto\code(w)$ is a bijection from $S_\infty$ onto the set of weak compositions of finite support. We will sometimes write $\code_i(w):=c_i$. The \emph{dual code} of $w$ is
+$$\code^*(w) \;:=\; \code(w^{-1}).$$
+
+A permutation $\mu\in S_\infty$ is called \emph{dominant} if $\code(\mu)$ is a partition (a weakly decreasing sequence of nonnegative integers, padded by $0$s). For a partition $\lambda$, we write $\dom_\lambda$ for the dominant permutation with
+$$\code^*(\dom_\lambda) \;=\; \lambda.$$
+\end{definition}
+
 \begin{definition}[Pulling out variables from double Schubert polynomials, the relation $\downvar{i}$] \label{definition:polysequence}
 		For a permutation $v'$ such that $v'\in S_{n}$, define
 		$$\varphi_{i,n}(v')(j)=\begin{cases}
@@ -427,6 +451,7 @@ Notice that necessarily $m\leq k$ for $\tom{k}$, but there is no upper bound on 
 		
 		The permutations $v'$ such that $v\downvar{i} v'$ arise when pulling a variable out of a Schubert polynomial and expressing the coefficients of the powers of this variable as Schubert polynomials in the remaining variables, as is done in \cite{coprod}, from which this definition essentially comes.
 
+    A permutation
     % For convenience, if $a$ is a weak composition of length $n$ and $v,v'\in S_\infty$, we declare that $v\downvar{a} v'$ if
     % $$v\downvar{a_1} v_1\downvar{a_2} v_2\downvar{a_3}\cdots \downvar{a_n} v'$$
   \end{definition}
@@ -3534,7 +3559,7 @@ That the coefficients $\beta_{ab}^c$ are nonnegative integers is not new. Berger
 
 The proof proceeds in four steps.
 
-In \S\ref{section:multiplactic} we define an associative product $\boxtimes$ on $\BRC_n$, the \emph{squash product}, built directly out of the row-decomposition operations of \S\ref{section:brc} (a horizontal concatenation of two RC graphs of common height, followed by $\clp$ to recover an $n$-row representative). The product behaves quite poorly as a global product on $\BRC$. However, on full Grassmannian RC graphs of height $n$, $\boxtimes$ turns out fortuitously to coincide with the plactic monoid product on semistandard Young tableaux of shape with parts at most $n$, modulo the customary transposition between RC-graph and tableau conventions (Theorem~\ref{theorem:placticiso}). Furthermore, it models the standard theory of the polynomial ring in $n$ variables as a module over the ring of symmetric polynomials with basis the Schubert polynomials indexed by permutation in $S_n$. This leverage (a fairly well-behaved right module action of the ring of Grassmannian RC graphs of a fixed height) is the key to expressing Schubert multiplication in terms of $\boxtimes$. 
+In \S\ref{section:multiplactic} we define an associative product $\boxtimes$ on $\BRC_n$, the \emph{squash product}, built directly out of the row-decomposition operations of \S\ref{section:brc} (a horizontal concatenation of two RC graphs of common height, followed by $\clp$ to recover an $n$-row representative). The product behaves quite poorly as a global product on $\BRC$. However, on full Grassmannian RC graphs of height $n$, $\boxtimes$ turns out fortuitously to coincide with the plactic monoid product on semistandard Young tableaux of shape with parts at most $n$, modulo the customary transposition between RC-graph and tableau conventions (Theorem~\ref{theorem:placticiso}). Furthermore, it models the standard theory of the polynomial ring in $n$ variables as a module over the ring of symmetric polynomials with basis the Schubert polynomials indexed by permutations in $S_n$. This leverage (a fairly well-behaved right module action of the ring of Grassmannian RC graphs of a fixed height) is the key to expressing Schubert multiplication in terms of $\boxtimes$. 
 
 The squash product induces a canonical projection $\RC_n:\mathcal{M}_n\to\BRC_n$, where $\mathcal{M}_n$ is the \emph{multiplactic algebra} obtained by tensoring the height-stratified plactic algebras together.
 
@@ -3666,7 +3691,7 @@ by Theorem \ref{theorem:schubmoduleiso}, since $\mathbf{E}_{p_m}^{k_m}\in\grass_
 \begin{definition}
   Suppose $\maxd(w)\leq n$. We define an element $\mathbf{S}_w(n)\in \mathcal{M}_n$ by
   $$\mathbf{S}_w(n) = \sum_{\alpha} E_w^{\alpha;n}\mathbf{E}_{\alpha_1,1}^1 \mathbf{E}_{\alpha_2,2}^2 \cdots  \mathbf{E}_{\alpha_n,n}^n\mathbf{E}_{\alpha_{n+1}, n}^n\cdots \mathbf{E}_{\alpha_N,n}^n$$
-  We observe by Proposition \ref{proposition:eproductworks} that $\RC_n(\mathbf{S}_w(n)) = \mathcal{S}_w(n)$, so that $\mathbf{S}_w(n)$ is a lift of $\mathcal{S}_w(n)$ to $\mathcal{M}_n$, which usually has signs.
+  where we recall that $E_w^{\alpha;n}$ represents the coefficient of the elementary basis element of $\coma_n$ indexed by the weak composition $\alpha$ in the expansion of $\sch_w^n$. We observe by Proposition \ref{proposition:eproductworks} that $\RC_n(\mathbf{S}_w(n)) = \mathcal{S}_w(n)$, so that $\mathbf{S}_w(n)$ is a lift of $\mathcal{S}_w(n)$ to $\mathcal{M}_n$, which usually has signs (\emph{but not always}; see, for example, \cite{woodruff2025single} for a classification of permutations for which $\mathbf{S}_w(n)$ has a single SEM term).
 \end{definition}
 
 \begin{theorem} \label{theorem:schubproduct}
@@ -3805,53 +3830,6 @@ so they are equal. The key point is that the corresponding lift factors commute,
 An arbitrary RC graph is itself a product of elementary symmetric RC graphs of weakly increasing heights according to Proposition \ref{proposition:elemfactor}, so an induction argument proves the result for arbitrary $R_3$.
 \end{proof}
 
-\subsection{Explicit description of the lifting map}
-
-The purpose of this subsection is to be helpful to those who do computations in this algebra: an algorithm for computing $\mathrm{lift}_n(R)$ for an RC graph $R$ does not present itself as obvious, and we flesh one out here for convenience.
-
-
-\begin{definition}
-Let $p\leq k$ be positive integers and let $w\in S_N$ be a permutation with $\maxd(w)\leq k$. Suppose $R\in \RC_k(w)$ and let $A\in\binom{[k]}{p}$. Define an RC graph $\sigma_k(R,A)$ as follows. Suppose $A=\{a_1<\cdots < a_p\}$ and let the reduced/compatible biword for $R$ be
-$$\binom{u_1\cdots u_m}{v_1\cdots v_m}$$
-For each $a_i$, assign an index $j_i$ to be the leftmost index such that $u_{j_i}=a_i$. Also define $\widetilde{b}_i = k - p + i + N$. Create a new biword
-$$\binom{u_1\cdots a_1 u_{j_1} \cdots a_p u_{j_p} \cdots u_m}{v_1\cdots \widetilde{b}_1 v_{j_1}\cdots \widetilde{b}_p v_{j_p} \cdots v_m}$$
-Then apply $\lzeromap_k$ to this biword to obtain $\sigma_k(R,A)$.
-\end{definition}
-
-\begin{lemma} \label{lemma:liftpieri}
-We have that 
-$$\sigma_k:\RC_k(w)\times \binom{[k]}{p}\to \bigcup_{\substack{w\tom{k} w'\\\ell(w,w')=p}}\RC_k(w')$$ 
-is an isomorphism of Demazure crystals.
-\end{lemma}
-\begin{proof}
-  This is precisely Proposition \ref{proposition:boxproduct} in the case where the right factor is a full $p$-Grassmannian elementary symmetric polynomial RC graph of height $k$.
-\end{proof}
-
-\begin{definition}[Pieri insertion]
-Let $R\in \RC_n(w)$ be an RC graph. A marked Pieri chain compatible with $R$ is a sequence of permutations
-$$1=w_0\leq w_1\leq w_2\leq \cdots\leq w_r=w$$
-and a weakly increasing sequence of positive integers $k_1\leq\cdots\leq k_r$ such that $w_{i-1}\tom{k_i} w_i$ for all $i$ and the implied Pieri deletion at each step has valid weights. Denote the set of marked Pieri chains from the identity to $w$ of steps $k_1\leq\cdots\leq k_r$ compatible with $R$ by
-$$\mathrm{Pieri}_R(w; k_1,\ldots,k_r)$$ 
-\end{definition}
-
-We state the following without proof, as the proof is straightforward, tedious, and unimportant for the rest of the exposition.
-
-\begin{theorem}
-The map 
-$$\sigma:\prod_{i=1}^r 2^{[k_i]}\to\{(R,C)\mid R\in \RC_n(w),C\in\mathrm{Pieri}_R(w;k_1,\ldots,k_r)\}$$
-given by Pieri insertion is a bijection.
-\end{theorem}
-
-\begin{method}[Computing $\mathrm{lift}_n(R)$ for an RC graph $R$]
-To find the lift of an RC graph $R\in \RC_n(w)$, suppose $\code(ww_0(n + 1)) = a$. We need to peel off $n+1-a_1$ reflections in an $n$-Pieri manner, yielding an RC graph $R'\in\RC_n(w')$ where $w'\in S_n$ is uniquely determined by $\code(w'w_0(n))=(a_2,\ldots,a_n)$. By Lemma \ref{lemma:liftpieri}, there is precisely one RC graph $R'\in\RC_{n-1}(w')$ and one subset $A\subseteq [n]$ of size $n+1-a_1$ such that $\sigma_{n}(R',A)=R$: Specifically, $A$ can be characterized by the fact that if
-$$A=\{A_1<\cdots < A_{n+1-a_1}\}$$
-then the rightmost crossings (leftmost letters in the reduced word) in row $A_i$ of $R$ for each $i$ correspond to a sequence of reflections $t_{c_1d_1},\ldots,t_{c_{n+1-a_1}d_{n+1-a_1}}$ such that $w' = w t_{c_1d_1}\cdots t_{c_{n+1-a_1}d_{n+1-a_1}}$, and
-$$c_i\leq n<d_i$$
-for all $i$.
-
-
-This subset $A$ tells us precisely which reflections to remove from $R$ to obtain the $n$th tensor component of $\mathrm{lift}_n(R)$. We then repeat this process with $R'$ to obtain the next tensor component, recursively, until we have peeled off all $n$ steps. The result is the unique lift of $R$.
-\end{method}
 
 \subsection{The slide quotient}
 
@@ -3934,9 +3912,9 @@ $$\sum_{R\in\mathcal{C}}x^{\wtt(R)} = \mathfrak{F}_{\wtt(R_0)}(x);$$
 that is, the character of $\mathcal{C}$ is the slide polynomial indexed by $\wtt(R_0)$.
 \end{theorem}
 \begin{proof}
-By construction $\ddot{e}_i$ and $\ddot{f}_i$ preserve $\mathrm{word}(R)$, so all elements of $\mathcal{C}$ share a common word $\mathbf{r}=\mathrm{word}(R_0)$. Conversely, an arbitrary $R\in\RC_n(w)$ with $\mathrm{word}(R)=\mathbf{r}$ is reached from $R_0$ by a sequence of crystal operators $e_i,f_i$ that fix the word: each such step changes $\wtt$ by moving a single crossing between rows $i$ and $i{+}1$ without altering inversions, hence is realised by the corresponding $\ddot{e}_i$ or $\ddot{f}_i$. Thus $\mathcal{C}=\{R\in\RC_n(w):\mathrm{word}(R)=\mathbf{r}\}$.
+By construction $\ddot{e}_i$ and $\ddot{f}_i$ preserve $\mathrm{word}(R)$, so all elements of $\mathcal{C}$ share a common word $\mathbf{r}=\mathrm{word}(R_0)$. Conversely, an arbitrary $R\in\RC_n(w)$ with $\mathrm{word}(R)=\mathbf{r}$ is reached from $R_0$ by a sequence of crystal operators $e_i,f_i$ that fix the word: each such step changes $\wtt$ by moving a single crossing between rows $i$ and $i{+}1$ without altering inversions, hence is realized by the corresponding $\ddot{e}_i$ or $\ddot{f}_i$. Thus $\mathcal{C}=\{R\in\RC_n(w):\mathrm{word}(R)=\mathbf{r}\}$.
 
-The map $R\mapsto\wtt(R)$ identifies $\mathcal{C}$ with the set of weight vectors realised by such RC graphs. By the BJS compatible-sequence formulation \cite{bjs}, this set is exactly the set of sequences $a$ compatible with $\mathbf{r}$, with $\wtt(R_0)$ corresponding to the unique compatible sequence whose flat composition is coarsest. Summing $x^{\wtt(R)}$ over $\mathcal{C}$ therefore gives $\sum_{a\text{ compatible with }\mathbf{r}}x^{a} = \mathfrak{F}(\mathbf{r}) = \mathfrak{F}_{\wtt(R_0)}(x)$.
+The map $R\mapsto\wtt(R)$ identifies $\mathcal{C}$ with the set of weight vectors realized by such RC graphs. By the BJS compatible-sequence formulation \cite{bjs}, this set is exactly the set of sequences $a$ compatible with $\mathbf{r}$, with $\wtt(R_0)$ corresponding to the unique compatible sequence whose flat composition is coarsest. Summing $x^{\wtt(R)}$ over $\mathcal{C}$ therefore gives $\sum_{a\text{ compatible with }\mathbf{r}}x^{a} = \mathfrak{F}(\mathbf{r}) = \mathfrak{F}_{\wtt(R_0)}(x)$.
 \end{proof}
 
 \begin{lemma}[Quasi-tensor swap by character]\label{lemma:quasitensorswap}
@@ -3990,7 +3968,7 @@ extends to an isomorphism of quasi-crystals from the quasi-tensor product of the
 We proceed in three steps: a reduction to a single elementary symmetric right factor, the Kashiwara argument via disjoint union under a height restriction, and the removal of that restriction.
 
 \smallskip\noindent\emph{Step 1: Reduction to $B$ a single elementary symmetric RC graph.}
-Write $\mathrm{lift}_n(B) = E_1\otimes\cdots\otimes E_k$ in weakly increasing-height order (Proposition~\ref{proposition:elemfactor}). The lift product $*$ on $\BRC$ is associative, since it is the projection under $\RC_n$ of the associative multiplication on $\mathcal{M}_n$ and Proposition~\ref{proposition:elemfactor} guarantees that $\RC_n$ respects this multiplication on lift factorisations. Likewise the quasi-tensor product $\ddot\otimes$ is associative on seminormal quasi-crystals by \cite[Theorem~5.1]{cain2023quasicrystals}. Hence
+Write $\mathrm{lift}_n(B) = E_1\otimes\cdots\otimes E_k$ in weakly increasing-height order (Proposition~\ref{proposition:elemfactor}). The lift product $*$ on $\BRC$ is associative, since it is the projection under $\RC_n$ of the associative multiplication on $\mathcal{M}_n$ and Proposition~\ref{proposition:elemfactor} guarantees that $\RC_n$ respects this multiplication on lift factorizations. Likewise the quasi-tensor product $\ddot\otimes$ is associative on seminormal quasi-crystals by \cite[Theorem~5.1]{cain2023quasicrystals}. Hence
 $$A*B = ((A*E_1)*E_2)*\cdots*E_k,\qquad A\,\ddot\otimes\, B = ((A\,\ddot\otimes\, E_1)\,\ddot\otimes\, E_2)\,\ddot\otimes\,\cdots\,\ddot\otimes\, E_k,$$
 where on the right, the quasi-crystal of $B$ is identified with $E_1\,\ddot\otimes\,\cdots\,\ddot\otimes\, E_k$ via Lemma~\ref{lemma:liftequivariant}. By induction on $k$, it suffices to prove the proposition when $B = E$ is a single full Grassmannian elementary symmetric RC graph.
 
@@ -4021,7 +3999,7 @@ A*E \;=\; A^{\mathrm{left}}*A^{\mathrm{right}}*E.
 
 We now build the quasi-crystal isomorphism $A\,\ddot\otimes\, E\to A*E$ in two stages, viewing the abstract quasi-tensor in its given order $A^{\mathrm{left}}\,\ddot\otimes\, A^{\mathrm{right}}\,\ddot\otimes\, E$ throughout. We do \emph{not} claim that this quasi-tensor is naturally isomorphic, in the order $A^{\mathrm{left}}\otimes A^{\mathrm{right}}\otimes E$, to one in any other order at the level of abstract Kashiwara crystals -- it generally is not. What we claim is that $*$ itself is well-defined on the abstract quasi-tensor regardless of the order of factors (since $*$ on $\BRC$ is associative), and that the resulting map onto $A*E$ is a quasi-crystal isomorphism. The naturality the abstract tensor lacks is supplied by $*$, which `snaps' the factors into the canonical lift order of $A*E$.
 
-\emph{Stage~3a (handling $A^{\mathrm{right}}$):} For each individual factor $A_j$ with $j>\ell$, we have $\hr(A_j)>\hr(E)$, so the roles of $A$ and $E$ in Step~2 reverse: the squash product $E\boxtimes A_j$ at the common height $\hr(A_j)$ realises $E*A_j$, and the same disjoint-union/clip pairing argument provides a quasi-crystal isomorphism $E\,\ddot\otimes\,A_j\to E*A_j$. Iterating across $j=\ell+1,\ldots,m$ and using that $\ddot\otimes$ is associative on seminormal quasi-crystals \cite[Theorem~5.1]{cain2023quasicrystals}, we obtain a quasi-crystal isomorphism $E\,\ddot\otimes\, A^{\mathrm{right}}\to E*A^{\mathrm{right}}$. By Lemma~\ref{lemma:quasitensorswap}, the abstract quasi-tensors $A^{\mathrm{right}}\,\ddot\otimes\, E$ and $E\,\ddot\otimes\, A^{\mathrm{right}}$ are isomorphic as quasi-crystals (non-canonically); composing this swap isomorphism with $E\,\ddot\otimes\, A^{\mathrm{right}}\to E*A^{\mathrm{right}}$ yields a quasi-crystal isomorphism
+\emph{Stage~3a (handling $A^{\mathrm{right}}$):} For each individual factor $A_j$ with $j>\ell$, we have $\hr(A_j)>\hr(E)$, so the roles of $A$ and $E$ in Step~2 reverse: the squash product $E\boxtimes A_j$ at the common height $\hr(A_j)$ realizes $E*A_j$, and the same disjoint-union/clip pairing argument provides a quasi-crystal isomorphism $E\,\ddot\otimes\,A_j\to E*A_j$. Iterating across $j=\ell+1,\ldots,m$ and using that $\ddot\otimes$ is associative on seminormal quasi-crystals \cite[Theorem~5.1]{cain2023quasicrystals}, we obtain a quasi-crystal isomorphism $E\,\ddot\otimes\, A^{\mathrm{right}}\to E*A^{\mathrm{right}}$. By Lemma~\ref{lemma:quasitensorswap}, the abstract quasi-tensors $A^{\mathrm{right}}\,\ddot\otimes\, E$ and $E\,\ddot\otimes\, A^{\mathrm{right}}$ are isomorphic as quasi-crystals (non-canonically); composing this swap isomorphism with $E\,\ddot\otimes\, A^{\mathrm{right}}\to E*A^{\mathrm{right}}$ yields a quasi-crystal isomorphism
 $$\Theta_{\mathrm{right}}:\;A^{\mathrm{right}}\,\ddot\otimes\,E \;\longrightarrow\; E*A^{\mathrm{right}}.$$
 The non-naturality of the swap is harmless: what is preserved under $\Theta_{\mathrm{right}}$ is exactly the quasi-crystal structure (weights, $\ddot e_i$, $\ddot f_i$), which is all we need.
 
