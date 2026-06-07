@@ -151,6 +151,7 @@
 \newcommand{\lzeromap}{\mathscr{Z}}
 \newcommand{\lmap}{\mathscr{L}}
 \newcommand{\ltb}{\mathrm{little}}
+\newcommand{\slide}{\mathfrak{F}}
 %\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\stackrel{\blacktriangleright}{\mathbf{\_}}$}}\limits}
 
 %\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\blacktriangleright$}}\limits}
@@ -263,109 +264,110 @@ The \emph{forest polynomials} $\forest_a$ of Nadeau and Tewari \cite{nadeau2024f
 $$\forest_a\,\forest_b \;=\; \sum_c \beta_{a,b}^c\,\forest_c,$$
 are nonnegative integers; this was first established by Nadeau and Tewari \cite{nadeau2024forest} via the forest equivalence class structure on monomials, and was given a constructive straightening algorithm by Bergeron--Gagnon--Nadeau--Spink--Tewari \cite{bergeron2025equivariant}. A combinatorial Littlewood--Richardson-style rule realizing each $\beta_{a,b}^c$ as the cardinality of an explicit finite set --- in the spirit of the classical LR rule for Schur functions --- has been raised as a natural question in this circle of work \cite{nadeau2024forest,nadeau2024quasisymmetric,bergeron2025qsymflag}, but no such rule has been available.
 
-The combinatorial centerpiece of this paper is such a rule. The forest-code map $\code_\forest$ partitions $\RC_n$ into Nadeau--Tewari forest equivalence classes whose generating polynomials are the $\forest_a$. Within each such class we single out a distinguished choice of representative: call an RC graph $R$ a \emph{forest RC graph} if its forest-code equals its weight, $\code_\forest(R) = \wtt(R)$. Forest RC graphs are not the only sensible choice of class representatives in general, but they are a particularly clean one and the choice that drives our proof.
+The combinatorial centerpiece of this paper is such a rule. The forest-code map $\code_\forest$ partitions $\RC_n$ into Nadeau--Tewari forest equivalence classes whose generating polynomials are the $\forest_a$. Within each such class we single out a distinguished representative: call an RC graph $R$ a \emph{forest RC graph} if its forest-code equals its weight, $\code_\forest(R) = \wtt(R)$. Each forest equivalence class contains a unique forest RC graph, but --- in contrast to the rigid correspondence between RC graphs and Schubert polynomials --- several distinct forest equivalence classes can share the same forest code, so a given weak composition $a$ may be realized by more than one forest RC graph. This non-uniqueness is genuine and visible in computations with the rule below: a forest LR coefficient of $2$ already arises from two distinct forest RC graphs of the same composition $c$ (see Example~\ref{example:forestlrproduct}).
 
-\begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR-intro}
+\begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR}
 Let $a,b$ be weak compositions of length $n$. Then
 $$\forest_a\,\forest_b \;=\; \sum_c \beta_{a,b}^c\,\forest_c,$$
 where $\beta_{a,b}^c$ is the number of pairs $(A,B)$ of RC graphs such that $\code(\wof{A}) = \code_\forest(A) = a$, $\code(\wof{B}) = \code_\forest(B) = b$, and $A*B = R$ for some forest RC graph $R$ with $\code_\forest(R) = \wtt(R) = c$.
 \end{theorem}
 
-Here $A*B$ is the \emph{lift product} (\S\ref{section:liftproduct}), a binary operation on RC graphs introduced in this paper for the purpose. Under the Borel-type surjection $\coma_n\twoheadrightarrow \coma_n/\mathrm{QSym}_n^+\cdot\coma_n\cong H^\bullet(\mathrm{QFl}_n)$ of \cite{bergeron2025qsymflag}, the forest polynomials descend to a basis of $H^\bullet(\mathrm{QFl}_n)$, so the same rule computes the cup product there.
+Here $A*B$ is the \emph{lift product} (\S\ref{section:liftproduct}), a binary operation on RC graphs introduced in this paper for the purpose.
 
-The proof requires substantial machinery, which we develop in its own right because it appears to be of independent interest: a Schubert bialgebra $\coma$ with a graded dual $\dcoma$ whose product captures branching of Schubert polynomials; an associative product $\sqcupplus$ on the free abelian group $\BRC$ of bounded RC graphs that realizes $\dcoma$ as a homomorphic image; the squash product $\boxtimes$ and the lift product $*$ on $\BRC_n$; a multiplactic algebra $\mathcal{M}_n$ of elementary RC factors; a Cauchy-type factorization through a slide quotient; and an application of the quasi-crystal framework of Cain--Guilherme--Malheiro \cite{cain2023quasicrystals} to RC graphs. Along the way, the same apparatus produces four further Littlewood--Richardson rules of independent interest --- for the dual Schubert, dual key, dual forest, and dual slide bases of $\dcoma$ --- which we record as Theorems~\ref{theorem:LR}, \ref{theorem:LRkey}, \ref{theorem:LRforest}, and \ref{theorem:lrfslide} below. The dual forest rule is itself the keystone bridge to the forest polynomial rule above. These dual rules form a coherent family of branching/splitting formulas for Schubert, key, forest, and slide polynomials under the partition of variables into two blocks $\{x_1,\ldots,x_p\}$ and $\{x_{p+1},\ldots,x_{p+q}\}$.
 
-\subsection*{The Schubert bialgebra and its dual} In this article we introduce a bialgebra $\coma$ that we call the Schubert bialgebra. This bialgebra has a basis of Schubert polynomials $\sch_u^n$ for $u\in S_\infty$, where the last descent of $u$ is not past index $n$. The structure constants for multiplication in this basis are the same as the structure constants for multiplication of Schubert polynomials. The difference from the usual realm of study of Schubert polynomials, which is the polynomial ring in infinitely many variables, is that this algebra is graded into length components that interact trivially. That is,
+Under the Borel-type surjection $\coma_n\twoheadrightarrow \coma_n/\mathrm{QSym}_n^+\cdot\coma_n\cong H^\bullet(\mathrm{QFl}_n)$ of \cite{bergeron2025qsymflag}, the forest polynomials descend to a basis of $H^\bullet(\mathrm{QFl}_n)$, so the same rule computes the cup product there.
+
+
+
+The proof requires substantial machinery, which we develop in its own right because it is of independent interest: a Schubert bialgebra $\coma$ with a graded dual $\dcoma$ whose product captures branching of Schubert polynomials; an associative product $\sqcupplus$ on the free abelian group $\BRC$ of bounded RC graphs that realizes $\dcoma$ as a homomorphic image; the squash product $\boxtimes$ and the lift product $*$ on $\BRC_n$; a multiplactic algebra $\mathcal{M}_n$ of elementary RC factors; a Cauchy-type factorization through a slide quotient; and an application of the quasi-crystal framework of Cain--Guilherme--Malheiro \cite{cain2023quasicrystals} to RC graphs. 
+
+% Along the way, the same apparatus produces four further Littlewood--Richardson rules of independent interest --- for the dual Schubert, dual key, dual forest, and dual slide bases of $\dcoma$ --- which we record as Theorems~\ref{theorem:LR}, \ref{theorem:LRkey}, \ref{theorem:LRforest}, and \ref{theorem:lrfslide} below. The dual forest rule is itself the keystone bridge to the forest polynomial rule above. These dual rules form a coherent family of branching/splitting formulas for Schubert, key, forest, and slide polynomials under the partition of variables into two blocks $\{x_1,\ldots,x_p\}$ and $\{x_{p+1},\ldots,x_{p+q}\}$.
+
+\subsection*{The Schubert bialgebra and its dual} In initial sections, we introduce a bialgebra $\coma$ that we call the Schubert bialgebra. This bialgebra has a basis of Schubert polynomials $\sch_u^n$ for $u\in S_\infty$, where the last descent of $u$ is not past index $n$. The structure constants for multiplication in this basis are the same as the structure constants for multiplication of Schubert polynomials. The difference from the usual realm of study of Schubert polynomials, which is the polynomial ring in infinitely many variables, is that this algebra is graded into length components that interact trivially. That is,
 $$\coma = \bigoplus_{n=0}^\infty \mathbb{Z}[x_1,\ldots,x_n]$$
 This allows us to consistently define a ``splitting'' coproduct that is compatible with the usual product of polynomials but actively requires the triviality of products between length components to achieve a bialgebra structure.
 
-We focus primarily on the dual $\dcoma$ of this algebra, where the product is derived from this splitting (deconcatenation) coproduct. Specifically, let $\mathrm{Comp}_n$ be the set of weak compositions of length $n$. Then, additively,
+We focus primarily on the dual $\dcoma$ of this algebra, where the product is derived from this splitting (deconcatenation) coproduct on $\coma$. Specifically, let $\mathrm{Comp}_n$ be the set of weak compositions of length $n$. Then, additively,
 $$\dcoma = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus \mathrm{Comp}_n}$$
-and multiplicatively the product of two basis elements indexed by $a\in \mathrm{Comp}_p$ and $b\in \mathrm{Comp}_q$ is the basis element indexed by the concatenation of $a$ and $b$, which is an element of $\mathrm{Comp}_{p+q}$. We will denote this product by $\sqcupplus$, writing $a\sqcupplus b$ for the concatenation, and we wish to flag the choice of symbol: the product on $\dcoma$ is \emph{not} the dual of polynomial multiplication on $\coma$ in any sense one might naively expect, and using a distinguished symbol for it serves as a constant reminder. (Polynomial multiplication on $\coma$ becomes the coproduct $\Delta^*$ on $\dcoma$, not its product.) The coproduct on $\dcoma$ is given by splitting sums of exponents, that is to say
+and multiplicatively the product of two basis elements indexed by $a\in \mathrm{Comp}_p$ and $b\in \mathrm{Comp}_q$ is the basis element indexed by the concatenation of $a$ and $b$, which is an element of $\mathrm{Comp}_{p+q}$. We will denote this product by $\sqcupplus$, writing $a\sqcupplus b$ for the concatenation, and we wish to flag the choice of symbol: the product on $\dcoma$ is \emph{not} the dual of polynomial multiplication on $\coma$ in any sense one might naively expect, and using a distinguished symbol for it serves as a constant reminder. The coproduct on $\dcoma$ is given by splitting sums of exponents, that is to say
 $$\Delta(c) = \sum_{a+b=c} a\otimes b$$
-where $a$ and $b$ are weak compositions of lengths $p$ and $q$ respectively, and the equation $a+b=c$ indicates that the pointwise sum of $a$ and $b$ is equal to $c$. The counit is given by $\varepsilon(c)=0$ unless $c$ is the empty composition, in which case $\varepsilon(c)=1$. With these definitions, $\coma$ and $\dcoma$ are dual bialgebras over $\mathbb{Z}$, a fact that is straightforward to verify. They fail to be connected and are not Hopf algebras.
+where $a$ and $b$ are weak compositions of lengths $p$ and $q$ respectively, and the equation $a+b=c$ indicates that the pointwise sum of $a$ and $b$ is equal to $c$. The counit is given by $\varepsilon(c)=0$ unless $c$ is the empty composition, in which case $\varepsilon(c)=1$. With these definitions, $\coma$ and $\dcoma$ are dual bialgebras over $\mathbb{Z}$, a fact that is straightforward to verify. They fail to be connected and are not Hopf algebras. A ``Littlewood-Richardson rule'' for a basis of the dual algebra is equivalent to a branching/splitting formula for the corresponding polynomial basis under the partition of variables into two blocks $\{x_1,\ldots,x_p\}$ and $\{x_{p+1},\ldots,x_{p+q}\}$.
 
-Combinatorially, $\dcoma$ is interesting, but not fundamentally new at this point. What is new is the Schubert basis $\dsch_u^n$ of $\dcoma$ indexed by $u\in S_\infty$ and $n$ at least as large as the last descent of $u$, defined by
+Combinatorially, $\dcoma$ is interesting, but not fundamentally new at this point. What is new is the interactions of the algebraic structure with the dual Schubert basis $\dsch_u^n$ of $\dcoma$ indexed by $u\in S_\infty$ and $n$ at least as large as the last descent of $u$, defined by
 $$\langle \dsch_u^m, \sch_v^n\rangle = \delta_{u,v}\delta_{m,n}$$
 where we take $\langle -,-\rangle$ to be the pairing implied by the assertion that for a composition $c\in\mathrm{Comp}_n$ we have that
-$$\langle c, x_a\rangle = \delta_{c,a}$$
+$$\langle c, x^a\rangle = \delta_{c,a}$$
 where $a$ is any composition. We present an explicit formula for the dual Schubert basis in $\dcoma$ with integer coefficients.
 
-A dual basis to the Schubert polynomials is of course not itself new: Postnikov and Stanley \cite{postnikov2009chains} introduced a family of dual Schubert polynomials $\mathfrak{D}_w$ in the polynomial ring with respect to a particular integral pairing, characterized by a formula that mimics the action of divided difference operators on Schubert polynomials. The relationship between the two bases is that the coefficients of $\mathfrak{D}_u$ in the divided power algebra are, up to a scalar factor, the same as the coefficients of $\dsch_u^n$ in the weak composition basis.
+A dual basis to the Schubert polynomials is of course not itself new: Postnikov and Stanley \cite{postnikov2009chains} introduced a family of dual Schubert polynomials $\mathfrak{D}_w$ in the polynomial ring with respect to a particular integral pairing, characterized by a formula that mimics the action of divided difference operators on Schubert polynomials. The relationship between the two bases is that the coefficients of $\mathfrak{D}_u$ in the divided power algebra are, up to a scalar factor, the same as the coefficients of $\dsch_u^n$ in the weak composition basis. 
 
+In addition, the dual forest basis $\{\forest_a^*\}$ of $\dcoma$ is defined by $\langle\forest_a^*,\forest_b\rangle=\delta_{a,b}$. As we record in Proposition~\ref{proposition:forestdualcoefficients}, this dual basis coincides, up to a divided-power normalization, with the volume polynomials of Nadeau--Spink--Tewari \cite{nadeau2024quasisymmetric} and, geometrically, with the Kronecker dual of the homology basis $\{[X(F)]\}\subset H_\bullet(\mathrm{QFl}_n)$ of Bergeron--Gagnon--Nadeau--Spink--Tewari \cite{bergeron2025qsymflag}. We also consider the dual bases of key polynomials and slide polynomials.
 
-\subsection*{The Littlewood-Richardson rule for dual Schubert polynomials} The Schubert basis of $\dcoma$ has nonnegative structure constants. This is fundamentally a geometric fact: the Schubert structure constants $c_{u,v}^w$ are intersection multiplicities of Schubert varieties in the complete flag manifold $\mathrm{Fl}_n$, and are nonnegative because Schubert classes are represented by effective subvarieties that, after a generic translate, intersect transversely (Kleiman). Bergeron and Sottile \cite{coprod} showed that this positivity passes to the splitting identity satisfied by Schubert polynomials when the variables are partitioned into two blocks, which in our language amounts to nonnegativity of the structure constants of the dual Schubert basis under the concatenation product on $\dcoma$. Our main result is an explicit, manifestly positive combinatorial formula for these structure constants, the numbers $d_{u,v}^w(p, q)$ such that 
-$$\dsch_u^p \sqcupplus \dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\,\dsch_w^{p+q}.$$
-The combinatorial objects we use are \emph{RC graphs}, equivalently \emph{pipe dreams}: the two terms refer to the same object, a tiling of a staircase by crosses and elbows representing a reduced word for a permutation. ``RC graph'' is the name used by Bergeron and Billey \cite{bbrc} (where the definition can be found); ``pipe dream'' is the more pictorial name introduced subsequently by Knutson and Miller \cite{knutson2005grobner}. Both presentations encode the same data, a \emph{reduced compatible sequence} (or \emph{RC sequence} for short): a reduced word $(r_1,\ldots,r_\ell)$ together with a weakly increasing \emph{compatible} sequence $(s_1,\ldots,s_\ell)$ of positive integers in the sense of \cite{bjs}, where the latter article introduced these biwords and used them to give a positive formula for Schubert polynomials. We will move freely between the three presentations, using whichever is most convenient; the picture the reader should have in mind is the row-by-row arrangement of generators of the reduced word indexed by the compatible sequence.
+\subsection*{Littlewood--Richardson rules for dual bases}
 
-It is important to note that while it is common to consider two RC graphs to be the same if they have the same set of crossings, we add a datum, the number of rows, that can distinguish two RC graphs that would otherwise be considered identical. It is a key feature in this exposition that we limit our focus to cases with finitely many rows/variables.
+Each of these dual bases in fact has nonnegative structure constants with $\sqcupplus$, for which we also give rules in terms of RC graphs. For an RC graph $R$ with $n$ rows and an integer $0\leq p\leq n$, we associate to $R$ two RC graphs $\clp^p(R)\in\RC_p$ and $\trm^p(R)\in\RC_{n-p}$, which the reader should picture as a decomposition of $R$ across the horizontal cut between rows $p$ and $p+1$. The map $\trm^p$ is genuinely simple: it discards the top $p$ rows and keeps the remaining $n-p$ rows (suitably reindexed). The map $\clp^p$ is the subtler partner. It is built by iterating an auxiliary map $\zeromap:\RC_n^0\to\RC_{n-1}$ (Definition \ref{definition:zeromap}), where $\RC_n^0$ denotes the set of RC graphs whose last row is empty. The map $\zeromap$ realizes, on the level of RC graphs, the Lascoux--Schützenberger transition formula for Schubert polynomials (see \cite{notes}), and ends up being a generalization of the main result of \cite{little2003combinatorial}, though this was not intentional. The whole construction preserves a wealth of additional structure (crystal operators, forest invariants) that we exploit later. Indeed, the product of $\dcoma$ is lifted to a product $\sqcupplus$ on the free abelian group $\BRC$ of bounded RC graphs using $\clp^p$ and $\trm^p$, for which $\dcoma$ is a quotient (\S\ref{section:brc}). The nonnegativity of the structure constants of all of these bases of $\dcoma$ is a consequence of this quotient structure.
 
-For an RC graph $R$ with $n$ rows and an integer $0\leq p\leq n$, we associate to $R$ two RC graphs $\clp^p(R)\in\RC_p$ and $\trm^p(R)\in\RC_{n-p}$, which the reader should picture as a decomposition of $R$ across the horizontal cut between rows $p$ and $p+1$. The map $\trm^p$ is genuinely simple: it discards the top $p$ rows and keeps the remaining $n-p$ rows (suitably reindexed). The map $\clp^p$ is the subtler partner. It is built by iterating an auxiliary map $\zeromap:\RC_n^0\to\RC_{n-1}$ (Definition \ref{definition:zeromap}), where $\RC_n^0$ denotes the set of RC graphs whose last row is empty. The map $\zeromap$ realizes, on the level of RC graphs, the Lascoux--Schützenberger transition formula for Schubert polynomials (see \cite{notes}), and ends up being a generalization of the main result of \cite{little2003combinatorial}, though this was not intentional. The whole construction preserves a wealth of additional structure (crystal operators, forest invariants) that we exploit later.
+For the dual Schubert basis by $\dsch_u^n$ for permutations $u$, we have the following result.
 
-Our main theorem is the following.
-
-
-\begin{theorem}\label{theorem:LR}
+\begin{theorem}[LR rule for dual Schubert polynomials]\label{theorem:LR}
 Suppose $u,v\in S_\infty$ and $p,q\geq 0$ are integers such that the last descent of $u$ is at most $p$ and the last descent of $v$ is at most $q$. Define integers $d_{u,v}^w(p, q)$ by the equation
 $$\dsch_u^p \sqcupplus \dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\,\dsch_w^{p+q}.$$
 Then for any fixed choices of RC graphs $U\in \RC_p(u)$, $V\in\RC_q(v)$, and a permutation $w\in S_\infty$, we have that $d_{u, v}^w(p, q)$ is the number of RC graphs $R\in \RC_{p+q}(w)$ such that $\clp^p(R)=U$ and $\trm^p(R)=V$, and is in particular nonnegative.
 \end{theorem}
-
-It is illuminating to read Theorem~\ref{theorem:LR} as a splitting rule for Schubert polynomials themselves. Concatenation on $\dcoma$ is dual, under the pairing $\langle\,\cdot\,,\,\cdot\,\rangle$, to the operation on $\coma$ of expanding $\sch_w$ in $p+q$ variables into products of Schubert polynomials in $\{x_1,\ldots,x_p\}$ and $\{x_{p+1},\ldots,x_{p+q}\}$:
-$$\sch_w(x_1,\ldots,x_{p+q}) \;=\; \sum_{u,v} d_{u,v}^w(p,q)\,\sch_u(x_1,\ldots,x_p)\,\sch_v(x_{p+1},\ldots,x_{p+q}).$$
-The structure constants of the concatenation product in the dual Schubert basis are precisely the branching coefficients of this splitting. Theorem~\ref{theorem:LR} thus expresses each such branching coefficient as the number of RC graphs of $w$ whose $(\clp^p,\trm^p)$-decomposition matches a chosen pair $(U,V)$.
-
-When restricted to Grassmannian permutations, Theorem \ref{theorem:LR} reduces directly to a Littlewood--Richardson rule for Schur polynomials: if $u$, $v$, $w$ are Grassmannian with unique descents at $p$, $q$, $p+q$ corresponding to partitions $\lambda$, $\mu$, $\nu$, then $\dsch^p_u$, $\dsch^q_v$, $\dsch^{p+q}_w$ are precisely the Schur polynomials $s_\lambda(x_1,\ldots,x_p)$, $s_\mu(x_{p+1},\ldots,x_{p+q})$, $s_\nu(x_1,\ldots,x_{p+q})$, and the classical splitting
-$$s_\nu(x_1,\ldots,x_{p+q}) = \sum_{\lambda,\mu} c^{\nu}_{\lambda,\mu}\, s_\lambda(x_1,\ldots,x_p)\, s_\mu(x_{p+1},\ldots,x_{p+q})$$
-identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} thus gives an alternative positive combinatorial rule for the classical Littlewood--Richardson coefficients in terms of RC graphs and the $\clp^p / \trm^p$ decomposition, which themselves naturally correspond to semistandard Young tableaux in French notation.
-
 Cast as a splitting rule for $\sch_w$, Theorem~\ref{theorem:LR} fits the framework of \emph{branching Schubert calculus} of Ressayre--Richmond \cite{ressayre2009branching} for the Levi inclusion $\mathrm{GL}_p\times \mathrm{GL}_q\hookrightarrow \mathrm{GL}_{p+q}$ (with $P=B$): the Ressayre--Richmond branching coefficients $d_w^{\tilde w}$ in this case are exactly our $d_{u,v}^w(p,q)$, and Theorem~\ref{theorem:LR} supplies for them an explicit positive cardinality formula. The associativity of $\sqcupplus$ encodes the compatibility of these splittings across all $p,q\geq 0$ simultaneously, packaging the entire family of Levi comorphisms into the single algebra $(\dcoma,\sqcupplus)$.
-\subsection*{Key polynomials and dual keys}
 
-The key polynomials $\kappa_a$ (Demazure characters in type $A$) form a $\mathbb{Z}$-basis of $\mathbb{Z}[x_1,x_2,\ldots]$ indexed by weak compositions; we defer definitions and a survey of the literature to the start of \S\ref{section:crystals}. The dual key basis $\{\kappa_a^*\}$ of $\dcoma$ is defined by $\langle\kappa_a^*,\kappa_b\rangle=\delta_{a,b}$. Linear functionals on $\coma_n$ that pair to $\delta_{a,b}$ against the $\kappa_b$ are implicit in the literature on Demazure characters (see, e.g., Joseph \cite{joseph1985demazure} and Mason \cite{mason2009explicit}); what appears to be new here is the structure of these duals as a basis of a bialgebra, and in particular the product $\sqcupplus$ on $\dcoma$ in the dual key basis. Using the Little-bump description \cite{little2003combinatorial,hamaker2014relating} of $\zeromap$ and the Demazure crystal structure on RC graphs of \cite{assaf2018demazure}, we obtain:
+The dual forest basis has nonnegative structure constants for the same structural reason. The coefficient $f_{a,b}^c$ in $\forest_a^*\sqcupplus\forest_b^*=\sum_c f_{a,b}^c\,\forest_c^*$ counts, within the forest equivalence class of composition $c$, the RC graphs whose row-splitting lands in forest-classes of compositions $a$ and $b$; the count is well-defined on equivalence classes and is nonneg\-ative (Theorem~\ref{theorem:LRforest}).
 
-\begin{theorem}[LR rule for dual keys] \label{theorem:LRkey}
-Let $a,b$ be weak compositions of lengths $p$ and $q$, and let $c$ be a weak composition of length $p+q$. Define integers $k_{a,b}^c$ by
-$$\kappa_a^* \sqcupplus \kappa_b^* = \sum_{c} k_{a,b}^c\,\kappa_c^*.$$
-For any highest-weight RC graph $C$ with $\mathrm{extwt}(C)=c$, let $N(C)$ be the number of RC graphs $R$ with $\mathbb{Y}(R)=C$ such that $\clp^p(R)$ and $\trm^p(R)$ are both highest weights and $\mathrm{extwt}(\clp^p(R)) = a$, $\mathrm{extwt}(\trm^p(R)) = b$. Then $N(C)$ depends only on $(a,b,c)$, and
-$$k_{a,b}^c \;=\; N(C);$$
-in particular $k_{a,b}^c\in\mathbb{Z}_{\geq 0}$.
-\end{theorem}
+The key polynomials $\kappa_a$ (Demazure characters in type $A$) form a $\mathbb{Z}$-basis of $\mathbb{Z}[x_1,x_2,\ldots]$ indexed by weak compositions; we defer definitions to \S\ref{section:crystals}. The dual key basis $\{\kappa_a^*\}$ of $\dcoma$ is defined by $\langle\kappa_a^*,\kappa_b\rangle=\delta_{a,b}$; its structure as a bialgebra basis appears to be new. The dual key rule (Theorem~\ref{theorem:LRkey}) has the same shape as the dual Schubert and dual forest rules but replaces forest equivalence classes with Demazure crystal components: $k_{a,b}^c$ counts, within the crystal component of highest weight $c$, those RC graphs whose row-splitting produces highest-weight pieces of compositions $a$ and $b$. We later found that nonnegativity of the $k_{a,b}^c$ also follows from Mathieu's existence theorem for excellent filtrations on tensor products of Demazure modules \cite{mathieu1990filtrations}; an explicit positive combinatorial rule had not previously appeared.
 
-Equivalently, Theorem~\ref{theorem:LRkey} is a positive combinatorial splitting rule
-$$\kappa_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} k_{a,b}^c\,\kappa_a(x_1,\ldots,x_p)\,\kappa_b(x_{p+1},\ldots,x_{p+q}).$$
-Nonnegativity of the $k_{a,b}^c$ is in retrospect a consequence of Mathieu's existence theorem for excellent filtrations on tensor products of Demazure modules \cite{mathieu1990filtrations}; an explicit positive combinatorial rule has not previously appeared.
+In a similar vein, the dual slide basis $\{\slide_a^*\}$ of $\dcoma$ is defined by $\langle\slide_a^*,\slide_b\rangle=\delta_{a,b}$, where $\slide_b$ is the slide polynomial of Assaf--Searles \cite{assaf2017slide}. We give a Littlewood--Richardson rule for this basis as well.
 
-\subsection*{Forest polynomials and dual forests}
+These formula bear a striking similarity to each other, which is not a coincidence: they are all consequences of the same underlying machinery, and in particular of the same maps $\clp^p$ and $\trm^p$ on RC graphs. A general ``dual LR rule factory'' is given in Theorem \ref{theorem:general_lr_template}, which gives a recipe for producing such rules whenever one has a family of polynomials with a positive combinatorial formula in terms of RC graphs that is compatible with the maps $\clp^p$ and $\trm^p$. The dual Schubert, dual key, dual forest, and dual slide bases all fit into this framework, and thus yield the four rules above as special cases.
 
-Forest polynomials are governed by an equivalence relation $\equiv_\forest$ on words (Nadeau--Tewari forest classes); we collect background and definitions at the start of \S\ref{section:forest}. The dual forest basis $\{\forest_a^*\}$ of $\dcoma$ is defined by $\langle\forest_a^*,\forest_b\rangle=\delta_{a,b}$. As we record in Proposition~\ref{proposition:forestdualcoefficients}, this dual basis coincides --- up to a divided-power normalization --- with the volume polynomials of Nadeau--Spink--Tewari \cite{nadeau2024quasisymmetric} and, geometrically, with the Kronecker dual of the homology basis $\{[X(F)]\}\subset H_\bullet(\mathrm{QFl}_n)$ of Bergeron--Gagnon--Nadeau--Spink--Tewari \cite{bergeron2025qsymflag}. What appears to be new here is the product structure: the concatenation product $\sqcupplus$ on $\dcoma$, restricted to $\{\forest_a^*\}$, has not previously been studied, and our main result for this basis is an explicit positive combinatorial rule for its structure constants.
+% \subsection*{The Littlewood-Richardson rule for dual Schubert polynomials} The Schubert basis of $\dcoma$ has nonnegative structure constants. This is fundamentally a geometric fact: the Schubert structure constants $c_{u,v}^w$ are intersection multiplicities of Schubert varieties in the complete flag manifold $\mathrm{Fl}_n$, and are nonnegative because Schubert classes are represented by effective subvarieties that, after a generic translate, intersect transversely (Kleiman). Bergeron and Sottile \cite{coprod} showed that this positivity passes to the splitting identity satisfied by Schubert polynomials when the variables are partitioned into two blocks, which in our language amounts to nonnegativity of the structure constants of the dual Schubert basis under the concatenation product on $\dcoma$. Our main result is an explicit, manifestly positive combinatorial formula for these structure constants, the numbers $d_{u,v}^w(p, q)$ such that 
+% $$\dsch_u^p \sqcupplus \dsch_v^q = \sum_{w} d_{u,v}^w(p, q)\,\dsch_w^{p+q}.$$
+% The combinatorial objects we use are \emph{RC graphs}, equivalently \emph{pipe dreams}: the two terms refer to the same object, a tiling of a staircase by crosses and elbows representing a reduced word for a permutation. ``RC graph'' is the name used by Bergeron and Billey \cite{bbrc} (where the definition can be found); ``pipe dream'' is the more pictorial name introduced subsequently by Knutson and Miller \cite{knutson2005grobner}. Both presentations encode the same data, a \emph{reduced compatible sequence} (or \emph{RC sequence} for short): a reduced word $(r_1,\ldots,r_\ell)$ together with a weakly increasing \emph{compatible} sequence $(s_1,\ldots,s_\ell)$ of positive integers in the sense of \cite{bjs}, where the latter article introduced these biwords and used them to give a positive formula for Schubert polynomials. We will move freely between the three presentations, using whichever is most convenient; the picture the reader should have in mind is the row-by-row arrangement of generators of the reduced word indexed by the compatible sequence.
 
-\begin{theorem}[LR rule for dual forests]\label{theorem:LRforest}
-Let $a,b$ be weak compositions of lengths $p$ and $q$, and let $c$ be a weak composition of length $p+q$. Define integers $f_{a,b}^c$ by
-$$\forest_a^* \sqcupplus \forest_b^* = \sum_{c} f_{a,b}^c\,\forest_c^*.$$
-For any $C\in\mathcal{C}_\forest(c)$, let $N(C)$ be the number of $R\in[C]$ such that $\clp^p(R)\in \mathcal{C}_\forest(a)$, $\trm^p(R)\in \mathcal{C}_\forest(b)$, $\wtt(\clp^p(R))=a$, and $\wtt(\trm^p(R))=b$. Then $N(C)$ depends only on $(a,b,c)$, and
-$$f_{a,b}^c \;=\; N(C);$$
-in particular $f_{a,b}^c\in\mathbb{Z}_{\geq 0}$.
-\end{theorem}
+% It is important to note that while it is common to consider two RC graphs to be the same if they have the same set of crossings, we add a datum, the number of rows, that can distinguish two RC graphs that would otherwise be considered identical. It is a key feature in this exposition that we limit our focus to cases with finitely many rows/variables.
 
-As with the dual key basis, Theorem~\ref{theorem:LRforest} is equivalent to a positive combinatorial splitting rule
-$$\forest_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} f_{a,b}^c\,\forest_a(x_1,\ldots,x_p)\,\forest_b(x_{p+1},\ldots,x_{p+q}).$$
-This splitting lifts, on cohomology, to a ring homomorphism $\iota_{p,q}^*:H^\bullet(\mathrm{QFl}_{p+q})\to H^\bullet(\mathrm{QFl}_p)\otimes H^\bullet(\mathrm{QFl}_q)$ that is the natural quasisymmetric-flag analogue of the Levi comorphism of \cite{ressayre2009branching}; we develop this in \S\ref{subsection:qflbranch}. The dual forest LR rule is also the keystone bridge to the forest polynomial LR rule announced in the lead subsection: Theorem~\ref{theorem:forestpolyLR-intro} is restated as Theorem~\ref{theorem:forestpolyLR} in \S\ref{section:forestrule} once the lift product $*$ has been formally defined, and its proof passes through the dual forest rule together with the squash product $\boxtimes$, the multiplactic algebra $\mathcal{M}_n$, a Cauchy-type factorization through the slide quotient of \S\ref{section:slide}, and the Nadeau--Tewari forest equivalence.
 
-\subsection*{The ring of RC graphs}
+% Our main theorem is the following.
 
-Perhaps the strongest indication that this is the ``correct'' way to decompose RC graphs is that these formulas are proved by the fact that if we define
-$$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\RC_n}$$
-then there is an associative product $\sqcupplus$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
-$$\alpha(R) = \dsch_u^n$$
-where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\sqcupplus$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintaining the projection to $\dcoma$ and leveraging this to find the formula.
+
+
+% It is illuminating to read Theorem~\ref{theorem:LR} as a splitting rule for Schubert polynomials themselves. Concatenation on $\dcoma$ is dual, under the pairing $\langle\,\cdot\,,\,\cdot\,\rangle$, to the operation on $\coma$ of expanding $\sch_w$ in $p+q$ variables into products of Schubert polynomials in $\{x_1,\ldots,x_p\}$ and $\{x_{p+1},\ldots,x_{p+q}\}$:
+% $$\sch_w(x_1,\ldots,x_{p+q}) \;=\; \sum_{u,v} d_{u,v}^w(p,q)\,\sch_u(x_1,\ldots,x_p)\,\sch_v(x_{p+1},\ldots,x_{p+q}).$$
+% The structure constants of the concatenation product in the dual Schubert basis are precisely the branching coefficients of this splitting. Theorem~\ref{theorem:LR} thus expresses each such branching coefficient as the number of RC graphs of $w$ whose $(\clp^p,\trm^p)$-decomposition matches a chosen pair $(U,V)$.
+
+% When restricted to Grassmannian permutations, Theorem \ref{theorem:LR} reduces directly to a Littlewood--Richardson rule for Schur polynomials: if $u$, $v$, $w$ are Grassmannian with unique descents at $p$, $q$, $p+q$ corresponding to partitions $\lambda$, $\mu$, $\nu$, then $\dsch^p_u$, $\dsch^q_v$, $\dsch^{p+q}_w$ are precisely the Schur polynomials $s_\lambda(x_1,\ldots,x_p)$, $s_\mu(x_{p+1},\ldots,x_{p+q})$, $s_\nu(x_1,\ldots,x_{p+q})$, and the classical splitting
+% $$s_\nu(x_1,\ldots,x_{p+q}) = \sum_{\lambda,\mu} c^{\nu}_{\lambda,\mu}\, s_\lambda(x_1,\ldots,x_p)\, s_\mu(x_{p+1},\ldots,x_{p+q})$$
+% identifies $c^{\nu}_{\lambda,\mu} = d^{w}_{u,v}(p,q)$. Theorem \ref{theorem:LR} thus gives an alternative positive combinatorial rule for the classical Littlewood--Richardson coefficients in terms of RC graphs and the $\clp^p / \trm^p$ decomposition, which themselves naturally correspond to semistandard Young tableaux in French notation.
+
+% \subsection*{Key polynomials and dual keys}
+
+
+% Equivalently, Theorem~\ref{theorem:LRkey} is a positive combinatorial splitting rule
+% $$\kappa_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} k_{a,b}^c\,\kappa_a(x_1,\ldots,x_p)\,\kappa_b(x_{p+1},\ldots,x_{p+q}).$$
+
+
+% As with the dual key basis, Theorem~\ref{theorem:LRforest} is equivalent to a positive combinatorial splitting rule
+% $$\forest_c(x_1,\ldots,x_{p+q}) = \sum_{a,b} f_{a,b}^c\,\forest_a(x_1,\ldots,x_p)\,\forest_b(x_{p+1},\ldots,x_{p+q}).$$
+% This splitting lifts, on cohomology, to a ring homomorphism $\iota_{p,q}^*:H^\bullet(\mathrm{QFl}_{p+q})\to H^\bullet(\mathrm{QFl}_p)\otimes H^\bullet(\mathrm{QFl}_q)$ that is the natural quasisymmetric-flag analogue of the Levi comorphism of \cite{ressayre2009branching}; we develop this in \S\ref{subsection:qflbranch}.
+
+% \subsection*{The ring of RC graphs}
+
+% Perhaps the strongest indication that this is the ``correct'' way to decompose RC graphs is that these formulas are proved by the fact that if we define
+% $$\BRC = \bigoplus_{n=0}^\infty \mathbb{Z}^{\oplus\RC_n}$$
+% then there is an associative product $\sqcupplus$ on $\BRC$ and a homomorphism of rings $\alpha:\BRC\to \dcoma$ such that
+% $$\alpha(R) = \dsch_u^n$$
+% where $u$ is the permutation of $R$ and $n$ is the number of rows. Indeed, $\BRC\cong \dcoma\ltimes \Omega$ as rings, where $\Omega$ is the kernel of $\alpha$ (Theorem \ref{theorem:semidirect}). The product $\sqcupplus$ is defined directly with $\clp$ and $\trm$, the former based directly on the transition function $\zeromap$, and the fact that $\alpha$ is a homomorphism of rings is essentially equivalent to Theorem \ref{theorem:LR}. Theorems \ref{theorem:LRkey} and \ref{theorem:LRforest} piggyback off of this as well, defining a ideals $\Theta$ and $\Gamma$ of $\BRC$ such that $\BRC/\Theta$ is indexed by Demazure crystals of RC graphs and $\BRC/\Gamma$ is indexed by forest equivalence classes of RC graphs while maintaining the projection to $\dcoma$ and leveraging this to find the formula.
 
 \subsection*{Further directions}
 
 Beyond this, there is potentially much to explore. For example, the coproduct of $\dcoma$ has as its structure constants the structure constants of Schubert polynomials, which have evaded expression in terms of positive formulas for decades, and at the time of this writing no positive, combinatorial formula is known for the structure constants of Schubert polynomials that applies in all cases. At the very least, this coproduct is a new potential method of attack on this and related problems, since as far as we know it is new. An expression for $\dsch_w^n$ in the composition basis leads to a simple, purely mechanical method for computing all $c_{u,v}^w$ (generalized Littlewood-Richardson coefficients for Schubert polynomials) by leveraging the extremely simple form the coproduct takes on the weak composition basis, as well as a neat positive formula for the expansion of a weak composition $[a]$ in the Schubert basis.
 %It is a nearly trivial observation that if a basis of the polynomial ring is such that the Schubert polynomials have a nonnegative expression in terms of that basis, then the dual Schubert elements can be expressed nonnegatively in terms of the corresponding dual basis.
 
-For the reader familiar with bumpless pipe dreams \cite{lam2021back}, we state without proof that our apparently complex transition algorithm for RC graphs can be realized almost trivially for bumpless pipe dreams. Specifically, while (reduced) bumpless pipe dreams are typically defined in such a way that they cannot deviate from a square shape, there is indeed a consistent way to remove rows from a bumpless pipe dream unambiguously. This was observed by Yu in \cite[Lemma~3.18]{Yu2025EmbeddingBP} in the definition of a $k$-row BPD. Weigandt in \cite{Weigandt2021} defines a transition formula $\mathbf{t}:\mathrm{BPD}_n\to\mathrm{BPD}_{n-1}$ and while the image is realized as square, it agrees with Yu's notion of an $n-1$-row BPD.
+For the reader familiar with bumpless pipe dreams \cite{lam2021back}, we state as a conjecture that our apparently complex transition algorithm for RC graphs can be realized almost trivially for bumpless pipe dreams. Specifically, while (reduced) bumpless pipe dreams are typically defined in such a way that they cannot deviate from a square shape, there is indeed a consistent way to remove rows from a bumpless pipe dream unambiguously. This was observed by Yu in \cite[Lemma~3.18]{Yu2025EmbeddingBP} in the definition of a $k$-row BPD. Weigandt in \cite{Weigandt2021} defines a transition formula $\mathbf{t}:\mathrm{BPD}_n\to\mathrm{BPD}_{n-1}$ and while the image is realized as square, it agrees with Yu's notion of an $n-1$-row BPD.
 
 Gao and Huang in \cite{GaoHuang2023} defined a natural bijection between RC graphs and bumpless pipe dreams. Given a bumpless pipe dream $B$ with $n$ rows, we define $\phi(B)$ to be the corresponding RC graph under this bijection.
 \begin{conjecture}
@@ -1559,57 +1561,45 @@ $$R_1\sqcupplus R_2 = \sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}}R'$$
 where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
 \end{definition}
 
-\begin{definition}
-Define a function $A_p:\RC_n\to\RC_{p}\times \RC_{n - p}\times S_\infty$ as follows:
-$$A_p(R) = (\clp^{p}(R), \trm^p(R),\wof{R})$$
-\end{definition}
+Associativity of $\sqcupplus$ rests on two structural identities relating $\clp^p$ and $\trm^p$: a functoriality of $\clp$ under iteration, and a commutativity of $\clp$ with $\trm$.
 
-\begin{lemma} \label{lemma:injap}
-The function $A_p$ is injective.
+\begin{lemma}[Functoriality of $\clp$] \label{lemma:clpfunc}
+Let $R$ be a bounded RC graph with $\hr(R)=n$, and let $0\leq p\leq p+q\leq n$. Then
+$$\clp^p(\clp^{p+q}(R))=\clp^p(R).$$
 \end{lemma}
 \begin{proof}
-This follows by iterated application of Theorem \ref{theorem:zero_bijection} if all rows with index greater than $p$ are empty. Suppose that this is not the case. Let $v=\wof{\trm^p(R)}$. We have that $\ell(w(\shup^p v)^{-1}) = \ell(w) - \ell(v)$ by the definition of an RC graph. We may therefore recover the image of $R$ by removing all elements in rows with index greater than $p$ to obtain an RC graph $R'$ while keeping track of $\trm^p(R)$. This reduces the problem to the previous case, where the third coordinate of the tuple becomes $w(\shup^p v)^{-1}$ and the first is $\clp^p(R')$, allowing us to uniquely determine $R'$. Combining this with knowledge of $\trm^p(R)$, we may recover the original graph, as desired.
+By definition, $\clp^k(R')$ is computed by iterating the row-zeroing map $\zeromap$ on the bottom row, one row at a time, until the height drops to $k$. Set $r=n-(p+q)$, so that $\clp^{p+q}(R)$ is obtained from $R$ by $r$ successive applications of $\zeromap$ to the bottom row, and $\clp^p(R)$ is obtained from $R$ by $r+q$ such applications. The first $r$ applications of $\zeromap$ in the computation of $\clp^p(R)$ produce exactly $\clp^{p+q}(R)$; the remaining $q$ applications then produce $\clp^p(\clp^{p+q}(R))$. Hence the two compositions agree.
+
+The only subtlety is that each invocation of $\zeromap$ requires the bottom row to be empty (Definition \ref{definition:zeromap}); when this fails, $\zeromap$ is preceded internally by Algorithm \ref{algorithm:zero}, which strips the last row using a reduced-word manipulation that depends only on the last row and rows immediately above it. The output of this stripping is independent of the rows lying strictly above the rows being processed, so the stripping performed at stage $i$ in computing $\clp^p(R)$ directly is identical to the stripping performed at stage $i$ in computing $\clp^p(\clp^{p+q}(R))$ for $i\leq r$, and the same iterative computation continues identically thereafter.
+\end{proof}
+
+\begin{lemma}[Commutativity of $\clp$ and $\trm$] \label{lemma:clptrm}
+Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. Then
+$$\trm^p(\clp^{p+q}(R))=\clp^q(\trm^p(R)).$$
+\end{lemma}
+\begin{proof}
+Both sides have height $q$. Lemma \ref{lemma:ztrim} asserts $\zeromap(\trm(R'))=\trm(\zeromap(R'))$ for any $R'$ whose last row is empty. Since $\clp^{p+q}$ on a graph of height $p+q+r$ and $\clp^q$ on a graph of height $q+r$ are both equal to the $r$-fold iterate of $\zeromap$ on the bottom row (cf.\ Lemma \ref{lemma:clpfunc}), iterating Lemma \ref{lemma:ztrim} $r$ times gives
+$$\trm^p(\clp^{p+q}(R))=\trm^p(\zeromap^r(R))=\zeromap^r(\trm^p(R))=\clp^q(\trm^p(R)),$$
+as required.
 \end{proof}
 
 \begin{theorem}
 	 The product $\sqcupplus$ is associative and $\BRC$ is a ring when equipped with $\sqcupplus$.%, and $\Xi:\BRC\to \dcoma$ and $\omega:\BRC\to \dcoma$ are homomorphisms of rings.
 \end{theorem}
 \begin{proof}
-Suppose we have three bounded RC graphs $R_1$ with $\hr(R_1)=p$, $R_2$ with $\hr(R_2)=q$, and $R_3$ with $\hr(R_3)=r$, and we want to show that the order of bracketing the product is irrelevant. Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. By Lemma \ref{lemma:injap},
-\[
-  A_{p+q}(R)=(P_1, R_3, \wof{R})
-\]
-is a unique representation of $R$, where $\hr(P_1)=p+q$ and $\hr(R_3)=r$. Applying $A_p$ to the first coordinate, we obtain
-\[
-  (A_p(P_1), R_3, \wof{R})=((R_1, R_2, \wof{P_1}), R_3, \wof{R}),
-\]
-where $\hr(R_1)=p$ and $\hr(R_2)=q$. We also have
-\[
-  A_{p}(R)=(R_1', P_2, \wof{R}),
-\]
-where $P_2$ is a unique RC graph with $\hr(P_2) = q+r$. Applying $A_q$ to the second coordinate yields
-\[
-  (R_1', A_q(P_2), \wof{R})=(R_1', (R_2', R_3', \wof{P_2}), \wof{R}).
-\]
+Let $R_1,R_2,R_3$ be bounded RC graphs of heights $p,q,r$ respectively, and let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. We claim that $R$ appears as a term in $(R_1\sqcupplus R_2)\sqcupplus R_3$ if and only if it appears as a term in $R_1\sqcupplus(R_2\sqcupplus R_3)$, and in both cases with multiplicity $1$. Unwinding the definition of $\sqcupplus$ in each bracketing yields the following conditions on $R$:
+\begin{center}
+\begin{tabular}{l|l|l}
+& Left bracketing $(R_1\sqcupplus R_2)\sqcupplus R_3$ & Right bracketing $R_1\sqcupplus(R_2\sqcupplus R_3)$ \\
+\hline
+(i) & $\clp^p(\clp^{p+q}(R))=R_1$ & $\clp^p(R)=R_1$ \\
+(ii) & $\trm^p(\clp^{p+q}(R))=R_2$ & $\clp^q(\trm^p(R))=R_2$ \\
+(iii) & $\trm^{p+q}(R)=R_3$ & $\trm^q(\trm^p(R))=R_3$ \\
+\end{tabular}
+\end{center}
+Row (i) is equivalent on both sides by Lemma \ref{lemma:clpfunc}. Row (ii) is equivalent on both sides by Lemma \ref{lemma:clptrm}. Row (iii) is equivalent on both sides because $\trm^{p+q}=\trm^q\circ\trm^p$ by definition of $\trm$. Thus the term $R$ contributes to the same bracketed product on both sides. Since the membership conditions are equalities (not weighted by any combinatorial multiplicity) and $R$ is determined to lie in either product by these three conditions, the multiplicity is $1$ in each case. We conclude that $(R_1\sqcupplus R_2)\sqcupplus R_3=R_1\sqcupplus(R_2\sqcupplus R_3)$.
 
-We may immediately conclude that $R_3=R_3'$. Now observe that the third factor $R_3$ enters the two bracketings only as the final coordinate that has just been matched, and not as input to either of the inner maps $A_p$ or $A_q$ that produced $R_1$, $R_2$, $R_1'$, $R_2'$. Replacing $R_3$ by the empty RC graph of the same height therefore changes neither side of the identity we are trying to establish; we may accordingly assume without loss of generality that $R_3$ is empty. The two representations therefore become
-\[
-  ((R_1, R_2, \wof{P_1}), \emptyset, \wof{R})
-  \qquad\text{and}\qquad
-  (R_1', (R_2', \emptyset, \wof{P_2}), \wof{R}).
-\]
-
-Consider the change in representation when we clip $R$ to $p+q$ rows. The first representation becomes simply
-\[
-  (R_1, R_2, \wof{P_1}),
-\]
-and the RC graph $P_2$ is clipped in the second representation, obtaining
-\[
-  (R_1', R_2', \wof{R}),
-\]
-since $R_2'=\clp^q(P_2)$. These represent the same RC graph $\clp^{p+q}(R)$. It follows from Lemma \ref{lemma:injap} that $R_1=R_1'$ and $R_2=R_2'$. We may conclude that if we know the RC graphs $R_1, R_2, R_3$, then the RC graphs that appear as terms in the product $(R_1\sqcupplus R_2)\sqcupplus R_3 = R_1\sqcupplus(R_2\sqcupplus R_3)$ do not depend on the bracketing.
-
-To tie up the claim that $\BRC$ is a ring, distributivity is directly imposed by the definition of the product as extending from the definition blinearly, and the identity element is the empty RC graph of height $0$.
+To tie up the claim that $\BRC$ is a ring, distributivity is directly imposed by the definition of the product as extending from the definition bilinearly, and the identity element is the empty RC graph of height $0$.
 \end{proof}
 
 
@@ -2723,6 +2713,14 @@ $$\alpha(K_a)\sqcupplus\alpha(K_b) = \kappa_a^*\sqcupplus\kappa_b^*=\sum_{c}k_{a
 it follows that $K_a\sqcupplus K_b$ is a linear combination of the $K_c$, so the span of the $K_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
 \end{proof}
 
+\begin{theorem}[LR rule for dual keys]\label{theorem:LRkey}
+Let $a,b$ be weak compositions of lengths $p$ and $q$, and let $c$ be a weak composition of length $p+q$. Define integers $k_{a,b}^c$ by
+$$\kappa_a^* \sqcupplus \kappa_b^* = \sum_{c} k_{a,b}^c\,\kappa_c^*.$$
+For any highest-weight RC graph $C$ with $\mathrm{extwt}(C)=c$, let $N(C)$ be the number of RC graphs $R$ with $\mathbb{Y}(R)=C$ such that $\clp^p(R)$ and $\trm^p(R)$ are both highest weights and $\mathrm{extwt}(\clp^p(R)) = a$, $\mathrm{extwt}(\trm^p(R)) = b$. Then $N(C)$ depends only on $(a,b,c)$, and
+$$k_{a,b}^c \;=\; N(C);$$
+in particular $k_{a,b}^c\in\mathbb{Z}_{\geq 0}$.
+\end{theorem}
+
 \begin{proof}[Proof of Theorem \ref{theorem:LRkey}]
   The coefficient of $K_c$ in $K_a\sqcupplus K_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\sqcupplus\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are Demazure crystals of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
 \end{proof}
@@ -3354,6 +3352,14 @@ As before, the last statement is simply Theorem \ref{theorem:forestformula}. The
 $$\alpha(F_a)\sqcupplus\alpha(F_b) = \forest_a^*\sqcupplus\forest_b^*=\sum_{c}f_{ab}^c\,\forest_c^*=\sum f_{a,b}^c\,\alpha(F_c),$$ 
 it follows that $F_a\sqcupplus F_b$ is a linear combination of the $F_c$, so the span of the $F_a$ is closed under multiplication, so that $\alpha$ is an isomorphism and we are done.
 \end{proof}
+
+\begin{theorem}[LR rule for dual forests]\label{theorem:LRforest}
+Let $a,b$ be weak compositions of lengths $p$ and $q$, and let $c$ be a weak composition of length $p+q$. Define integers $f_{a,b}^c$ by
+$$\forest_a^* \sqcupplus \forest_b^* = \sum_{c} f_{a,b}^c\,\forest_c^*.$$
+For any $C\in\mathcal{C}_\forest(c)$, let $N(C)$ be the number of $R\in[C]$ such that $\clp^p(R)\in \mathcal{C}_\forest(a)$, $\trm^p(R)\in \mathcal{C}_\forest(b)$, $\wtt(\clp^p(R))=a$, and $\wtt(\trm^p(R))=b$. Then $N(C)$ depends only on $(a,b,c)$, and
+$$f_{a,b}^c \;=\; N(C);$$
+in particular $f_{a,b}^c\in\mathbb{Z}_{\geq 0}$.
+\end{theorem}
 
 \begin{proof}[Proof of Theorem \ref{theorem:LRforest}]
   The coefficient of $F_c$ in $F_a\sqcupplus F_b$ is the same as the coefficient of $\forest_c^*$ in $\forest_a^*\sqcupplus\forest_b^*$, which is $f_{a,b}^c$ by definition. Since each of the summands of $F_c$ that are equivalence classes of RC graphs are distinct from the summands of any other forest element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
@@ -4048,18 +4054,10 @@ From this we may recover \cite[Theorem~5.11]{assaf2017slide}.
 % \end{theorem}
 \subsection{The forest polynomial LR rule}
 
-We now state and prove the LR rule for forest polynomials, which is the main motivation for introducing the lift product.
+We now prove the LR rule for forest polynomials (Theorem~\ref{theorem:forestpolyLR}), which is the main motivation for introducing the lift product.
 \begin{definition}[Forest RC graph]
 A \emph{forest RC graph} is an RC graph such that $\code_\forest(R) = \wtt(R)$. 
 \end{definition}
-
-\begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR}
-  Let $a,b$ be weak compositions of length $n$. Then
-  $$\forest_a\forest_b = \sum_c \beta_{ab}^c \forest_c$$
-  where $\beta_{ab}^c$ is the number of pairs $A,B$ of RC graphs such that
-  $$\code(\wof{A}) = \code_\forest(A) = a, \code(\wof{B}) = \code_\forest(B) = b$$
-  and $A*B=R$ for some forest RC graph $R$ with $\code_\forest(R)=\wtt(R)=c$.
-\end{theorem}
 
 A few technical results are required to close the loop.
 
@@ -4338,7 +4336,6 @@ For the reader's convenience we collect here, in one place, the principal symbol
 \item[$\trm^p(R)$] ``Truncate'': the RC graph obtained from the last $\hr(R)-p$ rows of $R$ (\S\ref{section:ringproduct}).
 \item[$\clp^p(R)$] ``Clip'': the RC graph in $\RC_p$ obtained from $R$ by an insertion algorithm based on $\zeromap$; the dual partner of $\trm^p$ (\S\ref{section:ringproduct}).
 \item[$\shup^p$] Shift indices up by $p$ (applied to permutations or letters).
-\item[$A_p(R)$] The triple $(\clp^p(R),\trm^p(R),\wof{R})$; injective by Lemma~\ref{lemma:injap}.
 \end{description}
 
 \subsubsection*{Crystal and forest structures}
