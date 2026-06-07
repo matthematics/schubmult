@@ -4430,6 +4430,53 @@ For the reader's convenience we collect here, in one place, the principal symbol
 \end{description}
 \endgroup
 
+\appendix
+\section{Proof of Proposition \ref{proposition:pullindex}}
+
+
+\renewcommand{\theproposition2}{\Alph{proposition2}}
+\setcounter{lemma}{0}
+
+We dedicate this section to the otherwise distracting proof of Proposition \ref{proposition:pullindex}.
+
+\begin{proposition2}[Special case of Pieri formula {\cite[Theorem~7.1]{samuelmolev}}] \label{proposition:pieri}
+Suppose $k\geq 1$ and $u,w\in S_\infty$. If $u\not\tom{k} w$, then
+$$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=0$$
+If $u\tom{k} w$, define
+$$Q = \{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
+then
+$$\ddv{y}_u^w\prod_{i=1}^k(x_1 - y_i)=\prod_{q\in Q}(x_1 - y_q)$$
+\end{proposition2}
+\begin{proof}
+	This is simply a change of variables from the original theorem.
+\end{proof}
+
+\begin{proof}[Proof of Proposition \ref{proposition:pullindex}]
+Suppose $v\in S_n$. We have
+$$\sch_v(x;y)=\ddv{y}^{vw_0(n)}(\sch_{w_0(n)}(x;y))$$
+This is equal to
+$$\ddv{y}^{vw_0(n)}\left(\sch_{s_{n+1-i}\cdots s_1w_0(n)}(x^{(i)};y)\prod_{j=1}^{n+1-i}(x_i - y_j)\right)$$
+and, applying the Leibniz formula, is also equal to
+$$\sum_{\substack{v'\in S_\infty\\\ell(v'w_0(n)s_1\cdots s_{n+1-i})=\ell(w_0(n)s_1\cdots s_{n+1-i})-\ell(v')}}\sch_{v'}(x^{(i)};y)\ddv{y}_{v'w_0(n)s_1\cdots s_{n+1-i}}^{vw_0(n)}\prod_{j=1}^{n+1-i}(x_i - y_j)$$
+By the restricted Pieri formula (Proposition \ref{proposition:pieri}), for this to be nonzero necessarily $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$. We note that $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$ if and only if 
+$$v\Tom{i}v'w_0(n)s_1\cdots s_{n+1-i}w_0(n)=v's_ns_{n-1}\cdots s_i$$
+We have that $v's_n\cdots s_i$ is exactly $\varphi_{i,n}(v')$ since $v'\in S_n$, so we require that
+$$v\Tom{i}\varphi_{i,n}(v')$$
+so the sum is over all $v'$ with $v\downvar{i} v'$.
+
+Applying Proposition \ref{proposition:pieri}, we obtain that the result is equal to
+$$\sum_{v\downvar{i} v'} \sch_{v'}(x^{(i)};y)\prod_{a\in A(v',v)}(x_i - y_a)$$
+where $A(v',v)$ is the set of all $vw_0(n)(j)$ such that $1\leq j\leq n+1-i$ and $v'w_0(n)s_1\cdots s_{n+1-i}(j)=vw_0(n)(j)$. These values are the same as at the indices that comprise the set of all $1\leq j\leq n+1-i$ such that
+$$v'(n+2-s_1\cdots s_{n+1-i}(j))=v(n+2-j)$$
+Applying the $s_1\cdots s_{n+1-i}$ to $j$, since $1\leq j\leq n+1-i$ we have that 
+$$s_1\cdots s_{n+1-i}(j)=j+1$$
+Hence we need
+$$v'(n+2-(j+1))=v'(n+1-j)=v(n+2-j)$$
+Replacing $j$ with $n+2-p$, the indices are the set of all $p$ such that $i<p\leq n+1$ and
+$$v'(p-1)=v(p)$$
+Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, which is exactly $Q_i(v',v)$, and we are done.
+\end{proof}
+
 \section*{Acknowledgements}
 
 The author is deeply grateful to Zachary Hamaker for many illuminating conversations during the development of this work, and in particular for introducing the author to forest polynomials in the first place, in addition to pointing out the connections of RC graph crystal operators to  Little's bumping algorithm. Thanks are also due to Frank Sottile, whose work, much of it now classical, has been a sustained guiding influence on the author's thinking about Schubert calculus, and whose generosity with his time over the years has shaped the perspective taken here.
