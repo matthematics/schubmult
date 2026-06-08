@@ -1563,14 +1563,12 @@ where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
 
 Associativity of $\sqcupplus$ rests on two structural identities relating $\clp^p$ and $\trm^p$: a functoriality of $\clp$ under iteration, and a commutativity of $\clp$ with $\trm$.
 
-\begin{lemma}[Functoriality of $\clp$] \label{lemma:clpfunc}
+\begin{lemma} \label{lemma:clpfunc}
 Let $R$ be a bounded RC graph with $\hr(R)=n$, and let $0\leq p\leq p+q\leq n$. Then
 $$\clp^p(\clp^{p+q}(R))=\clp^p(R).$$
 \end{lemma}
 \begin{proof}
 By definition, $\clp^k(R')$ is computed by iterating the row-zeroing map $\zeromap$ on the bottom row, one row at a time, until the height drops to $k$. Set $r=n-(p+q)$, so that $\clp^{p+q}(R)$ is obtained from $R$ by $r$ successive applications of $\zeromap$ to the bottom row, and $\clp^p(R)$ is obtained from $R$ by $r+q$ such applications. The first $r$ applications of $\zeromap$ in the computation of $\clp^p(R)$ produce exactly $\clp^{p+q}(R)$; the remaining $q$ applications then produce $\clp^p(\clp^{p+q}(R))$. Hence the two compositions agree.
-
-The only subtlety is that each invocation of $\zeromap$ requires the bottom row to be empty (Definition \ref{definition:zeromap}); when this fails, $\zeromap$ is preceded internally by Algorithm \ref{algorithm:zero}, which strips the last row using a reduced-word manipulation that depends only on the last row and rows immediately above it. The output of this stripping is independent of the rows lying strictly above the rows being processed, so the stripping performed at stage $i$ in computing $\clp^p(R)$ directly is identical to the stripping performed at stage $i$ in computing $\clp^p(\clp^{p+q}(R))$ for $i\leq r$, and the same iterative computation continues identically thereafter.
 \end{proof}
 
 \begin{lemma}[Commutativity of $\clp$ and $\trm$] \label{lemma:clptrm}
@@ -2454,11 +2452,11 @@ $$\dsch_w^n(a) = \sum_{\alpha} d_{\alpha, w}^n a_{\alpha_1} \cdots a_{\alpha_n}$
 where the sum is over all weak compositions $\alpha$ of length $n$, and $d_{\alpha, w}^n$ is the coefficient of $\alpha$ in $\dsch_w^n\in\dcoma$.
 \end{definition}
 
-\begin{proposition}
+\begin{lemma} \label{lemma:schubertrow}
 We have that the elements
 $$\dsch_w^n(\mathtt{row})$$
 for integers $n\geq 0$ and $w$ that ranges over all permutations in $S_\infty$ with $n\geq \maxd(w)$ form a $\mathbb{Z}$-basis of $\mathcal{R}$, and $\alpha:\mathcal{R}\to \dcoma$ is an isomorphism of graded rings.
-\end{proposition}
+\end{lemma}
 \begin{proof}
 Since $\alpha(\dsch_w(\mathtt{row})) = \dsch_w^n\in \dcoma$, the elements $\dsch_w^n(\mathtt{row})$ are linearly independent. Given that the images form a basis of $\dcoma$, they must also span $\mathcal{R}$ since $\dcoma$ is a free algebra, and hence there is a homomorphism backwards $\dcoma\to \mathcal{R}$ sending $[i]\mapsto \mathtt{row}(i)$ which is necessarily surjective. Thus, the elements $\dsch_w^n(\mathtt{row})$ form a $\mathbb{Z}$-basis of $\mathcal{R}$.
 \end{proof}
@@ -2482,7 +2480,7 @@ $\Omega$ is a two-sided ideal of $\BRC$.
 \begin{proof}
   We have an exact sequence
 $$0\to \Omega\to \BRC\to \dcoma\to 0$$
-where the map $\BRC\to \dcoma$ is $\alpha$. We have a homomorphism $\iota:\dcoma\to \BRC$ sending $[i]\mapsto \mathtt{row}(i)$ inducing an isomorphism on $\mathcal{R}$, and the composition $\dcoma\to \BRC\to \dcoma$ is the identity since $\alpha(\mathtt{row}(i)) = [i]$. Since $\Omega$ is a two-sided ideal, we can conclude that $\alpha$ is in fact a homomorphism of rings. Since $\BRC = \mathcal{R}\oplus \Omega$, by virtue of the fact that the sequence is split, and $\mathcal{R}\cong \dcoma$, we have $\BRC\cong \dcoma\ltimes \Omega$ as rings.
+where the map $\BRC\to \dcoma$ is $\alpha$. We have a homomorphism $\iota:\dcoma\to \BRC$ sending $[i]\mapsto \mathtt{row}(i)$ inducing an isomorphism on $\mathcal{R}$ by Lemma \ref{lemma:schubertrow}, and the composition $\dcoma\to \BRC\to \dcoma$ is the identity since $\alpha(\mathtt{row}(i)) = [i]$. Since $\Omega$ is a two-sided ideal, we can conclude that $\alpha$ is in fact a homomorphism of rings. Since $\BRC = \mathcal{R}\oplus \Omega$ by virtue of the fact that the sequence is split (which is due to the evident section $\iota$), and $\mathcal{R}\cong \dcoma$, we have $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{proof}
 
 % \begin{proposition}
@@ -2540,7 +2538,7 @@ A purely combinatorial development of key polynomials was carried out by Lascoux
 $$\kappa_a = \sum_{T} x^{\wtt(T)},$$
 where the sum runs over semistandard Young tableaux $T$ of shape $\mathrm{sort}(a)$ whose right key $K_+(T)$ is bounded above (entrywise) by the key tableau associated to $a$. They additionally proved that Schubert polynomials decompose as a positive sum of key polynomials, given a combinatorial proof in terms of compatible sequences and the right-key map by Reiner and Shimozono \cite{reiner1995key}. The intermediate basis of \emph{Demazure atoms} (the ``standard bases'' of \cite{lascoux1990keys}) was later given an explicit nonnegative monomial expansion by Mason \cite{mason2009explicit} via semi-skyline augmented fillings.
 
-From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from an extremal weight element by closure under the operators $\{e_{i_k}^n : n\geq 0\}$, and its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs of a permutation $w$, thereby giving a representation-theoretic proof of Lascoux--Schützenberger key-positivity. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
+From a representation-theoretic perspective, Kashiwara \cite{kashiwara1993crystal} introduced \emph{Demazure crystals}: for a dominant integral weight $\lambda$ with crystal $B(\lambda)$ and a Weyl group element $w$ with reduced expression $w=s_{i_1}\cdots s_{i_\ell}$, the Demazure crystal $B_w(\lambda)\subseteq B(\lambda)$ is defined inductively from an extremal weight element by closure under the operators $\{e_{i_k}^n : n\geq 0\}$, and its character coincides with the Demazure character. Littelmann \cite{littelmann1995crystal} obtained parallel results in the path model. Assaf and Schilling \cite{assaf2018demazure}, building on the crystal structure on reduced factorizations of Morse and Schilling \cite{morse2016crystal}, exhibited an explicit Demazure crystal structure on the set of RC graphs of a permutation $w$, thereby giving a representation-theoretic proof of Lascoux--Schützenberger key-positivity. It is this Demazure crystal structure on RC graphs that we will repeatedly invoke below.
 
 The nonnegativity of the dual key structure constants $k_{a,b}^c$ of Theorem~\ref{theorem:LRkey} is, in retrospect, a consequence of the theory of \emph{excellent filtrations} for $B$-modules introduced by Polo \cite{polo1989excellent} and van der Kallen \cite{vanderkallen1989longest}, with existence of such filtrations on tensor products of Demazure modules established in general by Mathieu \cite{mathieu1990filtrations}; see also Joseph \cite{joseph1985demazure}. Restricting a Demazure module $V_c(\lambda)$ for $GL_{p+q}$ to the Borel of the Levi $GL_p\times GL_q$ yields a $B$-module with an excellent filtration whose Demazure subquotients account for the $k_{a,b}^c$. This was pointed out by the anonymous user ``Henry V'' on MathOverflow \cite{henrymath}. While this abstract nonnegativity is classical, no explicit positive combinatorial rule for these coefficients appears in the literature to our knowledge.
 
@@ -2621,9 +2619,9 @@ $$\lzeromap:\RC_n(w)^0\to \bigcup_{w\downvar{n} w'}\RC_{n-1}(w')$$
 The fact that this is a weight-preserving bijection follows directly from repeated application of \cite[Lemma~7]{little2003combinatorial}, which states that the Little bump on the last descent realizes the Lascoux-Sch\"utzenberger transition formula. The crystal isomorphism follows from Theorem \ref{theorem:littlecrystal}.
 \end{proof}
 
-\begin{theorem} \label{theorem:zerocrystal}
+\begin{proposition} \label{proposition:zerocrystal}
 We have the equality $\lzeromap=\zeromap$.
-\end{theorem}
+\end{proposition}
 \begin{proof}
 Let $R$ be a bounded RC graph, say with permutation $w$, with $r$ rows and last descent $r$ such that row $r$ is empty. We prove this by induction on $\ell(w)$ as well as on $s - r$, where $s>r$ is the maximal index such that $w(r)>w(s)$. If $s=r+1$, then the definitions of the two maps are identical. 
 
@@ -2637,13 +2635,16 @@ $$\bigcup_{ws_r\downvar{r+1} w'}\RC(w')$$
 Inspection of both algorithms reveals that the removal of this crossing and the subsequent reinsertion in the first step of both algorithms is precisely the same, and holding this fixed then applying the inductive hypothesis yields the result.
 \end{proof}
 
-\begin{corollary} \label{corollary:crystaliso}
+\begin{corollary}[$\zeromap$ intertwines with crystal operators] \label{corollary:crystaliso}
 For any bounded RC graph $R$ and any positive integer $i$ satisfying $1\leq i\leq \hr(R) - 1$, we have 
 $$\zeromap(e_i(R)) = e_i(\zeromap(R))$$
 and
 $$\zeromap(f_i(R)) = f_i(\zeromap(R))$$
 whenever the left-hand sides are defined.
 \end{corollary}
+\begin{proof}
+This follows from Proposition \ref{proposition:zerocrystal} and the fact that $\lzeromap$ is a crystal isomorphism by Proposition \ref{proposition:zeroequal}.
+\end{proof}
 
 \subsection{The dual key basis and the ring of RC graph crystals}
 
