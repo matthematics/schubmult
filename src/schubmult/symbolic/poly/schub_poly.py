@@ -457,3 +457,61 @@ def div_diff(poly, v1, v2):
             current_args[i] = current_args[i].xreplace({v1: _s}).xreplace({v2: v1}).xreplace({_s: v2})
         return Add(*args_ret)
     raise ValueError(f"Expected Expr but got {type(poly)}")
+
+def _groth_plus(x1, y1, beta):
+    return x1 + y1 + beta * x1 * y1
+
+def _groth_div_diff(val, index, x, beta):
+    from schubmult import DoubleSchubertElement
+    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+    ring = SingleSchubertRing(x)
+    if not isinstance(val, DoubleSchubertElement):
+        val = ring.from_expr(val)
+    rval = ring.from_dict({w.swap(index-1,index): coeff for w, coeff in ((S.One + beta*x[index + 1]) * val).items() if w[index - 1] > w[index]})
+    return rval
+
+
+@cache
+def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
+    from schubmult.combinatorics.permutation import Permutation
+
+    if perm.inv == 0:
+        return S.One
+    n = len(perm)
+    w0 = Permutation.w0(n)
+    if perm == w0:
+        return prod([_groth_plus(x[i], y[j], beta) for i in range(1, n) for j in range(1,n + 1 - i)])
+    desc = min([i for i in range(n) if i not in (perm.descents())])
+    result =  _groth_div_diff(grothendieck_poly(perm.swap(desc, desc + 1), x, y, beta, keep_as_schub=True), desc + 1, x, beta)
+    if keep_as_schub:
+        return result
+    return result.as_polynomial()
+
+
+def to_groth(val, x, y, beta):
+    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+    from schubmult.symbolic import expand
+
+    if expand(val, deep=True) == S.Zero:
+        return {}
+
+    ring = SingleSchubertRing(x)
+    schub_dict = ring.from_dict({k: v for k, v in ring.from_expr(val).items() if expand(v) != S.Zero})
+    min_perm = min(schub_dict.keys(), key=lambda a: a.pad_code(max(len(p) for p in schub_dict.keys())))
+    new_val = val - schub_dict[min_perm] * grothendieck_poly(min_perm, x, y, beta, keep_as_schub=False)
+    assert ring.from_dict({k: v for k, v in ring.from_expr(new_val).items() if expand(v, deep=True) != S.Zero}).get(min_perm, 0) == 0, f"{val=}\n{new_val=}\n{schub_dict=}"
+    return to_groth(new_val, x, y, beta) | {min_perm: schub_dict[min_perm]}
+
+
+
+if __name__ == "__main__":
+    from symengine import Symbol
+
+    from schubmult import Permutation
+    from schubmult.abc import x, y
+    from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+    zz = ZeroGeneratingSet()
+    beta = Symbol("beta")
+
+    print(to_groth(grothendieck_poly(Permutation([2, 1, 4, 3]), x, y, S.One), x, y, S.One))
+    #print(to_groth(Sx(Permutation([2, 5, 1, 4, 3])).as_polynomial(), x, zz, S.One))

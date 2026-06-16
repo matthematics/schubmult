@@ -501,6 +501,18 @@ class Permutation(Printable):
     def __hash__(self):
         return self._hash_code
 
+    def __matmul__(self, other):
+        """Demazure product"""
+        word = other.code_word
+        ret = self
+        if len(word) == 0:
+            return ret
+        for letter in word:
+            if ret[letter - 1] < ret[letter]:
+                ret = ret.swap(letter - 1, letter)
+        return ret
+
+
     def __mul__(self, other):
         max_len = max(len(self._perm), len(other._perm))
         # Extend arrays if needed

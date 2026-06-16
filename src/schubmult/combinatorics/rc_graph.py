@@ -1061,21 +1061,33 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return self._rebuild(())
         return self._rebuild([tuple([a - start for a in row]) for row in self[start:end]])
 
-    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
+    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False) -> Expr:
         ret = S.One
         if crystal:
             ret = S.Zero
             for rc in self.full_crystal:
                 ret += rc.polyvalue(x, y=y, crystal=False)
             return ret
-        for i, row in enumerate(self):
-            if y is None:
-                ret *= x[i + 1] ** len(row)
+        if beta is None:
+            for i, row in enumerate(self):
+                if y is None:
+                    ret *= x[i + 1] ** len(row)
+                else:
+                    ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
+        if beta is not None:
+            for i, row in enumerate(self):
+                if y is None:
+                    ret *= x[i + 1] ** len(row)
+                else:
+                    ret *= prod([x[i + 1] + y[row[j] - i] + beta * x[i + 1] * y[row[j] - i] for j in range(len(row))])
+            if prop_beta:
+                ret *= beta ** (len(self.perm_word) - self.hecke_perm.inv)
             else:
-                ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
+                ret *= beta ** (len(self.perm_word))
         return ret
 
     _graph_cache: dict[tuple[Permutation, int], set[RCGraph]] = {}  # noqa: RUF012
+    _unreduced_graph_cache: dict[tuple[Permutation, int], set[RCGraph]] = {}  # noqa: RUF012
 
     _cache_by_weight: dict[tuple[Permutation, tuple[int, ...]], set[RCGraph]] = {}  # noqa: RUF012
 
@@ -1088,6 +1100,35 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @classmethod
     def all_rcs_with_word(cls, perm: Permutation, word: tuple[int, ...]) -> set[RCGraph]:
         return {rc for rc in RCGraph.all_rc_graphs(perm) if rc.perm_word == word}
+
+    @classmethod
+    def all_unreduced_rc_graphs(cls, perm: Permutation, length: int) -> set[RCGraph]:
+        raise NotImplementedError("This method is not implemented. Use all_rc_graphs instead.")
+        # import itertools
+
+        # if (perm, length) in cls._unreduced_graph_cache:
+        #     return cls._unreduced_graph_cache[(perm, length)]
+        # if perm.inv == 0:
+        #     cls._unreduced_graph_cache[(perm, length)] = {cls([()] * length if length > 0 else [])}
+        #     return cls._unreduced_graph_cache[(perm, length)]
+        # ret = set()
+
+        # pm = perm
+        # L = schub_lib.pull_out_var(1, pm)
+        # for _, new_perm in L:
+        #     if length == 1 and new_perm.inv != 0:
+        #         continue
+        #     new_row = [new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]]
+        #     new_row.sort(reverse=True)
+        #     oldset = cls.all_unreduced_rc_graphs(new_perm, length=length - 1)
+
+        #     for old_rc in oldset:
+        #         nrc = cls([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
+        #         assert nrc.perm == perm
+        #         assert len(nrc) == length, f"{nrc=}, {length=}, {old_rc=}, {new_row=}"
+        #         ret.add(nrc)
+        # cls._graph_cache[(perm, length)] = ret
+        # return ret
 
     @classmethod
     def all_rc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None, *, check_length=False) -> set[RCGraph]:
@@ -1334,6 +1375,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         for row in self:
             for p in row:
                 perm = perm.swap(p - 1, p)
+        return perm
+
+    @property
+    def hecke_perm(self) -> Permutation:
+        perm = Permutation([])
+        for row in self:
+            for p in row:
+                if perm[p - 1] < perm[p]:
+                    perm = perm.swap(p - 1, p)
         return perm
 
     @classmethod
@@ -2626,19 +2676,20 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def _double_squash_monk(self, row, descent, genset, subvar=None):
         from schubmult.rings.combinatorial import RCGraphRing
+
         if descent < len(self.perm.trimcode):
             raise ValueError("Descent must be at least as large as length of trimcode")
         r = RCGraphRing()
         if subvar is not None:
-            return (genset[self.perm[row - 1]] - subvar)* r(self) + r(self.squash_product(RCGraph.monk_rc(row, descent).resize(len(self))))
-        return genset[self.perm[row - 1]]* r(self) + r(self.squash_product(RCGraph.monk_rc(row, descent).resize(len(self))))
-
+            return (genset[self.perm[row - 1]] - subvar) * r(self) + r(self.squash_product(RCGraph.monk_rc(row, descent).resize(len(self))))
+        return genset[self.perm[row - 1]] * r(self) + r(self.squash_product(RCGraph.monk_rc(row, descent).resize(len(self))))
 
     def _double_elem_sym_squash(self, weight, descent, genset, coeff_subs=None):
         from schubmult.rings.combinatorial import RCGraphRing
+
         r = RCGraphRing()
         result = r(self)
-        if len(weight) != descent or any(weight[i] not in {0,1} for i in range(len(weight))):
+        if len(weight) != descent or any(weight[i] not in {0, 1} for i in range(len(weight))):
             raise ValueError(f"Weight must be a tuple of 0s and 1s of length {descent=}")
         index = 0
         for i in range(len(weight)):
@@ -2656,10 +2707,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             result = new_result
         return result
 
-
-    @property
-    def inverse_crystal(self) -> InverseRCGraph:
-        return InverseRCGraph(self)
+    # @property
+    # def inverse_crystal(self) -> InverseRCGraph:
+    #     return InverseRCGraph(self)
 
     def forest_poly_value(self, x: Sequence[Expr], y: Sequence[Expr] | None = None) -> Expr:
         if y is None:
@@ -2670,162 +2720,162 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return result
 
 
-class InverseRCGraph(CrystalGraph):
-    def __init__(self, base_graph: RCGraph):
-        self.base_graph = base_graph
+# class InverseRCGraph(CrystalGraph):
+#     def __init__(self, base_graph: RCGraph):
+#         self.base_graph = base_graph
 
-    @property
-    def crystal_weight(self) -> tuple[int, ...]:
-        return self.base_graph.transpose().crystal_weight
+#     @property
+#     def crystal_weight(self) -> tuple[int, ...]:
+#         return self.base_graph.transpose().crystal_weight
 
-    def lowering_operator(self, index) -> InverseRCGraph | None:
-        lowered = self.base_graph.transpose().lowering_operator(index)
-        if lowered is None:
-            return None
-        lowered = lowered.transpose(len(self.base_graph))
-        return InverseRCGraph(lowered)
+#     def lowering_operator(self, index) -> InverseRCGraph | None:
+#         lowered = self.base_graph.transpose().lowering_operator(index)
+#         if lowered is None:
+#             return None
+#         lowered = lowered.transpose(len(self.base_graph))
+#         return InverseRCGraph(lowered)
 
-    def raising_operator(self, index) -> InverseRCGraph | None:
-        raised = self.base_graph.transpose().raising_operator(index)
-        if raised is None:
-            return None
-        raised = raised.transpose(len(self.base_graph))
-        return InverseRCGraph(raised)
+#     def raising_operator(self, index) -> InverseRCGraph | None:
+#         raised = self.base_graph.transpose().raising_operator(index)
+#         if raised is None:
+#             return None
+#         raised = raised.transpose(len(self.base_graph))
+#         return InverseRCGraph(raised)
 
-    def crystal_length(self) -> int:
-        return self.base_graph.transpose().crystal_length()
-
-
-class DecoratedRCGraph(RCGraph):
-    """An RC graph decorated with a generating set used as the default ``y`` argument in :meth:`polyvalue`.
-
-    The decoration is preserved across all in-class reconstructions (``extend``, ``normalize``,
-    ``transpose``, raising/lowering operators, products, ...) via the :meth:`_rebuild` hook,
-    which is the single override point subclasses of :class:`RCGraph` use to thread extra
-    construction state through helper methods.
-    """
-
-    def __new__(cls, rows=(), generating_set: tuple | None = None) -> DecoratedRCGraph:
-        # Bypass RCGraph's value-keyed cache so that decorations with distinct
-        # generating sets remain distinct objects.
-        if rows is None or len(rows) == 0:
-            new_args = ()
-        else:
-            new_args = (tuple(tuple(row) for row in rows),)
-        obj = tuple.__new__(cls, *new_args)
-        obj._generating_set = tuple(generating_set) if generating_set is not None else None
-        return obj
-
-    def __init__(self, rows=(), generating_set: tuple | None = None) -> None:  # noqa: ARG002
-        super().__init__()
-
-    @property
-    def generating_set(self) -> tuple | None:
-        return self._generating_set
-
-    def _rebuild(self, rows=()) -> DecoratedRCGraph:
-        return type(self)(rows, self._generating_set)
-
-    def elem_squash(self, other: DecoratedRCGraph, coeff=1) -> DecoratedRCGraph:
-        if not other.is_elem_sym:
-            raise ValueError("Other RC graph must be elem-symmetric")
-        if other.perm.inv == 0:
-            return {self: coeff}
-        normalized_other = other.normalize()
-        normalized_self = self.normalize()
-        if len(normalized_self) > len(normalized_other):
-            raise ValueError("Other RC graph must have length at least as large as self")
-        normalized_self = normalized_self.resize(len(normalized_other))
-
-        base_term = normalized_self.squash_product(normalized_other)
-        ret = {}
-        ret[base_term] = coeff
-
-        for i in range(other.perm.inv):
-            row, col = other.left_to_right_inversion_coords(i)
-            # if normalized_other.length_vector[row - 1] != 1:
-            #     raise ValueError(f"bagisn {other=}, {row=}, {normalized_other.length_vector=} {row, col=}")
-            wtt = tuple([0 if i + 1 == row else value for i, value in enumerate(normalized_other.length_vector)])
-            new_elem_sym = next(iter(RCGraph.elem_sym_rcs(other.perm.inv - 1, len(normalized_other), len(normalized_other), weight=wtt)))
-            new_elem_sym = DecoratedRCGraph(new_elem_sym, other.generating_set)
-            new_base = normalized_self.elem_squash(new_elem_sym)
-            for new_rc, coeff2 in new_base.items():
-                ret[new_rc] = ret.get(new_rc, 0) + coeff * coeff2 * (self.generating_set[new_rc.perm[row - 1]] - other.generating_set[col])
-            # ret.update(self.elem_squash(new_elem_sym, coeff=coeff * (self.generating_set[new_base.perm[row - 1]] - other.generating_set[col])))
-            # ret[new_base] = ret.get(new_base, 0) + self.generating_set[new_base.perm[row - 1]] - other.generating_set[col]
-        return ret
-
-    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
-        if y is None:
-            y = self._generating_set
-        return super().polyvalue(x, y=y, crystal=crystal)
-
-    @classmethod
-    @cache
-    def full_CEM_double(cls, perm: Permutation, length: int, partition: tuple[int] | None = None, *, generating_set) -> dict[RCGraph, dict[tuple[DecoratedRCGraph], int]]:
-        import itertools
-
-        from sympy import Add, Mul, Pow, expand, sympify
-
-        from schubmult import Sx
-        from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
-
-        the_ring = DoubleSchubertRing(Sx.genset, generating_set)
-
-        if perm.inv == 0:
-            return {cls([()] * length, generating_set=generating_set): {(): 1}}
-        if partition is None:
-            partition = (~(perm.strict_mul_dominant())).trimcode
-        mu = uncode(partition)
-
-        # Fully distribute Mul-over-Add but DO NOT call _eval_expand_func on the
-        # ElemSym leaves (that would destroy the FactorialElemSym objects whose
-        # `coeffvars` we need to decorate each RC graph factor with).
-        cem_expr = sympify(the_ring(perm).cem_rep(mumu=mu, elem_func=the_ring.symbol_elem_func))
-        cem_expr = expand(cem_expr, func=False)
-
-        ret: dict = {}
-        for term in Add.make_args(cem_expr):
-            coeff, rest = term.as_coeff_Mul()
-            # Flatten the product into a list of ElemSym factors repeated by exponent.
-            elem_factors: list = []
-            if rest != 1:
-                for factor in Mul.make_args(rest):
-                    if isinstance(factor, Pow):
-                        base, exponent = factor.as_base_exp()
-                        elem_factors.extend([base] * int(exponent))
-                    else:
-                        elem_factors.append(factor)
-            # Cartesian product over the elem-sym RC-graph choices for each factor,
-            # threading the factor index through so we can pull the right coeffvars.
-            # Use RCGraph (not cls) here: elem_sym_rcs goes through all_rc_graphs
-            # which would construct cls(rows) with no generating_set, invalid
-            # for DecoratedRCGraph. We wrap with proper coeffvars below.
-            choice_iters = [RCGraph.elem_sym_rcs(f.degree, f.numvars) for f in elem_factors]
-            for rc_choice in itertools.product(*choice_iters):
-                rc_tup = tuple(
-                    DecoratedRCGraph(rc, generating_set=(generating_set[0], *elem_factors[i].coeffvars, *generating_set[len(elem_factors[i].coeffvars) + 2 :])) for i, rc in enumerate(rc_choice)
-                )
-                # Squash-multiply the underlying (undecorated) RC graphs to get
-                # the aggregate graph that this monomial contributes to.
-                if not rc_choice:
-                    continue
-                rc = rc_choice[0]
-                for other in rc_choice[1:]:
-                    rc = rc.resize(len(other)).squash_product(other)
-                # if rc.perm != perm:
-                #     continue
-                rc = rc.resize(length)
-                toadd_dict = ret.get(rc, {})
-                toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
-                ret[rc] = toadd_dict
-        return ret
+#     def crystal_length(self) -> int:
+#         return self.base_graph.transpose().crystal_length()
 
 
-if __name__ == "__main__":
-    from schubmult import uncode
-    from schubmult.abc import y, z
+# class DecoratedRCGraph(RCGraph):
+#     """An RC graph decorated with a generating set used as the default ``y`` argument in :meth:`polyvalue`.
 
-    rc1 = DecoratedRCGraph([(3, 1), (4, 2), (), ()], y)
-    rc2 = DecoratedRCGraph(RCGraph.random_rc_graph(uncode([0, 0, 1, 1])), z)
-    print(rc1.elem_squash(rc2))
+#     The decoration is preserved across all in-class reconstructions (``extend``, ``normalize``,
+#     ``transpose``, raising/lowering operators, products, ...) via the :meth:`_rebuild` hook,
+#     which is the single override point subclasses of :class:`RCGraph` use to thread extra
+#     construction state through helper methods.
+#     """
+
+#     def __new__(cls, rows=(), generating_set: tuple | None = None) -> DecoratedRCGraph:
+#         # Bypass RCGraph's value-keyed cache so that decorations with distinct
+#         # generating sets remain distinct objects.
+#         if rows is None or len(rows) == 0:
+#             new_args = ()
+#         else:
+#             new_args = (tuple(tuple(row) for row in rows),)
+#         obj = tuple.__new__(cls, *new_args)
+#         obj._generating_set = tuple(generating_set) if generating_set is not None else None
+#         return obj
+
+#     def __init__(self, rows=(), generating_set: tuple | None = None) -> None:
+#         super().__init__()
+
+#     @property
+#     def generating_set(self) -> tuple | None:
+#         return self._generating_set
+
+#     def _rebuild(self, rows=()) -> DecoratedRCGraph:
+#         return type(self)(rows, self._generating_set)
+
+#     def elem_squash(self, other: DecoratedRCGraph, coeff=1) -> DecoratedRCGraph:
+#         if not other.is_elem_sym:
+#             raise ValueError("Other RC graph must be elem-symmetric")
+#         if other.perm.inv == 0:
+#             return {self: coeff}
+#         normalized_other = other.normalize()
+#         normalized_self = self.normalize()
+#         if len(normalized_self) > len(normalized_other):
+#             raise ValueError("Other RC graph must have length at least as large as self")
+#         normalized_self = normalized_self.resize(len(normalized_other))
+
+#         base_term = normalized_self.squash_product(normalized_other)
+#         ret = {}
+#         ret[base_term] = coeff
+
+#         for i in range(other.perm.inv):
+#             row, col = other.left_to_right_inversion_coords(i)
+#             # if normalized_other.length_vector[row - 1] != 1:
+#             #     raise ValueError(f"bagisn {other=}, {row=}, {normalized_other.length_vector=} {row, col=}")
+#             wtt = tuple([0 if i + 1 == row else value for i, value in enumerate(normalized_other.length_vector)])
+#             new_elem_sym = next(iter(RCGraph.elem_sym_rcs(other.perm.inv - 1, len(normalized_other), len(normalized_other), weight=wtt)))
+#             new_elem_sym = DecoratedRCGraph(new_elem_sym, other.generating_set)
+#             new_base = normalized_self.elem_squash(new_elem_sym)
+#             for new_rc, coeff2 in new_base.items():
+#                 ret[new_rc] = ret.get(new_rc, 0) + coeff * coeff2 * (self.generating_set[new_rc.perm[row - 1]] - other.generating_set[col])
+#             # ret.update(self.elem_squash(new_elem_sym, coeff=coeff * (self.generating_set[new_base.perm[row - 1]] - other.generating_set[col])))
+#             # ret[new_base] = ret.get(new_base, 0) + self.generating_set[new_base.perm[row - 1]] - other.generating_set[col]
+#         return ret
+
+#     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
+#         if y is None:
+#             y = self._generating_set
+#         return super().polyvalue(x, y=y, crystal=crystal)
+
+#     @classmethod
+#     @cache
+#     def full_CEM_double(cls, perm: Permutation, length: int, partition: tuple[int] | None = None, *, generating_set) -> dict[RCGraph, dict[tuple[DecoratedRCGraph], int]]:
+#         import itertools
+
+#         from sympy import Add, Mul, Pow, expand, sympify
+
+#         from schubmult import Sx
+#         from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
+
+#         the_ring = DoubleSchubertRing(Sx.genset, generating_set)
+
+#         if perm.inv == 0:
+#             return {cls([()] * length, generating_set=generating_set): {(): 1}}
+#         if partition is None:
+#             partition = (~(perm.strict_mul_dominant())).trimcode
+#         mu = uncode(partition)
+
+#         # Fully distribute Mul-over-Add but DO NOT call _eval_expand_func on the
+#         # ElemSym leaves (that would destroy the FactorialElemSym objects whose
+#         # `coeffvars` we need to decorate each RC graph factor with).
+#         cem_expr = sympify(the_ring(perm).cem_rep(mumu=mu, elem_func=the_ring.symbol_elem_func))
+#         cem_expr = expand(cem_expr, func=False)
+
+#         ret: dict = {}
+#         for term in Add.make_args(cem_expr):
+#             coeff, rest = term.as_coeff_Mul()
+#             # Flatten the product into a list of ElemSym factors repeated by exponent.
+#             elem_factors: list = []
+#             if rest != 1:
+#                 for factor in Mul.make_args(rest):
+#                     if isinstance(factor, Pow):
+#                         base, exponent = factor.as_base_exp()
+#                         elem_factors.extend([base] * int(exponent))
+#                     else:
+#                         elem_factors.append(factor)
+#             # Cartesian product over the elem-sym RC-graph choices for each factor,
+#             # threading the factor index through so we can pull the right coeffvars.
+#             # Use RCGraph (not cls) here: elem_sym_rcs goes through all_rc_graphs
+#             # which would construct cls(rows) with no generating_set, invalid
+#             # for DecoratedRCGraph. We wrap with proper coeffvars below.
+#             choice_iters = [RCGraph.elem_sym_rcs(f.degree, f.numvars) for f in elem_factors]
+#             for rc_choice in itertools.product(*choice_iters):
+#                 rc_tup = tuple(
+#                     DecoratedRCGraph(rc, generating_set=(generating_set[0], *elem_factors[i].coeffvars, *generating_set[len(elem_factors[i].coeffvars) + 2 :])) for i, rc in enumerate(rc_choice)
+#                 )
+#                 # Squash-multiply the underlying (undecorated) RC graphs to get
+#                 # the aggregate graph that this monomial contributes to.
+#                 if not rc_choice:
+#                     continue
+#                 rc = rc_choice[0]
+#                 for other in rc_choice[1:]:
+#                     rc = rc.resize(len(other)).squash_product(other)
+#                 # if rc.perm != perm:
+#                 #     continue
+#                 rc = rc.resize(length)
+#                 toadd_dict = ret.get(rc, {})
+#                 toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
+#                 ret[rc] = toadd_dict
+#         return ret
+
+
+# if __name__ == "__main__":
+#     from schubmult import uncode
+#     from schubmult.abc import y, z
+
+#     rc1 = DecoratedRCGraph([(3, 1), (4, 2), (), ()], y)
+#     rc2 = DecoratedRCGraph(RCGraph.random_rc_graph(uncode([0, 0, 1, 1])), z)
+#     print(rc1.elem_squash(rc2))
