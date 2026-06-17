@@ -598,7 +598,7 @@ def elem_sym_perms(orig_perm, p, k):
 def elem_sym_perms_groth(orig_perm, p, k):
     orig_perm = Permutation(orig_perm)
     total_list = [(orig_perm, 0)]
-    up_perm_list = [(orig_perm, [], len(orig_perm))]
+    up_perm_list = [(orig_perm, [], len(orig_perm) + k)]
     for pp in range(p):
         perm_list = []
         for up_perm, a_list, last_b in up_perm_list:
@@ -613,15 +613,15 @@ def elem_sym_perms_groth(orig_perm, p, k):
     return total_list
 
 
-def elem_sym_chains_groth(orig_perm, p, k): # noqa: ARG001
+def elem_sym_chains_groth(orig_perm, p, k):  # noqa: ARG001
     """1 force mark, -1 force unmark, 0 otherwise"""
     orig_perm = Permutation(orig_perm)
     total_list = {((orig_perm,), ())}
-    up_perm_list = [(((orig_perm,), ()), (), len(orig_perm), True)]
-    #if p == -1:
+    up_perm_list = [(((orig_perm,), ()), (), len(orig_perm) + k, True)]
+    # if p == -1:
     old_len = -1
     new_len = len(total_list)
-    #for pp in range(p):
+    # for pp in range(p):
     while old_len != new_len:
         perm_list = set()
         old_len = new_len
@@ -1066,28 +1066,54 @@ def ppp(chain):
     return len([c for c in chain[1] if c == -1])
 
 
+def groth_pieri_mul(perm_dict, p, kk):
+    import math
+    ret = {}
+    p2 = uncode([0] * (kk - p) + [1] * p)
+    for p1, coeff in perm_dict.items():
+        spinach = elem_sym_chains_groth(p1, 25, kk)
+        for chain in spinach:
+            k = p2.inv - fff(chain)
+            n = len(chain[0]) - 1 - fff(chain) - ppp(chain)
+            if k > n or k < 0 or n < 0:
+                continue
+            # assert chain[0][-1].inv - chain[0][0].inv == len(chain[0]) - 1
+            ret[chain[0][-1]] = ret.get(chain[0][-1], S.Zero) + coeff * (S.NegativeOne ** (len(chain[0]) - 1 - p2.inv)) * math.comb(n, k)
+    return ret
+
+
+
+
 if __name__ == "__main__":
+
     from schubmult import Permutation
     from schubmult.abc import x
     from schubmult.symbolic import S, expand
-    from schubmult.symbolic.poly.schub_poly import grothendieck_poly, to_groth
+    from schubmult.symbolic.poly.schub_poly import groth_dict_to_poly, groth_mul_full, grothendieck_poly, to_groth
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
 
     zz = ZeroGeneratingSet()
-    import math
 
-    p1 = uncode([0, 3, 2,0, 1])
-    p2 = uncode([0, 0, 1, 1, 1])
-    spinach = elem_sym_chains_groth(p1, 25, 5)
+    p1 = uncode([0,1,2])
+
+    pp = 3
+    kk = 3
+    p2 = uncode([0,2,0,1])
     val_res = grothendieck_poly(p1, x, zz, S.NegativeOne) * grothendieck_poly(p2, x, zz, S.NegativeOne)
-    assert expand(val_res) != S.Zero
-    try_val = S.Zero
-    for chain in spinach:
-        k = p2.inv - fff(chain)
-        n = len(chain[0]) - 1 - fff(chain) - ppp(chain)
-        if k > n or k < 0 or n < 0:
-            continue
-        # assert chain[0][-1].inv - chain[0][0].inv == len(chain[0]) - 1
-        try_val += (S.NegativeOne ** (len(chain[0]) - 1 - p2.inv)) * math.comb(n, k) * grothendieck_poly(chain[0][-1], x, zz, S.NegativeOne)
+    ret = groth_mul_full({p1: S.One}, p2, x, zz, S.NegativeOne)
+    try_val = groth_dict_to_poly(ret, x, zz, S.NegativeOne)
+
+    #try_val = groth_dict_to_poly(groth_pieri_mul({p1: S.One}, pp, kk), x, zz, S.NegativeOne)
+    # spinach = elem_sym_chains_groth(p1, 25, 5)
+    # for chain in spinach:
+    #     k = p2.inv - fff(chain)
+    #     n = len(chain[0]) - 1 - fff(chain) - ppp(chain)
+    #     if k > n or k < 0 or n < 0:
+    #         continue
+    #     # assert chain[0][-1].inv - chain[0][0].inv == len(chain[0]) - 1
+    #     try_val += (S.NegativeOne ** (len(chain[0]) - 1 - p2.inv)) * math.comb(n, k) * grothendieck_poly(chain[0][-1], x, zz, S.NegativeOne)
     resid = expand(val_res - try_val)
     assert resid == S.Zero, f"residual {resid} not zero but {to_groth(val_res - try_val, x, zz, S.NegativeOne)}"  # - {to_groth(try_val, x, zz, S.NegativeOne)}"
+    for perm, coeff in ret.items():
+        if coeff != 0:
+            print(f"{coeff}  {perm}")

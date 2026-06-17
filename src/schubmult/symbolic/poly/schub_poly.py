@@ -512,6 +512,70 @@ def to_groth(val, x, y, beta):
     return old
 
 
+def groth_dict_to_poly(groth_dict, x, zz, neg_one):
+    ret = S.Zero
+    for perm, coeff in groth_dict.items():
+        ret += coeff * grothendieck_poly(perm, x, zz, neg_one)
+    return ret
+
+
+def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, neg_one):
+    from schubmult import uncode
+    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+    from schubmult.symbolic import expand
+    from schubmult.utils.schub_lib import groth_pieri_mul
+
+    ring = SingleSchubertRing(x)
+    the_perm = uncode([0] * (k - p) + [1] * p)
+    dct = to_groth(ring(the_perm).expand(), x, zz, neg_one)
+    #print(f"schub elem sym to groth dict for {the_perm}: {dct=}")
+    ret = {}
+    for perm, coeff in dct.items():
+        pp = perm.inv
+        kk = len(perm.trimcode)
+        if perm == uncode([0] * (kk - pp) + [1] * pp):
+            ret[(pp, kk)] = coeff
+        else:
+            raise ValueError(f"unexpected perm {perm} in schub to groth dict")
+    result = S.Zero
+    #print(f"pieri mul for {the_perm}: {ret}")
+    for (pp, kk), coeff in ret.items():
+        pieri_dict = groth_pieri_mul({uncode((0,)): coeff}, pp, kk)
+        #print(f"pieri dict for {(pp, kk)}: {pieri_dict=}")
+        result += groth_dict_to_poly(pieri_dict, x, zz, neg_one)
+    assert expand(expand(result) - ring(the_perm).expand(deep=True)) == S.Zero, f"unexpected result {result} from schub to groth dict for {the_perm}\n{ret=}\n{expand(result)=}\n{ring(the_perm).expand(deep=True)=}"
+    return ret
+
+
+def groth_mul_full(perm_dict, p2, x, zz, neg_one):
+    from schubmult.rings.polynomial_algebra import ElemSymPolyBasis, PolynomialAlgebra
+    from schubmult.utils.perm_utils import add_perm_dict
+    from schubmult.utils.schub_lib import groth_pieri_mul
+
+    the_groth_poly = grothendieck_poly(p2, x, zz, neg_one)
+    EE = PolynomialAlgebra(ElemSymPolyBasis(x))
+    the_elem_dict = EE.from_expr(the_groth_poly, length=10)  # arbitrary big length
+    ret = {}
+    for p1, coeff0 in perm_dict.items():
+        for (elem_comp, length), coeff in the_elem_dict.items():
+            assert len(elem_comp) <= 10, f"unexpected elem_comp length {len(elem_comp)} {elem_comp=} {the_elem_dict=}"
+            # new_ret = {}
+            this_term = {p1: coeff0 * coeff}
+            for index, degree in enumerate(elem_comp, start=1):
+                if degree == 0:
+                    continue
+                dctt = schub_elem_sym_to_groth_elem_sym_dict(degree, index, x, zz, neg_one)
+                build = {}
+                for pair, coeff3 in dctt.items():
+                    # new_ret = add_perm_dict_with_coeff(new_ret, groth_pieri_mul(this_term, *pair), coeff=coeff3)
+                    build = add_perm_dict(build, {k: coeff3 * v for k, v in groth_pieri_mul(this_term, *pair).items()})
+                # convert schubert elem sym to groth
+                this_term = build
+            # the_elem_dict[elem_comp] = coeff * neg_one ** sum(elem_comp)
+            ret = add_perm_dict(ret, this_term)
+    return ret
+
+
 
 if __name__ == "__main__":
     from symengine import Symbol, expand
