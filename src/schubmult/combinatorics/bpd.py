@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from enum import IntEnum
 from functools import cache, cached_property
+from itertools import combinations
 from typing import Tuple
 
 import numpy as np
@@ -147,6 +148,46 @@ def _display_grid(grid: np.ndarray) -> str:
     print("\n".join(rows))
 
 
+@cache
+def _asm_row_patterns(n: int) -> tuple[tuple[int, ...], ...]:
+    """All ASM-compatible row patterns of length n (sum 1, alternating nonzeros)."""
+    rows: list[tuple[int, ...]] = []
+    for m in range(1, n + 1, 2):
+        for positions in combinations(range(n), m):
+            row = [0] * n
+            sign = 1
+            for pos in positions:
+                row[pos] = sign
+                sign *= -1
+            rows.append(tuple(row))
+    return tuple(rows)
+
+
+@cache
+def _all_asms_data(n: int) -> tuple[tuple[tuple[int, ...], ...], ...]:
+    """Enumerate all n x n ASMs as hashable row-tuples."""
+    if n <= 0:
+        return ((),)
+
+    patterns = _asm_row_patterns(n)
+    results: list[tuple[tuple[int, ...], ...]] = []
+
+    def recurse(row_idx: int, col_prefix: tuple[int, ...], built_rows: tuple[tuple[int, ...], ...]) -> None:
+        if row_idx == n:
+            if all(v == 1 for v in col_prefix):
+                results.append(built_rows)
+            return
+
+        for row in patterns:
+            new_prefix = tuple(col_prefix[c] + row[c] for c in range(n))
+            if any(v < 0 or v > 1 for v in new_prefix):
+                continue
+            recurse(row_idx + 1, new_prefix, (*built_rows, row))
+
+    recurse(0, (0,) * n, ())
+    return tuple(results)
+
+
 class BPD(SchubertMonomialGraph, DefaultPrinting):
     """
     Bumpless Pipe Dream representation.
@@ -192,6 +233,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     _bpd_cache = {}  # noqa: RUF012
     _cache_by_weight = {}  # noqa: RUF012
+    _unreduced_bpd_cache = {}  # noqa: RUF012
+    _unreduced_cache_by_weight = {}  # noqa: RUF012
 
     @classmethod
     def all_bpds(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None) -> set[BPD]:
@@ -241,6 +284,48 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         else:
             cls._bpd_cache[(w, length)] = set(ret)
         return ret
+
+    @classmethod
+    def all_unreduced_bpds(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None) -> set[BPD]:
+        """Enumerate all (possibly unreduced) BPDs for w by generating ASMs and mapping with from_asm."""
+        if length is None:
+            length = len(weight) if weight is not None else len(w)
+
+        if weight is not None and len(weight) != length:
+            raise ValueError("Weight must have length equal to the number of rows")
+
+        if length < len(w.trimcode):
+            raise ValueError("Length must be at least the length of the permutation's trimcode")
+
+        if weight is not None:
+            key = (w, length, tuple(weight))
+            if key in cls._unreduced_cache_by_weight:
+                return set(cls._unreduced_cache_by_weight[key])
+        else:
+            key = (w, length)
+            if key in cls._unreduced_bpd_cache:
+                return set(cls._unreduced_bpd_cache[key])
+
+        ret: set[BPD] = set()
+        for asm_rows in _all_asms_data(length):
+            asm = np.array(asm_rows, dtype=int)
+            bpd = cls.from_asm(asm)
+            if bpd.perm != w:
+                continue
+            if weight is not None and tuple(weight) != bpd.weight:
+                continue
+            ret.add(bpd)
+
+        if weight is not None:
+            cls._unreduced_cache_by_weight[key] = set(ret)
+        else:
+            cls._unreduced_bpd_cache[key] = set(ret)
+        return ret
+
+    # @classmethod
+    # def all_unreduced_bps(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None) -> set[BPD]:
+    #     """Backwards-compatible alias."""
+    #     return cls.all_unreduced_bpds(w, length=length, weight=weight)
 
     # Static lookup table for TBD tile resolution
     # Index by (left_tile_value, up_tile_value) where None is represented as -1
@@ -962,7 +1047,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             pipes_northeast_values = r[cross_positions[:, 0] + 1, cross_positions[:, 1] + 1]
             # Apply swaps sequentially
             for pipes_northeast in pipes_northeast_values:
-                small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
+                if small_perm[pipes_northeast - 2] < small_perm[pipes_northeast - 1]:
+                    small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         build_perm = good_cols * small_perm
 
@@ -1146,9 +1232,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self._valid
         if self.rows == 0:
             self._valid = True
-            return self._valid
-        if len(self.all_blanks()) != self.perm.inv:
-            self._valid = False
             return self._valid
         # if self.perm.inv != sum(self.length_vector):
         #     self._valid = False
