@@ -1097,7 +1097,7 @@ if __name__ == "__main__":
     zz = ZeroGeneratingSet()
 
     p1 = uncode([0,3,1])
-    beta = Symbol("beta")
+    beta = Symbol("\u03B2")
     pp = 3
     kk = 3
     p2 = uncode([0,2,0,1])

@@ -180,6 +180,7 @@ fallback_version = "4.0.0.dev0"
 
 [project.scripts]
 schubmult_py = "schubmult._scripts.schubmult_py:main"
+grothmult_py = "schubmult._scripts.grothmult_py:main"
 schubmult_double = "schubmult._scripts.schubmult_double:main"
 schubmult_q = "schubmult._scripts.schubmult_q:main"
 schubmult_q_double = "schubmult._scripts.schubmult_q_double:main"

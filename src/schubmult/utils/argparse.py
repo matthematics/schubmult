@@ -9,7 +9,7 @@ from schubmult.utils.logging import init_logging
 # Indexed.sympify_sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
 
 
-def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
+def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod=True):
     parser = ArgumentParser(
         prog=prog_name,
         description=description,
@@ -56,7 +56,7 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         help="Some additional terms in the ring to multiply by",
     )
 
-    if not quantum:
+    if not quantum and coprod:
         parser.add_argument(
             "--coprod",
             action="store_true",
