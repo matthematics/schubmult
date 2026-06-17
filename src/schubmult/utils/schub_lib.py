@@ -595,6 +595,78 @@ def elem_sym_perms(orig_perm, p, k):
     return total_list
 
 
+def elem_sym_perms_groth(orig_perm, p, k):
+    orig_perm = Permutation(orig_perm)
+    total_list = [(orig_perm, 0)]
+    up_perm_list = [(orig_perm, [], len(orig_perm))]
+    for pp in range(p):
+        perm_list = []
+        for up_perm, a_list, last_b in up_perm_list:
+            for j in range(last_b, k - 1, -1):
+                for i in range(k):
+                    if has_bruhat_ascent(up_perm, i, j):
+                        new_perm_add = up_perm.swap(i, j)
+                        new_a_list = [*a_list, i]
+                        perm_list += [(new_perm_add, new_a_list, j)]
+                        total_list += [(new_perm_add, pp + 1)]
+        up_perm_list = perm_list
+    return total_list
+
+
+def elem_sym_chains_groth(orig_perm, p, k): # noqa: ARG001
+    """1 force mark, -1 force unmark, 0 otherwise"""
+    orig_perm = Permutation(orig_perm)
+    total_list = {((orig_perm,), ())}
+    up_perm_list = [(((orig_perm,), ()), (), len(orig_perm), True)]
+    #if p == -1:
+    old_len = -1
+    new_len = len(total_list)
+    #for pp in range(p):
+    while old_len != new_len:
+        perm_list = set()
+        old_len = new_len
+        for (up_chain, markings), a_list, last_b, dec_from_start in up_perm_list:
+            up_perm = up_chain[-1]
+            for j in range(last_b, k - 1, -1):
+                for i in range(k):
+                    if has_bruhat_ascent(up_perm, i, j):
+                        new_perm_add = up_perm.swap(i, j)
+                        updated_markings = markings
+                        new_markings = 0
+
+                        # P3: if the previous cover is unmarked, the next cover must be ordered.
+                        # If not ordered, force the previous cover to be marked.
+                        if len(a_list) > 0:
+                            prev_i = a_list[-1]
+                            prev_b = last_b
+                            ordered = (j < prev_b) or (j == prev_b and i > prev_i)
+                            if not ordered:
+                                if len(updated_markings) > 0 and updated_markings[-1] == -1:
+                                    continue
+                                if len(updated_markings) > 0 and updated_markings[-1] == 0:
+                                    updated_markings = updated_markings[:-1] + (1,)
+
+                        # P4 applies only along the initial block with equal b and strictly decreasing a.
+                        if len(a_list) == 0:
+                            p4_prefix_holds = True
+                        else:
+                            p4_prefix_holds = dec_from_start and j == last_b and i < a_list[-1]
+                        dec_from_start2 = p4_prefix_holds
+
+                        if i in a_list:
+                            # cannot be marked
+                            new_markings = -1
+                            dec_from_start2 = False
+                        elif p4_prefix_holds:
+                            new_markings = 1
+                        new_a_list = (*a_list, i)
+                        perm_list.add((((*up_chain, new_perm_add), (*updated_markings, new_markings)), new_a_list, j, dec_from_start2))
+                        total_list.add(((*up_chain, new_perm_add), (*updated_markings, new_markings)))
+        up_perm_list = list(perm_list)
+        new_len = len(total_list)
+    return list(total_list)
+
+
 def elem_sym_positional_perms(orig_perm, p, *k):
     k = {i - 1 for i in k}
     orig_perm = Permutation(orig_perm)
@@ -877,6 +949,7 @@ def is_hook(cd):
 def all_grassmannian_rc_graphs(n: int, max_inv: int):
     """All RC graphs for Grassmannian permutations generated from partitions."""
     from schubmult.combinatorics.rc_graph import RCGraph
+
     graph_set = set()
     for perm in grassmannian_perms_from_partitions(n, max_inv):
         graph_set.update(rc for rc in RCGraph.all_rc_graphs(perm, n))
@@ -983,3 +1056,38 @@ def hw_elementary_tensors(c, bounds=None):
                 d[j] -= 1
 
     yield from recurse(0)
+
+
+def fff(chain):
+    return len([c for c in chain[1] if c == 1])
+
+
+def ppp(chain):
+    return len([c for c in chain[1] if c == -1])
+
+
+if __name__ == "__main__":
+    from schubmult import Permutation
+    from schubmult.abc import x
+    from schubmult.symbolic import S, expand
+    from schubmult.symbolic.poly.schub_poly import grothendieck_poly, to_groth
+    from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+
+    zz = ZeroGeneratingSet()
+    import math
+
+    p1 = uncode([0, 3, 2,0, 1])
+    p2 = uncode([0, 0, 1, 1, 1])
+    spinach = elem_sym_chains_groth(p1, 25, 5)
+    val_res = grothendieck_poly(p1, x, zz, S.NegativeOne) * grothendieck_poly(p2, x, zz, S.NegativeOne)
+    assert expand(val_res) != S.Zero
+    try_val = S.Zero
+    for chain in spinach:
+        k = p2.inv - fff(chain)
+        n = len(chain[0]) - 1 - fff(chain) - ppp(chain)
+        if k > n or k < 0 or n < 0:
+            continue
+        # assert chain[0][-1].inv - chain[0][0].inv == len(chain[0]) - 1
+        try_val += (S.NegativeOne ** (len(chain[0]) - 1 - p2.inv)) * math.comb(n, k) * grothendieck_poly(chain[0][-1], x, zz, S.NegativeOne)
+    resid = expand(val_res - try_val)
+    assert resid == S.Zero, f"residual {resid} not zero but {to_groth(val_res - try_val, x, zz, S.NegativeOne)}"  # - {to_groth(try_val, x, zz, S.NegativeOne)}"
