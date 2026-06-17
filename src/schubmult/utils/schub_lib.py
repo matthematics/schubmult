@@ -1066,7 +1066,7 @@ def ppp(chain):
     return len([c for c in chain[1] if c == -1])
 
 
-def groth_pieri_mul(perm_dict, p, kk):
+def groth_pieri_mul(perm_dict, p, kk, beta):
     import math
     ret = {}
     p2 = uncode([0] * (kk - p) + [1] * p)
@@ -1078,13 +1078,15 @@ def groth_pieri_mul(perm_dict, p, kk):
             if k > n or k < 0 or n < 0:
                 continue
             # assert chain[0][-1].inv - chain[0][0].inv == len(chain[0]) - 1
-            ret[chain[0][-1]] = ret.get(chain[0][-1], S.Zero) + coeff * (S.NegativeOne ** (len(chain[0]) - 1 - p2.inv)) * math.comb(n, k)
+            ret[chain[0][-1]] = ret.get(chain[0][-1], S.Zero) + coeff * (beta ** (len(chain[0]) - 1 - p2.inv)) * math.comb(n, k)
     return ret
 
 
 
 
 if __name__ == "__main__":
+
+    from sympy import Symbol
 
     from schubmult import Permutation
     from schubmult.abc import x
@@ -1094,14 +1096,14 @@ if __name__ == "__main__":
 
     zz = ZeroGeneratingSet()
 
-    p1 = uncode([0,1,2])
-
+    p1 = uncode([0,3,1])
+    beta = Symbol("beta")
     pp = 3
     kk = 3
     p2 = uncode([0,2,0,1])
-    val_res = grothendieck_poly(p1, x, zz, S.NegativeOne) * grothendieck_poly(p2, x, zz, S.NegativeOne)
-    ret = groth_mul_full({p1: S.One}, p2, x, zz, S.NegativeOne)
-    try_val = groth_dict_to_poly(ret, x, zz, S.NegativeOne)
+    val_res = grothendieck_poly(p1, x, zz, beta) * grothendieck_poly(p2, x, zz, beta)
+    ret = groth_mul_full({p1: S.One}, p2, x, zz, beta)
+    try_val = groth_dict_to_poly(ret, x, zz, beta)
 
     #try_val = groth_dict_to_poly(groth_pieri_mul({p1: S.One}, pp, kk), x, zz, S.NegativeOne)
     # spinach = elem_sym_chains_groth(p1, 25, 5)
