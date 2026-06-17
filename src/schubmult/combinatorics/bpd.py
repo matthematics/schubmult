@@ -237,6 +237,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     _unreduced_cache_by_weight = {}  # noqa: RUF012
 
     @classmethod
+    def clear_unreduced_cache(cls) -> None:
+        cls._unreduced_bpd_cache.clear()
+        cls._unreduced_cache_by_weight.clear()
+
+    @classmethod
     def all_bpds(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None) -> set[BPD]:
         if weight and len(weight) != length:
             raise ValueError("Weight must have length equal to the number of rows")
@@ -1047,8 +1052,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             pipes_northeast_values = r[cross_positions[:, 0] + 1, cross_positions[:, 1] + 1]
             # Apply swaps sequentially
             for pipes_northeast in pipes_northeast_values:
-                if small_perm[pipes_northeast - 2] < small_perm[pipes_northeast - 1]:
-                    small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
+                # THIS LINE IS WRONG
+                #if small_perm[pipes_northeast - 2] < small_perm[pipes_northeast - 1]:
+                small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         build_perm = good_cols * small_perm
 
