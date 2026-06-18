@@ -1,0 +1,312 @@
+\documentclass{amsart}
+%\usepackage[backend=bibtex8,style=numeric,giveninits=true]{biblatex}
+%\addbibresource{formschub.bib}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{cases}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{mathtools}
+\usetikzlibrary{calc}
+\usepackage{centernot}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage[makeroom]{cancel}
+\usepackage{stmaryrd}
+\usepackage{stackengine}
+\usepackage{mathrsfs}
+\usepackage{enumitem}
+
+% Concatenation product on \dcoma: a square cup with a + inside (visually `\sqcupplus`).
+\makeatletter
+\newcommand{\sqcupplus@inner}[2]{%
+  \vcenter{\hbox{\ooalign{%
+    \hfil$\m@th#1\sqcup$\hfil\cr
+    \hfil\raisebox{0.15ex}{$\m@th#1\scriptscriptstyle+$}\hfil\cr
+  }}}%
+}
+\newcommand{\sqcupplus}{\mathbin{\mathpalette\sqcupplus@inner\relax}}
+\makeatother
+
+%\usepackage{unicode-math}
+%\usepackage{nicematrix}
+
+%\usepackage{witharrows}
+
+\newtheorem{lemma}{Lemma}[subsection]
+\newtheorem{corollary}[lemma]{Corollary}
+
+\newtheorem{proposition}[lemma]{Proposition} 
+\newtheorem{proposition2}{Proposition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{conjecture}[theorem]{Conjecture} 
+\newtheorem{observation}{Observation}[section]
+\newtheorem{question}{Question}
+
+%\newtheorem{conj}[thm]{Conjecture} 
+
+
+%%% 
+%%% The following gives definition type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+\theoremstyle{definition}
+%\newtheorem{definition}{Definition}[section]
+%\newtheorem{example}{Example}[section]
+\newtheorem{definition}[lemma]{Definition}
+\newtheorem{example}[lemma]{Example}
+%\newtheorem{algorithm}{Algorithm}
+\newtheorem*{note}{Note}
+\newtheorem*{method}{Method}
+%%
+%% Again more of these can be added by uncommenting and editing the
+%% following. 
+%%
+
+%\newtheorem{note}[thm]{Note}
+
+
+%%% 
+%%% The following gives remark type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+
+\theoremstyle{remark}
+
+\newtheorem*{remark}{Remark}
+
+
+%%%
+%%% The following, if uncommented, numbers equations within sections.
+%%% 
+
+%\numberwithin{equation}{section}
+\numberwithin{equation}{subsection}
+
+
+%%%
+%%% The following show how to make definition (also called macros or
+%%% abbreviations).  For example to use get a bold face R for use to
+%%% name the real numbers the command is $\mathbf{R}.  To save typing we
+%%% can abbreviate as
+
+\newcommand{\R}{\mathbf{R}}  % The real numbers.
+
+%%
+%% The comment after the definition is not required, but if you are
+%% working with someone they will likely thank you for explaining your
+%% definition.  
+%%
+%% Now add you own definitions:
+%%
+
+%%%
+%%% Mathematical operators (things like sin and cos which are used as
+%%% functions and have slightly different spacing when typeset than
+%%% variables are defined as follows:
+%%%
+
+\DeclareMathOperator{\sch}{\mathfrak{S}}
+\newcommand{\shup}{{\uparrow}}
+\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
+\newcommand{\wof}[1]{w_{#1}}
+\newcommand{\rcdd}{\mathfrak{F}}
+\newcommand{\wtt}{\mathtt{wt}}
+\newcommand{\QY}{\ensuremath{\mathbb{QY}}}
+\newcommand{\tom}[1]{\xrightarrow{#1}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\mot}[1]{\xleftarrow{#1}}
+\newcommand{\grass}{\mathcal{G}}
+\newcommand{\plac}{\mathrm{Plac}}
+
+\newcommand{\cperm}[1]{\llbracket #1\rrbracket}
+\newcommand{\cpcf}[5]{d^{#1,#2}_{#3}\left(#4\mid #5\right)}
+% simplified product notation
+\newcommand{\smpfu}{\mathsf{\Pi}}
+\newcommand{\smpr}[3]{\ensuremath{}\smpfu\left( #1 \mid #2_{[#3]}\right)}
+%\newcommand{\smpre}[2]{\ensuremath{}\smpfu\left( #1 \mid #2\right)}
+\newcommand{\smpre}[2]{\ensuremath{}\prod_{b\in #2}(#1-b)}
+
+\newcommand{\rtt}{\mathtt{rt}}
+\newcommand{\trm}{\mathtt{trim}}
+\newcommand{\zeromap}{\mathcal{Z}}
+\newcommand{\hr}{\mathtt{ht}}
+\newcommand{\clp}{\mathtt{clip}}
+\newcommand{\BRC}{\mathcal{BRC}}
+\newcommand{\RC}{\mathcal{RC}}
+\newcommand{\lzeromap}{\mathscr{Z}}
+\newcommand{\lmap}{\mathscr{L}}
+\newcommand{\ltb}{\mathrm{little}}
+\newcommand{\slide}{\mathfrak{F}}
+%\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\stackrel{\blacktriangleright}{\mathbf{\_}}$}}\limits}
+
+%\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\blacktriangleright$}}\limits}
+
+\newcommand{\shifthom}{\operatornamewithlimits{\triangleright}\limits}
+
+
+%\newcommand{\shiftvby}[1]{\ensuremath{\resizebox{\width}{\heightoff}{$\shifthom_{#1}$}}}
+
+\newcommand{\shiftvby}[1]{\shifthom_{#1}}
+
+\newcommand*\circled[1]{%
+	\tikz[baseline=(char.base)]{
+		\node[shape=circle,draw,inner sep=0.1pt] (char) {#1};
+	}%
+}
+\newcommand\mycircled[1]{\makebox[0pt]{\circled{#1}}}
+\newcommand{\tb}{\textbullet}
+\newcommand{\xr}[1]{\ensuremath{{}\xrightarrow{[#1]}{}}}
+\newcommand{\rd}[1]{\ensuremath{\mathcolor{red}{\mathbf{#1}}}}
+\newcommand{\mc}[1]{\ensuremath{\mycircled{#1}}}
+\newcommand{\desc}{\mathrm{Desc}}%
+\newcommand{\SSYT}{\mathrm{SSYT}}
+%\newcommand{\schv}[2]{\operatornamewithlimits{\sch_{\mathit{#2}}}\limits_{\negphantom{{}_{\mathit{#2}}}\negvphantom{{}_{\mathit{#2}}}#1}}
+
+%\newcommand{\schv}[2]{\setstackgap{S}{0pt}\setstackgap{L}{0pt}\stackMath\stackunder{\sch_{#2}}{\negphantom{\scriptstyle{#2}}\!{\scriptscriptstyle{#1}}}}
+
+\newcommand{\schv}[2]{\shiftvby{#1}\!\sch_{#2}}
+
+%\newcommand{\shiftvby}[1]{\makebox[0pt]{$\triangleright$}#1}
+
+
+
+%\newglossary[slg]{symbolslist}{syi}{syg}{List of symbols}
+%\makeglossaries
+
+%\begin{itemize}
+%	\item Elements of $S_\infty$ $c{[}p,q{]}$, $d{[}p,q{]}$, $r{[}p,q{]}$, homomorphism $\sigma_p:S_\infty\to S_\infty$: Definition \ref{definition:specelem}	
+
+%	\item  Relations between elements of $S\infty$ $\tom{k},\Tom{k}$: Definition \ref{definition:pierisymb}
+
+%	\item Code, dual code, $\code(w)$, $\code^*(w)$, dominant permutations, the dominant approximation $\dom(v)$: Definition \ref{definition:codestuff}
+
+%	\item Function/sets of permutations related to pulling out variables from Schubert polynomials $\varphi_{i,n}$, $\mathcal{D}_i(v)$, $Q_i(v',v)$: Definition \ref{definition:polysequence}
+
+%	\item Flattening function $\phi_i:S_\infty\to S_\infty$, domination relation between permutations: Definition \ref{definition:domination}
+
+%	\item Special polynomials $H_p(x;y)$, $E_p(x;y)$, $\smpr{x_1}{y}{p}$: Definition \ref{definition:hp}
+
+%	\item Polynomial variable omission $x^{(i)}$, subscript substitution $y_A$, index shift function $\shiftvby{i}$: Definition \ref{definition:pv}
+%\end{itemize}
+
+\newcommand{\dsch}{\ensuremath{\Xi}}
+\newcommand{\coma}{\mathcal{A}}
+\newcommand{\dcoma}{\mathcal{D}}
+
+
+
+%%
+%% This is the end of the preamble.
+%% 
+\title{A Littlewood--Richardson rule for forest polynomials via the Schubert bialgebra}
+\author{Matthew J. Samuel}
+
+%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
+%\counterwithout{equation}{section}
+%\setcounter{section}{-1}
+\newcommand{\shuff}[2]{\mathcal{S}\mathcal{H}_{#1}^{#2}}
+\newcommand{\dom}{\mathfrak{d}}
+\newcommand{\ldom}{\dom^*}
+\newcommand{\code}{\mathfrak{c}}
+\newcommand{\ducode}{\overline{\mathfrak{c}}}
+\newcommand{\forest}{\mathfrak{P}}
+\newcommand{\fcode}{\mathfrak{c}_\forest}
+\newcommand{\finv}{P_{\forest}}
+
+\newcommand{\maxd}{\mathfrak{m}}
+%\newcommand{\ddv}[1]{{{}_{{\scriptscriptstyle (#1)}}\partial}}
+\newcommand{\ddv}[1]{\delta}
+%\newglossary[slg]{symbolslist}{syi}{syg}{Symbolslist}
+%\GlsXtrLoadResources
+%[src={symbols},sort=use,type=main,
+%	group=specelem]
+%\glsaddstoragekey{group}{}{\grouplabel}
+%\glsxtrsetgrouptitle{specelem}{}
+
+
+
+
+
+%\newglossary[slg]{symbol}{sot}{stn}{Symbols}
+%\makeglossaries
+
+\begin{document}
+
+\begin{abstract}
+\end{abstract}
+
+	\maketitle
+
+
+\section{Introduction}
+
+
+\section{Set-valued inversions tableaux}
+\begin{definition}
+
+Let $w$ be a permutation such that $\maxd(w)\leq n$. Suppose $T:I(w)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$ is a function mapping a root to a nonempty subset of $[n]$. Define relations $\leq$ and $<$ on these sets by declaring that $A\leq B$ if $\max(A)\leq \min(B)$ and $A<B$ if $\max(A)<\min(B)$. 
+We say that $T$ is a \emph{set-valued inversions tableau} if the following conditions are satisfied:
+\begin{itemize}
+  \item If $i < j < k$ and $(i,j),(j,k),(i,k)\in I(w)$, then either $T(i,j) \leq T(i,k) \leq T(j,k)$ or $T(j,k) \leq T(i,k) \leq T(i,j)$.
+  \item If $i>0$ and $j<k$ are such that $(i,j),(i,k)\in I(w)$, then $T(i,j) < T(i,k)$.
+  \item $T(i,i+1)\leq \{i\}$ for all $i$.
+
+\end{itemize}
+For $(i,j)\in I(w)$, define $\lambda_T(i,j)$ as follows. Suppose $T(i,j) = r$. Let $(i,k)$ be the root such that $T(i,k)=r$ and $k$ is minimal. Then $\lambda_T(i,j) = i + j + 1 - k$.
+\end{definition}
+
+\begin{theorem}
+Suppose $w$ is a permutation. Then we have the following formula for the double Grothendieck polynomial of $w$:
+$$\mathfrak{G}_w^{(\beta)}(x;y) = \sum_{T} \prod_{(i,j)\in I(w)} \beta^{|T(i,j)| - 1} \prod_{r\in T(i,j)} x_r \oplus y_{\lambda_T(i,j) - r}$$
+where the sum is over all set-valued inversions tableaux of $w$. 
+\end{theorem}
+
+\begin{definition}
+An \emph{staircase word graph} is simply a subset of $\mathbb{N}^2$. We impose the same ordering on these as RC graphs. That is, we say that $(a,b)\leq (c,d)$ if $a<c$ or $a=c$ and $b > d$. We define $\mathbf{word}(G)$ to be the word obtained by reading the elements $i + j - 1$ in the linear order given by $\leq$. We then say that $\wof{G}$ is the Demazure product of $\mathbf{word}(G)$.
+
+For a set-valued inversions tableau $T$, we can define a staircase word graph $G$ as follows. If $w$ is the identity, then $G$ is the empty set. Otherwise, let $n$ be the maximum value that is contained in $T(i,j)$ for some $(i,j)\in I(w)$. Choose $i$ and $j$ such that $T(i,j)=n$ and $i + j$ is as small as possible. Necessarily, $j=i+1$, or in other words $i$ is a right descent of $w$. If $|T(i,i+1)| > 1$, remove $n$ from $T(i,i+1)$ to obtain a new function $T':I(w)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$. If $|T(i,i+1)|=1$, then let $T':I(ws_i)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$ be the function defined by
+$$T'(a,b) = T(s_i(a),s_i(b))$$
+for all $(a,b)\in I(ws_i)$.
+
+It is straightforward to check that $T'$ is a set-valued inversions tableau, either for $w$ if $|T(i,i+1)| > 1$ or for $ws_n$ if $|T(i,i+1)| = 1$. Let $G'=\Phi(T')$. Then let $\Phi(T)=G'\cup \{(n,i+1-n)\}$. 
+\end{definition}
+
+\begin{proposition}
+$\Phi$ is a bijection between set-valued inversions tableaux of $w$ with maximum value $n$ and staircase word graphs $G$ such that $\wof{G} = w$ and $a\leq n$ for all $(a,b)\in G$.
+\end{proposition}
+\begin{proof}
+  If $|T(i,j)|=1$ for all $(i,j)\in I(w)$, then $T$ is just an ordinary inversion tableau and $\Phi(T)$ is just the usual RC graph associated to $T$. In this case, the result is \cite{axelrodfreed2025inversionstableaux}. Otherwise, we prove this by induction on the maximum size of $|T(i,j)|$. Suppose this maximum size is $m>1$ and we have proved the result for all set-valued inversions tableaux with maximum size less than $m$. We may assume without loss of generality that $m$ is the maximum value that is contained in $T(i,j)$ for some $(i,j)\in I(w)$ by removing elements below. In that case, $m\in T(i,i+1)$ for some $i$. Let $T'$ be the set-valued inversions tableau obtained by removing $m$ from $T(i,i+1)$ if $|T(i,i+1)| > 1$ or by applying the transformation described in the definition of $\Phi$ if $|T(i,i+1)|=1$. By the inductive hypothesis, $\Phi(T')$ is a staircase word graph such that $\wof{\Phi(T')} = w$ or $\wof{\Phi(T')} = ws_i$ and $a\leq n$ for all $(a,b)\in \Phi(T')$. In either case, we have $\wof{\Phi(T)} = w$. It is also clear that $a\leq n$ for all $(a,b)\in \Phi(T)$. This proves that $\Phi(T)$ is a staircase word graph with the desired properties.
+
+  Let $G$ be a staircase word graph. Define $\Psi(G)$ to be empty if $G$ is empty. Otherwise, let $(i,j)$ be the maximum element of $G$ and let $G' = G\setminus \{(i,j)\}$. Let $w'=\wof{G'}$. Let $d=i + j - 1$. If $\ell(w's_d) > \ell(w')$, then let
+$$\Psi(G)(a,b) = \begin{cases}
+\Psi(G')(s_d(a),s_d(b)) & \text{if } (a,b)\in I(w)\setminus\{(i,j)\}\\
+\{d\} & \text{if } (a,b) = (i,j)
+\end{cases}$$
+If $\ell(w's_d) < \ell(w')$, then let
+$$\Psi(G)(a,b) = \begin{cases}
+\Psi(G')(a,b) & \text{if } (a,b)\in I(w)\setminus\{(i,j)\}\\
+\Psi(G')(a,b)\cup \{d\} & \text{if } (a,b) = (i,j)
+\end{cases}$$
+\end{proof}
+
+\cite{samuelmolev}
+\bibliographystyle{acm}
+\bibliography{schubert_bialgebra}
+
+
+\end{document}

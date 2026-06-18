@@ -1066,6 +1066,47 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Alias for perm property"""
         return self.perm
 
+    def disjoint_union(self, other: BPD) -> BPD:
+        """
+        Row-preserving disjoint union.
+
+        This keeps both summands on the same row indices by placing them side-by-side,
+        with a single horizontal connector column between them.
+        The result is intended to preserve row placement of blanks and may be unreduced.
+        """
+        if self.rows != other.rows:
+            raise ValueError(
+                f"Row-preserving disjoint union requires equal row counts, got {self.rows} and {other.rows}. "
+                "Use disjoint_union_block_diag for unequal sizes.",
+            )
+
+        new_grid = np.full((self.rows, self.cols + 1 + other.cols), TileType.TBD, dtype=TileType)
+        new_grid[:, : self.cols] = self._grid
+        new_grid[:, self.cols] = TileType.HORIZ
+        new_grid[:, self.cols + 1 :] = other._grid
+        return BPD(new_grid)
+
+    def disjoint_union_block_diag(self, other: BPD) -> BPD:
+        """Disjoint union via ASM block diagonal (rows of the second summand are shifted)."""
+        asm1 = self.to_asm()
+        asm2 = other.to_asm()
+        n1 = asm1.shape[0]
+        n2 = asm2.shape[0]
+        block = np.zeros((n1 + n2, n1 + n2), dtype=int)
+        block[:n1, :n1] = asm1
+        block[n1:, n1:] = asm2
+        return BPD.from_asm(block)
+
+    @classmethod
+    def disjoint_union_many(cls, *bpds: BPD) -> BPD:
+        """Row-preserving disjoint union of any number of BPDs."""
+        if len(bpds) == 0:
+            return cls(np.zeros((0, 0), dtype=TileType))
+        current = bpds[0]
+        for bpd in bpds[1:]:
+            current = current.disjoint_union(bpd)
+        return current
+
     @property
     def inv(self) -> int:
         """

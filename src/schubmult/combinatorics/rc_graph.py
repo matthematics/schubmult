@@ -6,11 +6,9 @@ from typing import TYPE_CHECKING
 
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.combinatorics.permutation import Permutation, uncode
-from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.rings.free_algebra import ASx, FreeAlgebra, FreeAlgebraElement, WordBasis
 from schubmult.rings.schubert.nil_hecke import NilHeckeRing
 from schubmult.symbolic import Expr, S, prod
-from schubmult.utils._grid_print import GridPrint
 
 if TYPE_CHECKING:
     pass
@@ -22,6 +20,7 @@ from schubmult.utils.perm_utils import add_perm_dict, find_reduced_fail, is_redu
 from .crystal_graph import CrystalGraph
 from .nilplactic import NilPlactic
 from .plactic import Plactic
+from .wc_graph import WCGraph
 
 init_logging(debug=False)
 logger = get_logger(__name__)
@@ -39,7 +38,7 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
         print(*args)
 
 
-class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
+class RCGraph(WCGraph, CrystalGraph):
     @property
     def is_elem_sym(self):
         return self.perm.inv == 0 or (len(self.perm.descents()) == 1 and set(self.perm.trimcode).issubset({0, 1}))
@@ -651,6 +650,29 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if length is None:
             return ret.normalize()
         return ret.resize(length)
+
+    @classmethod
+    def from_wc_graph(cls, wc_graph: WCGraph) -> RCGraph:
+        working = cls(wc_graph)
+        changed = True
+        while changed:
+            changed = False
+            for index in range(len(working.perm_word) - 1, -1, -1):
+                a, b = working.left_to_right_inversion(index)
+                if b < a:
+                    matching_positive = (b, a)
+                    delete_index = None
+                    for index2 in range(index + 1, len(working.perm_word)):
+                        if working.left_to_right_inversion(index2) == matching_positive:
+                            delete_index = index2
+                            break
+                    if delete_index is None:
+                        continue
+                    row, col = working.left_to_right_inversion_coords(delete_index)
+                    working = working.toggle_ref_at(row, col)
+                    changed = True
+                    break
+        return working
 
     @cached_property
     def crystal_weight(self):

@@ -25,6 +25,7 @@ _lazy_exports = {
     "Permutation": "schubmult.combinatorics.permutation",
     "uncode": "schubmult.combinatorics.permutation",
     "RCGraph": "schubmult.combinatorics.rc_graph",
+    "WCGraph": "schubmult.combinatorics.wc_graph",
     "AntiRCGraph": "schubmult.combinatorics.anti_rc_graph",
     "BoundedRCFactorAlgebra": "schubmult.rings.combinatorial.bounded_rc_factor_algebra",
     "ChuteMoveElement": "schubmult.combinatorics.chute_move_element",
@@ -34,6 +35,9 @@ _lazy_exports = {
     "HPD": "schubmult.combinatorics.hpd",
     "HPDTile": "schubmult.combinatorics.hpd",
     # Rings
+    "Gx": "schubmult.rings.schubert.grothendieck_ring",
+    "GrothendieckRing": "schubmult.rings.schubert.grothendieck_ring",
+    "GrothendieckElement": "schubmult.rings.schubert.grothendieck_ring",
     "Sx": "schubmult.rings.schubert.schubert_ring",
     "DSx": "schubmult.rings.schubert.schubert_ring",
     "ASx": "schubmult.rings.free_algebra",
