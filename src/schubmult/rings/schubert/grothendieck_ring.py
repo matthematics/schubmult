@@ -4,15 +4,15 @@ import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol
 from schubmult.symbolic.poly.schub_poly import groth_mul_full, grothendieck_poly
-from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, ZeroGeneratingSet, poly_genset
+from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, ZeroGeneratingSet
 
 from .base_schubert_ring import BaseSchubertElement
 from .schubert_ring import SingleSchubertRing
 
 __all__ = [
-    "Gx",
     "GrothendieckElement",
     "GrothendieckRing",
+    "Gx",
 ]
 
 
