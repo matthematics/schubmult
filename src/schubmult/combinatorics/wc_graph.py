@@ -178,6 +178,23 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 seq.append(i + 1)
         return tuple(seq)
 
+    @classmethod
+    def from_word_compatible(cls, word, seq, length = None):
+        if length is None:
+            length = max(seq)
+        if length < max(seq):
+            raise ValueError("Length must be at least the maximum value in the sequence")
+        if len(word) != len(seq):
+            raise ValueError("Word and sequence must have the same length")
+        if any(seq[i] > seq[i + 1] for i in range(len(seq) - 1)):
+            raise ValueError("Sequence must be weakly increasing")
+        if any(word[i] < word[i+1] and seq[i] == seq[i + 1] for i in range(len(seq) - 1)):
+            raise ValueError(f"{word} is not compatible with {seq}")
+        result = [[] for _ in range(length)]
+        for i in range(len(word)):
+            result[seq[i] - 1] = [*result[seq[i] - 1], word[i]]
+        return cls(tuple([tuple(row) for row in result]))
+
     def left_to_right_inversion_coords(self, index: int) -> tuple[int, int]:
         if index < 0 or index >= len(self.perm_word):
             raise ValueError(f"Index {index} out of range {self.perm.inv}")
@@ -190,6 +207,10 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
 
         return (i + 1, self[i][(index - index_find)] - i)
 
+    def left_to_right_inversion(self, index: int) -> tuple[int, int]:
+        coords = self.left_to_right_inversion_coords(index)
+        return self.right_root_at(*coords)
+
     def right_root_at(self, i: int, j: int) -> tuple[int, int]:
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
@@ -200,8 +221,11 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         word_piece = list(self.perm_word[index + 1 :])
         if len(word_piece) == 0:
             return (i + j - 1, i + j)
-        apply = ~Permutation.ref_product(*word_piece)
-        return apply.act_root(i + j - 1, i + j)
+        apply = ~Permutation.hecke_ref_product(*word_piece)
+        ret =  apply.act_root(i + j - 1, i + j)
+        if ret[0] > ret[1]:
+            ret = (ret[1], ret[0])
+        return ret
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False) -> Expr:
         if crystal:

@@ -168,6 +168,14 @@ class Permutation(Printable):
             p = p.swap(a - 1, a)
         return p
 
+    @classmethod
+    def hecke_ref_product(cls, *args):
+        p = cls([])
+        for a in args:
+            if p[a - 1] < p[a]:
+                p = p.swap(a - 1, a)
+        return p
+
     @property
     def code_word(self):
         cd = self.trimcode

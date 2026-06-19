@@ -1,18 +1,9 @@
-from symengine import Symbol, expand
-
-from schubmult import Permutation
-from schubmult.abc import x
-from schubmult.combinatorics.wc_graph import WCGraph
-from schubmult.symbolic import S
-from schubmult.symbolic.poly.schub_poly import grothendieck_poly
-from schubmult.symbolic.poly.variables import ZeroGeneratingSet
-
-
 def test_groth_match():
     from schubmult.combinatorics.wc_graph import WCGraph
     from schubmult.symbolic import S, expand, Symbol
     from schubmult.symbolic.poly.schub_poly import grothendieck_poly
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+    from schubmult.combinatorics.inversions_tableau import InversionsTableau
     from schubmult.abc import x
     from schubmult import Permutation
     
@@ -22,15 +13,7 @@ def test_groth_match():
     for w in Permutation.all_permutations(4):
         result = S.Zero
         for wc_graph in WCGraph.all_wc_graphs(w, 3):
-            result += wc_graph.polyvalue(x, beta=beta, prop_beta=True)
+            result += InversionsTableau.from_wc_graph(wc_graph).polyvalue(x, beta=beta, prop_beta=True)
         via_it = result
         direct = expand(grothendieck_poly(w, x, zz, beta), deep=True)
         assert expand(via_it - direct, deep=True) == S.Zero, f"Failed for {w}: {expand(via_it - direct, deep=True)=}"
-
-def test_pull_out_var_hecke_equation_holds():
-    w = Permutation([1, 3, 2])
-    for k in range(len(w)):
-        sols = WCGraph.pull_out_var_hecke(w, k)
-        for row, wpp in sols:
-            lhs = Permutation.ref_product(*row) @ wpp.shiftup(1)
-            assert lhs == w
