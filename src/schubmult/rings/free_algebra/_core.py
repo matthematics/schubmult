@@ -680,3 +680,14 @@ class FreeAlgebra(BaseRing):
 FA = FreeAlgebra()
 
 ASx = FreeAlgebra(SchubertBasis)
+
+
+def make_AGx(beta=None):
+    """Create a Grothendieck-basis free algebra, optionally with custom beta."""
+    from .grothendieck_basis import GrothendieckBasis
+
+    basis = GrothendieckBasis if beta is None else GrothendieckBasis.with_beta(beta)
+    return FreeAlgebra(basis)
+
+
+AGx = make_AGx()

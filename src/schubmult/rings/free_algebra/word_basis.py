@@ -1,7 +1,9 @@
 from functools import cache
+from itertools import combinations
 
 import schubmult.rings.free_algebra as fa
 from schubmult.combinatorics.permutation import uncode
+from schubmult.combinatorics.wc_graph import WCGraph
 from schubmult.symbolic import S, Symbol
 from schubmult.utils.perm_utils import add_perm_dict
 from schubmult.utils.tuple_utils import pad_tuple
@@ -430,12 +432,74 @@ class WordBasis(FreeAlgebraBasis):
                 ret[candidate] = coeff
         return ret
 
+    @classmethod
+    @cache
+    def transition_grothendieck(cls, key, basis_cls=None):
+        """Transition a word key (composition) to the Grothendieck basis.
+
+        Coefficient of ``G_w`` is the number of WC graphs of permutation ``w``
+        and weight ``key``, multiplied by ``beta^(|key|-inv(w))``.
+        """
+        from .grothendieck_basis import GrothendieckBasis
+
+        if basis_cls is None:
+            basis_cls = GrothendieckBasis
+
+        comp = tuple(int(a) for a in key)
+        if any(a < 0 for a in comp):
+            raise ValueError(f"Composition entries must be nonnegative, got {comp}")
+
+        length = len(comp)
+        total = sum(comp)
+        beta = getattr(basis_cls, "beta", Symbol("\u03B2"))
+
+        @cache
+        def _strict_rows(max_reflection, k):
+            if k < 0:
+                return ()
+            if k == 0:
+                return ((),)
+            if max_reflection < k:
+                return ()
+            return tuple(tuple(sorted(combo, reverse=True)) for combo in combinations(range(1, max_reflection + 1), k))
+
+        @cache
+        def _graphs_from_weight(weight):
+            # Build WC graphs directly from row-length data, recursively in numvars.
+            if len(weight) == 0:
+                return frozenset({WCGraph(())})
+
+            if len(weight) == 1:
+                k0 = weight[0]
+                first_row = tuple(range(k0, 0, -1))
+                return frozenset({WCGraph((first_row,))})
+
+            k0 = weight[0]
+            tail = weight[1:]
+            ret = set()
+            for old_wc in _graphs_from_weight(tail):
+                shifted = tuple(tuple(a + 1 for a in row) for row in old_wc)
+                max_reflection = len(weight) + len(old_wc.perm)
+                for first_row in _strict_rows(max_reflection, k0):
+                    wc = WCGraph((first_row, *shifted))
+                    if wc.is_valid and wc.length_vector == weight:
+                        ret.add(wc)
+            return frozenset(ret)
+
+        out = {}
+        for wc in _graphs_from_weight(comp):
+            perm = wc.perm
+            coeff = beta ** (total - perm.inv)
+            out[(perm, length)] = out.get((perm, length), S.Zero) + coeff
+        return out
+
 
 
     @classmethod
     def transition(cls, other_basis):
         from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
+        from .grothendieck_basis import GrothendieckBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
         from .key_basis import KeyBasis
@@ -466,6 +530,8 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_forest(x)
         if other_basis == MonomialSlideBasis:
             return lambda x: cls.transition_monomial_slide(x)
+        if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
+            return lambda x: cls.transition_grothendieck(x, basis_cls=other_basis)
         # if other_basis == KeyBasis:
         #     return lambda x: cls.transition_key(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))

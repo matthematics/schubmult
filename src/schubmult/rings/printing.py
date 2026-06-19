@@ -360,22 +360,36 @@ class GrothendieckPoly(PrintingTerm):
     def __xnew_cached__(_class, k, genset, prefix):
         return GrothendieckPoly.__xnew__(_class, k, genset, prefix)
 
+    def _split_key(self):
+        if isinstance(self._key, tuple) and len(self._key) == 2 and isinstance(self._key[0], Permutation) and isinstance(self._key[1], int):
+            return self._key[0], self._key[1]
+        return self._key, None
+
     def _sympystr(self, printer):
-        if self._key == Permutation([]):
+        perm, numvars = self._split_key()
+        if perm == Permutation([]):
             return printer.doprint(ssymb.S.One)
-        return printer.doprint(f"{self._prefix}G{self._genset}({printer.doprint(self._key)})")
+        if numvars is None:
+            return printer.doprint(f"{self._prefix}G{self._genset}({printer.doprint(perm)})")
+        return printer.doprint(f"{self._prefix}G{self._genset}({printer.doprint(perm)}, {numvars})")
 
     def _pretty(self, printer):
-        if self._key == Permutation([]):
+        perm, numvars = self._split_key()
+        if perm == Permutation([]):
             return printer._print(ssymb.S.One)
-        subscript = printer._print(self._key)
-        return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(self._genset)))
+        subscript = printer._print(perm)
+        if numvars is None:
+            return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(self._genset)))
+        return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(f"{self._genset}; {numvars}")))
 
     def _latex(self, printer):
-        if self._key == Permutation([]):
+        perm, numvars = self._split_key()
+        if perm == Permutation([]):
             return printer._print(ssymb.S.One)
-        subscript = printer._print(self._key)
-        return printer._print_Function(ssymb.Function(f"{self._prefix}\\mathfrak{{G}}_{'{' + subscript + '}'}")(ssymb.Symbol(self._genset)))
+        subscript = printer._print(perm)
+        if numvars is None:
+            return printer._print_Function(ssymb.Function(f"{self._prefix}\\mathfrak{{G}}_{'{' + subscript + '}'}")(ssymb.Symbol(self._genset)))
+        return printer._print_Function(ssymb.Function(f"{self._prefix}\\mathfrak{{G}}_{'{' + subscript + '}'}")(ssymb.Symbol(f"{self._genset}; {numvars}")))
 
     def __reduce__(self):
         return (self.__class__, (self._key, self._genset, self._prefix))

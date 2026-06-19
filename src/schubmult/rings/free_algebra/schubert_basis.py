@@ -229,6 +229,7 @@ class SchubertBasis(FreeAlgebraBasis):
         from .elementary_basis import ElementaryBasis
         from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
+        from .grothendieck_basis import GrothendieckBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
         from .key_basis import KeyBasis
@@ -252,7 +253,7 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_word(*x)
         if other_basis.__name__ == "_SeparatedDescentsBasis":
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
-        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis or other_basis == KeyBasis or other_basis == FundamentalSlideBasis:
+        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis or other_basis == KeyBasis or other_basis == FundamentalSlideBasis or other_basis == GrothendieckBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
         raise NotImplementedError(f"Transition from SchubertBasis to {other_basis} is not implemented.")
 

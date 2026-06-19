@@ -41,6 +41,7 @@ _lazy_exports = {
     "Sx": "schubmult.rings.schubert.schubert_ring",
     "DSx": "schubmult.rings.schubert.schubert_ring",
     "ASx": "schubmult.rings.free_algebra",
+    "AGx": "schubmult.rings.free_algebra",
     "ADSx": "schubmult.rings.free_algebra",
     "FA": "schubmult.rings.free_algebra",
     "DualRCGraphRing": "schubmult.rings.combinatorial.dual_rc_graph_ring",
@@ -92,6 +93,7 @@ _lazy_exports = {
     "SchubertSchurBasis": "schubmult.rings.free_algebra",
     "ElementaryBasis": "schubmult.rings.free_algebra",
     "NElementaryBasis": "schubmult.rings.free_algebra",
+    "GrothendieckBasis": "schubmult.rings.free_algebra",
     "ZBasis": "schubmult.rings.free_algebra",
 }
 

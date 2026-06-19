@@ -7,6 +7,7 @@ any of the available bases and converted between them via ``change_basis``.
 Pre-built instances:
     - ``FA``: FreeAlgebra with WordBasis (default)
     - ``ASx``: FreeAlgebra with SchubertBasis
+    - ``AGx``: FreeAlgebra with GrothendieckBasis
     - ``ADSx``: FreeAlgebra with double Schubert basis
 
 Available bases:
@@ -16,12 +17,13 @@ Available bases:
     SchurElementaryBasis, SeparatedDescentsBasis, ZBasis.
 """
 
-from ._core import FA, ADSx, ASx, FreeAlgebra, FreeAlgebraElement
+from ._core import FA, ADSx, AGx, ASx, FreeAlgebra, FreeAlgebraElement, make_AGx
 from .composition_schubert_basis import CompositionSchubertBasis
 from .elementary_basis import ElementaryBasis
 from .forest_basis import ForestBasis, ForestDual
 from .free_algebra_basis import FreeAlgebraBasis
 from .fundamental_slide_basis import FundamentalSlideBasis
+from .grothendieck_basis import GrothendieckBasis
 from .j_basis import JBasis
 from .jt_basis import JTBasis
 from .key_basis import KeyBasis
@@ -37,6 +39,7 @@ from .z_basis import ZBasis
 __all__ = [
     "FA",
     "ADSx",
+    "AGx",
     "ASx",
     "CompositionSchubertBasis",
     "ElementaryBasis",
@@ -46,6 +49,7 @@ __all__ = [
     "FreeAlgebraBasis",
     "FreeAlgebraElement",
     "FundamentalSlideBasis",
+    "GrothendieckBasis",
     "JBasis",
     "JTBasis",
     "KeyBasis",
@@ -58,4 +62,5 @@ __all__ = [
     "WordBasis",
     "ZBasis",
     "_SeparatedDescentsBasis",
+    "make_AGx",
 ]

@@ -202,6 +202,10 @@ def __getattr__(name):
         from .schubert_schur_basis import SchubertSchurBasis
 
         return SchubertSchurBasis
+    if name == "GrothendieckBasis":
+        from .grothendieck_basis import GrothendieckBasis
+
+        return GrothendieckBasis
     if name == "ElementaryBasis":
         from .elementary_basis import ElementaryBasis
 
@@ -223,6 +227,7 @@ def __getattr__(name):
 
 if TYPE_CHECKING:
     from .elementary_basis import ElementaryBasis
+    from .grothendieck_basis import GrothendieckBasis
     from .j_basis import JBasis
     from .jt_basis import JTBasis
     from .nelementary_basis import NElementaryBasis
@@ -235,6 +240,7 @@ if TYPE_CHECKING:
 __all__ = [
     "ElementaryBasis",
     "FreeAlgebraBasis",
+    "GrothendieckBasis",
     "JBasis",
     "JTBasis",
     "NElementaryBasis",
