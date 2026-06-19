@@ -386,6 +386,10 @@ class Permutation(Printable):
     def rothe_diagram(self):
         return {(i + 1, self[i]) for i in range(len(self))}
 
+    @cached_property
+    def max_descent(self):
+        return len(self.trimcode)
+
     @property
     def maximal_corner(self):
         maxd = len(self.trimcode)
@@ -410,7 +414,11 @@ class Permutation(Printable):
                 j += 1
         return cls(perm)
 
-    def pivots(self, a, b):
+    @cache
+    def pivots(self, a = None, b = None):
+        """Return the set of pivot positions for a maximal corner (a,b)."""
+        if a is None or b is None:
+            a, b = self.maximal_corner
         piv = set()
         for i in range(1, len(self) + 1):
             j = self[i - 1]
@@ -421,14 +429,34 @@ class Permutation(Printable):
                 if not good:
                     break
                 for j_prime in range(j, b + 1):
-                    if (i == i_prime and j == j_prime) or (i == a and j == b):
+                    if (i,j) == (i_prime, j_prime) or (i_prime, j_prime) == (a, b):
                         continue
                     if self[i_prime - 1] == j_prime:
                         good = False
                         break
             if good:
-                piv.add((i, j))
+                piv.add(i)
         return piv
+
+    def pivot_transition(self, pivot_set):
+        """Grothendieck transition for a given pivot set at the maximal corner. Returns the resulting permutation."""
+        if self.inv == 0:
+            raise ValueError("Cannot perform pivot transition on the identity permutation.")
+        if not pivot_set.issubset(self.pivots()):
+            raise ValueError(f"Invalid pivot set {pivot_set} for permutation {self} with pivots {self.pivots()}")
+        pivot_list = sorted(pivot_set, reverse=True)
+        maxd, b = self.maximal_corner
+        cycle = [maxd, *pivot_list]
+        if len(pivot_list) == 0:
+            cycle_perm = Permutation([])
+        else:
+            cycle_arr = list(range(1, len(self) + 1))
+            for i in range(len(cycle) - 1):
+                cycle_arr[cycle[i] - 1] = cycle[i + 1]
+            cycle_arr[cycle[-1] - 1] = cycle[0]
+            cycle_perm = Permutation(cycle_arr)
+        b_prime = (~self)[b - 1]
+        return self.swap(maxd - 1, b_prime - 1) * cycle_perm
 
     def pad_code(self, length):
         if length < len(self.trimcode):
@@ -765,3 +793,4 @@ ID_PERM = Permutation([])
 @cache
 def s(i):
     return Permutation([*list(range(1, i)), i + 1, i])
+

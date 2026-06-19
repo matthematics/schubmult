@@ -4,10 +4,9 @@ import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol
 from schubmult.symbolic.poly.schub_poly import groth_mul_full, grothendieck_poly
-from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, ZeroGeneratingSet
+from schubmult.symbolic.poly.variables import GeneratingSet, ZeroGeneratingSet
 
-from .base_schubert_ring import BaseSchubertElement
-from .schubert_ring import SingleSchubertRing
+from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 __all__ = [
     "GrothendieckElement",
@@ -24,7 +23,7 @@ class GrothendieckElement(BaseSchubertElement):
         return Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
 
-class GrothendieckRing(SingleSchubertRing):
+class GrothendieckRing(BaseSchubertRing):
     """
     Ring of Grothendieck polynomials.
 
@@ -42,7 +41,7 @@ class GrothendieckRing(SingleSchubertRing):
     """
 
     def __init__(self, genset, beta=None):
-        super().__init__(genset)
+        super().__init__(genset, coeff_genset=None)
         if beta is None:
             beta = Symbol("\u03B2")
         self._beta = beta
@@ -84,10 +83,11 @@ class GrothendieckRing(SingleSchubertRing):
     def printing_term(self, k, prefix=""):
         return spolymod.GrothendieckPoly(k, self.genset.label, prefix=prefix)
 
+    def __call__(self, x):
+        return self.new(x)
+
     def new(self, x):
         genset = self.genset
-        if not isinstance(genset, GeneratingSet_base):
-            raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
             elem = self.from_dict({Permutation(x): self.domain.one})
         elif isinstance(x, Permutation):
@@ -99,6 +99,9 @@ class GrothendieckRing(SingleSchubertRing):
         else:
             elem = self.from_expr(x)
         return elem
+
+    def from_dict(self, dct):
+        return self.dtype(dct)
 
 
 Gx = GrothendieckRing(GeneratingSet("x"))

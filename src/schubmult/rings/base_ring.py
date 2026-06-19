@@ -290,3 +290,5 @@ class BaseRing(Ring, CompositeDomain):
         return self.mul_expr(self.one, x)
 
     def mul_expr(self, elem, x): ...
+
+

@@ -84,6 +84,16 @@ class GrothendieckBasis(FreeAlgebraBasis):
         return {(perm, numvars): coeff for perm, coeff in coeff_dict.items() if coeff != S.Zero}
 
     @classmethod
+    def detransition(cls, degree):
+        if degree < 0:
+            raise ValueError(f"Degree must be nonnegative, got {degree}")
+        if degree == 0:
+            # G_{w_I} => beta**(|I|-1)G_w
+            raise NotImplementedError("WIP")
+        raise NotImplementedError("WIP")
+
+
+    @classmethod
     @cache
     def transition_elementary(cls, perm, numvars):
         """Transition a Groth basis key to the dual elementary basis.
