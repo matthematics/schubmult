@@ -369,9 +369,9 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         if row < 0:
             raise ValueError("Row out of range")
         if row == 0:
-            return WCGraph(), self
+            return self._rebuild(()), self
         if row == len(self):
-            return self, WCGraph()
+            return self, self._rebuild(())
         if row >= len(self):
             raise ValueError("Row out of range")
         front = self._rebuild([*self[:row]])
@@ -384,6 +384,23 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         else:
             back = self.rowrange(row, len(self))
         return (front, back)
+
+    def disjoint_union(self, rc: WCGraph) -> WCGraph:
+        if len(self) != len(rc):
+            raise ValueError(f"{type(self).__name__}s must have at least as many rows")
+        if self.perm.inv == 0:
+            return rc
+        rowmax = [max(self[i], default=0) for i in range(len(self))]
+        N = max(rowmax)
+        shift_rc = self._rebuild([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
+        rc_self = self.resize(len(rc) + N)
+        return self._rebuild([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+
+    def squash_product(self, rc: WCGraph) -> WCGraph:
+        combined_rc = self.disjoint_union(rc)
+        while len(combined_rc) > len(self):
+            combined_rc = combined_rc.zero_out_last_row()
+        return combined_rc
 
     @cache
     def zero_out_last_row(self) -> WCGraph:
@@ -488,7 +505,7 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
             working2 = working.resize(len(self))
             col = 1
             while working2.perm.max_descent != len(self):
-                working2 = WCGraph([*working, tuple(range(len(self) + col - 1, len(self) - 1, - 1))])
+                working2 = self._rebuild([*working, tuple(range(len(self) + col - 1, len(self) - 1, - 1))])
                 col += 1
             working2 = working2.upieri_insert(len(self), diffs).resize(len(self) - 1).resize(len(self)).zero_out_last_row()
             return working2
