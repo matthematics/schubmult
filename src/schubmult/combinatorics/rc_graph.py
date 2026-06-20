@@ -2039,25 +2039,25 @@ class RCGraph(WCGraph, CrystalGraph):
             return None
         return ret_rc
 
-    def vertical_cut(self, row: int) -> tuple[RCGraph, RCGraph]:
-        if row < 0:
-            raise ValueError("Row out of range")
-        if row == 0:
-            return RCGraph(), self
-        if row == len(self):
-            return self, RCGraph()
-        if row >= len(self):
-            raise ValueError("Row out of range")
-        front = self._rebuild([*self[:row]])
-        front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
-        flen = len(front)
-        for _ in range(flen - row):
-            front = front.zero_out_last_row()
-        if row == len(self):
-            back = self._rebuild()
-        else:
-            back = self.rowrange(row, len(self))
-        return (front, back)
+    # def vertical_cut(self, row: int) -> tuple[RCGraph, RCGraph]:
+    #     if row < 0:
+    #         raise ValueError("Row out of range")
+    #     if row == 0:
+    #         return RCGraph(), self
+    #     if row == len(self):
+    #         return self, RCGraph()
+    #     if row >= len(self):
+    #         raise ValueError("Row out of range")
+    #     front = self._rebuild([*self[:row]])
+    #     front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
+    #     flen = len(front)
+    #     for _ in range(flen - row):
+    #         front = front.zero_out_last_row()
+    #     if row == len(self):
+    #         back = self._rebuild()
+    #     else:
+    #         back = self.rowrange(row, len(self))
+    #     return (front, back)
 
     def right_zero_act(self) -> set[RCGraph]:
         if self.perm.inv == 0:

@@ -251,7 +251,7 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         from .rc_graph import RCGraph
         red_word, seq = self.to_reduced_compatible_set_sequence()
         compat_seq = [min(v) for v in seq]
-        return RCGraph.from_reduced_compatible(red_word, compat_seq)
+        return RCGraph.from_reduced_compatible(red_word, compat_seq, length=len(self))
 
     @classmethod
     def from_word_compatible(cls, word, seq, length=None):
@@ -365,6 +365,26 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 hi = mid
         return lo
 
+    def vertical_cut(self, row: int) -> tuple[WCGraph, WCGraph]:
+        if row < 0:
+            raise ValueError("Row out of range")
+        if row == 0:
+            return WCGraph(), self
+        if row == len(self):
+            return self, WCGraph()
+        if row >= len(self):
+            raise ValueError("Row out of range")
+        front = self._rebuild([*self[:row]])
+        front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
+        flen = len(front)
+        for _ in range(flen - row):
+            front = front.zero_out_last_row()
+        if row == len(self):
+            back = self._rebuild([])
+        else:
+            back = self.rowrange(row, len(self))
+        return (front, back)
+
     @cache
     def zero_out_last_row(self) -> WCGraph:
         if len(self) == 0:
@@ -372,37 +392,36 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
 
-        from .rc_graph import RCGraph
+        reduced = self
+        if self.perm.inv != len(self.perm_word):
+            reduction_working = self
+            removed_positive_roots: Counter[tuple[int, int]] = Counter()
+            changed = True
+            while changed:
+                changed = False
+                for index in range(len(reduction_working.perm_word) - 1, -1, -1):
+                    a, b = reduction_working.left_to_right_inversion(index)
+                    if b < a:
+                        matching_positive = (b, a)
+                        delete_index = None
+                        for index2 in range(index + 1, len(reduction_working.perm_word)):
+                            if reduction_working.left_to_right_inversion(index2) == matching_positive:
+                                delete_index = index2
+                                break
+                        if delete_index is None:
+                            continue
+                        removed_positive_roots[matching_positive] += 1
+                        row, col = reduction_working.left_to_right_inversion_coords(delete_index)
+                        reduction_working = reduction_working.toggle_ref_at(row, col)
+                        changed = True
+                        break
 
-        reduction_working = RCGraph(self)
-        removed_positive_roots: Counter[tuple[int, int]] = Counter()
-        changed = True
-        while changed:
-            changed = False
-            for index in range(len(reduction_working.perm_word) - 1, -1, -1):
-                a, b = reduction_working.left_to_right_inversion(index)
-                if b < a:
-                    matching_positive = (b, a)
-                    delete_index = None
-                    for index2 in range(index + 1, len(reduction_working.perm_word)):
-                        if reduction_working.left_to_right_inversion(index2) == matching_positive:
-                            delete_index = index2
-                            break
-                    if delete_index is None:
-                        continue
-                    removed_positive_roots[matching_positive] += 1
-                    row, col = reduction_working.left_to_right_inversion_coords(delete_index)
-                    reduction_working = reduction_working.toggle_ref_at(row, col)
-                    changed = True
-                    break
+            reduced = self._rebuild(reduction_working._snap_reduced().zero_out_last_row())
+        else:
+            return self._rebuild(reduced._snap_reduced().zero_out_last_row())
 
-        rc = reduction_working
-        reduced = rc.zero_out_last_row()
-        if self.perm.inv == len(self.perm_word):
-            return WCGraph(reduced)
-
-        working = WCGraph(reduced)
-        root_map = {rc.left_to_right_inversion(i): reduced.left_to_right_inversion(i) for i in range(rc.perm.inv)}
+        working = reduced
+        root_map = {reduced.left_to_right_inversion(i): reduced.left_to_right_inversion(i) for i in range(reduced.perm.inv)}
         target_positive_roots: Counter[tuple[int, int]] = Counter()
         for root, mult in removed_positive_roots.items():
             mapped_root = root_map.get(root)
@@ -460,61 +479,20 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 if changed:
                     break
 
-        if tuple(len(row) for row in working) != target_row_weights:
+        if working.length_vector != target_row_weights:
             red_word, exist_compat = working.to_reduced_compatible_set_sequence()
             diffs = []
             for i in range(len(working)):
                 if len(working[i]) < target_row_weights[i]:
                     diffs.extend([i + 1] * (target_row_weights[i] - len(working[i])))
-            #diffs = [target_row_weights[i] - len(working[i]) for i in range(len(working))]
-            # rc = self._snap_reduced()
             working2 = working.resize(len(self))
             col = 1
             while working2.perm.max_descent != len(self):
                 working2 = WCGraph([*working, tuple(range(len(self) + col - 1, len(self) - 1, - 1))])
                 col += 1
             working2 = working2.upieri_insert(len(self), diffs).resize(len(self) - 1).resize(len(self)).zero_out_last_row()
-            #working = WCGraph(working2[:-1])
             return working2
 
-            # red_word2, compat2 = rc2.as_reduced_compatible()
-            # word = []
-            # seq = exist_compat
-            # set_seq = []
-            # working_perm = Permutation([])
-            # working_perm2 = Permutation([])
-            # for i, letter in enumerate(red_word2):
-            #     if working_perm[letter - 1] > working_perm[letter]:
-            #         for root_index in range(len(word)):
-            #             root = working_perm.right_root_at(root_index, word=word)
-            #             if root == (letter, letter + 1):
-            #                 set_seq[root_index].add(seq[i])
-            #                 break
-            #     else:
-            #         working_perm = working_perm.swap(letter - 1, letter)
-            #         working_perm2 = working_perm2.swap(letter - 1, letter)
-            #         word.append(letter)
-            #         set_seq.append({seq[i]})
-        # return tuple(word), tuple(tuple(sorted(s)) for s in set_seq)
-            # index1 = 0
-            # index2 = 0
-            # new_set_seq = []
-            # while index2 < len(red_word2):
-            #     if index1 < len(red_word) and min(exist_compat[index1]) == compat2[index2]:
-            #         new_set_seq.append(exist_compat[index1])
-            #         index1 += 1
-            #         index2 += 1
-            #     else:
-            #         new_set_seq.append({compat2[index2]})
-            #         index2 += 1
-            # working = WCGraph.from_reduced_compatible_set_sequence(red_word2, new_set_seq)
-            # raise ValueError(
-            #     f"Failed to preserve row weights in WCGraph.zero_out_last_row: expected {target_row_weights}, got {tuple(len(row) for row in working)}",
-            # )
-        if len(working.perm_word) != len(self.perm_word):
-            raise ValueError(
-                f"Failed to preserve crossing count in WCGraph.zero_out_last_row: expected {len(self.perm_word)}, got {len(working.perm_word)}",
-            )
         return working
 
     def right_zero_act(self) -> set[WCGraph]:
