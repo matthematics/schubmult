@@ -27,6 +27,31 @@ def test_groth_match():
         direct = expand(grothendieck_poly(w, x, zz, beta), deep=True)
         assert expand(via_it - direct, deep=True) == S.Zero, f"Failed for {w}: {expand(via_it - direct, deep=True)=}"
 
+def test_groth_transition():
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult.symbolic import S, expand, Symbol
+    from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+    from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+    from schubmult.abc import x
+    from schubmult import Permutation
+    
+    beta = Symbol("β")
+    zz = ZeroGeneratingSet()
+
+    for w in Permutation.all_permutations(4):
+        result = S.Zero
+        for wc_graph in WCGraph.all_wc_graphs(w, 3):
+            if len(wc_graph[-1]) > 0:
+                continue
+            new_wc_graph = wc_graph.zero_out_last_row()
+            rc1 = wc_graph._snap_reduced()
+            rc2 = new_wc_graph._snap_reduced()
+            result += (beta ** (rc2.perm.inv - rc1.perm.inv))* new_wc_graph.polyvalue(x, beta=beta, prop_beta=True)
+        via_it = result
+        direct = expand(grothendieck_poly(w, x, zz, beta).subs(x[len(wc_graph)], 0), deep=True)
+        assert expand(via_it - direct, deep=True) == S.Zero, f"Failed for {w}: {expand(via_it - direct, deep=True)=}\n{via_it=}\n{direct=}"
+
+
 def test_set_seq_round_trip():
     from schubmult.combinatorics.wc_graph import WCGraph
     from schubmult import Permutation

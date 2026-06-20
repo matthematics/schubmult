@@ -10,6 +10,25 @@ from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGrap
 from schubmult.symbolic import Expr, S, prod
 from schubmult.utils._grid_print import GridPrint
 
+#from schubmult.utils.perm_utils import _is_compatible
+
+def _is_compatible(compat_seq, word):
+    """Check if compat_seq is compatible with word, i.e. for each prefix of word, the corresponding prefix of compat_seq has all distinct entries."""
+    if len(compat_seq) != len(word):
+        return False
+    if len(compat_seq) == 0:
+        return True
+    if compat_seq[0] > word[0]:
+        return False
+    for i in range(1, len(word)):
+        if compat_seq[i-1] > compat_seq[i]:
+            return False
+        if word[i - 1] <= word[i] and compat_seq[i-1] == compat_seq[i]:
+            return False
+        if compat_seq[i] > word[i]:
+            return False
+    return True
+
 
 class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
     """Word-compatible graph.
@@ -98,6 +117,8 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 return False
             if any(row[j] <= row[j + 1] for j in range(len(row) - 1)):
                 return False
+        if not _is_compatible(self.compatible_sequence, self.perm_word):
+            return False
         return True
 
     def shiftup(self, shift: int = 1, check_valid=True) -> WCGraph:
@@ -223,6 +244,11 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
 
         return cls._from_root_dict(root_dict, length=length)
 
+    def _snap_reduced(self):
+        from .rc_graph import RCGraph
+        red_word, seq = self.to_reduced_compatible_set_sequence()
+        compat_seq = [min(v) for v in seq]
+        return RCGraph.from_reduced_compatible(red_word, compat_seq)
 
     @classmethod
     def from_word_compatible(cls, word, seq, length=None):
@@ -411,9 +437,31 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                     break
 
         if tuple(len(row) for row in working) != target_row_weights:
-            raise ValueError(
-                f"Failed to preserve row weights in WCGraph.zero_out_last_row: expected {target_row_weights}, got {tuple(len(row) for row in working)}",
-            )
+            red_word, exist_compat = working.to_reduced_compatible_set_sequence()
+            diffs = []
+            for i in range(len(working)):
+                if len(working[i]) < target_row_weights[i]:
+                    diffs.extend([i + 1] * (target_row_weights[i] - len(working[i])))
+            #diffs = [target_row_weights[i] - len(working[i]) for i in range(len(working))]
+            rc = self._snap_reduced()
+            rc2 = rc.pieri_insert(len(self) - 1, diffs)
+
+            red_word2, compat2 = rc2.as_reduced_compatible()
+            index1 = 0
+            index2 = 0
+            new_set_seq = []
+            while index2 < len(red_word2):
+                if index1 < len(red_word) and min(exist_compat[index1]) == compat2[index2]:
+                    new_set_seq.append(exist_compat[index1])
+                    index1 += 1
+                    index2 += 1
+                else:
+                    new_set_seq.append({compat2[index2]})
+                    index2 += 1
+            working = WCGraph.from_reduced_compatible_set_sequence(red_word2, new_set_seq)
+            # raise ValueError(
+            #     f"Failed to preserve row weights in WCGraph.zero_out_last_row: expected {target_row_weights}, got {tuple(len(row) for row in working)}",
+            # )
         if len(working.perm_word) != len(self.perm_word):
             raise ValueError(
                 f"Failed to preserve crossing count in WCGraph.zero_out_last_row: expected {len(self.perm_word)}, got {len(working.perm_word)}",

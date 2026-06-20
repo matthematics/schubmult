@@ -1,9 +1,21 @@
 from functools import cached_property
+from itertools import combinations
 
 from .permutation import Permutation
 from .rc_graph import RCGraph
 from .wc_graph import WCGraph
 
+
+def _is_compatible(compat_seq, word):
+    """Check if compat_seq is compatible with word, i.e. for each prefix of word, the corresponding prefix of compat_seq has all distinct entries."""
+    if len(compat_seq) != len(word):
+        return False
+    for i in range(1, len(word)):
+        if compat_seq[i-1] > compat_seq[i]:
+            return False
+        if word[i - 1] <= word[i] and compat_seq[i-1] == compat_seq[i]:
+            return False
+    return True
 
 class InversionsTableau:
     def __init__(self, _dict, *_, **__):
@@ -66,6 +78,7 @@ class InversionsTableau:
         return cls(dct)
 
     @cached_property
+    #@property
     def perm_word(self):
         root_dict = {root: set(v) for root, v in self._dict.items()}
         ret_word = []
@@ -85,123 +98,203 @@ class InversionsTableau:
 
     @property
     def is_valid(self):
+        """Check if the tableau satisfies the necessary conditions to be an inversions tableau.
+        1. If a root is a simple root, all values assigned to it must be less than or equal to the smaller index.
+        2. If two roots have the same second index, their value sets must be disjoint.
+        3. If there exist two roots that have indices (i, j) and (j, k), then necessarily there also exists (i,k) provided
+        i < j < k. In that case, for each such (i,k) and each v in (i,k) set there exist v1 in (i,j) set and v2 in (j,k) set such that either
+        v1 <= v < v2 or v2 < v <= v1.
+        """
+        import itertools
         try:
-            self.to_wc_graph()
+            if not self.to_wc_graph().is_valid:
+                return False
         except ValueError:
-            # import traceback
-            # traceback.print_exc()
-            # print("Invalid inversion tableau: ", self)
             return False
+        if InversionsTableau.from_wc_graph(self.to_wc_graph()) != self:
+            return False
+        if False:
+            bloated_root_dict = {}
+            for root, val in self._dict.items():
+                for v in val:
+                    bloated_root_dict[(root, v)] = v
+            rootsum_smuckers = {}
+            root1_smuckers = {}
+            root2_smuckers = {}
+            root3_smuckers = {}
+            for ((root1, _), val1), ((root2, _), val2) in itertools.combinations(bloated_root_dict.items(), 2):
+                if val1 > root1[0]:
+                    return False
+                if val2 > root2[0]:
+                    return False
+                if root1[1] == root2[1] and val1 == val2:
+                    return False
+                if root1[0] == root2[0] and ((root1[1] < root2[1] and (root1[1], root2[1]) not in self._dict.keys() and val1 <= val2) or (root2[1] < root1[1] and (root2[1], root1[1]) not in self._dict.keys() and val2 == val1)):
+                    return False
+                # if root1[1] == root2[1] and ((root1[0] < root2[0] and (root1[0], root2[0]) not in self._dict.keys() and val2 < val1) or (root2[0] < root1[0] and (root2[0], root1[0]) not in self._dict.keys() and val1 < val2)):
+                #     return False
+
+                if root1[1] == root2[0] or root1[0] == root2[1]:
+                    if root1[1] == root2[0]:
+                        root3 = (root1[0], root2[1])
+                    else:
+                        root3 = (root2[0], root1[1])
+                    #key = frozenset({(root1, val1), (root2,val2)})
+                    if root1 not in root1_smuckers:
+                        root1_smuckers[root1] = False
+                    if root2 not in root2_smuckers:
+                        root2_smuckers[root2] = False
+                    if (val1 != val2):
+                        # if key not in rootsum_smuckers:
+                        #     rootsum_smuckers[key] = False
+                        for (r1, _), a in bloated_root_dict.items():
+                            if r1 == root3:
+                                if (root3, a) not in root3_smuckers:
+                                    root3_smuckers[(root3, a)] = False
+                                #if root3_smuckers[(root3, a)] is False and rootsum_smuckers[key] is False:
+                                #if root3_smuckers[(root3, a)] is False: # and rootsum_smuckers[key] is False:
+                                if val1 <= a <= val2 or val2 <= a <= val1:
+                                    #rootsum_smuckers[key] = True
+                                    root3_smuckers[(root3, a)] = True
+                                    root1_smuckers[root1] = True
+                                    root2_smuckers[root2] = True
+                                        #break
+            if any(not v for v in root2_smuckers.values()):
+                # print(f"Failed root2 condition {root2_smuckers.items()}")
+                return False
+            if any(not v for v in root1_smuckers.values()):
+                # print(f"Failed root1 condition {root1_smuckers.items()}")
+                return False
+            if any(not v for v in root3_smuckers.values()):
+                # print(f"Failed root3 condition {root3_smuckers.items()}")
+                return False
+            if any(not v for v in rootsum_smuckers.values()):
+                # print(f"Failed rootsum condition {rootsum_smuckers.items()}")
+                return False
+            try:
+                if self.perm != Permutation.hecke_ref_product(*self.perm_word):
+                    # print(f"Failed perm condition: {self.perm} != {Permutation.hecke_ref_product(*self.perm_word)}")
+                    return False
+            except ValueError:
+                return False
+            if set(self._dict.keys()) != self.perm.inversion_set:
+                return False
+            if any(len(v) > 1 for v in self._dict.values()) and not self._snap_min().is_valid:
+                return False
+            # if any(len(v) > 1 for v in self._dict.values()) and not self._snap_max().is_valid:
+            #     return False
+            if not _is_compatible(self.compatible_sequence, self.perm_word):
+                return False
         return True
-        # import itertools
-        # if self.perm.inv <= 1:
-        #     return True
 
-        # if set(self._dict.keys()) != self.perm.inversion_set:
-        #     return False
-        # if sum(len(v) for v in self._dict.values()) != len(self.perm_word):
-        #     return False
-        # #bloated_inversion_set = set()
-        # smaller_iv_list = [InversionsTableau({k: min(v) for k, v in self._dict.items()}), InversionsTableau({k: max(v) for k, v in self._dict.items()})]
-        # for smaller_iv in smaller_iv_list:
-        #     for (root1, val1), (root2, val2) in itertools.combinations(smaller_iv._dict.items(), 2):
-        #         if root1[1] == root1[0] + 1 and val1 > root1[0]:
-        #             return False
-        #         if root2[1] == root2[0] + 1 and val2 > root2[0]:
-        #             return False
+    def _snap_min(self):
+        return InversionsTableau({k: {min(v)} for k, v in self._dict.items()})
 
-        #         # if root1 != root2:
-        #         #     if root1[1] == root2[1] and val1 == val2:
-        #         #         return False
-        #         if root1[1] == root2[0]:
-        #             root3 = (root1[0], root2[1])
-        #             if not (val1 <= smaller_iv[root3] < val2 or val2 < smaller_iv[root3] <= val1):
-        #                 return False
-        #         #     # good = True
-        #         #     for (r3, val3) in bloated_inversion_set:
-        #         #         if r3 == root3:
-        #         #             if val1 == val3 and val2 > val3:
-        #         #                return False
-        #                     # if val3 > val1 and val3 > val2:
-        #                     #     return False
-        #             #     if r3 == root3:
-        #             #         if val1 == val3:
-        #             #             continue
-        #             #         if val2 < val3:
-        #             #             if not any(val1_1 >= val3 for r1, val1_1 in bloated_inversion_set if r1 == root1):
-        #             #                 good = False
-        #             #                 break
-        #             #         if val2 > val3:
-        #             #             if not any(val1_1 <= val3 for r1, val1_1 in bloated_inversion_set if r1 == root1):
-        #             #                 good = False
-        #             #                 break
-        #             #         if val2 == val3:
-        #             #             good = False
-        #             #             break
-        #             # if not good:
-        #             #     return False
-        # return True
+    def _snap_max(self):
+        return InversionsTableau({k: {max(v)} for k, v in self._dict.items()})
 
     @classmethod
     def all_set_valued_inversions_tableaux(cls, perm, max_value=None):
-        # import itertools
+        """Enumerate all set-valued inversions tableaux for ``perm``.
 
-        # ret = set()
-        # if perm.inv == 0:
-        #     return {cls({})}
-        # if max_value is None:
-        #     max_value = len(perm.trimcode)
-        # if perm in cls._sv_cache:
-        #     return {iv for iv in cls._sv_cache[perm] if max(iv._reverse_lookup.keys(), default=0) <= max_value}
-        # for d in perm.descents(zero_indexed=False):
-        #     down_perm = perm.swap(d - 1, d)
-        #     cls.all_set_valued_inversions_tableaux(down_perm)  # load cache
-        #     old_set = cls.all_set_valued_inversions_tableaux(down_perm)
-        #     for old_iv in old_set:
-        #         max_val = max(old_iv._reverse_lookup.keys(), default=0)
-        #         old_perm_word = old_iv.perm_word
+        This enumerates candidate root-label assignments directly from the
+        defining axioms in :meth:`is_valid` (no WCGraph construction), then
+        filters by validity and target permutation.
 
-        #             new_dct = {**old_iv._dict}
-        #             new_dct = {Permutation.ref_product(d).act_root(*key): set(valset) for key, valset in new_dct.items()}
-        #             new_dct[(d, d + 1)] = {mxv}
-        #             dd = [ddd for ddd in perm.descents(zero_indexed=False) if ddd != d]
-        #                     new_iv = cls(new_dct)
-        #                     if new_iv.is_valid:
-        #                         # print("Warning invalid inversion tableau generated: ", new_iv)
-        #                         ret.add(new_iv)
+        The optional ``max_value`` bounds all labels by ``{1, ..., max_value}``.
+        """
+        perm = Permutation(perm)
+        if max_value is None:
+            max_value = perm.max_descent
+        if max_value < 0:
+            raise ValueError(f"max_value must be nonnegative, got {max_value}")
 
-        # for r2 in range(1, max_value + 1 - mxv):
-        #     for valset in itertools.combinations(list(range(mxv + 1, max_value + 1)), r2):
-        #         new_dct2 = {**new_dct}
-        #         new_dct2[(d, d + 1)] = set(valset) | {mxv}
-        #         new_iv = cls(new_dct2)
-        #         if not new_iv.is_valid:
-        #             # print("Warning invalid inversion tableau generated: ", new_iv)
-        #             continue
-        #         ret.add(new_iv)
-        #             new_dct = {}
-        #             for key, valset in old_iv._dict.items():
-        #                 new_dct[Permutation.ref_product(d).act_root(*key)] = valset
+        key = (perm, int(max_value))
+        if key in cls._sv_cache:
+            return cls._sv_cache[key]
 
-        #             first_new_dct = {**new_dct, (d, d + 1): {mxv}}
-        #             new_iv = cls(first_new_dct)
-        #             if new_iv.is_valid:
-        #                 # print("Warning invalid inversion tableau generated: ", new_iv)
-        #                 ret.add(new_iv)
-        #             for r in range(1, max_value + 1 - mxv):
-        #                 for valset in itertools.combinations(list(range(mxv + 1, max_value + 1)), r):
-        #                     new_dct2 = {**new_dct}
-        #                     new_dct2[(d, d + 1)] = set(valset) | {mxv}
-        #                     new_iv = cls(new_dct2)
-        #                     if not new_iv.is_valid:
-        #                         # print("Warning invalid inversion tableau generated: ", new_iv)
-        #                         continue
-        #                     ret.add(new_iv)
+        ret = set()
 
-        # if max_value == len(perm.trimcode):
-        #     cls._sv_cache[perm] = ret
-        # return ret
-        raise NotImplementedError("This is not implemented yet")
+        n = len(perm)
+        if n <= 1:
+            iv = cls({})
+            if iv.perm == perm and iv.is_valid:
+                ret.add(iv)
+            cls._sv_cache[key] = ret
+            return ret
+
+        labels = tuple(range(1, max_value + 1))
+
+        # Organize roots by second index. Axiom (2) is column-local and can be
+        # enforced while building each column assignment.
+        columns = []
+        for j in range(2, n + 1):
+            roots = [(i, j) for i in range(1, j)]
+            columns.append(roots)
+
+        def powerset(vals):
+            out = [frozenset()]
+            vals = list(vals)
+            for r in range(1, len(vals) + 1):
+                out.extend(frozenset(c) for c in combinations(vals, r))
+            return out
+
+        # Precompute allowed sets per root from axiom (1).
+        allowed_for_root = {}
+        for j in range(2, n + 1):
+            for i in range(1, j):
+                if j == i + 1:
+                    allowed_labels = tuple(v for v in labels if v <= i)
+                else:
+                    allowed_labels = labels
+                allowed_for_root[(i, j)] = powerset(allowed_labels)
+
+        # Enumerate each column with pairwise-disjoint assigned sets (axiom 2).
+        column_assignments = []
+        for roots in columns:
+            local = []
+
+            def build_col(idx, used, partial):
+                if idx == len(roots):
+                    local.append(dict(partial))
+                    return
+                root = roots[idx]
+                for st in allowed_for_root[root]:
+                    if used.intersection(st):
+                        continue
+                    partial[root] = st
+                    build_col(idx + 1, used.union(st), partial)
+                partial.pop(root, None)
+
+            build_col(0, set(), {})
+            column_assignments.append(local)
+
+        def backtrack_cols(cidx, current):
+            if cidx == len(column_assignments):
+                # Drop empty sets from the explicit dictionary representation.
+                compact = {r: s for r, s in current.items() if len(s) > 0}
+                iv = cls(compact)
+                if iv.is_valid:
+                    try:
+                        if iv.perm == perm:
+                            ret.add(iv)
+                    except ValueError:
+                        # Candidate root assignment may satisfy axioms checked by
+                        # is_valid yet fail the greedy simple-root extraction used
+                        # by perm_word; such candidates are discarded.
+                        pass
+                return
+
+            for col_dct in column_assignments[cidx]:
+                current.update(col_dct)
+                backtrack_cols(cidx + 1, current)
+                for r in col_dct:
+                    current.pop(r, None)
+
+        backtrack_cols(0, {})
+
+        cls._sv_cache[key] = ret
+        return ret
 
     @cached_property
     def perm(self):
