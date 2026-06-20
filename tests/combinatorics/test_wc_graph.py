@@ -27,6 +27,22 @@ def test_groth_match():
         direct = expand(grothendieck_poly(w, x, zz, beta), deep=True)
         assert expand(via_it - direct, deep=True) == S.Zero, f"Failed for {w}: {expand(via_it - direct, deep=True)=}"
 
+def test_set_seq_round_trip():
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult import Permutation
+    n = 5
+    for w in Permutation.all_permutations(n):
+        for wc_graph in WCGraph.all_wc_graphs(w, n - 1):
+            try:
+                wc_graph2 = WCGraph.from_reduced_compatible_set_sequence(*wc_graph.to_reduced_compatible_set_sequence(), length=len(wc_graph))
+            except Exception as e:
+                raise AssertionError(f"{wc_graph.to_reduced_compatible_set_sequence()} did not round trip from {wc_graph.perm_word}") from e
+            assert wc_graph == wc_graph2, f"Round trip failed for {w}: got {wc_graph2}, expected {wc_graph}"
+        # via_it = result
+        # direct = expand(grothendieck_poly(w, x, zz, beta), deep=True)
+        # assert expand(via_it - direct, deep=True) == S.Zero, f"Failed for {w}: {expand(via_it - direct, deep=True)=}"
+
+
 def test_pull_out_var_hecke_equation_holds():
     w = Permutation([1, 3, 2])
     for k in range(len(w)):

@@ -7,7 +7,7 @@ from .wc_graph import WCGraph
 
 class InversionsTableau:
     def __init__(self, _dict, *_, **__):
-        self._dict = {k: frozenset(v) if isinstance(v, set) else v  for k, v in _dict.items()}
+        self._dict = {k: frozenset(v) if isinstance(v, set) else v for k, v in _dict.items()}
         self._reverse_lookup = {}
         for k, v in self._dict.items():
             try:
@@ -58,63 +58,150 @@ class InversionsTableau:
 
     @classmethod
     def from_wc_graph(cls, wc):
+        word, seq = wc.to_reduced_compatible_set_sequence()
+        perm = wc.perm
         dct = {}
-        for i in range(len(wc.perm_word)):
-            key = wc.left_to_right_inversion(i)
-            dct[key] = dct.get(key, set())
-            dct[key].add(wc.left_to_right_inversion_coords(i)[0])
+        for i in range(len(word)):
+            dct[perm.right_root_at(i, word=word)] = frozenset(seq[i])
         return cls(dct)
 
     @cached_property
     def perm_word(self):
-        keys = list(self.iter_keys())
-        keys.reverse()
-        build_perm = Permutation([])
-        word = []
-        for key in keys:
-            the_root = (~build_perm).act_root(*key)
-            if the_root[1] < the_root[0]:
-                word.append(the_root[1])
-            else:
-                word.append(the_root[0])
-            # else:
-            if the_root[0] < the_root[1]:
-                build_perm = build_perm.swap(the_root[0] - 1, the_root[1] - 1)
+        root_dict = {root: set(v) for root, v in self._dict.items()}
+        ret_word = []
+        while root_dict:
+            max_pair = max([(root, v) for root, v in root_dict.items() if root[1] == root[0] + 1], key=lambda x: (max(x[1]), -x[0][1], x[0][0]))
+            letter = max_pair[0][0]
+            ret_word = [letter, *ret_word]
+            root_dict[max_pair[0]].remove(max(max_pair[1]))
+            if len(root_dict[max_pair[0]]) == 0:
+                root_dict = {Permutation([]).swap(letter - 1, letter).act_root(*root): v for root, v in root_dict.items() if root != max_pair[0]}
+        return tuple(ret_word)
 
-        return tuple(reversed(word))
-        # if not keys:
-        #     return ()
-        # print("DEBUG: ", keys)
-        # word_roots = []
-        # word_roots = [keys[0]]
-        # for key in keys[1:]:
-        #     word_roots = [*word_roots[:-1], Permutation([]).swap(key[0] - 1, key[1] - 1).act_root(*word_roots[-1]), key]
-        # print("DEBUG: ", word_roots)
-        # raise NotImplementedError("This is not fully implemented yet, and may be buggy. The idea is to iteratively apply root swaps to the keys to build the permutation word, but it needs more work.")
-        # while keys:
-        #     # print("Debug: ", keys)
-        #     key = keys.pop()
-        #     if key[1] != key[0] + 1:
-        #         raise ValueError("Invalid key: ", key)
-        #     the_swap = Permutation.ref_product(key[0])
-        #     # print("Debug: ", key, the_swap)
-        #     new_keys = []
-        #     swapping = True
-        #     for k in reversed(keys):
-        #         if k == key:
-        #             swapping = not swapping
-        #         if swapping:
-        #             new_keys = [the_swap.act_root(*k), *new_keys]
-        #         else:
-        #             new_keys = [k, *new_keys]
-        #     keys = new_keys
-        #     #keys = [the_swap.act_root(*k) if k != key else k for k in keys]
-        #     #keys = [the_swap.act_root(*k) for k in keys]
-        #     # print("Debug: ", keys)
-        #     result.append(key[0])
-        #     # print("Debug: ", result)
+    _sv_cache = {}  # noqa: RUF012
 
-        # return tuple(reversed(result))
+    def __eq__(self, other):
+        return type(self) is type(other) and self._dict == other._dict
+
+    @property
+    def is_valid(self):
+        try:
+            self.to_wc_graph()
+        except ValueError:
+            # import traceback
+            # traceback.print_exc()
+            # print("Invalid inversion tableau: ", self)
+            return False
+        return True
+        # import itertools
+        # if self.perm.inv <= 1:
+        #     return True
+
+        # if set(self._dict.keys()) != self.perm.inversion_set:
+        #     return False
+        # if sum(len(v) for v in self._dict.values()) != len(self.perm_word):
+        #     return False
+        # #bloated_inversion_set = set()
+        # smaller_iv_list = [InversionsTableau({k: min(v) for k, v in self._dict.items()}), InversionsTableau({k: max(v) for k, v in self._dict.items()})]
+        # for smaller_iv in smaller_iv_list:
+        #     for (root1, val1), (root2, val2) in itertools.combinations(smaller_iv._dict.items(), 2):
+        #         if root1[1] == root1[0] + 1 and val1 > root1[0]:
+        #             return False
+        #         if root2[1] == root2[0] + 1 and val2 > root2[0]:
+        #             return False
+
+        #         # if root1 != root2:
+        #         #     if root1[1] == root2[1] and val1 == val2:
+        #         #         return False
+        #         if root1[1] == root2[0]:
+        #             root3 = (root1[0], root2[1])
+        #             if not (val1 <= smaller_iv[root3] < val2 or val2 < smaller_iv[root3] <= val1):
+        #                 return False
+        #         #     # good = True
+        #         #     for (r3, val3) in bloated_inversion_set:
+        #         #         if r3 == root3:
+        #         #             if val1 == val3 and val2 > val3:
+        #         #                return False
+        #                     # if val3 > val1 and val3 > val2:
+        #                     #     return False
+        #             #     if r3 == root3:
+        #             #         if val1 == val3:
+        #             #             continue
+        #             #         if val2 < val3:
+        #             #             if not any(val1_1 >= val3 for r1, val1_1 in bloated_inversion_set if r1 == root1):
+        #             #                 good = False
+        #             #                 break
+        #             #         if val2 > val3:
+        #             #             if not any(val1_1 <= val3 for r1, val1_1 in bloated_inversion_set if r1 == root1):
+        #             #                 good = False
+        #             #                 break
+        #             #         if val2 == val3:
+        #             #             good = False
+        #             #             break
+        #             # if not good:
+        #             #     return False
+        # return True
+
+    @classmethod
+    def all_set_valued_inversions_tableaux(cls, perm, max_value=None):
+        # import itertools
+
+        # ret = set()
+        # if perm.inv == 0:
+        #     return {cls({})}
+        # if max_value is None:
+        #     max_value = len(perm.trimcode)
+        # if perm in cls._sv_cache:
+        #     return {iv for iv in cls._sv_cache[perm] if max(iv._reverse_lookup.keys(), default=0) <= max_value}
+        # for d in perm.descents(zero_indexed=False):
+        #     down_perm = perm.swap(d - 1, d)
+        #     cls.all_set_valued_inversions_tableaux(down_perm)  # load cache
+        #     old_set = cls.all_set_valued_inversions_tableaux(down_perm)
+        #     for old_iv in old_set:
+        #         max_val = max(old_iv._reverse_lookup.keys(), default=0)
+        #         old_perm_word = old_iv.perm_word
+
+        #             new_dct = {**old_iv._dict}
+        #             new_dct = {Permutation.ref_product(d).act_root(*key): set(valset) for key, valset in new_dct.items()}
+        #             new_dct[(d, d + 1)] = {mxv}
+        #             dd = [ddd for ddd in perm.descents(zero_indexed=False) if ddd != d]
+        #                     new_iv = cls(new_dct)
+        #                     if new_iv.is_valid:
+        #                         # print("Warning invalid inversion tableau generated: ", new_iv)
+        #                         ret.add(new_iv)
+
+        # for r2 in range(1, max_value + 1 - mxv):
+        #     for valset in itertools.combinations(list(range(mxv + 1, max_value + 1)), r2):
+        #         new_dct2 = {**new_dct}
+        #         new_dct2[(d, d + 1)] = set(valset) | {mxv}
+        #         new_iv = cls(new_dct2)
+        #         if not new_iv.is_valid:
+        #             # print("Warning invalid inversion tableau generated: ", new_iv)
+        #             continue
+        #         ret.add(new_iv)
+        #             new_dct = {}
+        #             for key, valset in old_iv._dict.items():
+        #                 new_dct[Permutation.ref_product(d).act_root(*key)] = valset
+
+        #             first_new_dct = {**new_dct, (d, d + 1): {mxv}}
+        #             new_iv = cls(first_new_dct)
+        #             if new_iv.is_valid:
+        #                 # print("Warning invalid inversion tableau generated: ", new_iv)
+        #                 ret.add(new_iv)
+        #             for r in range(1, max_value + 1 - mxv):
+        #                 for valset in itertools.combinations(list(range(mxv + 1, max_value + 1)), r):
+        #                     new_dct2 = {**new_dct}
+        #                     new_dct2[(d, d + 1)] = set(valset) | {mxv}
+        #                     new_iv = cls(new_dct2)
+        #                     if not new_iv.is_valid:
+        #                         # print("Warning invalid inversion tableau generated: ", new_iv)
+        #                         continue
+        #                     ret.add(new_iv)
+
+        # if max_value == len(perm.trimcode):
+        #     cls._sv_cache[perm] = ret
+        # return ret
+        raise NotImplementedError("This is not implemented yet")
 
     @cached_property
     def perm(self):
@@ -137,17 +224,32 @@ class InversionsTableau:
     def __hash__(self):
         return hash(tuple(sorted(self._dict.items())))
 
+    @cached_property
+    def reduced_word(self):
+        working_perm = Permutation([])
+        reduced_word = []
+        for a in self.perm_word:
+            if working_perm[a - 1] < working_perm[a]:
+                reduced_word.append(a)
+                working_perm = working_perm.swap(a - 1, a)
+        return tuple(reduced_word)
+
     def to_rc_graph(self):
         if not self.is_reduced:
             raise ValueError("Inversions tableau must be reduced to convert to RC graph")
         return RCGraph.from_reduced_compatible(self.perm_word, self.compatible_sequence)
 
     def to_wc_graph(self):
-        return WCGraph.from_word_compatible(self.perm_word, self.compatible_sequence)
+        set_seq = [self[self.perm.right_root_at(i, word=self.reduced_word)] for i in range(len(self.reduced_word))]
+        the_wc = WCGraph.from_reduced_compatible_set_sequence(self.reduced_word, set_seq)
+        if the_wc.perm != self.perm:
+            raise ValueError("Inversions tableau is not compatible with its own word")
+        return the_wc
 
     def polyvalue(self, x, y=None, *, beta=None, prop_beta=False):
         from schubmult import Gx
         from schubmult.symbolic import S
+
         if y is not None:
             raise NotImplementedError("This is not implemented yet")
         if beta is None:
@@ -155,7 +257,7 @@ class InversionsTableau:
         result = S.One
         overage = len(self.perm_word) - self.perm.inv
         for v, st in self._reverse_lookup.items():
-            result *= (x[v] ** len(st))
+            result *= x[v] ** len(st)
 
         if prop_beta:
             result *= beta**overage

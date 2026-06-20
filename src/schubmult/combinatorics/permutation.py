@@ -196,10 +196,22 @@ class Permutation(Printable):
             word = [*self.code_word]
         return Permutation._right_root_at(index, word)
 
+    def left_root_at(self, index, word=None):
+        if word is None:
+            word = [*self.code_word]
+        return Permutation._left_root_at(index, word)
+
     @staticmethod
     def _right_root_at(index, word):
         word_piece = word[index + 1 :]
         apply = ~Permutation.ref_product(*word_piece)
+        root = apply.act_root(word[index], word[index] + 1)
+        return root
+
+    @staticmethod
+    def _left_root_at(index, word):
+        word_piece = word[:index]
+        apply = Permutation.ref_product(*word_piece)
         root = apply.act_root(word[index], word[index] + 1)
         return root
 

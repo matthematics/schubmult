@@ -178,18 +178,60 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 seq.append(i + 1)
         return tuple(seq)
 
+    def to_reduced_compatible_set_sequence(self):
+        word = []
+        seq = self.compatible_sequence
+        set_seq = []
+        working_perm = Permutation([])
+        for i, letter in enumerate(self.perm_word):
+            if working_perm[letter - 1] > working_perm[letter]:
+                for root_index in range(len(word)):
+                    root = working_perm.right_root_at(root_index, word=word)
+                    if root == (letter, letter + 1):
+                        set_seq[root_index].add(seq[i])
+                        break
+            else:
+                working_perm = working_perm.swap(letter - 1, letter)
+                word.append(letter)
+                set_seq.append({seq[i]})
+        return tuple(word), tuple(tuple(sorted(s)) for s in set_seq)
+
     @classmethod
-    def from_word_compatible(cls, word, seq, length = None):
+    def from_reduced_compatible_set_sequence(cls, word, set_seq, length=None):
+        ret_word = []
+        compat_seq = []
+        if len(word) != len(set_seq):
+            raise ValueError("Word and set sequence must have the same length")
+        working_set_seq = [set(s) for s in set_seq]
+        root_dict = {}
+        for i in range(len(word)):
+            root_dict[Permutation._right_root_at(i, word=word)] = working_set_seq[i]
+
+        while root_dict:
+            max_pair = max([(root, v) for root, v in root_dict.items() if root[1] == root[0] + 1], key=lambda x: (max(x[1]), -x[0][1], x[0][0]))
+            letter = max_pair[0][0]
+            ret_word = [letter, *ret_word]
+
+            compat_seq += [max(max_pair[1])]
+            root_dict[max_pair[0]].remove(max(max_pair[1]))
+            if len(root_dict[max_pair[0]]) == 0:
+                # del root_dict[max_pair[0]]
+                root_dict = {Permutation([]).swap(letter - 1, letter).act_root(*root): v for root, v in root_dict.items() if root != max_pair[0]}
+
+        return cls.from_word_compatible(ret_word, sorted(compat_seq), length=length)
+
+    @classmethod
+    def from_word_compatible(cls, word, seq, length=None):
         if length is None:
-            length = max(seq)
-        if length < max(seq):
+            length = max(seq, default=0)
+        if length < max(seq, default=0):
             raise ValueError("Length must be at least the maximum value in the sequence")
         if len(word) != len(seq):
             raise ValueError("Word and sequence must have the same length")
         if any(seq[i] > seq[i + 1] for i in range(len(seq) - 1)):
             raise ValueError("Sequence must be weakly increasing")
-        if any(word[i] < word[i+1] and seq[i] == seq[i + 1] for i in range(len(seq) - 1)):
-            raise ValueError(f"{word} is not compatible with {seq}")
+        if any(word[i] <= word[i + 1] and seq[i] == seq[i + 1] for i in range(len(seq) - 1)):
+            raise ValueError(f"{seq} is not compatible with {word}")
         result = [[] for _ in range(length)]
         for i in range(len(word)):
             result[seq[i] - 1] = [*result[seq[i] - 1], word[i]]
@@ -211,6 +253,10 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         coords = self.left_to_right_inversion_coords(index)
         return self.right_root_at(*coords)
 
+    def left_to_right_hecke_inversion(self, index: int) -> tuple[int, int]:
+        coords = self.left_to_right_inversion_coords(index)
+        return self.right_hecke_root_at(*coords)
+
     def right_root_at(self, i: int, j: int) -> tuple[int, int]:
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
@@ -221,8 +267,24 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         word_piece = list(self.perm_word[index + 1 :])
         if len(word_piece) == 0:
             return (i + j - 1, i + j)
+        apply = ~Permutation.ref_product(*word_piece)
+        ret = apply.act_root(i + j - 1, i + j)
+        if ret[0] > ret[1]:
+            ret = (ret[1], ret[0])
+        return ret
+
+    def right_hecke_root_at(self, i: int, j: int) -> tuple[int, int]:
+        if i <= 0 or j <= 0:
+            raise IndexError("i and j must be positive")
+        index = 0
+        for row_index in range(i - 1):
+            index += len(self[row_index])
+        index += self[i - 1].index(i + j - 1)
+        word_piece = list(self.perm_word[index + 1 :])
+        if len(word_piece) == 0:
+            return (i + j - 1, i + j)
         apply = ~Permutation.hecke_ref_product(*word_piece)
-        ret =  apply.act_root(i + j - 1, i + j)
+        ret = apply.act_root(i + j - 1, i + j)
         if ret[0] > ret[1]:
             ret = (ret[1], ret[0])
         return ret
