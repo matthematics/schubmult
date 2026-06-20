@@ -12,6 +12,9 @@ from schubmult.utils._grid_print import GridPrint
 
 #from schubmult.utils.perm_utils import _is_compatible
 
+def _is_row_root(row: int, root: tuple[int, int]) -> bool:
+    return row is None or (root[0] <= row and root[1] > row)
+
 def _is_compatible(compat_seq, word):
     """Check if compat_seq is compatible with word, i.e. for each prefix of word, the corresponding prefix of compat_seq has all distinct entries."""
     if len(compat_seq) != len(word):
@@ -290,34 +293,39 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
     def right_root_at(self, i: int, j: int) -> tuple[int, int]:
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
-        index = 0
-        for row_index in range(i - 1):
-            index += len(self[row_index])
-        index += self[i - 1].index(i + j - 1)
-        word_piece = list(self.perm_word[index + 1 :])
-        if len(word_piece) == 0:
-            return (i + j - 1, i + j)
-        apply = ~Permutation.ref_product(*word_piece)
-        ret = apply.act_root(i + j - 1, i + j)
-        if ret[0] > ret[1]:
-            ret = (ret[1], ret[0])
-        return ret
+        if len(self.perm_word) > 0:
+            index = self.bisect_left_coords_index(i, j)
+            if index < len(self.perm_word):
+                if self.left_to_right_inversion_coords(index) == (i, j):
+                    return self.perm.right_root_at(index, word=self.perm_word)
+                word_piece = list(self.perm_word[index:])
+            else:
+                word_piece = []
+            refl = ~Permutation.ref_product(*word_piece)
+            result = refl.act_root(i + j - 1, i + j)
+
+        else:
+            result = (i + j - 1, i + j)
+        return result
 
     def right_hecke_root_at(self, i: int, j: int) -> tuple[int, int]:
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
-        index = 0
-        for row_index in range(i - 1):
-            index += len(self[row_index])
-        index += self[i - 1].index(i + j - 1)
-        word_piece = list(self.perm_word[index + 1 :])
-        if len(word_piece) == 0:
-            return (i + j - 1, i + j)
-        apply = ~Permutation.hecke_ref_product(*word_piece)
-        ret = apply.act_root(i + j - 1, i + j)
-        if ret[0] > ret[1]:
-            ret = (ret[1], ret[0])
-        return ret
+        if len(self.perm_word) > 0:
+            index = self.bisect_left_coords_index(i, j)
+            if index < len(self.perm_word):
+                if self.left_to_right_inversion_coords(index) == (i, j):
+                    return self.perm.right_hecke_root_at(index, word=self.perm_word)
+                word_piece = list(self.perm_word[index:])
+            else:
+                word_piece = []
+            refl = ~Permutation.hecke_ref_product(*word_piece)
+            result = refl.act_root(i + j - 1, i + j)
+
+        else:
+            result = (i + j - 1, i + j)
+        return result
+
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False) -> Expr:
         if crystal:
@@ -340,6 +348,22 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         else:
             ret *= beta ** (len(self.perm_word))
         return ret
+
+    @cache
+    def bisect_left_coords_index(self, row: int, col: int, lo: int = 0, hi: int | None = None) -> int:
+        from bisect import bisect_left, bisect_right  # noqa: F401
+
+        if hi is None:
+            hi = len(self.perm_word)
+
+        while lo < hi:
+            mid = (lo + hi) // 2
+            i, j = self.left_to_right_inversion_coords(mid)
+            if i < row or (i == row and j > col):
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
 
     @cache
     def zero_out_last_row(self) -> WCGraph:
@@ -443,22 +467,47 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 if len(working[i]) < target_row_weights[i]:
                     diffs.extend([i + 1] * (target_row_weights[i] - len(working[i])))
             #diffs = [target_row_weights[i] - len(working[i]) for i in range(len(working))]
-            rc = self._snap_reduced()
-            rc2 = rc.pieri_insert(len(self) - 1, diffs)
+            # rc = self._snap_reduced()
+            working2 = working.resize(len(self))
+            col = 1
+            while working2.perm.max_descent != len(self):
+                working2 = WCGraph([*working, tuple(range(len(self) + col - 1, len(self) - 1, - 1))])
+                col += 1
+            working2 = working2.upieri_insert(len(self), diffs).resize(len(self) - 1).resize(len(self)).zero_out_last_row()
+            #working = WCGraph(working2[:-1])
+            return working2
 
-            red_word2, compat2 = rc2.as_reduced_compatible()
-            index1 = 0
-            index2 = 0
-            new_set_seq = []
-            while index2 < len(red_word2):
-                if index1 < len(red_word) and min(exist_compat[index1]) == compat2[index2]:
-                    new_set_seq.append(exist_compat[index1])
-                    index1 += 1
-                    index2 += 1
-                else:
-                    new_set_seq.append({compat2[index2]})
-                    index2 += 1
-            working = WCGraph.from_reduced_compatible_set_sequence(red_word2, new_set_seq)
+            # red_word2, compat2 = rc2.as_reduced_compatible()
+            # word = []
+            # seq = exist_compat
+            # set_seq = []
+            # working_perm = Permutation([])
+            # working_perm2 = Permutation([])
+            # for i, letter in enumerate(red_word2):
+            #     if working_perm[letter - 1] > working_perm[letter]:
+            #         for root_index in range(len(word)):
+            #             root = working_perm.right_root_at(root_index, word=word)
+            #             if root == (letter, letter + 1):
+            #                 set_seq[root_index].add(seq[i])
+            #                 break
+            #     else:
+            #         working_perm = working_perm.swap(letter - 1, letter)
+            #         working_perm2 = working_perm2.swap(letter - 1, letter)
+            #         word.append(letter)
+            #         set_seq.append({seq[i]})
+        # return tuple(word), tuple(tuple(sorted(s)) for s in set_seq)
+            # index1 = 0
+            # index2 = 0
+            # new_set_seq = []
+            # while index2 < len(red_word2):
+            #     if index1 < len(red_word) and min(exist_compat[index1]) == compat2[index2]:
+            #         new_set_seq.append(exist_compat[index1])
+            #         index1 += 1
+            #         index2 += 1
+            #     else:
+            #         new_set_seq.append({compat2[index2]})
+            #         index2 += 1
+            # working = WCGraph.from_reduced_compatible_set_sequence(red_word2, new_set_seq)
             # raise ValueError(
             #     f"Failed to preserve row weights in WCGraph.zero_out_last_row: expected {target_row_weights}, got {tuple(len(row) for row in working)}",
             # )
@@ -473,6 +522,185 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
 
     def product(self, other: SchubertMonomialGraph) -> dict[WCGraph, int]:
         raise NotImplementedError("product is implemented in RCGraph")
+
+    def _upieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None, left=False):
+        working_rc = self
+        if descent is not None and row > descent:
+            raise ValueError("All rows must be less than or equal to descent")
+
+        i = start_index
+        new_reflections = []  # Track reflections added in THIS call
+
+        if i == -1:
+            if backwards or (not backwards and left):
+                i = 0
+            else:
+                i = max(self[row - 1], default=0) + descent + 5
+        num_done = 0
+        flag = True
+        attempts_without_progress = 0
+        last_num_done = -1
+        max_attempts = 100
+        while num_done < num_times:
+            if num_done == last_num_done:
+                attempts_without_progress += 1
+            last_num_done = num_done
+            if attempts_without_progress > max_attempts:
+                raise ValueError(
+                    f"Pieri insertion made no progress after {max_attempts} attempts ({row=}, {descent=}, {num_times=}, {left=}, {backwards=})",
+                )
+            if i <= 1 and (not backwards or (backwards and left)):
+                i = working_rc.cols + descent + 5
+            if not backwards or (backwards and left):
+                i -= 1
+            else:
+                i += 1
+            flag = False
+
+            if not working_rc.has_element(row, i):
+                if left:
+                    a, b = working_rc.left_root_at(row, i)
+                else:
+                    a, b = working_rc.right_root_at(row, i)
+                if a < b:
+                    flag = False
+                    if _is_row_root(descent, (a, b)) and b not in dict_by_b:
+                        working_rc = working_rc.toggle_ref_at(row, i)
+                        dict_by_a[a] = dict_by_a.get(a, set())
+                        dict_by_a[a].add(b)
+                        dict_by_b[b] = a
+                        if reflection_rows is not None and target_row is not None:
+                            reflection_rows[(a, b)] = target_row
+                            new_reflections.append((a, b))
+                        flag = True
+                    elif a in dict_by_b and b > descent and b not in dict_by_b:
+                        working_rc = working_rc.toggle_ref_at(row, i)
+                        dict_by_a[dict_by_b[a]].add(b)
+                        dict_by_b[b] = dict_by_b[a]
+                        if reflection_rows is not None and target_row is not None:
+                            reflection_rows[(dict_by_b[a], b)] = target_row
+                            new_reflections.append((dict_by_b[a], b))
+                        flag = True
+                    elif descent is None:
+                        working_rc = working_rc.toggle_ref_at(row, i)
+                        flag = True
+                if flag:
+                    num_done += 1
+                    attempts_without_progress = 0
+                if not left and row > 1 and not working_rc.is_valid:
+                    working_rc = working_rc._upieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, left=left)  # minus one?
+                if left and row < len(working_rc) and not working_rc.is_valid:
+                    working_rc = working_rc._upieri_rectify(row + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, left=left)
+        return working_rc, new_reflections
+
+    def _upieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None, left=False):
+        working_rc = self
+        if working_rc.is_valid:
+            return working_rc
+        if row_below == 0 and not left:
+            assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
+            return working_rc
+        if left and row_below > len(working_rc):
+            if working_rc.is_valid:
+                return working_rc
+            raise ValueError(f"Left upieri rectify exhausted rows without reaching validity ({row_below=}, {len(working_rc)=})")
+        extra = descent if descent is not None else 0
+        the_range = range(1, working_rc.cols + extra + 5)
+        if left:
+            the_range = reversed(the_range)
+        for j in the_range:
+            flag = False
+            if working_rc.is_valid:
+                return working_rc
+
+            if working_rc.has_element(row_below, j):
+                if left:
+                    a, b = working_rc.left_root_at(row_below, j)
+                else:
+                    a, b = working_rc.right_root_at(row_below, j)
+
+                top, bottom = max(a, b), min(a, b)
+
+                if a < b:
+                    continue
+
+                if bottom in dict_by_a and top in dict_by_a[bottom]:
+                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                    dict_by_a[bottom].remove(top)
+                    if len(dict_by_a[bottom]) == 0:
+                        del dict_by_a[bottom]
+                    del dict_by_b[top]
+                    working_rc = new_rc
+                    flag = True
+
+                elif bottom in dict_by_b and top in dict_by_b and dict_by_b[top] == dict_by_b[bottom]:
+                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                    dict_by_a[dict_by_b[bottom]].remove(top)
+
+                    if len(dict_by_a[dict_by_b[top]]) == 0:
+                        del dict_by_a[dict_by_b[top]]
+                    del dict_by_b[top]
+                    flag = True
+                    working_rc = new_rc
+                elif descent is None:
+                    working_rc = working_rc.toggle_ref_at(row_below, j)
+                    flag = True
+                else:
+                    raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
+                if flag:
+                    working_rc, _ = working_rc._upieri_insert_row(
+                        row_below,
+                        descent,
+                        dict_by_a,
+                        dict_by_b,
+                        num_times=1,
+                        backwards=backwards,
+                        reflection_rows=reflection_rows,
+                        target_row=target_row,
+                        left=left,
+                    )
+        if left:
+            return working_rc._upieri_rectify(row_below + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row, left=left)
+        return working_rc._upieri_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row, left=left)
+
+    # VERIFY
+    def upieri_insert(self, descent, rows, return_reflections=False, backwards=True, left=False):
+        dict_by_a = {}
+        dict_by_b = {}
+        reflection_rows = {}  # Track which row each reflection was added to
+        # row is descent
+        # inserting times
+
+        working_rc = self._rebuild([*self])
+        if len(rows) == 0:
+            if return_reflections:
+                return working_rc, ()
+            return self
+        rows_grouping = {}
+
+        for r in rows:
+            rows_grouping[r] = rows_grouping.get(r, 0) + 1
+        if max(rows) > len(working_rc):
+            working_rc = working_rc.extend(max(rows) - len(working_rc))
+        rows = sorted(rows, reverse=not left)
+        reflections = []
+        for row in sorted(rows_grouping.keys(), reverse=not left):
+            num_times = rows_grouping[row]
+            last_working_rc = working_rc
+            working_rc, new_reflections = working_rc._upieri_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)
+            reflections += new_reflections
+            if (not left and row > 1) and not working_rc.is_valid:
+                working_rc = working_rc._upieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)  # minus one?
+            elif (left and row < len(working_rc)) and not working_rc.is_valid:
+                working_rc = working_rc._upieri_rectify(row + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)
+            try:
+                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
+            except AssertionError:
+                raise
+        if return_reflections:
+            # Build list of (row, reflection) pairs
+            return working_rc, tuple(reflections)
+        return working_rc
 
     @staticmethod
     def _strict_decreasing_reflection_rows(max_reflection: int, k: int) -> tuple[tuple[int, ...], ...]:

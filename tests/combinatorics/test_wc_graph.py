@@ -37,10 +37,10 @@ def test_groth_transition():
     
     beta = Symbol("β")
     zz = ZeroGeneratingSet()
-
-    for w in Permutation.all_permutations(4):
+    n = 5
+    for w in Permutation.all_permutations(n):
         result = S.Zero
-        for wc_graph in WCGraph.all_wc_graphs(w, 3):
+        for wc_graph in WCGraph.all_wc_graphs(w, n - 1):
             if len(wc_graph[-1]) > 0:
                 continue
             new_wc_graph = wc_graph.zero_out_last_row()

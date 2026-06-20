@@ -1879,9 +1879,11 @@ class RCGraph(WCGraph, CrystalGraph):
     def zero_out_last_row(self) -> RCGraph:
         # this is important!
         # transition formula
-        assert len(self.perm.trimcode) <= len(self), (
-            f"Cannot zero out last row of RC graph with fewer rows than the last descent of the permutation, got {len(self)=}, {len(self.perm.trimcode)=}, {self.perm=}"
-        )
+        # assert len(self.perm.trimcode) <= len(self), (
+        #     f"Cannot zero out last row of RC graph with fewer rows than the last descent of the permutation, got {len(self)=}, {len(self.perm.trimcode)=}, {self.perm=}"
+        # )
+        if len(self.perm.trimcode) > len(self):
+            return self.resize(len(self.perm.trimcode)).vertical_cut(len(self) - 1)[0]
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
