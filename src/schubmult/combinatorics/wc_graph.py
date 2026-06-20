@@ -215,7 +215,6 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
             compat_seq += [max(max_pair[1])]
             root_dict[max_pair[0]].remove(max(max_pair[1]))
             if len(root_dict[max_pair[0]]) == 0:
-                # del root_dict[max_pair[0]]
                 root_dict = {Permutation([]).swap(letter - 1, letter).act_root(*root): v for root, v in root_dict.items() if root != max_pair[0]}
 
         return cls.from_word_compatible(ret_word, sorted(compat_seq), length=length)

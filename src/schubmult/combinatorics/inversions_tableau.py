@@ -226,22 +226,38 @@ class InversionsTableau:
 
     @cached_property
     def reduced_word(self):
+        word = []
+        seq = self.compatible_sequence
+        set_seq = []
         working_perm = Permutation([])
-        reduced_word = []
-        for a in self.perm_word:
-            if working_perm[a - 1] < working_perm[a]:
-                reduced_word.append(a)
-                working_perm = working_perm.swap(a - 1, a)
-        return tuple(reduced_word)
+        for i, letter in enumerate(self.perm_word):
+            if working_perm[letter - 1] > working_perm[letter]:
+                for root_index in range(len(word)):
+                    root = working_perm.right_root_at(root_index, word=word)
+                    if root == (letter, letter + 1):
+                        set_seq[root_index].add(seq[i])
+                        break
+            else:
+                working_perm = working_perm.swap(letter - 1, letter)
+                word.append(letter)
+                set_seq.append({seq[i]})
+        return tuple(word)#, tuple(tuple(sorted(s)) for s in set_seq)
+        # working_perm = Permutation([])
+        # reduced_word = []
+        # for a in self.perm_word:
+        #     if working_perm[a - 1] < working_perm[a]:
+        #         reduced_word.append(a)
+        #         working_perm = working_perm.swap(a - 1, a)
+        # return tuple(reduced_word)
 
-    def to_rc_graph(self):
+    def to_rc_graph(self, length=None):
         if not self.is_reduced:
             raise ValueError("Inversions tableau must be reduced to convert to RC graph")
-        return RCGraph.from_reduced_compatible(self.perm_word, self.compatible_sequence)
+        return RCGraph.from_reduced_compatible(self.perm_word, self.compatible_sequence, length=length)
 
-    def to_wc_graph(self):
+    def to_wc_graph(self, length=None):
         set_seq = [self[self.perm.right_root_at(i, word=self.reduced_word)] for i in range(len(self.reduced_word))]
-        the_wc = WCGraph.from_reduced_compatible_set_sequence(self.reduced_word, set_seq)
+        the_wc = WCGraph.from_reduced_compatible_set_sequence(self.reduced_word, set_seq, length=length)
         if the_wc.perm != self.perm:
             raise ValueError("Inversions tableau is not compatible with its own word")
         return the_wc
