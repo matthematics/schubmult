@@ -197,16 +197,9 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         return tuple(word), tuple(tuple(sorted(s)) for s in set_seq)
 
     @classmethod
-    def from_reduced_compatible_set_sequence(cls, word, set_seq, length=None):
+    def _from_root_dict(cls, root_dict: dict[tuple[int, int], set[int]], length: int | None = None) -> WCGraph:
         ret_word = []
         compat_seq = []
-        if len(word) != len(set_seq):
-            raise ValueError("Word and set sequence must have the same length")
-        working_set_seq = [set(s) for s in set_seq]
-        root_dict = {}
-        for i in range(len(word)):
-            root_dict[Permutation._right_root_at(i, word=word)] = working_set_seq[i]
-
         while root_dict:
             max_pair = max([(root, v) for root, v in root_dict.items() if root[1] == root[0] + 1], key=lambda x: (max(x[1]), -x[0][1], x[0][0]))
             letter = max_pair[0][0]
@@ -218,6 +211,18 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 root_dict = {Permutation([]).swap(letter - 1, letter).act_root(*root): v for root, v in root_dict.items() if root != max_pair[0]}
 
         return cls.from_word_compatible(ret_word, sorted(compat_seq), length=length)
+
+    @classmethod
+    def from_reduced_compatible_set_sequence(cls, word, set_seq, length=None):
+        if len(word) != len(set_seq):
+            raise ValueError("Word and set sequence must have the same length")
+        working_set_seq = [set(s) for s in set_seq]
+        root_dict = {}
+        for i in range(len(word)):
+            root_dict[Permutation._right_root_at(i, word=word)] = working_set_seq[i]
+
+        return cls._from_root_dict(root_dict, length=length)
+
 
     @classmethod
     def from_word_compatible(cls, word, seq, length=None):

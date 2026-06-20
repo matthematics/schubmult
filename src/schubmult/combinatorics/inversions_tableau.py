@@ -250,17 +250,17 @@ class InversionsTableau:
         #         working_perm = working_perm.swap(a - 1, a)
         # return tuple(reduced_word)
 
+    @property
+    def is_set_valued(self):
+        return any(isinstance(v, set | frozenset) for v in self._dict.values())
+
     def to_rc_graph(self, length=None):
-        if not self.is_reduced:
+        if self.is_set_valued:
             raise ValueError("Inversions tableau must be reduced to convert to RC graph")
         return RCGraph.from_reduced_compatible(self.perm_word, self.compatible_sequence, length=length)
 
     def to_wc_graph(self, length=None):
-        set_seq = [self[self.perm.right_root_at(i, word=self.reduced_word)] for i in range(len(self.reduced_word))]
-        the_wc = WCGraph.from_reduced_compatible_set_sequence(self.reduced_word, set_seq, length=length)
-        if the_wc.perm != self.perm:
-            raise ValueError("Inversions tableau is not compatible with its own word")
-        return the_wc
+        return WCGraph._from_root_dict({root: set(v) for root, v in self._dict.items()}, length=length)
 
     def polyvalue(self, x, y=None, *, beta=None, prop_beta=False):
         from schubmult import Gx
