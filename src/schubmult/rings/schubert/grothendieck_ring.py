@@ -65,6 +65,14 @@ class GrothendieckRing(BaseSchubertRing):
     def beta(self):
         return self._beta
 
+    def from_expr(self, expr):
+        from schubmult.symbolic.poly.schub_poly import schub_dict_to_groth_dict
+
+        from .schubert_ring import SingleSchubertRing
+        ring = SingleSchubertRing(self.genset)
+        schub_dict = ring.from_expr(expr)
+        return self.from_dict(schub_dict_to_groth_dict({Permutation([]): 1}, schub_dict, self.genset, self._zz, self._beta))
+
     @cache
     def cached_product(self, u, v, basis2):
         if self == basis2:
@@ -101,6 +109,8 @@ class GrothendieckRing(BaseSchubertRing):
         return elem
 
     def from_dict(self, dct):
+        from schubmult.symbolic import sympify
+        dct = {k: v for k, v in dct.items() if sympify(v).expand() != 0}
         return self.dtype(dct)
 
 

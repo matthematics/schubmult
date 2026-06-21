@@ -548,7 +548,7 @@ def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, beta):
 
 
 @cache
-def _strip_isobaric(index, length, genset, beta):
+def _strip_isobaric(index, length, genset, beta, backwards=False):
     from schubmult import uncode
     from schubmult.abc import E
     from schubmult.rings.schubert.nil_hecke import NilHeckeRing
@@ -556,7 +556,10 @@ def _strip_isobaric(index, length, genset, beta):
 
     ring = SingleSchubertRing(genset)
     nh = NilHeckeRing(genset)
-    operator = nh(uncode([0] * (index - 1) + [length]))
+    if backwards:
+        operator = nh(~uncode([0] * (index - 1) + [length]))
+    else:
+        operator = nh(uncode([0] * (index - 1) + [length]))
     poly = (beta**length) * E(length, length, genset[index + 1 :], [-beta**(-1)])
     schub = ring.from_expr(poly)
     return operator * schub
@@ -581,33 +584,63 @@ def groth_elem_as_schub_dict(perm, genset, beta):
     bacon = ((~perm) * w0).trimcode
     for i in range(len(bacon) - 1, -1, -1):
         if bacon[i] != 0:
-            schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta).apply(schub_elem)
+            schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta, backwards=False).apply(schub_elem)
     return {k: v for k, v in schub_elem.items() if v != S.Zero}
 
 
 def groth_mul_full(perm_dict, p2, x, zz, beta):
-    from schubmult.rings.polynomial_algebra import ElemSymPolyBasis
-    from schubmult.rings.polynomial_algebra.schubert_poly_basis import SchubertPolyBasis
-    from schubmult.utils.perm_utils import add_perm_dict
-    from schubmult.utils.schub_lib import groth_pieri_mul
 
     p2 = pl.Permutation(p2)
-    embed_length = max(10, len(p2.trimcode))
     schub_dict = groth_elem_as_schub_dict(p2, x, beta)
 
-    schub_poly_basis = SchubertPolyBasis(x)
-    the_elem_dict = schub_poly_basis.transition_elementary({(perm, embed_length): coeff for perm, coeff in schub_dict.items()}, ElemSymPolyBasis(x))
+    return schub_dict_to_groth_dict(perm_dict, schub_dict, x, zz, beta)
+
+def schub_dict_to_groth_dict(base_groth, schub_dict, x, zz, beta):
+
+    #schub_elem_sym_as_groth_elem_sym_dict
+
+    import sympy
+
+    from schubmult import FactorialElemSym, Sx
+    from schubmult.utils.perm_utils import add_perm_dict
+    from schubmult.utils.schub_lib import groth_pieri_mul
+    #schub_poly_basis = SchubertPolyBasis(x)
+    #the_elem_dict = schub_poly_basis.transition_elementary({(perm, max()): coeff for perm, coeff in schub_dict.items()}, ElemSymPolyBasis(x))
+    schub_elem_dict = Sx.from_dict(schub_dict).in_CEM_basis().expand().as_coefficients_dict()
 
     ret = {}
-    for p1, coeff0 in perm_dict.items():
-        for (elem_comp, length), coeff in the_elem_dict.items():
-            assert len(elem_comp) <= 10, f"unexpected elem_comp length {len(elem_comp)} {elem_comp=} {the_elem_dict=}"
+    #print("DEBUG: ", schub_elem_dict)
+    for p1, coeff0 in base_groth.items():
+        for expr, coeff in schub_elem_dict.items():
+            #assert len(elem_comp) <= 10, f"unexpected elem_comp length {len(elem_comp)} {elem_comp=} {the_elem_dict=}"
             # new_ret = {}
             this_term = {p1: coeff0 * coeff}
-            for index, degree in enumerate(elem_comp, start=1):
+
+            def _process_expr_iter(expr0):
+                if isinstance(sympy.sympify(expr0), FactorialElemSym):
+                    yield sympy.sympify(expr0).degree, sympy.sympify(expr0).numvars
+                    return
+                if isinstance(expr0, Mul):
+                    for a in expr0.args:
+                        yield from _process_expr_iter(a)
+                    return
+                if isinstance(expr0, Pow):
+                    for _ in range(int(expr0.args[1])):
+                        yield from _process_expr_iter(expr0.args[0])
+                    return
+                # if expr0 == 1:
+                #     return
+                # raise ValueError(f"unexpected expr {expr0} of type {type(expr0)}")
+                yield expr0
+            #if isinstance(expr, Mul):
+            for val in _process_expr_iter(expr):
+                if not isinstance(val, tuple):
+                    this_term = {k: coeff * val for k, coeff in this_term.items()}
+                    continue
+                degree, numvars = val
                 if degree == 0:
                     continue
-                dctt = schub_elem_sym_to_groth_elem_sym_dict(degree, index, x, zz, beta)
+                dctt = schub_elem_sym_to_groth_elem_sym_dict(degree, numvars, x, zz, beta)
                 build = {}
                 for pair, coeff3 in dctt.items():
                     # new_ret = add_perm_dict_with_coeff(new_ret, groth_pieri_mul(this_term, *pair), coeff=coeff3)
@@ -617,8 +650,6 @@ def groth_mul_full(perm_dict, p2, x, zz, beta):
             # the_elem_dict[elem_comp] = coeff * beta ** sum(elem_comp)
             ret = add_perm_dict(ret, this_term)
     return ret
-
-
 
 if __name__ == "__main__":
     from symengine import Symbol, expand

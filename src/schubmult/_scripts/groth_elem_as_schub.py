@@ -55,7 +55,7 @@ if __name__ == "__main__":
         for i in range(len(bacon) - 1, -1, -1):
             if bacon[i] != 0:
                 schub_elem = strip_isobaric(i + 1, bacon[i]).apply(schub_elem)
-        assert expand(schub_elem.as_polynomial() - grothendieck_poly(perm, Sx.genset, coeff_genset, Gx._beta)) == S.Zero, f"Failed for {perm}: {expand(schub_elem.as_polynomial() - grothendieck_poly(perm, Sx.genset, coeff_genset, Gx._beta))=}"
+        assert Gx.from_expr(schub_elem.as_polynomial())==Gx(perm), f"Failed for {perm}: {Gx.from_expr(schub_elem.as_polynomial())=}, {Gx(perm)=}"
         print("Success ", perm)
 
 ## LEFT ISOBARIC DIV DIFF 1 - beta + beta y_i partial_i
