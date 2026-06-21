@@ -28,6 +28,7 @@ _lazy_exports = {
     "WCGraph": "schubmult.combinatorics.wc_graph",
     "AntiRCGraph": "schubmult.combinatorics.anti_rc_graph",
     "BoundedRCFactorAlgebra": "schubmult.rings.combinatorial.bounded_rc_factor_algebra",
+    "BoundedWCFactorAlgebra": "schubmult.rings.combinatorial.bounded_wc_factor_algebra",
     "ChuteMoveElement": "schubmult.combinatorics.chute_move_element",
     "ChuteMoveRing": "schubmult.rings.combinatorial.chute_move_ring",
     "BPD": "schubmult.combinatorics.bpd",

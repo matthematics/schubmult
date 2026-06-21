@@ -194,7 +194,7 @@ class NilHeckeRing(Ring, CompositeDomain):
     def to_sympy(self, elem):
         return elem.as_expr()
 
-    def isobaric(self, perm, groth=False):
+    def isobaric(self, perm, groth=False, *, groth_beta = None):
         perm = Permutation(perm)
         if perm.inv == 0:
             return self.one
@@ -202,7 +202,10 @@ class NilHeckeRing(Ring, CompositeDomain):
         elem = self.isobaric(perm.swap(index, index + 1), groth=groth)
         elem = elem * self.from_dict({Permutation([]).swap(index, index + 1): S.One})
         if groth:
-            return self.mul(elem, (1 - self.genset[index + 1]))
+            if groth_beta is None:
+                from schubmult import Gx
+                groth_beta = Gx._beta
+            return self.mul(elem, (1 + groth_beta*self.genset[index + 2]))
         return self.mul(elem, self.genset[index + 1])
 
     def g_isobaric(self, perm):

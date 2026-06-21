@@ -547,14 +547,57 @@ def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, beta):
     return ret
 
 
+@cache
+def _strip_isobaric(index, length, genset, beta):
+    from schubmult import uncode
+    from schubmult.abc import E
+    from schubmult.rings.schubert.nil_hecke import NilHeckeRing
+    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+
+    ring = SingleSchubertRing(genset)
+    nh = NilHeckeRing(genset)
+    operator = nh(uncode([0] * (index - 1) + [length]))
+    poly = (beta**length) * E(length, length, genset[index + 1 :], [-beta**(-1)])
+    schub = ring.from_expr(poly)
+    return operator * schub
+
+
+@cache
+def groth_elem_as_schub_dict(perm, genset, beta):
+    """Expand a Grothendieck basis element G_perm into Schubert basis terms.
+
+    Uses the strip-isobaric construction from the groth_elem_as_schub method.
+    Returns ``{Permutation: coeff}``.
+    """
+    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+
+    perm = pl.Permutation(perm)
+    ring = SingleSchubertRing(genset)
+    if perm.inv == 0:
+        return {pl.Permutation([]): S.One}
+
+    w0 = pl.Permutation.w0(len(perm))
+    schub_elem = ring(w0)
+    bacon = ((~perm) * w0).trimcode
+    for i in range(len(bacon) - 1, -1, -1):
+        if bacon[i] != 0:
+            schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta).apply(schub_elem)
+    return {k: v for k, v in schub_elem.items() if v != S.Zero}
+
+
 def groth_mul_full(perm_dict, p2, x, zz, beta):
-    from schubmult.rings.polynomial_algebra import ElemSymPolyBasis, PolynomialAlgebra
+    from schubmult.rings.polynomial_algebra import ElemSymPolyBasis
+    from schubmult.rings.polynomial_algebra.schubert_poly_basis import SchubertPolyBasis
     from schubmult.utils.perm_utils import add_perm_dict
     from schubmult.utils.schub_lib import groth_pieri_mul
 
-    the_groth_poly = grothendieck_poly(p2, x, zz, beta)
-    EE = PolynomialAlgebra(ElemSymPolyBasis(x))
-    the_elem_dict = EE.from_expr(the_groth_poly, length=10)  # arbitrary big length
+    p2 = pl.Permutation(p2)
+    embed_length = max(10, len(p2.trimcode))
+    schub_dict = groth_elem_as_schub_dict(p2, x, beta)
+
+    schub_poly_basis = SchubertPolyBasis(x)
+    the_elem_dict = schub_poly_basis.transition_elementary({(perm, embed_length): coeff for perm, coeff in schub_dict.items()}, ElemSymPolyBasis(x))
+
     ret = {}
     for p1, coeff0 in perm_dict.items():
         for (elem_comp, length), coeff in the_elem_dict.items():
