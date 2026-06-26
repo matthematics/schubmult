@@ -386,8 +386,8 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
             set_of_keys = [self.make_key((rc,), size) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k)]
             res += sum([beta**(i - p) * math.comb(i - 1, p - 1) * self.from_dict(dict.fromkeys(set_of_keys, S.One))])
         return res
-        
-        
+
+
     def printing_term(self, key):
         return BoundedWCFactorPrintingTerm(key)
 
