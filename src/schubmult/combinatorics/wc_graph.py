@@ -61,6 +61,15 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
     def __hash__(self) -> int:
         return hash(tuple(self))
 
+    def trans_co_pipe(self):
+        #return self._rebuild([tuple(reversed([])) for i, row in enumerate(reversed(self))])
+        new_wc = WCGraph([]).resize(2*len(self))
+        for i in range(1,self.rows + 1):
+            for j in range(1, self.cols + 1):
+                if not self.has_element(i,j):
+                    new_wc = new_wc.toggle_ref_at(i + j, j)
+        return new_wc
+
     def __new__(cls, *args):
         if len(args) == 1:
             try:

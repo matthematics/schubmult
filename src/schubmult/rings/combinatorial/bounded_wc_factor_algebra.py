@@ -6,7 +6,7 @@ from functools import cache
 from sympy import Tuple
 
 from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
-from schubmult.combinatorics.wc_graph import WCGraph
+from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.rings.combinatorial.crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 from schubmult.rings.printing import PrintingTerm, TypedPrintingTerm
@@ -21,7 +21,7 @@ def _tensor_to_rcs(weight_tensor, descents):
         weight = [0] * desc
         for w in weight_tensor[i]:
             weight[w - 1] = 1
-        elem_rc = next(iter(WCGraph.all_wc_graphs(uncode([0]*(desc - wt) + [1] * wt), desc, weight=tuple(weight))))
+        elem_rc = next(iter(RCGraph.all_wc_graphs(uncode([0]*(desc - wt) + [1] * wt), desc, weight=tuple(weight))))
         rcs.append(elem_rc)
     return CrystalGraphTensor(*rcs)
 
@@ -33,7 +33,7 @@ def _all_tensors(weights, descents):
         yield from hw_tensor.full_crystal
 
 def _squash_it_up(tup):
-    ret = WCGraph([()])
+    ret = RCGraph([()])
     for rc in tup:
         ret = ret.resize(len(rc)).squash_product(rc)
     return ret
@@ -56,11 +56,11 @@ def _elem_factor_from_rc(rc):
     return to_lower
 
 
-def _is_full_grassmannian_rc(rc: WCGraph) -> bool:
+def _is_full_grassmannian_rc(rc: RCGraph) -> bool:
     return rc.perm.inv == 0 or rc.perm.descents() == {len(rc) - 1}
 
 
-def _descent_of_grass(rc: WCGraph) -> int:
+def _descent_of_grass(rc: RCGraph) -> int:
     if rc.perm.inv == 0:
         return -1
     descs = rc.perm.descents()
@@ -69,7 +69,7 @@ def _descent_of_grass(rc: WCGraph) -> int:
     return max(descs) + 1
 
 
-def _last_descent_size(rc: WCGraph) -> int:
+def _last_descent_size(rc: RCGraph) -> int:
     """Return max descent + 1, or 0 for identity."""
     if rc.perm.inv == 0:
         return 0
@@ -281,8 +281,8 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
 
     @cache
     def _schub_elem_cached(self, perm, size, partition):
-        dct = WCGraph.full_CEM(perm, size, partition=partition)
-        # dct = WCGraph.full_CEM(perm, size)
+        dct = RCGraph.full_CEM(perm, size, partition=partition)
+        # dct = RCGraph.full_CEM(perm, size)
         elem = self.zero
         for _, cem_dict in dct.items():
             for key, coeff in cem_dict.items():
@@ -377,20 +377,26 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         return hash(("BoundedWCFactorAlgebra", self._ID))
 
     def elem_sym(self, p, k, size):
-        from schubmult import uncode
+        import math
 
-        set_of_keys = [self.make_key((rc,), size) for rc in WCGraph.all_wc_graphs(uncode([0] * (k - p) + [1] * p), k)]
-        return self.from_dict(dict.fromkeys(set_of_keys, S.One))
-
+        from schubmult import Gx, uncode
+        res = self.zero
+        beta = Gx._beta
+        for i in range(p, k + 1):
+            set_of_keys = [self.make_key((rc,), size) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k)]
+            res += sum([beta**(i - p) * math.comb(i - 1, p - 1) * self.from_dict(dict.fromkeys(set_of_keys, S.One))])
+        return res
+        
+        
     def printing_term(self, key):
         return BoundedWCFactorPrintingTerm(key)
 
-    def key_to_wc_graph(self, key) -> WCGraph:
-        """Evaluate a tensor key to an WCGraph using left-to-right squash_product."""
+    def key_to_wc_graph(self, key) -> RCGraph:
+        """Evaluate a tensor key to an RCGraph using left-to-right squash_product."""
         if not isinstance(key, self.make_key):
             raise TypeError(f"Expected CrystalGraphTensor or tuple key, got {type(key)}\nfor {key=}")
         if len(key) == 0:
-            return WCGraph([]).resize(key.size)
+            return RCGraph([]).resize(key.size)
 
 
         acc = key[0]
@@ -410,8 +416,8 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         if isinstance(key, tuple):
             key = self.make_key(key[0], key[1])
         for rc in key:
-            if not isinstance(rc, WCGraph):
-                raise TypeError(f"Key factors must be WCGraph, got {type(rc)}")
+            if not isinstance(rc, RCGraph):
+                raise TypeError(f"Key factors must be RCGraph, got {type(rc)}")
             if len(rc) > key.size:
                 raise ValueError(f"Factor of size {len(rc)} in {key} which is bigger than {key.size}")
             if not _is_full_grassmannian_rc(rc):
@@ -515,7 +521,7 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
 
 
     def _normalize_key(self, key, legacy=True):
-        """Normalize an WCGraph tensor key to normal form."""
+        """Normalize an RCGraph tensor key to normal form."""
         key = self._ensure_valid_key(key)
         if len(key) == 0:
             return key

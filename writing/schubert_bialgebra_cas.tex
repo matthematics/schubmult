@@ -1,6 +1,16 @@
-\documentclass{amsart}
-%\usepackage[backend=bibtex8,style=numeric,giveninits=true]{biblatex}
-%\addbibresource{formschub.bib}
+%% 
+%% Copyright 2019-2024 Elsevier Ltd
+%% 
+%% This file is part of the 'CAS Bundle'.
+%% 
+%% Template article for cas-sc documentclass for 
+%% single column output.
+
+\documentclass[a4paper,fleqn]{cas-sc}
+
+\usepackage[authoryear,longnamesfirst]{natbib}
+
+% Additional packages from original document
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{hyperref}
@@ -18,9 +28,7 @@
 \usepackage{mathtools}
 \usetikzlibrary{calc}
 \usepackage{centernot}
-\usepackage{mathtools}
 \usepackage{graphicx}
-\usepackage[margin=1in]{geometry}
 \usepackage[makeroom]{cancel}
 \usepackage{stackengine}
 \usepackage{mathrsfs}
@@ -37,19 +45,15 @@
 \newcommand{\sqcupplus}{\mathbin{\mathpalette\sqcupplus@inner\relax}}
 \makeatother
 
-
+% Custom theorem styles and definitions
 \newtheorem{lemma}{Lemma}[subsection]
 \newtheorem{corollary}[lemma]{Corollary}
-
 \newtheorem{proposition}[lemma]{Proposition} 
 \newtheorem{proposition2}{Proposition}[section]
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{conjecture}[theorem]{Conjecture} 
 \newtheorem{observation}{Observation}[section]
 \newtheorem{question}{Question}
-
-
-
 
 \theoremstyle{definition}
 \newtheorem{definition}[lemma]{Definition}
@@ -58,17 +62,12 @@
 \newtheorem*{method}{Method}
 
 \theoremstyle{remark}
-
 \newtheorem*{remark}{Remark}
-
-
 
 \numberwithin{equation}{subsection}
 
-
-\newcommand{\R}{\mathbf{R}}  % The real numbers.
-
-
+% Custom mathematical operators and notation
+\newcommand{\R}{\mathbf{R}}
 \DeclareMathOperator{\sch}{\mathfrak{S}}
 \newcommand{\shup}{{\uparrow}}
 \newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
@@ -101,9 +100,6 @@
 \newcommand{\slide}{\mathfrak{F}}
 
 \newcommand{\shifthom}{\operatornamewithlimits{\triangleright}\limits}
-
-
-
 \newcommand{\shiftvby}[1]{\shifthom_{#1}}
 
 \newcommand*\circled[1]{%
@@ -121,26 +117,10 @@
 
 \newcommand{\schv}[2]{\shiftvby{#1}\!\sch_{#2}}
 
-
-
-
-
-
 \newcommand{\dsch}{\ensuremath{\Xi}}
 \newcommand{\coma}{\mathcal{A}}
 \newcommand{\dcoma}{\mathcal{D}}
 
-
-
-%%
-%% This is the end of the preamble.
-%% 
-\title{A Littlewood--Richardson rule for forest polynomials via the Schubert bialgebra}
-\author{Matthew J. Samuel}
-
-%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
-%\counterwithout{equation}{section}
-%\setcounter{section}{-1}
 \newcommand{\shuff}[2]{\mathcal{S}\mathcal{H}_{#1}^{#2}}
 \newcommand{\dom}{\mathfrak{d}}
 \newcommand{\ldom}{\dom^*}
@@ -149,16 +129,11 @@
 \newcommand{\forest}{\mathfrak{P}}
 \newcommand{\fcode}{\mathfrak{c}_\forest}
 \newcommand{\finv}{P_{\forest}}
-
 \newcommand{\maxd}{\mathfrak{m}}
 \newcommand{\ddv}[1]{\delta}
 
-
-
-
-
-
 \begin{document}
+
 
 \begin{abstract}
 The forest polynomials $\forest_a$ of Nadeau--Tewari form a $\mathbb{Z}$-basis of $\mathbb{Z}[x_1,x_2,\ldots]$ whose role for the cohomology of the quasisymmetric flag variety parallels that of Schubert polynomials for the classical flag variety. Nonnegativity of the structure constants $\beta_{a,b}^c$ in $\forest_a\,\forest_b = \sum_c \beta_{a,b}^c\,\forest_c$ is known, but no Littlewood--Richardson-style enumerative rule has been available. We give such a rule: $\beta_{a,b}^c$ counts pairs of forest RC graphs of forest-codes $a$ and $b$ whose lift product lands on a forest RC graph of forest-code and weight both equal to $c$. The same rule descends to the cup product on $H^\bullet(\mathrm{QFl}_n)$. The proof introduces a \emph{Schubert bialgebra} $\coma$ and lifts the multiplication on its graded dual $\dcoma$ to a product on a free abelian group $\BRC$ of bounded RC graphs; the same machinery yields enumerative LR rules for the dual Schubert, dual key, dual forest, and dual slide bases of $\dcoma$.
@@ -4179,6 +4154,7 @@ $$H^\bullet(\mathrm{QFl}_{p+q})\to H^\bullet(\mathrm{QFl}_p)\otimes H^\bullet(\m
 \item[$V_F(\boldsymbol\lambda)$] The volume polynomial of \cite[\S 10.5]{nadeau2024quasisymmetric}, dual to $\forest_F$ under the divided-power $D$-pairing; $V_F(\boldsymbol\lambda)=\sum_{\mathbf{b}}\epsilon_F(\mathbf{b})\,\boldsymbol\lambda^{\mathbf{b}}/\mathbf{b}!$.
 \end{description}
 \endgroup
+
 
 \appendix
 \section{Proof of Proposition \ref{proposition:pullindex}}

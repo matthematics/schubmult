@@ -1,6 +1,16 @@
-\documentclass{amsart}
-%\usepackage[backend=bibtex8,style=numeric,giveninits=true]{biblatex}
-%\addbibresource{formschub.bib}
+%% 
+%% Copyright 2019-2024 Elsevier Ltd
+%% 
+%% This file is part of the 'CAS Bundle'.
+%% 
+%% Template article for cas-sc documentclass for 
+%% single column output.
+
+\documentclass[a4paper,fleqn]{cas-sc}
+
+\usepackage[authoryear,longnamesfirst]{natbib}
+
+% Additional packages
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{hyperref}
@@ -20,7 +30,6 @@
 \usepackage{centernot}
 \usepackage{mathtools}
 \usepackage{graphicx}
-\usepackage[margin=1in]{geometry}
 \usepackage[makeroom]{cancel}
 \usepackage{stackengine}
 \usepackage{mathrsfs}
@@ -121,27 +130,10 @@
 
 \newcommand{\schv}[2]{\shiftvby{#1}\!\sch_{#2}}
 
-
-
-
-
-
 \newcommand{\dsch}{\ensuremath{\Xi}}
 \newcommand{\coma}{\mathcal{A}}
 \newcommand{\dcoma}{\mathcal{D}}
 
-
-
-%%
-%% This is the end of the preamble.
-%% 
-\title{A Littlewood--Richardson rule for forest polynomials via the Schubert bialgebra}
-\author{Matthew J. Samuel}
-
-%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
-%\counterwithout{equation}{section}
-%\setcounter{section}{-1}
-\newcommand{\shuff}[2]{\mathcal{S}\mathcal{H}_{#1}^{#2}}
 \newcommand{\dom}{\mathfrak{d}}
 \newcommand{\ldom}{\dom^*}
 \newcommand{\code}{\mathfrak{c}}
@@ -153,10 +145,13 @@
 \newcommand{\maxd}{\mathfrak{m}}
 \newcommand{\ddv}[1]{\delta}
 
+% To compile this file, use XeTeX or LuaTeX instead of pdflatex:
+%   xelatex schubert_bialgebra_cas-sc.tex
+% or
+%   lualatex schubert_bialgebra_cas-sc.tex
 
-
-
-
+\title{A Littlewood--Richardson rule for forest polynomials via the Schubert bialgebra}
+\author{Matthew J. Samuel}
 
 \begin{document}
 
@@ -4231,7 +4226,7 @@ Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, whic
 
 The author is deeply grateful to Zachary Hamaker for many illuminating conversations during the development of this work, and in particular for introducing the author to forest polynomials in the first place, in addition to pointing out the connections of RC graph crystal operators to  Little's bumping algorithm. Thanks are also due to Frank Sottile, whose work, much of it now classical, has been a sustained guiding influence on the author's thinking about Schubert calculus, and whose generosity with his time over the years has shaped the perspective taken here.
 
-\bibliographystyle{acm}
+\bibliographystyle{cas-model2-names}
 \bibliography{schubert_bialgebra}
 
 

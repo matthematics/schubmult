@@ -67,3 +67,9 @@ schubmult/schubmult_yz/__pycache__/
 schubmult/schubmult_yz/build/
 schubmult/schubmult_yz/dist/
 schubmult/tests/__pycache__/
+
+els-cas-templates.zip
+els-cas-templates.zip:Zone.Identifier
+writing/cas-common.sty
+writing/cas-model2-names.bst
+writing/cas-sc.cls

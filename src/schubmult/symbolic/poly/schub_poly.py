@@ -560,8 +560,8 @@ def _strip_isobaric(index, length, genset, beta, backwards=False):
         operator = nh(~uncode([0] * (index - 1) + [length]))
     else:
         operator = nh(uncode([0] * (index - 1) + [length]))
-    poly = (beta**length) * E(length, length, genset[index + 1 :], [-beta**(-1)])
-    schub = ring.from_expr(poly)
+    schub = ring.from_dict({k: v * beta**(k.inv) for k, v in (E(length, length, genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
+    # schub = ring.from_expr(poly)
     return operator * schub
 
 
@@ -587,6 +587,9 @@ def groth_elem_as_schub_dict(perm, genset, beta):
             schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta, backwards=False).apply(schub_elem)
     return {k: v for k, v in schub_elem.items() if v != S.Zero}
 
+#(1+beta y)E(x,y/(1+beta y))
+# yy
+# beta/(1-yy)E(x,yy)
 
 def groth_mul_full(perm_dict, p2, x, zz, beta):
 
