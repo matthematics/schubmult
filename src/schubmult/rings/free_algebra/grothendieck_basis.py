@@ -5,11 +5,15 @@ from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import S, Symbol
 from schubmult.symbolic.poly.schub_poly import schub_elem_sym_to_groth_elem_sym_dict
 from schubmult.symbolic.poly.variables import ZeroGeneratingSet
-from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
 from schubmult.utils.schub_lib import groth_pieri_mul
 
 from ..printing import GrothendieckPoly
+from ..schubert.grothendieck_ring import Gx
+from ..schubert.separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import FreeAlgebraBasis
+
+splugGx = SeparatedDescentsRing(Gx([]).ring)
 
 
 class GrothendieckBasis(FreeAlgebraBasis):
@@ -179,22 +183,56 @@ class GrothendieckBasis(FreeAlgebraBasis):
 
         return ret
 
+    @classmethod
+    def transition_word(cls, perm, numvars):
+        """Transition a Groth basis key to the word basis.
 
+        Returns ``{(word, numvars): coeff}`` where ``coeff`` is the coefficient
+        of ``G_perm`` in ``w_{word;numvars}`` on the polynomial side, interpreted
+        as the dual-basis coefficient.
+        """
+        if numvars < 0:
+            raise ValueError(f"numvars must be nonnegative, got {numvars}")
+        if numvars == 0:
+            return {(): S.One} if perm == Permutation([]) else {}
+        if numvars == 1:
+            return {(perm.inv,): S.One}
+        if perm.max_descent > numvars:
+            return {}
+        cd = perm.pad_code(numvars)
+
+        if cd[0] == 0:
+            return {(0, *k): v for k, v in cls.transition_word(uncode(cd[1:]), numvars - 1).items()}
+        #wetbag = cls.product(uncode([cd[0]]), )
+        wetbag = cls.product((uncode([cd[0]]), 1), (uncode(cd[1:]), numvars - 1))
+        donkeydict = {cd: S.One}
+        for (pinkbat, _), coeff in wetbag.items():
+            if pinkbat == perm:
+                continue
+            wtt = cls.transition_word(uncode(pinkbat), numvars)
+            donkeydict = {k: v for k, v in add_perm_dict_with_coeff(donkeydict, wtt, coeff=coeff).items() if v != S.Zero}
+        return donkeydict
 
     @classmethod
     def transition(cls, other_basis):
-        from .elementary_basis import ElementaryBasis
-
+        #from .elementary_basis import ElementaryBasis
+        from .word_basis import WordBasis
         if other_basis == cls:
             return lambda x: {x: S.One}
-        if other_basis == ElementaryBasis:
-            return lambda x: cls.transition_elementary(*x)
-        return lambda x: FreeAlgebraBasis.compose_transition(ElementaryBasis.transition(other_basis), cls.transition_elementary(*x))
+        if other_basis == WordBasis:
+            return lambda x: cls.transition_word(*x)
+        return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
 
     @classmethod
     def printing_term(cls, k):
         perm, numvars = cls.as_key(k)
         return GrothendieckPoly((perm, numvars), "x", prefix="A")
+
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
+        """Multiply two Schubert basis keys via the separated-descents ring."""
+        return dict(coeff * splugGx(*cls.as_key(key1)) * splugGx(*cls.as_key(key2)))
+
 
     @classmethod
     def dual_basis(cls):

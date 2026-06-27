@@ -89,5 +89,12 @@ class SingleSchubertRing(DoubleSchubertRing):
     def elem_func(self):
         return ElemSym
 
+    def divdiff(self, v, elem):
+        ret = self.zero
+        for u, coeff in elem.items():
+            if (u * (~v)).inv == u.inv - v.inv:
+                ret += coeff * self.new(u * (~v))
+        return ret
+
 
 Sx = SingleSchubertRing(GeneratingSet("x"))

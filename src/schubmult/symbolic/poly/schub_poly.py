@@ -548,7 +548,7 @@ def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, beta):
 
 
 @cache
-def _strip_isobaric(index, length, genset, beta, backwards=False):
+def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
     from schubmult import uncode
     from schubmult.abc import E
     from schubmult.rings.schubert.nil_hecke import NilHeckeRing
@@ -560,9 +560,9 @@ def _strip_isobaric(index, length, genset, beta, backwards=False):
         operator = nh(~uncode([0] * (index - 1) + [length]))
     else:
         operator = nh(uncode([0] * (index - 1) + [length]))
-    schub = ring.from_dict({k: v * beta**(k.inv) for k, v in (E(length, length, genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
+    schub = ring.from_dict({k: v * beta**(k.inv) for k, v in (elem * E(length, length, genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
     # schub = ring.from_expr(poly)
-    return operator * schub
+    return operator.apply(schub)
 
 
 @cache
@@ -584,7 +584,7 @@ def groth_elem_as_schub_dict(perm, genset, beta):
     bacon = ((~perm) * w0).trimcode
     for i in range(len(bacon) - 1, -1, -1):
         if bacon[i] != 0:
-            schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta, backwards=False).apply(schub_elem)
+            schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta, schub_elem, backwards=False)
     return {k: v for k, v in schub_elem.items() if v != S.Zero}
 
 #(1+beta y)E(x,y/(1+beta y))

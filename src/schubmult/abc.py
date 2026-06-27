@@ -7,8 +7,11 @@ var("x_(1:100)")
 var("y_(1:100)")
 var("z_(1:100)")
 var("q_(1:100)")
+var("β")
 
 x = GeneratingSet("x")
 y = GeneratingSet("y")
 z = GeneratingSet("z")
 q = GeneratingSet("q")
+
+beta = var("β")
