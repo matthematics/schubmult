@@ -81,6 +81,20 @@ class SchubertBasis(FreeAlgebraBasis):
         return res
 
     @classmethod
+    @cache
+    def transition_grothendieck(cls, perm, numvars, beta):
+        """Transition a Schubert key to the Grothendieck basis."""
+        from schubmult.combinatorics.bpd import BPD
+        n = len(perm)
+        pw0 = perm * Permutation.w0(n)
+
+        dct = {}
+        for bpd in BPD.all_bpds(pw0, n):
+            cobpd = bpd.co_bpd()
+            dct[(cobpd.perm, numvars)] = dct.get((cobpd.perm, numvars), 0) + beta ** (perm.inv - cobpd.perm.inv)
+        return dct
+
+    @classmethod
     def transition_schubert_schur(cls, *x):
         """Transition a Schubert key to the Schubert-Schur basis."""
         perm, numvars = x
@@ -253,8 +267,10 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_word(*x)
         if other_basis.__name__ == "_SeparatedDescentsBasis":
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
-        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis or other_basis == KeyBasis or other_basis == FundamentalSlideBasis or other_basis == GrothendieckBasis:
+        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis or other_basis == KeyBasis or other_basis == FundamentalSlideBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
+        if other_basis == GrothendieckBasis:
+            return lambda x: cls.transition_grothendieck(*x, other_basis.beta)
         raise NotImplementedError(f"Transition from SchubertBasis to {other_basis} is not implemented.")
 
     @classmethod

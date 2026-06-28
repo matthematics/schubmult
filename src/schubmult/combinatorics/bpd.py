@@ -1091,6 +1091,71 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._perm = Permutation.from_partial(build_perm)
         return self._perm
 
+    @property
+    def hecke_perm(self) -> Permutation:
+        """
+        Compute the permutation associated with this BPD.
+
+        The permutation is determined by following each vertical pipe from bottom to top.
+        Pipes enter from the bottom (vertical) and left (horizontal).
+
+        Returns:
+            Permutation object
+        """
+        if self._perm is not None:
+            return self._hecke_perm
+        if self.rows == 0:
+            self._perm = Permutation([])
+            return self._hecke_perm
+        # self._perm = Permutation.ref_product(*self.word)
+
+        #return self._perm
+        nrows, ncols = self._grid.shape
+        bottom_row = self._grid[nrows - 1, :]
+
+        # # Check for TBD in bottom row
+        # if np.any(bottom_row == TileType.TBD):
+        #     raise ValueError("Cannot compute permutation with unresolved TBD tiles")
+
+        # # Vectorized: find columns with entrance_from_bottom
+        # # entrance_from_bottom is True for VERT, CROSS, ELBOW_NW
+        entrance_mask = (bottom_row == TileType.VERT) | (bottom_row == TileType.CROSS) | (bottom_row == TileType.ELBOW_SE)
+        good_cols = (np.where(entrance_mask)[0] + 1).tolist()
+
+        good_cols = Permutation.from_partial(good_cols)
+
+        small_perm = Permutation.hecke_ref_product(*self.as_planar_history().perm_word)
+        # small_perm = Permutation([])
+        # # Vectorized: Map tiles to their diff values
+        # diff = np.ones((nrows, ncols), dtype=int)
+        # diff[self._grid == TileType.BLANK] = 0
+        # diff[self._grid == TileType.CROSS] = 2
+        # # Create r array with shape (nrows+1, ncols+1)
+        # r = np.zeros((nrows + 1, ncols + 1), dtype=int)
+
+        # for i in range(1, nrows + 1):
+        #     for j in range(1, ncols + 1):
+        #         r[i, j] = r[i - 1, j - 1] + diff[i - 1, j - 1]
+
+        # # Pre-compute all cross positions and their pipes_northeast values
+        # cross_positions = np.argwhere(self._grid == TileType.CROSS)
+        # if len(cross_positions) > 0:
+        #     # Sort by column first, then by row descending (for correct swap order)
+        #     sort_indices = np.lexsort((-cross_positions[:, 0], cross_positions[:, 1]))
+        #     cross_positions = cross_positions[sort_indices]
+        #     # Get pipes_northeast for each cross position
+        #     pipes_northeast_values = r[cross_positions[:, 0] + 1, cross_positions[:, 1] + 1]
+        #     # Apply swaps sequentially
+        #     for pipes_northeast in pipes_northeast_values:
+        #         # THIS LINE IS WRONG
+        #         #if small_perm[pipes_northeast - 2] < small_perm[pipes_northeast - 1]:
+        #         small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
+
+        build_perm = good_cols * small_perm
+
+        self._hecke_perm = Permutation.from_partial(build_perm)
+        return self._hecke_perm
+
     def co_bpd(self):
         new_grid = self._grid.copy()
         mapping = {
