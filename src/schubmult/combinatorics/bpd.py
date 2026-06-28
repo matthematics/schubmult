@@ -232,6 +232,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._grid = np.array(grid, dtype=TileType)
         self._column_perm = column_perm if column_perm else Permutation([])
         self._perm = None
+        self._hecke_perm = None
         self._valid = None
         self._word = None
         self._unzero_cache = None
@@ -1102,10 +1103,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Returns:
             Permutation object
         """
-        if self._perm is not None:
+        if self._hecke_perm is not None:
             return self._hecke_perm
         if self.rows == 0:
-            self._perm = Permutation([])
+            self._hecke_perm = Permutation([])
             return self._hecke_perm
         # self._perm = Permutation.ref_product(*self.word)
 
@@ -1651,6 +1652,48 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 if LEGAL:
                     droop_moves.add(((ri, rj), (bi, bj)))
         return droop_moves
+
+    def k_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
+        import itertools
+
+        k_droop_moves = set()
+        for (ri, rj), (bi, bj) in itertools.product(self.all_se_elbows(), self.all_nw_elbows()):
+            if bi > ri and bj > rj:
+                LEGAL = True
+                for i, j in itertools.product(range(ri, bi), range(rj, bj)):
+                    if (i, j) != (ri, rj) and (self[i, j] == TileType.ELBOW_SE or self[i, j] == TileType.ELBOW_NW or self[i, j] == TileType.BUMP):  # if not NW-corner, check if elbow
+                        LEGAL = False
+                        break
+                if LEGAL:
+                    if self[ri, bj] == TileType.CROSS:
+                        first_elbow_col = None
+                        for j in range(rj, bj):
+                            if self[bi, j] == TileType.ELBOW_SE:
+                                first_elbow_col = j
+                                break
+                        if first_elbow_col is None:
+                            LEGAL = False
+                        else:
+                            for j in range(first_elbow_col + 1, bj):
+                                if self[bi, j] != TileType.HORIZ:
+                                    LEGAL = False
+                                    break
+                    elif self[bi, rj] == TileType.CROSS:
+                        first_elbow_row = None
+                        for i in range(ri, bi):
+                            if self[i, bj] == TileType.ELBOW_SE:
+                                first_elbow_row = i
+                                break
+                        if first_elbow_row is None:
+                            LEGAL = False
+                        else:
+                            for i in range(first_elbow_row + 1, bi):
+                                if self[i, bj] != TileType.VERT:
+                                    LEGAL = False
+                                    break
+                    if LEGAL:
+                        k_droop_moves.add(((ri, rj), (bi, bj)))
+        return k_droop_moves
 
     def min_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
         droop_moves = set()
