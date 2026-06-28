@@ -211,6 +211,16 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 seq.append(i + 1)
         return tuple(seq)
 
+    def flipped_co_wc(self):
+        spet = self.resize(len(self.perm) - 1)
+        refspet = []
+        for i in range(1, spet.rows):
+            refspet.append([])
+            for j in range(1, spet.rows):
+                if spet.has_element(i, j):
+                    refspet[-1] = refspet.toggle_ref_at(spet.rows - i - j + 1, j)
+        return refspet
+
     def to_reduced_compatible_set_sequence(self):
         word = []
         seq = self.compatible_sequence

@@ -547,7 +547,7 @@ def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, beta):
     return ret
 
 
-@cache
+#@cache
 def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
     from schubmult import uncode
     from schubmult.abc import E
@@ -566,26 +566,27 @@ def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
 
 
 @cache
-def groth_elem_as_schub_dict(perm, genset, beta):
+def groth_elem_as_schub_dict(perm, beta):
     """Expand a Grothendieck basis element G_perm into Schubert basis terms.
 
     Uses the strip-isobaric construction from the groth_elem_as_schub method.
     Returns ``{Permutation: coeff}``.
     """
-    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+    from schubmult.combinatorics.bpd import BPD
 
-    perm = pl.Permutation(perm)
-    ring = SingleSchubertRing(genset)
+    # perm = pl.Permutation(perm)
+    # ring = SingleSchubertRing(genset)
     if perm.inv == 0:
         return {pl.Permutation([]): S.One}
 
-    w0 = pl.Permutation.w0(len(perm))
-    schub_elem = ring(w0)
-    bacon = ((~perm) * w0).trimcode
-    for i in range(len(bacon) - 1, -1, -1):
-        if bacon[i] != 0:
-            schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta, schub_elem, backwards=False)
-    return {k: v for k, v in schub_elem.items() if v != S.Zero}
+    # w0 = pl.Permutation.w0(len(perm))
+    # schub_elem = ring(w0)
+    # bacon = ((~perm) * w0).trimcode
+    # for i in range(len(bacon) - 1, -1, -1):
+    #     if bacon[i] != 0:
+    #         schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta, schub_elem, backwards=False)
+    # return {k: v for k, v in schub_elem.items() if v != S.Zero}
+    return BPD.groth_to_schub(perm, beta)
 
 #(1+beta y)E(x,y/(1+beta y))
 # yy
@@ -594,7 +595,7 @@ def groth_elem_as_schub_dict(perm, genset, beta):
 def groth_mul_full(perm_dict, p2, x, zz, beta):
 
     p2 = pl.Permutation(p2)
-    schub_dict = groth_elem_as_schub_dict(p2, x, beta)
+    schub_dict = groth_elem_as_schub_dict(p2, beta)
 
     return schub_dict_to_groth_dict(perm_dict, schub_dict, x, zz, beta)
 

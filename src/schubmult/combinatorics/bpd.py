@@ -20,6 +20,8 @@ from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGrap
 from schubmult.symbolic import Expr
 from schubmult.utils.schub_lib import pull_out_var
 
+from .planar_history import PlanarHistory, Tile
+
 
 class TileType(IntEnum):
     """
@@ -36,6 +38,24 @@ class TileType(IntEnum):
     ELBOW_SE = 5  # Elbow: top-left to bottom-right (╮)
     VERT = 6
     BUMP = 7  # Bump/osculating tile (pipes touch at corner)
+
+    def as_tile(self) -> Tile:
+        """Convert TileType to a Tile object with edge information."""
+        if self == TileType.BLANK:
+            return Tile(edges=set())
+        if self == TileType.CROSS:
+            return Tile(edges={(Tile.SOUTH, Tile.NORTH), (Tile.WEST, Tile.EAST)})
+        if self == TileType.HORIZ:
+            return Tile(edges={(Tile.WEST, Tile.EAST)})
+        if self == TileType.VERT:
+            return Tile(edges={(Tile.SOUTH, Tile.NORTH)})
+        if self == TileType.ELBOW_NW:
+            return Tile(edges={(Tile.WEST, Tile.NORTH)})
+        if self == TileType.ELBOW_SE:
+            return Tile(edges={(Tile.SOUTH, Tile.EAST)})
+        if self == TileType.BUMP:
+            return Tile(edges={(Tile.SOUTH, Tile.EAST), (Tile.WEST, Tile.NORTH)})
+        raise ValueError(f"Cannot convert TileType {self} to a Tile object.")
 
     def __str__(self) -> str:
         symbols = {TileType.BLANK: "▢", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.BUMP: "╬", TileType.TBD: "?"}
@@ -216,6 +236,14 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._word = None
         self._unzero_cache = None
         self.build()
+
+    def as_planar_history(self) -> PlanarHistory:
+        def _map_tile(t: TileType) -> Tile:
+            return t.as_tile()
+        new_grid = np.empty((self._grid.shape[0], self._grid.shape[1]), dtype=object)
+        new_grid[:] = np.vectorize(_map_tile)(self._grid)
+        return PlanarHistory(new_grid)
+
 
     def _invalidate_cache(self):
         self._perm = None
@@ -1016,50 +1044,78 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self._perm
         # self._perm = Permutation.ref_product(*self.word)
 
+        #return self._perm
         nrows, ncols = self._grid.shape
         bottom_row = self._grid[nrows - 1, :]
 
-        # Check for TBD in bottom row
-        if np.any(bottom_row == TileType.TBD):
-            raise ValueError("Cannot compute permutation with unresolved TBD tiles")
+        # # Check for TBD in bottom row
+        # if np.any(bottom_row == TileType.TBD):
+        #     raise ValueError("Cannot compute permutation with unresolved TBD tiles")
 
-        # Vectorized: find columns with entrance_from_bottom
-        # entrance_from_bottom is True for VERT, CROSS, ELBOW_NW
+        # # Vectorized: find columns with entrance_from_bottom
+        # # entrance_from_bottom is True for VERT, CROSS, ELBOW_NW
         entrance_mask = (bottom_row == TileType.VERT) | (bottom_row == TileType.CROSS) | (bottom_row == TileType.ELBOW_SE)
         good_cols = (np.where(entrance_mask)[0] + 1).tolist()
 
         good_cols = Permutation.from_partial(good_cols)
 
-        small_perm = Permutation([])
-        # Vectorized: Map tiles to their diff values
-        diff = np.ones((nrows, ncols), dtype=int)
-        diff[self._grid == TileType.BLANK] = 0
-        diff[self._grid == TileType.CROSS] = 2
-        # Create r array with shape (nrows+1, ncols+1)
-        r = np.zeros((nrows + 1, ncols + 1), dtype=int)
+        small_perm = Permutation.ref_product(*self.as_planar_history().perm_word)
+        # small_perm = Permutation([])
+        # # Vectorized: Map tiles to their diff values
+        # diff = np.ones((nrows, ncols), dtype=int)
+        # diff[self._grid == TileType.BLANK] = 0
+        # diff[self._grid == TileType.CROSS] = 2
+        # # Create r array with shape (nrows+1, ncols+1)
+        # r = np.zeros((nrows + 1, ncols + 1), dtype=int)
 
-        for i in range(1, nrows + 1):
-            for j in range(1, ncols + 1):
-                r[i, j] = r[i - 1, j - 1] + diff[i - 1, j - 1]
+        # for i in range(1, nrows + 1):
+        #     for j in range(1, ncols + 1):
+        #         r[i, j] = r[i - 1, j - 1] + diff[i - 1, j - 1]
 
-        # Pre-compute all cross positions and their pipes_northeast values
-        cross_positions = np.argwhere(self._grid == TileType.CROSS)
-        if len(cross_positions) > 0:
-            # Sort by column first, then by row descending (for correct swap order)
-            sort_indices = np.lexsort((-cross_positions[:, 0], cross_positions[:, 1]))
-            cross_positions = cross_positions[sort_indices]
-            # Get pipes_northeast for each cross position
-            pipes_northeast_values = r[cross_positions[:, 0] + 1, cross_positions[:, 1] + 1]
-            # Apply swaps sequentially
-            for pipes_northeast in pipes_northeast_values:
-                # THIS LINE IS WRONG
-                #if small_perm[pipes_northeast - 2] < small_perm[pipes_northeast - 1]:
-                small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
+        # # Pre-compute all cross positions and their pipes_northeast values
+        # cross_positions = np.argwhere(self._grid == TileType.CROSS)
+        # if len(cross_positions) > 0:
+        #     # Sort by column first, then by row descending (for correct swap order)
+        #     sort_indices = np.lexsort((-cross_positions[:, 0], cross_positions[:, 1]))
+        #     cross_positions = cross_positions[sort_indices]
+        #     # Get pipes_northeast for each cross position
+        #     pipes_northeast_values = r[cross_positions[:, 0] + 1, cross_positions[:, 1] + 1]
+        #     # Apply swaps sequentially
+        #     for pipes_northeast in pipes_northeast_values:
+        #         # THIS LINE IS WRONG
+        #         #if small_perm[pipes_northeast - 2] < small_perm[pipes_northeast - 1]:
+        #         small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         build_perm = good_cols * small_perm
 
         self._perm = Permutation.from_partial(build_perm)
         return self._perm
+
+    def co_bpd(self):
+        new_grid = self._grid.copy()
+        mapping = {
+            TileType.HORIZ: TileType.CROSS,
+            TileType.VERT: TileType.BLANK,
+            TileType.CROSS: TileType.HORIZ,
+            TileType.BLANK: TileType.VERT,
+        }
+        for i in range(self._grid.shape[0]):
+            for j in range(self._grid.shape[1]):
+                val = self._grid[self._grid.shape[0] - 1 - i, j]
+                new_grid[i, j] = mapping.get(val, val)#.as_tile()
+        #return PlanarHistory(new_grid)
+        return BPD(new_grid)
+
+    @classmethod
+    @cache
+    def groth_to_schub(cls, groth_perm: Permutation, beta):
+        boip = BPD.all_unreduced_bpds(~groth_perm, len(groth_perm))
+        bods = [b.co_bpd() for b in boip]
+        spits = [bpd.perm*Permutation.w0(bpd.rows) for bpd in bods if bpd.is_reduced]
+        ret = {}
+        for perm in spits:
+            ret[perm] = ret.get(perm, 0) + beta ** (perm.inv - groth_perm.inv)
+        return ret
 
     @property
     def permutation(self) -> Permutation:

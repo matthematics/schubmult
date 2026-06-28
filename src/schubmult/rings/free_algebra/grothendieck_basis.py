@@ -201,11 +201,12 @@ class GrothendieckBasis(FreeAlgebraBasis):
             return {}
         cd = perm.pad_code(numvars)
 
-        if cd[0] == 0:
-            return {(0, *k): v for k, v in cls.transition_word(uncode(cd[1:]), numvars - 1).items()}
-        #wetbag = cls.product(uncode([cd[0]]), )
-        wetbag = cls.product((uncode([cd[0]]), 1), (uncode(cd[1:]), numvars - 1))
-        donkeydict = {cd: S.One}
+        # if cd[0] == 0:
+        #     return {(0, *k): v for k, v in cls.transition_word(uncode(cd[1:]), numvars - 1).items()}
+        wetbag = cls.product((uncode([cd[0]]),1), (uncode(cd[1:]),numvars - 1))
+        #wetbag1 = (cd[0],)
+        donkeydict = {(cd[0], *k): v for k, v in cls.transition_word(uncode(cd[1:]), numvars - 1).items()}
+        #donkeydict = {cd: S.One}
         for (pinkbat, _), coeff in wetbag.items():
             if pinkbat == perm:
                 continue
