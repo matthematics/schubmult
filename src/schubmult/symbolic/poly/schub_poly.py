@@ -458,17 +458,20 @@ def div_diff(poly, v1, v2):
         return Add(*args_ret)
     raise ValueError(f"Expected Expr but got {type(poly)}")
 
+
 def _groth_plus(x1, y1, beta):
     return x1 + y1 + beta * x1 * y1
+
 
 def _groth_div_diff(val, index, x, beta):
     from schubmult import DoubleSchubertElement
     from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+
     ring = SingleSchubertRing(x)
     if not isinstance(val, DoubleSchubertElement):
         val = ring.from_expr(val)
-    up_val = (S.One + beta*x[index + 1]) * val
-    rval = ring.from_dict({w.swap(index-1,index): coeff for w, coeff in up_val.items() if w[index - 1] > w[index]})
+    up_val = (S.One + beta * x[index + 1]) * val
+    rval = ring.from_dict({w.swap(index - 1, index): coeff for w, coeff in up_val.items() if w[index - 1] > w[index]})
     return rval
 
 
@@ -481,9 +484,9 @@ def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
     n = len(perm)
     w0 = Permutation.w0(n)
     if perm == w0:
-        return prod([_groth_plus(x[i], y[j], beta) for i in range(1, n) for j in range(1,n + 1 - i)])
+        return prod([_groth_plus(x[i], y[j], beta) for i in range(1, n) for j in range(1, n + 1 - i)])
     desc = min([i for i in range(n) if i not in (perm.descents())])
-    result =  _groth_div_diff(grothendieck_poly(perm.swap(desc, desc + 1), x, y, beta, keep_as_schub=True), desc + 1, x, beta)
+    result = _groth_div_diff(grothendieck_poly(perm.swap(desc, desc + 1), x, y, beta, keep_as_schub=True), desc + 1, x, beta)
     if keep_as_schub:
         return result
     return result.as_polynomial()
@@ -519,35 +522,41 @@ def groth_dict_to_poly(groth_dict, x, zz, beta):
     return ret
 
 
-def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, beta):
-    from schubmult import uncode
+def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, beta, verify=False):
+    from schubmult import BPD, uncode
     from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
     from schubmult.symbolic import expand
     from schubmult.utils.schub_lib import groth_pieri_mul
 
     ring = SingleSchubertRing(x)
     the_perm = uncode([0] * (k - p) + [1] * p)
-    dct = to_groth(ring(the_perm).expand(), x, zz, beta)
-    #print(f"schub elem sym to groth dict for {the_perm}: {dct=}")
-    ret = {}
-    for perm, coeff in dct.items():
-        pp = perm.inv
-        kk = len(perm.trimcode)
-        if perm == uncode([0] * (kk - pp) + [1] * pp):
-            ret[(pp, kk)] = coeff
-        else:
-            raise ValueError(f"unexpected perm {perm} in schub to groth dict")
-    result = S.Zero
-    #print(f"pieri mul for {the_perm}: {ret}")
-    for (pp, kk), coeff in ret.items():
-        pieri_dict = groth_pieri_mul({uncode((0,)): coeff}, pp, kk, beta)
-        #print(f"pieri dict for {(pp, kk)}: {pieri_dict=}")
-        result += groth_dict_to_poly(pieri_dict, x, zz, beta)
-    assert expand(expand(result) - ring(the_perm).expand(deep=True)) == S.Zero, f"unexpected result {result} from schub to groth dict for {the_perm}\n{ret=}\n{expand(result)=}\n{ring(the_perm).expand(deep=True)=}"
+    dct = {}
+    w0 = pl.Permutation.w0(len(the_perm))
+    for bpd in BPD.all_bpds(the_perm):
+        permo = bpd.co_bpd().perm * w0
+        dct[(permo.inv, permo.max_descent)] = dct.get((permo.inv, permo.max_descent), S.Zero) + (-beta) ** (permo.inv - the_perm.inv)
+    # dct = to_groth(ring(the_perm).expand(), x, zz, beta)
+    # print(f"schub elem sym to groth dict for {the_perm}: {dct=}")
+    ret = dct
+    # for perm, coeff in dct.items():
+    #     pp = perm.inv
+    #     kk = len(perm.trimcode)
+    #     if perm == uncode([0] * (kk - pp) + [1] * pp):
+    #         ret[(pp, kk)] = coeff
+    #     else:
+    #         raise ValueError(f"unexpected perm {perm} in schub to groth dict")
+    if verify:
+        result = S.Zero
+        # #print(f"pieri mul for {the_perm}: {ret}")
+        for (pp, kk), coeff in ret.items():
+            pieri_dict = groth_pieri_mul({uncode((0,)): coeff}, pp, kk, beta)
+            #print(f"pieri dict for {(pp, kk)}: {pieri_dict=}")
+            result += groth_dict_to_poly(pieri_dict, x, zz, beta)
+        assert expand(expand(result) - ring(the_perm).expand(deep=True)) == S.Zero, f"unexpected result {result} from schub to groth dict for {the_perm}\n{ret=}\n{expand(result)=}\n{ring(the_perm).expand(deep=True)=}"
     return ret
 
 
-#@cache
+# @cache
 def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
     from schubmult import uncode
     from schubmult.abc import E
@@ -560,7 +569,7 @@ def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
         operator = nh(~uncode([0] * (index - 1) + [length]))
     else:
         operator = nh(uncode([0] * (index - 1) + [length]))
-    schub = ring.from_dict({k: v * beta**(k.inv) for k, v in (elem * E(length, length, genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
+    schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
     # schub = ring.from_expr(poly)
     return operator.apply(schub)
 
@@ -588,35 +597,37 @@ def groth_elem_as_schub_dict(perm, beta):
     # return {k: v for k, v in schub_elem.items() if v != S.Zero}
     return BPD.groth_to_schub(perm, beta)
 
-#(1+beta y)E(x,y/(1+beta y))
+
+# (1+beta y)E(x,y/(1+beta y))
 # yy
 # beta/(1-yy)E(x,yy)
 
-def groth_mul_full(perm_dict, p2, x, zz, beta):
 
+def groth_mul_full(perm_dict, p2, x, zz, beta):
     p2 = pl.Permutation(p2)
     schub_dict = groth_elem_as_schub_dict(p2, beta)
 
     return schub_dict_to_groth_dict(perm_dict, schub_dict, x, zz, beta)
 
-def schub_dict_to_groth_dict(base_groth, schub_dict, x, zz, beta):
 
-    #schub_elem_sym_as_groth_elem_sym_dict
+def schub_dict_to_groth_dict(base_groth, schub_dict, x, zz, beta):
+    # schub_elem_sym_as_groth_elem_sym_dict
 
     import sympy
 
     from schubmult import FactorialElemSym, Sx
     from schubmult.utils.perm_utils import add_perm_dict
     from schubmult.utils.schub_lib import groth_pieri_mul
-    #schub_poly_basis = SchubertPolyBasis(x)
-    #the_elem_dict = schub_poly_basis.transition_elementary({(perm, max()): coeff for perm, coeff in schub_dict.items()}, ElemSymPolyBasis(x))
+
+    # schub_poly_basis = SchubertPolyBasis(x)
+    # the_elem_dict = schub_poly_basis.transition_elementary({(perm, max()): coeff for perm, coeff in schub_dict.items()}, ElemSymPolyBasis(x))
     schub_elem_dict = Sx.from_dict(schub_dict).in_CEM_basis().expand().as_coefficients_dict()
 
     ret = {}
-    #print("DEBUG: ", schub_elem_dict)
+    # print("DEBUG: ", schub_elem_dict)
     for p1, coeff0 in base_groth.items():
         for expr, coeff in schub_elem_dict.items():
-            #assert len(elem_comp) <= 10, f"unexpected elem_comp length {len(elem_comp)} {elem_comp=} {the_elem_dict=}"
+            # assert len(elem_comp) <= 10, f"unexpected elem_comp length {len(elem_comp)} {elem_comp=} {the_elem_dict=}"
             # new_ret = {}
             this_term = {p1: coeff0 * coeff}
 
@@ -636,7 +647,8 @@ def schub_dict_to_groth_dict(base_groth, schub_dict, x, zz, beta):
                 #     return
                 # raise ValueError(f"unexpected expr {expr0} of type {type(expr0)}")
                 yield expr0
-            #if isinstance(expr, Mul):
+
+            # if isinstance(expr, Mul):
             for val in _process_expr_iter(expr):
                 if not isinstance(val, tuple):
                     this_term = {k: coeff * val for k, coeff in this_term.items()}
@@ -655,19 +667,21 @@ def schub_dict_to_groth_dict(base_groth, schub_dict, x, zz, beta):
             ret = add_perm_dict(ret, this_term)
     return ret
 
+
 if __name__ == "__main__":
     from symengine import Symbol, expand
 
     from schubmult import Permutation, Sx, uncode
     from schubmult.abc import x
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+
     zz = ZeroGeneratingSet()
-    #beta = Symbol("beta")
+    # beta = Symbol("beta")
     beta = S.NegativeOne
-    Permutation.print_as_code=True
+    Permutation.print_as_code = True
     # print(to_groth(grothendieck_poly(Permutation([2, 3, 4, 1]), x, y, beta), x, y, beta))
-    test_poly = Sx(uncode([0,0,1,1,1])).as_polynomial()
+    test_poly = Sx(uncode([0, 0, 1, 1, 1])).as_polynomial()
     grothy = to_groth(test_poly, x, zz, beta)
     fat_poly = sum([v * grothendieck_poly(k, x, zz, beta) for k, v in grothy.items()])
     assert expand(fat_poly - test_poly, deep=True) == S.Zero, f"Expected zero but got {expand(fat_poly - test_poly, deep=True)}"
-    #print(to_groth(Sx(Permutation([2, 5, 1, 4, 3])).as_polynomial(), x, zz, S.One))
+    # print(to_groth(Sx(Permutation([2, 5, 1, 4, 3])).as_polynomial(), x, zz, S.One))
