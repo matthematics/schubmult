@@ -232,6 +232,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._grid = np.array(grid, dtype=TileType)
         self._column_perm = column_perm if column_perm else Permutation([])
         self._perm = None
+        self._hecke_perm = None
         self._valid = None
         self._word = None
         self._unzero_cache = None
@@ -240,10 +241,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def as_planar_history(self) -> PlanarHistory:
         def _map_tile(t: TileType) -> Tile:
             return t.as_tile()
+
         new_grid = np.empty((self._grid.shape[0], self._grid.shape[1]), dtype=object)
         new_grid[:] = np.vectorize(_map_tile)(self._grid)
         return PlanarHistory(new_grid)
-
 
     def _invalidate_cache(self):
         self._perm = None
@@ -297,6 +298,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return set(cls._bpd_cache[(w, length)])
 
         ret = set()
+
         def bruhat_bpd(w):
             bpath = []
             w2 = w
@@ -311,11 +313,71 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 for _, perm in da_list:
                     stack.append((perm, [*bpath, w3 * Permutation.w0(len(w) - i).shiftup(i)], i))
             return
+
         bruhat_bpd(w)
         if weight is not None:
             cls._cache_by_weight[(w, tuple(weight))] = set(ret)
         else:
             cls._bpd_cache[(w, length)] = set(ret)
+        return ret
+
+    @classmethod
+    @cache
+    def alt_unreduced_bpds(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None, *, width=None) -> set[BPD]:
+        """Enumerate all (possibly unreduced) BPDs for w by generating ASMs and mapping with from_asm."""
+        if length is None:
+            length = len(weight) if weight is not None else len(w)
+
+        if weight is not None and len(weight) != length:
+            raise ValueError("Weight must have length equal to the number of rows")
+
+        if length < len(w.trimcode):
+            raise ValueError("Length must be at least the length of the permutation's trimcode")
+
+        if weight is not None:
+            key = (w, length, tuple(weight))
+            if key in cls._unreduced_cache_by_weight:
+                return set(cls._unreduced_cache_by_weight[key])
+        else:
+            key = (w, length)
+            if key in cls._unreduced_bpd_cache:
+                return set(cls._unreduced_bpd_cache[key])
+
+        ret: set[BPD] = set()
+        if length == 1:
+            new_grid = np.array([[TileType.BLANK] * w.inv + [TileType.ELBOW_SE] + ([TileType.BLANK] * (width - w.inv - 1) if width is not None else [])], dtype=TileType)
+            return {cls(new_grid)}
+        # pivot transition
+        def pivot_transition(perm2, target_d=None):
+            import itertools
+            ret_set = set()
+            if target_d is None:
+                d = perm2.max_descent
+            else:
+                d = target_d
+            if perm2.max_descent < d:
+                return {perm2}
+            pivots = perm2.pivots()
+            for r in range(1, len(pivots) + 1):
+                for pivot_set in itertools.combinations(pivots, r):
+                    pivot_set = set(pivot_set)
+                    ptrans = perm2.pivot_transition(pivot_set)
+                    ret_set.update(pivot_transition(ptrans, target_d=d))
+            return ret_set
+        old_perm_set = pivot_transition(w, target_d=length)
+        print(old_perm_set)
+        for wp in old_perm_set:
+            old_set = cls.alt_unreduced_bpds(wp, length=length - 1, width=width if width is not None else len(w))
+            if width is None:
+                width = len(w)
+            for bpd in old_set:
+                # while np.count(new_grid == TileType.TBD) > 0:    
+                #     for col in range(width - 1, -1, -1):
+                new_grid = np.full((length, width), TileType.TBD, dtype=TileType)
+                new_grid[:length - 1, :width] = bpd._grid
+                new_grid[length - 1, :width] = BPD.row_from_k_chain(wp * Permutation.w0(len(w) - length).shiftup(length - 1), w * Permutation.w0(len(w) - length).shiftup(length), length, len(w))
+                #bp = bpd.to_bruhat_path()
+                ret.add(BPD(new_grid))
         return ret
 
     @classmethod
@@ -1044,7 +1106,72 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self._perm
         # self._perm = Permutation.ref_product(*self.word)
 
-        #return self._perm
+        # return self._perm
+        nrows, ncols = self._grid.shape
+        bottom_row = self._grid[nrows - 1, :]
+
+        # # Check for TBD in bottom row
+        # if np.any(bottom_row == TileType.TBD):
+        #     raise ValueError("Cannot compute permutation with unresolved TBD tiles")
+
+        # # Vectorized: find columns with entrance_from_bottom
+        # # entrance_from_bottom is True for VERT, CROSS, ELBOW_NW
+        entrance_mask = (bottom_row == TileType.VERT) | (bottom_row == TileType.CROSS) | (bottom_row == TileType.ELBOW_SE)
+        good_cols = (np.where(entrance_mask)[0] + 1).tolist()
+
+        good_cols = Permutation.from_partial(good_cols)
+
+        small_perm = Permutation.ref_product(*self.as_planar_history().perm_word)
+        # small_perm = Permutation([])
+        # # Vectorized: Map tiles to their diff values
+        # diff = np.ones((nrows, ncols), dtype=int)
+        # diff[self._grid == TileType.BLANK] = 0
+        # diff[self._grid == TileType.CROSS] = 2
+        # # Create r array with shape (nrows+1, ncols+1)
+        # r = np.zeros((nrows + 1, ncols + 1), dtype=int)
+
+        # for i in range(1, nrows + 1):
+        #     for j in range(1, ncols + 1):
+        #         r[i, j] = r[i - 1, j - 1] + diff[i - 1, j - 1]
+
+        # # Pre-compute all cross positions and their pipes_northeast values
+        # cross_positions = np.argwhere(self._grid == TileType.CROSS)
+        # if len(cross_positions) > 0:
+        #     # Sort by column first, then by row descending (for correct swap order)
+        #     sort_indices = np.lexsort((-cross_positions[:, 0], cross_positions[:, 1]))
+        #     cross_positions = cross_positions[sort_indices]
+        #     # Get pipes_northeast for each cross position
+        #     pipes_northeast_values = r[cross_positions[:, 0] + 1, cross_positions[:, 1] + 1]
+        #     # Apply swaps sequentially
+        #     for pipes_northeast in pipes_northeast_values:
+        #         # THIS LINE IS WRONG
+        #         #if small_perm[pipes_northeast - 2] < small_perm[pipes_northeast - 1]:
+        #         small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
+
+        build_perm = good_cols * small_perm
+
+        self._perm = Permutation.from_partial(build_perm)
+        return self._perm
+
+    @property
+    def hecke_perm(self) -> Permutation:
+        """
+        Compute the permutation associated with this BPD.
+
+        The permutation is determined by following each vertical pipe from bottom to top.
+        Pipes enter from the bottom (vertical) and left (horizontal).
+
+        Returns:
+            Permutation object
+        """
+        if self._hecke_perm is not None:
+            return self._hecke_perm
+        if self.rows == 0:
+            self._hecke_perm = Permutation([])
+            return self._hecke_perm
+        # self._perm = Permutation.ref_product(*self.word)
+
+        # return self._perm
         nrows, ncols = self._grid.shape
         bottom_row = self._grid[nrows - 1, :]
 
@@ -1088,8 +1215,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         build_perm = good_cols * small_perm
 
-        self._perm = Permutation.from_partial(build_perm)
-        return self._perm
+        self._hecke_perm = Permutation.from_partial(build_perm)
+        return self._hecke_perm
 
     def co_bpd(self):
         new_grid = self._grid.copy()
@@ -1109,8 +1236,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     @classmethod
     @cache
     def groth_to_schub(cls, groth_perm: Permutation, beta):
-        boip = BPD.all_unreduced_bpds(groth_perm, len(groth_perm))
+        boip = BPD.all_unreduced_bpds(~groth_perm, len(groth_perm))
         bods = [b.co_bpd() for b in boip]
+        #spits = [Permutation.hecke_ref_product(*bpd.perm_word) * Permutation.w0(bpd.rows) for bpd in bods if Permutation.ref_product(*bpd.perm_word).inv == len(bpd.perm_word)]
         spits = [bpd.perm*Permutation.w0(bpd.rows) for bpd in bods if bpd.is_reduced]
         ret = {}
         for perm in spits:
@@ -1132,8 +1260,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self.rows != other.rows:
             raise ValueError(
-                f"Row-preserving disjoint union requires equal row counts, got {self.rows} and {other.rows}. "
-                "Use disjoint_union_block_diag for unequal sizes.",
+                f"Row-preserving disjoint union requires equal row counts, got {self.rows} and {other.rows}. Use disjoint_union_block_diag for unequal sizes.",
             )
 
         new_grid = np.full((self.rows, self.cols + 1 + other.cols), TileType.TBD, dtype=TileType)
@@ -1586,6 +1713,48 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 if LEGAL:
                     droop_moves.add(((ri, rj), (bi, bj)))
         return droop_moves
+
+    def k_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
+        import itertools
+
+        k_droop_moves = set()
+        for (ri, rj), (bi, bj) in itertools.product(self.all_se_elbows(), self.all_nw_elbows()):
+            if bi > ri and bj > rj:
+                LEGAL = True
+                for i, j in itertools.product(range(ri, bi), range(rj, bj)):
+                    if (i, j) != (ri, rj) and (self[i, j] == TileType.ELBOW_SE or self[i, j] == TileType.ELBOW_NW or self[i, j] == TileType.BUMP):  # if not NW-corner, check if elbow
+                        LEGAL = False
+                        break
+                if LEGAL:
+                    if self[ri, bj] == TileType.CROSS:
+                        first_elbow_col = None
+                        for j in range(rj, bj):
+                            if self[bi, j] == TileType.ELBOW_SE:
+                                first_elbow_col = j
+                                break
+                        if first_elbow_col is None:
+                            LEGAL = False
+                        else:
+                            for j in range(first_elbow_col + 1, bj):
+                                if self[bi, j] != TileType.HORIZ:
+                                    LEGAL = False
+                                    break
+                    elif self[bi, rj] == TileType.CROSS:
+                        first_elbow_row = None
+                        for i in range(ri, bi):
+                            if self[i, bj] == TileType.ELBOW_SE:
+                                first_elbow_row = i
+                                break
+                        if first_elbow_row is None:
+                            LEGAL = False
+                        else:
+                            for i in range(first_elbow_row + 1, bi):
+                                if self[i, bj] != TileType.VERT:
+                                    LEGAL = False
+                                    break
+                    if LEGAL:
+                        k_droop_moves.add(((ri, rj), (bi, bj)))
+        return k_droop_moves
 
     def min_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
         droop_moves = set()
@@ -2160,7 +2329,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def is_reduced(self):
         if not self.is_valid:
             return False
-        return self.perm.inv == np.sum(self.length_vector)
+        return self.hecke_perm.inv == np.sum(self.length_vector)
 
     @cache
     def as_reduced_compatible(self):
@@ -2317,7 +2486,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # return self.set_width(max(self.rows, perm_length))
         return new_bpd
 
-    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, **_kwargs) -> Expr:
+    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, beta=None, **_kwargs) -> Expr:
         """
         Compute the Schubert polynomial value for this BPD.
 
@@ -2328,9 +2497,16 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         from schubmult.symbolic import prod
 
+        def _groth_sum(v1, v2, _beta):
+            return v1 + v2 + _beta * v1 * v2
+
         if y is None:
-            return prod(x[i + 1] for i, _ in self.all_blanks())
-        return prod(x[i + 1] - y[j + 1] for i, j in self.all_blanks())
+            if beta is None:
+                return prod(x[i + 1] for i, _ in self.all_blanks())
+            return prod(x[i + 1] for i, _ in self.all_blanks()) * prod(1 + beta * x[i + 1] for i, _ in self.all_nw_elbows())
+        if beta is None:
+            return prod(x[i + 1] + y[j + 1] for i, j in self.all_blanks())
+        return beta**(-self.hecke_perm.inv) * prod(beta * _groth_sum(x[i + 1], y[j + 1], beta) for i, j in self.all_blanks()) * prod(1 + beta * _groth_sum(x[i + 1], y[j + 1], beta) for i, j in self.all_nw_elbows())
 
     def to_rc_graph(self) -> RCGraph:
         """

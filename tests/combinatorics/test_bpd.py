@@ -85,3 +85,15 @@ def test_gao_huang():
                 assert bpd == bpd_test
 
             assert len(BPD.all_bpds(perm, length)) == len(RCGraph.all_rc_graphs(perm, length)), f"Error: Number of BPDs and RC graphs do not match for permutation {perm} with length {length}"
+        
+def test_groth_to_schub():
+    from schubmult import BPD, Permutation, Gx, Sx
+    from schubmult.symbolic import expand, S
+
+    n = 5
+    perms = Permutation.all_permutations(n)
+    
+    for perm in perms:
+        permset = BPD.groth_to_schub(perm, Gx._beta)
+        the_sum = sum([v * Sx(k) for k, v in permset.items()])
+        assert expand(the_sum.as_polynomial() - Gx(perm).as_polynomial()) == S.Zero, f"Error: Grothendieck to Schubert polynomial value mismatch for permutation {perm}:\nSum of BPD polyvalues:\n{the_sum}\nExpected:\n{Gx(perm).as_polynomial()}"
