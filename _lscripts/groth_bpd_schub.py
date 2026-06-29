@@ -19,6 +19,8 @@ if __name__ == "__main__":
         for p in range(1, k + 1):
             w = uncode([0] * (k - p) + [1] * p)
             dct = groth_to_schub_as_rc(w)
+            # for bpd, rc_set in dct.items():
+            #     assert len([bpd0 for bpd0 in BPD.all_unreduced_bpds(w) if bpd0.co_bpd().perm == bpd.co_bpd().perm]) == len(rc_set), f"Mismatch for {w}: {bpd=}, {len([bpd0 for bpd0 in BPD.all_unreduced_bpds(w) if bpd0.co_bpd().perm == bpd.co_bpd().perm])=}, {len(rc_set)=}"
             print(f"{w.trimcode}: {dct}")
             poly1 = Gx(w).as_polynomial()
             poly2 = 0
