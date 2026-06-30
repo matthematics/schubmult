@@ -15,6 +15,20 @@ const SCHUBMULT_OPTION = 'schubmult_embed_url';
 const SCHUBMULT_DEFAULT_URL = 'https://example.pythonanywhere.com/embed';
 
 /**
+ * Return the configured embed URL, or empty string if not configured.
+ *
+ * We intentionally treat the shipped placeholder default as "not configured"
+ * so front-end pages show a clear message instead of a blank iframe.
+ */
+function schubmult_get_embed_url() {
+    $raw = trim((string) get_option(SCHUBMULT_OPTION, ''));
+    if ($raw === '' || $raw === SCHUBMULT_DEFAULT_URL) {
+        return '';
+    }
+    return esc_url_raw($raw);
+}
+
+/**
  * Shortcode: [schubmult height="640" width="100%"]
  *
  * Renders an <iframe> pointing at the configured embed URL.
@@ -26,7 +40,7 @@ function schubmult_embed_shortcode($atts) {
         'flavor' => '',     // optional: py | double | q | q_double; appended as ?flavor=...
     ), $atts, 'schubmult');
 
-    $url = trim((string) get_option(SCHUBMULT_OPTION, SCHUBMULT_DEFAULT_URL));
+    $url = schubmult_get_embed_url();
     if (empty($url)) {
         return '<em>Schubmult embed URL is not configured. See Settings → Schubmult Embed.</em>';
     }
@@ -120,12 +134,18 @@ add_action('admin_init', 'schubmult_embed_settings_init');
 
 function schubmult_embed_settings_page() {
     if (!current_user_can('manage_options')) { return; }
-    $url = (string) get_option(SCHUBMULT_OPTION, SCHUBMULT_DEFAULT_URL);
+    $url = trim((string) get_option(SCHUBMULT_OPTION, ''));
     ?>
     <div class="wrap">
         <h1>Schubmult Embed</h1>
         <p>Set the URL of your hosted schubmult Flask app's <code>/embed</code> endpoint.
            Then drop <code>[schubmult]</code> into any post or page.</p>
+        <?php if ($url === '' || $url === SCHUBMULT_DEFAULT_URL) : ?>
+            <div class="notice notice-warning inline"><p>
+                The embed URL is not configured yet. Paste your live
+                <code>https://YOURUSER.pythonanywhere.com/embed</code> URL below and save.
+            </p></div>
+        <?php endif; ?>
         <form action="options.php" method="post">
             <?php settings_fields('schubmult_embed'); ?>
             <table class="form-table" role="presentation">

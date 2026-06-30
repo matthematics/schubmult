@@ -13,6 +13,7 @@ classes as well as ready-to-use ring instances:
 from ...abc import x, y
 from ..schubert.schubert_ring import Sx
 from ._core import PA, PolynomialAlgebra, PolynomialAlgebraElement
+from .composition_schubert_poly_basis import CompositionSchubertPolyBasis
 from .double_forest_poly_basis import DoubleForestPolyBasis
 from .forest_poly_basis import ForestPolyBasis
 from .key_poly_basis import KeyPolyBasis
@@ -27,6 +28,7 @@ DoubleForest = PolynomialAlgebra(DoubleForestPolyBasis(x, y))
 
 __all__ = [
     "PA",
+    "CompositionSchubertPolyBasis",
     "DoubleForest",
     "DoubleForestPolyBasis",
     "ElemSymPolyBasis",

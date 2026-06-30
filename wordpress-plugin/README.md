@@ -39,3 +39,19 @@ SCHUBMULT_ALLOWED_ORIGINS=https://your-wordpress-site.com,https://www.your-wordp
 
 Without this, browsers will block the iframe with a CSP `frame-ancestors`
 violation.
+
+## Troubleshooting a blank widget
+
+If the page area is blank after reactivating your site/app, check these first:
+
+1. Open your embed URL directly in a browser, e.g.
+   `https://YOURUSER.pythonanywhere.com/embed`.
+   - If this fails, fix the PythonAnywhere app first.
+2. In WordPress, go to **Settings → Schubmult Embed** and re-save the embed URL.
+   - Reactivation/migration can clear options.
+3. In PythonAnywhere, verify your WSGI file still sets:
+   - `SCHUBMULT_ALLOWED_ORIGINS=https://your-site.com,https://www.your-site.com`
+   - Then click **Reload** in the Web tab.
+4. In browser DevTools (Console), look for
+   `Refused to frame ... because an ancestor violates Content Security Policy`.
+   - That means your allowed-origins list is missing or incorrect.

@@ -1,7 +1,9 @@
+from itertools import combinations
+
 from schubmult.combinatorics.indexed_forests import decreasing_labelings, weak_composition_to_indfor, word_from_labeling
 from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
 from schubmult.rings.printing import GenericPrintingTerm
-from schubmult.symbolic import S
+from schubmult.symbolic import S, Symbol
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
 from schubmult.utils.tuple_utils import pad_tuple
 
@@ -32,6 +34,49 @@ def _forest_polynomial_from_root(root, genset, min_value=1):
         if root.right is not None:
             term *= _forest_polynomial_from_root(root.right, genset, val + 1)
         ret += term
+    return ret
+
+
+def _grove_polynomial_from_indfor(indfor, genset, beta=Symbol("beta")):
+    """Compute the set-valued grove polynomial for an indexed forest.
+
+    Each root contributes via set-valued labelings, with a factor ``beta``
+    raised to the number of extra labels beyond one per node.
+    """
+    if len(indfor) == 0:
+        return S.One
+
+    ret = S.One
+
+    for root in indfor:
+        ret *= _grove_polynomial_from_root(root, genset, beta=beta)
+    return ret
+
+
+def _grove_polynomial_from_root(root, genset, min_value=1, beta=Symbol("beta")):
+    """Recursively compute one root contribution for set-valued grove polynomials."""
+    if root.rho == 0:
+        return S.One
+
+    available_vals = tuple(range(min_value, root.rho + 1))
+    if len(available_vals) == 0:
+        return S.Zero
+
+    ret = S.Zero
+    for subset_size in range(1, len(available_vals) + 1):
+        for subset in combinations(available_vals, subset_size):
+            overage = subset_size - 1
+            term = beta ** overage
+
+            for val in subset:
+                term *= genset[val]
+
+            max_val = subset[-1]
+            if root.left is not None:
+                term *= _grove_polynomial_from_root(root.left, genset, min_value=max_val, beta=beta)
+            if root.right is not None:
+                term *= _grove_polynomial_from_root(root.right, genset, min_value=max_val + 1, beta=beta)
+            ret += term
     return ret
 
 

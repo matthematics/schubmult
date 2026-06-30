@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from schubmult import FreeAlgebra, WordBasis
-from schubmult.symbolic import S
+from schubmult.symbolic import S, Symbol
 
 
 def _eq_except_trailing_zeros(cd1, cd2):
@@ -1202,6 +1202,54 @@ def omega_park(word):
     return set(occupied.keys())
 
 
+def _grove_polynomial_from_indfor(indfor, genset, beta=Symbol("beta")):
+    """Compute the set-valued grove polynomial for an indexed forest.
+
+    Each root contributes via set-valued labelings, with a factor ``beta``
+    raised to the number of extra labels beyond one per node.
+    """
+    if len(indfor) == 0:
+        return S.One
+
+    ret = S.One
+
+    for root in indfor:
+        ret *= _grove_polynomial_from_root(root, genset, beta=beta)
+    return ret
+
+
+def _grove_polynomial_from_root(root, genset, min_value=1, beta=Symbol("beta")):
+    from itertools import combinations
+    """Recursively compute one root contribution for set-valued grove polynomials."""
+    if root.rho == 0:
+        return S.One
+
+    available_vals = tuple(range(min_value, root.rho + 1))
+    if len(available_vals) == 0:
+        return S.Zero
+
+    ret = S.Zero
+    for subset_size in range(1, len(available_vals) + 1):
+        for subset in combinations(available_vals, subset_size):
+            overage = subset_size - 1
+            term = beta ** overage
+
+            for val in subset:
+                term *= genset[val]
+
+            max_val = subset[-1]
+            if root.left is not None:
+                term *= _grove_polynomial_from_root(root.left, genset, min_value=max_val, beta=beta)
+            if root.right is not None:
+                term *= _grove_polynomial_from_root(root.right, genset, min_value=max_val + 1, beta=beta)
+            ret += term
+    return ret
+
+def grove_polynomial(comp, genset, beta=Symbol("beta")):
+    indfor = weak_composition_to_indfor(comp)
+    return _grove_polynomial_from_indfor(indfor, genset, beta=beta)
+
 if __name__ == "__main__":
+    from schubmult.abc import beta, x
     # Example usage
-    print(omega_insertion((letterpair(2, 1), letterpair(7, 1), letterpair(4, 2), letterpair(4, 1), letterpair(8, 1), letterpair(4, 3))))
+    print(grove_polynomial((0,2,3),x,beta))

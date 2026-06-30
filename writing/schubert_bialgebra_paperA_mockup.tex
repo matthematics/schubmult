@@ -1,0 +1,732 @@
+\documentclass{amsart}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\BRC}{\mathcal{BRC}}
+\newcommand{\RC}{\mathcal{RC}}
+\newcommand{\dcoma}{\mathcal{D}}
+\newcommand{\coma}{\mathcal{A}}
+\newcommand{\forest}{\mathfrak{P}}
+\newcommand{\dsch}{\mathfrak{D}}
+\newcommand{\dom}{\delta}
+\newcommand{\grass}{\mathcal{G}}
+\newcommand{\Mn}{\mathcal{M}}
+\newcommand{\plac}{\mathcal{P}}
+\newcommand{\SSYT}{\mathrm{SSYT}}
+\newcommand{\rowg}{\mathtt{row}}
+\newcommand{\rw}{\mathrm{rw}}
+\newcommand{\shup}{\mathord{\uparrow}}
+\newcommand{\code}{\mathfrak{c}}
+\newcommand{\wtt}{\operatorname{wt}}
+\newcommand{\wof}[1]{w_{#1}}
+\newcommand{\hr}{\mathtt{ht}}
+\newcommand{\maxd}{\operatorname{maxdes}}
+\newcommand{\sch}{\mathfrak{S}}
+\newcommand{\tom}[1]{\xrightarrow{#1}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
+\newcommand{\rtt}{\mathtt{rt}}
+\newcommand{\trm}{\mathtt{trim}}
+\newcommand{\clp}{\mathtt{clip}}
+\newcommand{\zeromap}{\mathcal{Z}}
+\newcommand{\xleadsto}[2][]{\overset{#2}{\leadsto}}
+\newcommand{\ins}[2]{{#2\xleadsto{#1}}}
+\makeatletter
+\newcommand{\sqcupplus@inner}[2]{%
+  \vcenter{\hbox{\ooalign{%
+    \hfil$\m@th#1\sqcup$\hfil\cr
+    \hfil\raisebox{0.15ex}{$\m@th#1\scriptscriptstyle+$}\hfil\cr
+  }}}%
+}
+\newcommand{\sqcupplus}{\mathbin{\mathpalette\sqcupplus@inner\relax}}
+\makeatother
+
+
+\title[Forest LR Rule via Schubert Bialgebra]{A Littlewood--Richardson Rule for Forest Polynomials via the Schubert Bialgebra}
+\author{Matthew J. Samuel}
+
+\begin{document}
+
+\begin{abstract}
+Forest polynomials $\forest_a$ form a positive basis of $\mathbb{Z}[x_1,x_2,\ldots]$, but an explicit Littlewood--Richardson cardinality rule for their structure constants has been missing. We prove such a rule: the coefficient of $\forest_c$ in $\forest_a\forest_b$ is the number of pairs of forest RC graphs of codes $a,b$ whose lift product lands in a forest RC graph of code $c$. The proof isolates a minimal bialgebraic-combinatorial spine: a Schubert bialgebra, a bounded RC-graph ring with clip/trim factorization, and a lift product compatible with the forest quotient. As a corollary, the same coefficients describe the cup product of forest classes in $H^\bullet(\mathrm{QFl}_n)$.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+\subsection*{Main theorem}
+Let
+\[
+\forest_a\forest_b=\sum_c \beta_{a,b}^c\,\forest_c.
+\]
+The principal result is the following explicit cardinality formula.
+
+\begin{theorem}[Forest polynomial LR rule]\label{theorem:forestpolyLR}
+Let $a,b$ be weak compositions of length $n$. Then
+\[
+\forest_a\,\forest_b \;=\; \sum_c \beta_{a,b}^c\,\forest_c,
+\]
+where $\beta_{a,b}^c$ is the number of pairs $(A,B)$ of RC graphs such that
+\[
+\code(\wof{A})=\code_{\forest}(A)=a,\qquad \code(\wof{B})=\code_{\forest}(B)=b,
+\]
+and $A*B=R$ for some forest RC graph $R$ with
+\[
+\code_{\forest}(R)=\wtt(R)=c.
+\]
+\end{theorem}
+
+\subsection*{What is new}
+\begin{itemize}
+\item A direct cardinality rule for forest polynomial multiplication (not an algorithmic accumulation).
+\item A lift product on RC-graph data that isolates exactly the terms contributing to $\beta_{a,b}^c$.
+\item A short geometric translation to cup products on the quasisymmetric flag variety.
+\end{itemize}
+
+\subsection*{Proof architecture}
+The proof uses only the following chain.
+\begin{enumerate}
+\item Build the bounded RC-graph ring and row-splitting maps.
+\item Pass to the forest quotient and identify forest classes.
+\item Construct the lift product and prove compatibility with forest classes.
+\item Extract Theorem~\ref{theorem:forestpolyLR} as a counting statement.
+\end{enumerate}
+
+\begin{remark}
+Material on dual key and dual slide LR rules is intentionally omitted from this version and moved to a companion manuscript. This paper keeps only machinery used in the proof of Theorem~\ref{theorem:forestpolyLR}.
+\end{remark}
+
+\section{Minimal Algebraic Setup}
+
+\subsection{The Schubert bialgebra and dual indexing language}
+
+We work over $\mathbb{Z}$. Let $\coma_n=\mathbb{Z}[x_1,\ldots,x_n]$ and set
+\[
+\coma=\bigoplus_{n\geq 0}\coma_n,
+\]
+with multiplication taken inside each component and \emph{trivial across components}: if $a\in\coma_m$, $b\in\coma_n$ with $m\neq n$ and $m,n>0$, then $ab=0$. The deconcatenation coproduct
+\[
+\Delta(x_c)=\sum_{ab=c} x_a\otimes x_b
+\]
+(where $ab=c$ means $a$ concatenated with $b$ equals the weak composition $c$) and the counit $\varepsilon(x_a)=\delta_{a,\varnothing}$ make $\coma$ a graded bialgebra; the cross-component triviality of the product is exactly what makes $\Delta$ a ring homomorphism. We call $\coma$ the \emph{Schubert bialgebra}.
+
+\begin{definition}\label{definition:dualalgebra}
+Let $\dcoma=\bigoplus_n\dcoma_n$ be the graded dual of $\coma$, with the pairing $\langle a,x_b\rangle=\delta_{a,b}$ on weak compositions. Dual to deconcatenation, the product on $\dcoma$ is concatenation,
+\[
+[a_1\cdots a_p]\,[b_1\cdots b_q]=[a_1\cdots a_p b_1\cdots b_q],
+\]
+so $\dcoma$ is the free associative algebra on generators $[i]$, $i\geq 0$. Its coproduct $\Delta^*$ is dual to the product of $\coma$ and is characterized by $\langle\Delta^*(\alpha),x\otimes y\rangle=\langle\alpha,xy\rangle$.
+\end{definition}
+
+Each $\coma_n$ carries the Schubert basis $\{\sch_u^{(n)}:\maxd(u)\leq n\}$, with structure constants
+\[
+\sch_u^{(n)}\sch_v^{(n)}=\sum_w c_{u,v}^w\,\sch_w^{(n)},
+\]
+the (nonnegative, geometrically defined) Schubert Littlewood--Richardson coefficients. Let $\{\dsch_u^n\}$ be the dual basis of $\dcoma_n$, so $\langle\dsch_u^n,\sch_v^n\rangle=\delta_{uv}$. The single fact about this basis we use is its Pieri-type module rule.
+
+\begin{lemma}\label{lemma:dpieri}
+For an integer $a\geq 0$ and $w\in S_\infty$,
+\[
+[a]\cdot\dsch_w^n=\sum_{\substack{w'\downvar{1}w\\\ell(w,w')=a}}\dsch_{w'}^{n+1}.
+\]
+\end{lemma}
+
+The conceptual point of the bialgebra, and the model for the forest rule proved below, is that the Schubert LR coefficients are the structure constants of the \emph{coproduct} $\Delta^*$ in the dual Schubert basis.
+
+\begin{theorem}[Schubert LR coefficients as a coproduct]\label{theorem:dschcoproduct}
+Let $w\in S_\infty$ with $\maxd(w)\leq n$. Then in $\dcoma_n\otimes\dcoma_n$,
+\[
+\Delta^*(\dsch_w^n)=\sum_{u,v}c_{u,v}^w\,\dsch_u^n\otimes\dsch_v^n.
+\]
+\end{theorem}
+\begin{proof}
+Expand $\Delta^*(\dsch_w^n)=\sum_{u,v}\lambda_{u,v}\,\dsch_u^n\otimes\dsch_v^n$. Pairing with $\sch_u^n\otimes\sch_v^n$ and using the defining identity of $\Delta^*$,
+\[
+\lambda_{u,v}=\langle\Delta^*(\dsch_w^n),\sch_u^n\otimes\sch_v^n\rangle=\langle\dsch_w^n,\sch_u^n\sch_v^n\rangle=\Big\langle\dsch_w^n,\sum_z c_{u,v}^z\sch_z^n\Big\rangle=c_{u,v}^w.\qedhere
+\]
+\end{proof}
+
+\begin{remark}
+Thus nonnegativity of $c_{u,v}^w$ is the bialgebra-theoretic statement that $\Delta^*$ has nonnegative coefficients in the basis $\{\dsch_u^n\}$. The main theorem of this paper is the analogous phenomenon for the dual \emph{forest} basis, where we obtain an explicit cardinality rule (Corollary~\ref{corollary:dforestcoproduct}).
+\end{remark}
+
+\subsection{Bounded RC graphs}
+\begin{definition}\label{definition:rcgraph}
+Let $R\subseteq\mathbb{P}\times\mathbb{P}$ be a finite set of cells in the positive integer grid. To a cell $(i,j)$ associate the simple reflection $s(i,j)=s_{i+j-1}$, and order the cells of $R$ lexicographically by row, reading right to left within each row. Listing the cells in this order as $r_1<\cdots<r_m$, set
+\[
+\wof{R}=s(r_1)\,s(r_2)\cdots s(r_m)\in S_\infty.
+\]
+If $\ell(\wof{R})=m$, i.e.\ no length cancellation occurs, then $R$ is an \emph{RC graph}. A \emph{bounded RC graph} is a pair $(R,n)$ with $n\geq\max\{i:(i,j)\in R\}$ and $\maxd(\wof{R})\leq n$; we call $\hr(R)=n$ the \emph{height} of $R$ and abuse notation by treating the number of rows as a property of $R$. Its \emph{weight vector} $\wtt(R)$ has entries $\wtt_i(R)=\#\{j:(i,j)\in R\}$. For $\hr(R)\geq 1$, the \emph{trim} $\trm(R)$ is the bounded RC graph of height $\hr(R)-1$ with underlying set $\{(i-1,j-1):(i,j)\in R,\ i\geq 2\}$.
+\end{definition}
+
+\begin{definition}
+Let $\BRC=\bigoplus_{n\geq 0}\BRC_n$ be the free abelian group on bounded RC graphs, graded by height, where $\BRC_n$ is spanned by those $R$ with $\hr(R)=n$.
+\end{definition}
+
+\subsection{Zeroing out the last row}
+
+\begin{algorithm}
+\caption{Basic monk insertion $\ins{k}{i} R$}
+\label{algorithm:monk}
+\begin{algorithmic}[1]
+\State \textbf{Input:} An RC graph $R$, parameter $k$, and an integer $i$ with $1\leq i\leq k$.
+\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_j(R')=\wtt_j(R)$ for $j\neq i$ and $\wtt_i(R')=\wtt_i(R)+1$ such that $\wof{R}\tom{k} \wof{R'}$.
+\State Find leftmost position $(i,j)\notin R$ in row $i$ such that if $\rtt_R(i,j)=(a,b)$, then $a\leq k<b$.
+\State $R\gets R\cup\{(i,j)\}$.
+\If{there exists $(i',j')\in R$ with $\rtt_R(i',j')\in\Phi^-$}
+\State $R\gets R\setminus\{(i',j')\}$.
+\State Return to step 3 substituting $i=i'$.
+\EndIf
+\State \Return $R$.
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Insertion machinery (retained)}
+
+\begin{algorithm}
+\caption{Pseudo-Pieri insertion $\ins{k}{I} R$}
+\label{algorithm:insertion}
+\begin{algorithmic}[1]
+\State \textbf{Input:} An RC graph $R$, parameter $k$, and sequence $I = \{i_1, \ldots, i_m\}$ with $k\geq i_1 \geq i_2 \geq \cdots \geq i_m \geq 1$.
+\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_i(R')=\wtt_i(R)$ for $i\notin I$ and $\wtt_i(R')=\wtt_i(R)+\#\{j \mid i_j = i\}$ for $i\in I$, together with a Pieri-type relation $\wof{R}\Tom{k} \wof{R'}$.
+\State \textbf{Initialize:} Let $L \gets [\,]$ (empty list of pairs $(a,b)$ where $a\leq k < b$), and $U\gets [\,]$ (empty list of positions).
+\For{each $i \in (i_1, \ldots, i_m)$}
+\State Find leftmost position $(i,j) \notin R$ in row $i$ satisfying $j>j'$ for all $(i,j')\in U$ such that either:
+\State \quad a) $\rtt_R(i,j) = (s,q)$ where $s \leq k < q$ and $q \notin \{b \mid (a,b) \in L\}$.
+\State \quad b) $\rtt_R(i,j) = (b_r,q)$ where $q > k$, $b_r<q$, and $q \notin \{b \mid (a,b) \in L\}$.
+\State $R \gets R \cup \{(i,j)\}$ and $U\gets U \cup \{(i,j)\}$.
+\State Update $L$ by adding $(s,q)$ or replacing $(a_r,b_r)$ with $(a_r,q)$ and $(a_r,b_r)$.
+\If{there exists $(i',j') \in R$ with $\rtt_R(i',j') \in \Phi^-$}
+\State $R \gets R \setminus \{(i',j')\}$.
+\State Let $\rtt_R(i',j') = (q,s)$.
+\If{$(s,q) \in L$}
+\State Remove $(s,q)$ from $L$.
+\Else
+\State Remove $(a_r,q)$ from $L$, where $(a_r,q),(a_r,s)\in L$.
+\EndIf
+\State Return to step 5 to insert $i'$.
+\EndIf
+\EndFor
+\State \Return $R$.
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Map $\zeromap(R)$ zeroing out last row}
+\label{algorithm:zero}
+\begin{algorithmic}[1]
+\State \textbf{Input:} A bounded RC graph $R$ with $\hr(R)=n$ and row $n$ empty.
+\State \textbf{Output:} A bounded RC graph $R'$ with $\hr(R')=n-1$, $|R'|=|R|$, and $\wof{R}\downvar{n}\wof{R'}$.
+\If{$R$ with last row removed is a valid bounded RC graph}
+\State \Return $R$ with last row removed.
+\Else
+\State Let $R_0\gets R$.
+\State Find maximal $p$ and sequence $\{(i_m,j_m)\}_{m=1}^p$ such that
+\State \quad $\rtt_{R_{m-1}}(i_m,j_m)=(n+m-1,n+m)$, where $R_m=R_{m-1}\setminus\{(i_m,j_m)\}$.
+\State $R^-\gets R\setminus\{(i_1,j_1),\ldots,(i_p,j_p)\}$.
+\State Let $I\gets(i_1,\ldots,i_p)$.
+\State $D\gets R^-\cup\{(n,1),\ldots,(n,p)\}$.
+\State $D'\gets \ins{n-1}{I}D$.
+\State $R'\gets\{(i,j)\in D'\mid i<n\}$ as a bounded RC graph with $n-1$ rows.
+\State \Return $R'$.
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\begin{definition}\label{definition:zeromap}
+Let $R$ be an RC graph with $\hr(R)=n$ such that row $n$ is empty. Define $\zeromap(R)$ to be the output of Algorithm~\ref{algorithm:zero}.
+\end{definition}
+
+\begin{lemma}\label{lemma:insertworks}
+Given an RC graph $R$, an integer $k$, and $k\geq i_1\geq\cdots\geq i_m\geq 1$, Algorithm~\ref{algorithm:insertion} produces a valid RC graph $R'$ satisfying
+\[
+\wtt_i(R')=\wtt_i(R)+\#\{j\mid i_j=i\},\qquad \wof{R}\Tom{k}\wof{R'}.
+\]
+\end{lemma}
+\begin{proof}
+Set $R_0=R$. We claim that at the start of iteration $p$ of the main loop, $R$ is a valid RC graph with
+\[
+\wtt_i(R)=\wtt_i(R_0)+\#\{j\leq p-1\mid i_j=i\},\qquad
+\wof{R}=\wof{R_0}\,t_{a_1b_1}\cdots t_{a_{p-1}b_{p-1}},
+\]
+where $L=[(a_1,b_1),\ldots,(a_{p-1},b_{p-1})]$. This is clear for $p=1$. For the inductive step, suppose we insert at row $i_p$. In case~(a) of Step~5, adjoining $(i_p,j)$ adds the root $t_s-t_q$ to the inversion set of $\wof{R}$, i.e.\ multiplies by $t_{sq}$. In case~(b), adjoining $(i_p,j)$ multiplies by $t_{b_rq}$, which commutes past the earlier reflections to meet $t_{a_rb_r}$, and the identity
+\[
+t_{a_rb_r}t_{b_rq}=t_{a_rq}t_{a_rb_r}
+\]
+keeps the product in the asserted form. If validity fails afterward, a negative root has been created at some row $i-1$; by the strong exchange property it equals the just-inserted $\rtt_R(i,j)$. Removing it (from $R$ and from $L$) restores the permutation at the start of the iteration, and reinserting at row $i-1$ adjoins a positive root while leaving the weight of row $i-1$ unchanged. Iterating the rectification proves the claim; the update rule for $L$ keeps the $b_j$ distinct, so $\wof{R}\Tom{k}\wof{R'}$.
+\end{proof}
+
+\begin{lemma}\label{lemma:zerovalid}
+Given a bounded RC graph $R$ with $\hr(R)=n$ and row $n$ empty, Algorithm~\ref{algorithm:zero} produces a valid bounded RC graph $R'$ with $\hr(R')=n-1$ and $\wtt(R')=\wtt(R)$.
+\end{lemma}
+\begin{proof}
+Stripping the crossings at roots $(n,n+1),(n+1,n+2),\ldots,(n+p-1,n+p)$ removes exactly one crossing from each of rows $i_1,\ldots,i_p$; relocating them to the last row to form $R_1$ preserves the word, so $\wof{R}=\wof{R_1}$. By construction the portion of $R_1$ in rows of index $<n$ is valid. Reinserting at rows $i_1,\ldots,i_p$ via Algorithm~\ref{algorithm:insertion} restores the per-row crossing counts without creating descents beyond index $n$, by Lemma~\ref{lemma:insertworks}. Deleting row $n$ then yields a valid bounded RC graph $R'$ of height $n-1$ with $\wtt(R')=\wtt(R)$.
+\end{proof}
+
+\begin{lemma}\label{lemma:ztrim}
+Let $(R,n)$ be a bounded RC graph with $n\geq 2$ such that row $n$ is empty. Then
+\[
+\zeromap(\trm(R))=\trm(\zeromap(R)).
+\]
+\end{lemma}
+\begin{proof}
+In terms of words, $\trm$ preserves a suffix of $\wof{R}$. Removing the initial roots before trimming therefore removes the same roots that remain after trimming, by the exchange property. In the subsequent reinsertion (Algorithm~\ref{algorithm:insertion}) there is no dependence on lower-indexed rows: the modification only propagates downward in row number. Trimming the first row thus merely halts the process one step earlier and leaves all rows of higher index in the outcome unchanged, giving $\zeromap(\trm(R))=\trm(\zeromap(R))$.
+\end{proof}
+
+\begin{lemma}\label{lemma:zerotransition}
+Let $R$ be a bounded RC graph with $\hr(R)=n\geq 2$ and row $n$ empty, and let $R'=\zeromap(R)$. Then $\wof{R}\downvar{n}\wof{R'}$.
+\end{lemma}
+\begin{proof}
+Write $w=\wof{R}$ and $m=\code_n(w)$. The penultimate graph $\widetilde{R}$ produced by Algorithm~\ref{algorithm:zero} populates the cells $(n,1),\ldots,(n,m)$ and satisfies $w\Tom{n-1}\wof{\widetilde{R}}$ via reflections $t_{ab}$ with $n\leq b\leq n+m$, while the closing reinsertion realizes $\wof{\widetilde{R}}\Tom{n}\varphi_{n,N}(w')$ via reflections $t_{nb}$ with $b>n+m$, where $w'=\wof{R'}$ and $\varphi_{n,N}$ is the order-preserving relabeling of the values occurring in the first $n$ rows. Because the cells $(n,1),\ldots,(n,m)$ keep pipe $n$ to the right of pipes $n+1,\ldots,n+m$ throughout, and the leftmost admissible cell is always chosen, no reflection of the form $t_{in}$ is ever inserted. Hence the value at position $n$ is unchanged and the composite is a single $n$-transition $w\downvar{n}w'$.
+\end{proof}
+
+\begin{theorem}[Weight-preserving zeroing bijection]\label{theorem:zero_bijection}
+Let $w$ be a permutation with last descent at most $n$, and let $\mathcal{RC}(w,n)^0$ be the bounded RC graphs $R$ of height $n$ with $\wof{R}=w$ and empty last row. Then
+\[
+\zeromap:\mathcal{RC}(w,n)^0\to \bigcup_{w\downvar{n}w'}\mathcal{RC}(w',n-1)
+\]
+is a weight-preserving bijection.
+\end{theorem}
+\begin{proof}
+Weight preservation and well-definedness of the codomain are Lemmas~\ref{lemma:zerovalid} and~\ref{lemma:zerotransition}. We prove bijectivity by induction on $n$.
+
+\emph{Base case $n=2$.} The graphs in $\mathcal{RC}(w,2)^0$ are exactly those of permutations $w=s_k s_{k-1}\cdots s_2$ for $k>1$. Algorithm~\ref{algorithm:zero} moves all of row $1$ into row $2$ and reinserts $k-1$ crossings into row $1$, necessarily with roots $t_q-t_s$ having $q=1$; the output is the unique one-row graph $\{(1,1),\ldots,(1,k-1)\}$ of $w'=s_{k-1}\cdots s_1$. Hence $\zeromap$ is a bijection for $n=2$.
+
+\emph{Injectivity.} Let $n>2$ and assume the result for $n-1$. If $R,R'\in\mathcal{RC}(w,n)^0$ satisfy $\zeromap(R)=\zeromap(R')$, then by Lemma~\ref{lemma:ztrim},
+\[
+\zeromap(\trm R)=\trm(\zeromap R)=\trm(\zeromap R')=\zeromap(\trm R'),
+\]
+so the inductive hypothesis forces $\trm R=\trm R'$; thus $R$ and $R'$ agree outside row $1$. Since $\wof{R}=\wof{R'}=w$ and a bounded RC graph is determined by its word together with its rows of index $\geq 2$, we conclude $R=R'$.
+
+\emph{Surjectivity.} The Lascoux--Sch\"utzenberger transition formula gives, for $\maxd(w)\leq n$,
+\[
+\sch_w(x_1,\ldots,x_{n-1},0)=\sum_{\substack{w\downvar{n}w'\\\ell(w)=\ell(w')}}\sch_{w'}(x_1,\ldots,x_{n-1}),
+\]
+a sum without multiplicity. Expanding each Schubert polynomial as the weight generating function over its RC graphs, and noting that only graphs with empty row $n$ contribute on the left, yields
+\[
+|\mathcal{RC}(w,n)^0|=\sum_{\substack{w\downvar{n}w'\\\ell(w)=\ell(w')}}|\mathcal{RC}(w',n-1)|.
+\]
+By injectivity the image of $\zeromap$ has cardinality $|\mathcal{RC}(w,n)^0|$; it sits inside the codomain, whose cardinality is the right-hand side above, the same number. Therefore $\zeromap$ is onto, completing the proof.
+\end{proof}
+
+\subsection{Clip and trim maps via zeroing}
+
+\begin{definition}
+For $R\in\BRC$ with $\hr(R)=n$ and $0\le p\le n$, define
+\[
+\trm^p(R)\in\BRC_{n-p}
+\]
+by deleting the top $p$ rows (with reindexing), and define
+\[
+\clp^p(R)\in\BRC_p
+\]
+by iterating the zeroing map on the bottom row until height $p$ is reached.
+\end{definition}
+
+\begin{remark}
+The definition of $\clp^p$ is meaningful because Theorem~\ref{theorem:zero_bijection} gives the required well-defined/bijective zeroing mechanism at each step.
+\end{remark}
+
+\subsection{Definition of the ring product}\label{section:ringproduct}
+
+Having defined the row maps $\clp^p$ and $\trm^p$ (the latter built from the zeroing bijection of Theorem~\ref{theorem:zero_bijection}), we use them to assemble a bounded RC graph of height $m+n$ from its top $m$ rows and bottom $n$ rows.
+
+\begin{definition}[Product on $\BRC$]\label{definition:ringproduct}
+If $R_1$ and $R_2$ are bounded RC graphs of heights $m$ and $n$, define
+\[
+R_1\sqcupplus R_2\;=\;\sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}} R',
+\]
+where $R'$ ranges over bounded RC graphs of height $m+n$, and extend bilinearly to $\BRC$. Equivalently, $R'$ occurs in $R_1\sqcupplus R_2$, with multiplicity one, precisely when $\clp^m(R')=R_1$ and $\trm^m(R')=R_2$; we call this the \emph{row factorization} of $R'$ at height $m$.
+\end{definition}
+
+The content of this subsection is that $\sqcupplus$ is associative. The proof rests on two compatibilities of the row maps, which we establish first.
+
+\begin{lemma}\label{lemma:clpfunc}
+Let $R$ be a bounded RC graph with $\hr(R)=n$, and let $0\leq p\leq p+q\leq n$. Then
+\[
+\clp^p(\clp^{p+q}(R))=\clp^p(R).
+\]
+\end{lemma}
+\begin{proof}
+By definition $\clp^k(R)$ is computed by iterating the bottom-row zeroing map $\zeromap$ until the height drops to $k$. Set $r=n-(p+q)$, so that $\clp^{p+q}(R)$ is obtained from $R$ by $r$ successive applications of $\zeromap$, and $\clp^p(R)$ by $r+q$ such applications. The first $r$ applications in the computation of $\clp^p(R)$ produce exactly $\clp^{p+q}(R)$; the remaining $q$ then produce $\clp^p(\clp^{p+q}(R))$. Hence the two agree.
+\end{proof}
+
+\begin{lemma}[Commutativity of $\clp$ and $\trm$]\label{lemma:clptrm}
+Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. Then
+\[
+\trm^p(\clp^{p+q}(R))=\clp^q(\trm^p(R)).
+\]
+\end{lemma}
+\begin{proof}
+Both sides have height $q$. Lemma~\ref{lemma:ztrim} gives $\zeromap(\trm(R'))=\trm(\zeromap(R'))$ for any $R'$ whose last row is empty. By Lemma~\ref{lemma:clpfunc}, both $\clp^{p+q}$ on a graph of height $p+q+r$ and $\clp^q$ on a graph of height $q+r$ are the $r$-fold iterate $\zeromap^r$ of bottom-row zeroing. Iterating Lemma~\ref{lemma:ztrim} $r$ times therefore yields
+\[
+\trm^p(\clp^{p+q}(R))=\trm^p(\zeromap^r(R))=\zeromap^r(\trm^p(R))=\clp^q(\trm^p(R)),
+\]
+as required.
+\end{proof}
+
+\begin{theorem}[Associativity; $\BRC$ is a ring]\label{theorem:ring_associative}
+The product $\sqcupplus$ is associative, and $(\BRC,\sqcupplus)$ is a ring with identity the empty RC graph of height $0$.
+\end{theorem}
+\begin{proof}
+Let $R_1,R_2,R_3$ be bounded RC graphs of heights $p,q,r$, and let $R$ be a bounded RC graph of height $p+q+r$. We show that $R$ occurs with the same multiplicity (namely $1$, or $0$) in $(R_1\sqcupplus R_2)\sqcupplus R_3$ and in $R_1\sqcupplus(R_2\sqcupplus R_3)$.
+
+Unwinding Definition~\ref{definition:ringproduct} in the left bracketing, $R$ occurs in $(R_1\sqcupplus R_2)\sqcupplus R_3$ iff there is a height-$(p+q)$ graph $S$ with $\clp^{p+q}(R)=S$, $\trm^{p+q}(R)=R_3$, and $\clp^p(S)=R_1$, $\trm^p(S)=R_2$. Eliminating $S=\clp^{p+q}(R)$, this is the conjunction
+\[
+\text{(i) } \clp^p(\clp^{p+q}(R))=R_1,\quad
+\text{(ii) } \trm^p(\clp^{p+q}(R))=R_2,\quad
+\text{(iii) } \trm^{p+q}(R)=R_3.
+\]
+Unwinding the right bracketing, $R$ occurs in $R_1\sqcupplus(R_2\sqcupplus R_3)$ iff there is a height-$(q+r)$ graph $T$ with $\clp^p(R)=R_1$, $\trm^p(R)=T$, and $\clp^q(T)=R_2$, $\trm^q(T)=R_3$. Eliminating $T=\trm^p(R)$, this is the conjunction
+\[
+\text{(i$'$) } \clp^p(R)=R_1,\quad
+\text{(ii$'$) } \clp^q(\trm^p(R))=R_2,\quad
+\text{(iii$'$) } \trm^q(\trm^p(R))=R_3.
+\]
+Now (i)$\Leftrightarrow$(i$'$) by Lemma~\ref{lemma:clpfunc}; (ii)$\Leftrightarrow$(ii$'$) by Lemma~\ref{lemma:clptrm}; and (iii)$\Leftrightarrow$(iii$'$) since $\trm^{p+q}=\trm^q\circ\trm^p$ by definition of $\trm$. Thus the two systems of conditions are equivalent, so $R$ contributes identically to both bracketings. Each condition is an equality of RC graphs, so in either bracketing $R$ occurs with multiplicity at most one; hence the multiplicities agree. This proves
+\[
+(R_1\sqcupplus R_2)\sqcupplus R_3 = R_1\sqcupplus(R_2\sqcupplus R_3).
+\]
+Distributivity holds because $\sqcupplus$ was extended bilinearly, and the empty RC graph of height $0$ is a two-sided identity since $\clp^0$ and $\trm^0$ act trivially. Therefore $(\BRC,\sqcupplus)$ is a ring.
+\end{proof}
+
+\subsection{The dual Schubert algebra as a quotient of \texorpdfstring{$\BRC$}{BRC}}\label{section:dschquotient}
+
+We now make precise the sense in which the dual algebra $\dcoma$ is a quotient \emph{ring} of $(\BRC,\sqcupplus)$. This is the engine behind the Littlewood--Richardson rules of the paper: each positive structure constant is read off as the number of RC graphs in a fiber of the quotient map.
+
+\begin{definition}\label{definition:alpha}
+Define the \emph{evaluation map}
+\[
+\alpha:\BRC\to\dcoma,\qquad \alpha(R)=\dsch_{\wof{R}}^{\hr(R)},
+\]
+extended $\mathbb{Z}$-linearly. For an integer $i\geq 0$ let $\rowg(i)\in\BRC_1$ be the height-$1$ single-row RC graph with $i$ crossings, and let $\mathcal{R}\subseteq\BRC$ be the subring generated by $\{\rowg(i):i\geq 0\}$.
+\end{definition}
+
+Since $\dcoma$ is the free associative algebra on the generators $[i]$ (Definition~\ref{definition:dualalgebra}), there is a unique ring homomorphism
+\[
+\iota:\dcoma\to\BRC,\qquad \iota([i])=\rowg(i),
+\]
+whose image is exactly $\mathcal{R}$.
+
+\begin{lemma}\label{lemma:schubertrow}
+We have $\alpha(\rowg(i))=[i]$ for all $i\geq 0$. Consequently $\alpha\circ\iota=\mathrm{id}_{\dcoma}$, the map $\iota:\dcoma\to\mathcal{R}$ is an isomorphism of graded rings, and $\alpha|_{\mathcal{R}}=\iota^{-1}$.
+\end{lemma}
+\begin{proof}
+In one variable $\dcoma_1$ has basis $\{[i]\}_{i\geq 0}$, and the dual Schubert element $\dsch_w^1$ for the unique permutation $w$ of length $i$ with $\maxd(w)\leq 1$ is $[i]$. Since $\rowg(i)$ has height $1$ and $\wof{\rowg(i)}=w$, we get $\alpha(\rowg(i))=\dsch_w^1=[i]$. Thus $\alpha\circ\iota$ fixes every generator $[i]$, so $\alpha\circ\iota=\mathrm{id}$. In particular $\iota$ is injective; it is surjective onto $\mathcal{R}$ by definition, so $\iota:\dcoma\to\mathcal{R}$ is a ring isomorphism with inverse $\alpha|_{\mathcal{R}}$.
+\end{proof}
+
+\begin{definition}\label{definition:omega}
+Let $\Omega\subseteq\BRC$ be the $\mathbb{Z}$-submodule generated by all differences $R_1-R_2$ with $\wof{R_1}=\wof{R_2}$ and $\hr(R_1)=\hr(R_2)$.
+\end{definition}
+
+\begin{lemma}\label{lemma:omegaideal}
+$\Omega$ is a two-sided ideal of $(\BRC,\sqcupplus)$, and $\Omega\subseteq\ker\alpha$.
+\end{lemma}
+\begin{proof}
+The product $R\sqcupplus R_1$ is determined by $R\sqcupplus\mathrm{empty}(\hr(R_1))$ together with $R_1$: the latter contributes precisely the shifted block $\shup^{\hr(R)}R_1$ as the bottom $\hr(R_1)$ rows, identically across all terms (with the same heights occurring the same number of times). Hence $R\sqcupplus R_1-R\sqcupplus R_2$ is a $\mathbb{Z}$-combination of differences $R_1'-R_2'$ with $\wof{R_1'}=\wof{R_2'}$ and $\hr(R_1')=\hr(R_2')$, so it lies in $\Omega$; thus $\Omega$ is a left ideal, and the right ideal property is symmetric. Finally $\alpha(R)$ depends only on the pair $(\wof{R},\hr(R))$, so $\Omega\subseteq\ker\alpha$.
+\end{proof}
+
+\begin{theorem}[$\alpha$ is a surjective ring homomorphism]\label{theorem:semidirect}
+The map $\alpha:\BRC\to\dcoma$ is a surjective homomorphism of rings with kernel $\Omega$, and $\iota$ is a right inverse. Concretely $\BRC=\mathcal{R}\oplus\Omega$ with $\mathcal{R}\cong\dcoma$, so $\BRC\cong\dcoma\ltimes\Omega$ as rings.
+\end{theorem}
+\begin{proof}
+Since $\alpha$ depends only on $(\wof{R},\hr(R))$ it factors through a $\mathbb{Z}$-linear map $\bar\alpha:\BRC/\Omega\to\dcoma$. The quotient $\BRC/\Omega$ is free on the classes $[R]$, indexed by the pairs $(\wof{R},\hr(R))=(w,n)$ with $\maxd(w)\leq n$, and $\bar\alpha[R]=\dsch_w^n$. As $(w,n)$ ranges over this index set the $\dsch_w^n$ range over a $\mathbb{Z}$-basis of $\dcoma=\bigoplus_n\dcoma_n$, so $\bar\alpha$ is a bijection on bases, hence a module isomorphism. In particular $\alpha$ is surjective and $\ker\alpha=\Omega$.
+
+By Lemma~\ref{lemma:schubertrow}, $\alpha|_{\mathcal{R}}$ is injective, so $\mathcal{R}\cap\Omega\subseteq\mathcal{R}\cap\ker\alpha=0$. For any RC graph $R_0$, the element $\iota\alpha(R_0)\in\mathcal{R}$ satisfies $\bar\alpha[\iota\alpha(R_0)]=\alpha(R_0)=\bar\alpha[R_0]$, and injectivity of $\bar\alpha$ gives $R_0\equiv\iota\alpha(R_0)\pmod\Omega$; hence $\mathcal{R}+\Omega=\BRC$. Therefore $\BRC=\mathcal{R}\oplus\Omega$.
+
+Finally $\alpha$ is multiplicative: writing $x=r_1+\omega_1$, $y=r_2+\omega_2$ with $r_i\in\mathcal{R}$, $\omega_i\in\Omega$, the ideal property of $\Omega$ gives $x\sqcupplus y\equiv r_1\sqcupplus r_2\pmod\Omega$, so
+\[
+\alpha(x\sqcupplus y)=\alpha(r_1\sqcupplus r_2)=\alpha(r_1)\sqcupplus\alpha(r_2)=\alpha(x)\sqcupplus\alpha(y),
+\]
+the middle equality because $\alpha|_{\mathcal{R}}=\iota^{-1}$ is a ring homomorphism. Thus $\alpha$ is a surjective ring homomorphism with kernel $\Omega$ and right inverse $\iota$, and $\BRC\cong\dcoma\ltimes\Omega$.
+\end{proof}
+
+The homomorphism $\alpha$ converts the RC-graph product directly into a Littlewood--Richardson rule for the dual Schubert basis.
+
+\begin{theorem}[LR rule for the dual Schubert basis]\label{theorem:LR}
+Let $u,v\in S_\infty$ with $\maxd(u)\leq p$ and $\maxd(v)\leq q$. Then in $\dcoma_{p+q}$,
+\[
+\dsch_u^p\sqcupplus\dsch_v^q=\sum_w d_{u,v}^w\,\dsch_w^{p+q},\qquad
+d_{u,v}^w=\#\{R\in\RC_{p+q}(w):\clp^p(R)=U,\ \trm^p(R)=V\},
+\]
+for any fixed $U\in\RC_p(u)$, $V\in\RC_q(v)$. In particular the count is independent of the choice of $U,V$ and $d_{u,v}^w\geq 0$.
+\end{theorem}
+\begin{proof}
+Such $U,V$ exist because $u,v$ have last descents at most $p,q$, and then $\alpha(U)=\dsch_u^p$, $\alpha(V)=\dsch_v^q$. Since $\alpha$ is a ring homomorphism (Theorem~\ref{theorem:semidirect}) and using Definition~\ref{definition:ringproduct},
+\[
+\dsch_u^p\sqcupplus\dsch_v^q=\alpha(U\sqcupplus V)=\sum_{\substack{\clp^p(R)=U\\\trm^p(R)=V}}\alpha(R)=\sum_{\substack{\clp^p(R)=U\\\trm^p(R)=V}}\dsch_{\wof{R}}^{p+q}.
+\]
+Collecting terms by $w=\wof{R}$ and comparing coefficients against the linearly independent basis $\{\dsch_w^{p+q}\}$ identifies $d_{u,v}^w$ with the stated cardinality. The left-hand side is manifestly independent of $U,V$, hence so is the count, which is a cardinality and thus nonnegative.
+\end{proof}
+
+\section{Forest Quotient Layer}
+
+\subsection{Forest polynomials and the forest invariant}
+
+The \emph{forest polynomials} $\forest_a$, indexed by weak compositions $a$, were introduced by Nadeau and Tewari~\cite{nadeau2024forest}; they form a $\mathbb{Z}$-basis of $\mathbb{Z}[x_1,x_2,\ldots]$ refining the Schubert basis. We use them through a single invariant of reduced words. To an RC graph $R$ one associates its word $\mathrm{word}(R)$ and, after breaking ties to make it injective over the alphabet $\overline{\mathbb{Z}}$, the Nadeau--Tewari $\Omega$-insertion tableau $P(\overline{\mathrm{word}(R)})$. Define
+\[
+R\equiv_{\forest}R'\quad\Longleftrightarrow\quad P(\overline{\mathrm{word}(R)})=P(\overline{\mathrm{word}(R')}).
+\]
+Each class lies inside a single permutation's RC graphs and carries a weak-composition \emph{forest code} $\code_{\forest}(R)$.
+
+\begin{theorem}[{Nadeau--Tewari \cite[Theorem~1.4]{nadeau2024forest}}]\label{theorem:forestforest}
+For $w\in S_\infty$,
+\[
+\sch_w(x)=\sum_{C\in\mathcal{C}_{\forest}(w)}\forest_{\code_{\forest}(C)}(x),
+\]
+the sum over forest classes $\mathcal{C}_{\forest}(w)$ of reduced words for $w$.
+\end{theorem}
+
+The combinatorial bridge to the RC-graph ring is the following two-sided description of forest polynomials and their duals.
+
+\begin{theorem}[Forest formula]\label{theorem:forestformula}
+Let $R$ be a bounded RC graph and $c$ a weak composition. Then
+\begin{enumerate}
+\item[\textup{(I)}] $\displaystyle \forest_{\code_{\forest}(R)}(x)=\sum_{R'\equiv_{\forest}R}x^{\wtt(R')}$, and
+\item[\textup{(II)}] $\displaystyle \forest^*_c=\sum_{[R]\in\mathcal{C}_{\forest}(c)}\dsch_{\wof{R}}^{\hr(R)}$,
+\end{enumerate}
+where $\forest_c^*\in\dcoma$ is the dual forest basis element ($\langle\forest_c^*,\forest_b\rangle=\delta_{c,b}$) and $\mathcal{C}_{\forest}(c)$ is the set of forest classes with forest code $c$.
+\end{theorem}
+\begin{proof}
+For (I): within a fixed $\equiv_{\forest}$ class $W$ of words, $\forest_{\code_{\forest}(W)}(x)$ is the generating function of the compatible sequences attached to the words of $W$ \cite[Proposition~5.10]{nadeau2024forest}, and these compatible sequences are exactly the weights $\wtt(R')$ of the RC graphs $R'$ in the corresponding class. Part (II) follows from (I) by dualizing Theorem~\ref{theorem:forestforest} against the dual Schubert basis.
+\end{proof}
+
+\subsection{The forest ideal}
+
+\begin{definition}\label{definition:gamma}
+Let $\Gamma\subseteq\BRC$ be the $\mathbb{Z}$-submodule generated by all differences $R_1-R_2$ with $R_1\equiv_{\forest}R_2$ (and $\hr(R_1)=\hr(R_2)$).
+\end{definition}
+
+\begin{lemma}\label{lemma:forestideal}
+$\Gamma$ is a two-sided ideal of $(\BRC,\sqcupplus)$.
+\end{lemma}
+\begin{proof}
+For the left ideal property, $R\sqcupplus R_1$ and $R\sqcupplus R_2$ share their top $\hr(R)$ rows, while the lower rows are shifted copies of $R_1$, $R_2$; thus their words share a common prefix and differ in a suffix exactly as $\mathrm{word}(R_1)$, $\mathrm{word}(R_2)$ do. Since $\equiv_{\forest}$ is generated by local commutations that are shift-invariant \cite[Proposition~5.8]{nadeau2024forest} and prefix-invariant \cite[Lemma~5.9]{nadeau2024forest}, the difference lies in $\Gamma$. For the right ideal property it suffices, by reduction to a single generating commutation of the last two letters $a<b$ at the last descent, to note that for each term with suffix $ab'$ ($b'>b$) there is a unique matching term with suffix $b'a$ and identical prefix, and the swap of $a,b'$ is again a valid forest commutation; hence $R_1\sqcupplus R-R_2\sqcupplus R\in\Gamma$.
+\end{proof}
+
+The evaluation $\alpha:\BRC\to\dcoma$ of Definition~\ref{definition:alpha}, a surjective ring homomorphism by Theorem~\ref{theorem:semidirect}, has $\Gamma$ in its kernel (its generators $R_1-R_2$ with $R_1\equiv_{\forest}R_2$ have equal associated permutation $\wof{R_1}=\wof{R_2}$ and equal height, hence lie in $\Omega=\ker\alpha$), so it factors through $\BRC/\Gamma$.
+
+\begin{proposition}[Forest classes form a subring isomorphic to the dual forest algebra]\label{prop:forest_basis}
+For a weak composition $a$ put $F_a=\sum_{[R]\in\mathcal{C}_{\forest}(a)}[R]\in\BRC/\Gamma$. The $F_a$ are linearly independent, span a subring, and $\alpha(F_a)=\forest_a^*$; hence $\alpha$ restricts to a ring isomorphism from $\mathrm{span}\{F_a\}$ onto the dual forest algebra, and the structure constants
+\[
+\forest_a^*\sqcupplus\forest_b^*=\sum_c f_{a,b}^c\,\forest_c^*
+\]
+are nonnegative integers.
+\end{proposition}
+\begin{proof}
+$\alpha(F_a)=\forest_a^*$ is Theorem~\ref{theorem:forestformula}(II). The classes comprising distinct $F_a$ are disjoint sets of RC graphs, so the $F_a$ are independent; since $\alpha$ maps them to the independent set $\{\forest_a^*\}$, $\alpha$ is injective on their span. From $\alpha(F_a)\sqcupplus\alpha(F_b)=\sum_c f_{a,b}^c\,\alpha(F_c)$ and injectivity, $F_a\sqcupplus F_b=\sum_c f_{a,b}^c F_c$, so the span is a subring and $\alpha$ is an isomorphism onto it. Nonnegativity of $f_{a,b}^c$ holds because $F_a\sqcupplus F_b$ is a nonnegative sum of forest classes in $\BRC/\Gamma$.
+\end{proof}
+
+\section{Lift Product and Counting Mechanism}
+
+\subsection{The squash product and its crystal structure}\label{section:squash}
+
+The associative product $\sqcupplus$ tracks permutations rather than forest classes, so it cannot by itself count forest coefficients. We build a second, ``squash'' product on each graded piece $\BRC_n$ out of the same row maps; its crystal-theoretic behaviour is what ultimately controls the forest rule.
+
+\begin{definition}[Squash product]\label{definition:squash}
+Let $R_1,R_2$ be RC graphs with $\hr(R_1)=\hr(R_2)$, and let $N$ be the position of the last non-fixed point of $\wof{R_1}$. Set
+\[
+R_1\sqcup R_2=R_1\cup\{(i,j+N):(i,j)\in R_2\},
+\]
+an RC graph with $|R_1\sqcup R_2|=|R_1|+|R_2|$ and $\wof{R_1\sqcup R_2}=\wof{R_1}\shup^N\wof{R_2}$, occupied only in its first $\hr(R_1)$ rows. The \emph{squash product} is
+\[
+R_1\boxtimes R_2=\clp^{\hr(R_1)}(R_1\sqcup R_2)\in\BRC_{\hr(R_1)}.
+\]
+\end{definition}
+
+Recall the type-$A$ Kashiwara crystal structure on each $\RC_n(w)$: the raising/lowering operators $e_i,f_i$ act by the standard signature/pairing rule on the crossings in rows $i$ and $i+1$, with weight map $\wtt$ and string data $\varepsilon_i,\varphi_i$ \cite{assaf2018demazure,morse2016crystal}. Call an RC graph of height $k$ \emph{full Grassmannian} if $\wof{R}$ has at most one descent, necessarily at position $k$, and let $\grass_n\subseteq\BRC_n$ be spanned by full Grassmannian RC graphs of height $n$.
+
+\begin{proposition}[Squash is a crystal isomorphism]\label{proposition:boxproduct}
+Let $u\in S_\infty$ with $\maxd(u)\leq n$ and let $v$ be an $n$-Grassmannian permutation. Then
+\[
+\boxtimes:\RC_n(u)\otimes\RC_n(v)\;\longrightarrow\;\bigoplus_{w}\RC_n(w)^{\oplus c_{u,v}^w}
+\]
+is an isomorphism of crystal graphs, with $c_{u,v}^w$ the Schubert structure constants.
+\end{proposition}
+\begin{proof}
+The map is weight-preserving: $\sqcup$ adds row weights and the clip $\clp^{n}$ only truncates empty rows. It commutes with the crystal operators: writing $R=R_1\sqcup R_2$, the unpaired row-$i$ crossings of $R_1$ pair against the unpaired row-$(i+1)$ crossings of $R_2$ at the seam exactly as in the Kashiwara tensor rule, so $f_i$ acts on the $R_1$-part when $\varphi_i(R_1)>\varepsilon_i(R_2)$ and on the $R_2$-part otherwise (and symmetrically for $e_i$); postcomposing with $\clp^{n}$, a crystal morphism by the weight-preserving zeroing bijection (Theorem~\ref{theorem:zero_bijection}), preserves this. The decomposition into Schubert components with multiplicities $c_{u,v}^w$ is the crystal Littlewood--Richardson rule for this tensor product \cite{kouno2020decomposition}.
+\end{proof}
+
+The squash product specializes, on the full Grassmannian part, to the plactic monoid product on semistandard tableaux: under the inversion-labeling bijection $P_n:\plac_n\xrightarrow{\sim}\grass_n$ between the plactic algebra on $[n]$ and $\grass_n$, Proposition~\ref{proposition:boxproduct} upgrades to a ring isomorphism $P_n:(\plac_n,\cdot)\xrightarrow{\sim}(\grass_n,\boxtimes)$ \cite{kashiwara1993crystal,littelmann1995crystal,axelrodfreed2025inversionstableaux}, and $\BRC_n$ becomes a right $\grass_n$-module under $\boxtimes$. We use this only through its crystal consequences.
+
+To pass from forest polynomials to a counting statement we need the finer \emph{quasi}-crystal structure of Cain--Guilherme--Malheiro, whose characters are slide polynomials.
+
+\begin{definition}[Seminormal quasi-crystal structure]\label{definition:quasicrystal}
+Following \cite{cain2023quasicrystals}, define word-preserving operators on $\RC_n(w)$ by
+\[
+\ddot e_i(R)=\begin{cases}e_i(R)&\text{if }e_i(R)\neq 0\text{ and }\mathrm{word}(e_iR)=\mathrm{word}(R),\\ \perp&\text{otherwise,}\end{cases}
+\]
+and dually for $\ddot f_i$, with string data $\ddot\varepsilon_i,\ddot\varphi_i$. The \emph{quasi-tensor product} $A\,\ddot\otimes\,B$ is the crystal tensor product, made undefined ($\perp$) on those indices $i$ with $\ddot\varphi_i(A)>0$ and $\ddot\varepsilon_i(B)>0$.
+\end{definition}
+
+\begin{proposition}[The squash structure is a seminormal quasi-crystal]\label{proposition:quasicrystalaxioms}
+The data $(\RC_n(w),\ddot e_i,\ddot f_i,\wtt,\ddot\varepsilon_i,\ddot\varphi_i)_{i\geq 1}$ form a seminormal quasi-crystal of type $A_\infty$ in the sense of \cite[Definitions~3.1, 3.9]{cain2023quasicrystals}. Each connected component $\mathcal{C}$ has constant word $\mathbf r$, equals $\{R\in\RC_n(w):\mathrm{word}(R)=\mathbf r\}$, and has character
+\[
+\sum_{R\in\mathcal{C}}x^{\wtt(R)}=\mathfrak F_{\wtt(R_0)}(x),
+\]
+the slide polynomial indexed by the weight of the unique quasi-Yamanouchi element $R_0\in\mathcal{C}$.
+\end{proposition}
+\begin{proof}
+The quasi-crystal axioms are local in $i$ and concern only the operators $\ddot e_i,\ddot f_i$ together with the weight. Since $\ddot e_i,\ddot f_i$ are the word-preserving restrictions of the genuine crystal operators $e_i,f_i$, which are mutually inverse partial bijections satisfying the type-$A$ weight law \cite{assaf2018demazure,morse2016crystal}, axioms (2)--(4) of \cite[Definition~3.1]{cain2023quasicrystals} hold verbatim, axiom (1) is the identity $\ddot\varphi_i-\ddot\varepsilon_i=\wtt_i-\wtt_{i+1}$ forced by the weight law, and axioms (5)--(6) hold because $\ddot\varepsilon_i\in\mathbb{Z}_{\geq 0}\cup\{+\infty\}$ by construction; seminormality \cite[Definition~3.9]{cain2023quasicrystals} is the resulting $\ddot\varepsilon_i,\ddot\varphi_i\geq 0$ together with their max-string formulas. For the character, $\ddot e_i,\ddot f_i$ preserve $\mathrm{word}(R)$, so a component has constant word $\mathbf r$; conversely any $R$ with $\mathrm{word}(R)=\mathbf r$ is reached from $R_0$ by word-fixing crystal moves, so $\mathcal{C}=\{R:\mathrm{word}(R)=\mathbf r\}$. Under $R\mapsto\wtt(R)$ this is the set of sequences compatible with $\mathbf r$ in the sense of \cite{bjs}, whose generating function is the slide polynomial $\mathfrak F_{\wtt(R_0)}$, with $R_0$ the unique quasi-Yamanouchi (coarsest-compatible) element.
+\end{proof}
+
+\begin{proposition}[The squash/lift product preserves quasi-crystals]\label{proposition:quasiprod}
+For RC graphs $A,B$, the assignment $A\,\ddot\otimes\,B\mapsto A*B$ extends to an isomorphism of quasi-crystals from the quasi-tensor product of the components of $A$ and $B$ (Proposition~\ref{proposition:quasicrystalaxioms}) onto the component of $A*B$. In particular $\boxtimes$, and hence the lift product $*$ of \S\ref{section:liftproduct}, carries quasi-crystal components to quasi-crystal components and preserves slide-polynomial characters.
+\end{proposition}
+\begin{proof}
+By associativity of both $*$ and $\ddot\otimes$ \cite[Theorem~5.1]{cain2023quasicrystals} and the elementary factorization of $B$ (Proposition~\ref{prop:elem_factor_min}), it suffices to treat $B=E$ a single full Grassmannian elementary RC graph. Working at the common height $n=\hr(E)$, the squash product is $A\boxtimes E=\clp^n(A\sqcup E)$, and $A*E=A\boxtimes E$ since $\BRC_n$ is a right $\grass_n$-module under $\boxtimes$. By Proposition~\ref{proposition:boxproduct}, $A\otimes E\mapsto A\sqcup E$ is a Kashiwara crystal isomorphism onto the component of $A\sqcup E$, and postcomposing with the crystal morphism $\clp^n$ gives a crystal isomorphism $A\otimes E\to A*E$. Restricting on both sides to the word-preserving operators of Definition~\ref{definition:quasicrystal} yields the seminormal quasi-crystal of Proposition~\ref{proposition:quasicrystalaxioms} on the target, and the quasi-tensor product on the source (the excluded indices $\ddot\varphi_i(A)>0$, $\ddot\varepsilon_i(E)>0$ are exactly the seam pairings that alter $\wof{A\sqcup E}=\wof{A}\shup^N\wof{E}$). Hence $A\,\ddot\otimes\,E\to A*E$ is a quasi-crystal isomorphism; characters are slide polynomials and are preserved by Proposition~\ref{proposition:quasicrystalaxioms}.
+\end{proof}
+
+\subsection{The multiplactic interface}
+
+We package the squash product into a single algebra. Let $\Mn_n$ be the multiplactic algebra: the free product, modulo height-compatible relations, of \emph{elementary full-Grassmannian RC graphs} $\mathbf{E}^{k;\beta}$ indexed by a height $k\leq n$ and a binary vector $\beta\in\{0,1\}^k$, with $\wtt_j(\mathbf{E}^{k;\beta})=\beta_j$. The squash product induces the row-clipping reassembly $\RC_n:\Mn_n\to\BRC_n$, $\RC_n(\mathbf{E}_1\otimes\cdots\otimes\mathbf{E}_m)=\mathbf{E}_1\boxtimes\cdots\boxtimes\mathbf{E}_m$ (Definition~\ref{definition:squash}). The one structural fact we need is the unique elementary factorization of an RC graph compatible with the dominant Cauchy expansion.
+
+\begin{proposition}[Elementary factorization]\label{prop:elem_factor_min}
+Let $R\in\RC_n(u)$, let $\lambda$ be a partition whose dominant permutation $\dom_\lambda$ satisfies $\ell(u\dom_\lambda^{-1})=\ell(\dom_\lambda)-\ell(u)$, and let $c=\code(u\dom_\lambda^{-1})$. Then the number of sequences $\beta_1,\ldots,\beta_N$ of binary vectors with $\beta_i\in\{0,1\}^{\lambda_{N+1-i}}$ and $|\beta_i|=c_i$ such that
+\[
+\mathbf{E}^{\lambda_N;\beta_1}\boxtimes\cdots\boxtimes\mathbf{E}^{\lambda_1;\beta_N}=R
+\]
+equals the coefficient of $x^c$ in $\sch_{u\dom_\lambda^{-1}}(x)$. In particular, choosing $\lambda$ of staircase-plus-rectangle shape so that this coefficient is $1$ produces a \emph{canonical} ordered elementary factorization of $R$.
+\end{proposition}
+\begin{proof}
+Apply the Cauchy identity $\sch_{\dom_\lambda}(x;-y)=\sum_u\sch_u(x)\sch_{u\dom_\lambda^{-1}}(y)$ and replace each factorial elementary factor $E_{\lambda_i,\lambda_i}(x;-y_i)$ by its multiplactic counterpart $\sum_{j}y_i^j\mathbf{E}^{\lambda_i}_{\lambda_i-j}$; comparing coefficients of $x^c$ identifies the count with the stated Schubert coefficient. For staircase-plus-rectangle $\lambda$ the relevant Schubert polynomial $\sch_{u\dom_\lambda^{-1}}$ has leading coefficient $1$, giving uniqueness.
+\end{proof}
+
+\subsection{The lift product}\label{section:liftproduct}
+
+\begin{definition}\label{definition:liftproduct}
+For $R\in\RC_n$, let $\mathrm{lift}_n(R)\in\Mn_n$ be the canonical ordered elementary factorization of Proposition~\ref{prop:elem_factor_min}, taken with respect to a partition $\lambda=(n^{p},n-1,n-2,\ldots,1)$ for $p$ large; this is independent of $p$, since increasing $p$ only prepends an $n$ to the code. The \emph{lift product} on $\BRC_n$ is
+\[
+R_1*R_2=\RC_n\bigl(\mathrm{lift}_n(R_1)\,\mathrm{lift}_n(R_2)\bigr).
+\]
+\end{definition}
+
+\begin{lemma}[Weight additivity]\label{lemma:liftweight}
+For $R_1,R_2\in\BRC_n$, $\ \wtt(R_1*R_2)=\wtt(R_1)+\wtt(R_2)$ componentwise. Equivalently $\mathrm{ev}:R\mapsto x^{\wtt(R)}$ is a ring homomorphism $(\BRC_n,*)\to\mathbb{Z}[x_1,\ldots,x_n]$.
+\end{lemma}
+\begin{proof}
+The reassembly $\boxtimes$ preserves row weights: stacking $R_2$ with columns shifted strictly past those of $R_1$ keeps row indices, so $\wtt_i(R_1\boxtimes R_2)=\wtt_i(R_1)+\wtt_i(R_2)$, and each clipping $\zeromap$ used in $\RC_n$ acts on an empty last row, merely truncating it and preserving the lower row weights. By induction, any $\boxtimes$-product of common-height factors adds row weights. For an elementary factor $\wtt_j(\mathbf{E}^{k;\beta})=\beta_j$, so if $\mathrm{lift}_n(R)=\boxtimes_i\mathbf{E}^{k_i;\beta_i}$ then $\wtt_j(R)=\sum_{i:k_i\geq j}(\beta_i)_j$. Since the multiplactic factorization of $R_1*R_2$ is the concatenation of those of $R_1$ and $R_2$, the weights add. The homomorphism statement is then $\mathrm{ev}(R_1*R_2)=x^{\wtt(R_1)+\wtt(R_2)}=\mathrm{ev}(R_1)\mathrm{ev}(R_2)$.
+\end{proof}
+
+\begin{lemma}[Factors at disjoint heights commute]\label{lemma:liftcommute}
+If $R=R^{\mathrm{left}}*R^{\mathrm{right}}$ is a lift factorization with $\hr(R^{\mathrm{left}})\leq k<\hr(R^{\mathrm{right}})$, then the elementary factors of $R^{\mathrm{left}}$ commute past those of $R^{\mathrm{right}}$ in $\Mn_n$. Consequently $*$ is associative on $\BRC_n$.
+\end{lemma}
+\begin{proof}
+Elementary full-Grassmannian RC graphs of strictly different heights commute in $\Mn_n$, and $\mathrm{lift}_n$ turns a height split of a partition into the concatenation of the corresponding codes (Proposition~\ref{prop:elem_factor_min}), so the left and right factors commute. Associativity follows by reducing the third argument to an elementary factor of height $k$, splitting $R_1,R_2$ at height $k$, and commuting the resulting low factors past the high ones to rebracket freely.
+\end{proof}
+
+\begin{proposition}[Compatibility with forest classes]\label{prop:lift_compat_forest}
+The lift product is compatible with $\equiv_{\forest}$ at the level of words: if $A\equiv_{\forest}A'$ and $B\equiv_{\forest}B'$ then the multiset of forest classes realized by $\{A''*B'':A''\equiv_{\forest}A,\ B''\equiv_{\forest}B\}$ equals that realized from $A',B'$. In particular $*$ induces a well-defined product on forest classes.
+\end{proposition}
+\begin{proof}
+At the word level, $\overline{\mathrm{word}(A*B)}$ is slide-equivalent (hence forest-equivalent) to a shuffle of $\overline{\mathrm{word}(A)}$ and $\overline{\mathrm{word}(B)}$, and the Nadeau--Tewari shuffle of forest classes is closed under $\equiv_{\forest}$ \cite[Theorem~6.3]{nadeau2024forest}. The invariance of the realized multiset of forest classes under replacing $A,B$ by forest-equivalent $A',B'$ is then immediate from shift- and prefix-invariance of forest commutations \cite[Proposition~5.8, Lemma~5.9]{nadeau2024forest}.
+\end{proof}
+
+\section{Proof of the Main Theorem}
+
+\subsection{Combinatorial extraction}
+\begin{definition}[Forest RC graph]
+An RC graph $R$ is a \emph{forest RC graph} if
+\[
+\code_{\forest}(R)=\wtt(R).
+\]
+\end{definition}
+
+\begin{proposition}[Lift-shuffle witness principle]\label{proposition:liftshufflewords}
+Fix $A,B\in\BRC_n$ with injectified words $W_A,W_B$. Then the multiset of forest classes realized by the lift products $\{A'*B':A'\equiv_{\forest}A,\ B'\equiv_{\forest}B\}$ coincides with the multiset of forest classes appearing in the shuffle product $\mathsf{Sh}(W_A,W_B)$; equivalently, with the forest expansion of $\forest_{\code_{\forest}(A)}\,\forest_{\code_{\forest}(B)}$.
+\end{proposition}
+\begin{proof}
+The injectified-word map $R\mapsto\overline{\mathrm{word}(R)}$ sends each forest class bijectively to a forest class of injective words, and at the word level the slide/shuffle product computes $\forest_{\code_{\forest}(A)}\forest_{\code_{\forest}(B)}=\sum_{X\in\mathsf{Sh}(W_A,W_B)}(\text{class of }X)$ \cite[Theorem~6.3]{nadeau2024forest}. Proposition~\ref{prop:lift_compat_forest} identifies the lift-product multiset of forest classes with the shuffle multiset, giving the claim.
+\end{proof}
+
+\begin{lemma}[Forest-class stability of lift images]\label{lemma:foreststable}
+For $A,B\in\BRC_n$ the set $S=\{A'*B':A'\equiv_{\forest}A,\ B'\equiv_{\forest}B\}$ is closed under $\equiv_{\forest}$: if $R\in S$ and $R\equiv_{\forest}R'$ then $R'\in S$.
+\end{lemma}
+\begin{proof}
+Let $\Phi_A,\Phi_B$ be the forest classes of $W_A,W_B$. If $R=A_0*B_0\in S$, then by Proposition~\ref{proposition:liftshufflewords} $\overline{\mathrm{word}(R)}$ is slide-equivalent to some $X_0\in\mathsf{Sh}(\Phi_A,\Phi_B)$. Slide equivalence refines forest equivalence, so $X_0\equiv_{\forest}\overline{\mathrm{word}(R)}\equiv_{\forest}\overline{\mathrm{word}(R')}$. Nadeau--Tewari shuffle-stability \cite[Theorem~6.3]{nadeau2024forest} gives $\overline{\mathrm{word}(R')}\in\mathsf{Sh}(W_1,W_2)$ for some $W_1\in\Phi_A$, $W_2\in\Phi_B$, and Proposition~\ref{proposition:liftshufflewords} (in reverse) realizes the corresponding class as $A_3*B_3$ with $A_3\equiv_{\forest}A$, $B_3\equiv_{\forest}B$ and $A_3*B_3=R'$. Hence $R'\in S$.
+\end{proof}
+
+\begin{lemma}[Uniqueness of forest-leading representative]\label{lemma:forestlead}
+If $R\in\RC_n$ has $\code_{\forest}(R)=c$, there is a unique RC graph $C\equiv_{\forest}R$ with $\wtt(C)=c$.
+\end{lemma}
+\begin{proof}
+$C$ is the minimal compatible filling with forest code $c$, unique by \cite[Lemma~3.12]{nadeau2024forest}.
+\end{proof}
+
+\begin{lemma}[Class choice at fixed code]\label{lemma:forestchoice}
+For each weak composition $c$ there is exactly one forest class in $\RC_n(w)$, where $\code(w)=c$, with forest code $c$.
+\end{lemma}
+\begin{proof}
+The bottom RC graph of $w$ has word with forest code $\code(w)=c$, so such a class exists. A second such class would force the leading term of $\sch_w$ to have multiplicity $>1$, contradicting Lemma~\ref{lemma:forestlead}.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{theorem:forestpolyLR}]
+Fix forest RC graphs $A,B$ with $\code_{\forest}(A)=\wtt(A)=a$ and $\code_{\forest}(B)=\wtt(B)=b$. By Theorem~\ref{theorem:forestformula}(I),
+\[
+\forest_a(x)=\sum_{A'\equiv_{\forest}A}x^{\wtt(A')},\qquad \forest_b(x)=\sum_{B'\equiv_{\forest}B}x^{\wtt(B')}.
+\]
+Multiplying and applying weight-additivity (Lemma~\ref{lemma:liftweight}) to each term,
+\[
+\forest_a(x)\forest_b(x)=\sum_{\substack{A'\equiv_{\forest}A\\B'\equiv_{\forest}B}}x^{\wtt(A')+\wtt(B')}=\sum_{\substack{A'\equiv_{\forest}A\\B'\equiv_{\forest}B}}x^{\wtt(A'*B')}.
+\]
+Let $T=\{A'*B':A'\equiv_{\forest}A,\ B'\equiv_{\forest}B\}$ as a multiset. By Lemma~\ref{lemma:foreststable}, $T$ is closed under $\equiv_{\forest}$, so we may group by forest class and, using Theorem~\ref{theorem:forestformula}(I) on each class, obtain
+\[
+\forest_a(x)\forest_b(x)=\sum_{[R]}m_{[R]}\,\forest_{\code_{\forest}(R)}(x),
+\]
+where $m_{[R]}$ is the number of pairs $(A',B')$ whose lift product lands in the class $[R]$ at a fixed representative — independent of the representative by Proposition~\ref{prop:lift_compat_forest}. Finally, fix a target $c$ and a forest RC graph $R$ with $\code_{\forest}(R)=\wtt(R)=c$ (unique class by Lemma~\ref{lemma:forestchoice}, unique representative by Lemma~\ref{lemma:forestlead}). The coefficient $\beta_{a,b}^c$ is the number of pairs $(A'',B'')$ with $A''\equiv_{\forest}A$, $B''\equiv_{\forest}B$, and $A''*B''=R$. Imposing the canonical normalization $\code(\wof{A})=\code_{\forest}(A)=a$ and $\code(\wof{B})=\code_{\forest}(B)=b$ gives exactly the count in the statement.
+\end{proof}
+
+\begin{corollary}[Dual forest coproduct]\label{corollary:dforestcoproduct}
+For a weak composition $c$ of length $n$, in $\dcoma_n\otimes\dcoma_n$,
+\[
+\Delta^*(\forest_c^*)=\sum_{a,b}\beta_{a,b}^c\,\forest_a^*\otimes\forest_b^*,
+\]
+with $\beta_{a,b}^c$ the forest LR coefficients of Theorem~\ref{theorem:forestpolyLR}. In particular $\Delta^*$ has nonnegative integer coefficients in the dual forest basis.
+\end{corollary}
+\begin{proof}
+As in Theorem~\ref{theorem:dschcoproduct}, pair $\Delta^*(\forest_c^*)=\sum_{a,b}\lambda_{a,b}\forest_a^*\otimes\forest_b^*$ with $\forest_a\otimes\forest_b$ and use $\langle\Delta^*(\alpha),x\otimes y\rangle=\langle\alpha,xy\rangle$ together with Theorem~\ref{theorem:forestpolyLR}: $\lambda_{a,b}=\langle\forest_c^*,\forest_a\forest_b\rangle=\beta_{a,b}^c$.
+\end{proof}
+
+\section{Geometric Corollary on $\mathrm{QFl}_n$}
+
+\begin{corollary}[Cup product of forest classes]
+Under the Borel-type isomorphism for $\mathrm{QFl}_n$, one has
+\[
+[\forest_a]\cup[\forest_b]=\sum_c \beta_{a,b}^c\,[\forest_c],
+\]
+where $\beta_{a,b}^c$ is the cardinality in Theorem~\ref{theorem:forestpolyLR}.
+\end{corollary}
+
+\section*{Companion-paper material (removed from this version)}
+\begin{itemize}
+\item Dual key LR rule package.
+\item Dual slide LR rule package.
+\item General ideal-quotient LR factory in full generality.
+\item Extended quasi-crystal formalism beyond what is needed for the lift argument.
+\end{itemize}
+
+\section*{Author checklist for next draft}
+\begin{itemize}
+\item Replace placeholder statements with final theorem numbering and exact hypotheses.
+\item Import only proofs used by Theorem~\ref{theorem:forestpolyLR}.
+\item Keep introduction claims synchronized with retained scope.
+\item Keep this manuscript under the target page budget by moving examples/figures first.
+\end{itemize}
+
+\bibliographystyle{acm}
+\bibliography{schubert_bialgebra}
+
+\end{document}
