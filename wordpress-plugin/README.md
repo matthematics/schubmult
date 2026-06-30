@@ -24,6 +24,7 @@ Optional attributes:
 
 ```
 [schubmult height="500"]
+[schubmult flavor="groth"]
 [schubmult flavor="py" height="640" width="100%"]
 [schubmult flavor="double"]
 ```

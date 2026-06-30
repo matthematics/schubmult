@@ -31,7 +31,7 @@ frame-ancestors` header on the server).
 
 | Field              | Type    | Default | Description                                                             |
 |--------------------|---------|---------|-------------------------------------------------------------------------|
-| `flavor`           | string  | `"py"`  | Which kernel: `py`, `double`, `q`, or `q_double`. See below.            |
+| `flavor`           | string  | `"py"`  | Which kernel: `py`, `groth`, `double`, `q`, or `q_double`. See below.   |
 | `perms`            | string  | `""`    | One-line permutations separated by `-`. E.g. `"3 1 2 - 2 1 3"`. With `ascode=true`, these are Lehmer codes instead. |
 | `ascode`           | boolean | `false` | Treat each token sequence as a Lehmer code rather than a permutation.   |
 | `coprod`           | boolean | `false` | Compute the coproduct of a single permutation along a split index list. Only honoured for `py`/`double`. With `coprod=true`, `perms` is one permutation followed by `-` followed by the split indices, e.g. `"1 4 2 3 - 1 2"`. |
@@ -49,12 +49,12 @@ a Lehmer code (which has no such constraint), set `ascode=true`.
 
 ### Flavor / option compatibility matrix
 
-| Option             | `py` | `double` | `q` | `q_double` |
-|--------------------|:----:|:--------:|:---:|:----------:|
-| `coprod`           |  ✓   |    ✓     |  —  |     —      |
-| `display_positive` |  —   |    ✓     |  —  |     ✓      |
-| `mixed_var`        |  —   |    ✓     |  —  |     ✓      |
-| `parabolic`        |  —   |    —     |  ✓  |     ✓      |
+| Option             | `py` | `groth` | `double` | `q` | `q_double` |
+|--------------------|:----:|:-------:|:--------:|:---:|:----------:|
+| `coprod`           |  ✓   |    —    |    ✓     |  —  |     —      |
+| `display_positive` |  —   |    —    |    ✓     |  —  |     ✓      |
+| `mixed_var`        |  —   |    —    |    ✓     |  —  |     ✓      |
+| `parabolic`        |  —   |    —    |    —     |  ✓  |     ✓      |
 
 Unsupported options are silently ignored for that flavor.
 
@@ -121,6 +121,13 @@ preceded by quantum-deformation factors `q_i`.
 curl -X POST https://schubmult.pythonanywhere.com/api/compute \
   -H 'Content-Type: application/json' \
   -d '{"flavor":"py","perms":"3 1 2 - 2 1 3"}'
+```
+
+### Grothendieck product
+```bash
+curl -X POST https://schubmult.pythonanywhere.com/api/compute \
+  -H 'Content-Type: application/json' \
+  -d '{"flavor":"groth","perms":"3 1 2 - 2 1 3"}'
 ```
 
 ### Double Schubert product, mixed variables, root-positive display
@@ -209,5 +216,5 @@ deployment guide.
 
 The web wrapper lives in [`web/app.py`](https://github.com/matthematics/schubmult/blob/main/web/app.py)
 of the [schubmult repository](https://github.com/matthematics/schubmult).
-The underlying CLI tools `schubmult_py`, `schubmult_double`, `schubmult_q`,
-`schubmult_q_double` are documented in the project README.
+The underlying CLI tools `schubmult_py`, `grothmult_py`, `schubmult_double`,
+`schubmult_q`, `schubmult_q_double` are documented in the project README.

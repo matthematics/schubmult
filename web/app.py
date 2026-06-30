@@ -206,6 +206,8 @@ def _worker(flavor: str, argv: list[str], q) -> None:
     try:
         if flavor == "py":
             from schubmult._scripts import schubmult_py as mod
+        elif flavor == "groth":
+            from schubmult._scripts import grothmult_py as mod
         elif flavor == "double":
             from schubmult._scripts import schubmult_double as mod
         elif flavor == "q":
@@ -231,6 +233,8 @@ def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
     try:
         if flavor == "py":
             from schubmult._scripts import schubmult_py as mod
+        elif flavor == "groth":
+            from schubmult._scripts import grothmult_py as mod
         elif flavor == "double":
             from schubmult._scripts import schubmult_double as mod
         elif flavor == "q":
@@ -329,6 +333,12 @@ def compute():
 
     if flavor == "py":
         prog = "schubmult_py"
+        display_positive = False
+        mixed_var = False
+        parabolic = None
+    elif flavor == "groth":
+        prog = "grothmult_py"
+        coprod = False
         display_positive = False
         mixed_var = False
         parabolic = None

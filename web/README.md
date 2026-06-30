@@ -1,6 +1,6 @@
 # schubmult web wrapper
 
-A small Flask app that exposes `schubmult_py` and `schubmult_double` through a
+A small Flask app that exposes `schubmult_py`, `grothmult_py`, and `schubmult_double` through a
 web form. Designed to be embeddable in another page via `<iframe>`.
 
 ## Run
@@ -29,7 +29,7 @@ Then visit:
 
 ```json
 {
-  "flavor": "py" | "double",
+  "flavor": "py" | "groth" | "double" | "q" | "q_double",
   "perms": "3 1 2 - 2 1 3",
   "ascode": false,
   "coprod": false,
