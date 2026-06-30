@@ -367,6 +367,20 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         else:
             ret *= beta ** (len(self.perm_word))
         return ret
+    @classmethod
+    @cache
+    def groth_to_schub(cls, groth_perm: Permutation, beta: Expr):
+        from .pipe_dream import PipeDream
+        boip = WCGraph.all_wc_graphs(groth_perm, len(groth_perm))
+        ret = {}
+        for wc in boip:
+            cpdb = PipeDream.from_rc_graph(wc).co_pipe_dream()
+            if cpdb.is_reduced:
+                w0 = Permutation.w0(cpdb.rows)
+                perm = cpdb.perm * w0
+                ret[perm] = ret.get(perm, 0) + beta ** (perm.inv - groth_perm.inv)
+        return ret
+
 
     @cache
     def bisect_left_coords_index(self, row: int, col: int, lo: int = 0, hi: int | None = None) -> int:

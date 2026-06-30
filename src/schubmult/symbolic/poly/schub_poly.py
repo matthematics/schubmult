@@ -521,38 +521,29 @@ def groth_dict_to_poly(groth_dict, x, zz, beta):
         ret += coeff * grothendieck_poly(perm, x, zz, beta)
     return ret
 
+@cache
+def schub_elem_to_groth_elem_dict(the_perm, beta):
+    from schubmult import RCGraph
+    from schubmult.combinatorics.pipe_dream import PipeDream
+    w0 = pl.Permutation.w0(len(the_perm))
+    dct = {}
+    for bpd in RCGraph.all_rc_graphs(the_perm, len(the_perm)):
+        permo = PipeDream.from_rc_graph(bpd).co_pipe_dream().perm * w0
+        dct[(permo.inv, permo.max_descent)] = dct.get((permo.inv, permo.max_descent), S.Zero) + (-beta) ** (permo.inv - the_perm.inv)
+    return dct
 
-def schub_elem_sym_to_groth_elem_sym_dict(p, k, x, zz, beta, verify=False):
-    from schubmult import BPD, uncode
-    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
-    from schubmult.symbolic import expand
-    from schubmult.utils.schub_lib import groth_pieri_mul
+@cache
+def schub_elem_sym_to_groth_elem_sym_dict(p, k, beta):
+    from schubmult import RCGraph, uncode
+    from schubmult.combinatorics.pipe_dream import PipeDream
 
-    ring = SingleSchubertRing(x)
     the_perm = uncode([0] * (k - p) + [1] * p)
     dct = {}
     w0 = pl.Permutation.w0(len(the_perm))
-    for bpd in BPD.all_bpds(the_perm):
-        permo = bpd.co_bpd().perm * w0
+    for bpd in RCGraph.all_rc_graphs(the_perm, len(the_perm)):
+        permo = PipeDream.from_rc_graph(bpd).co_pipe_dream().perm * w0
         dct[(permo.inv, permo.max_descent)] = dct.get((permo.inv, permo.max_descent), S.Zero) + (-beta) ** (permo.inv - the_perm.inv)
-    # dct = to_groth(ring(the_perm).expand(), x, zz, beta)
-    # print(f"schub elem sym to groth dict for {the_perm}: {dct=}")
     ret = dct
-    # for perm, coeff in dct.items():
-    #     pp = perm.inv
-    #     kk = len(perm.trimcode)
-    #     if perm == uncode([0] * (kk - pp) + [1] * pp):
-    #         ret[(pp, kk)] = coeff
-    #     else:
-    #         raise ValueError(f"unexpected perm {perm} in schub to groth dict")
-    if verify:
-        result = S.Zero
-        # #print(f"pieri mul for {the_perm}: {ret}")
-        for (pp, kk), coeff in ret.items():
-            pieri_dict = groth_pieri_mul({uncode((0,)): coeff}, pp, kk, beta)
-            #print(f"pieri dict for {(pp, kk)}: {pieri_dict=}")
-            result += groth_dict_to_poly(pieri_dict, x, zz, beta)
-        assert expand(expand(result) - ring(the_perm).expand(deep=True)) == S.Zero, f"unexpected result {result} from schub to groth dict for {the_perm}\n{ret=}\n{expand(result)=}\n{ring(the_perm).expand(deep=True)=}"
     return ret
 
 
@@ -581,7 +572,7 @@ def groth_elem_as_schub_dict(perm, beta):
     Uses the strip-isobaric construction from the groth_elem_as_schub method.
     Returns ``{Permutation: coeff}``.
     """
-    from schubmult.combinatorics.bpd import BPD
+    from schubmult import WCGraph
 
     # perm = pl.Permutation(perm)
     # ring = SingleSchubertRing(genset)
@@ -595,7 +586,7 @@ def groth_elem_as_schub_dict(perm, beta):
     #     if bacon[i] != 0:
     #         schub_elem = _strip_isobaric(i + 1, bacon[i], genset, beta, schub_elem, backwards=False)
     # return {k: v for k, v in schub_elem.items() if v != S.Zero}
-    return BPD.groth_to_schub(perm, beta)
+    return WCGraph.groth_to_schub(perm, beta)
 
 
 # (1+beta y)E(x,y/(1+beta y))
@@ -604,13 +595,15 @@ def groth_elem_as_schub_dict(perm, beta):
 
 
 def groth_mul_full(perm_dict, p2, x, zz, beta):
+    #from schubmult import Gx, Sx
     p2 = pl.Permutation(p2)
-    schub_dict = groth_elem_as_schub_dict(p2, beta)
+    # schub_elem2 = Sx.from_dict(groth_elem_as_schub_dict(p2, beta))
+    # schub_elem1 = sum([v * Sx.from_dict(groth_elem_as_schub_dict(k, beta)) for k, v in perm_dict.items()])
+    return schub_dict_to_groth_dict(perm_dict, groth_elem_as_schub_dict(p2, beta), x, zz, beta)
+    # result = schub_elem1 * schub_elem2
+    # return sum([v * Gx.from_dict(schub_elem_to_groth_elem_dict(k, beta)) for k, v in result.items()])
 
-    return schub_dict_to_groth_dict(perm_dict, schub_dict, x, zz, beta)
-
-
-def schub_dict_to_groth_dict(base_groth, schub_dict, x, zz, beta):
+def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
     # schub_elem_sym_as_groth_elem_sym_dict
 
     import sympy
@@ -621,50 +614,120 @@ def schub_dict_to_groth_dict(base_groth, schub_dict, x, zz, beta):
 
     # schub_poly_basis = SchubertPolyBasis(x)
     # the_elem_dict = schub_poly_basis.transition_elementary({(perm, max()): coeff for perm, coeff in schub_dict.items()}, ElemSymPolyBasis(x))
-    schub_elem_dict = Sx.from_dict(schub_dict).in_CEM_basis().expand().as_coefficients_dict()
+    schub_elem_expr = Sx.from_dict(schub_dict).in_CEM_basis()
+
+    def _mul_scalar(term_dict, scalar):
+        if scalar == S.Zero:
+            return {}
+        return {perm: coeff * scalar for perm, coeff in term_dict.items()}
+
+    def _apply_factorial_elem_sym(term_dict, degree, numvars):
+        if degree == 0:
+            return term_dict
+        dctt = schub_elem_sym_to_groth_elem_sym_dict(degree, numvars, beta)
+        build = {}
+        for pair, coeff3 in dctt.items():
+            pieri_piece = groth_pieri_mul(term_dict, *pair, beta)
+            build = add_perm_dict(build, {perm: coeff3 * coeff for perm, coeff in pieri_piece.items()})
+        return build
+
+    def _flatten_factors(expr):
+        """Return (scalar, [(deg, numvars), ...]) for multiplicative terms.
+
+        Returns None when expression contains additive structure that would require
+        distribution; caller may then use recursive fallback.
+        """
+        expr_sym = sympy.sympify(expr)
+        if isinstance(expr_sym, FactorialElemSym):
+            return S.One, [(expr_sym.degree, expr_sym.numvars)]
+
+        if isinstance(expr, Add):
+            return None
+
+        if isinstance(expr, Mul):
+            scalar = S.One
+            factors = []
+            for arg in expr.args:
+                flattened = _flatten_factors(arg)
+                if flattened is None:
+                    return None
+                arg_scalar, arg_factors = flattened
+                scalar *= arg_scalar
+                factors.extend(arg_factors)
+            return scalar, factors
+
+        if isinstance(expr, Pow):
+            base, exponent = expr.args
+            exponent_int = int(exponent)
+            if exponent_int < 0 or exponent_int != exponent:
+                raise ValueError(f"Unsupported exponent in CEM expression: {exponent}")
+            if exponent_int == 0:
+                return S.One, []
+            flattened_base = _flatten_factors(base)
+            if flattened_base is None:
+                return None
+            base_scalar, base_factors = flattened_base
+            return base_scalar**exponent_int, base_factors * exponent_int
+
+        return expr, []
+
+    def _eval_expr(term_dict, expr):
+        expr_sym = sympy.sympify(expr)
+
+        if isinstance(expr_sym, FactorialElemSym):
+            return _apply_factorial_elem_sym(term_dict, expr_sym.degree, expr_sym.numvars)
+
+        if isinstance(expr, Add):
+            out = {}
+            for arg in expr.args:
+                out = add_perm_dict(out, _eval_expr(term_dict, arg))
+            return out
+
+        if isinstance(expr, Mul):
+            out = term_dict
+            for arg in expr.args:
+                out = _eval_expr(out, arg)
+            return out
+
+        if isinstance(expr, Pow):
+            base, exponent = expr.args
+            exponent_int = int(exponent)
+            if exponent_int < 0 or exponent_int != exponent:
+                raise ValueError(f"Unsupported exponent in CEM expression: {exponent}")
+            out = term_dict
+            for _ in range(exponent_int):
+                out = _eval_expr(out, base)
+            return out
+
+        return _mul_scalar(term_dict, expr)
+
+    # Fast path: compile top-level additive pieces into multiplicative factor lists.
+    top_terms = schub_elem_expr.args if isinstance(schub_elem_expr, Add) else (schub_elem_expr,)
+    compiled_terms = []
+    fallback_terms = []
+    for term_expr in top_terms:
+        flattened = _flatten_factors(term_expr)
+        if flattened is None:
+            fallback_terms.append(term_expr)
+        else:
+            compiled_terms.append(flattened)
 
     ret = {}
-    # print("DEBUG: ", schub_elem_dict)
     for p1, coeff0 in base_groth.items():
-        for expr, coeff in schub_elem_dict.items():
-            # assert len(elem_comp) <= 10, f"unexpected elem_comp length {len(elem_comp)} {elem_comp=} {the_elem_dict=}"
-            # new_ret = {}
-            this_term = {p1: coeff0 * coeff}
+        subtotal = {}
 
-            def _process_expr_iter(expr0):
-                if isinstance(sympy.sympify(expr0), FactorialElemSym):
-                    yield sympy.sympify(expr0).degree, sympy.sympify(expr0).numvars
-                    return
-                if isinstance(expr0, Mul):
-                    for a in expr0.args:
-                        yield from _process_expr_iter(a)
-                    return
-                if isinstance(expr0, Pow):
-                    for _ in range(int(expr0.args[1])):
-                        yield from _process_expr_iter(expr0.args[0])
-                    return
-                # if expr0 == 1:
-                #     return
-                # raise ValueError(f"unexpected expr {expr0} of type {type(expr0)}")
-                yield expr0
+        for scalar, factors in compiled_terms:
+            term_dict = {p1: coeff0}
+            if scalar != S.One:
+                term_dict = _mul_scalar(term_dict, scalar)
+            for degree, numvars in factors:
+                term_dict = _apply_factorial_elem_sym(term_dict, degree, numvars)
+            subtotal = add_perm_dict(subtotal, term_dict)
 
-            # if isinstance(expr, Mul):
-            for val in _process_expr_iter(expr):
-                if not isinstance(val, tuple):
-                    this_term = {k: coeff * val for k, coeff in this_term.items()}
-                    continue
-                degree, numvars = val
-                if degree == 0:
-                    continue
-                dctt = schub_elem_sym_to_groth_elem_sym_dict(degree, numvars, x, zz, beta)
-                build = {}
-                for pair, coeff3 in dctt.items():
-                    # new_ret = add_perm_dict_with_coeff(new_ret, groth_pieri_mul(this_term, *pair), coeff=coeff3)
-                    build = add_perm_dict(build, {k: coeff3 * v for k, v in groth_pieri_mul(this_term, *pair, beta).items()})
-                # convert schubert elem sym to groth
-                this_term = build
-            # the_elem_dict[elem_comp] = coeff * beta ** sum(elem_comp)
-            ret = add_perm_dict(ret, this_term)
+        for term_expr in fallback_terms:
+            subtotal = add_perm_dict(subtotal, _eval_expr({p1: coeff0}, term_expr))
+
+        ret = add_perm_dict(ret, subtotal)
     return ret
 
 
