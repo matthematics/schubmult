@@ -594,12 +594,15 @@ def groth_elem_as_schub_dict(perm, beta):
 # beta/(1-yy)E(x,yy)
 
 
-def groth_mul_full(perm_dict, p2, x, zz, beta):
+def groth_mul_full(perm_dict, p2, _x, _zz, beta):
     #from schubmult import Gx, Sx
     p2 = pl.Permutation(p2)
     # schub_elem2 = Sx.from_dict(groth_elem_as_schub_dict(p2, beta))
     # schub_elem1 = sum([v * Sx.from_dict(groth_elem_as_schub_dict(k, beta)) for k, v in perm_dict.items()])
-    return schub_dict_to_groth_dict(perm_dict, groth_elem_as_schub_dict(p2, beta), x, zz, beta)
+    # schub_dict_to_groth_dict currently takes (base_groth, schub_dict, beta).
+    # Keep groth_mul_full signature stable for existing call sites, but route
+    # through the updated helper interface.
+    return schub_dict_to_groth_dict(perm_dict, groth_elem_as_schub_dict(p2, beta), beta)
     # result = schub_elem1 * schub_elem2
     # return sum([v * Gx.from_dict(schub_elem_to_groth_elem_dict(k, beta)) for k, v in result.items()])
 
