@@ -1396,7 +1396,7 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 
 \subsection{Definition of the ring product}\label{section:ringproduct}
 
-\begin{definition}
+\begin{definition}\label{definition:ringproduct}
 Suppose we have two bounded RC graphs $R_1$ with $\hr(R_1)=m$ and $R_2$ with $\hr(R_2)=n$. The product of these is defined by
 $$R_1\sqcupplus R_2 = \sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}}R'$$  
 where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
@@ -2296,10 +2296,26 @@ where the sum is over all weak compositions $\alpha$ of length $n$, and $d_{\alp
 \begin{lemma} \label{lemma:schubertrow}
 We have that the elements
 $$\dsch_w^n(\mathtt{row})$$
-for integers $n\geq 0$ and $w$ that ranges over all permutations in $S_\infty$ with $n\geq \maxd(w)$ form a $\mathbb{Z}$-basis of $\mathcal{R}$, and $\alpha:\mathcal{R}\to \dcoma$ is an isomorphism of graded rings.
+for integers $n\geq 0$ and $w$ that ranges over all permutations in $S_\infty$ with $n\geq \maxd(w)$ form a $\mathbb{Z}$-basis of $\mathcal{R}$, and $\omega:\mathcal{R}\to \dcoma$ is an isomorphism of graded rings.
 \end{lemma}
 \begin{proof}
-Since $\alpha(\dsch_w(\mathtt{row})) = \dsch_w^n\in \dcoma$, the elements $\dsch_w^n(\mathtt{row})$ are linearly independent. Given that the images form a basis of $\dcoma$, they must also span $\mathcal{R}$ since $\dcoma$ is a free algebra, and hence there is a homomorphism backwards $\dcoma\to \mathcal{R}$ sending $[i]\mapsto \mathtt{row}(i)$ which is necessarily surjective. Thus, the elements $\dsch_w^n(\mathtt{row})$ form a $\mathbb{Z}$-basis of $\mathcal{R}$.
+First, $\omega:\BRC\to\dcoma$ is a ring homomorphism because
+$$
+\omega(R_1\sqcupplus R_2)=\omega(R_1)\sqcupplus\omega(R_2),
+$$
+which follows from the weight concatenation property of $\sqcupplus$ (equivalently, from weight preservation under $\clp$ and $\trm$ in Definition~\ref{definition:ringproduct}). Restricting to $\mathcal{R}$ gives a graded ring map $\omega|_{\mathcal{R}}:\mathcal{R}\to\dcoma$.
+
+Since $\omega(\mathtt{row}(i))=[i]$ for all $i\ge 0$, the image of $\omega|_{\mathcal{R}}$ contains the free generators $[i]$ of $\dcoma$, hence $\omega|_{\mathcal{R}}$ is surjective. Conversely, by freeness of $\dcoma$, there is a unique graded ring homomorphism
+$$
+\iota:\dcoma\to\mathcal{R},\qquad \iota([i])=\mathtt{row}(i).
+$$
+Then $(\omega|_{\mathcal{R}})\circ\iota=\mathrm{id}_{\dcoma}$, so $\omega|_{\mathcal{R}}$ is also injective. Therefore $\omega:\mathcal{R}\xrightarrow{\sim}\dcoma$ is an isomorphism of graded rings.
+
+Finally, the family $\{\dsch_w^n\}_{n\ge 0,\, n\ge\maxd(w)}$ is a $\mathbb{Z}$-basis of $\dcoma$ by construction, and
+$$
+\omega\bigl(\dsch_w^n(\mathtt{row})\bigr)=\dsch_w^n.
+$$
+Applying the inverse isomorphism $\iota$ shows that $\{\dsch_w^n(\mathtt{row})\}$ is a $\mathbb{Z}$-basis of $\mathcal{R}$.
 \end{proof}
 
 \begin{definition}\label{definition:omega}
@@ -3430,7 +3446,7 @@ We define an RC graph $R$ of $\hr(R)=k$ to be \emph{full Grassmannian} if $\wof{
 
 We define $\plac_n$ to be the plactic algebra on $[n]$, the free abelian group on the set of words in $[n]$ modulo the Knuth relations. We take as the basis of $\plac_n$ the set of row reading words of semistandard Young tableaux \emph{in French notation} (upside-down).
 
-Recall that the Young/Ferrers diagram of a partition (in French notation) is a set of ``boxes'' on a grid, with $\lambda_i$ boxes in row $i$ for the first $\ell(\lambda)$ rows, where the rows are indexed from the bottom up. The notation $\mathrm{SSYT}_n$ denotes the set of semistandard Young tableaux, which are labelings of the boxes of such diagrams with elements of $[n]$ such that the numbers strictly increase along the columns and weakly increase along the rows. The shape of a semistandard Young tableau is the partition corresponding to the underlying Young diagram, and the weight is the weak composition whose $i$-th part counts the number of boxes labeled $i$. .
+Recall that the Young/Ferrers diagram of a partition (in French notation) is a set of ``boxes'' on a grid, with $\lambda_i$ boxes in row $i$ for the first $\ell(\lambda)$ rows, where the rows are indexed from the bottom up. The notation $\mathrm{SSYT}_n$ denotes the set of semistandard Young tableaux, which are labelings of the boxes of such diagrams with elements of $[n]$ such that the numbers strictly increase along the columns and weakly increase along the rows. The shape of a semistandard Young tableau is the partition corresponding to the underlying Young diagram, and the weight is the weak composition whose $i$-th part counts the number of boxes labeled $i$.
 
 Consider the set $I(v)$ of right inversions of an $n$-Grassmannian permutation $v$, that is to say the pairs $(i,j)$ with $i<j$ and $v(i)>v(j)$. An RC graph $R\in\RC_n(v)$ corresponds bijectively to a labeling $T_R:I(v)\to [n]$ by defining
 $$T_R(\rtt(i,j)) = i$$
@@ -3482,7 +3498,7 @@ where we increase the size of the left factor to match the right factor as neede
 
 We may avoid the clunky tensor product notation by noting that we may identify which tensor factor an element of $\mathcal{M}_n$ belongs to by its height, and so we may write elements of $\mathcal{M}_n$ as formal products of full-Grassmannian RC graphs, with the understanding that the $k$-th factor of the product is the submodule $\grass_k$.
 
-For each $1\leq k\leq n$ and binary vector $\beta\in\{0,1\}^k$, define $\mathbf{E}^{k;\beta}$ to be the unique $k$-Grassmannian RC graph for a permutation with a single column satisfying
+For each $1\leq k\leq n$ and binary vector $\beta\in\{0,1\}^k$, define $\mathbf{E}^{k;\beta}$ to be the unique $k$-Grassmannian RC graph for a partition with a single column satisfying
 $$\wtt_j(\mathbf{E}^{k;\beta}) = \beta_j$$
 for $1\leq j\leq k$. Equivalently, the rows of $\mathbf{E}^{k;\beta}$ that carry a crossing are exactly those indexed by the support of $\beta$, namely $\{j\in\{1,\ldots,k\}:\beta_j=1\}$, and the degree (column length) of $\mathbf{E}^{k;\beta}$ is $|\beta|:=\beta_1+\cdots+\beta_k$.
 
@@ -3657,7 +3673,7 @@ An arbitrary RC graph is itself a product of elementary symmetric RC graphs of w
 \begin{proposition}\label{proposition:liftcrystaliso}
 Let $A = A_1\otimes\cdots \otimes A_m$ be an elementary tensor of full Grassmannian elementary symmetric polynomial RC graphs in weakly increasing order of height, considered as an element of the tensor product of Demazure crystals. Then 
 $$A\mapsto\RC_n(A)$$
-extends to an isomorphism of Demazure crystals from the tensor product to the connected component of $\RC_n(A)\subseteq \RC_n(\wof{A})$.
+extends to an isomorphism of Demazure crystals from the connected component of $A$ in the tensor product to the connected component of $\RC_n(A)\subseteq \RC_n(\wof{A})$.
 \end{proposition}
 \begin{proof}
 This is seen to be true by invoking Proposition \ref{proposition:boxproduct}, associativity of the tensor product of crystals, and the fact that the Demazure crystal generated by $A$ is isomorphic to the connected component of $A$ in the case of complete Kashiwara crystals of left to right increasing lengths \cite{kouno2020decomposition}.
@@ -3685,7 +3701,7 @@ where we interpret $\mathrm{word}(\perp)$ as a formal symbol distinct from every
 \end{align*}
 with the convention $m+(+\infty)=+\infty$ for $m\in\mathbb{Z}$.
 
-The same article \cite{cain2023quasicrystals} defines a notion of the quasi-tensor product of quasi-crystals, which is the same as the usual tensor product of crystals except that if there is an $i$ such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, then we require that $\ddot{e}_i(A\ddot{\otimes} B) =\ddot{f}_i(A\ddot{\otimes} B)= \perp$, an undefined symbol signifying that the result is not defined.
+These data equip $\RC_n(w)$ with a seminormal quasi-crystal structure (verified in Proposition \ref{proposition:quasicrystalaxioms}). Following \cite{cain2023quasicrystals}, we define the quasi-tensor product $A\,\ddot{\otimes}\,B$ of two quasi-crystals as the ordinary crystal tensor product, except that whenever $i$ is an index such that $\ddot{\varphi}_i(A)>0$ and $\ddot{\varepsilon}_i(B)>0$, we set $\ddot{e}_i(A\,\ddot{\otimes}\,B)=\ddot{f}_i(A\,\ddot{\otimes}\,B)=\perp$ (undefined).
 \end{definition}
 
 \begin{proposition}\label{proposition:quasicrystalaxioms}

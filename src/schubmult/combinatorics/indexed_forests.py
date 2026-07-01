@@ -132,6 +132,40 @@ class IndexedForest:
     def intervals(self):
         return _forest_intervals(self._roots)
 
+    @property
+    def terminal_nodes(self):
+        """Terminal nodes for trimming, indexed by qdes positions.
+
+        In Nadeau--Spink--Tewari notation, qdes(F) is defined from the forest
+        code c(F) by
+            qdes(F) = { i : c_i > 0 and c_{i+1} = 0 }.
+        We realize these as nodes of index i when present in the support.
+        """
+        return tuple(node for node in (self.node(i) for i in self.trim_descents) if node is not None)
+
+    @property
+    def trim_descent_nodes(self):
+        """Nodes corresponding to trim descents (qdes positions)."""
+        return self.terminal_nodes
+
+    @property
+    def trim_descents(self):
+        """Trim descents (left terminal set qdes) of the indexed forest.
+
+        This matches the code-level criterion used in Nadeau--Spink--Tewari:
+            qdes(F) = { i : c_i > 0 and c_{i+1} = 0 },
+        with 1-based indexing and c_{k}=0 beyond the code length.
+        """
+        c = self.code
+        out = []
+        for i, val in enumerate(c, start=1):
+            if val <= 0:
+                continue
+            nxt = c[i] if i < len(c) else 0
+            if nxt == 0:
+                out.append(i)
+        return tuple(out)
+
     def __iter__(self):
         return iter(self._roots)
 

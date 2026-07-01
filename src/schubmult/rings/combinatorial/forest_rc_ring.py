@@ -33,6 +33,20 @@ class ForestRCGraphRingElement(RCGraphRingElement):
             return result
         return result.change_basis(basis)
 
+    def quasi_shift(self, i):
+        result = self.ring.zero
+        for key, coeff in self.items():
+            if len(key) < i:
+                result += coeff * self.ring(key)
+                continue
+            if key.length_vector[i - 1] != 0:
+                continue
+            result += coeff * self.ring(key.pull_out_row(i))
+        return result
+
+    def forest_trim(self, i):
+        return self.divdiff(i).quasi_shift(i)
+
 class DualForestRCGraphRingElement(ForestRCGraphRingElement):
     pass
 
@@ -83,7 +97,6 @@ class ForestRCGraphRing(RCGraphRing):
                 prd = (self._forest_brc_lookup(rc1) * self._forest_brc_lookup(rc2))
                 result += coeff1 * coeff2 * self._snap(prd.to_rc_graph_ring_element().resize(length))
         return result
-
 
     @staticmethod
     @cache
