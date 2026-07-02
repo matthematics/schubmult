@@ -2472,7 +2472,8 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def is_forest_rc(self) -> bool:
-        return self.forest_invariant == RCGraph.principal_rc(self.perm, len(self)).forest_invariant
+        #return self.forest_invariant == RCGraph.principal_rc(self.perm, len(self)).forest_invariant
+        return self.forest_weight == self.length_vector
 
     def pull_out_row(self, row: int, keep_size=False) -> tuple[tuple, RCGraph]:
         # if row - 1 not in self.perm.descents():

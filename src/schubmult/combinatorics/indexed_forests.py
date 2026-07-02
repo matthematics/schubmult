@@ -124,6 +124,26 @@ class IndexedForest:
                 return node
         return None
 
+    def _parent_of(self, target):
+        if target is None:
+            return None
+
+        def search(node):
+            if node is None:
+                return None
+            if node.left is target or node.right is target:
+                return node
+            left = search(node.left)
+            if left is not None:
+                return left
+            return search(node.right)
+
+        for root in self._roots:
+            parent = search(root)
+            if parent is not None:
+                return parent
+        return None
+
     @property
     def support(self):
         return tuple(sorted(node.index for node in self.inorder_traversal))
@@ -165,6 +185,60 @@ class IndexedForest:
             if nxt == 0:
                 out.append(i)
         return tuple(out)
+
+    def trim_descent(self, index):
+        """Trim the forest directly at descent ``index``.
+
+        The index must lie in ``self.trim_descents``. If ``c = self.code`` and
+        ``index = i`` (1-based), this performs the inverse of blossoming at i:
+        decrement ``c_i`` by 1 and delete position ``i+1`` (which is 0 for a
+        valid trim descent), then rebuild the indexed forest from the resulting
+        code.
+        """
+        i = int(index)
+        if i <= 0:
+            raise ValueError(f"trim descent index must be positive, got {index!r}")
+
+        descents = set(self.trim_descents)
+        if i not in descents:
+            raise ValueError(f"{i} is not a trim descent of this forest (qdes={tuple(sorted(descents))})")
+
+        c = list(self.code)
+        ci = i - 1  # 0-based position for c_i
+        c[ci] -= 1
+
+        # For a valid descent we should have c_{i+1} = 0 (or implicit 0 beyond
+        # the list). Delete that slot when present.
+        if i < len(c):
+            if c[i] != 0:
+                raise ValueError(f"Internal inconsistency: expected c_{{i+1}}=0 at i={i}, got {c[i]}")
+            del c[i]
+
+        # Normalize only trailing zeros to keep weak-composition semantics.
+        while c and c[-1] == 0:
+            c.pop()
+
+        return weak_composition_to_indfor(tuple(c))
+
+    def is_left_child(self, descent):
+        """Return whether the leaf labeled ``descent`` is a left child.
+
+        The label is interpreted as a support index in the indexed forest.
+        If the labeled node is not a leaf, this returns ``False``.
+        """
+        idx = int(descent)
+        node = self.node(idx)
+        if node is None:
+            raise ValueError(f"No node with index {idx} in this indexed forest")
+
+        # The request is specifically about leaf labels.
+        if node.left is not None or node.right is not None:
+            return False
+
+        parent = self._parent_of(node)
+        if parent is None:
+            return False
+        return parent.left is node
 
     def __iter__(self):
         return iter(self._roots)

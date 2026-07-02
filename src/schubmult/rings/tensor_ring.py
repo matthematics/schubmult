@@ -264,6 +264,20 @@ class TensorRingElement(BaseRingElement):
     def __init__(self):
         pass
 
+    def as_terms(self):
+        if len(self.keys()) == 0:
+            return [S.Zero]
+        # Keep the tensor identity basis element explicit instead of
+        # collapsing (zero_monom -> coeff) to a scalar SymPy term.
+        return [sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
+
+    def as_ordered_terms(self, *_, **__):
+        if len(self.keys()) == 0:
+            return [S.Zero]
+        # Keep the tensor identity basis element explicit instead of
+        # collapsing (zero_monom -> coeff) to a scalar SymPy term.
+        return [sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
+
     def coproduct(self):
         """Override coproduct to use the correct target ring."""
         tring = self.ring @ self.ring
@@ -280,14 +294,6 @@ class TensorRingElement(BaseRingElement):
             for i in range(len(k)):
                 ret.update(self.ring.rings[i](k[i]).free_symbols)
         return ret
-
-    def as_ordered_terms(self, *_, **__):
-        if len(self.keys()) == 0:
-            return [S.Zero]
-        return [
-            self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
-            for k in self.keys()  # sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
-        ]
 
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         from schubmult.symbolic import prod

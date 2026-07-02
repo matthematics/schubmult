@@ -199,3 +199,25 @@ def test_rc_graph_ring_empty_basis_not_scalar_one_term():
     term = ring(RCGraph([])).as_ordered_terms()[0]
 
     assert term != S.One
+
+
+def test_forest_rc_graph_ring_empty_basis_not_scalar_one_term():
+    from schubmult import RCGraph
+    from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
+    from schubmult.symbolic import S
+
+    ring = ForestRCGraphRing()
+    term = ring(RCGraph([])).as_ordered_terms()[0]
+
+    assert term != S.One
+
+
+def test_tensor_ring_empty_basis_not_scalar_one_term():
+    from schubmult import RCGraph
+    from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
+    from schubmult.symbolic import S
+
+    ring = ForestRCGraphRing() @ ForestRCGraphRing()
+    term = ring((RCGraph([]), RCGraph([]))).as_ordered_terms()[0]
+
+    assert term != S.One
