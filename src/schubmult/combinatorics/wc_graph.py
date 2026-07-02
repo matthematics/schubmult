@@ -10,10 +10,12 @@ from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGrap
 from schubmult.symbolic import Expr, S, prod
 from schubmult.utils._grid_print import GridPrint
 
-#from schubmult.utils.perm_utils import _is_compatible
+# from schubmult.utils.perm_utils import _is_compatible
+
 
 def _is_row_root(row: int, root: tuple[int, int]) -> bool:
     return row is None or (root[0] <= row and root[1] > row)
+
 
 def _is_compatible(compat_seq, word):
     """Check if compat_seq is compatible with word, i.e. for each prefix of word, the corresponding prefix of compat_seq has all distinct entries."""
@@ -24,9 +26,9 @@ def _is_compatible(compat_seq, word):
     if compat_seq[0] > word[0]:
         return False
     for i in range(1, len(word)):
-        if compat_seq[i-1] > compat_seq[i]:
+        if compat_seq[i - 1] > compat_seq[i]:
             return False
-        if word[i - 1] <= word[i] and compat_seq[i-1] == compat_seq[i]:
+        if word[i - 1] <= word[i] and compat_seq[i - 1] == compat_seq[i]:
             return False
         if compat_seq[i] > word[i]:
             return False
@@ -62,11 +64,11 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         return hash(tuple(self))
 
     def trans_co_pipe(self):
-        #return self._rebuild([tuple(reversed([])) for i, row in enumerate(reversed(self))])
-        new_wc = WCGraph([]).resize(2*len(self))
-        for i in range(1,self.rows + 1):
+        # return self._rebuild([tuple(reversed([])) for i, row in enumerate(reversed(self))])
+        new_wc = WCGraph([]).resize(2 * len(self))
+        for i in range(1, self.rows + 1):
             for j in range(1, self.cols + 1):
-                if not self.has_element(i,j):
+                if not self.has_element(i, j):
                     new_wc = new_wc.toggle_ref_at(i + j, j)
         return new_wc
 
@@ -211,6 +213,89 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 seq.append(i + 1)
         return tuple(seq)
 
+    @classmethod
+    def grove_wcs(cls, comp, length=None) -> set[WCGraph]:
+        """Grove polynomial of ``comp`` built by inverting the omega insertion.
+
+        We enumerate the compatible set-valued labelings ``kappa`` of the indexed
+        forest ``F = weak_composition_to_indfor(comp)`` (the grove definition), and
+        realize each labeling as a WCGraph by writing down its (word, compatible
+        sequence) pair *explicitly* -- the published inverse of the set-valued omega
+        insertion -- and feeding it to ``WCGraph.from_word_compatible``.
+
+        Concretely:
+
+        * The canonical left-binary-search labeling ``P`` of ``F`` and the decreasing
+          labeling ``Q`` of the principal reduced RC graph form the omega pair for
+          ``F``. The map ``Gamma = omega_reduced_word_from_labelings`` reads the
+          reduced word ``W`` off ``(P, Q)`` -- this is the inverse of the insertion,
+          so ``W`` is determined by ``F`` (not chosen at random). Node ``v`` sits at
+          word position ``len(W) - Q(v)`` and carries the reduced letter
+          ``ell(v) = W[len(W) - Q(v)]``.
+        * A labeling ``kappa`` places the letter ``ell(v)`` into every row
+          ``r in kappa(v)``. Reading the resulting ``(row, letter)`` pairs in
+          ``(row, -letter)`` order gives a weakly-increasing compatible sequence and
+          a word whose rows are strictly decreasing, i.e. exactly the data
+          ``WCGraph.from_word_compatible`` consumes. The multiset of compatible
+          values is the disjoint union of the ``kappa(v)``, so the WCGraph monomial
+          equals ``x^kappa``.
+
+        Each WCGraph contributes ``beta**(|kappa| - |F|)`` times its monomial; beta is
+        the degree ``-1`` homogenizer recording extra labels beyond one per node.
+        """
+        from itertools import combinations
+
+        from schubmult.combinatorics.indexed_forests import omega_reduced_word_from_labelings, weak_composition_to_indfor
+        from schubmult.combinatorics.permutation import uncode
+        from schubmult.combinatorics.rc_graph import RCGraph
+
+        if length is None:
+            length = len(comp)
+        forest = weak_composition_to_indfor(comp)
+
+        def labelings_below(node, min_value):
+            results = []
+            for subset_size in range(1, node.rho - min_value + 2):
+                for subset in combinations(range(min_value, node.rho + 1), subset_size):
+                    top = subset[-1]
+                    left_opts = labelings_below(node.left, top) if node.left is not None else [{}]
+                    right_opts = labelings_below(node.right, top + 1) if node.right is not None else [{}]
+                    for left in left_opts:
+                        for right in right_opts:
+                            labeling = {node.index: tuple(subset)}
+                            labeling.update(left)
+                            labeling.update(right)
+                            results.append(labeling)
+            return results
+
+        all_labelings = [{}]
+        for root in forest._roots:
+            root_labelings = labelings_below(root, 1)
+            all_labelings = [{**base, **choice} for base in all_labelings for choice in root_labelings]
+
+        # Omega pair (P, Q) for F, read off the principal reduced RC graph.
+        principal = RCGraph.principal_rc(uncode(comp), length)
+        p_labeling, q_labeling = principal.omega_invariant
+
+        # Gamma (the published inverse of the insertion) reconstructs the reduced word
+        # from (P, Q); reversing matches the forward convention of perm_word.
+        word = list(reversed(omega_reduced_word_from_labelings(p_labeling, q_labeling)))
+
+        # The reduced letter carried by node v is W at v's Q-position.
+        letter_of = {node.index: word[len(word) - q_labeling(node.index)] for node in p_labeling.forest.inorder_traversal}
+
+        wc_set = set()
+        for labeling in all_labelings:
+            # Explicit (word, compatible sequence): node v's letter into each row of kappa(v).
+            entries = [(row, letter_of[index]) for index, label_set in labeling.items() for row in label_set]
+            entries.sort(key=lambda pair: (pair[0], -pair[1]))
+            compat_seq = [row for row, _ in entries]
+            wc_word = [letter for _, letter in entries]
+            wc = cls.from_word_compatible(wc_word, compat_seq, length=length)
+            assert wc.is_valid
+            wc_set.add(wc)
+        return wc_set
+
     def flipped_co_wc(self):
         spet = self.resize(len(self.perm) - 1)
         refspet = []
@@ -268,6 +353,7 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
 
     def _snap_reduced(self):
         from .rc_graph import RCGraph
+
         red_word, seq = self.to_reduced_compatible_set_sequence()
         compat_seq = [min(v) for v in seq]
         return RCGraph.from_reduced_compatible(red_word, compat_seq, length=len(self))
@@ -345,7 +431,6 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
             result = (i + j - 1, i + j)
         return result
 
-
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False) -> Expr:
         if crystal:
             raise NotImplementedError("WCGraph is not a crystal graph")
@@ -367,10 +452,12 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         else:
             ret *= beta ** (len(self.perm_word))
         return ret
+
     @classmethod
     @cache
     def groth_to_schub(cls, groth_perm: Permutation, beta: Expr):
         from .pipe_dream import PipeDream
+
         boip = WCGraph.all_wc_graphs(groth_perm, len(groth_perm))
         ret = {}
         for wc in boip:
@@ -380,7 +467,6 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 perm = cpdb.perm * w0
                 ret[perm] = ret.get(perm, 0) + beta ** (perm.inv - groth_perm.inv)
         return ret
-
 
     @cache
     def bisect_left_coords_index(self, row: int, col: int, lo: int = 0, hi: int | None = None) -> int:
@@ -538,7 +624,7 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
             working2 = working.resize(len(self))
             col = 1
             while working2.perm.max_descent != len(self):
-                working2 = self._rebuild([*working, tuple(range(len(self) + col - 1, len(self) - 1, - 1))])
+                working2 = self._rebuild([*working, tuple(range(len(self) + col - 1, len(self) - 1, -1))])
                 col += 1
             working2 = working2.upieri_insert(len(self), diffs).resize(len(self) - 1).resize(len(self)).zero_out_last_row()
             return working2

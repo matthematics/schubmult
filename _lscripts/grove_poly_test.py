@@ -81,24 +81,39 @@ def _forest_weight(wc):
     return wc._snap_reduced().forest_weight
 
 def grove_rc_try(comp, beta, length):
-    """Grove polynomial of ``comp`` built by going from the indexed forest to
-    WCGraphs.
+    """Grove polynomial of ``comp`` built by inverting the omega insertion.
 
-    We enumerate the compatible set-valued labelings of the indexed forest
-    ``F = weak_composition_to_indfor(comp)`` (Definition of grove polynomials),
-    and realize each labeling as a WCGraph on the principal reduced word of
-    ``comp``. The forest node -> word-position map comes from the ``omega``
-    ``Q``-labeling of that reduced RC graph, and each labeling's node sets become
-    the set-sequence of the WCGraph. Each WCGraph contributes
-    ``beta**(|kappa| - |F|)`` times its monomial, i.e. beta is the degree ``-1``
-    homogenizer recording extra labels beyond one per node.
+    We enumerate the compatible set-valued labelings ``kappa`` of the indexed
+    forest ``F = weak_composition_to_indfor(comp)`` (the grove definition), and
+    realize each labeling as a WCGraph by writing down its (word, compatible
+    sequence) pair *explicitly* -- the published inverse of the set-valued omega
+    insertion -- and feeding it to ``WCGraph.from_word_compatible``.
+
+    Concretely:
+
+    * The canonical left-binary-search labeling ``P`` of ``F`` and the decreasing
+      labeling ``Q`` of the principal reduced RC graph form the omega pair for
+      ``F``. The map ``Gamma = omega_reduced_word_from_labelings`` reads the
+      reduced word ``W`` off ``(P, Q)`` -- this is the inverse of the insertion,
+      so ``W`` is determined by ``F`` (not chosen at random). Node ``v`` sits at
+      word position ``len(W) - Q(v)`` and carries the reduced letter
+      ``ell(v) = W[len(W) - Q(v)]``.
+    * A labeling ``kappa`` places the letter ``ell(v)`` into every row
+      ``r in kappa(v)``. Reading the resulting ``(row, letter)`` pairs in
+      ``(row, -letter)`` order gives a weakly-increasing compatible sequence and
+      a word whose rows are strictly decreasing, i.e. exactly the data
+      ``WCGraph.from_word_compatible`` consumes. The multiset of compatible
+      values is the disjoint union of the ``kappa(v)``, so the WCGraph monomial
+      equals ``x^kappa``.
+
+    Each WCGraph contributes ``beta**(|kappa| - |F|)`` times its monomial; beta is
+    the degree ``-1`` homogenizer recording extra labels beyond one per node.
     """
     from itertools import combinations
 
     from schubmult.combinatorics.rc_graph import RCGraph
 
     forest = weak_composition_to_indfor(comp)
-    size = len(forest)
 
     def labelings_below(node, min_value):
         results = []
@@ -120,28 +135,29 @@ def grove_rc_try(comp, beta, length):
         root_labelings = labelings_below(root, 1)
         all_labelings = [{**base, **choice} for base in all_labelings for choice in root_labelings]
 
-    # Principal reduced RC graph for comp gives the reduced word and, via its
-    # omega Q-labeling, the forest node -> word position correspondence.
-    principal = next(
-        rc
-        for rc in RCGraph.all_rc_graphs(uncode(comp), length)
-        if rc.forest_weight == tuple(comp) and uncode(comp) == rc.perm
-    )
-    word = list(principal.perm_word)
-    _, q_labeling = principal.omega_invariant
-    position_of = {
-        node.index: len(word) - q_labeling(node.index)
-        for node in principal.forest_invariant.forest.inorder_traversal
+    # Omega pair (P, Q) for F, read off the principal reduced RC graph.
+    principal = RCGraph.principal_rc(uncode(comp), length)
+    p_labeling, q_labeling = principal.omega_invariant
+
+    # Gamma (the published inverse of the insertion) reconstructs the reduced word
+    # from (P, Q); reversing matches the forward convention of perm_word.
+    word = list(reversed(omega_reduced_word_from_labelings(p_labeling, q_labeling)))
+
+    # The reduced letter carried by node v is W at v's Q-position.
+    letter_of = {
+        node.index: word[len(word) - q_labeling(node.index)]
+        for node in p_labeling.forest.inorder_traversal
     }
 
     result = 0
     wc_set = set()
     for labeling in all_labelings:
-        set_sequence = [None] * len(word)
-        total_labels = 0
-        for index, label_set in labeling.items():
-            set_sequence[position_of[index]] = set(label_set)
-        wc = WCGraph.from_reduced_compatible_set_sequence(word, set_sequence, length=length)
+        # Explicit (word, compatible sequence): node v's letter into each row of kappa(v).
+        entries = [(row, letter_of[index]) for index, label_set in labeling.items() for row in label_set]
+        entries.sort(key=lambda pair: (pair[0], -pair[1]))
+        compat_seq = [row for row, _ in entries]
+        wc_word = [letter for _, letter in entries]
+        wc = WCGraph.from_word_compatible(wc_word, compat_seq, length=length)
         assert wc.is_valid
         wc_set.add(wc)
     for wc in wc_set:
