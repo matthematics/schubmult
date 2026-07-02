@@ -1,4 +1,14 @@
-from schubmult.combinatorics.indexed_forests import IndexedForest, Node, weak_composition_to_indfor
+from schubmult.combinatorics.indexed_forests import (
+    IndexedForest,
+    Node,
+    indexed_forest_from_trimming_word,
+    letterpair,
+    omega_setvalued_insertion,
+    omega_setvalued_insertion_from_wcgraph,
+    omega_is_set_valued_compatible,
+    omega_set_valued_compatibility,
+    weak_composition_to_indfor,
+)
 
 
 def test_trim_descents_matches_qdes_rule_simple():
@@ -78,3 +88,65 @@ def test_is_left_child_missing_label_raises():
         assert "No node with index" in str(exc)
     else:
         raise AssertionError("Expected ValueError for missing node label")
+
+
+def test_indexed_forest_from_trimming_word_round_trip_example():
+    trimming_word = (1, 1, 2, 4, 7)
+    forest = indexed_forest_from_trimming_word(trimming_word)
+    expected = weak_composition_to_indfor((2, 1, 0, 1, 0, 0, 1, 0))
+    assert forest == expected
+
+
+def test_indexed_forest_from_trimming_word_empty():
+    forest = indexed_forest_from_trimming_word(())
+    assert len(forest.roots) == 0
+    assert forest.code == ()
+
+
+def test_indexed_forest_from_trimming_word_rejects_nonpositive_entries():
+    try:
+        indexed_forest_from_trimming_word((1, 0, 2))
+    except ValueError as exc:
+        assert "positive integers" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for non-positive trimming-word entry")
+
+
+def test_omega_set_valued_compatibility_true_case():
+    # Longer compatible sequence reducing to one reduced letter with set {1,2}.
+    pairs = (letterpair(1, 1), letterpair(1, 2))
+    data = omega_set_valued_compatibility(pairs)
+    assert data["ok"] is True
+    assert data["omega_reduced_word"] == (1, 1)
+    assert data["wc_reduced_word"] == (1,)
+    assert data["set_sequence"] == ((1, 2),)
+    assert omega_is_set_valued_compatible(pairs) is True
+
+
+def test_omega_set_valued_compatibility_false_case():
+    # Not weakly increasing in the compatible sequence, so WCGraph rejects it.
+    pairs = (letterpair(1, 2), letterpair(1, 1))
+    data = omega_set_valued_compatibility(pairs)
+    assert data["ok"] is False
+    assert omega_is_set_valued_compatible(pairs) is False
+
+
+def test_omega_setvalued_insertion_merges_on_unreduced_step():
+    # Word (1,1) is unreduced at second step; both compatible labels merge.
+    data = omega_setvalued_insertion((1, 1), (1, 2))
+
+    assert data["reduced_word"] == (1,)
+    assert data["set_sequence"] == ((1, 2),)
+    assert len(data["node_sets"]) == 1
+    assert next(iter(data["node_sets"].values())) == (1, 2)
+
+
+def test_omega_setvalued_insertion_from_wcgraph_matches_wc_reduction():
+    from schubmult.combinatorics.wc_graph import WCGraph
+
+    wc = WCGraph.from_word_compatible((1, 1), (1, 2), length=2)
+    data = omega_setvalued_insertion_from_wcgraph(wc)
+
+    red_word, set_seq = wc.to_reduced_compatible_set_sequence()
+    assert data["reduced_word"] == red_word
+    assert data["set_sequence"] == set_seq

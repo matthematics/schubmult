@@ -1,7 +1,7 @@
 from schubmult import *
 from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
 from schubmult.rings.polynomial_algebra import *
-from schubmult.combinatorics.indexed_forests import weak_composition_to_indfor
+from schubmult.combinatorics.indexed_forests import weak_composition_to_indfor, comp_to_thompson_word
 
 f = ForestRCGraphRing()
 ff = f @ f
@@ -34,17 +34,6 @@ def forest_trim_tensor(tensor_elem, index_list):
     return forest_trim_tensor(result, rest)
         
 
-def comp_to_word(comp):
-    if len(comp) == 0:
-        return []
-    word = []
-    forest = weak_composition_to_indfor(comp)
-    while forest.trim_descents:
-        desc = forest.trim_descents[0]
-        word = [desc, *word]
-        forest = forest.trim_descent(desc)
-    return word
-
 if __name__ == "__main__":
     import sys
     import itertools
@@ -57,7 +46,7 @@ if __name__ == "__main__":
         prd = Forest(*comp1) * Forest(*comp2)
         pork = rc1 @ rc2
         for end_comp, val in prd.items():
-            varnish = forest_trim_tensor(pork, comp_to_word(end_comp))
+            varnish = forest_trim_tensor(pork, comp_to_thompson_word(end_comp))
             #assert len(varnish) == 1, f"Error: Leibniz rule produced multiple terms for {comp1=} {comp2=} {end_comp=} {val=} {varnish=}"
             assert (sum(varnish.values())-val)==0, f"Error: Leibniz rule failed for {comp1=} {comp2=} {end_comp=} {val=} {varnish=}"
         print("Socks")

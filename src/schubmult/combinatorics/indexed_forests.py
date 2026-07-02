@@ -712,6 +712,30 @@ def weak_composition_to_indfor(c):
     return IndexedForest(tuple(forest_roots), code=c)
 
 
+def indexed_forest_from_trimming_word(trimming_word):
+    """Build an indexed forest directly from a trimming word.
+
+    If the trimming word is ``(i_1, ..., i_k)``, we reconstruct the forest code
+    by iterating the inverse blossoming operation
+
+        c <- (c_1, ..., c_{i-1}, c_i + 1, 0, c_{i+1}, ...)
+
+    at each index ``i`` from left to right, then convert the resulting weak
+    composition code into an ``IndexedForest``.
+    """
+    code = []
+    for i in trimming_word:
+        idx = int(i)
+        if idx <= 0:
+            raise ValueError(f"Trimming word entries must be positive integers, got {i!r}")
+        pos = idx - 1  # 0-based
+        while len(code) <= pos:
+            code.append(0)
+        code[pos] += 1
+        code.insert(pos + 1, 0)
+    return weak_composition_to_indfor(tuple(code))
+
+
 # ---------------------------------------------------------------------------
 # Dual forest polynomials (Section 4 of arXiv:2306.10939, Nadeau-Tewari).
 #
@@ -1277,6 +1301,138 @@ def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabe
     return new_P, new_Q
 
 
+def omega_reduced_word_from_labelings(P: LBS, Q: DecLabeling) -> tuple[int, ...]:
+    """Read the reduced-word order from an omega insertion pair (P, Q).
+
+    The decreasing labeling Q orders the surviving insertion events; sorting the
+    forest nodes by Q-label and reading primary labels from P gives the reduced
+    word represented by the omega insertion output.
+    """
+    ordered_nodes = sorted(P.forest.inorder_traversal, key=lambda node: Q(node.index))
+    return tuple(P(node.index).primary for node in ordered_nodes)
+
+
+def omega_set_valued_compatibility(word_of_pairs: tuple[letterpair, ...]):
+    """Check set-valued compatibility of a longer sequence via omega insertion.
+
+        Returns a dict with:
+            - ok: whether the sequence is set-valued compatible in WCGraph sense,
+      - omega_reduced_word: reduced word extracted from (P, Q),
+      - wc_reduced_word: reduced word from WCGraph reduction,
+      - set_sequence: reduced compatible set sequence from WCGraph.
+    """
+    from schubmult.combinatorics.wc_graph import WCGraph
+
+    primary = tuple(int(lp.primary) for lp in word_of_pairs)
+    secondary = tuple(int(lp.secondary) for lp in word_of_pairs)
+
+    P, Q = omega_insertion(word_of_pairs)
+    omega_word = omega_reduced_word_from_labelings(P, Q)
+
+    try:
+        wc_full = WCGraph.from_word_compatible(primary, secondary)
+    except Exception:
+        return {
+            "ok": False,
+            "omega_reduced_word": omega_word,
+            "wc_reduced_word": (),
+            "set_sequence": (),
+        }
+
+    wc_reduced_word, set_seq = wc_full.to_reduced_compatible_set_sequence()
+    return {
+        "ok": True,
+        "omega_reduced_word": omega_word,
+        "wc_reduced_word": wc_reduced_word,
+        "set_sequence": set_seq,
+    }
+
+
+def omega_is_set_valued_compatible(word_of_pairs: tuple[letterpair, ...]) -> bool:
+    """Boolean convenience wrapper for omega_set_valued_compatibility."""
+    return bool(omega_set_valued_compatibility(word_of_pairs)["ok"])
+
+
+def omega_setvalued_insertion(word, compatible_sequence):
+    """Omega insertion for potentially unreduced words with set-valued labels.
+
+    This mirrors the reduction logic used by WCGraph: scan a (word, compatible
+    sequence) pair left-to-right. If appending a letter would be non-reduced,
+    do not insert a new node; instead merge the compatible label into the set
+    attached to the corresponding reduced root. Otherwise perform ordinary
+    insertion on that letterpair.
+
+    Returns
+    -------
+    dict
+        {
+          "P": LBS,
+          "Q": DecLabeling,
+          "reduced_word": tuple[int, ...],
+          "set_sequence": tuple[tuple[int, ...], ...],
+          "node_sets": dict[int, tuple[int, ...]],
+        }
+    where ``node_sets`` maps forest node index -> merged compatible-label set.
+    """
+    from schubmult.combinatorics.permutation import Permutation
+
+    if len(word) != len(compatible_sequence):
+        raise ValueError("word and compatible_sequence must have the same length")
+
+    reduced_pairs = []
+    reduced_word = []
+    set_seq = []
+    working_perm = Permutation([])
+
+    for letter_raw, comp_raw in zip(word, compatible_sequence):
+        letter = int(letter_raw)
+        comp = int(comp_raw)
+        if letter <= 0 or comp <= 0:
+            raise ValueError("word letters and compatible_sequence values must be positive integers")
+
+        # Non-reduced step: merge label into existing reduced root bucket.
+        if working_perm[letter - 1] > working_perm[letter]:
+            matched = False
+            for root_index in range(len(reduced_word)):
+                root = working_perm.right_root_at(root_index, word=tuple(reduced_word))
+                if root == (letter, letter + 1):
+                    set_seq[root_index].add(comp)
+                    matched = True
+                    break
+            if not matched:
+                raise RuntimeError(f"Could not place non-reduced letter {letter} into any root bucket")
+            continue
+
+        # Reduced step: ordinary insertion event.
+        working_perm = working_perm.swap(letter - 1, letter)
+        reduced_word.append(letter)
+        set_seq.append({comp})
+        reduced_pairs.append(letterpair(letter, comp))
+
+    P, Q = omega_insertion(tuple(reduced_pairs))
+
+    # Match each reduced position j with the unique node inserted at time j+1.
+    node_sets = {}
+    for j, labels in enumerate(set_seq, start=1):
+        candidates = [node for node in P.forest.inorder_traversal if Q(node.index) == j]
+        if len(candidates) != 1:
+            raise RuntimeError(f"Expected unique node for insertion time {j}, got {len(candidates)}")
+        node_sets[candidates[0].index] = tuple(sorted(labels))
+
+    return {
+        "P": P,
+        "Q": Q,
+        "reduced_word": tuple(reduced_word),
+        "set_sequence": tuple(tuple(sorted(s)) for s in set_seq),
+        "node_sets": node_sets,
+    }
+
+
+def omega_setvalued_insertion_from_wcgraph(wc_graph):
+    """Convenience wrapper: run set-valued omega insertion directly from WCGraph."""
+    return omega_setvalued_insertion(wc_graph.perm_word, wc_graph.compatible_sequence)
+
+
 def omega_park(word):
     """Parking procedure Omega.
 
@@ -1356,6 +1512,17 @@ def _grove_polynomial_from_root(root, genset, min_value=1, beta=Symbol("beta")):
 def grove_polynomial(comp, genset, beta=Symbol("beta")):
     indfor = weak_composition_to_indfor(comp)
     return _grove_polynomial_from_indfor(indfor, genset, beta=beta)
+
+def comp_to_thompson_word(comp):
+    if len(comp) == 0:
+        return []
+    word = []
+    forest = weak_composition_to_indfor(comp)
+    while forest.trim_descents:
+        desc = forest.trim_descents[0]
+        word = [desc, *word]
+        forest = forest.trim_descent(desc)
+    return word
 
 if __name__ == "__main__":
     from schubmult.abc import beta, x
