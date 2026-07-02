@@ -33,6 +33,7 @@ _lazy_exports = {
     "ChuteMoveElement": "schubmult.combinatorics.chute_move_element",
     "ChuteMoveRing": "schubmult.rings.combinatorial.chute_move_ring",
     "BPD": "schubmult.combinatorics.bpd",
+    "ForestRCGraphRing": "schubmult.rings.combinatorial.forest_rc_ring",
     "TileType": "schubmult.combinatorics.bpd",
     "HPD": "schubmult.combinatorics.hpd",
     "HPDTile": "schubmult.combinatorics.hpd",
