@@ -468,6 +468,21 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
                 ret[perm] = ret.get(perm, 0) + beta ** (perm.inv - groth_perm.inv)
         return ret
 
+    @classmethod
+    @cache
+    def grove_to_forest(cls, comp, beta: Expr):
+        from .pipe_dream import PipeDream
+
+        boip = WCGraph.grove_wcs(comp, len(comp))
+        ret = {}
+        for wc in boip:
+            cpdb = PipeDream.from_rc_graph(wc).co_pipe_dream()
+            if cpdb.is_reduced:
+                rcc = cpdb.to_rc_graph()
+                fweight = tuple((rcc.perm * Permutation.w0(wc.rows)).pad_code(len(comp)))
+                ret[fweight] = ret.get(fweight, 0) + beta ** (sum(fweight) - sum(comp))
+        return ret
+
     @cache
     def bisect_left_coords_index(self, row: int, col: int, lo: int = 0, hi: int | None = None) -> int:
         from bisect import bisect_left, bisect_right  # noqa: F401

@@ -48,6 +48,17 @@ class PipeDream(PlanarHistory, GridPrint):
         # Use native pipe-dream orientation (left -> top) for permutation extraction.
         return Permutation.hecke_ref_product(*self._native_cross_word)
 
+    def to_rc_graph(self):
+        from schubmult import RCGraph
+        rows = []
+        for i in range(self.rows):
+            row = []
+            for j in range(self.cols - i):
+                if self[i, j] == self.CROSS:
+                    row.append(i + j + 1)
+            rows.append(tuple(reversed(row)))
+        return RCGraph(rows)
+
     @classmethod
     def from_rc_graph(cls, rc_graph):
         grid = np.full((len(rc_graph.perm), len(rc_graph.perm)), cls.EMPTY, dtype=object)
