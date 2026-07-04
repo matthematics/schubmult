@@ -300,6 +300,47 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
             wc_set.add(wc)
         return wc_set
 
+    @cached_property
+    def forest_weight(self):
+        from schubmult.utils.tuple_utils import pad_tuple
+
+        return pad_tuple(self.forest_invariant.forest.code, len(self))
+
+    @property
+    @cache
+    def omega_invariant(self):
+        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+
+        word = list(reversed(self.perm_word))
+
+        def word_to_pair_labeled(word):
+            counts = {}
+            out = []
+            for a in word:
+                aa = int(a)
+                counts[aa] = counts.get(aa, 0) + 1
+                out.append(letterpair(aa, counts[aa]))
+            return tuple(out)
+
+        return omega_insertion(word_to_pair_labeled(word))
+
+    @property
+    def forest_invariant(self):
+        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+
+        word = list(reversed(self.perm_word))
+
+        def word_to_pair_labeled(word):
+            counts = {}
+            out = []
+            for a in word:
+                aa = int(a)
+                counts[aa] = counts.get(aa, 0) + 1
+                out.append(letterpair(aa, counts[aa]))
+            return tuple(out)
+
+        return omega_insertion(word_to_pair_labeled(word))[0]
+
     def flipped_co_wc(self):
         spet = self.resize(len(self.perm) - 1)
         refspet = []

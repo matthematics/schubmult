@@ -175,17 +175,35 @@ if __name__ == "__main__":
         #grove_try = grove_rc_try(comp, Gx._beta, n - 1)
         # forest_dict = grove_as_forest_dict(comp, beta=Gx._beta, length=n - 1)
         # forest_result = Forest.from_dict(forest_dict)
-        forest_rcs = {k for k in RCGraph.all_rc_graphs(uncode(comp), n - 1) if k.is_forest_rc}
+        # forest_rcs = {k for k in RCGraph.all_rc_graphs(uncode(comp), n - 1) if k.is_forest_rc}
+        # fatpants_sum = 0
+        # for dinkbat in forest_rcs:
+        #     new_comp = dinkbat.forest_weight
+        #     grove_result = grove_polynomial(new_comp, Sx.genset, Gx._beta)
+        #     grove_try = sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in WCGraph.grove_wcs(new_comp, n - 1, dinkbat)])
+        #     diff =  (grove_result - grove_try).expand() 
+        #     assert diff == 0, f"Mismatch for {new_comp}: {grove_result} != {grove_try}\n{dinkbat=}\nDiff: {diff}"
+        #     print(f"Puncho! {dinkbat.is_principal=}")
+        #     fatpants_sum += grove_try
+        # print("Hofer gonk")
+
+        wc_set = WCGraph.all_wc_graphs(uncode(comp), n - 1)
+        # for dinkbat in forest_rcs:
+        #     wc_set -= WCGraph.grove_wcs(dinkbat.forest_weight, n - 1, dinkbat)
         fatpants_sum = 0
-        for dinkbat in forest_rcs:
-            new_comp = dinkbat.forest_weight
-            grove_result = grove_polynomial(new_comp, Sx.genset, Gx._beta)
-            grove_try = sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in WCGraph.grove_wcs(new_comp, n - 1, dinkbat)])
-            diff =  (grove_result - grove_try).expand() 
-            assert diff == 0, f"Mismatch for {new_comp}: {grove_result} != {grove_try}\n{dinkbat=}\nDiff: {diff}"
-            print(f"Puncho! {dinkbat.is_principal=}")
-            fatpants_sum += grove_try
-        print("Hofer gonk")
+        while wc_set:
+            new_forest_rcs = {wc for wc in wc_set if wc.forest_weight == wc.length_vector}
+            for dinkbat in new_forest_rcs:
+                gang = WCGraph.grove_wcs(dinkbat.forest_weight, n - 1, dinkbat)
+                assert gang.issubset(wc_set), f"Mismatch for {dinkbat.forest_weight}: {gang.difference(wc_set)}"
+                wc_set -= gang
+                grover = sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in gang])
+                assert (grover - (Gx._beta ** (len(dinkbat.perm_word) - sum(comp))) * grove_polynomial(dinkbat.forest_weight, Sx.genset, Gx._beta)).expand() == 0, f"Mismatch for {dinkbat.forest_weight}: {grover} != {(Gx._beta ** (len(gang.pop().perm_word) - sum(dinkbat.forest_weight))) * grove_polynomial(dinkbat.forest_weight, Sx.genset, Gx._beta)}"
+                print("Profie")
+                fatpants_sum += grover
+                #sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in gang])
+        assert (fatpants_sum - grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)).expand() == 0, f"Mismatch for {comp}: {fatpants_sum} != {grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)}\nDiff: {(fatpants_sum - grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)).expand()}"
+        print("Potato piston")
         # grothy = grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)
         # assert (fatpants_sum - grothy).expand() == 0, f"Mismatch for {comp}: {fatpants_sum} != {grothy}\nDiff: {(fatpants_sum - grothy).expand()}"
     # for w in perms:
