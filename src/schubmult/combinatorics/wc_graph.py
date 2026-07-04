@@ -214,7 +214,7 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         return tuple(seq)
 
     @classmethod
-    def grove_wcs(cls, comp, length=None) -> set[WCGraph]:
+    def grove_wcs(cls, comp, length=None, base_rc=None) -> set[WCGraph]:
         """Grove polynomial of ``comp`` built by inverting the omega insertion.
 
         We enumerate the compatible set-valued labelings ``kappa`` of the indexed
@@ -274,7 +274,10 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
             all_labelings = [{**base, **choice} for base in all_labelings for choice in root_labelings]
 
         # Omega pair (P, Q) for F, read off the principal reduced RC graph.
-        principal = RCGraph.principal_rc(uncode(comp), length)
+        if base_rc is not None:
+            principal = base_rc.resize(length)
+        else:
+            principal = RCGraph.principal_rc(uncode(comp), length)
         p_labeling, q_labeling = principal.omega_invariant
 
         # Gamma (the published inverse of the insertion) reconstructs the reduced word
@@ -293,6 +296,7 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
             wc_word = [letter for _, letter in entries]
             wc = cls.from_word_compatible(wc_word, compat_seq, length=length)
             assert wc.is_valid
+            assert wc.perm == principal.perm
             wc_set.add(wc)
         return wc_set
 

@@ -213,7 +213,7 @@
 %%
 %% This is the end of the preamble.
 %% 
-\title{A Littlewood--Richardson rule for forest polynomials via the Schubert bialgebra}
+\title{A Littlewood--Richardson rule for grove polynomials}
 \author{Matthew J. Samuel}
 
 %\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
@@ -262,13 +262,12 @@
 \section{Set-valued inversions tableaux}
 \begin{definition}
 
-Let $w$ be a permutation such that $\maxd(w)\leq n$. Suppose $T:I(w)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$ is a function mapping a root to a nonempty subset of $[n]$. Define relations $\leq$ and $<$ on these sets by declaring that $A\leq B$ if $\max(A)\leq \min(B)$ and $A<B$ if $\max(A)<\min(B)$. 
+Let $w$ be a permutation such that $\maxd(w)\leq n$. Suppose $T:\binom{[n]}{2}\to \mathbf{2}^{[n]}$ is a function mapping a root to a subset of $[n]$ that is nonempty if and only if $(i,j)\in I(w)$. Define relations $\leq$ and $<$ on these sets by declaring that $A\leq B$ if $\max(A)\leq \min(B)$ and $A<B$ if $\max(A)<\min(B)$. By convention, $\max(\varnothing) = -\infty$ and $\min(\varnothing) = \infty$.
 We say that $T$ is a \emph{set-valued inversions tableau} if the following conditions are satisfied:
 \begin{itemize}
-  \item If $i < j < k$ and $(i,j),(j,k),(i,k)\in I(w)$, then either $T(i,j) \leq T(i,k) \leq T(j,k)$ or $T(j,k) \leq T(i,k) \leq T(i,j)$.
-  \item If $i>0$ and $j<k$ are such that $(i,j),(i,k)\in I(w)$, then $T(i,j) < T(i,k)$.
+  \item If $i < j < k$, then either $T(i,j) \leq T(i,k) < T(j,k)$ or $T(j,k) < T(i,k) \leq T(i,j)$.
   \item $T(i,i+1)\leq \{i\}$ for all $i$.
-
+  \item If $i\neq j$ and $i,j<k$, then $T(i,k) \cap T(j,k) = \varnothing$.
 \end{itemize}
 For $(i,j)\in I(w)$, define $\lambda_T(i,j)$ as follows. Suppose $T(i,j) = r$. Let $(i,k)$ be the root such that $T(i,k)=r$ and $k$ is minimal. Then $\lambda_T(i,j) = i + j + 1 - k$.
 \end{definition}
@@ -668,8 +667,21 @@ and the result follows by induction in the special case that $R_{>p}$ is empty, 
 
 Since the row was initially empty, we have at our disposal the exchange property on $R_{>p}$, shifting the reflections down a row to obtain the general case.
 \end{proof}
+\section{Grove}
 
+Let $F$ be an indexed forest and let $\kappa:\mathrm{IN}(F)\to 2^{\mathbb{N}}$ be a set-valued labeling. Let $P$ be the $P$-forest of the reverse of $\RC^0(F)$. Consider the set 
+$$A =\bigcup_{v\in\mathrm{IN}(F)}\kappa(v)\times \{P(v)\}$$
+Sort $A=\{(a_i,b_i)\}$ in lexicographical order, increasing in the first coordinate and decreasing in the second coordinate. By construction, $b_1\cdots b_n$ is a Hecke word and $a_1\cdots a_n$ is a compatible sequence for this word. We claim that the product $b_1\cdots b_n$ in the Hecke monoid is equal to $\wof{F}$. To see this, observe that any choice function $\mathbf{w}:\mathrm{IN}(F)\to \mathbb{N}$ satisfying $\mathbf{w}(v)\in\kappa(v)$ for $v\in\mathrm{IN}(F)$ gives a  sequence $a_1\cdots a_n$ for which there is a decreasing labeling $Q(\mathbf{w})$ of shape $F$ for which the inverse of $(P,Q(\mathbf{w}))$ is a reduced word for $\wof{F}$ for which $a_1\cdots a_n$ is a compatible sequence. Iterating from largest set values to smallest and applying the exchange property gives the result.
 
+% let $\mathbf{w}:F\to \mathbb{N}$ be a function satisfying the following:
+
+% \begin{enumerate}
+% \item $\mathbf{w}(v)\in \kappa(v)$ for $v\in\mathrm{IN}(F)$.
+% \item If $\mathbf{w}(v_1) < \mathbf{w}(v_2)$, then $P(v_1) > P(v_2)$.
+% \end{enumerate}
+
+%$v_i$ is the unique element of $\mathrm{IN}(F)$ such that $Q(v_i)=i$. By properties of the insertion algorithm,
+%$$P(v)
 \cite{samuelmolev}
 \bibliographystyle{acm}
 \bibliography{schubert_bialgebra}

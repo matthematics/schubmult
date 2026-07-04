@@ -208,6 +208,13 @@ class Permutation(Printable):
         root = apply.act_root(word[index], word[index] + 1)
         return root
 
+    # @staticmethod
+    # def _hecke_right_root_at(index, word):
+    #     word_piece = word[index + 1 :]
+    #     apply = ~Permutation.ref_product(*word_piece)
+    #     root = apply.act_root(word[index], word[index] + 1)
+    #     return root
+
     @staticmethod
     def _left_root_at(index, word):
         word_piece = word[:index]

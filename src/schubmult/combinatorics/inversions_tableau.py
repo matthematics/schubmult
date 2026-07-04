@@ -70,11 +70,30 @@ class InversionsTableau:
 
     @classmethod
     def from_wc_graph(cls, wc):
-        word, seq = wc.to_reduced_compatible_set_sequence()
-        perm = wc.perm
+        word, seq = wc.perm_word, wc.compatible_sequence
+        # wc.to_reduced_compatible_set_sequence()
+        #perm = wc.perm
         dct = {}
+        perm = Permutation([])
+        bangle_word = []
+
         for i in range(len(word)):
-            dct[perm.right_root_at(i, word=word)] = frozenset(seq[i])
+            if perm[word[i] - 1] < perm[word[i]]:
+                bangle_word = [*bangle_word, word[i]]
+                dct = {Permutation.ref_product(word[i]).act_root(*k): v for k, v in dct.items()}
+                root = (word[i], word[i] + 1)
+                dct[root] = dct.get(root, set())
+                dct[root].add(seq[i])
+                perm = perm.swap(word[i] - 1, word[i])
+            else:
+                root = (bangle_word[-1], bangle_word[-1] + 1)
+                dct[root].add(seq[i])
+            # root = _abs(perm._right_root_at(i, word=word))
+            # dct[root] = set(dct.get(root, set()))
+            # dct[root].add(seq[i])
+            # dct[root] = frozenset(dct[root])
+        if Permutation.ref_product(*bangle_word) != wc.perm:
+            raise ValueError("The word and compatible sequence do not correspond to the same permutation")
         return cls(dct)
 
     @cached_property
@@ -98,94 +117,73 @@ class InversionsTableau:
 
     @property
     def is_valid(self):
-        """Check if the tableau satisfies the necessary conditions to be an inversions tableau.
-        1. If a root is a simple root, all values assigned to it must be less than or equal to the smaller index.
-        2. If two roots have the same second index, their value sets must be disjoint.
-        3. If there exist two roots that have indices (i, j) and (j, k), then necessarily there also exists (i,k) provided
-        i < j < k. In that case, for each such (i,k) and each v in (i,k) set there exist v1 in (i,j) set and v2 in (j,k) set such that either
-        v1 <= v < v2 or v2 < v <= v1.
-        """
+        # """Check if the tableau satisfies the necessary conditions to be an inversions tableau.
+        # 1. If a root is a simple root, all values assigned to it must be less than or equal to the smaller index.
+        # 2. If two roots have the same second index, their value sets must be disjoint.
+        # 3. If there exist two roots that have indices (i, j) and (j, k), then necessarily there also exists (i,k) provided
+        # i < j < k. In that case, for each such (i,k) and each v in (i,k) set there exist v1 in (i,j) set and v2 in (j,k) set such that either
+        # v1 <= v < v2 or v2 < v <= v1.
+        # """
         import itertools
-        try:
-            if not self.to_wc_graph().is_valid:
-                return False
-        except ValueError:
-            return False
-        if InversionsTableau.from_wc_graph(self.to_wc_graph()) != self:
-            return False
-        if False:
-            bloated_root_dict = {}
-            for root, val in self._dict.items():
-                for v in val:
-                    bloated_root_dict[(root, v)] = v
-            rootsum_smuckers = {}
-            root1_smuckers = {}
-            root2_smuckers = {}
-            root3_smuckers = {}
-            for ((root1, _), val1), ((root2, _), val2) in itertools.combinations(bloated_root_dict.items(), 2):
-                if val1 > root1[0]:
+        # try:
+        #     if not self.to_wc_graph().is_valid:
+        #         return False
+        # except ValueError:
+        #     return False
+        # if InversionsTableau.from_wc_graph(self.to_wc_graph()) != self:
+        #     return False
+        # if False:
+        vals = set(self._dict.keys())
+        for r1, r2 in itertools.combinations(vals, 2):
+            if r1[0] == r1[1] - 1:
+                if not InversionsTableau.set_leq(self._dict[r1], {r1[0]}):
                     return False
-                if val2 > root2[0]:
+            if r2[0] == r2[1] - 1:
+                if not InversionsTableau.set_leq(self._dict[r2], {r2[0]}):
                     return False
-                if root1[1] == root2[1] and val1 == val2:
+            if r1[1] == r2[1]:
+                if len(self._dict[r1].intersection(self._dict[r2])) > 0:
                     return False
-                if root1[0] == root2[0] and ((root1[1] < root2[1] and (root1[1], root2[1]) not in self._dict.keys() and val1 <= val2) or (root2[1] < root1[1] and (root2[1], root1[1]) not in self._dict.keys() and val2 == val1)):
-                    return False
-                # if root1[1] == root2[1] and ((root1[0] < root2[0] and (root1[0], root2[0]) not in self._dict.keys() and val2 < val1) or (root2[0] < root1[0] and (root2[0], root1[0]) not in self._dict.keys() and val1 < val2)):
-                #     return False
-
-                if root1[1] == root2[0] or root1[0] == root2[1]:
-                    if root1[1] == root2[0]:
-                        root3 = (root1[0], root2[1])
-                    else:
-                        root3 = (root2[0], root1[1])
-                    #key = frozenset({(root1, val1), (root2,val2)})
-                    if root1 not in root1_smuckers:
-                        root1_smuckers[root1] = False
-                    if root2 not in root2_smuckers:
-                        root2_smuckers[root2] = False
-                    if (val1 != val2):
-                        # if key not in rootsum_smuckers:
-                        #     rootsum_smuckers[key] = False
-                        for (r1, _), a in bloated_root_dict.items():
-                            if r1 == root3:
-                                if (root3, a) not in root3_smuckers:
-                                    root3_smuckers[(root3, a)] = False
-                                #if root3_smuckers[(root3, a)] is False and rootsum_smuckers[key] is False:
-                                #if root3_smuckers[(root3, a)] is False: # and rootsum_smuckers[key] is False:
-                                if val1 <= a <= val2 or val2 <= a <= val1:
-                                    #rootsum_smuckers[key] = True
-                                    root3_smuckers[(root3, a)] = True
-                                    root1_smuckers[root1] = True
-                                    root2_smuckers[root2] = True
-                                        #break
-            if any(not v for v in root2_smuckers.values()):
-                # print(f"Failed root2 condition {root2_smuckers.items()}")
-                return False
-            if any(not v for v in root1_smuckers.values()):
-                # print(f"Failed root1 condition {root1_smuckers.items()}")
-                return False
-            if any(not v for v in root3_smuckers.values()):
-                # print(f"Failed root3 condition {root3_smuckers.items()}")
-                return False
-            if any(not v for v in rootsum_smuckers.values()):
-                # print(f"Failed rootsum condition {rootsum_smuckers.items()}")
-                return False
-            try:
-                if self.perm != Permutation.hecke_ref_product(*self.perm_word):
-                    # print(f"Failed perm condition: {self.perm} != {Permutation.hecke_ref_product(*self.perm_word)}")
-                    return False
-            except ValueError:
-                return False
-            if set(self._dict.keys()) != self.perm.inversion_set:
-                return False
-            if any(len(v) > 1 for v in self._dict.values()) and not self._snap_min().is_valid:
-                return False
-            # if any(len(v) > 1 for v in self._dict.values()) and not self._snap_max().is_valid:
-            #     return False
-            if not _is_compatible(self.compatible_sequence, self.perm_word):
-                return False
+                fr1, fr2 = r1, r2
+                if fr1[0] < fr2[0]:
+                    fr1, fr2 = fr2, fr1
+                i, j, k = fr2[0], fr1[1], fr2[1]
+                if (i, j) not in self._dict:
+                    if not InversionsTableau.set_lt(self._dict[fr2], self._dict[fr1]):
+                        return False
+                else:
+                    if not (InversionsTableau.set_lt(self._dict[fr1], self._dict[fr2]) and InversionsTableau.set_leq(self._dict[fr2], self._dict[(i, j)])) and not (InversionsTableau.set_leq(self._dict[(i,j)], self._dict[fr2]) and InversionsTableau.set_lt(self._dict[fr2], self._dict[fr1])):
+                        return False
+            if r1[0] == r2[0]:
+                fr1, fr2 = r1, r2
+                if fr1[1] > fr2[1]:
+                    fr1, fr2 = fr2, fr1
+                i, j, k = fr1[0], fr1[1], fr2[1]
+                if (j, k) not in self._dict:
+                    if not InversionsTableau.set_leq(self._dict[fr2], self._dict[fr1]):
+                        return False
+                else:
+                    if not (InversionsTableau.set_leq(self._dict[fr1], self._dict[fr2]) and InversionsTableau.set_lt(self._dict[fr2], self._dict[(j, k)])) and not (InversionsTableau.set_lt(self._dict[(j,k)], self._dict[fr2]) and InversionsTableau.set_leq(self._dict[fr2], self._dict[fr1])):
+                        return False
         return True
+
+    @staticmethod
+    def set_leq(set1, set2):
+        """Check if set1 <= set2, i.e. max(set1) <= min(set2)."""
+        if len(set1) == 0:
+            return False
+        if len(set2) == 0:
+            return True
+        return max(set1) <= min(set2)
+
+    @staticmethod
+    def set_lt(set1, set2):
+        """Check if set1 < set2, i.e. max(set1) < min(set2)."""
+        if len(set1) == 0:
+            return False
+        if len(set2) == 0:
+            return True
+        return max(set1) < min(set2)
 
     def _snap_min(self):
         return InversionsTableau({k: {min(v)} for k, v in self._dict.items()})
@@ -375,3 +373,15 @@ class InversionsTableau:
         # print(f"{list(self.iter_keys())=}")
         # print(f"{self.perm_word=}")
         return result
+
+# if __name__ == "__main__":
+#     import sys
+#     import itertools
+#     n = int(sys.argv[1])
+#     perms = Permutation.all_permutations(n)
+#     for perm in perms:
+#         ivs = InversionsTableau.all_set_valued_inversions_tableaux(perm, max_value=perm.max_descent)
+#         print(f"PERMUTATION: {perm}  (inv={perm.inv}, descents={perm.descents()}, trimcode={perm.trimcode})")
+#         print(f"  Found {len(ivs)} set-valued inversions tableaux:")
+#         for iv in sorted(ivs, key=lambda x: (x.perm_word, x.compatible_sequence)):
+#             print(f"    {iv._dict}")

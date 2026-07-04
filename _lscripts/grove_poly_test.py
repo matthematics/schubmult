@@ -171,13 +171,23 @@ if __name__ == "__main__":
     perms = Permutation.all_permutations(n)
     comps = [perm.pad_code(n -  1) for perm in perms]
     for comp in comps:
-        grove_result = grove_polynomial(comp, Sx.genset, Gx._beta)
-        grove_try = grove_rc_try(comp, Gx._beta, n - 1)
+        
+        #grove_try = grove_rc_try(comp, Gx._beta, n - 1)
         # forest_dict = grove_as_forest_dict(comp, beta=Gx._beta, length=n - 1)
         # forest_result = Forest.from_dict(forest_dict)
-        diff =  (grove_result - grove_try).expand() 
-        assert diff == 0, f"Mismatch for {comp}: {grove_result} != {grove_try}\nDiff: {diff}"
+        forest_rcs = {k for k in RCGraph.all_rc_graphs(uncode(comp), n - 1) if k.is_forest_rc}
+        fatpants_sum = 0
+        for dinkbat in forest_rcs:
+            new_comp = dinkbat.forest_weight
+            grove_result = grove_polynomial(new_comp, Sx.genset, Gx._beta)
+            grove_try = sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in WCGraph.grove_wcs(new_comp, n - 1, dinkbat)])
+            diff =  (grove_result - grove_try).expand() 
+            assert diff == 0, f"Mismatch for {new_comp}: {grove_result} != {grove_try}\n{dinkbat=}\nDiff: {diff}"
+            print(f"Puncho! {dinkbat.is_principal=}")
+            fatpants_sum += grove_try
         print("Hofer gonk")
+        # grothy = grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)
+        # assert (fatpants_sum - grothy).expand() == 0, f"Mismatch for {comp}: {fatpants_sum} != {grothy}\nDiff: {(fatpants_sum - grothy).expand()}"
     # for w in perms:
     #     if w.inv == 0:
     #         continue
