@@ -73,7 +73,7 @@ class GrothendieckRing(BaseSchubertRing):
         from .schubert_ring import SingleSchubertRing
         ring = SingleSchubertRing(self.genset)
         schub_dict = ring.from_expr(expr)
-        return self.from_dict(schub_dict_to_groth_dict({Permutation([]): 1}, schub_dict, self.genset, self._zz, self._beta))
+        return self.from_dict(schub_dict_to_groth_dict({Permutation([]): 1}, schub_dict, self._beta))
 
     def mul_expr(self, elem, expr):
         mul2 = self.from_expr(expr)

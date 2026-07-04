@@ -515,6 +515,21 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
 
     @classmethod
     @cache
+    def schub_to_groth(cls, schub_perm: Permutation, beta: Expr):
+        from .pipe_dream import PipeDream
+        from .rc_graph import RCGraph
+
+        boip = RCGraph.all_rc_graphs(schub_perm, len(schub_perm.trimcode))
+        ret = {}
+        for rc in boip:
+            cpdb = PipeDream.from_rc_graph(rc).co_pipe_dream()
+            w0 = Permutation.w0(cpdb.rows)
+            perm = cpdb.perm * w0
+            ret[perm] = ret.get(perm, 0) + (-beta) ** (perm.inv - schub_perm.inv)
+        return ret
+
+    @classmethod
+    @cache
     def grove_to_forest(cls, comp, beta: Expr):
         from .pipe_dream import PipeDream
 

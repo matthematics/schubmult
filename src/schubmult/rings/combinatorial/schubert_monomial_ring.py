@@ -36,7 +36,7 @@ class SchubertMonomialRingElement(BaseRingElement):
     - Crystal structure operations (if the basis elements support them)
     """
 
-    def polyvalue(self, x, y=None, **kwargs):
+    def polyvalue(self, x, y=None, *args, **kwargs):
         """
         Evaluate as a polynomial in variables x (and optionally y).
 
@@ -55,7 +55,7 @@ class SchubertMonomialRingElement(BaseRingElement):
 
         result = S.Zero
         for basis_elem, coeff in self.items():
-            result += coeff * basis_elem.polyvalue(x, y, **kwargs)
+            result += coeff * basis_elem.polyvalue(x, y, *args, **kwargs)
         return result
 
     def as_ordered_terms(self, *_, **__):

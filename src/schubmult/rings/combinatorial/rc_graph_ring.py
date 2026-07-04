@@ -268,7 +268,8 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
     def zero_out_last_row(self):
         res = self.ring.zero
         for rc_graph, coeff in self.items():
-            res += coeff * self.ring(rc_graph.zero_out_last_row())
+            if len(rc_graph[-1]) == 0:
+                res += coeff * self.ring(rc_graph.zero_out_last_row())
         return res
 
     def resize(self, n):

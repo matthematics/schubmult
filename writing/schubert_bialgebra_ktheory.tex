@@ -43,16 +43,16 @@
 
 %\usepackage{witharrows}
 
-\newtheorem{lemma}{Lemma}[subsection]
+\newtheorem{lemma}{Lemma}[section]
 \newtheorem{corollary}[lemma]{Corollary}
 
 \newtheorem{proposition}[lemma]{Proposition} 
 \newtheorem{proposition2}{Proposition}[section]
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{conjecture}[theorem]{Conjecture} 
+\newtheorem{theorem}[lemma]{Theorem}
+\newtheorem{conjecture}[lemma]{Conjecture} 
 \newtheorem{observation}{Observation}[section]
 \newtheorem{question}{Question}
-
+\newcommand{\grove}{\widetilde{\mathfrak{P}}}
 %\newtheorem{conj}[thm]{Conjecture} 
 
 
@@ -123,7 +123,7 @@
 \DeclareMathOperator{\sch}{\mathfrak{S}}
 \newcommand{\shup}{{\uparrow}}
 \newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
-\newcommand{\wof}[1]{w_{#1}}
+\newcommand{\wof}[1]{\mathtt{perm}(#1)}
 \newcommand{\rcdd}{\mathfrak{F}}
 \newcommand{\wtt}{\mathtt{wt}}
 \newcommand{\QY}{\ensuremath{\mathbb{QY}}}
@@ -148,6 +148,7 @@
 \newcommand{\clp}{\mathtt{clip}}
 \newcommand{\BRC}{\mathcal{BRC}}
 \newcommand{\RC}{\mathcal{RC}}
+\newcommand{\WC}{\mathcal{WC}}
 \newcommand{\lzeromap}{\mathscr{Z}}
 \newcommand{\lmap}{\mathscr{L}}
 \newcommand{\ltb}{\mathrm{little}}
@@ -213,7 +214,7 @@
 %%
 %% This is the end of the preamble.
 %% 
-\title{A Littlewood--Richardson rule for grove polynomials}
+\title{Word-compatible graphs and grove polynomials}
 \author{Matthew J. Samuel}
 
 %\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
@@ -256,422 +257,503 @@
 	\maketitle
 
 
-\section{Introduction}
+% \section{Introduction}
 
 
-\section{Set-valued inversions tableaux}
+% \section{Set-valued inversions tableaux}
+% \begin{definition}
+
+% Let $w$ be a permutation such that $\maxd(w)\leq n$. Suppose $T:\binom{[n]}{2}\to \mathbf{2}^{[n]}$ is a function mapping a root to a subset of $[n]$ that is nonempty if and only if $(i,j)\in I(w)$. Define relations $\leq$ and $<$ on these sets by declaring that $A\leq B$ if $\max(A)\leq \min(B)$ and $A<B$ if $\max(A)<\min(B)$. By convention, $\max(\varnothing) = -\infty$ and $\min(\varnothing) = \infty$.
+% We say that $T$ is a \emph{set-valued inversions tableau} if the following conditions are satisfied:
+% \begin{itemize}
+%   \item If $i < j < k$, then either $T(i,j) \leq T(i,k) < T(j,k)$ or $T(j,k) < T(i,k) \leq T(i,j)$.
+%   \item $T(i,i+1)\leq \{i\}$ for all $i$.
+%   \item If $i\neq j$ and $i,j<k$, then $T(i,k) \cap T(j,k) = \varnothing$.
+% \end{itemize}
+% For $(i,j)\in I(w)$, define $\lambda_T(i,j)$ as follows. Suppose $T(i,j) = r$. Let $(i,k)$ be the root such that $T(i,k)=r$ and $k$ is minimal. Then $\lambda_T(i,j) = i + j + 1 - k$.
+% \end{definition}
+
+% \begin{theorem}
+% Suppose $w$ is a permutation. Then we have the following formula for the double Grothendieck polynomial of $w$:
+% $$\mathfrak{G}_w^{(\beta)}(x;y) = \sum_{T} \prod_{(i,j)\in I(w)} \beta^{|T(i,j)| - 1} \prod_{r\in T(i,j)} x_r \oplus y_{\lambda_T(i,j) - r}$$
+% where the sum is over all set-valued inversions tableaux of $w$. 
+% \end{theorem}
+
+% \begin{definition}
+% An \emph{staircase word graph} is simply a subset of $\mathbb{N}^2$. We impose the same ordering on these as RC graphs. That is, we say that $(a,b)\leq (c,d)$ if $a<c$ or $a=c$ and $b > d$. We define $\mathbf{word}(G)$ to be the word obtained by reading the elements $i + j - 1$ in the linear order given by $\leq$. We then say that $\wof{G}$ is the Demazure product of $\mathbf{word}(G)$.
+
+% For a set-valued inversions tableau $T$, we can define a staircase word graph $G$ as follows. If $w$ is the identity, then $G$ is the empty set. Otherwise, let $n$ be the maximum value that is contained in $T(i,j)$ for some $(i,j)\in I(w)$. Choose $i$ and $j$ such that $T(i,j)=n$ and $i + j$ is as small as possible. Necessarily, $j=i+1$, or in other words $i$ is a right descent of $w$. If $|T(i,i+1)| > 1$, remove $n$ from $T(i,i+1)$ to obtain a new function $T':I(w)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$. If $|T(i,i+1)|=1$, then let $T':I(ws_i)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$ be the function defined by
+% $$T'(a,b) = T(s_i(a),s_i(b))$$
+% for all $(a,b)\in I(ws_i)$.
+
+% It is straightforward to check that $T'$ is a set-valued inversions tableau, either for $w$ if $|T(i,i+1)| > 1$ or for $ws_n$ if $|T(i,i+1)| = 1$. Let $G'=\Phi(T')$. Then let $\Phi(T)=G'\cup \{(n,i+1-n)\}$. 
+% \end{definition}
+
+% \begin{proposition}
+% $\Phi$ is a bijection between set-valued inversions tableaux of $w$ with maximum value $n$ and staircase word graphs $G$ such that $\wof{G} = w$ and $a\leq n$ for all $(a,b)\in G$.
+% \end{proposition}
+% \begin{proof}
+%   If $|T(i,j)|=1$ for all $(i,j)\in I(w)$, then $T$ is just an ordinary inversion tableau and $\Phi(T)$ is just the usual RC graph associated to $T$. In this case, the result is \cite{axelrodfreed2025inversionstableaux}. Otherwise, we prove this by induction on the maximum size of $|T(i,j)|$. Suppose this maximum size is $m>1$ and we have proved the result for all set-valued inversions tableaux with maximum size less than $m$. We may assume without loss of generality that $m$ is the maximum value that is contained in $T(i,j)$ for some $(i,j)\in I(w)$ by removing elements below. In that case, $m\in T(i,i+1)$ for some $i$. Let $T'$ be the set-valued inversions tableau obtained by removing $m$ from $T(i,i+1)$ if $|T(i,i+1)| > 1$ or by applying the transformation described in the definition of $\Phi$ if $|T(i,i+1)|=1$. By the inductive hypothesis, $\Phi(T')$ is a staircase word graph such that $\wof{\Phi(T')} = w$ or $\wof{\Phi(T')} = ws_i$ and $a\leq n$ for all $(a,b)\in \Phi(T')$. In either case, we have $\wof{\Phi(T)} = w$. It is also clear that $a\leq n$ for all $(a,b)\in \Phi(T)$. This proves that $\Phi(T)$ is a staircase word graph with the desired properties.
+
+%   Let $G$ be a staircase word graph. Define $\Psi(G)$ to be empty if $G$ is empty. Otherwise, let $(i,j)$ be the maximum element of $G$ and let $G' = G\setminus \{(i,j)\}$. Let $w'=\wof{G'}$. Let $d=i + j - 1$. If $\ell(w's_d) > \ell(w')$, then let
+% $$\Psi(G)(a,b) = \begin{cases}
+% \Psi(G')(s_d(a),s_d(b)) & \text{if } (a,b)\in I(w)\setminus\{(i,j)\}\\
+% \{d\} & \text{if } (a,b) = (i,j)
+% \end{cases}$$
+% If $\ell(w's_d) < \ell(w')$, then let
+% $$\Psi(G)(a,b) = \begin{cases}
+% \Psi(G')(a,b) & \text{if } (a,b)\in I(w)\setminus\{(i,j)\}\\
+% \Psi(G')(a,b)\cup \{d\} & \text{if } (a,b) = (i,j)
+% \end{cases}$$
+% \end{proof}
+
+% \begin{definition}
+% Define the isobaric divided difference operator
+% $$\pi^i = \partial^i(1+\beta x_{i+1})$$
+% Note the Leibniz formula
+% $$\pi^i(fg) = (\pi^i+\beta s_i)(f)g + f\pi^i(g)$$
+% \end{definition}
+
+
+% \begin{definition}[Pulling out an empty row]
+% Let $R$ be a bounded RC graph with $\hr(R)=n$ and let $p\leq n$ be such that row $p$ of $R$ is empty. Let $R_{\leq p}$ denote the RC-graph consisting of the first $p$ rows and $R_{>p}$ the RC-graph consisting of rows $p+1$ through $n$. Now, $\maxd(R_{\leq p})$ could be greater than $p$. If it is less than or equal to $p$, define 
+% $$\zeromap^{(p)}(R) = \zeromap(R_{\leq p})\cup {\downarrow R_{>p}}$$ 
+% as a bounded RC graph with $\hr(R)-1$ rows. Otherwise, define $R' = R_{\leq p}$, let $d_1 = \maxd(\wof{R'})$ and set $R_1 = R'$. While $\maxd(R_i) > p$, do:
+
+% Set $R'=R_i$. While $\maxd(R') \geq d_i$, delete the element $(a,b)\in R'$ such that $\rtt_{R'}(a,b)=(\maxd(R'),\maxd(R')+1)$ from $R'$ and store $a$ in the list (multiset) $A_i$. After enough iterations such that $\maxd(R')<d_i$, set $R_{i+1}= R'$ and set $d_{i+1}= \maxd(R_{i+1})$, then repeat. 
+
+% At termination, say at step $k$, set
+% $$\zeromap^{(p)}(R) = (\ins{d_1 - 1}{A_1}\cdots\ins{d_k - 1}{A_k}\zeromap(\overline{R}))\cup {\downarrow} R_{>p}$$
+% be the desired bounded RC graph with $\hr(R)-1$ rows.
+
+% We show an example in Figure \ref{figure:zpexample}.
+% \end{definition}
+
+% \begin{figure}[htbp]
+% \centering
+
+% % Step 1: Initial R
+% \begin{minipage}{0.22\textwidth}
+% \centering
+% \begin{tikzpicture}[scale=0.5]
+%   \draw[lightgray, very thin, opacity=0.3] (0,1) grid[step=1] (7,5);
+%   % Row 1: crossings at 1,2,6
+%   \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
+%   \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
+%   \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
+%   \draw[blue, line width=1.0pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
+%   \draw[blue, line width=1.0pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
+%   \draw[blue, line width=1.0pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
+%   \draw[blue, line width=1.0pt] (4.5,4) .. controls (4.5,4.3) and (4.7,4.5) .. (5,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (5,4.5) -- (6,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (5.5,4) -- (5.5,5);
+%   \draw[blue, line width=1.0pt] (6,4.5) .. controls (6.3,4.5) and (6.5,4.7) .. (6.5,5);
+%   \draw[blue, line width=1.0pt] (6.5,4) .. controls (6.5,4.3) and (6.7,4.5) .. (7,4.5);
+%   % Row 2: crossings at 2,3
+%   \draw[blue, line width=1.0pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
+%   \draw[blue, line width=1.0pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
+%   \draw[blue, line width=1.0pt, line cap=round] (2,3.5) -- (3,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (2.5,3) -- (2.5,4);
+%   \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
+%   \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
+%   \draw[blue, line width=1.0pt] (4,3.5) .. controls (4.3,3.5) and (4.5,3.7) .. (4.5,4);
+%   \draw[blue, line width=1.0pt] (4.5,3) .. controls (4.5,3.3) and (4.7,3.5) .. (5,3.5);
+%   \draw[blue, line width=1.0pt] (5,3.5) .. controls (5.3,3.5) and (5.5,3.7) .. (5.5,4);
+%   \draw[blue, line width=1.0pt] (5.5,3) .. controls (5.5,3.3) and (5.7,3.5) .. (6,3.5);
+%   \draw[blue, line width=1.0pt] (6,3.5) .. controls (6.3,3.5) and (6.5,3.7) .. (6.5,4);
+%   \draw[blue, line width=1.0pt] (6.5,3) .. controls (6.5,3.3) and (6.7,3.5) .. (7,3.5);
+%   % Row 3: empty
+%   \draw[blue, line width=1.0pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
+%   \draw[blue, line width=1.0pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
+%   \draw[blue, line width=1.0pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
+%   \draw[blue, line width=1.0pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
+%   \draw[blue, line width=1.0pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
+%   \draw[blue, line width=1.0pt] (2.5,2) .. controls (2.5,2.3) and (2.7,2.5) .. (3,2.5);
+%   \draw[blue, line width=1.0pt] (3,2.5) .. controls (3.3,2.5) and (3.5,2.7) .. (3.5,3);
+%   \draw[blue, line width=1.0pt] (3.5,2) .. controls (3.5,2.3) and (3.7,2.5) .. (4,2.5);
+%   \draw[blue, line width=1.0pt] (4,2.5) .. controls (4.3,2.5) and (4.5,2.7) .. (4.5,3);
+%   \draw[blue, line width=1.0pt] (4.5,2) .. controls (4.5,2.3) and (4.7,2.5) .. (5,2.5);
+%   \draw[blue, line width=1.0pt] (5,2.5) .. controls (5.3,2.5) and (5.5,2.7) .. (5.5,3);
+%   \draw[blue, line width=1.0pt] (5.5,2) .. controls (5.5,2.3) and (5.7,2.5) .. (6,2.5);
+%   \draw[blue, line width=1.0pt] (6,2.5) .. controls (6.3,2.5) and (6.5,2.7) .. (6.5,3);
+%   \draw[blue, line width=1.0pt] (6.5,2) .. controls (6.5,2.3) and (6.7,2.5) .. (7,2.5);
+%   % Row 4: crossings at 1,2
+%   \draw[blue, line width=1.0pt, line cap=round] (0,1.5) -- (1,1.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,1) -- (0.5,2);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,1.5) -- (2,1.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,1) -- (1.5,2);
+%   \draw[blue, line width=1.0pt] (2,1.5) .. controls (2.3,1.5) and (2.5,1.7) .. (2.5,2);
+%   \draw[blue, line width=1.0pt] (2.5,1) .. controls (2.5,1.3) and (2.7,1.5) .. (3,1.5);
+%   \draw[blue, line width=1.0pt] (3,1.5) .. controls (3.3,1.5) and (3.5,1.7) .. (3.5,2);
+%   \draw[blue, line width=1.0pt] (3.5,1) .. controls (3.5,1.3) and (3.7,1.5) .. (4,1.5);
+%   \draw[blue, line width=1.0pt] (4,1.5) .. controls (4.3,1.5) and (4.5,1.7) .. (4.5,2);
+%   \draw[blue, line width=1.0pt] (4.5,1) .. controls (4.5,1.3) and (4.7,1.5) .. (5,1.5);
+%   \draw[blue, line width=1.0pt] (5,1.5) .. controls (5.3,1.5) and (5.5,1.7) .. (5.5,2);
+%   \draw[blue, line width=1.0pt] (5.5,1) .. controls (5.5,1.3) and (5.7,1.5) .. (6,1.5);
+%   \draw[blue, line width=1.0pt] (6,1.5) .. controls (6.3,1.5) and (6.5,1.7) .. (6.5,2);
+%   \draw[blue, line width=1.0pt] (6.5,1) .. controls (6.5,1.3) and (6.7,1.5) .. (7,1.5);
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (5.5,4.5) {6};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (2.5,3.5) {4};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,1.5) {4};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,1.5) {5};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
+%   % Output permutation at top
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {2};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {5};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,5.1) {6};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,5.1) {3};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (5.5,5.1) {7};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (6.5,5.1) {4};
+%   \draw[black, line width=1.0pt] (0,1) rectangle (7,5);
+% \end{tikzpicture}
+% \caption*{(a) $R$ with $p=3$}
+% \end{minipage}
+% \hfill
+% % Step 2: After deletion
+% \begin{minipage}{0.22\textwidth}
+% \centering
+% \begin{tikzpicture}[scale=0.5]
+%   \draw[lightgray, very thin, opacity=0.3] (0,2) grid[step=1] (5,5);
+%   % Row 1: crossings at 1,2 (no 6)
+%   \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
+%   \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
+%   \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
+%   \draw[blue, line width=1.0pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
+%   \draw[blue, line width=1.0pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
+%   \draw[blue, line width=1.0pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
+%   \draw[blue, line width=1.0pt] (4.5,4) .. controls (4.5,4.3) and (4.7,4.5) .. (5,4.5);
+%   % Row 2: crossings at 2,3
+%   \draw[blue, line width=1.0pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
+%   \draw[blue, line width=1.0pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
+%   \draw[blue, line width=1.0pt, line cap=round] (2,3.5) -- (3,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (2.5,3) -- (2.5,4);
+%   \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
+%   \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
+%   \draw[blue, line width=1.0pt] (4,3.5) .. controls (4.3,3.5) and (4.5,3.7) .. (4.5,4);
+%   \draw[blue, line width=1.0pt] (4.5,3) .. controls (4.5,3.3) and (4.7,3.5) .. (5,3.5);
+%   % Row 3: empty
+%   \draw[blue, line width=1.0pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
+%   \draw[blue, line width=1.0pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
+%   \draw[blue, line width=1.0pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
+%   \draw[blue, line width=1.0pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
+%   \draw[blue, line width=1.0pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
+%   \draw[blue, line width=1.0pt] (2.5,2) .. controls (2.5,2.3) and (2.7,2.5) .. (3,2.5);
+%   \draw[blue, line width=1.0pt] (3,2.5) .. controls (3.3,2.5) and (3.5,2.7) .. (3.5,3);
+%   \draw[blue, line width=1.0pt] (3.5,2) .. controls (3.5,2.3) and (3.7,2.5) .. (4,2.5);
+%   \draw[blue, line width=1.0pt] (4,2.5) .. controls (4.3,2.5) and (4.5,2.7) .. (4.5,3);
+%   \draw[blue, line width=1.0pt] (4.5,2) .. controls (4.5,2.3) and (4.7,2.5) .. (5,2.5);
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (2.5,3.5) {4};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
+%   % Output permutation at top
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {2};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {4};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,5.1) {5};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,5.1) {3};
+%   \draw[black, line width=1.0pt] (0,2) rectangle (5,5);
+% \end{tikzpicture}
+% \caption*{(b) After delete (1,6)}
+% \end{minipage}
+% \hfill
+% % Step 3: Zero out row 3
+% \begin{minipage}{0.22\textwidth}
+% \centering
+% \begin{tikzpicture}[scale=0.5]
+%   \draw[lightgray, very thin, opacity=0.3] (0,3) grid[step=1] (3,5);
+%   % Row 1: crossings at 1,2
+%   \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
+%   \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
+%   \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
+%   % Row 2: crossings at 1,2
+%   \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,3) -- (0.5,4);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
+%   \draw[blue, line width=1.0pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
+%   \draw[blue, line width=1.0pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,3.5) {2};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
+%   % Output permutation at top
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {3};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {4};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
+%   \draw[black, line width=1.0pt] (0,3) rectangle (3,5);
+% \end{tikzpicture}
+% \caption*{(c) $\zeromap(\overline{R})$}
+% \end{minipage}
+% \hfill
+% % Step 4: Insert back
+% \begin{minipage}{0.22\textwidth}
+% \centering
+% \begin{tikzpicture}[scale=0.5]
+%   \draw[lightgray, very thin, opacity=0.3] (0,3) grid[step=1] (6,5);
+%   % Row 1: crossings at 1,2,5
+%   \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
+%   \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
+%   \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
+%   \draw[blue, line width=1.0pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
+%   \draw[blue, line width=1.0pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (4,4.5) -- (5,4.5);
+%   \draw[green!60!black, line width=1.0pt, line cap=round] (4.5,4) -- (4.5,5);
+%   \draw[blue, line width=1.0pt] (5,4.5) .. controls (5.3,4.5) and (5.5,4.7) .. (5.5,5);
+%   \draw[blue, line width=1.0pt] (5.5,4) .. controls (5.5,4.3) and (5.7,4.5) .. (6,4.5);
+%   % Row 2: crossings at 1,2
+%   \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,3) -- (0.5,4);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
+%   \draw[blue, line width=1.0pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
+%   \draw[blue, line width=1.0pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
+%   \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
+%   \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
+%   \draw[blue, line width=1.0pt] (4,3.5) .. controls (4.3,3.5) and (4.5,3.7) .. (4.5,4);
+%   \draw[blue, line width=1.0pt] (4.5,3) .. controls (4.5,3.3) and (4.7,3.5) .. (5,3.5);
+%   \draw[blue, line width=1.0pt] (5,3.5) .. controls (5.3,3.5) and (5.5,3.7) .. (5.5,4);
+%   \draw[blue, line width=1.0pt] (5.5,3) .. controls (5.5,3.3) and (5.7,3.5) .. (6,3.5);
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
+%   \node[font=\scriptsize\bfseries, text=red!80!black, fill=white, inner sep=0.5pt] at (4.5,4.5) {5};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,3.5) {2};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
+%   % Output permutation at top
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {3};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {4};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,5.1) {2};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,5.1) {6};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (5.5,5.1) {5};
+%   \draw[black, line width=1.0pt] (0,3) rectangle (6,5);
+% \end{tikzpicture}
+% \caption*{(d) After $\ins{5}{1}$}
+% \end{minipage}
+
+% \vspace{0.3cm}
+
+% % Step 5: Final with R>p
+% \begin{minipage}{0.45\textwidth}
+% \centering
+% \begin{tikzpicture}[scale=0.5]
+%   \draw[lightgray, very thin, opacity=0.3] (0,1) grid[step=1] (6,4);
+%   % Row 1: crossings at 1,2,5
+%   \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,3) -- (0.5,4);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
+%   \draw[blue, line width=1.0pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
+%   \draw[blue, line width=1.0pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
+%   \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
+%   \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (4,3.5) -- (5,3.5);
+%   \draw[green!60!black, line width=1.0pt, line cap=round] (4.5,3) -- (4.5,4);
+%   \draw[blue, line width=1.0pt] (5,3.5) .. controls (5.3,3.5) and (5.5,3.7) .. (5.5,4);
+%   \draw[blue, line width=1.0pt] (5.5,3) .. controls (5.5,3.3) and (5.7,3.5) .. (6,3.5);
+%   % Row 2: crossings at 1,2
+%   \draw[blue, line width=1.0pt, line cap=round] (0,2.5) -- (1,2.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,2) -- (0.5,3);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,2.5) -- (2,2.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,2) -- (1.5,3);
+%   \draw[blue, line width=1.0pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
+%   \draw[blue, line width=1.0pt] (2.5,2) .. controls (2.5,2.3) and (2.7,2.5) .. (3,2.5);
+%   \draw[blue, line width=1.0pt] (3,2.5) .. controls (3.3,2.5) and (3.5,2.7) .. (3.5,3);
+%   \draw[blue, line width=1.0pt] (3.5,2) .. controls (3.5,2.3) and (3.7,2.5) .. (4,2.5);
+%   \draw[blue, line width=1.0pt] (4,2.5) .. controls (4.3,2.5) and (4.5,2.7) .. (4.5,3);
+%   \draw[blue, line width=1.0pt] (4.5,2) .. controls (4.5,2.3) and (4.7,2.5) .. (5,2.5);
+%   \draw[blue, line width=1.0pt] (5,2.5) .. controls (5.3,2.5) and (5.5,2.7) .. (5.5,3);
+%   \draw[blue, line width=1.0pt] (5.5,2) .. controls (5.5,2.3) and (5.7,2.5) .. (6,2.5);
+%   % Row 3: crossings at 1,2 (from R>p shifted)
+%   \draw[blue, line width=1.0pt, line cap=round] (0,1.5) -- (1,1.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (0.5,1) -- (0.5,2);
+%   \draw[blue, line width=1.0pt, line cap=round] (1,1.5) -- (2,1.5);
+%   \draw[blue, line width=1.0pt, line cap=round] (1.5,1) -- (1.5,2);
+%   \draw[blue, line width=1.0pt] (2,1.5) .. controls (2.3,1.5) and (2.5,1.7) .. (2.5,2);
+%   \draw[blue, line width=1.0pt] (2.5,1) .. controls (2.5,1.3) and (2.7,1.5) .. (3,1.5);
+%   \draw[blue, line width=1.0pt] (3,1.5) .. controls (3.3,1.5) and (3.5,1.7) .. (3.5,2);
+%   \draw[blue, line width=1.0pt] (3.5,1) .. controls (3.5,1.3) and (3.7,1.5) .. (4,1.5);
+%   \draw[blue, line width=1.0pt] (4,1.5) .. controls (4.3,1.5) and (4.5,1.7) .. (4.5,2);
+%   \draw[blue, line width=1.0pt] (4.5,1) .. controls (4.5,1.3) and (4.7,1.5) .. (5,1.5);
+%   \draw[blue, line width=1.0pt] (5,1.5) .. controls (5.3,1.5) and (5.5,1.7) .. (5.5,2);
+%   \draw[blue, line width=1.0pt] (5.5,1) .. controls (5.5,1.3) and (5.7,1.5) .. (6,1.5);
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,3.5) {1};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {2};
+%   \node[font=\scriptsize\bfseries, text=green!80!black, fill=white, inner sep=0.5pt] at (4.5,3.5) {5};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,2.5) {2};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,2.5) {3};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,1.5) {3};
+%   \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,1.5) {4};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {1};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,2.5) {2};
+%   \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,1.5) {3};
+%   % Output permutation at top
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,4.1) {4};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,4.1) {5};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,4.1) {1};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,4.1) {2};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,4.1) {6};
+%   \node[font=\scriptsize\bfseries, text=red, anchor=south] at (5.5,4.1) {3};
+%   \draw[black, line width=1.0pt] (0,1) rectangle (6,4);
+% \end{tikzpicture}
+% \caption*{(e) Final $\zeromap^{(p)}(R)$ with $R_{>p}$ reattached}
+% \end{minipage}
+
+% \caption{Example of $\zeromap^{(p)}$ operation with $p=3$. Starting with (a) $R$ where row 3 is empty, we identify element $(1,6)$ creates maxd $> p$. (b) After deleting it (storing row 1 in $A_1$). (c) Apply $\zeromap$ to get 2-row graph. (d) Insert back at row 1 with $k=d_1-1=5$ (shown in red). (e) Reattach $R_{>p}$ shifted down to get final result.}
+% \label{figure:zpexample}
+% \end{figure}
+
+% \begin{definition}
+% Let $R$ be an RC graph. We define an RC graph $\overline{R}$ and a sequence $\mathtt{strip}(R)$ as follows. Let $\maxd(R)=n$, set $R_0=R$, and set $A_0=()$. While $\maxd(R_i)> n -1$, delete the element $(a,b)\in R_i$ such that $\rtt_{R_i}(a,b)=(\maxd(R_i), \maxd(R_i) + 1)$ to obtain $R_{i+1}$, and add $a$ to $A_i$ to obtain $A_{i+1}$. When the algorithm terminates at step $k$, set
+% $$\mathtt{strip}(R) = A_k$$
+% and set $\overline{R} = \overline{R}$.
+% \end{definition}
+
+% \begin{lemma} \label{lemma:reconstruct}
+% Let $R$ be an RC graph. Then
+% $$R = \ins{\maxd(R)}{\mathtt{strip}(R)} \overline{R}$$
+% \end{lemma}
+% \begin{proof}
+% Let $n=\maxd(R)$. We prove this by induction on $\code_n(R)$. Let $(i,j)$ be the location of the descent $n$ in $R$. If $\code_n(R)=1$, then we know that insertion of $i$ into $\overline{R}$ returns an RC graph with the same weight and permutation as $R$, the latter assertion because the only $n$-reflection that increases the length of $\wof{\overline{R}}$ by exactly $1$ is $s_n$. By the exchange property, there is precisely one location in row $i$ that this $n$-reflection can be inserted, and we have the result when $\code_{n}(R)=1$.
+
+% Assume the inductive hypothesis that we have the result for $\code_n(R) = k$ for some $k\geq 1$ and additionally that insertion order of reflections has been $(n, n+1),\ldots,(n,n+k)$. Assume $\mathtt{strip}(R) = (r_1,\ldots,r_{k+1})$ in increasing order and we have inserted all of $r_2,\ldots,r_{k+1}$ in Algorithm \ref{algorithm:insertion}. By the induction hypothesis, the RC graph $R'$ we have at this point has permutation $\code_i{R'} = \code_i{R}$ for $i<n$ and $\code_n(R') = k$, and we have equality of $R'$ with $R$ except deletion of the root $(n, n+k + 1)$. Since $\wof{R'}(n) < \wof{R'}(n+k+1)$, the only $n$-reflection that can be inserted to increase the length of $\wof{R'}$ by $1$ is $(n, n+k+1)$. By pipe considerations, this must be inserted in column $c = n + k + 1 - r_1$. Since this is the only possible insertion location and the permutation is the same as $\wof{R}$, we have the result by induction.
+% \end{proof}
+
+
+% \begin{theorem}
+% Let $R\in\BRC(w,n)^{(0,p)}$ be the set of all bounded RC graphs with $\hr(R)=n$ such that row $p$ of $R$ is empty. Then we have that the restriction of $\zeromap^{(p)}$ is a bijection
+% $$\zeromap^{(p)}:\BRC(w,n)^{(0,p)}\to\bigcup_{\substack{w\downvar{p} w'\\\ell(w)=\ell(w')}} \BRC(w', n-1)$$
+% satisfying $\wtt(\zeromap^{(p)}(R)) = (i_1,\ldots,i_{p-1},i_{p+1},\ldots,i_{n})$, where $\wtt(R)=(i_1,\ldots,i_n)$.
+% \end{theorem}
+% \begin{proof}
+% Consider first the special case that $R_{>p}$ is empty. Let $w_0 = \wof{\zeromap(\overline{R})}$. Then we know that
+% $$\overline{R}\downvar{p} \zeromap(\overline{R})$$
+% Since every element of $A_k$ is less than $p$ and $d_k>p$, the insertion $\ins{d_k-1}{A_k}\zeromap(\overline{R})$ only adds right roots $(a,b)$ with $a<p$ and $b>p$. Thus
+% $$\ins{d_k}{A_k}\overline{R}\downvar{p} \ins{d_k-1}{A_k}\zeromap(\overline{R})$$
+% We assert the (descending) inductive hypothesis that for some index $j$ we have
+% $$\ins{d_j}{A_j}\cdots\ins{d_k}{A_k}\overline{R}\downvar{p} \ins{d_j-1}{A_j}\cdots\ins{d_k-1}{A_k}\zeromap(\overline{R})$$
+% Then the induction step follows with precisely the same reasoning; since every element of $A_{j-1}$ is less than $p$ and $d_{j-1}>p$, the insertion $\ins{d_{j-1}-1}{A_{j-1}}$ only adds right roots $(a,b)$ with $a<p$ and $b>p$. Thus
+% $$\ins{d_{j-1}}{A_{j-1}}\cdots\ins{d_k}{A_k}\overline{R}\downvar{p} \ins{d_{j-1}-1}{A_{j-1}}\cdots\ins{d_k-1}{A_k}\zeromap(\overline{R})$$
+% and the result follows by induction in the special case that $R_{>p}$ is empty, where we invoke Lemma \ref{lemma:reconstruct} to assert that the left-hand side is equal to $R$.
+
+% Since the row was initially empty, we have at our disposal the exchange property on $R_{>p}$, shifting the reflections down a row to obtain the general case.
+% \end{proof}
+\section{WC graphs}
+
 \begin{definition}
-
-Let $w$ be a permutation such that $\maxd(w)\leq n$. Suppose $T:\binom{[n]}{2}\to \mathbf{2}^{[n]}$ is a function mapping a root to a subset of $[n]$ that is nonempty if and only if $(i,j)\in I(w)$. Define relations $\leq$ and $<$ on these sets by declaring that $A\leq B$ if $\max(A)\leq \min(B)$ and $A<B$ if $\max(A)<\min(B)$. By convention, $\max(\varnothing) = -\infty$ and $\min(\varnothing) = \infty$.
-We say that $T$ is a \emph{set-valued inversions tableau} if the following conditions are satisfied:
-\begin{itemize}
-  \item If $i < j < k$, then either $T(i,j) \leq T(i,k) < T(j,k)$ or $T(j,k) < T(i,k) \leq T(i,j)$.
-  \item $T(i,i+1)\leq \{i\}$ for all $i$.
-  \item If $i\neq j$ and $i,j<k$, then $T(i,k) \cap T(j,k) = \varnothing$.
-\end{itemize}
-For $(i,j)\in I(w)$, define $\lambda_T(i,j)$ as follows. Suppose $T(i,j) = r$. Let $(i,k)$ be the root such that $T(i,k)=r$ and $k$ is minimal. Then $\lambda_T(i,j) = i + j + 1 - k$.
+A \emph{WC graph} is simply a finite subset $W\subseteq \mathbb{N}\times \mathbb{N}$ with no additional restrictions. We define the \emph{weight} of a WC graph $W$ to be the sequence $\wtt(W) = (i_1,\ldots,i_n)$, where $i_j$ is the number of elements of $W$ in row $j$. We define the \emph{permutation} of a WC graph $W$ to be the permutation
+$$\wof{W} = s(w_1)\bullet \cdots \bullet s(w_n)$$ 
+where
+$$w_i = (a_i, b_i)$$
+is the $i$th element in the imposed ordering, and
+$$s(a_i,b_i) = s_{a_i + b_i - 1}$$
+with $\bullet$ being the Hecke product. The \emph{word} of $W$ is
+$$(s(w_1),\ldots,s(w_n))$$
+and
+$$\wtt_i(W) = \#\{(a,b)\in W\mid a=i\}$$
+Define $\WC(w)$ to be the set of all WC graphs $W$ such that $\wof{W} = w$.
 \end{definition}
 
+The following is well-known.
 \begin{theorem}
-Suppose $w$ is a permutation. Then we have the following formula for the double Grothendieck polynomial of $w$:
-$$\mathfrak{G}_w^{(\beta)}(x;y) = \sum_{T} \prod_{(i,j)\in I(w)} \beta^{|T(i,j)| - 1} \prod_{r\in T(i,j)} x_r \oplus y_{\lambda_T(i,j) - r}$$
-where the sum is over all set-valued inversions tableaux of $w$. 
+We have
+$$\mathfrak{G}^{(\beta)}_w(x) = \sum_{W\in \WC(w)} \beta^{|W|-\ell(w)}x^{\wtt(W)}$$
 \end{theorem}
 
-\begin{definition}
-An \emph{staircase word graph} is simply a subset of $\mathbb{N}^2$. We impose the same ordering on these as RC graphs. That is, we say that $(a,b)\leq (c,d)$ if $a<c$ or $a=c$ and $b > d$. We define $\mathbf{word}(G)$ to be the word obtained by reading the elements $i + j - 1$ in the linear order given by $\leq$. We then say that $\wof{G}$ is the Demazure product of $\mathbf{word}(G)$.
 
-For a set-valued inversions tableau $T$, we can define a staircase word graph $G$ as follows. If $w$ is the identity, then $G$ is the empty set. Otherwise, let $n$ be the maximum value that is contained in $T(i,j)$ for some $(i,j)\in I(w)$. Choose $i$ and $j$ such that $T(i,j)=n$ and $i + j$ is as small as possible. Necessarily, $j=i+1$, or in other words $i$ is a right descent of $w$. If $|T(i,i+1)| > 1$, remove $n$ from $T(i,i+1)$ to obtain a new function $T':I(w)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$. If $|T(i,i+1)|=1$, then let $T':I(ws_i)\to \mathbf{2}^{[n]}\setminus \{\varnothing\}$ be the function defined by
-$$T'(a,b) = T(s_i(a),s_i(b))$$
-for all $(a,b)\in I(ws_i)$.
-
-It is straightforward to check that $T'$ is a set-valued inversions tableau, either for $w$ if $|T(i,i+1)| > 1$ or for $ws_n$ if $|T(i,i+1)| = 1$. Let $G'=\Phi(T')$. Then let $\Phi(T)=G'\cup \{(n,i+1-n)\}$. 
-\end{definition}
-
-\begin{proposition}
-$\Phi$ is a bijection between set-valued inversions tableaux of $w$ with maximum value $n$ and staircase word graphs $G$ such that $\wof{G} = w$ and $a\leq n$ for all $(a,b)\in G$.
-\end{proposition}
-\begin{proof}
-  If $|T(i,j)|=1$ for all $(i,j)\in I(w)$, then $T$ is just an ordinary inversion tableau and $\Phi(T)$ is just the usual RC graph associated to $T$. In this case, the result is \cite{axelrodfreed2025inversionstableaux}. Otherwise, we prove this by induction on the maximum size of $|T(i,j)|$. Suppose this maximum size is $m>1$ and we have proved the result for all set-valued inversions tableaux with maximum size less than $m$. We may assume without loss of generality that $m$ is the maximum value that is contained in $T(i,j)$ for some $(i,j)\in I(w)$ by removing elements below. In that case, $m\in T(i,i+1)$ for some $i$. Let $T'$ be the set-valued inversions tableau obtained by removing $m$ from $T(i,i+1)$ if $|T(i,i+1)| > 1$ or by applying the transformation described in the definition of $\Phi$ if $|T(i,i+1)|=1$. By the inductive hypothesis, $\Phi(T')$ is a staircase word graph such that $\wof{\Phi(T')} = w$ or $\wof{\Phi(T')} = ws_i$ and $a\leq n$ for all $(a,b)\in \Phi(T')$. In either case, we have $\wof{\Phi(T)} = w$. It is also clear that $a\leq n$ for all $(a,b)\in \Phi(T)$. This proves that $\Phi(T)$ is a staircase word graph with the desired properties.
-
-  Let $G$ be a staircase word graph. Define $\Psi(G)$ to be empty if $G$ is empty. Otherwise, let $(i,j)$ be the maximum element of $G$ and let $G' = G\setminus \{(i,j)\}$. Let $w'=\wof{G'}$. Let $d=i + j - 1$. If $\ell(w's_d) > \ell(w')$, then let
-$$\Psi(G)(a,b) = \begin{cases}
-\Psi(G')(s_d(a),s_d(b)) & \text{if } (a,b)\in I(w)\setminus\{(i,j)\}\\
-\{d\} & \text{if } (a,b) = (i,j)
-\end{cases}$$
-If $\ell(w's_d) < \ell(w')$, then let
-$$\Psi(G)(a,b) = \begin{cases}
-\Psi(G')(a,b) & \text{if } (a,b)\in I(w)\setminus\{(i,j)\}\\
-\Psi(G')(a,b)\cup \{d\} & \text{if } (a,b) = (i,j)
-\end{cases}$$
-\end{proof}
+\section{Grove polynomials and WC graphs}
 
 \begin{definition}
-Define the isobaric divided difference operator
-$$\pi^i = \partial^i(1+\beta x_{i+1})$$
-Note the Leibniz formula
-$$\pi^i(fg) = (\pi^i+\beta s_i)(f)g + f\pi^i(g)$$
+A labeled indexed forest $(F,P)$ is an indexed forest $F$ with a function (labeling) $P:\mathrm{IN}(F)\to\mathbb{N}$ satisfying the following properties:
+\begin{enumerate}
+\item $P(\mathrm{left}(u)) < P(u)$ for all $u\in \mathrm{IN}(F)$.
+\item $P(u)\leq P(\mathrm{right}(u))$ for all $u\in \mathrm{IN}(F)$.
+\item $P(u)\geq \rho_F(u)$ for all $u\in \mathrm{IN}(F)$.
+\item $P(u)\leq \lambda_F(u)$ for all $u\in \mathrm{IN}(F)$.
+\end{enumerate}
+
+The set $\mathrm{Komp}_P(F)$ is the set of functions $\kappa:\mathrm{IN}(F)\to 2^{\mathbb{N}}$ such that 
+
+\begin{enumerate}
+\item $\max(\kappa(u))\leq P(u)$ for all $u\in \mathrm{IN}(F)$.
+\item $\max(\kappa(u))\leq \min(\kappa(\mathrm{left}(u)))$ for all $u\in \mathrm{IN}(F)$.
+\item $\max(\kappa(u))< \min(\kappa(\mathrm{right}(u)))$ for all $u\in \mathrm{IN}(F)$.
+\end{enumerate}
+We have that
+$$\wtt_i(\kappa) = \#\{u\in \mathrm{in}(F)\mid i\in \kappa(u)\}$$
 \end{definition}
-
-
-\begin{definition}[Pulling out an empty row]
-Let $R$ be a bounded RC graph with $\hr(R)=n$ and let $p\leq n$ be such that row $p$ of $R$ is empty. Let $R_{\leq p}$ denote the RC-graph consisting of the first $p$ rows and $R_{>p}$ the RC-graph consisting of rows $p+1$ through $n$. Now, $\maxd(R_{\leq p})$ could be greater than $p$. If it is less than or equal to $p$, define 
-$$\zeromap^{(p)}(R) = \zeromap(R_{\leq p})\cup {\downarrow R_{>p}}$$ 
-as a bounded RC graph with $\hr(R)-1$ rows. Otherwise, define $R' = R_{\leq p}$, let $d_1 = \maxd(\wof{R'})$ and set $R_1 = R'$. While $\maxd(R_i) > p$, do:
-
-Set $R'=R_i$. While $\maxd(R') \geq d_i$, delete the element $(a,b)\in R'$ such that $\rtt_{R'}(a,b)=(\maxd(R'),\maxd(R')+1)$ from $R'$ and store $a$ in the list (multiset) $A_i$. After enough iterations such that $\maxd(R')<d_i$, set $R_{i+1}= R'$ and set $d_{i+1}= \maxd(R_{i+1})$, then repeat. 
-
-At termination, say at step $k$, set
-$$\zeromap^{(p)}(R) = (\ins{d_1 - 1}{A_1}\cdots\ins{d_k - 1}{A_k}\zeromap(\overline{R}))\cup {\downarrow} R_{>p}$$
-be the desired bounded RC graph with $\hr(R)-1$ rows.
-
-We show an example in Figure \ref{figure:zpexample}.
-\end{definition}
-
-\begin{figure}[htbp]
-\centering
-
-% Step 1: Initial R
-\begin{minipage}{0.22\textwidth}
-\centering
-\begin{tikzpicture}[scale=0.5]
-  \draw[lightgray, very thin, opacity=0.3] (0,1) grid[step=1] (7,5);
-  % Row 1: crossings at 1,2,6
-  \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  \draw[blue, line width=1.0pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=1.0pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=1.0pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=1.0pt] (4.5,4) .. controls (4.5,4.3) and (4.7,4.5) .. (5,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (5,4.5) -- (6,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (5.5,4) -- (5.5,5);
-  \draw[blue, line width=1.0pt] (6,4.5) .. controls (6.3,4.5) and (6.5,4.7) .. (6.5,5);
-  \draw[blue, line width=1.0pt] (6.5,4) .. controls (6.5,4.3) and (6.7,4.5) .. (7,4.5);
-  % Row 2: crossings at 2,3
-  \draw[blue, line width=1.0pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=1.0pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=1.0pt, line cap=round] (2,3.5) -- (3,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (2.5,3) -- (2.5,4);
-  \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
-  \draw[blue, line width=1.0pt] (4,3.5) .. controls (4.3,3.5) and (4.5,3.7) .. (4.5,4);
-  \draw[blue, line width=1.0pt] (4.5,3) .. controls (4.5,3.3) and (4.7,3.5) .. (5,3.5);
-  \draw[blue, line width=1.0pt] (5,3.5) .. controls (5.3,3.5) and (5.5,3.7) .. (5.5,4);
-  \draw[blue, line width=1.0pt] (5.5,3) .. controls (5.5,3.3) and (5.7,3.5) .. (6,3.5);
-  \draw[blue, line width=1.0pt] (6,3.5) .. controls (6.3,3.5) and (6.5,3.7) .. (6.5,4);
-  \draw[blue, line width=1.0pt] (6.5,3) .. controls (6.5,3.3) and (6.7,3.5) .. (7,3.5);
-  % Row 3: empty
-  \draw[blue, line width=1.0pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
-  \draw[blue, line width=1.0pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
-  \draw[blue, line width=1.0pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=1.0pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=1.0pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=1.0pt] (2.5,2) .. controls (2.5,2.3) and (2.7,2.5) .. (3,2.5);
-  \draw[blue, line width=1.0pt] (3,2.5) .. controls (3.3,2.5) and (3.5,2.7) .. (3.5,3);
-  \draw[blue, line width=1.0pt] (3.5,2) .. controls (3.5,2.3) and (3.7,2.5) .. (4,2.5);
-  \draw[blue, line width=1.0pt] (4,2.5) .. controls (4.3,2.5) and (4.5,2.7) .. (4.5,3);
-  \draw[blue, line width=1.0pt] (4.5,2) .. controls (4.5,2.3) and (4.7,2.5) .. (5,2.5);
-  \draw[blue, line width=1.0pt] (5,2.5) .. controls (5.3,2.5) and (5.5,2.7) .. (5.5,3);
-  \draw[blue, line width=1.0pt] (5.5,2) .. controls (5.5,2.3) and (5.7,2.5) .. (6,2.5);
-  \draw[blue, line width=1.0pt] (6,2.5) .. controls (6.3,2.5) and (6.5,2.7) .. (6.5,3);
-  \draw[blue, line width=1.0pt] (6.5,2) .. controls (6.5,2.3) and (6.7,2.5) .. (7,2.5);
-  % Row 4: crossings at 1,2
-  \draw[blue, line width=1.0pt, line cap=round] (0,1.5) -- (1,1.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,1) -- (0.5,2);
-  \draw[blue, line width=1.0pt, line cap=round] (1,1.5) -- (2,1.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,1) -- (1.5,2);
-  \draw[blue, line width=1.0pt] (2,1.5) .. controls (2.3,1.5) and (2.5,1.7) .. (2.5,2);
-  \draw[blue, line width=1.0pt] (2.5,1) .. controls (2.5,1.3) and (2.7,1.5) .. (3,1.5);
-  \draw[blue, line width=1.0pt] (3,1.5) .. controls (3.3,1.5) and (3.5,1.7) .. (3.5,2);
-  \draw[blue, line width=1.0pt] (3.5,1) .. controls (3.5,1.3) and (3.7,1.5) .. (4,1.5);
-  \draw[blue, line width=1.0pt] (4,1.5) .. controls (4.3,1.5) and (4.5,1.7) .. (4.5,2);
-  \draw[blue, line width=1.0pt] (4.5,1) .. controls (4.5,1.3) and (4.7,1.5) .. (5,1.5);
-  \draw[blue, line width=1.0pt] (5,1.5) .. controls (5.3,1.5) and (5.5,1.7) .. (5.5,2);
-  \draw[blue, line width=1.0pt] (5.5,1) .. controls (5.5,1.3) and (5.7,1.5) .. (6,1.5);
-  \draw[blue, line width=1.0pt] (6,1.5) .. controls (6.3,1.5) and (6.5,1.7) .. (6.5,2);
-  \draw[blue, line width=1.0pt] (6.5,1) .. controls (6.5,1.3) and (6.7,1.5) .. (7,1.5);
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (5.5,4.5) {6};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (2.5,3.5) {4};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,1.5) {4};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,1.5) {5};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  % Output permutation at top
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {2};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {5};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,5.1) {6};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,5.1) {3};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (5.5,5.1) {7};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (6.5,5.1) {4};
-  \draw[black, line width=1.0pt] (0,1) rectangle (7,5);
-\end{tikzpicture}
-\caption*{(a) $R$ with $p=3$}
-\end{minipage}
-\hfill
-% Step 2: After deletion
-\begin{minipage}{0.22\textwidth}
-\centering
-\begin{tikzpicture}[scale=0.5]
-  \draw[lightgray, very thin, opacity=0.3] (0,2) grid[step=1] (5,5);
-  % Row 1: crossings at 1,2 (no 6)
-  \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  \draw[blue, line width=1.0pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=1.0pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=1.0pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=1.0pt] (4.5,4) .. controls (4.5,4.3) and (4.7,4.5) .. (5,4.5);
-  % Row 2: crossings at 2,3
-  \draw[blue, line width=1.0pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=1.0pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=1.0pt, line cap=round] (2,3.5) -- (3,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (2.5,3) -- (2.5,4);
-  \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
-  \draw[blue, line width=1.0pt] (4,3.5) .. controls (4.3,3.5) and (4.5,3.7) .. (4.5,4);
-  \draw[blue, line width=1.0pt] (4.5,3) .. controls (4.5,3.3) and (4.7,3.5) .. (5,3.5);
-  % Row 3: empty
-  \draw[blue, line width=1.0pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
-  \draw[blue, line width=1.0pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
-  \draw[blue, line width=1.0pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=1.0pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=1.0pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=1.0pt] (2.5,2) .. controls (2.5,2.3) and (2.7,2.5) .. (3,2.5);
-  \draw[blue, line width=1.0pt] (3,2.5) .. controls (3.3,2.5) and (3.5,2.7) .. (3.5,3);
-  \draw[blue, line width=1.0pt] (3.5,2) .. controls (3.5,2.3) and (3.7,2.5) .. (4,2.5);
-  \draw[blue, line width=1.0pt] (4,2.5) .. controls (4.3,2.5) and (4.5,2.7) .. (4.5,3);
-  \draw[blue, line width=1.0pt] (4.5,2) .. controls (4.5,2.3) and (4.7,2.5) .. (5,2.5);
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (2.5,3.5) {4};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  % Output permutation at top
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {2};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {4};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,5.1) {5};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,5.1) {3};
-  \draw[black, line width=1.0pt] (0,2) rectangle (5,5);
-\end{tikzpicture}
-\caption*{(b) After delete (1,6)}
-\end{minipage}
-\hfill
-% Step 3: Zero out row 3
-\begin{minipage}{0.22\textwidth}
-\centering
-\begin{tikzpicture}[scale=0.5]
-  \draw[lightgray, very thin, opacity=0.3] (0,3) grid[step=1] (3,5);
-  % Row 1: crossings at 1,2
-  \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  % Row 2: crossings at 1,2
-  \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=1.0pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=1.0pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,3.5) {2};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  % Output permutation at top
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {3};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {4};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
-  \draw[black, line width=1.0pt] (0,3) rectangle (3,5);
-\end{tikzpicture}
-\caption*{(c) $\zeromap(\overline{R})$}
-\end{minipage}
-\hfill
-% Step 4: Insert back
-\begin{minipage}{0.22\textwidth}
-\centering
-\begin{tikzpicture}[scale=0.5]
-  \draw[lightgray, very thin, opacity=0.3] (0,3) grid[step=1] (6,5);
-  % Row 1: crossings at 1,2,5
-  \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=1.0pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  \draw[blue, line width=1.0pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=1.0pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=1.0pt, line cap=round] (4,4.5) -- (5,4.5);
-  \draw[green!60!black, line width=1.0pt, line cap=round] (4.5,4) -- (4.5,5);
-  \draw[blue, line width=1.0pt] (5,4.5) .. controls (5.3,4.5) and (5.5,4.7) .. (5.5,5);
-  \draw[blue, line width=1.0pt] (5.5,4) .. controls (5.5,4.3) and (5.7,4.5) .. (6,4.5);
-  % Row 2: crossings at 1,2
-  \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=1.0pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=1.0pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
-  \draw[blue, line width=1.0pt] (4,3.5) .. controls (4.3,3.5) and (4.5,3.7) .. (4.5,4);
-  \draw[blue, line width=1.0pt] (4.5,3) .. controls (4.5,3.3) and (4.7,3.5) .. (5,3.5);
-  \draw[blue, line width=1.0pt] (5,3.5) .. controls (5.3,3.5) and (5.5,3.7) .. (5.5,4);
-  \draw[blue, line width=1.0pt] (5.5,3) .. controls (5.5,3.3) and (5.7,3.5) .. (6,3.5);
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,4.5) {2};
-  \node[font=\scriptsize\bfseries, text=red!80!black, fill=white, inner sep=0.5pt] at (4.5,4.5) {5};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,3.5) {2};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {3};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  % Output permutation at top
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,5.1) {3};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,5.1) {4};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,5.1) {1};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,5.1) {2};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,5.1) {6};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (5.5,5.1) {5};
-  \draw[black, line width=1.0pt] (0,3) rectangle (6,5);
-\end{tikzpicture}
-\caption*{(d) After $\ins{5}{1}$}
-\end{minipage}
-
-\vspace{0.3cm}
-
-% Step 5: Final with R>p
-\begin{minipage}{0.45\textwidth}
-\centering
-\begin{tikzpicture}[scale=0.5]
-  \draw[lightgray, very thin, opacity=0.3] (0,1) grid[step=1] (6,4);
-  % Row 1: crossings at 1,2,5
-  \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=1.0pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=1.0pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=1.0pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=1.0pt] (3.5,3) .. controls (3.5,3.3) and (3.7,3.5) .. (4,3.5);
-  \draw[blue, line width=1.0pt, line cap=round] (4,3.5) -- (5,3.5);
-  \draw[green!60!black, line width=1.0pt, line cap=round] (4.5,3) -- (4.5,4);
-  \draw[blue, line width=1.0pt] (5,3.5) .. controls (5.3,3.5) and (5.5,3.7) .. (5.5,4);
-  \draw[blue, line width=1.0pt] (5.5,3) .. controls (5.5,3.3) and (5.7,3.5) .. (6,3.5);
-  % Row 2: crossings at 1,2
-  \draw[blue, line width=1.0pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=1.0pt, line cap=round] (1,2.5) -- (2,2.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,2) -- (1.5,3);
-  \draw[blue, line width=1.0pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=1.0pt] (2.5,2) .. controls (2.5,2.3) and (2.7,2.5) .. (3,2.5);
-  \draw[blue, line width=1.0pt] (3,2.5) .. controls (3.3,2.5) and (3.5,2.7) .. (3.5,3);
-  \draw[blue, line width=1.0pt] (3.5,2) .. controls (3.5,2.3) and (3.7,2.5) .. (4,2.5);
-  \draw[blue, line width=1.0pt] (4,2.5) .. controls (4.3,2.5) and (4.5,2.7) .. (4.5,3);
-  \draw[blue, line width=1.0pt] (4.5,2) .. controls (4.5,2.3) and (4.7,2.5) .. (5,2.5);
-  \draw[blue, line width=1.0pt] (5,2.5) .. controls (5.3,2.5) and (5.5,2.7) .. (5.5,3);
-  \draw[blue, line width=1.0pt] (5.5,2) .. controls (5.5,2.3) and (5.7,2.5) .. (6,2.5);
-  % Row 3: crossings at 1,2 (from R>p shifted)
-  \draw[blue, line width=1.0pt, line cap=round] (0,1.5) -- (1,1.5);
-  \draw[blue, line width=1.0pt, line cap=round] (0.5,1) -- (0.5,2);
-  \draw[blue, line width=1.0pt, line cap=round] (1,1.5) -- (2,1.5);
-  \draw[blue, line width=1.0pt, line cap=round] (1.5,1) -- (1.5,2);
-  \draw[blue, line width=1.0pt] (2,1.5) .. controls (2.3,1.5) and (2.5,1.7) .. (2.5,2);
-  \draw[blue, line width=1.0pt] (2.5,1) .. controls (2.5,1.3) and (2.7,1.5) .. (3,1.5);
-  \draw[blue, line width=1.0pt] (3,1.5) .. controls (3.3,1.5) and (3.5,1.7) .. (3.5,2);
-  \draw[blue, line width=1.0pt] (3.5,1) .. controls (3.5,1.3) and (3.7,1.5) .. (4,1.5);
-  \draw[blue, line width=1.0pt] (4,1.5) .. controls (4.3,1.5) and (4.5,1.7) .. (4.5,2);
-  \draw[blue, line width=1.0pt] (4.5,1) .. controls (4.5,1.3) and (4.7,1.5) .. (5,1.5);
-  \draw[blue, line width=1.0pt] (5,1.5) .. controls (5.3,1.5) and (5.5,1.7) .. (5.5,2);
-  \draw[blue, line width=1.0pt] (5.5,1) .. controls (5.5,1.3) and (5.7,1.5) .. (6,1.5);
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,3.5) {1};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,3.5) {2};
-  \node[font=\scriptsize\bfseries, text=green!80!black, fill=white, inner sep=0.5pt] at (4.5,3.5) {5};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,2.5) {2};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,2.5) {3};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (0.5,1.5) {3};
-  \node[font=\scriptsize\bfseries, text=green!60!black, fill=white, inner sep=0.5pt] at (1.5,1.5) {4};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,3.5) {1};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,2.5) {2};
-  \node[font=\scriptsize\bfseries, text=blue, anchor=east] at (-0.3,1.5) {3};
-  % Output permutation at top
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (0.5,4.1) {4};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (1.5,4.1) {5};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (2.5,4.1) {1};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (3.5,4.1) {2};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (4.5,4.1) {6};
-  \node[font=\scriptsize\bfseries, text=red, anchor=south] at (5.5,4.1) {3};
-  \draw[black, line width=1.0pt] (0,1) rectangle (6,4);
-\end{tikzpicture}
-\caption*{(e) Final $\zeromap^{(p)}(R)$ with $R_{>p}$ reattached}
-\end{minipage}
-
-\caption{Example of $\zeromap^{(p)}$ operation with $p=3$. Starting with (a) $R$ where row 3 is empty, we identify element $(1,6)$ creates maxd $> p$. (b) After deleting it (storing row 1 in $A_1$). (c) Apply $\zeromap$ to get 2-row graph. (d) Insert back at row 1 with $k=d_1-1=5$ (shown in red). (e) Reattach $R_{>p}$ shifted down to get final result.}
-\label{figure:zpexample}
-\end{figure}
-
-\begin{definition}
-Let $R$ be an RC graph. We define an RC graph $\overline{R}$ and a sequence $\mathtt{strip}(R)$ as follows. Let $\maxd(R)=n$, set $R_0=R$, and set $A_0=()$. While $\maxd(R_i)> n -1$, delete the element $(a,b)\in R_i$ such that $\rtt_{R_i}(a,b)=(\maxd(R_i), \maxd(R_i) + 1)$ to obtain $R_{i+1}$, and add $a$ to $A_i$ to obtain $A_{i+1}$. When the algorithm terminates at step $k$, set
-$$\mathtt{strip}(R) = A_k$$
-and set $\overline{R} = \overline{R}$.
-\end{definition}
-
-\begin{lemma} \label{lemma:reconstruct}
-Let $R$ be an RC graph. Then
-$$R = \ins{\maxd(R)}{\mathtt{strip}(R)} \overline{R}$$
-\end{lemma}
-\begin{proof}
-Let $n=\maxd(R)$. We prove this by induction on $\code_n(R)$. Let $(i,j)$ be the location of the descent $n$ in $R$. If $\code_n(R)=1$, then we know that insertion of $i$ into $\overline{R}$ returns an RC graph with the same weight and permutation as $R$, the latter assertion because the only $n$-reflection that increases the length of $\wof{\overline{R}}$ by exactly $1$ is $s_n$. By the exchange property, there is precisely one location in row $i$ that this $n$-reflection can be inserted, and we have the result when $\code_{n}(R)=1$.
-
-Assume the inductive hypothesis that we have the result for $\code_n(R) = k$ for some $k\geq 1$ and additionally that insertion order of reflections has been $(n, n+1),\ldots,(n,n+k)$. Assume $\mathtt{strip}(R) = (r_1,\ldots,r_{k+1})$ in increasing order and we have inserted all of $r_2,\ldots,r_{k+1}$ in Algorithm \ref{algorithm:insertion}. By the induction hypothesis, the RC graph $R'$ we have at this point has permutation $\code_i{R'} = \code_i{R}$ for $i<n$ and $\code_n(R') = k$, and we have equality of $R'$ with $R$ except deletion of the root $(n, n+k + 1)$. Since $\wof{R'}(n) < \wof{R'}(n+k+1)$, the only $n$-reflection that can be inserted to increase the length of $\wof{R'}$ by $1$ is $(n, n+k+1)$. By pipe considerations, this must be inserted in column $c = n + k + 1 - r_1$. Since this is the only possible insertion location and the permutation is the same as $\wof{R}$, we have the result by induction.
-\end{proof}
 
 
 \begin{theorem}
-Let $R\in\BRC(w,n)^{(0,p)}$ be the set of all bounded RC graphs with $\hr(R)=n$ such that row $p$ of $R$ is empty. Then we have that the restriction of $\zeromap^{(p)}$ is a bijection
-$$\zeromap^{(p)}:\BRC(w,n)^{(0,p)}\to\bigcup_{\substack{w\downvar{p} w'\\\ell(w)=\ell(w')}} \BRC(w', n-1)$$
-satisfying $\wtt(\zeromap^{(p)}(R)) = (i_1,\ldots,i_{p-1},i_{p+1},\ldots,i_{n})$, where $\wtt(R)=(i_1,\ldots,i_n)$.
+Suppose a labeled indexed forest $(F,P)$ is such that there is a $\kappa\in\mathrm{Komp}_P(F)$ with 
+$$\wtt(\kappa) = \code(F).$$ 
+Then
+$$\grove_F(x) = \sum_{\kappa\in\mathrm{Komp}_P(F)} \beta^{|\kappa|-|F|}x^{\wtt(\kappa)}$$
 \end{theorem}
-\begin{proof}
-Consider first the special case that $R_{>p}$ is empty. Let $w_0 = \wof{\zeromap(\overline{R})}$. Then we know that
-$$\overline{R}\downvar{p} \zeromap(\overline{R})$$
-Since every element of $A_k$ is less than $p$ and $d_k>p$, the insertion $\ins{d_k-1}{A_k}\zeromap(\overline{R})$ only adds right roots $(a,b)$ with $a<p$ and $b>p$. Thus
-$$\ins{d_k}{A_k}\overline{R}\downvar{p} \ins{d_k-1}{A_k}\zeromap(\overline{R})$$
-We assert the (descending) inductive hypothesis that for some index $j$ we have
-$$\ins{d_j}{A_j}\cdots\ins{d_k}{A_k}\overline{R}\downvar{p} \ins{d_j-1}{A_j}\cdots\ins{d_k-1}{A_k}\zeromap(\overline{R})$$
-Then the induction step follows with precisely the same reasoning; since every element of $A_{j-1}$ is less than $p$ and $d_{j-1}>p$, the insertion $\ins{d_{j-1}-1}{A_{j-1}}$ only adds right roots $(a,b)$ with $a<p$ and $b>p$. Thus
-$$\ins{d_{j-1}}{A_{j-1}}\cdots\ins{d_k}{A_k}\overline{R}\downvar{p} \ins{d_{j-1}-1}{A_{j-1}}\cdots\ins{d_k-1}{A_k}\zeromap(\overline{R})$$
-and the result follows by induction in the special case that $R_{>p}$ is empty, where we invoke Lemma \ref{lemma:reconstruct} to assert that the left-hand side is equal to $R$.
 
-Since the row was initially empty, we have at our disposal the exchange property on $R_{>p}$, shifting the reflections down a row to obtain the general case.
-\end{proof}
-\section{Grove}
 
-Let $F$ be an indexed forest and let $\kappa:\mathrm{IN}(F)\to 2^{\mathbb{N}}$ be a set-valued labeling. Let $P$ be the $P$-forest of the reverse of $\RC^0(F)$. Consider the set 
+
+\begin{definition}
+Let $W\in \WC(w)$ be a WC graph for $w$. Define via the Nadeau-Tewari insertion algorithm
+$$(P(W), Q(W)) = (P(\mathrm{word}(W)), Q(\mathrm{word}(W)))$$
+and let
+$$F(W) = \mathrm{shape}(P(W))$$
+Define $\code(F)$ to be the code of the indexed forest $F$.
+\end{definition}
+
+
+\begin{definition}
+Let $(F,P)$ be a labeled indexed forest and let $\kappa\in\mathrm{Komp}_P(F)$. Consider the set 
 $$A =\bigcup_{v\in\mathrm{IN}(F)}\kappa(v)\times \{P(v)\}$$
-Sort $A=\{(a_i,b_i)\}$ in lexicographical order, increasing in the first coordinate and decreasing in the second coordinate. By construction, $b_1\cdots b_n$ is a Hecke word and $a_1\cdots a_n$ is a compatible sequence for this word. We claim that the product $b_1\cdots b_n$ in the Hecke monoid is equal to $\wof{F}$. To see this, observe that any choice function $\mathbf{w}:\mathrm{IN}(F)\to \mathbb{N}$ satisfying $\mathbf{w}(v)\in\kappa(v)$ for $v\in\mathrm{IN}(F)$ gives a  sequence $a_1\cdots a_n$ for which there is a decreasing labeling $Q(\mathbf{w})$ of shape $F$ for which the inverse of $(P,Q(\mathbf{w}))$ is a reduced word for $\wof{F}$ for which $a_1\cdots a_n$ is a compatible sequence. Iterating from largest set values to smallest and applying the exchange property gives the result.
+Define
+$$\WC(\kappa) = \{(a_i, b_i + 1 - a_i)\mid (a_i, b_i)\in A\}$$
+\end{definition}
+
+\begin{theorem}
+For a permutation $w$, let $\WC_\forest(w)$ be the set of $W\in\WC(w)$ such that $\wtt(W) = \code(F(W))$. Then we have that $\WC(w)$ is the disjoint union of $\WC(\mathrm{Komp}_{P(W)}(F(W)))$ for $W\in \WC_\forest(w)$. 
+% Furthermore, the Grothendieck polynomial $\mathfrak{G}^{(\beta)}_w(x)$ satisfies
+% $$\mathfrak{G}^{(\beta)}_w(x)=\sum_{\substack{W\in \WC(w)\\\wtt(W) = \code(F(W))}} \beta^{|W|-\ell(w)}\grove_{F(W)}(x)$$
+\end{theorem}
+
+\begin{corollary}
+The Grothendieck polynomial $\mathfrak{G}^{(\beta)}_w(x)$ satisfies
+$$\mathfrak{G}^{(\beta)}_w(x)=\sum_{F\in \mathrm{IF}} \beta^{|F|-\ell(w)}a_w^F\grove_F(x)$$
+where 
+$$a_w^F = \#\{W\in \WC_\forest(w)\mid F(W) = F\}$$
+\end{corollary}
+% Sort $A=\{(a_i,b_i)\}$ in lexicographical order, increasing in the first coordinate and decreasing in the second coordinate. By construction, $b_1\cdots b_n$ is a Hecke word and $a_1\cdots a_n$ is a compatible sequence for this word. We claim that the product $b_1\cdots b_n$ in the Hecke monoid is equal to $\wof{F}$. 
+
+% To see this, observe that any choice function $\mathbf{w}:\mathrm{IN}(F)\to \mathbb{N}$ satisfying $\mathbf{w}(v)\in\kappa(v)$ for $v\in\mathrm{IN}(F)$ gives a  sequence $a_1\cdots a_n$ for which there is a decreasing labeling $Q(\mathbf{w})$ of shape $F$ for which the inverse of $(P,Q(\mathbf{w}))$ is a reduced word for $\wof{F}$ for which $a_1\cdots a_n$ is a compatible sequence. Iterating from largest set values to smallest and applying the exchange property gives the result.
 
 % let $\mathbf{w}:F\to \mathbb{N}$ be a function satisfying the following:
 
