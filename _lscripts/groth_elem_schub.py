@@ -219,7 +219,7 @@ def main(n):
             for kk in key_hw:
                 for i, j in enumerate(kk.length_vector):
                     lv[i] += j
-            wcs = {wcc for wcc in WCGraph.all_wc_graphs(perm, length, weight=lv)}
+            wcs = {wcc for wcc in WCGraph.all_wc_graphs(perm, length, weight=lv) if wcc.excess <= excess + sum([kk.excess for kk in key])}
             assert len(wcs) > 0, f"No WCGraphs found for {perm.trimcode} in S_{n} with weight {lv} and highest weight {key_hw}"
             if len(wcs) > 1:
                 pretty_print(key_hw)
