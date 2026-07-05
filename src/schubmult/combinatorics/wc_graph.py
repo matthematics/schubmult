@@ -10,6 +10,8 @@ from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGrap
 from schubmult.symbolic import Expr, S, prod
 from schubmult.utils._grid_print import GridPrint
 
+from .crystal_graph import CrystalGraph
+
 # from schubmult.utils.perm_utils import _is_compatible
 
 
@@ -35,7 +37,7 @@ def _is_compatible(compat_seq, word):
     return True
 
 
-class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
+class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     """Word-compatible graph.
 
     Internal representation matches RCGraph: a tuple of rows where row i (0-indexed)
@@ -497,6 +499,101 @@ class WCGraph(SchubertMonomialGraph, GridPrint, tuple):
         else:
             ret *= beta ** (len(self.perm_word))
         return ret
+
+    @property
+    def is_elem_sym(self) -> bool:
+        cd = self.perm.trimcode
+        if len(cd) == 0:
+            return True
+        if len(cd) == 1 and cd[0] == 1:
+            return True
+        spot = max([i for i, c in enumerate(cd) if c == 0], default=-1) + 1
+        return all(c == 0 for c in cd[:spot]) and all(c == 1 for c in cd[spot:])
+        #return False
+
+    def crystal_length(self) -> int:
+        return len(self)
+
+    @property
+    def hecke_invariant(self):
+        from .hecke_plactic import HeckePlactic
+        return HeckePlactic.hecke_insert_rsk(self.compatible_sequence, self.perm_word)
+
+    @cache
+    def _convert_elem_rc(self):
+        if self.is_elem_sym:
+            from .rc_graph import RCGraph
+            return next(iter(RCGraph.elem_sym_rcs(len(self.perm_word), self.perm.max_descent, weight=self.length_vector)))
+        raise ValueError("Cannot convert non-elementary symmetric WCGraph to RCGraph")
+
+    @property
+    def crystal_weight(self) -> tuple[int, ...]:
+        return self.length_vector
+
+    @property
+    def excess(self):
+        return len(self.perm_word) - self.perm.inv
+
+    def raising_operator(self, i: int) -> WCGraph | None:
+        from .hecke_plactic import HeckePlactic
+        h_inv = self.hecke_invariant
+        if i >= len(self) or i <= 0:
+            return None
+        try:
+            raised_1 = h_inv[1].raising_operator(i)
+        except Exception:
+            return None
+        if raised_1 is None:
+            return None
+        if len(h_inv[0].row_word) != len(raised_1.row_word):
+            return None
+        try:
+            ret = WCGraph.from_word_compatible(*tuple(reversed(HeckePlactic.hecke_uninsert_rsk(h_inv[0], raised_1))), length=len(self))
+            if ret.perm == self.perm and ret.is_valid:
+                return ret
+            return None
+        except Exception:
+            return None
+
+    def lowering_operator(self, i: int) -> WCGraph | None:
+        from .hecke_plactic import HeckePlactic
+        h_inv = self.hecke_invariant
+        if i >= len(self) or i <= 0:
+            return None
+        try:
+            lowered_1 = h_inv[1].lowering_operator(i)
+        except Exception:
+            return None
+        if lowered_1 is None:
+            return None
+        if len(h_inv[0].row_word) != len(lowered_1.row_word):
+            return None
+        try:
+            ret = WCGraph.from_word_compatible(*tuple(reversed(HeckePlactic.hecke_uninsert_rsk(h_inv[0], lowered_1))), length=len(self))
+            if ret.perm == self.perm and ret.is_valid:
+                return ret
+            return None
+        except Exception:
+            return None
+
+    @classmethod
+    @cache
+    def _extremal_weight(cls, hw_rc):
+        import numpy as np
+
+        properly_sortable = [rc for rc in hw_rc.full_crystal if rc.sorted_length_vector == hw_rc.length_vector]
+        min_vec = min([(i, np.cumsum(properly_sortable[i].length_vector).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
+        return properly_sortable[min_vec].length_vector
+
+    @cached_property
+    def sorted_length_vector(self):
+        return tuple(sorted(self.length_vector, reverse=True))
+
+
+    @property
+    def extremal_weight(self):
+        # from schubmult.utils.tuple_utils import pad_tuple
+        return WCGraph._extremal_weight(self.to_highest_weight()[0])
 
     @classmethod
     @cache

@@ -9,7 +9,6 @@ from .planar_history import PlanarHistory
 
 
 class PipeDream(PlanarHistory, GridPrint):
-
     # def __str__(self) -> str:
     #     symbols = {Tile(edges=set()): " ", PipeDream.CROSS: "┼", PipeDream.BUMP: "*"}
     #     return symbols.get(self, "?")
@@ -50,6 +49,7 @@ class PipeDream(PlanarHistory, GridPrint):
 
     def to_rc_graph(self):
         from schubmult import RCGraph
+
         rows = []
         for i in range(self.rows):
             row = []
@@ -59,12 +59,35 @@ class PipeDream(PlanarHistory, GridPrint):
             rows.append(tuple(reversed(row)))
         return RCGraph(rows)
 
+    def to_wc_graph(self):
+        from schubmult import WCGraph
+
+        rows = []
+        for i in range(self.rows):
+            row = []
+            for j in range(self.cols - i):
+                if self[i, j] == self.CROSS:
+                    row.append(i + j + 1)
+            rows.append(tuple(reversed(row)))
+        return WCGraph(rows)
+
     @classmethod
     def from_rc_graph(cls, rc_graph):
         grid = np.full((len(rc_graph.perm), len(rc_graph.perm)), cls.EMPTY, dtype=object)
         for i in range(grid.shape[0]):
             for j in range(grid.shape[1] - i):
                 if rc_graph.has_element(i + 1, j + 1):
+                    grid[i, j] = cls.CROSS
+                else:
+                    grid[i, j] = cls.BUMP
+        return cls(grid)
+
+    @classmethod
+    def from_wc_graph(cls, wc_graph):
+        grid = np.full((len(wc_graph.perm), len(wc_graph.perm)), cls.EMPTY, dtype=object)
+        for i in range(grid.shape[0]):
+            for j in range(grid.shape[1] - i):
+                if wc_graph.has_element(i + 1, j + 1):
                     grid[i, j] = cls.CROSS
                 else:
                     grid[i, j] = cls.BUMP
@@ -84,9 +107,25 @@ class PipeDream(PlanarHistory, GridPrint):
             for j in range(1, self.grid.shape[1] + 1 - i):
                 if self[i - 1, j - 1] == self.CROSS:
                     new_grid[self.rows - 1 - (i + j - 1), j - 1] = self.BUMP
-                elif self[i - 1, j - 1] == self.BUMP:
+                if self[i - 1, j - 1] == self.BUMP:
                     new_grid[self.rows - 1 - (i + j - 1), j - 1] = self.CROSS
-                #new_grid[i + j - 1, j - 1] = self.CROSS if self[i - 1, j - 1] == self.BUMP else (self.BUMP if self[i - 1, j - 1] == self.CROSS else self.EMPTY)
+                # new_grid[i + j - 1, j - 1] = self.CROSS if self[i - 1, j - 1] == self.BUMP else (self.BUMP if self[i - 1, j - 1] == self.CROSS else self.EMPTY)
+        return PipeDream(new_grid)
+
+    def inverse_pipe_dream(self):
+        new_grid = self.grid.copy()
+        new_grid[:] = self.EMPTY
+        for i in range(1, self.grid.shape[0] + 1):
+            for j in range(1, self.grid.shape[1] + 1 - i):
+                if self[self.rows - 1 - (i + j - 1), j - 1] == self.BUMP:
+                    new_grid[i - 1, j - 1] = self.CROSS
+                else:
+                    new_grid[i - 1, j - 1] = self.BUMP
+                # new_grid[i + j - 1, j - 1] = self.CROSS if self[i - 1, j - 1] == self.BUMP else (self.BUMP if self[i - 1, j - 1] == self.CROSS else self.EMPTY)
+        return PipeDream(new_grid)
+
+    def reflect_vertically(self):
+        new_grid = np.flipud(self.grid.copy())
         return PipeDream(new_grid)
 
     def __hash__(self):

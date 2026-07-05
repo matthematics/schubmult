@@ -1,0 +1,171 @@
+from schubmult import *
+from sympy import pretty_print
+from schubmult.combinatorics.pipe_dream import PipeDream
+from schubmult.symbolic.poly.schub_poly import *
+from schubmult.symbolic.poly.variables import *
+#schub_elem_sym_to_groth_elem_sym_dict, schub_dict_to_groth_dict
+from schubmult.symbolic import prod
+
+br = BoundedRCFactorAlgebra()
+bw = BoundedWCFactorAlgebra()
+
+r = RCGraphRing()
+# def groth_to_schub_as_rc(groth_perm: Permutation, length):
+#     from schubmult.combinatorics.pipe_dream import PipeDream
+
+#     boip = WCGraph.all_wc_graphs(groth_perm, length)
+#     ret = (rw @ r).zero
+#     for wc in boip:
+#         cpdb = PipeDream.from_rc_graph(wc).co_pipe_dream()
+#         if cpdb.is_reduced:
+#             w0 = Permutation.w0(cpdb.rows)
+#             perm = cpdb.perm * w0
+#             ret += rw(wc) @ r.schub(perm, length)
+#     return ret
+
+
+
+def groth_elem_to_schub_elem_as_rc(p, k, length):
+    from schubmult.combinatorics.pipe_dream import PipeDream
+    groth_perm = uncode([0] * (k - p) + [1] * p)
+    boip = WCGraph.all_wc_graphs(groth_perm, length)
+    ret = (bw @ br).zero
+    for wc in boip:
+        cpdb = PipeDream.from_rc_graph(wc).co_pipe_dream()
+        if cpdb.is_reduced:
+            w0 = Permutation.w0(cpdb.rows)
+            perm = cpdb.perm * w0
+            for the_rc in RCGraph.all_wc_graphs(perm, length):
+                the_wc = next(iter([wc2 for wc2 in boip if wc2.perm_word == wc.perm_word and wc2.length_vector == the_rc.length_vector]))
+                ret += bw(bw.make_key((the_wc.resize(k),),length)) @ br(br.make_key((the_rc.resize(k),),length))
+    return ret
+
+def schub_to_groth_as_rc(schub_perm: Permutation, length):
+    
+    ret = (r @ rw).zero
+    
+    for rc in RCGraph.all_rc_graphs(schub_perm, length):
+        cpdb = PipeDream.from_rc_graph(rc).co_pipe_dream()
+        w0 = Permutation.w0(cpdb.rows)
+        perm = cpdb.perm * w0
+        for wc, _ in rw.groth(perm, length).items():
+            ret += (-1)**(len(wc.perm_word) - wc.perm.inv) * r(rc) @ rw(wc)
+        #ret += coeff*rw.groth(perm, length)
+    return ret
+
+
+def tagged_groth_elem(perm, length):
+    """Express the Grothendieck polynomial of ``perm`` as a tagged tensor in ``bw @ br``.
+
+    Pipeline (no RC graphs until the final step):
+
+    1. Expand the Grothendieck polynomial in the Schubert basis,
+       ``Sx.from_expr(Gx(perm).expand())``.
+    2. Rewrite each Schubert polynomial in its CEM basis, a sum of products of
+       Schubert elementary symmetrics ``e_p(x_1, ..., x_k)``.
+    3. Change basis on each Schubert elem sym factor abstractly via
+       :func:`schub_elem_sym_to_groth_elem_sym_dict`, so every CEM monomial becomes
+       a sum of products of Grothendieck elementary symmetrics, tracked only as
+       ``(p, k)`` index vectors (there is no dedicated Grothendieck-elem-sym symbol).
+    4. Expand each Grothendieck-elem-sym factor ``(p, k)`` into its tagged tensor
+       via :func:`groth_elem_to_schub_elem_as_rc`, whose left (``bw``) factor is the
+       Grothendieck elem sym over its WCGraph monomials and whose right (``br``)
+       factor is the uniquely co-pipe-dream-bijected Schubert elem sym RC graph.
+
+    Multiplying the tagged factors in the tensor ring keeps the tag paired factor
+    by factor, producing ``(gelem1 @ elem1) * (gelem2 @ elem2) * ...`` rather than a
+    single top-level ``groth @ schub`` tensor.
+    """
+    from sympy import Add, Mul, Pow, expand, sympify
+
+    beta = Gx._beta
+    tensor_ring = bw @ br
+    identity = bw(bw.make_key((), length)) @ br(br.make_key((), length))
+
+    # Step 1: Grothendieck polynomial -> Schubert basis.
+    schub_dict = Sx.from_expr(Gx(perm).expand())
+
+    result = tensor_ring.zero
+    for schub_perm, schub_coeff in schub_dict.items():
+        # Step 2: each Schubert polynomial -> CEM basis (products of Schubert elem syms).
+        cem_rep = expand(sympify(Sx(schub_perm).in_CEM_basis()))
+
+        for term in Add.make_args(cem_rep):
+            scalar, rest = term.as_coeff_Mul()
+
+            schub_factors = []
+            if rest != 1:
+                for factor in Mul.make_args(rest):
+                    if isinstance(factor, Pow):
+                        base, exponent = factor.as_base_exp()
+                    else:
+                        base, exponent = factor, 1
+                    schub_factors.extend([base] * int(exponent))
+
+            # Step 3: rewrite each Schubert elem sym as a sum of Grothendieck elem syms,
+            # distributing the product into a sum of (coeff, [(p, k), ...]) products.
+            groth_products = [(scalar, [])]
+            for factor in schub_factors:
+                conversion = schub_elem_sym_to_groth_elem_sym_dict(factor.degree, factor.numvars, beta)
+                expanded = []
+                for prod_coeff, groth_factors in groth_products:
+                    for (deg, numvars), conv_coeff in conversion.items():
+                        if deg == 0:
+                            expanded.append((prod_coeff * conv_coeff, groth_factors))
+                        else:
+                            expanded.append((prod_coeff * conv_coeff, [*groth_factors, (deg, numvars)]))
+                groth_products = expanded
+
+            # Step 4: expand each Grothendieck elem sym factor into its tagged tensor.
+            for prod_coeff, groth_factors in groth_products:
+                term_tensor = identity
+                for deg, numvars in groth_factors:
+                    term_tensor = term_tensor * groth_elem_to_schub_elem_as_rc(deg, numvars, length)
+                result += schub_coeff * prod_coeff * term_tensor
+
+    return result
+
+
+
+# def groth_to_schub_as_rc(groth_perm: Permutation, length):
+#     ret = r.zero
+#     for perm, coeff in WCGraph.groth_to_schub(groth_perm, Gx._beta).items():
+#         ret += coeff*r.schub(perm, length)
+#     return ret
+
+
+def tensor_bensor(rw_r_elem):
+    ret = (rw @ r @ rw).zero
+    for (wc, rc), coeff in rw_r_elem.items():
+        cpdb = PipeDream.from_rc_graph(rc).co_pipe_dream()
+        w0 = Permutation.w0(cpdb.rows)
+        perm = cpdb.perm * w0
+        for wc2, _ in rw.groth(perm, len(rc)).items():
+            ret += coeff * (-1)**(len(wc2.perm_word) - wc2.perm.inv) * rw(wc)@ r(rc) @ rw(wc2)
+    return ret
+
+def main(n):
+    length = n - 1
+    for perm in Permutation.all_permutations(n):
+        tagged = tagged_groth_elem(perm, length)
+        print(f"Tagged Grothendieck element for {perm.trimcode} (S_{n}):")
+        # pretty_print(tagged)
+        # print()
+        new_tagged = 0
+        rlength = max(1, len(perm.trimcode))
+        fratsit = 0
+        for (wc_fact, rc_factor), coeff in tagged.items():
+            rcc = next(iter(br(rc_factor).to_rc_graph_ring_element().resize(rlength)))
+            # cpcp = PipeDream.from_rc_graph(rcc).co_pipe_dream()
+            # w0 = Permutation.w0(cpcp.rows)
+            # perm1 = cpcp.perm * w0
+            #if perm1 == perm: 
+            new_tagged += coeff * bw(wc_fact) @ r(rcc)
+            fratsit += coeff * prod([elem.polyvalue(Sx.genset, beta=Gx._beta) for elem in wc_fact])
+        pretty_print(new_tagged)
+        assert (fratsit - grothendieck_poly(perm, Sx.genset, ZeroGeneratingSet(), Gx._beta)).expand() == 0, f"Failed for {perm.trimcode} in S_{n}"
+
+if __name__ == "__main__":
+    import sys
+    n = int(sys.argv[1])
+    main(n)
