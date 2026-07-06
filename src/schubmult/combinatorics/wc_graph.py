@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter
 from collections.abc import Sequence
 from functools import cache, cached_property
 from itertools import combinations
@@ -702,115 +701,25 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             combined_rc = combined_rc.zero_out_last_row()
         return combined_rc
 
-    @cache
     def zero_out_last_row(self) -> WCGraph:
+        from .increasing_tableau import IncreasingTableau
+        from .nilplactic import NilPlactic
         if len(self) == 0:
             return self
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
 
-        reduced = self
-        if self.perm.inv != len(self.perm_word):
-            reduction_working = self
-            removed_positive_roots: Counter[tuple[int, int]] = Counter()
-            changed = True
-            while changed:
-                changed = False
-                for index in range(len(reduction_working.perm_word) - 1, -1, -1):
-                    a, b = reduction_working.left_to_right_inversion(index)
-                    if b < a:
-                        matching_positive = (b, a)
-                        delete_index = None
-                        for index2 in range(index + 1, len(reduction_working.perm_word)):
-                            if reduction_working.left_to_right_inversion(index2) == matching_positive:
-                                delete_index = index2
-                                break
-                        if delete_index is None:
-                            continue
-                        removed_positive_roots[matching_positive] += 1
-                        row, col = reduction_working.left_to_right_inversion_coords(delete_index)
-                        reduction_working = reduction_working.toggle_ref_at(row, col)
-                        changed = True
-                        break
-
-            reduced = self._rebuild(reduction_working._snap_reduced().zero_out_last_row())
-        else:
-            return self._rebuild(reduced._snap_reduced().zero_out_last_row())
-
-        working = reduced
-        root_map = {reduced.left_to_right_inversion(i): reduced.left_to_right_inversion(i) for i in range(reduced.perm.inv)}
-        target_positive_roots: Counter[tuple[int, int]] = Counter()
-        for root, mult in removed_positive_roots.items():
-            mapped_root = root_map.get(root)
-            if mapped_root is None:
-                continue
-            target_positive_roots[mapped_root] += mult
-
-        target_row_weights = tuple(self.length_vector[:-1])
-        if len(target_row_weights) != len(working):
-            raise ValueError("Row count mismatch while rebuilding WCGraph after zero_out_last_row")
-
-        changed = True
-        while changed and sum(target_positive_roots.values()) > 0:
-            changed = False
-            max_col = max(working.cols + sum(target_positive_roots.values()) + 1, len(self.perm) + len(self.perm_word) + 8)
-            for row_index in range(len(working)):
-                if len(working[row_index]) >= target_row_weights[row_index]:
-                    continue
-                for col in range(1, max_col + 1):
-                    if working.has_element(row_index + 1, col):
-                        continue
-                    candidate = working.toggle_ref_at(row_index + 1, col)
-
-                    # Index of the inserted crossing in the candidate perm_word.
-                    row_value = row_index + col
-                    try:
-                        pos_in_row = candidate[row_index].index(row_value)
-                    except ValueError:
-                        continue
-                    ins_index = sum(len(candidate[r]) for r in range(row_index)) + pos_in_row
-
-                    tail = candidate.perm_word[ins_index + 1 :]
-                    base_root = (row_index + col, row_index + col + 1)
-                    matched_root = None
-
-                    # Allow temporary chopping of trailing reflections on the right.
-                    for chop in range(len(tail) + 1):
-                        piece = tail[: len(tail) - chop]
-                        if len(piece) == 0:
-                            root = base_root
-                        else:
-                            apply = ~Permutation.ref_product(*piece)
-                            root = apply.act_root(*base_root)
-                        if target_positive_roots[root] > 0:
-                            matched_root = root
-                            break
-
-                    if matched_root is not None:
-                        working = candidate
-                        target_positive_roots[matched_root] -= 1
-                        if target_positive_roots[matched_root] == 0:
-                            del target_positive_roots[matched_root]
-                        changed = True
-                        break
-                if changed:
-                    break
-
-        if working.length_vector != target_row_weights:
-            red_word, exist_compat = working.to_reduced_compatible_set_sequence()
-            diffs = []
-            for i in range(len(working)):
-                if len(working[i]) < target_row_weights[i]:
-                    diffs.extend([i + 1] * (target_row_weights[i] - len(working[i])))
-            working2 = working.resize(len(self))
-            col = 1
-            while working2.perm.max_descent != len(self):
-                working2 = self._rebuild([*working, tuple(range(len(self) + col - 1, len(self) - 1, -1))])
-                col += 1
-            working2 = working2.upieri_insert(len(self), diffs).resize(len(self) - 1).resize(len(self)).zero_out_last_row()
-            return working2
-
-        return working
+        increasing, recording = self.hecke_invariant
+        if len(increasing.row_word) != self.perm.inv:
+            #raise NotImplementedError("zero_out_last_row is only implemented for core-reduced WCGraphs")
+            print("Warning: zero_out_last_row is only implemented for core-reduced WCGraphs; returning None")
+            return None
+        hw_wc, raise_seq = self.to_highest_weight()
+        #corresponding_rc = NilPlactic.from_word(*tuple(reversed(increasing.row_word))).to_rc_graph()
+        hw_rc = NilPlactic.from_word(tuple(reversed(increasing.row_word))).hw_rc(len(self))
+        new_increasing, _ = WCGraph(hw_rc.zero_out_last_row()).hecke_invariant
+        return WCGraph.from_word_compatible(*tuple(reversed(IncreasingTableau.hecke_column_uninsert_rsk(new_increasing, recording))), length=len(self) - 1)
+        #return WCGraph.from(*tuple(reversed(new_increasing.row_word)), length=len(self))
 
     def right_zero_act(self) -> set[WCGraph]:
         raise NotImplementedError("right_zero_act is implemented in RCGraph")
