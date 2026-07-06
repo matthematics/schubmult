@@ -208,17 +208,14 @@ class BoundedWCFactorAlgebraElement(CrystalGraphRingElement):
         return elem
 
     def to_wc_graph_ring_element(self):
-        from schubmult import Gx
         from schubmult.combinatorics.wc_graph import WCGraph
         r = WCGraphRing()
         result = r.zero
-        beta = Gx._beta
         for key, coeff in self.items():
             if coeff == 0:
                 continue
             rc = self.ring.key_to_wc_graph(key)
-            bagoinv = sum([len(wc.perm_word) - wc.perm.inv for wc in key])
-            result += coeff * (beta**(bagoinv - len(rc.perm_word) + rc.perm.inv)) * r(WCGraph(rc))
+            result += coeff * r(WCGraph(rc))
         return result
 
 

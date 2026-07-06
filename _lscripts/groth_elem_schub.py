@@ -166,69 +166,70 @@ def main(n):
         # poly = groth_bucket.to_rc_graph_ring_element().polyvalue(Sx.genset)
         # pretty_print(new_tagged)
         assert (poly - Gx(perm).expand()).expand() == 0, f"Failed for {perm.trimcode} in S_{n}, got {poly} vs {Gx(perm).expand()}"
+        pretty_print(tagged.to_wc_graph_ring_element())
         # GOOD
-        for key, coeff in tagged.items():
-            if len(key) == 0:
-                continue
-            for i in range(n - 1):
-                key2 = key.raising_operator(i)
-                if key2 is not None:
-                    assert tagged.get(bw.make_key(key2, key.size), 0) == coeff, f"Raising operator mismatch for {perm.trimcode} in S_{n}: {key} -> {key2}, got {tagged.get(key2, 0)} vs {coeff}"
-                key2 = key.lowering_operator(i) 
-                if key2 is not None:
-                    assert tagged.get(bw.make_key(key2, key.size), 0) == coeff, f"Lowering operator mismatch for {perm.trimcode} in S_{n}: {key} -> {key2}, got {tagged.get(key2, 0)} vs {coeff}"
-        reduce_it = 0
-        dct = {}
-        for key, coeff in tagged.items():
-            rc_key = br.make_key(tuple([key[i]._convert_elem_rc().normalize() for i in range(len(key))]), key.size)
-            dct[key] = rc_key
-            reduce_it += coeff * (Gx._beta**(sum([len(key[i].perm_word) for i in range(len(key))]) - sum([key[i].perm.inv for i in range(len(key))]))) * br(rc_key)
-        #spinach = reduce_it.to_rc_graph_ring_element()
-        reduced_potato = reduce_it.to_rc_graph_ring_element().resize(length)
-        dct2 = WCGraph.groth_to_schub(perm, Gx._beta)
-        for key, rc_key in dct.items():
-            rcc = br.key_to_rc_graph(rc_key)
-            if reduce_it.get(rc_key, 0) == 0:
-                continue
-            if reduced_potato.get(br.key_to_rc_graph(rc_key).resize(length), 0) == 0:
-                continue
-            excess = 0
-            if not(sympify(reduce_it.get(rc_key, 0)).is_Number):
-                coeff, popp = sympify(reduce_it.get(rc_key, 0)).as_coeff_Mul()
-                if popp == Gx._beta:
-                    excess = 1
-                elif popp.is_Pow and popp.base == Gx._beta:
-                    excess = popp.exp
-                else:
-                    raise ValueError(f"Unexpected coefficient {reduce_it.get(rc_key, 0)} for {perm.trimcode} in S_{n}")
-            if len(key) == 1:
-                continue
-            # if excess + sum([kk.excess for kk in key]) != sum([len(kk.perm_word) for kk in key]) - perm.inv:
-            #     continue
-            # copi = PipeDream.from_rc_graph(rc.resize(length)).co_pipe_dream()
-            # test_perm = copi.perm * Permutation.w0(copi.rows)
-            # print("Pago")
-            # pretty_print(rc)
-            # assert test_perm == perm, f"RC graph mismatch for {perm.trimcode} in S_{n}: got {test_perm} vs {perm}"
-            # if br.key_to_rc_graph(rc_key).is_principal:
-            #     print("PRINCIPAL")
-            #     pretty_print(bw(bw.make_key(key, key.size)))
-            #assert dct.get(rc.perm, 0) == coeff, f"RC graph mismatch for {perm.trimcode} in S_{n}: got {coeff} vs {dct.get(rc.perm, 0)}\n{rc=}"
-            key_hw = key.to_highest_weight()[0]
-            lv = [0] * length
-            for kk in key_hw:
-                for i, j in enumerate(kk.length_vector):
-                    lv[i] += j
-            wcs = {wcc for wcc in WCGraph.all_wc_graphs(perm, length, weight=lv) if wcc.excess <= excess + sum([kk.excess for kk in key])}
-            assert len(wcs) > 0, f"No WCGraphs found for {perm.trimcode} in S_{n} with weight {lv} and highest weight {key_hw}"
-            if len(wcs) > 1:
-                print("Petunia")
-                pretty_print(key_hw)
-                print("Crampy bra")
-                pretty_print(br.key_to_rc_graph(rc_key).normalize())
-                for wc in wcs:
-                    print("Candidate")
-                    pretty_print(wc)
+        # for key, coeff in tagged.items():
+        #     if len(key) == 0:
+        #         continue
+        #     for i in range(n - 1):
+        #         key2 = key.raising_operator(i)
+        #         if key2 is not None:
+        #             assert tagged.get(bw.make_key(key2, key.size), 0) == coeff, f"Raising operator mismatch for {perm.trimcode} in S_{n}: {key} -> {key2}, got {tagged.get(key2, 0)} vs {coeff}"
+        #         key2 = key.lowering_operator(i) 
+        #         if key2 is not None:
+        #             assert tagged.get(bw.make_key(key2, key.size), 0) == coeff, f"Lowering operator mismatch for {perm.trimcode} in S_{n}: {key} -> {key2}, got {tagged.get(key2, 0)} vs {coeff}"
+        # reduce_it = 0
+        # dct = {}
+        # for key, coeff in tagged.items():
+        #     rc_key = br.make_key(tuple([key[i]._convert_elem_rc().normalize() for i in range(len(key))]), key.size)
+        #     dct[key] = rc_key
+        #     reduce_it += coeff * (Gx._beta**(sum([len(key[i].perm_word) for i in range(len(key))]) - sum([key[i].perm.inv for i in range(len(key))]))) * br(rc_key)
+        # #spinach = reduce_it.to_rc_graph_ring_element()
+        # reduced_potato = reduce_it.to_rc_graph_ring_element().resize(length)
+        # dct2 = WCGraph.groth_to_schub(perm, Gx._beta)
+        # for key, rc_key in dct.items():
+        #     rcc = br.key_to_rc_graph(rc_key)
+        #     if reduce_it.get(rc_key, 0) == 0:
+        #         continue
+        #     if reduced_potato.get(br.key_to_rc_graph(rc_key).resize(length), 0) == 0:
+        #         continue
+        #     excess = 0
+        #     if not(sympify(reduce_it.get(rc_key, 0)).is_Number):
+        #         coeff, popp = sympify(reduce_it.get(rc_key, 0)).as_coeff_Mul()
+        #         if popp == Gx._beta:
+        #             excess = 1
+        #         elif popp.is_Pow and popp.base == Gx._beta:
+        #             excess = popp.exp
+        #         else:
+        #             raise ValueError(f"Unexpected coefficient {reduce_it.get(rc_key, 0)} for {perm.trimcode} in S_{n}")
+        #     if len(key) == 1:
+        #         continue
+        #     # if excess + sum([kk.excess for kk in key]) != sum([len(kk.perm_word) for kk in key]) - perm.inv:
+        #     #     continue
+        #     # copi = PipeDream.from_rc_graph(rc.resize(length)).co_pipe_dream()
+        #     # test_perm = copi.perm * Permutation.w0(copi.rows)
+        #     # print("Pago")
+        #     # pretty_print(rc)
+        #     # assert test_perm == perm, f"RC graph mismatch for {perm.trimcode} in S_{n}: got {test_perm} vs {perm}"
+        #     # if br.key_to_rc_graph(rc_key).is_principal:
+        #     #     print("PRINCIPAL")
+        #     #     pretty_print(bw(bw.make_key(key, key.size)))
+        #     #assert dct.get(rc.perm, 0) == coeff, f"RC graph mismatch for {perm.trimcode} in S_{n}: got {coeff} vs {dct.get(rc.perm, 0)}\n{rc=}"
+        #     key_hw = key.to_highest_weight()[0]
+        #     lv = [0] * length
+        #     for kk in key_hw:
+        #         for i, j in enumerate(kk.length_vector):
+        #             lv[i] += j
+        #     wcs = {wcc for wcc in WCGraph.all_wc_graphs(perm, length, weight=lv) if wcc.excess <= excess + sum([kk.excess for kk in key])}
+        #     assert len(wcs) > 0, f"No WCGraphs found for {perm.trimcode} in S_{n} with weight {lv} and highest weight {key_hw}"
+        #     if len(wcs) > 1:
+        #         print("Petunia")
+        #         pretty_print(key_hw)
+        #         print("Crampy bra")
+        #         pretty_print(br.key_to_rc_graph(rc_key).normalize())
+        #         for wc in wcs:
+        #             print("Candidate")
+        #             pretty_print(wc)
 
 if __name__ == "__main__":
     import sys

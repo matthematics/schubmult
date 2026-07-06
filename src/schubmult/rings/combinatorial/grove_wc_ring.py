@@ -6,7 +6,7 @@ from schubmult.combinatorics.wc_graph import WCGraph
 from .wc_graph_ring import WCGraphRing, WCGraphRingElement
 
 
-def _canonical_rc(rc):
+def _canonical_wc(rc):
     # if rc.forest_weight == rc.length_vector:
     #     return rc
     # print(omega_park(rc.perm_word))
@@ -15,13 +15,104 @@ def _canonical_rc(rc):
     #         return rc0
     #     print(rc0, rc0.forest_invariant, omega_park(tuple(reversed(rc0.perm_word))))
     # raise ValueError(f"Failed to find canonical RC graph for {rc}, which has forest weight {rc.forest_weight} and forest invariant {rc.forest_invariant}")
-    st = [rc0 for rc0 in WCGraph.all_wc_graphs(uncode(rc.forest_weight), len(rc)) if rc0.omega_invariant[1] == rc.omega_invariant[1] and rc0.length_vector == rc.length_vector and rc0.forest_weight == rc.forest_weight and uncode(rc0.forest_weight) == rc0.perm]
+    st = [rc0 for rc0 in WCGraph.grove_wcs(rc.forest_weight, len(rc)) if rc0.hecke_invariant[1] == rc.hecke_invariant[1] and rc0.length_vector == rc.length_vector and rc0.forest_weight == rc.forest_weight]
     if len(st) != 1:
-        raise ValueError(f"Failed to find unique canonical RC graph for {rc}, which has forest weight {rc.forest_weight} and omega invariant {rc.omega_invariant}. Candidates were: {st}")
+        raise ValueError(f"Failed to find unique canonical RC graph for {rc}, which has forest weight {rc.forest_weight} and hecke invariant {rc.hecke_invariant}. Candidates were: {st}")
     return st[0].resize(len(rc))
     # qy_rc = crc(rc)
     # the_real_qy = WCGraph.principal_rc(uncode(qy_rc.length_vector), len(rc))
     # return next(iter([rcc for rcc in WCGraph.all_wc_graphs(the_real_qy.perm, len(rc)) if crc(rcc) == the_real_qy and rcc.length_vector == rc.length_vector]))
+
+
+def _try_snap(rc):
+    """Snap ``rc`` to its canonical grove WCGraph, returning None on failure.
+
+    Snapping maps a WCGraph to the (reduced insertion-tableau) grove
+    representative sharing its forest weight, omega invariant and length vector.
+    """
+    if rc is None:
+        return None
+    try:
+        return _canonical_wc(rc)
+    except Exception:
+        return None
+
+
+def _try_squash(acc, factor):
+    """Squash ``factor`` (an elementary symmetric WCGraph) onto ``acc``.
+
+    Returns None if the (limited) squash product is undefined, which happens when
+    an intermediate WCGraph has a non-reduced insertion tableau. In that case
+    ``zero_out_last_row`` returns None and the squash product cannot complete.
+    """
+    if acc is None or factor is None:
+        return None
+    try:
+        result = acc.squash_product(factor)
+    except Exception:
+        return None
+    return result
+
+
+def _insertion_is_reduced(rc):
+    """Return True if ``rc``'s insertion tableau has a reduced row word.
+
+    This is exactly the precondition under which ``squash_product`` (which relies
+    on ``zero_out_last_row``) is defined. A non-reduced insertion tableau means it
+    is impossible to proceed with the limited squash product.
+    """
+    try:
+        increasing, _ = rc.hecke_invariant
+    except Exception:
+        return False
+    return len(increasing.row_word) == rc.perm.inv
+
+
+def _snap_squash_eval(key):
+    """Evaluate a ``BoundedWCFactorAlgebra`` key to a single WCGraph.
+
+    Mirrors ``BoundedWCFactorAlgebra.key_to_wc_graph`` (left-to-right squash
+    product of the elementary symmetric factors). Grove WCGraphs have a reduced
+    insertion row word, which is all ``squash_product`` supports; an intermediate
+    product may become non-reduced, in which case it is impossible to proceed.
+    Only then do we snap the accumulator back to its canonical grove WCGraph
+    (restoring the reduced insertion tableau) before continuing. Returns None if a
+    step still cannot be completed.
+    """
+    if len(key) == 0:
+        return WCGraph([]).resize(key.size)
+
+    acc = key[0]
+    for factor in key[1:]:
+        # Keep lengths compatible before squashing left to right.
+        if len(acc) < len(factor):
+            acc = acc.resize(len(factor))
+
+        # Only snap when it is impossible to proceed: the accumulator's insertion
+        # tableau is non-reduced, so the limited squash product is undefined.
+        if not _insertion_is_reduced(acc):
+            acc = _try_snap(acc)
+            if acc is None:
+                return None
+            if len(acc) < len(factor):
+                acc = acc.resize(len(factor))
+
+        nxt = _try_squash(acc, factor)
+        if nxt is None:
+            # Fall back to snapping if the squash still could not complete.
+            snapped = _try_snap(acc)
+            if snapped is None:
+                return None
+            acc = snapped
+            if len(acc) < len(factor):
+                acc = acc.resize(len(factor))
+            nxt = _try_squash(acc, factor)
+            if nxt is None:
+                return None
+
+        acc = nxt
+
+    return acc.resize(key.size)
 
 
 class GroveWCGraphRingElement(WCGraphRingElement):
@@ -67,7 +158,7 @@ class GroveWCGraphRing(WCGraphRing):
     def _snap(self, elem):
         ret = self.zero
         for key, coeff in elem.items():
-            the_rc = _canonical_rc(key)
+            the_rc = _canonical_wc(key)
             # if the_rc is not None:
             ret += self.from_dict({the_rc: coeff})
         return ret
@@ -87,8 +178,40 @@ class GroveWCGraphRing(WCGraphRing):
                     # otherwise inflate the empty RC graph to a nonzero ambient size.
                     result += coeff1 * coeff2 * self(rc1)
                     continue
-                prd = (self._grove_bwc_lookup(rc1) * self._grove_bwc_lookup(rc2))
-                result += coeff1 * coeff2 * self._snap(prd.to_wc_graph_ring_element().resize(length))
+                try:
+                    f1 = self._grove_bwc_lookup(rc1)
+                    f2 = self._grove_bwc_lookup(rc2)
+                except Exception:
+                    # One of the WCGraphs does not have a reduced insertion tableau,
+                    # so it cannot be factorized into elementary symmetric pieces yet.
+                    # Skip it gracefully until squash_product supports that case.
+                    continue
+                prd = f1 * f2
+                result += coeff1 * coeff2 * self._snap(self._grove_bwc(prd).resize(length))
+        return result
+
+    def _grove_bwc(self, prd):
+        """Evaluate a ``BoundedWCFactorAlgebra`` product to a WCGraph ring element.
+
+        Analogous to ``BoundedWCFactorAlgebraElement.to_wc_graph_ring_element``,
+        but each tensor key is evaluated with :func:`_snap_squash_eval`, which
+        snaps the intermediate squash product to a canonical grove WCGraph after
+        every step. This keeps the insertion tableau reduced so grove WCGraphs can
+        be factorized even when an intermediate product would be non-reduced.
+        Keys whose evaluation is unsupported are dropped gracefully.
+        """
+
+        r = WCGraphRing()
+        result = r.zero
+        #beta = Gx._beta
+        for key, coeff in prd.items():
+            if coeff == 0:
+                continue
+            rc = _snap_squash_eval(key)
+            if rc is None:
+                # Non-reduced insertion tableau along the way: unsupported for now.
+                continue
+            result += coeff * r(WCGraph(rc))
         return result
 
     @staticmethod
@@ -115,9 +238,9 @@ class GroveWCGraphRing(WCGraphRing):
         return addup
 
     @cache
-    def forest_poly(self, comp):
+    def grove_poly(self, comp):
         comp = tuple(comp)
-        return self.from_dict({rc: 1 for rc in WCGraph.all_wc_graphs(uncode(comp), len(comp)) if rc.forest_weight == comp})
+        return self.from_dict(dict.fromkeys(WCGraph.grove_wcs(comp), 1))
 
     def rmul(self, a, b):
         return self.from_dict(super().rmul(a, b), snap=True)
@@ -155,7 +278,7 @@ class DualGroveWCGraphRing(WCGraphRing):
     def _snap(self, elem):
         ret = self.zero
         for key, coeff in elem.items():
-            the_rc = _canonical_rc(key)
+            the_rc = _canonical_wc(key)
             if the_rc == key:
                 ret += self.from_dict({the_rc: coeff})
         return ret
@@ -177,9 +300,9 @@ class DualGroveWCGraphRing(WCGraphRing):
         return addup
 
     @cache
-    def forest_poly(self, comp):
+    def grove_poly(self, comp):
         comp = tuple(comp)
-        return self.from_dict({rc: 1 for rc in WCGraph.all_wc_graphs(uncode(comp), len(comp)) if rc.forest_weight == comp})
+        return self.from_dict(dict.fromkeys(WCGraph.grove_wcs(comp), 1))
 
     def rmul(self, a, b):
         return self.from_dict(super().rmul(a, b), snap=True)

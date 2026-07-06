@@ -408,6 +408,26 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         compat_seq = [min(v) for v in seq]
         return RCGraph.from_reduced_compatible(red_word, compat_seq, length=len(self))
 
+    # def to_word_compatible_set_sequence(self):
+    #     from .nilplactic import NilPlactic
+    #     increasing, recording = self.hecke_invariant
+
+    #     hw_recording, raise_seq = recording.to_highest_weight(length=len(self))
+
+    #     hw_rc = NilPlactic.from_word(tuple(reversed(increasing.row_word))).hw_rc(len(self))
+    #     word = hw_rc.perm_word
+    #     hw_compat = []
+    #     for i in range(len(hw_recording)):
+    #         hw_compat.extend(hw_recording[i])
+    #     hw_wc = WCGraph.from_word
+
+    def _snap_min(self):
+        from .increasing_tableau import IncreasingTableau
+        from .set_valued_tableau import SetValuedTableau
+        increasing_tab, recording_tab = self.hecke_invariant
+        recording_tab = SetValuedTableau({coord: (min(labels),) for coord, labels in recording_tab.cells.items()})
+        return WCGraph.from_word_compatible(*tuple(reversed(IncreasingTableau.hecke_column_uninsert_rsk(increasing_tab, recording_tab))))
+
     @classmethod
     def from_word_compatible(cls, word, seq, length=None):
         if length is None:
@@ -690,7 +710,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         if self.perm.inv == 0:
             return rc
         rowmax = [max(self[i], default=0) for i in range(len(self))]
-        N = max(rowmax)
+        N = max(rowmax) + 1
         shift_rc = self._rebuild([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
         rc_self = self.resize(len(rc) + N)
         return self._rebuild([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
@@ -713,6 +733,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         if len(increasing.row_word) != self.perm.inv:
             #raise NotImplementedError("zero_out_last_row is only implemented for core-reduced WCGraphs")
             print("Warning: zero_out_last_row is only implemented for core-reduced WCGraphs; returning None")
+            print(f"DEBUG: {self=}, {increasing=}, {recording=}")
             return None
         hw_wc, raise_seq = self.to_highest_weight()
         #corresponding_rc = NilPlactic.from_word(*tuple(reversed(increasing.row_word))).to_rc_graph()

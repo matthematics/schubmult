@@ -13,7 +13,6 @@ from schubmult.symbolic import Expr, S, prod
 if TYPE_CHECKING:
     pass
 
-# from schubmult.utils.bitfield_row import BitfieldRow
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import add_perm_dict, find_reduced_fail, is_reduced
 
@@ -46,7 +45,6 @@ class RCGraph(WCGraph, CrystalGraph):
     def left_squash(self, other_rc):
         from .anti_rc_graph import AntiRCGraph
 
-        # assert grass_rc.perm.inv == 0 or grass_rc.perm.descents() == {len(self) - 1}, "Left squash only defined for full Grassmannian RC graphs"
         assert len(other_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
 
         a_other = AntiRCGraph.from_rc_graph(other_rc)
@@ -59,30 +57,15 @@ class RCGraph(WCGraph, CrystalGraph):
     @cache
     def squash_decomp(self):
         """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
-        # if len(self.perm.trimcode) < len(self):
-        #     return self, RCGraph([()]).resize(len(self))
-        # if self.perm.descents() == {len(self) - 1}:
-        #     return RCGraph([()]).resize(len(self)), self
         from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
 
         n = len(self)
         rc = self
         grass_descent = n
-        # if grass_descent == 0 and rc.perm.inv > 1:
-        #     rc_ret = RCGraph([(1,)])
-        #     grass_ret = RCGraph([self[0][1:]]).normal
-        #     return rc_ret, grass_ret
 
-        # hw, raise_seq = self.to_highest_weight()
-        # if len(self.perm) - 1 <= n:
-        #     return self, RCGraph([()]).resize(n)
         hw, raise_seq = rc.to_highest_weight()
         perm = self.perm
         perm_grass, perm_base = perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
-        # if perm_grass.inv == 0:
-        #     return self, RCGraph([()]).resize(n)
-        # if perm_base.inv == 0:
-        #     return self, RCGraph([()]).resize(n)
 
         def decomp_hw():
             stack = [hw]
@@ -112,40 +95,11 @@ class RCGraph(WCGraph, CrystalGraph):
             upper_rc = RCGraph([tuple([a for a in row if a >= grass_descent]) for row in tuple(rc_max)]).resize(len(rc_max))
 
             upper_rc = upper_rc.vertical_cut(grass_descent)[0]
-            # print(f"Lower RC: {lower_rc}, perm={lower_rc.perm}, inv={lower_rc.perm.inv}")
             return lower_rc, upper_rc
 
         base_hw, grass = decomp_hw()
         tensor = CrystalGraphTensor(base_hw, grass).reverse_raise_seq(raise_seq)
-        # print(f"Tensor factors: {tensor.factors}")
         return tensor.factors
-        # n = len(self)
-        # working_set = {self}
-        # for _ in range(n + 1):
-        #     next_set = set()
-        #     for working_rc in working_set:
-        #         up_rcs = working_rc.right_zero_act()
-        #         next_set.update(up_rcs)
-        #     working_set = next_set
-        # the_rcs = [(rc, rc.perm.reduce(n)) for rc in working_set if rc.perm.is_reducible]
-        # the_rcs_panda = [rc for (rc, tup) in the_rcs if tup is not None and tup[1].descents() == {n-1}]
-        # working_rc = the_rcs_panda[0]
-        # if len(the_rcs_panda) != 1:
-        #     raise ValueError(f"Failed to find unique squash decomposition for {self}, got {the_rcs}")
-        # ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
-        # grass_rc = RCGraph([()]).resize(len(working_rc))
-        # for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
-        #     if not ret_rc.has_element(row, col):
-        #         grass_rc = grass_rc.toggle_ref_at(row, col)
-        # # print("The gasga")
-        # # print(grass_rc)
-        # grass_rc = grass_rc.vertical_cut(n)[0]
-        # assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
-        # assert ret_rc.squash_product(grass_rc) == self, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
-        # if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
-        #     if len(ret_rc.perm) <= n:
-        #         return ret_rc, grass_rc
-        # raise ValueError(f"Failed to find squash decomposition for {self}, got {the_rcs}")
 
     def left_squash_decomp(self):
         """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
@@ -255,14 +209,9 @@ class RCGraph(WCGraph, CrystalGraph):
         if len(self) < last_desc:
             rc = self.normalize()
             return rc.little_bump_desc()
-        # if len(self[last_desc - 1]) != 0:
-        #     raise ValueError("Last row not empty")
         rc, row = self.exchange_property(last_desc, return_row=True)
         rc = rc.toggle_ref_at(last_desc, 1)
         return rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
-        # if max(rc.perm.descents(), default=-1) + 1 < last_desc:
-        #     return rc.resize(last_desc - 1)
-        # return rc.little_bump_zero().resize(last_desc - 1)
 
     def inversions(self):
         return tuple([self.left_to_right_inversion(i) for i in range(self.perm.inv)])
@@ -279,19 +228,12 @@ class RCGraph(WCGraph, CrystalGraph):
         newlen = len(trc)
         oldlen = len(self.perm.trimcode)
         selfrc = self.to_highest_weight()[0]
-        # if 2 * newlen < oldlen:
-        #     # print("Why is this happening?")
-        #     # print(f"{2*newlen=}, {oldlen=}, {self.perm.trimcode=} {trc=}")
         selfrc = selfrc.shiftup(2 * newlen - oldlen).normalize()
 
-        # if self.perm.is_vexillary:
-        #     return selfrc
         vex_rc = selfrc
         assert vex_rc.perm.inv == self.perm.inv
         while not vex_rc.perm.is_vexillary:
             if len(vex_rc[-1]) == 0:
-                # if len(vex_rc.perm.trimcode) < len(vex_rc):
-                #     vex_rc = RCGraph(vex_rc.shiftup(len(vex_rc) - len(vex_rc.perm.trimcode)))
                 vex_rc = vex_rc.zero_out_last_row()
             else:
                 vex_rc = vex_rc.resize(len(vex_rc) + 1)
@@ -414,41 +356,12 @@ class RCGraph(WCGraph, CrystalGraph):
                         chute_moves.add(((row_num + 1, poncho), end))
         return chute_moves
 
-    # @property
-    # def weight_perm(self):
-    #     lw_vector = self.to_lowest_weight()[0].length_vector
-    #     weight_perm = Permutation.sorting_perm(lw_vector, reverse=True)
-    #     assert weight_perm.right_act(lw_vector) == self.to_highest_weight()[0].length_vector, f"Failed on {self}, {lw_vector}, {weight_perm}, {weight_perm.right_act(lw_vector)}, {self.to_highest_weight()[0].length_vector}"
-    #     return weight_perm
-    #     # rc = self
-    #     # raise_seq = []
-    #     # while True:
-    #     #     if len(rc) == 0 or len(rc[-1]) == 0:
-    #     #         break
-    #     #     row_num = len(rc)
-    #     #     col = max(rc[-1])
-    #     #     a, b = rc.right_root_at(row_num, col)
-    #     #     if a < b:
-    #     #         break
-    #     #     rc = rc.toggle_ref_at(row_num, col)
-    #     #     raise_seq.append(row_num)
-    #     # return rc, raise_seq
     def to_lowest_weight_demaz(self):
         rc = self.to_highest_weight()[0]
         raise_seq = []
         is_any = True
         while is_any:
-            # if len(rc) == 0 or len(rc[-1]) == 0:
-            #     break
-            # row_num = len(rc)
-            # col = max(rc[-1])
-            # a, b = rc.right_root_at(row_num, col)
-            # if a < b:
-            #     break
-            # rc = rc.toggle_ref_at(row_num, col)
-            # raise_seq.append(row_num)
             is_any = False
-            # for i in sorted((~self.perm).descents(zero_indexed=False)):
             for i in range(len(self) - 1, 0, -1):
                 rc2_new = rc.lowering_operator(i)
                 if rc2_new is not None:
@@ -570,10 +483,6 @@ class RCGraph(WCGraph, CrystalGraph):
             last_elem = i
             wrd.append(last_elem)
         return wrd
-
-    def lowest_weight_perm(self):
-        perms = [Permutation.ref_product(*RCGraph.raise_seq_word(rc0.to_highest_weight()[1])) for rc0 in RCGraph.all_lw_rcs(self.perm, len(self))]
-        return min(perms, key=lambda p: p.inv)
 
     @property
     def grass(self):
@@ -699,75 +608,17 @@ class RCGraph(WCGraph, CrystalGraph):
     @cache
     def _extremal_weight(cls, hw_rc):
         import numpy as np
-
-        # hw_rc = nilp.hw_rc(len(nilp.perm.trimcode))
-        # min_vec = hw_rc.length_vector
-        # min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
         properly_sortable = [rc for rc in hw_rc.full_crystal if rc.sorted_length_vector == hw_rc.length_vector]
         min_vec = min([(i, np.cumsum(properly_sortable[i].length_vector).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
-        # for rc in properly_sortable:
-        #     good = True
-        #     prefix_sums = np.cumsum(rc.length_vector).tolist()
-        #     for j in range(1, len(rc.length_vector)):
-        #         if prefix_sums[j - 1] > min_vec_prefix_sums[j - 1]:
-        #             good = False
-        #             break
-        #     if good:
-        #         min_vec = rc.length_vector
-        #         min_vec_prefix_sums = prefix_sums
         return properly_sortable[min_vec].length_vector
-
-    # @cached_property
-    # def full_crystal(self):
-    #     return super().full_crystal
 
     @property
     def extremal_weight(self):
-        # from schubmult.utils.tuple_utils import pad_tuple
         return RCGraph._extremal_weight(self.to_highest_weight()[0])
-        # hw_vec = self.to_highest_weight()[0].length_vector
-        # # search_space = {rc for rc in self.full_crystal if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
-        # # for rc in sea
-        # # @cache
-        # # def dom_key(comp):
-        # #     return tuple([sum(comp[:i]) for i in range(1, len(comp))])
-        # # return min(search_space, key=lambda rc: dom_key(rc.length_vector)).length_vector
-        # min_vec = self.length_vector
-        # min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
-        # for rc in self.full_crystal:
-        #     if tuple(sorted(rc.length_vector, reverse=True)) != hw_vec:
-        #         continue
-        #     good = True
-        #     for j in range(1, len(rc.length_vector)):
-        #         if sum(rc.length_vector[:j]) > min_vec_prefix_sums[j - 1]:
-        #             good = False
-        #             break
-        #     if good:
-        #         min_vec = rc.length_vector
-        #         min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
-        # return min_vec
-        # #return min(RCGraph.all_lw_rcs(self.perm, len(self)), key=lambda rc: dom_key(rc.length_vector)).length_vector
 
     @property
     def forest_invariant(self):
-        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
-
-        word = list(reversed(self.perm_word))
-
-        def word_to_pair_labeled(word):
-            counts = {}
-            out = []
-            for a in word:
-                aa = int(a)
-                counts[aa] = counts.get(aa, 0) + 1
-                out.append(letterpair(aa, counts[aa]))
-            return tuple(out)
-
-        return omega_insertion(word_to_pair_labeled(word))[0]
-
-    @classmethod
-    def from_omega_invariant(cls, omega_invariant):
-        pass
+        return self.omega_invariant[0]
 
     @property
     @cache

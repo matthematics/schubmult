@@ -671,7 +671,9 @@
 \section{WC graphs}
 
 \begin{definition}
-A \emph{WC graph} is simply a finite subset $W\subseteq \mathbb{N}\times \mathbb{N}$ with no additional restrictions. We define the \emph{weight} of a WC graph $W$ to be the sequence $\wtt(W) = (i_1,\ldots,i_n)$, where $i_j$ is the number of elements of $W$ in row $j$. We define the \emph{permutation} of a WC graph $W$ to be the permutation
+A \emph{WC graph} is simply a finite subset $W\subseteq \mathbb{N}\times \mathbb{N}$ with no additional restrictions. We impose a total ordering on these pairs by declaring that $(a, b) \leq (c, d)$ if $a < c$ or $a = c$ and $b \geq d$. We define the \emph{weight} of a WC graph $W$ to be the sequence 
+$$\wtt(W) = (i_1,\ldots,i_n)$$ 
+where $i_j$ is the number of elements of $W$ in row $j$. We define the \emph{permutation} of a WC graph $W$ to be the permutation
 $$\wof{W} = s(w_1)\bullet \cdots \bullet s(w_n)$$ 
 where
 $$w_i = (a_i, b_i)$$
@@ -679,8 +681,7 @@ is the $i$th element in the imposed ordering, and
 $$s(a_i,b_i) = s_{a_i + b_i - 1}$$
 with $\bullet$ being the Hecke product. The \emph{word} of $W$ is
 $$(s(w_1),\ldots,s(w_n))$$
-and
-$$\wtt_i(W) = \#\{(a,b)\in W\mid a=i\}$$
+
 Define $\WC(w)$ to be the set of all WC graphs $W$ such that $\wof{W} = w$.
 \end{definition}
 

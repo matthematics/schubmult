@@ -52,7 +52,10 @@ class WCGraphRingElement(SchubertMonomialRingElement):
     def zero_out_last_row(self):
         res = self.ring.zero
         for wc_graph, coeff in self.items():
-            res += coeff * self.ring(wc_graph.zero_out_last_row())
+            if len(wc_graph) == 0:
+                res += coeff * self.ring(wc_graph)
+            elif len(wc_graph[-1]) == 0:
+                res += coeff * self.ring(wc_graph.zero_out_last_row())
         return res
 
     def resize(self, n):
