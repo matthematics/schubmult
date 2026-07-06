@@ -15,22 +15,26 @@ from schubmult.symbolic import S
 
 def _tensor_to_rcs(weight_tensor, descents):
     from schubmult import uncode
+
     rcs = []
     for i, desc in enumerate(descents):
         wt = len(weight_tensor[i])
         weight = [0] * desc
         for w in weight_tensor[i]:
             weight[w - 1] = 1
-        elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0]*(desc - wt) + [1] * wt), desc, weight=tuple(weight))))
+        elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (desc - wt) + [1] * wt), desc, weight=tuple(weight))))
         rcs.append(elem_rc)
     return CrystalGraphTensor(*rcs)
 
+
 def _all_tensors(weights, descents):
     from schubmult.utils.schub_lib import hw_elementary_tensors
+
     hw_tensors = hw_elementary_tensors(weights, descents)
     for hw_tensor_weight in hw_tensors:
         hw_tensor = _tensor_to_rcs(hw_tensor_weight, descents)
         yield from hw_tensor.full_crystal
+
 
 def _squash_it_up(tup):
     ret = RCGraph([()])
@@ -38,22 +42,72 @@ def _squash_it_up(tup):
         ret = ret.resize(len(rc)).squash_product(rc)
     return ret
 
+
+def _is_row_root(root, k):
+    if root[0] < k and root[1] >= k:
+        return True
+    return False
+
+
+@cache
 def _elem_factor_from_rc(rc):
     from schubmult.combinatorics.permutation import Permutation
+    from schubmult.utils.perm_utils import has_bruhat_descent
+
     if rc.perm.inv == 0:
-        return {}
+        return ()
+    if rc.is_elem_sym:
+        return CrystalGraphTensor(rc.normalize())
     n = len(rc.perm)
+    k = n - 1
     weight = tuple(reversed([n - 1 - j - w for j, w in enumerate((rc.perm * Permutation.w0(n)).pad_code(n - 1))]))
-    hw_rc, raise_seq = rc.to_highest_weight()
-    good_tensor = None
-    for tensor in _all_tensors(weight, tuple(range(1,n))):
-        if _squash_it_up(tensor).resize(len(hw_rc)) == hw_rc:
-            good_tensor = tensor
-            break
-    if good_tensor is None:
-        raise ValueError(f"Could not find good tensor for RC graph {rc}")
-    to_lower = CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)
-    return to_lower
+    # hw_rc, raise_seq = rc.to_highest_weight()
+    # good_tensor = None
+    # for tensor in _all_tensors(weight, tuple(range(1,n))):
+    #     if _squash_it_up(tensor).resize(len(hw_rc)) == hw_rc:
+    #         good_tensor = tensor
+    #         break
+    degree = weight[-1]
+    if degree == 0:
+        raise ValueError(f"This shouldn't happen {rc=} {degree=}")
+    stack = [[[], rc]]
+    while stack:
+        spot_list, test_rc = stack.pop()
+        if len(spot_list) == degree:
+            weight = [0] * k
+            for r, c in spot_list:
+                weight[r - 1] = 1
+            elem_sym_rc = next(iter(RCGraph.elem_sym_rcs(degree, k, weight=tuple(weight))))
+            if test_rc.resize(k).squash_product(elem_sym_rc).resize(len(rc)) == rc:
+                return CrystalGraphTensor(*_elem_factor_from_rc(test_rc), elem_sym_rc)
+            continue
+        for i in range(k):
+            for j in range(k, len(test_rc.perm)):
+                if has_bruhat_descent(test_rc.perm, i, j):
+                    row, col = test_rc.loc_of_inversion(i + 1, j + 1)
+                    if row in spot_list:
+                        continue
+                    new_rc = test_rc.toggle_ref_at(row, col)
+                    stack.append([[*spot_list, (row, col)], new_rc])
+
+    # for the_spots in itertools.combinations(range(1, len(hw_rc) + 1), degree):
+    #     test_rc = hw_rc
+    #     rows = the_spots
+    #     good = True
+    #     for spot in the_spots:
+    #         column =
+
+    #     weight = [0] * k
+    #     for r in rows:
+    #         weight[r - 1] = 1
+    #     elem_sym_rc = next(iter(RCGraph.elem_sym_rcs(degree, k, weight=tuple(weight)))).resize(len(rc))
+    #     if test_rc.resize(k).squash_product(elem_sym_rc).resize(len(hw_rc)) == hw_rc:
+    #         tensor = CrystalGraphTensor(test_rc, elem_sym_rc).reverse_raise_seq(raise_seq)
+    #         return CrystalGraphTensor(*_elem_factor_from_rc(tensor.factors[0]), tensor.factors[1])
+    # if good_tensor is None:
+    raise ValueError(f"Could not find good tensor for RC graph {rc=} {degree=} {n - 1=}")
+    # to_lower = CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)
+    # return to_lower
 
 
 def _is_full_grassmannian_rc(rc: RCGraph) -> bool:
@@ -77,57 +131,6 @@ def _last_descent_size(rc: RCGraph) -> int:
     if len(descs) == 0:
         return 0
     return max(descs) + 1
-
-
-@cache
-def _max_grass_elem_peel(rc):
-    """Try to peel a wide grassmannian RC graph into a smaller piece + elementary symmetric piece."""
-    from schubmult import uncode
-
-    # if len(rc) == 1:
-    #     # special case
-    #     if rc.perm.inv <= 1:
-    #         return rc, RCGraph([])
-    #     return RCGraph([rc[0][1:]]), RCGraph([(2,),()])
-    perm = rc.perm
-    r = RCGraphRing()
-    # if rc.perm.inv == 1:
-    if len(rc.perm) - 1 <= len(rc):
-        return rc, RCGraph([])
-    the_mully = r(rc) * (r.monomial(*([0] * (len(perm)))))
-    length = len(rc) + 1
-    max_found = -1
-    the_min = None
-    the_max = None
-    for rcc in the_mully:
-        new_rcc = RCGraph(rcc)
-        rows = []
-        maxxy = max(new_rcc.perm.descents()) + 1
-        while True:
-            if maxxy < 1:
-                break
-            if new_rcc.perm[maxxy - 1] > new_rcc.perm[maxxy]:
-                new_rcc_test, row = new_rcc.exchange_property(maxxy, return_row=True)
-                if row in rows:
-                    break
-                new_rcc = new_rcc_test
-                rows.append(row)
-                maxxy -= 1
-            else:
-                break
-        new_rcc = new_rcc.normalize()
-        if len(rows) > max_found and _is_full_grassmannian_rc(new_rcc) and len(new_rcc.inv) < len(rc):
-            # length = max(max(rows),min(len(rc.perm.trimcode) + 1, length))
-            weight = [0] * length
-            for row in rows:
-                weight[row - 1] += 1
-            elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (length - len(rows)) + [1] * len(rows)), length, weight=tuple(weight))))
-            # if new_rcc.resize(len(elem_rc)).squash_product(elem_rc).normalize() == rc:
-            the_min, the_max = new_rcc, elem_rc
-            max_found = elem_rc.inv
-    # if the_min is None:
-    #     return _max_grass_elem_peel(rc.extend(1))
-    return the_min, the_max
 
 
 def _build_elem_from_key(key):
@@ -181,8 +184,6 @@ def _build_schur_elem_from_key(key):
         partition = (0,) * size
     elem_key = (tuple(build_elem_key), partition)
     return elem_key
-
-
 
 
 class BoundedRCFactorPrintingTerm(PrintingTerm):
@@ -240,7 +241,15 @@ class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
         return result
 
     def _to_top_forest_weight_graph(self, rc):
-        return next(iter([rc2 for rc2 in RCGraph.all_forest_rcs(rc.forest_weight, weight=rc.length_vector) if rc2.forest_weight == rc.forest_weight and rc2.omega_invariant[1] == rc.omega_invariant[1] and rc2.perm.pad_code(len(rc2)) == rc2.forest_weight]))
+        return next(
+            iter(
+                [
+                    rc2
+                    for rc2 in RCGraph.all_forest_rcs(rc.forest_weight, weight=rc.length_vector)
+                    if rc2.forest_weight == rc.forest_weight and rc2.omega_invariant[1] == rc.omega_invariant[1] and rc2.perm.pad_code(len(rc2)) == rc2.forest_weight
+                ],
+            ),
+        )
 
     def prune(self):
         """Merge terms whose evaluated RC graphs share forest/omega invariants.
@@ -257,7 +266,7 @@ class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
             if coeff == 0:
                 continue
             rc = self._to_top_forest_weight_graph(self.ring.key_to_rc_graph(key))
-            signature = rc#(rc.forest_weight, rc.length_vector, rc.omega_invariant[1])
+            signature = rc  # (rc.forest_weight, rc.length_vector, rc.omega_invariant[1])
             representative = representative_for_signature.get(signature)
             if representative is None:
                 representative_for_signature[signature] = key
@@ -386,14 +395,14 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 elem += coeff * self(new_key)
         return elem
 
-
     def full_schub_elem(self, perm, size):
         from schubmult.rings.polynomial_algebra import ElemSymPolyBasis, Schub
+
         schub_elem = Schub(perm, size).change_basis(ElemSymPolyBasis)
         schub = self.zero
         for (comp, _), coeff in schub_elem.items():
             term = self(self.make_key((), size))
-            #grass_part = self.make_key((), size)
+            # grass_part = self.make_key((), size)
             for index, part in enumerate(comp, start=1):
                 if index < size:
                     term *= self.elem_sym(part, index, size=size)
@@ -482,8 +491,6 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         return hash(("BoundedRCFactorAlgebra", self._ID))
 
     def elem_sym(self, p, k, size):
-
-
         from schubmult import uncode
 
         # size = k if size is None else size
@@ -613,7 +620,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             index = min([i for i, rc in enumerate(normalized_key) if len(rc) > len(elem_sym_rc)], default=len(normalized_key))
             return [*normalized_key[:index], elem_sym_rc, *normalized_key[index:]]
         index = next(i for i, rc in enumerate(normalized_key) if len(rc) == len(elem_sym_rc))
-        tensor = CrystalGraphTensor(*normalized_key[:index + 1], elem_sym_rc)
+        tensor = CrystalGraphTensor(*normalized_key[: index + 1], elem_sym_rc)
         hw, raise_seq = tensor.to_highest_weight()
         left_part, the_elem_sym = hw.factors[:-1], hw.factors[-1]
         squashed_elem = left_part[-1].squash_product(the_elem_sym)
@@ -621,7 +628,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         base, overflow = squashed_elem.resize(len(elem_sym_rc) + 1).squash_decomp()
         base = base.normalize()
         overflow = overflow.normalize()
-        build_back_up = self.make_key(left_part, size)#, base, *normalized_key[index + 1 :]
+        build_back_up = self.make_key(left_part, size)  # , base, *normalized_key[index + 1 :]
         if not _is_full_grassmannian_rc(base) or len(base) - 1 > len(base):
             base0 = base
             addup_list = []
@@ -639,30 +646,30 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         build_back_up = self.make_key(self._merge_elem_sym(build_back_up, overflow), size)
         back_to_key = self.make_key(build_back_up.reverse_raise_seq(raise_seq), size)
         build_back_up = back_to_key
-        for rc in normalized_key[index + 1:]:
+        for rc in normalized_key[index + 1 :]:
             build_back_up = self.make_key(self._merge_elem_sym(build_back_up, rc), size)
         #     full_overflow = addup_list
         # else:
         #     full_overflow = [base, overflow]
-            #raise ValueError(f"Unexpected non full Grassmannian base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
-            # base0 = base
-            # #full_overflow = [overflow]
+        # raise ValueError(f"Unexpected non full Grassmannian base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+        # base0 = base
+        # #full_overflow = [overflow]
 
-            # while len(overflow) <= size and base0.perm.inv > 0 and (not _is_full_grassmannian_rc(base0) or len(base0.perm) - 1 > len(base0)):
-            #     base0, overflow = base0.squash_decomp()
-            #     base0 = base0.normalize()
-            #     overflow = overflow.normalize()
-            #     # merge partial key
-            #     full_overflow = [overflow, *full_overflow]
-            #     if overflow.perm.inv == 0:
-            #         raise ValueError(f"Unexpected identity overflow during merging elem_sym: {overflow} from {base} and {normalized_key[index]} in key of size {size}")
-            # base = base0
+        # while len(overflow) <= size and base0.perm.inv > 0 and (not _is_full_grassmannian_rc(base0) or len(base0.perm) - 1 > len(base0)):
+        #     base0, overflow = base0.squash_decomp()
+        #     base0 = base0.normalize()
+        #     overflow = overflow.normalize()
+        #     # merge partial key
+        #     full_overflow = [overflow, *full_overflow]
+        #     if overflow.perm.inv == 0:
+        #         raise ValueError(f"Unexpected identity overflow during merging elem_sym: {overflow} from {base} and {normalized_key[index]} in key of size {size}")
+        # base = base0
         # if base.perm.inv == 0:
         #     raise ValueError(f"Unexpected identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
         # if len(base.perm) - 1 > len(base):
         #     raise ValueError(f"Unexpected non-identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
-        #mix_index = min([i for i, rc in enumerate(normalized_key) if len(rc) > len(base)], default=len(normalized_key))
-        #full_overflow = [base, *full_overflow]
+        # mix_index = min([i for i, rc in enumerate(normalized_key) if len(rc) > len(base)], default=len(normalized_key))
+        # full_overflow = [base, *full_overflow]
         # ret_key = [*normalized_key[:index]]
         # #the_rest = []
         # for mixer in [base, *normalized_key[index+1:]]:
@@ -675,20 +682,17 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         # while len(full_overflow) > 0:
         #     overflow = full_overflow.pop(0)
         #     ret_key = self._merge_elem_sym(self.make_key(ret_key, size), overflow)
-            # if index < len(normalized_key) - 1:
-            #     if len(normalized_key[index + 1]) == len(overflow):
-            #         ret_key = self.make_key([*self._merge_elem_sym(ret_key, overflow)], size)
-            #         #, size), normalized_key[index + 1]), *normalized_key[index + 2:]]
-            #     return (*normalized_key[:index], base, overflow, *normalized_key[index + 1 :])
-            # return (*normalized_key[:index], base, overflow)
+        # if index < len(normalized_key) - 1:
+        #     if len(normalized_key[index + 1]) == len(overflow):
+        #         ret_key = self.make_key([*self._merge_elem_sym(ret_key, overflow)], size)
+        #         #, size), normalized_key[index + 1]), *normalized_key[index + 2:]]
+        #     return (*normalized_key[:index], base, overflow, *normalized_key[index + 1 :])
+        # return (*normalized_key[:index], base, overflow)
         ret_key = list(build_back_up)
         return ret_key
-        #(*ret_key, ) if index < len(normalized_key) - 1 else ret_key
+        # (*ret_key, ) if index < len(normalized_key) - 1 else ret_key
         # elif index < len(normalized_key) - 1 and len(normalized_key[index + 1]) == len(overflow):
         #     return [*normalized_key[:index], base, overflow, *normalized_key[index + 1:]]
-
-
-
 
     def _sort_and_merge(self, key):
         """Sort factors by length (ascending, stable) and merge same-length adjacent via squash_product."""
@@ -719,7 +723,6 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         if sorted({len(rc) for rc in key}) != [len(rc) for rc in key]:
             raise ValueError(f"Key has factors of different sizes: {key}")
         return key
-
 
     def _normalize_key(self, key):
         """Normalize an RCGraph tensor key to normal form."""
@@ -792,7 +795,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 for left_key, left_coeff in a.items():
                     for right_key, right_coeff in b.items():
                         key = self._mul_keys(left_key, right_key)
-                        #if key is not None:
+                        # if key is not None:
                         accum += left_coeff * right_coeff * self(key)
                 return accum
             return self.from_dict({k: v * b for k, v in a.items()})

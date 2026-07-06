@@ -27,4 +27,4 @@ if __name__ == "__main__":
                 result += ForestPoly(*rc.length_vector)
         true_result = ForestPoly(*comp1) * ForestPoly(*comp2)
         assert result.almosteq(true_result), f"Mismatch for {comp1=}, {comp2=}: {result=} vs {true_result=}"
-        print("Hot baby")
+        print(f"Hot baby {comp1} {comp2}")
