@@ -286,6 +286,131 @@ class IncreasingTableau(Plactic):
         return cls._from_pcells(pcells), SetValuedTableau(qcells)
 
     @staticmethod
+    def _is_corner(cells, r, c):
+        """True if ``(r, c)`` is an outer (removable) corner of the shape.
+
+        Works for any dict keyed by ``(row, col)``; only the presence of keys is
+        used, so it applies both to ``pcells`` (integer values) and to
+        set-valued ``qcells`` (tuple values).
+        """
+        return (r, c) in cells and (r + 1, c) not in cells and (r, c + 1) not in cells
+
+    @staticmethod
+    def _reverse_hecke_column_insert(pcells, corner, alpha):
+        """Reverse Hecke column insertion (Thomas–Yong / Buch–Samuel, §3.2).
+
+        Given an increasing tableau ``pcells`` (dict ``{(row, col): value}``), a
+        ``corner`` ``(r, c)`` of it, and ``alpha in {0, 1}``, produce ``(Y, x)``
+        as follows. Let ``y`` be the entry in cell ``c``. If ``alpha == 1`` the
+        entry ``y`` is removed (the box is deleted); if ``alpha == 0`` the box is
+        kept. In either case ``y`` is reverse-inserted into the column to the
+        left of ``c``.
+
+        Whenever a value ``y`` is reverse-inserted into a column ``C``, let ``x``
+        be the largest entry of ``C`` with ``x < y``. If replacing ``x`` with
+        ``y`` keeps the tableau increasing this is done; in any case ``x`` is
+        passed to the left. When the left-most column is reached, ``x`` becomes
+        the output letter.
+
+        Returns ``(new_pcells, x)``.
+        """
+        pcells = dict(pcells)
+        r, c = corner
+        v = pcells[(r, c)]
+        if alpha == 1:
+            del pcells[(r, c)]
+
+        # reverse-insert v into the columns to the left of c, right-to-left
+        cc = c - 1
+        while cc >= 0:
+            # x = largest entry of column cc such that x < v
+            below = [(rr, pcells[(rr, cc)]) for (rr, ccc) in pcells if ccc == cc and pcells[(rr, cc)] < v]
+            if not below:
+                # No strictly-smaller entry in this column: the value passes
+                # through unchanged (mirrors a forward step that did not bump).
+                cc -= 1
+                continue
+            xr, x = max(below, key=lambda t: t[1])
+            cand = dict(pcells)
+            cand[(xr, cc)] = v
+            if IncreasingTableau._is_increasing_cells(cand):
+                # replace x with v only when the result stays increasing
+                pcells = cand
+            v = x  # pass x to the left
+            cc -= 1
+
+        return pcells, v
+
+    def reverse_hecke_column_insert(self, corner, alpha=1):
+        """Reverse Hecke-column-insert the box at ``corner`` ``(row, col)``.
+
+        ``alpha`` is ``1`` when the corner box was created by the forward
+        insertion (a ``"grow"`` step) and ``0`` when the forward step merely
+        absorbed a letter at that corner. Returns ``(Y, x)`` where ``Y`` is the
+        resulting :class:`IncreasingTableau` and ``x`` the reconstructed letter.
+        """
+        pcells = self._to_pcells()
+        if not IncreasingTableau._is_corner(pcells, corner[0], corner[1]):
+            raise ValueError(f"{corner} is not an outer corner of the tableau")
+        new_cells, x = IncreasingTableau._reverse_hecke_column_insert(pcells, corner, int(alpha))
+        return IncreasingTableau._from_pcells(new_cells), x
+
+    @classmethod
+    def hecke_column_uninsert_rsk(cls, P, Q):
+        """Invert :meth:`hecke_column_insert_rsk`.
+
+        Given an insertion tableau ``P`` (:class:`IncreasingTableau`) and a
+        set-valued recording tableau ``Q`` of the same shape, reconstruct the
+        two-line array as ``(recording, insertion)``.
+
+        The recording labels are undone from largest to smallest. Within a box,
+        the maximum label was the last placed there: a singleton box came from a
+        ``"grow"`` step (reverse with ``alpha = 1``), while a box holding several
+        labels had its largest label appended by an ``"absorb"`` step (reverse
+        with ``alpha = 0``, keeping the box). Because insertion is by *columns*
+        with the canonical convention that equal-label letters are inserted in
+        strictly *decreasing* order, the corners sharing the maximal label are
+        undone right-most column first (that being the most recently created
+        box for the batch).
+        """
+        from .set_valued_tableau import SetValuedTableau
+
+        pcells = P._to_pcells() if isinstance(P, IncreasingTableau) else dict(P)
+        if isinstance(Q, SetValuedTableau):
+            qcells = {rc: tuple(labels) for rc, labels in Q.cells.items()}
+        else:
+            qcells = {rc: tuple(v) for rc, v in Q.items()}
+
+        recording = []
+        insertion = []
+        while qcells:
+            # largest recording label still present anywhere in Q
+            kmax = max(max(labels) for labels in qcells.values())
+            # among removable corners containing kmax, undo the right-most
+            # column first: with the canonical column-insertion convention the
+            # equal-label letters were inserted in strictly decreasing order, so
+            # the last box created for that batch sits in the right-most column
+            corners = [rc for rc in qcells if cls._is_corner(qcells, rc[0], rc[1]) and kmax in qcells[rc]]
+            r, c = max(corners, key=lambda rc: (rc[1], rc[0]))
+
+            labels = qcells[(r, c)]
+            if len(labels) == 1:
+                alpha = 1
+                del qcells[(r, c)]
+            else:
+                # kmax is the maximum, i.e. the last label placed in this box
+                alpha = 0
+                qcells[(r, c)] = tuple(v for v in labels if v != kmax) or labels[:-1]
+
+            pcells, x = cls._reverse_hecke_column_insert(pcells, (r, c), alpha)
+            recording.append(kmax)
+            insertion.append(x)
+
+        recording.reverse()
+        insertion.reverse()
+        return tuple(recording), tuple(insertion)
+
+    @staticmethod
     def _ed_insert_rsk(word, word2, letter, letter2, i=0):
         """
         Edelman–Greene style two-row insertion.

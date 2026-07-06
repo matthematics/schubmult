@@ -1,7 +1,8 @@
 from ..utils._grid_print import GridPrint
+from .crystal_graph import CrystalGraph
 
 
-class SetValuedTableau(GridPrint):
+class SetValuedTableau(GridPrint, CrystalGraph):
     """A semistandard set-valued tableau.
 
     Each box of a Young diagram holds a non-empty *set* of positive integers.
@@ -13,6 +14,11 @@ class SetValuedTableau(GridPrint):
     Internally the tableau is stored as a dict ``{(row, col): tuple(labels)}``
     where each ``labels`` tuple is sorted ascending. Empty boxes are simply
     absent from the dict.
+
+    The tableau carries the type ``A`` crystal structure of Monical--Pechenik--
+    Scrimshaw (*Crystal structures for symmetric Grothendieck polynomials*,
+    arXiv:1807.03294): :meth:`raising_operator` is ``e_i`` and
+    :meth:`lowering_operator` is ``f_i``.
     """
 
     _display_name = "SetValuedTableau"
@@ -128,6 +134,98 @@ class SetValuedTableau(GridPrint):
             if r > 0 and (r - 1, c) not in self._cells:
                 return False
         return True
+
+    # ---- crystal structure (Monical--Pechenik--Scrimshaw) --------------
+    def _reading_boxes(self):
+        """Row-reading order over boxes: bottom-to-top rows, left-to-right."""
+        boxes = []
+        for r in range(self.rows - 1, -1, -1):
+            for c in range(self.cols):
+                if (r, c) in self._cells:
+                    boxes.append((r, c))
+        return boxes
+
+    def _bracket(self, i):
+        """Signature bracketing for the pair ``(i, i + 1)``.
+
+        Within each box the ``i + 1`` sign (an opening ``-``) is read before the
+        ``i`` sign (a closing ``+``), so a box holding both is self-cancelling.
+        ``+`` closes the most recent unmatched ``-``. Returns the pair
+        ``(leftmost_unmatched_minus_box, rightmost_unmatched_plus_box)`` (either
+        may be ``None``).
+        """
+        open_stack = []       # boxes with an unmatched i+1 (opening '-')
+        unmatched_plus = []   # boxes with an unmatched i (closing '+')
+        for rc in self._reading_boxes():
+            labels = self._cells[rc]
+            if (i + 1) in labels:
+                open_stack.append(rc)
+            if i in labels:
+                if open_stack:
+                    open_stack.pop()
+                else:
+                    unmatched_plus.append(rc)
+        left_minus = open_stack[0] if open_stack else None
+        right_plus = unmatched_plus[-1] if unmatched_plus else None
+        return left_minus, right_plus
+
+    def lowering_operator(self, i):
+        """Crystal lowering operator ``f_i`` (Definition 3.1 of MPS).
+
+        Acts on the box ``b`` of the rightmost uncancelled ``+`` (an ``i``). If
+        the box ``b_right`` immediately to the right of ``b`` contains ``i``,
+        remove ``i`` from ``b_right`` and add ``i + 1`` to ``b``; otherwise
+        replace ``i`` with ``i + 1`` in ``b``. Returns ``None`` if undefined.
+        """
+        if i < 1:
+            return None
+        _, b = self._bracket(i)
+        if b is None:
+            return None
+        cells = {k: set(v) for k, v in self._cells.items()}
+        r, c = b
+        b_right = (r, c + 1)
+        if b_right in cells and i in cells[b_right]:
+            cells[b_right].discard(i)
+            cells[b].add(i + 1)
+        else:
+            cells[b].discard(i)
+            cells[b].add(i + 1)
+        return SetValuedTableau({k: tuple(sorted(v)) for k, v in cells.items() if v})
+
+    def raising_operator(self, i):
+        """Crystal raising operator ``e_i`` (Definition 3.1 of MPS).
+
+        Acts on the box ``b`` of the leftmost uncancelled ``-`` (an ``i + 1``).
+        If the box ``b_left`` immediately to the left of ``b`` contains
+        ``i + 1``, remove ``i + 1`` from ``b_left`` and add ``i`` to ``b``;
+        otherwise replace ``i + 1`` with ``i`` in ``b``. Returns ``None`` if
+        undefined.
+        """
+        if i < 1:
+            return None
+        b, _ = self._bracket(i)
+        if b is None:
+            return None
+        cells = {k: set(v) for k, v in self._cells.items()}
+        r, c = b
+        b_left = (r, c - 1)
+        if b_left in cells and (i + 1) in cells[b_left]:
+            cells[b_left].discard(i + 1)
+            cells[b].add(i)
+        else:
+            cells[b].discard(i + 1)
+            cells[b].add(i)
+        return SetValuedTableau({k: tuple(sorted(v)) for k, v in cells.items() if v})
+
+    @property
+    def crystal_weight(self):
+        """Content weight ``(#1, #2, ...)`` (alias of :attr:`weight`)."""
+        return self.weight
+
+    def crystal_length(self):
+        """Upper bound on crystal operator indices (matches ``Plactic``)."""
+        return 100
 
     def __eq__(self, other):
         if isinstance(other, SetValuedTableau):

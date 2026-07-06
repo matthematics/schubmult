@@ -222,7 +222,10 @@ def main(n):
             wcs = {wcc for wcc in WCGraph.all_wc_graphs(perm, length, weight=lv) if wcc.excess <= excess + sum([kk.excess for kk in key])}
             assert len(wcs) > 0, f"No WCGraphs found for {perm.trimcode} in S_{n} with weight {lv} and highest weight {key_hw}"
             if len(wcs) > 1:
+                print("Petunia")
                 pretty_print(key_hw)
+                print("Crampy bra")
+                pretty_print(br.key_to_rc_graph(rc_key).normalize())
                 for wc in wcs:
                     print("Candidate")
                     pretty_print(wc)

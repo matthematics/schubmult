@@ -127,6 +127,10 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return True
 
     @property
+    def is_reduced(self):
+        return len(self.perm_word) == self.perm.inv
+
+    @property
     def is_valid(self) -> bool:
         for i, row in enumerate(self):
             if any(a < i + 1 for a in row):
@@ -516,8 +520,8 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def hecke_invariant(self):
-        from .hecke_plactic import HeckePlactic
-        return HeckePlactic.hecke_insert_rsk(self.compatible_sequence, self.perm_word)
+        from .increasing_tableau import IncreasingTableau
+        return IncreasingTableau.hecke_column_insert_rsk(self.compatible_sequence, self.perm_word)
 
     @cache
     def _convert_elem_rc(self):
@@ -525,6 +529,21 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             from .rc_graph import RCGraph
             return next(iter(RCGraph.elem_sym_rcs(len(self.perm_word), self.perm.max_descent, weight=self.length_vector)))
         raise ValueError("Cannot convert non-elementary symmetric WCGraph to RCGraph")
+
+    def to_rc_pieri(self):
+        """Map this WCGraph to an RCGraph via ``_snap_reduced`` + Pieri insertion.
+
+        Snap to the underlying reduced RCGraph, then reinsert the missing
+        (excess) letters row-by-row: the number of letters missing from row
+        ``i + 1`` is ``self.length_vector[i] - reduced.length_vector[i]``, and
+        those rows (with multiplicity) are Pieri-inserted at ``perm.max_descent``.
+        """
+        from .rc_graph import RCGraph
+        result = RCGraph([()]).resize(len(self))
+        for i in range(len(self)):
+            for j in range(len(self[i]) - 1, -1, -1):
+                result = result.pieri_insert(self[i][j], [i + 1])
+        return result
 
     @property
     def crystal_weight(self) -> tuple[int, ...]:
@@ -535,46 +554,36 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return len(self.perm_word) - self.perm.inv
 
     def raising_operator(self, i: int) -> WCGraph | None:
-        from .hecke_plactic import HeckePlactic
+        from .increasing_tableau import IncreasingTableau
         h_inv = self.hecke_invariant
         if i >= len(self) or i <= 0:
             return None
-        try:
-            raised_1 = h_inv[1].raising_operator(i)
-        except Exception:
-            return None
+        raised_1 = h_inv[1].raising_operator(i)
         if raised_1 is None:
             return None
-        if len(h_inv[0].row_word) != len(raised_1.row_word):
-            return None
         try:
-            ret = WCGraph.from_word_compatible(*tuple(reversed(HeckePlactic.hecke_uninsert_rsk(h_inv[0], raised_1))), length=len(self))
-            if ret.perm == self.perm and ret.is_valid:
-                return ret
-            return None
+            ret = WCGraph.from_word_compatible(*tuple(reversed(IncreasingTableau.hecke_column_uninsert_rsk(h_inv[0], raised_1))), length=len(self))
         except Exception:
             return None
+        if ret.perm == self.perm and ret.is_valid:
+            return ret
+        return None
 
     def lowering_operator(self, i: int) -> WCGraph | None:
-        from .hecke_plactic import HeckePlactic
+        from .increasing_tableau import IncreasingTableau
         h_inv = self.hecke_invariant
         if i >= len(self) or i <= 0:
             return None
-        try:
-            lowered_1 = h_inv[1].lowering_operator(i)
-        except Exception:
-            return None
+        lowered_1 = h_inv[1].lowering_operator(i)
         if lowered_1 is None:
             return None
-        if len(h_inv[0].row_word) != len(lowered_1.row_word):
-            return None
         try:
-            ret = WCGraph.from_word_compatible(*tuple(reversed(HeckePlactic.hecke_uninsert_rsk(h_inv[0], lowered_1))), length=len(self))
-            if ret.perm == self.perm and ret.is_valid:
-                return ret
-            return None
+            ret = WCGraph.from_word_compatible(*tuple(reversed(IncreasingTableau.hecke_column_uninsert_rsk(h_inv[0], lowered_1))), length=len(self))
         except Exception:
             return None
+        if ret.perm == self.perm and ret.is_valid:
+            return ret
+        return None
 
     @classmethod
     @cache
