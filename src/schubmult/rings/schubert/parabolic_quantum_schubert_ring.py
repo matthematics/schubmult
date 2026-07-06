@@ -5,7 +5,7 @@ import schubmult.mult.quantum as py
 import schubmult.mult.quantum_double as yz
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
-from schubmult.symbolic.poly.schub_poly import elem_sym_poly, schubpoly_from_elems, xreplace_genvars
+from schubmult.symbolic.common_polys import elem_sym_poly, schubpoly_from_elems, xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, poly_genset
 from schubmult.utils.perm_utils import is_parabolic
 

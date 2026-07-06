@@ -1,2 +1,3 @@
-from .schub_poly import *  # noqa: F403
+from schubmult.symbolic.common_polys import *  # noqa: F403
+
 from .variables import *  # noqa: F403

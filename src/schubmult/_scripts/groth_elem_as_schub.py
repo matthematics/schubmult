@@ -2,7 +2,7 @@ import math
 from functools import cache
 from schubmult import *
 from schubmult.symbolic import *
-from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+from schubmult.symbolic.common_polys import grothendieck_poly
 
 if __name__ == "__main__":
     import sys

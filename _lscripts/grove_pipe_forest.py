@@ -1,7 +1,7 @@
 from schubmult import *
 from schubmult.combinatorics.pipe_dream import PipeDream
 from schubmult.rings.polynomial_algebra import *
-from schubmult.symbolic.poly.schub_poly import *
+from schubmult.symbolic.common_polys import *
 from schubmult.combinatorics.indexed_forests import *
 
 def groth_to_schub_as_rc(groth_perm: Permutation):

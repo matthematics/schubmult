@@ -464,8 +464,7 @@ def _groth_plus(x1, y1, beta):
 
 
 def _groth_div_diff(val, index, x, beta):
-    from schubmult import DoubleSchubertElement
-    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+    from schubmult.rings.schubert.schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
     ring = SingleSchubertRing(x)
     if not isinstance(val, DoubleSchubertElement):

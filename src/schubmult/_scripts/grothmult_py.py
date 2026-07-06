@@ -5,7 +5,7 @@ from symengine import Symbol
 from schubmult import Permutation, uncode
 from schubmult.abc import x
 from schubmult.symbolic import sstr, sympify
-from schubmult.symbolic.poly.schub_poly import groth_dict_to_poly, groth_mul_full, to_groth
+from schubmult.symbolic.common_polys import groth_dict_to_poly, groth_mul_full, to_groth
 from schubmult.symbolic.poly.variables import ZeroGeneratingSet
 from schubmult.utils.argparse import schub_argparse
 

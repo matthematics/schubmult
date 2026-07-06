@@ -3,7 +3,7 @@ from schubmult.combinatorics.indexed_forests import *
 from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
 from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
 from schubmult.rings.polynomial_algebra import *
-from schubmult.symbolic.poly.schub_poly import *
+from schubmult.symbolic.common_polys import *
 from schubmult.symbolic.poly.variables import *
 from schubmult.utils._mul_utils import add_perm_dict
 from schubmult.utils.tuple_utils import pad_tuple

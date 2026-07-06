@@ -1,7 +1,7 @@
 from functools import cache
 
 from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, sympify, sympify_sympy
-from schubmult.symbolic.poly.schub_poly import complete_sym_poly
+from schubmult.symbolic.common_polys import complete_sym_poly
 from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
 from schubmult.utils.logging import get_logger
 

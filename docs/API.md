@@ -65,7 +65,7 @@ Abstract and concrete polynomial basis classes.
 Symbolic helpers and symmetric polynomial utilities.
 
 - Package: [src/schubmult/symbolic](../src/schubmult/symbolic)
-- Schubert polynomial symbolic helpers: [src/schubmult/symbolic/poly/schub_poly.py](../src/schubmult/symbolic/poly/schub_poly.py)
+- Schubert polynomial symbolic helpers: [src/schubmult/symbolic/common_polys.py](../src/schubmult/symbolic/common_polys.py)
 - Symmetric polynomial package: [src/schubmult/symbolic/symmetric_polynomials](../src/schubmult/symbolic/symmetric_polynomials)
 
 ## CLI scripts

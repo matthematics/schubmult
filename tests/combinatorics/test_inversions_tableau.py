@@ -1,6 +1,6 @@
 from schubmult.combinatorics.wc_graph import WCGraph
 from schubmult.symbolic import S, expand, Symbol
-from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+from schubmult.symbolic.common_polys import grothendieck_poly
 from schubmult.symbolic.poly.variables import ZeroGeneratingSet
 from schubmult.combinatorics.inversions_tableau import InversionsTableau
 from schubmult.abc import x

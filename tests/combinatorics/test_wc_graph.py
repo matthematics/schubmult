@@ -5,14 +5,14 @@ from schubmult import Permutation
 from schubmult.abc import x
 from schubmult.combinatorics.wc_graph import WCGraph
 from schubmult.symbolic import S
-from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+from schubmult.symbolic.common_polys import grothendieck_poly
 from schubmult.symbolic.poly.variables import ZeroGeneratingSet
 
 
 def test_groth_match():
     from schubmult.combinatorics.wc_graph import WCGraph
     from schubmult.symbolic import S, expand, Symbol
-    from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+    from schubmult.symbolic.common_polys import grothendieck_poly
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
     from schubmult.abc import x
     from schubmult import Permutation
@@ -32,7 +32,7 @@ def test_groth_match():
 def test_groth_transition():
     from schubmult.combinatorics.wc_graph import WCGraph
     from schubmult.symbolic import S, expand, Symbol
-    from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+    from schubmult.symbolic.common_polys import grothendieck_poly
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
     from schubmult.abc import x
     from schubmult import Permutation

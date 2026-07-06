@@ -5,7 +5,7 @@ import numpy as np
 import schubmult.mult.positivity as pos
 from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
-from schubmult.symbolic.poly.schub_poly import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
+from schubmult.symbolic.common_polys import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (

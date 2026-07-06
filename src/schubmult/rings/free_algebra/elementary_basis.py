@@ -49,7 +49,7 @@ class ElementaryBasis(FreeAlgebraBasis):
         """Transition an elementary key to the Schubert basis."""
         from schubmult.abc import x
         from schubmult.symbolic import prod
-        from schubmult.symbolic.poly.schub_poly import monom_sym
+        from schubmult.symbolic.common_polys import monom_sym
 
         mu = list(range(numvars, 0, -1))
         if len(mu) < len(tup):

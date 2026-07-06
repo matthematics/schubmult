@@ -11,7 +11,7 @@ from schubmult.combinatorics.permutation import (
     uncode,
 )
 from schubmult.symbolic import S, expand, prod, sympify, sympify_sympy, sympy_poly
-from schubmult.symbolic.poly.schub_poly import _vars, efficient_subs, elem_sym_poly, schubpoly
+from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
     divdiffable,

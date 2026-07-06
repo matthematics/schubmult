@@ -2,7 +2,7 @@ from sympy import pretty
 
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, CoercionFailed, S, expand, sympify, sympify_sympy, sympy_Mul
-from schubmult.symbolic.poly.schub_poly import schubpoly_from_elems
+from schubmult.symbolic.common_polys import schubpoly_from_elems
 from schubmult.utils._mul_utils import _mul_schub_dicts
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict

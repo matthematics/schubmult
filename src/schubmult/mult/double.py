@@ -6,7 +6,7 @@ from schubmult.combinatorics.permutation import (
     uncode,
 )
 from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func, sympify
-from schubmult.symbolic.poly.schub_poly import _vars, efficient_subs, elem_func_func_mul, elem_sym_func, elem_sym_poly
+from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_func_func_mul, elem_sym_func, elem_sym_poly
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.symbolic.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.logging import get_logger

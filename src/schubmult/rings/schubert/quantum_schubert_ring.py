@@ -5,7 +5,7 @@ import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert.schubert_ring as spr
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, Mul, Pow, S, sympify
-from schubmult.symbolic.poly.schub_poly import xreplace_genvars
+from schubmult.symbolic.common_polys import xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, poly_genset
 
 from .parabolic_quantum_double_schubert_ring import (

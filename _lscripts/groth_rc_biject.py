@@ -1,7 +1,7 @@
 from schubmult import *
 from sympy import pretty_print
 from schubmult.combinatorics.pipe_dream import PipeDream
-from schubmult.symbolic.poly.schub_poly import *
+from schubmult.symbolic.common_polys import *
 from schubmult.symbolic.poly.variables import *
 #schub_elem_sym_to_groth_elem_sym_dict, schub_dict_to_groth_dict
 from schubmult.symbolic import prod

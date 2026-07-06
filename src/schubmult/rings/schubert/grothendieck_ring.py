@@ -3,7 +3,7 @@ from functools import cache
 import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol
-from schubmult.symbolic.poly.schub_poly import groth_mul_full, grothendieck_poly
+from schubmult.symbolic.common_polys import groth_mul_full, grothendieck_poly
 from schubmult.symbolic.poly.variables import GeneratingSet, ZeroGeneratingSet
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -68,7 +68,7 @@ class GrothendieckRing(BaseSchubertRing):
     #def single_variable(self, i):
 
     def from_expr(self, expr):
-        from schubmult.symbolic.poly.schub_poly import schub_dict_to_groth_dict
+        from schubmult.symbolic.common_polys import schub_dict_to_groth_dict
 
         from .schubert_ring import SingleSchubertRing
         ring = SingleSchubertRing(self.genset)

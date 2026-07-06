@@ -1091,7 +1091,7 @@ if __name__ == "__main__":
     from schubmult import Permutation
     from schubmult.abc import x
     from schubmult.symbolic import S, expand
-    from schubmult.symbolic.poly.schub_poly import groth_dict_to_poly, groth_mul_full, grothendieck_poly, to_groth
+    from schubmult.symbolic.common_polys import groth_dict_to_poly, groth_mul_full, grothendieck_poly, to_groth
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
 
     zz = ZeroGeneratingSet()

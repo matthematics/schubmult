@@ -6,7 +6,7 @@ import schubmult.rings.schubert.quantum_schubert_ring as qsr
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
-from schubmult.symbolic.poly.schub_poly import xreplace_genvars
+from schubmult.symbolic.common_polys import xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, poly_genset
 from schubmult.symbolic.symmetric_polynomials import ElemSym
 
