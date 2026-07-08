@@ -128,6 +128,8 @@ def untagged_groth_elem(perm, length):
 
             result += schub_coeff * scalar * groth_term
 
+    result = bw.from_dict({k: v.subs(Gx._beta, 1) for k, v in result.items()})
+    result = bw.from_dict({k: v for k, v in result.items() if v != 0})
     return result
 
 
@@ -158,55 +160,31 @@ def main(n):
         if perm.inv == 0:
             continue
         tagged = tagged0.to_wc_graph_ring_element()
-        assert all((v.subs(Gx._beta, 1) == 1 and wc.perm == perm) for wc, v in tagged.items() if v.subs(Gx._beta, 1) != 0), f"WCGraph mismatch for {perm.trimcode} in S_{n}, {perm=}, {[(wc.perm, v) for wc, v in tagged.items() if v != 0]}"
-        # print(f"Tagged Grothendieck element for {perm.trimcode} (S_{n}):")
-        # pretty_print(tagged)
-        # print()
-        # # new_tagged = 0
-        # poly = 0
-        # # for (wc_fact, rc_factor), coeff in tagged.items():
-        # #     new_tagged += coeff * bw(wc_fact) @ br(rc_factor).to_rc_graph_ring_element().resize(length)
-        # for (wc_fact, rc), coeff in tagged.items():
-        # poly = sum([coeff * prod([elem.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for elem in key]) for key, coeff in tagged.items()])
-        # # groth_bucket = groth_to_schub_as_rc(perm, length)
-        # # poly = groth_bucket.to_rc_graph_ring_element().polyvalue(Sx.genset)
-        # # pretty_print(new_tagged)
-        # assert (poly - Gx(perm).expand()).expand() == 0, f"Failed for {perm.trimcode} in S_{n}, got {poly} vs {Gx(perm).expand()}"
-        # # GOOD
-        # for key, coeff in tagged.items():
-        #     if len(key) == 0:
-        #         continue
-        #     for i in range(n - 1):
-        #         key2 = key.raising_operator(i)
-        #         if key2 is not None:
-        #             assert tagged.get(bw.make_key(key2, key.size), 0) == coeff, f"Raising operator mismatch for {perm.trimcode} in S_{n}: {key} -> {key2}, got {tagged.get(key2, 0)} vs {coeff}"
-        #         key2 = key.lowering_operator(i) 
-        #         if key2 is not None:
-        #             assert tagged.get(bw.make_key(key2, key.size), 0) == coeff, f"Lowering operator mismatch for {perm.trimcode} in S_{n}: {key} -> {key2}, got {tagged.get(key2, 0)} vs {coeff}"
-        # reduce_it = 0
+        assert all((v == 1 and wc.perm == perm) for wc, v in tagged.items()), f"WCGraph mismatch for {perm.trimcode} in S_{n}, {perm=}, {[(wc.perm, v) for wc, v in tagged.items() if v != 0]}"
+        
         # hw_dict = {}
-        hw_dict = {}
-        for key, coeff in tagged.items():
-            if key.is_highest_weight:
-                hw_dict[key] = hw_dict.get(key, 0) + coeff.subs(Gx._beta, 1)
-        #     #reduce_it += coeff * (Gx._beta**(sum([len(key[i].perm_word) for i in range(len(key))]) - sum([key[i].perm.inv for i in range(len(key))]))) * br(rc_key)
+        # for key, coeff in tagged.items():
+        #     if key.is_highest_weight:
+        #         hw_dict[key] = hw_dict.get(key, 0) + coeff.subs(Gx._beta, 1)
 
-        poly = 0
-        for key_hw, coeff in hw_dict.items():
-            # properly_sortable = [rc for rc in key_hw.full_crystal if tuple(sorted(rc.crystal_weight, reverse=True)) == tuple(key_hw.crystal_weight)]
-            # min_vec = min([(i, np.cumsum(properly_sortable[i].crystal_weight).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
-            spanko = 0
-            # coeff2, mulmul = sympify(coeff).as_coeff_Mul()
-            # assert not sympify(coeff2).is_negative, f"Negative coefficient {coeff2} for {perm.trimcode} in S_{n}"
-            #spinach = 0
-            for keykey in key_hw.full_crystal:
-                spanko += coeff * keykey.polyvalue(Gx.genset, beta=Gx._beta, prop_beta=True)
-                #spinach += coeff * keykey.polyvalue(Gx.genset, beta=1, prop_beta=False)
+        # poly = 0
+        # for key_hw, coeff in hw_dict.items():
+        #     # properly_sortable = [rc for rc in key_hw.full_crystal if tuple(sorted(rc.crystal_weight, reverse=True)) == tuple(key_hw.crystal_weight)]
+        #     # min_vec = min([(i, np.cumsum(properly_sortable[i].crystal_weight).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
+        #     spanko = 0
+        #     # coeff2, mulmul = sympify(coeff).as_coeff_Mul()
+        #     # assert not sympify(coeff2).is_negative, f"Negative coefficient {coeff2} for {perm.trimcode} in S_{n}"
+        #     #spinach = 0
+        #     for keykey in key_hw.full_crystal:
+        #         spanko += coeff * keykey.polyvalue(Gx.genset, beta=Gx._beta, prop_beta=True)
+        #         #spinach += coeff * keykey.polyvalue(Gx.genset, beta=1, prop_beta=False)
 
-            # keyspanko = KeyPoly.from_expr(spinach)
-            # assert len([porko for porko, v in keyspanko.items() if sympify(v).expand() != 0]) <= 1, f"Key polynomial expansion for {perm.trimcode} in S_{n} has more than one term: {keyspanko}"
-            poly += spanko
-        poly = poly.expand()
+        #     # keyspanko = KeyPoly.from_expr(spinach)
+        #     # assert len([porko for porko, v in keyspanko.items() if sympify(v).expand() != 0]) <= 1, f"Key polynomial expansion for {perm.trimcode} in S_{n} has more than one term: {keyspanko}"
+        #     poly += spanko
+        # poly = poly.expand()
+        
+        poly = tagged.polyvalue(Gx.genset, beta=Gx._beta, prop_beta=True)
         assert (poly - Gx(perm).expand()).expand() == 0, f"Failed for {perm.trimcode} in S_{n}, got {poly} vs {Gx(perm).expand()}"
         # #spinach = reduce_it.to_rc_graph_ring_element()
         # # reduced_potato = reduce_it.to_rc_graph_ring_element().resize(length)

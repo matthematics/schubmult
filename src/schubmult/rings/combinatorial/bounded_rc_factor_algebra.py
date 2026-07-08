@@ -206,6 +206,8 @@ class BoundedRCFactorPrintingTerm(PrintingTerm):
     def __hash__(self):
         return hash((self._key, "BoundedRCFactorPrintingTerm"))
 
+
+
     def _sympystr(self, printer):
         if len(self._key) == 0:
             return printer._print(S.One)
@@ -229,6 +231,12 @@ class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
         if len(self.keys()) == 0:
             return [S.Zero]
         return [self[k] if k == self.ring.zero_monom else self[k] * self.ring.printing_term(k) for k in self.keys()]
+
+    def straighten(self):
+        new_elem = 0
+        for key, coeff in self.items():
+            new_elem += coeff * self.ring.from_rc_graph(self.ring.key_to_rc_graph(key), key.size)
+        return new_elem
 
     def to_rc_graph_ring_element(self) -> RCGraphRingElement:
         r = RCGraphRing()

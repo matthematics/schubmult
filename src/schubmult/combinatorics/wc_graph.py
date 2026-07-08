@@ -218,6 +218,25 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
                 seq.append(i + 1)
         return tuple(seq)
 
+    def to_mbpd(self, n: int | None = None):
+        r"""The marked bumpless pipedream ``Psi(RCP(self))`` (paper
+        ``writing/mbpd.solve.tex``, Theorem "T: main").
+
+        This composes the trivial ``WCGraph -> RCP`` repackaging with the
+        row-unpop bijection ``Psi``.  ``n`` is the ambient grid size (defaults
+        to ``len(self.perm) - 1`` padded to fit the graph)."""
+        from schubmult.combinatorics.mbpd import RCP
+
+        if n is None:
+            n = max(len(self.perm) - 1, len(self) + 1, max(self.perm_word, default=0) + 1)
+        return RCP.from_wcgraph(self, n=n).psi()
+
+    @classmethod
+    def from_mbpd(cls, mbpd) -> WCGraph:
+        r"""Inverse of :meth:`to_mbpd`: the WCGraph ``RCP(Phi(mbpd))`` obtained
+        from the row-pop bijection ``Phi`` (paper Theorem "T: main")."""
+        return mbpd.phi().to_wcgraph()
+
     @classmethod
     def grove_wcs(cls, comp, length=None, base_rc=None) -> set[WCGraph]:
         """Grove polynomial of ``comp`` built by inverting the omega insertion.
@@ -722,25 +741,21 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return combined_rc
 
     def zero_out_last_row(self) -> WCGraph:
-        from .increasing_tableau import IncreasingTableau
-        from .nilplactic import NilPlactic
+        r"""Zero out the (empty) last row, realizing the Weigandt/Lascoux
+        transition (``writing/weigandt_bumpless.tex``, Theorem "transition").
+
+        The graph is transported to a marked bumpless pipedream, the underlying
+        BPD is resized down by one row (dropping the maximal-corner row), and the
+        result is transported back.  Weight is preserved; the permutation changes
+        according to the transition.  Unlike the previous Hecke-insertion route,
+        this is total: it works for non-core-reduced graphs as well."""
         if len(self) == 0:
             return self
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
-
-        increasing, recording = self.hecke_invariant
-        if len(increasing.row_word) != self.perm.inv:
-            #raise NotImplementedError("zero_out_last_row is only implemented for core-reduced WCGraphs")
-            print("Warning: zero_out_last_row is only implemented for core-reduced WCGraphs; returning None")
-            print(f"DEBUG: {self=}, {increasing=}, {recording=}")
-            return None
-        hw_wc, raise_seq = self.to_highest_weight()
-        #corresponding_rc = NilPlactic.from_word(*tuple(reversed(increasing.row_word))).to_rc_graph()
-        hw_rc = NilPlactic.from_word(tuple(reversed(increasing.row_word))).hw_rc(len(self))
-        new_increasing, _ = WCGraph(hw_rc.zero_out_last_row()).hecke_invariant
-        return WCGraph.from_word_compatible(*tuple(reversed(IncreasingTableau.hecke_column_uninsert_rsk(new_increasing, recording))), length=len(self) - 1)
-        #return WCGraph.from(*tuple(reversed(new_increasing.row_word)), length=len(self))
+        rows = len(self) - 1
+        reduced = self.to_mbpd().zero_out_last_row(rows)
+        return WCGraph.from_mbpd(reduced).resize(rows)
 
     def right_zero_act(self) -> set[WCGraph]:
         raise NotImplementedError("right_zero_act is implemented in RCGraph")
