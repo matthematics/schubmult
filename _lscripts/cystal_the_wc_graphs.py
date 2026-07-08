@@ -160,89 +160,44 @@ def main(n):
     length = n + 2
     perms = Permutation.all_permutations(n)
     interestin_perms = [perm for perm in perms if perm.inv != 0]
-    for perm1, perm2 in itertools.combinations(interestin_perms, 2):
-        poly1 = untagged_groth_elem(perm1, length)
-        poly2 = untagged_groth_elem(perm2, length)
-
-        try_poly = (poly1 * poly2).to_wc_graph_ring_element()
-        real_product = Gx(perm1) * Gx(perm2)
+    for perm in perms:
+        poly = untagged_groth_elem(perm, length)
+        mapping = {}
+        unmapping = {}
+        # correct_weights = (perm * Permutation.w0(n)).pad_code(n - 1)
+        weight = tuple(reversed([n - 1 - j - w for j, w in enumerate((perm * Permutation.w0(n)).pad_code(n - 1))]))
+        #cw_dict = {n + 1 - i: ww for i, ww in enumerate(weight, start=1)}
+        for key, coeff in poly.items():
+            wc = bw.key_to_wc_graph(key).resize(n - 1)
+            #wcc = bw.key_to_wc_graph(bw.make_key(k, key.size)).resize(n - 1)
+            unmapping[CrystalGraphTensor(*key)] = wc
+            if wc not in mapping:
+                mapping[wc] = key
+                
         
-        for wc, v in try_poly.items():
-            assert sympify(real_product.get(wc.perm, 0)).subs(Gx._beta, 1) == v, f"Mismatch for {perm1=}, {perm2=}: {try_poly=} vs {real_product=}"
-        print(f"Success {perm1=}, {perm2=}")
-        # tagged = tagged0.to_wc_graph_ring_element()
-        # assert all((v == 1 and wc.perm == perm) for wc, v in tagged.items()), f"WCGraph mismatch for {perm.trimcode} in S_{n}, {perm=}, {[(wc.perm, v) for wc, v in tagged.items() if v != 0]}"
-        
-        # hw_dict = {}
-        # for key, coeff in tagged.items():
-        #     if key.is_highest_weight:
-        #         hw_dict[key] = hw_dict.get(key, 0) + coeff.subs(Gx._beta, 1)
+        hw_set = set()
+        for wc in WCGraph.all_wc_graphs(perm, n - 1):
+            if mapping[wc].is_highest_weight:
+                hw_set.add(wc)
 
-        # poly = 0
-        # for key_hw, coeff in hw_dict.items():
-        #     # properly_sortable = [rc for rc in key_hw.full_crystal if tuple(sorted(rc.crystal_weight, reverse=True)) == tuple(key_hw.crystal_weight)]
-        #     # min_vec = min([(i, np.cumsum(properly_sortable[i].crystal_weight).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
-        #     spanko = 0
-        #     # coeff2, mulmul = sympify(coeff).as_coeff_Mul()
-        #     # assert not sympify(coeff2).is_negative, f"Negative coefficient {coeff2} for {perm.trimcode} in S_{n}"
-        #     #spinach = 0
-        #     for keykey in key_hw.full_crystal:
-        #         spanko += coeff * keykey.polyvalue(Gx.genset, beta=Gx._beta, prop_beta=True)
-        #         #spinach += coeff * keykey.polyvalue(Gx.genset, beta=1, prop_beta=False)
+        crystals = {}
+        for wc_hw in hw_set:
+            crystals[wc_hw] = set()
+            for paint in mapping[wc_hw].full_crystal:
+                crystals[wc_hw].add(unmapping[CrystalGraphTensor(*paint)])
 
-        #     # keyspanko = KeyPoly.from_expr(spinach)
-        #     # assert len([porko for porko, v in keyspanko.items() if sympify(v).expand() != 0]) <= 1, f"Key polynomial expansion for {perm.trimcode} in S_{n} has more than one term: {keyspanko}"
-        #     poly += spanko
-        # poly = poly.expand()
-        
-        # poly = tagged.polyvalue(Gx.genset, beta=Gx._beta, prop_beta=True)
-        # assert (poly - Gx(perm).expand()).expand() == 0, f"Failed for {perm.trimcode} in S_{n}, got {poly} vs {Gx(perm).expand()}"
-        # #spinach = reduce_it.to_rc_graph_ring_element()
-        # # reduced_potato = reduce_it.to_rc_graph_ring_element().resize(length)
-        # # dct2 = WCGraph.groth_to_schub(perm, Gx._beta)
-        # # for key, rc_key in dct.items():
-        # #     rcc = br.key_to_rc_graph(rc_key)
-        # #     if reduce_it.get(rc_key, 0) == 0:
-        # #         continue
-        # #     if reduced_potato.get(br.key_to_rc_graph(rc_key).resize(length), 0) == 0:
-        # #         continue
-        # #     excess = 0
-        # #     if not(sympify(reduce_it.get(rc_key, 0)).is_Number):
-        # #         coeff, popp = sympify(reduce_it.get(rc_key, 0)).as_coeff_Mul()
-        # #         if popp == Gx._beta:
-        # #             excess = 1
-        # #         elif popp.is_Pow and popp.base == Gx._beta:
-        # #             excess = popp.exp
-        # #         else:
-        # #             raise ValueError(f"Unexpected coefficient {reduce_it.get(rc_key, 0)} for {perm.trimcode} in S_{n}")
-        # #     if len(key) == 1:
-        # #         continue
-        # #     # if excess + sum([kk.excess for kk in key]) != sum([len(kk.perm_word) for kk in key]) - perm.inv:
-        # #     #     continue
-        # #     # copi = PipeDream.from_rc_graph(rc.resize(length)).co_pipe_dream()
-        # #     # test_perm = copi.perm * Permutation.w0(copi.rows)
-        # #     # print("Pago")
-        # #     # pretty_print(rc)
-        # #     # assert test_perm == perm, f"RC graph mismatch for {perm.trimcode} in S_{n}: got {test_perm} vs {perm}"
-        # #     # if br.key_to_rc_graph(rc_key).is_principal:
-        # #     #     print("PRINCIPAL")
-        # #     #     pretty_print(bw(bw.make_key(key, key.size)))
-        # #     #assert dct.get(rc.perm, 0) == coeff, f"RC graph mismatch for {perm.trimcode} in S_{n}: got {coeff} vs {dct.get(rc.perm, 0)}\n{rc=}"
-        # #     key_hw = key.to_highest_weight()[0]
-        # #     lv = [0] * length
-        # #     for kk in key_hw:
-        # #         for i, j in enumerate(kk.length_vector):
-        # #             lv[i] += j
-        # #     wcs = {wcc for wcc in WCGraph.all_wc_graphs(perm, length, weight=lv) if wcc.excess <= excess + sum([kk.excess for kk in key])}
-        # #     assert len(wcs) > 0, f"No WCGraphs found for {perm.trimcode} in S_{n} with weight {lv} and highest weight {key_hw}"
-        # #     if len(wcs) > 1:
-        # #         print("Petunia")
-        # #         pretty_print(key_hw)
-        # #         print("Crampy bra")
-        # #         pretty_print(br.key_to_rc_graph(rc_key).normalize())
-        # #         for wc in wcs:
-        # #             print("Candidate")
-        # #             pretty_print(wc)
+        pantalones = 0
+        stt = set()
+        r = GrothendieckRing(genset=Gx.genset, beta=1)
+        for hw, crystal in crystals.items():
+            stt.update(crystal)
+            result = sum([wc.polyvalue(Gx.genset, beta=1) for wc in crystal])
+            pato = KeyPoly.from_expr(result, length=n-1)
+            assert len(tuple(key for key, v in pato.items() if sympify(v).expand() != 0)) == 1, f"More than one key label for crystal {crystal}"
+            pantalones += pato
+
+        assert r.from_expr(pantalones.expand()).almosteq(r(perm)), f"Grothendieck polynomial for {perm} does not match sum of crystals, r.from_expr({pantalones.expand()}) = {r.from_expr(pantalones.expand())} != r({perm}) = {r(perm)}"
+        assert stt == WCGraph.all_wc_graphs(perm, n - 1), f"Crystals do not cover all WC graphs for {perm}, missing {set(WCGraph.all_wc_graphs(perm, n - 1)) - stt}"
 
 if __name__ == "__main__":
     import sys

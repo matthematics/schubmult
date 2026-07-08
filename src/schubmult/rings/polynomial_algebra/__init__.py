@@ -16,10 +16,12 @@ from ._core import PA, PolynomialAlgebra, PolynomialAlgebraElement
 from .composition_schubert_poly_basis import CompositionSchubertPolyBasis
 from .double_forest_poly_basis import DoubleForestPolyBasis
 from .forest_poly_basis import ForestPolyBasis
+from .grove_poly_basis import GrovePolyBasis
 from .key_poly_basis import KeyPolyBasis
 from .polynomial_basis import ElemSymPolyBasis, FundamentalSlidePolyBasis, MonomialBasis, MonomialSlidePolyBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
 
 Forest = PolynomialAlgebra(ForestPolyBasis(x))
+Grove = PolynomialAlgebra(GrovePolyBasis(x))
 Schub = PolynomialAlgebra(SchubertPolyBasis(x))
 Key = PolynomialAlgebra(KeyPolyBasis(x))
 FSlide = PolynomialAlgebra(FundamentalSlidePolyBasis(x))
@@ -36,6 +38,8 @@ __all__ = [
     "Forest",
     "ForestPolyBasis",
     "FundamentalSlidePolyBasis",
+    "Grove",
+    "GrovePolyBasis",
     "Key",
     "KeyPolyBasis",
     "Monomial",

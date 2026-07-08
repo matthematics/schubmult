@@ -105,7 +105,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             ret = [*ret, *row]
         return tuple(ret)
 
-    @property
+    @cached_property
     def perm(self) -> Permutation:
         perm = Permutation([])
         for row in self:
@@ -187,7 +187,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     def length_vector(self) -> tuple[int, ...]:
         return tuple(len(row) for row in self)
 
-    @property
+    @cached_property
     def weight(self) -> tuple[int, ...]:
         wt = []
         for i, row in enumerate(self):
@@ -210,7 +210,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     def height(self) -> int:
         return self.rows
 
-    @property
+    @cached_property
     def compatible_sequence(self) -> tuple[int, ...]:
         seq = []
         for i in range(len(self)):
@@ -218,13 +218,17 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
                 seq.append(i + 1)
         return tuple(seq)
 
+    @cache
     def to_mbpd(self, n: int | None = None):
         r"""The marked bumpless pipedream ``Psi(RCP(self))`` (paper
         ``writing/mbpd.solve.tex``, Theorem "T: main").
 
         This composes the trivial ``WCGraph -> RCP`` repackaging with the
         row-unpop bijection ``Psi``.  ``n`` is the ambient grid size (defaults
-        to ``len(self.perm) - 1`` padded to fit the graph)."""
+        to ``len(self.perm) - 1`` padded to fit the graph).
+
+        Cached: WCGraphs are immutable and hashable, so the (self, n) round
+        trip is memoized."""
         from schubmult.combinatorics.mbpd import RCP
 
         if n is None:
@@ -232,9 +236,12 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return RCP.from_wcgraph(self, n=n).psi()
 
     @classmethod
+    @cache
     def from_mbpd(cls, mbpd) -> WCGraph:
         r"""Inverse of :meth:`to_mbpd`: the WCGraph ``RCP(Phi(mbpd))`` obtained
-        from the row-pop bijection ``Phi`` (paper Theorem "T: main")."""
+        from the row-pop bijection ``Phi`` (paper Theorem "T: main").
+
+        Cached on the (hashable) ``mbpd`` argument."""
         return mbpd.phi().to_wcgraph()
 
     @classmethod
@@ -350,20 +357,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def forest_invariant(self):
-        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
-
-        word = list(reversed(self.perm_word))
-
-        def word_to_pair_labeled(word):
-            counts = {}
-            out = []
-            for a in word:
-                aa = int(a)
-                counts[aa] = counts.get(aa, 0) + 1
-                out.append(letterpair(aa, counts[aa]))
-            return tuple(out)
-
-        return omega_insertion(word_to_pair_labeled(word))[0]
+        return self.omega_invariant[0]
 
     def flipped_co_wc(self):
         spet = self.resize(len(self.perm) - 1)
@@ -723,6 +717,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             back = self.rowrange(row, len(self))
         return (front, back)
 
+    @cache
     def disjoint_union(self, rc: WCGraph) -> WCGraph:
         if len(self) != len(rc):
             raise ValueError(f"{type(self).__name__}s must have at least as many rows")
@@ -734,12 +729,14 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         rc_self = self.resize(len(rc) + N)
         return self._rebuild([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
 
+    @cache
     def squash_product(self, rc: WCGraph) -> WCGraph:
         combined_rc = self.disjoint_union(rc)
         while len(combined_rc) > len(self):
             combined_rc = combined_rc.zero_out_last_row()
         return combined_rc
 
+    @cache
     def zero_out_last_row(self) -> WCGraph:
         r"""Zero out the (empty) last row, realizing the Weigandt/Lascoux
         transition (``writing/weigandt_bumpless.tex``, Theorem "transition").
@@ -748,7 +745,10 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         BPD is resized down by one row (dropping the maximal-corner row), and the
         result is transported back.  Weight is preserved; the permutation changes
         according to the transition.  Unlike the previous Hecke-insertion route,
-        this is total: it works for non-core-reduced graphs as well."""
+        this is total: it works for non-core-reduced graphs as well.
+
+        Cached: the full MBPD round trip is memoized on the (hashable) graph,
+        so repeated ``squash_product`` calls reuse the result."""
         if len(self) == 0:
             return self
         if len(self[-1]) != 0:

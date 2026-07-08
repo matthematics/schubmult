@@ -1,5 +1,6 @@
 from schubmult import *
 import numpy as np
+from schubmult.combinatorics.indexed_forests import grove_polynomial
 from schubmult.combinatorics.pipe_dream import PipeDream
 from schubmult.symbolic.common_polys import schub_elem_sym_to_groth_elem_sym_dict, schub_dict_to_groth_dict
 from schubmult.symbolic import *
@@ -7,6 +8,7 @@ from functools import cache
 br = BoundedRCFactorAlgebra()
 bw = BoundedWCFactorAlgebra()
 from sympy import pretty_print, sympify, Pow, Mul
+from schubmult.rings.polynomial_algebra import Grove, GrovePolyBasis
 
 def groth_to_schub_as_rc(groth_perm: Permutation, length):
     from schubmult.combinatorics.pipe_dream import PipeDream
@@ -157,19 +159,84 @@ def main(n):
     from schubmult.rings.polynomial_algebra import KeyPolyBasis, PolynomialAlgebra
     import itertools
     KeyPoly = PolynomialAlgebra(KeyPolyBasis(Gx.genset))
-    length = n + 2
+    length = n - 1
     perms = Permutation.all_permutations(n)
     interestin_perms = [perm for perm in perms if perm.inv != 0]
-    for perm1, perm2 in itertools.combinations(interestin_perms, 2):
-        poly1 = untagged_groth_elem(perm1, length)
-        poly2 = untagged_groth_elem(perm2, length)
+    wcr = WCGraphRing()
+    Grove1 = PolynomialAlgebra(GrovePolyBasis(Gx.genset, beta=1))
 
+    # --- Memoization of per-perm / per-key work ---------------------------
+    # Each perm appears in O(#perms) combinations, so its per-perm work is
+    # otherwise recomputed many times. These caches keep the exact same
+    # computation path, just evaluated once per distinct argument.
+    @cache
+    def _key_to_wc(k):
+        # squash_product bijection; expensive and reused across many perms
+        return bw.key_to_wc_graph(k)
+
+    @cache
+    def _grove_expand(comp):
+        return Grove1(*comp).expand()
+
+    @cache
+    def _gx_of(comp):
+        # Gx.from_expr is a ring homomorphism, so caching this per single comp
+        # and multiplying in the Gx ring reproduces Gx.from_expr(prod of exprs)
+        # without the per-pair symbolic polynomial multiply + re-parse.
+        return Gx.from_expr(_grove_expand(comp))
+
+    @cache
+    def _all_wcs(perm):
+        return WCGraph.all_wc_graphs(perm, n - 1)
+
+    @cache
+    def _grove_elem(weight):
+        return Grove1(*weight)
+
+    @cache
+    def _grove_weights_of(k):
+        # Forest weights of the WCGraphs of k that survive the grove filter.
+        # In the real_product loop every such wc carries the same coefficient,
+        # so we only need the (multiset of) qualifying weights.
+        return tuple(wc.forest_weight for wc in _all_wcs(k) if wc.forest_weight == wc.length_vector)
+
+    @cache
+    def _poly_for(perm):
+        comp = perm.pad_code(n - 1)
+        gwc = WCGraph.grove_wcs(comp)
+
+        def _keep(k):
+            wcg = _key_to_wc(k)
+            return wcg.resize(n - 1) in gwc or wcg.perm != perm
+
+        return bw.from_dict({k: v for k, v in untagged_groth_elem(perm, length).items() if _keep(k)})
+
+    for perm1, perm2 in itertools.combinations(interestin_perms, 2):
+        # perm1 = uncode([0,0,0,1])
+        # perm2 = uncode([0,0,2,1])
+        comp1 = perm1.pad_code(n-1)
+        comp2 = perm2.pad_code(n-1)
+        poly1 = _poly_for(perm1)
+        poly2 = _poly_for(perm2)
+        if any(v < 0 for v in poly1.values()) or any(v < 0 for v in poly2.values()):
+            print(f"Negative coefficient")# for {comp1=}, {comp2=}: {poly1=}, {poly2=}")
+            
         try_poly = (poly1 * poly2).to_wc_graph_ring_element()
-        real_product = Gx(perm1) * Gx(perm2)
         
+        real_product_g = Gx.from_dict({k: sympify(v).subs(Gx._beta, 1) for k, v in (_gx_of(comp1) * _gx_of(comp2)).items()})
+        real_product = 0
+        for k, v in real_product_g.items():
+            for fw in _grove_weights_of(k):
+                real_product += v * _grove_elem(fw)
+            
+        painted_potato = 0
         for wc, v in try_poly.items():
-            assert sympify(real_product.get(wc.perm, 0)).subs(Gx._beta, 1) == v, f"Mismatch for {perm1=}, {perm2=}: {try_poly=} vs {real_product=}"
-        print(f"Success {perm1=}, {perm2=}")
+            #assert sympify(real_product.get(wc.perm, 0)).subs(Gx._beta, 1) == v, f"Mismatch for {perm1=}, {perm2=}: {try_poly=} vs {real_product=}"
+            if wc.forest_weight == wc.length_vector:
+                painted_potato += v * _grove_elem(wc.forest_weight)
+        assert real_product.almosteq(painted_potato), f"Mismatch for {perm1=}, {perm2=}: {(painted_potato-real_product)=}"
+        print(f"Success {comp1=}, {comp2=}")
+        # break
         # tagged = tagged0.to_wc_graph_ring_element()
         # assert all((v == 1 and wc.perm == perm) for wc, v in tagged.items()), f"WCGraph mismatch for {perm.trimcode} in S_{n}, {perm=}, {[(wc.perm, v) for wc, v in tagged.items() if v != 0]}"
         
