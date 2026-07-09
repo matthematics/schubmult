@@ -86,14 +86,32 @@ class GrothendieckBasis(FreeAlgebraBasis):
     #     return donkeydict
 
     @classmethod
+    def transition_grove(cls, key):
+        """Transition a Groth basis key to the Grove basis.
+
+        Returns ``{(grove_key): coeff}`` where ``coeff`` is the coefficient
+        of ``G_perm`` in ``g_{grove_key}`` on the polynomial side, interpreted
+        as the dual-basis coefficient.
+        """
+        from schubmult.combinatorics.wc_graph import WCGraph
+        dct = {}
+        for wc in WCGraph.all_wc_graphs(key[0], key[1]):
+            if wc.forest_weight == wc.length_vector:
+                dct[wc.forest_weight] = dct.get(wc.forest_weight, S.Zero) + S.One
+        return dct
+
+    @classmethod
     def transition(cls, other_basis):
         # from .elementary_basis import ElementaryBasis
+        from .grove_basis import GroveBasis
         from .schubert_basis import SchubertBasis
 
         if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
             return lambda x: {x: S.One}
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(*x)
+        if other_basis == GroveBasis:
+            return lambda x: cls.transition_grove(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(*x))
 
     @classmethod

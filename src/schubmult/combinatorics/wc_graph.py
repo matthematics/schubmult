@@ -338,6 +338,10 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
         return pad_tuple(self.forest_invariant.forest.code, len(self))
 
+    @classmethod
+    def one_row(cls, a: int) -> WCGraph:
+        return cls([tuple(range(a, 0, -1))])
+
     @property
     @cache
     def omega_invariant(self):
