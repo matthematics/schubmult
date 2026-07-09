@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from functools import cache, cached_property
 from itertools import combinations
+from typing import ClassVar
 
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
@@ -719,7 +720,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     def disjoint_union(self, rc: WCGraph) -> WCGraph:
         if len(self) != len(rc):
-            raise ValueError(f"{type(self).__name__}s must have at least as many rows")
+            raise ValueError(f"{type(self).__name__}s must have the same number of rows")
         if self.perm.inv == 0:
             return rc
         rowmax = [max(self[i], default=0) for i in range(len(self))]
@@ -755,11 +756,56 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         reduced = self.to_mbpd().zero_out_last_row(rows)
         return WCGraph.from_mbpd(reduced).resize(rows)
 
+    _z_cache: ClassVar[dict[WCGraph, set[WCGraph]]] = {}
+
     def right_zero_act(self) -> set[WCGraph]:
-        raise NotImplementedError("right_zero_act is implemented in RCGraph")
+        from schubmult.combinatorics.permutation import uncode
+        from schubmult.rings.free_algebra import AGx
+        if self.perm.inv == 0:
+            return {self._rebuild([*self, ()])}
+
+        if self in WCGraph._z_cache:
+            return WCGraph._z_cache[self]
+
+        up_perms = AGx(self.perm, len(self)) * AGx(uncode([0]), 1)
+
+        rc_set = set()
+
+        for perm, _ in up_perms.keys():
+            for wc in type(self).all_wc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
+                if wc.zero_out_last_row() == self:
+                    rc_set.add(wc)
+
+        WCGraph._z_cache[self] = rc_set
+        return rc_set
 
     def product(self, other: SchubertMonomialGraph) -> dict[WCGraph, int]:
-        raise NotImplementedError("product is implemented in RCGraph")
+        """Compute the product of this WC graph with another."""
+        from schubmult.utils.perm_utils import add_perm_dict
+        self_len = len(self)
+        if self.perm.inv == 0:
+            return {self._rebuild([*self, *other.shiftup(self_len)]): 1}
+        num_zeros = max(len(other), len(other.perm))
+        assert len(self.perm.trimcode) <= self_len, f"{self=}, {self.perm=}"
+        base_rc = self
+        buildup_module = {base_rc: 1}
+
+        for _ in range(num_zeros):
+            new_buildup_module = {}
+            for rc, coeff in buildup_module.items():
+                new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(rc.right_zero_act(), coeff))
+            buildup_module = new_buildup_module
+        ret_module = {}
+        other_shifted = other.shiftup(self_len)
+        target_len = self_len + len(other)
+
+        for rc, coeff in buildup_module.items():
+            new_rc = type(rc)([*rc[:self_len], *other_shifted])
+            assert len(new_rc) == target_len
+            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
+                ret_module = add_perm_dict(ret_module, {new_rc: coeff})
+
+        return ret_module
 
     def _upieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None, left=False):
         working_rc = self
@@ -1013,7 +1059,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             wkey = (perm, tuple(weight)[:perm.max_descent])
             if wkey in cls._cache_by_weight:
                 if length != perm.max_descent:
-                    return cls._cache_by_weight[wkey].resize(length)
+                    return {wc.resize(length) for wc in cls._cache_by_weight[wkey]}
                 return cls._cache_by_weight[wkey]
             elif perm in cls._graph_cache:  # noqa: RET505
                 if length != perm.max_descent:

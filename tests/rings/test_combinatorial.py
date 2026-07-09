@@ -221,3 +221,92 @@ def test_tensor_ring_empty_basis_not_scalar_one_term():
     term = ring((RCGraph([]), RCGraph([]))).as_ordered_terms()[0]
 
     assert term != S.One
+
+
+def test_wc_graph_ring_product_agrees_with_free_algebra():
+    import itertools
+
+    from schubmult import AGx, Permutation
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+
+    def to_agx(elem):
+        res = AGx.zero
+        for wc, coeff in elem.items():
+            res += coeff * AGx(wc.perm, len(wc))
+        return res
+
+    n = 3
+    perms = Permutation.all_permutations(n)
+    ring = WCGraphRing()
+
+    for perm1, perm2 in itertools.product(perms, repeat=2):
+        for len1 in range(len(perm1.trimcode), n):
+            for len2 in range(len(perm2.trimcode), n):
+                for wc1, wc2 in itertools.product(WCGraph.all_wc_graphs(perm1, len1), WCGraph.all_wc_graphs(perm2, len2)):
+                    wc_elem = ring(wc1) * ring(wc2)
+                    free_algebra_elem = AGx(wc1.perm, len(wc1)) * AGx(wc2.perm, len(wc2))
+                    free_elem_test = to_agx(wc_elem)
+                    assert all(v == 0 for v in (free_algebra_elem - free_elem_test).values()), (
+                        f"WCGraphRing product disagrees with AGx for {perm1}, {perm2}"
+                    )
+
+
+def test_wc_graph_ring_groth_polyvalue_is_grothendieck_poly():
+    import itertools
+
+    from schubmult import Permutation
+    from schubmult.abc import x
+    from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+    from schubmult.rings.schubert.grothendieck_ring import Gx
+    from schubmult.symbolic import S, expand
+    from schubmult.symbolic.common_polys import grothendieck_poly
+    from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+
+    ring = WCGraphRing()
+    beta = Gx._beta
+    zz = ZeroGeneratingSet()
+
+    for pl in itertools.permutations(range(1, 4)):
+        w = Permutation(list(pl))
+        elem = ring.groth(w)
+        polyval = S.Zero
+        for wc, coeff in elem.items():
+            polyval += coeff * wc.polyvalue(x, beta=beta, prop_beta=True)
+        direct = grothendieck_poly(w, x, zz, beta)
+        assert expand(polyval - direct, deep=True) == S.Zero, f"Groth polyvalue mismatch for {w}"
+
+
+def test_wc_graph_ring_one_is_empty_graph():
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+
+    ring = WCGraphRing()
+    keys = list(ring.one.keys())
+
+    assert keys == [WCGraph([])]
+    assert ring.one[WCGraph([])] == 1
+
+
+def test_wc_graph_ring_empty_basis_not_scalar_one_term():
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+    from schubmult.symbolic import S
+
+    ring = WCGraphRing()
+    term = ring(WCGraph([])).as_ordered_terms()[0]
+
+    assert term != S.One
+
+
+def test_wc_graph_ring_resize_resizes_empty_graph_too():
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+
+    ring = WCGraphRing()
+    resized = ring(WCGraph([])).resize(3)
+
+    assert len(resized) == 1
+    only_key = next(iter(resized.keys()))
+    assert len(only_key) == 3
+    assert resized[only_key] == 1
