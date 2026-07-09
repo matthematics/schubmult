@@ -76,3 +76,29 @@ def test_pull_out_var_hecke_equation_holds():
         for row, wpp in sols:
             lhs = Permutation.ref_product(*row) @ wpp.shiftup(1)
             assert lhs == w
+
+
+@pytest.mark.parametrize("n", [3, 4])
+def test_grove_wcs_decompose_grothendieck(n):
+    from schubmult import Gx, Sx, uncode
+    from schubmult.combinatorics.indexed_forests import grove_polynomial
+
+    beta = Gx._beta
+    zz = ZeroGeneratingSet()
+
+    for perm in Permutation.all_permutations(n):
+        code = perm.pad_code(n - 1)
+        all_wcs = WCGraph.all_wc_graphs(uncode(code), n - 1)
+        forest_wcs = {wc for wc in all_wcs if wc.forest_weight == wc.length_vector}
+
+        total = S.Zero
+        for forest_wc in forest_wcs:
+            grove = WCGraph.grove_wcs(forest_wc.forest_weight, n - 1, forest_wc)
+            grove_value = sum(wc.polyvalue(Sx.genset, beta=beta, prop_beta=True) for wc in grove)
+            expected = beta ** (len(forest_wc.perm_word) - sum(code)) * grove_polynomial(forest_wc.forest_weight, Sx.genset, beta)
+            assert (grove_value - expected).expand() == S.Zero, f"Grove mismatch for {forest_wc.forest_weight}"
+            total += grove_value
+
+        direct = grothendieck_poly(uncode(code), Sx.genset, zz, beta)
+        assert (total - direct).expand() == S.Zero, f"Grothendieck mismatch for {code}"
+
