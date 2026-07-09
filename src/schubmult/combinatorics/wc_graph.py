@@ -999,11 +999,11 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         first row via ``pull_out_var_hecke``.
         """
         perm = Permutation(perm)
-        if length < perm.max_descent:
-            return set()
         if length < 0:
             # Non-empty rows can only occur in indices 1..len(perm)-1.
             length = perm.max_descent
+        if length < perm.max_descent:
+            return set()
         if weight is not None and len(weight) != length:
             raise ValueError("Weight must have length equal to the number of rows")
 
