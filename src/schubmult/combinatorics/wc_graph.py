@@ -1054,35 +1054,20 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             raise ValueError("Weight must have length equal to the number of rows")
 
         if weight is not None:
-            if any(a != 0 for a in weight[perm.max_descent:]):
-                return set()
-            wkey = (perm, tuple(weight)[:perm.max_descent])
-            if wkey in cls._cache_by_weight:
-                if length != perm.max_descent:
-                    return {wc.resize(length) for wc in cls._cache_by_weight[wkey]}
-                return cls._cache_by_weight[wkey]
-            elif perm in cls._graph_cache:  # noqa: RET505
-                if length != perm.max_descent:
-                    ret_by_weight = {wc.resize(length) for wc in cls._graph_cache[perm] if wc.resize(length).length_vector == tuple(weight)}
-                else:
-                    ret_by_weight = {wc for wc in cls._graph_cache[perm] if wc.length_vector == tuple(weight)}
-                cls._cache_by_weight[wkey] = ret_by_weight
-                return ret_by_weight
-        else:
-            key = perm
-            if key in cls._graph_cache:
-                if length != perm.max_descent:
-                    return {wc.resize(length) for wc in cls._graph_cache[key]}
-                return cls._graph_cache[key]
-
-        if length == 0:
-            ret = {cls([()] * length)} if perm.inv == 0 else set()
-            return ret
+            if (perm, tuple(weight)) in cls._cache_by_weight:
+                return cls._cache_by_weight[(perm, tuple(weight))]
+        elif (perm, length) in cls._graph_cache:
+            return cls._graph_cache[(perm, length)]
 
         if perm.inv == 0:
-            ret = {cls([()] * length)}
             if weight is not None and sum(weight) != 0:
+                cls._cache_by_weight[(perm, tuple(weight))] = set()
                 return set()
+            ret = {cls([()] * length)}
+            if weight is not None:
+                cls._cache_by_weight[(perm, tuple(weight))] = ret
+            else:
+                cls._graph_cache[(perm, length)] = ret
             return ret
 
         ret: set[WCGraph] = set()
@@ -1102,9 +1087,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
                     ret.add(nwc)
 
         if weight is not None:
-            cls._cache_by_weight[(perm, tuple(weight[:perm.max_descent]))] = ret
+            cls._cache_by_weight[(perm, tuple(weight))] = ret
         else:
-            cls._graph_cache[perm] = {wc.resize(perm.max_descent) for wc in ret}
+            cls._graph_cache[(perm, length)] = ret
         return ret
 
     @classmethod
