@@ -1,14 +1,11 @@
 from functools import cache
 
 from schubmult.combinatorics.permutation import Permutation
-from schubmult.symbolic import S, Symbol
+from schubmult.symbolic import S
+from schubmult.utils.perm_utils import add_perm_dict
 
 from ..printing import GrothendieckPoly
-from ..schubert.grothendieck_ring import Gx
-from ..schubert.separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import FreeAlgebraBasis
-
-splugGx = SeparatedDescentsRing(Gx([]).ring)
 
 
 class GrothendieckBasis(FreeAlgebraBasis):
@@ -19,18 +16,12 @@ class GrothendieckBasis(FreeAlgebraBasis):
     passed directly to ``FreeAlgebra`` without requiring a basis constructor.
     """
 
-    beta = Symbol("\u03b2")
     zero_monom = (Permutation([]), 0)
 
-    @classmethod
-    def with_beta(cls, beta):
-        """Return a configured subclass with a fixed class-level beta."""
-        return type("GrothendieckBasis", (cls,), {"beta": beta, "zero_monom": cls.zero_monom})
-
-    @classmethod
-    def set_beta(cls, beta):
-        """Set class-level beta in-place for this basis class."""
-        cls.beta = beta
+    # @classmethod
+    # def with_beta(cls, beta):
+    #     """Return a configured subclass with a fixed class-level beta."""
+    #     return type("GrothendieckBasis", (cls,), {"beta": beta, "zero_monom": cls.zero_monom})
 
     @classmethod
     def is_key(cls, x):
@@ -50,12 +41,17 @@ class GrothendieckBasis(FreeAlgebraBasis):
 
         n = len(perm)
         pw0 = perm * Permutation.w0(n)
+        #pw0 = perm * Permutation.w0(n)
 
         dct = {}
+        if perm.max_descent > numvars:
+            return dct
         for bpd in BPD.all_unreduced_bpds(pw0, n):
             cobpd = bpd.co_bpd()
             if cobpd.is_reduced:
-                dct[(cobpd.perm, numvars)] = dct.get((cobpd.perm, numvars), 0) + (-cls.beta) ** (perm.inv - cobpd.perm.inv)
+                the_perm = cobpd.perm
+                if the_perm.max_descent <= numvars:
+                    dct[(the_perm, numvars)] = dct.get((the_perm, numvars), 0) + (-1) ** (perm.inv - the_perm.inv)
         return dct
 
     # @classmethod
@@ -94,7 +90,7 @@ class GrothendieckBasis(FreeAlgebraBasis):
         # from .elementary_basis import ElementaryBasis
         from .schubert_basis import SchubertBasis
 
-        if other_basis == cls:
+        if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
             return lambda x: {x: S.One}
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(*x)
@@ -106,13 +102,25 @@ class GrothendieckBasis(FreeAlgebraBasis):
         return GrothendieckPoly((perm, numvars), "x", prefix="A")
 
     @classmethod
+    @cache
     def product(cls, key1, key2, coeff=S.One):
-        """Multiply two Schubert basis keys via the separated-descents ring."""
-        return dict(coeff * splugGx(*cls.as_key(key1)) * splugGx(*cls.as_key(key2)))
+        """Multiply two keys by transitioning to WordBasis and back."""
+        from .schubert_basis import SchubertBasis
+
+        left = cls.transition(SchubertBasis)(key1)
+        right = cls.transition(SchubertBasis)(key2)
+        ret = {}
+
+        for key_schub_right, v in right.items():
+            for key_schub_left, v2 in left.items():
+                ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
+        return ret
+
+    def __hash__(self):
+        return hash((self.__class__, "Hot potato"))
 
     @classmethod
     def dual_basis(cls):
-        from .schubert_basis import SchubertBasis
 
         # Placeholder until a dedicated Groth polynomial dual basis is added.
-        return SchubertBasis.dual_basis()
+        return

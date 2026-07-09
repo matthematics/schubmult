@@ -450,8 +450,7 @@ class WordBasis(FreeAlgebraBasis):
             raise ValueError(f"Composition entries must be nonnegative, got {comp}")
 
         length = len(comp)
-        total = sum(comp)
-        beta = getattr(basis_cls, "beta", Symbol("\u03B2"))
+        # total = sum(comp)
 
         @cache
         def _strict_rows(max_reflection, k):
@@ -486,10 +485,11 @@ class WordBasis(FreeAlgebraBasis):
                         ret.add(wc)
             return frozenset(ret)
 
+
         out = {}
         for wc in _graphs_from_weight(comp):
             perm = wc.perm
-            coeff = beta ** (total - perm.inv)
+            coeff = 1
             out[(perm, length)] = out.get((perm, length), S.Zero) + coeff
         return out
 

@@ -544,6 +544,7 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         return key
 
 
+    @cache
     def _normalize_key(self, key, legacy=True):
         """Normalize an WCGraph tensor key to normal form."""
         key = self._ensure_valid_key(key)
@@ -559,6 +560,7 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
 
         return self.make_key(factors, size)
 
+    @cache
     def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
         size = left_key.size
         if left_key.size != right_key.size:

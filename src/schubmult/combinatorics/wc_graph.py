@@ -59,10 +59,10 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, WCGraph):
             return NotImplemented
-        return tuple(self) == tuple(other)
+        return tuple(self) == tuple(other) and hash(self) == hash(other)
 
     def __hash__(self) -> int:
-        return hash(tuple(self))
+        return hash((tuple(self), "Tweezers"))
 
     def trans_co_pipe(self):
         # return self._rebuild([tuple(reversed([])) for i, row in enumerate(reversed(self))])
@@ -717,7 +717,6 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             back = self.rowrange(row, len(self))
         return (front, back)
 
-    @cache
     def disjoint_union(self, rc: WCGraph) -> WCGraph:
         if len(self) != len(rc):
             raise ValueError(f"{type(self).__name__}s must have at least as many rows")
@@ -729,7 +728,6 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         rc_self = self.resize(len(rc) + N)
         return self._rebuild([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
 
-    @cache
     def squash_product(self, rc: WCGraph) -> WCGraph:
         combined_rc = self.disjoint_union(rc)
         while len(combined_rc) > len(self):
@@ -1001,35 +999,44 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         first row via ``pull_out_var_hecke``.
         """
         perm = Permutation(perm)
+        if length < perm.max_descent:
+            return set()
         if length < 0:
             # Non-empty rows can only occur in indices 1..len(perm)-1.
-            length = max(len(perm) - 1, 0)
+            length = perm.max_descent
         if weight is not None and len(weight) != length:
             raise ValueError("Weight must have length equal to the number of rows")
 
         if weight is not None:
-            wkey = (perm, tuple(weight))
+            if any(a != 0 for a in weight[perm.max_descent:]):
+                return set()
+            wkey = (perm, tuple(weight)[:perm.max_descent])
             if wkey in cls._cache_by_weight:
+                if length != perm.max_descent:
+                    return cls._cache_by_weight[wkey].resize(length)
                 return cls._cache_by_weight[wkey]
+            elif perm in cls._graph_cache:  # noqa: RET505
+                if length != perm.max_descent:
+                    ret_by_weight = {wc.resize(length) for wc in cls._graph_cache[perm] if wc.resize(length).length_vector == tuple(weight)}
+                else:
+                    ret_by_weight = {wc for wc in cls._graph_cache[perm] if wc.length_vector == tuple(weight)}
+                cls._cache_by_weight[wkey] = ret_by_weight
+                return ret_by_weight
         else:
-            key = (perm, length)
+            key = perm
             if key in cls._graph_cache:
+                if length != perm.max_descent:
+                    return {wc.resize(length) for wc in cls._graph_cache[key]}
                 return cls._graph_cache[key]
 
         if length == 0:
-            ret = {cls(())} if perm.inv == 0 else set()
-            if weight is not None:
-                cls._cache_by_weight[(perm, tuple(weight))] = ret
-            else:
-                cls._graph_cache[(perm, length)] = ret
+            ret = {cls([()] * length)} if perm.inv == 0 else set()
             return ret
 
         if perm.inv == 0:
             ret = {cls([()] * length)}
-            if weight is not None:
-                cls._cache_by_weight[(perm, tuple(weight))] = ret
-            else:
-                cls._graph_cache[(perm, length)] = ret
+            if weight is not None and sum(weight) != 0:
+                return set()
             return ret
 
         ret: set[WCGraph] = set()
@@ -1040,18 +1047,18 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
                 for old_wc in old_set:
                     new_rows = [row, *[tuple(a + 1 for a in rr) for rr in old_wc]]
                     nwc = cls(new_rows)
-                    if nwc.perm != perm:
+                    if Permutation.ref_product(*row) @ reduced_perm.shiftup(1) != perm:
                         continue
                     if len(nwc) != length:
                         continue
-                    if weight is not None and nwc.length_vector != tuple(weight):
+                    if weight is not None and nwc.length_vector[0] != weight[0]:
                         continue
                     ret.add(nwc)
 
         if weight is not None:
-            cls._cache_by_weight[(perm, tuple(weight))] = ret
+            cls._cache_by_weight[(perm, tuple(weight[:perm.max_descent]))] = ret
         else:
-            cls._graph_cache[(perm, length)] = ret
+            cls._graph_cache[perm] = {wc.resize(perm.max_descent) for wc in ret}
         return ret
 
     @classmethod

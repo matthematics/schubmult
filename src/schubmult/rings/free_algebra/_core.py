@@ -219,7 +219,7 @@ class FreeAlgebraElement(BaseRingElement):
         return spoink.change_basis(self.ring._basis)
 
     def __hash__(self):
-        return hash(set(self.items()))
+        return hash(frozenset(self.items()))
 
     def __imul__(self, other):
         return self * other

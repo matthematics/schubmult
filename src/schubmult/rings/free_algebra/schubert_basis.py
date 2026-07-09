@@ -42,6 +42,7 @@ class SchubertBasis(FreeAlgebraBasis):
         return (Permutation(x[0]), x[1])
 
     @classmethod
+    @cache
     def product(cls, key1, key2, coeff=S.One):
         """Multiply two Schubert basis keys via the separated-descents ring."""
         return dict(coeff * splugSx(*cls.as_key(key1)) * splugSx(*cls.as_key(key2)))
@@ -82,7 +83,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     @cache
-    def transition_grothendieck(cls, perm, numvars, beta):
+    def transition_grothendieck(cls, perm, numvars):
         """Transition a Schubert key to the Grothendieck basis."""
         from schubmult.combinatorics.bpd import BPD
         n = len(perm)
@@ -91,7 +92,9 @@ class SchubertBasis(FreeAlgebraBasis):
         dct = {}
         for bpd in BPD.all_bpds(pw0, n):
             cobpd = bpd.co_bpd()
-            dct[(cobpd.perm, numvars)] = dct.get((cobpd.perm, numvars), 0) + beta ** (perm.inv - cobpd.perm.inv)
+            the_perm = cobpd.perm
+            if the_perm.max_descent <= numvars:
+                dct[(the_perm, numvars)] = dct.get((the_perm, numvars), 0) + 1
         return dct
 
     @classmethod
@@ -269,8 +272,8 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
         if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis or other_basis == KeyBasis or other_basis == FundamentalSlideBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
-        if other_basis == GrothendieckBasis:
-            return lambda x: cls.transition_grothendieck(*x, other_basis.beta)
+        if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
+            return lambda x: cls.transition_grothendieck(*x)
         raise NotImplementedError(f"Transition from SchubertBasis to {other_basis} is not implemented.")
 
     @classmethod
