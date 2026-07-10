@@ -23,15 +23,10 @@ def test_crystal(n):
     for w in perms:
         the_wcs = set()
         for rc in RCGraph.all_rc_graphs(w, n - 1):
-            rc_tensor = _elem_factor_from_rc(rc)
-            base_p = [rc.perm.inv for rc in rc_tensor]
-            setletter_tensor = CrystalGraphTensor(*[SetLetter(_set_from_lv(rc.length_vector), length=rc.perm.max_descent) for rc in rc_tensor])
-            crystal = setletter_tensor.full_crystal
-            for c in crystal:
-                wc_graph_tensor_list = [_setletter_to_elem_wc(c.factors[i], base_p[i], rc_tensor[i].perm.max_descent) for i in range(len(c.factors))]
-                if any(wc is None for wc in wc_graph_tensor_list):
-                    continue
-                wc_graph_tensor = bw.make_key(wc_graph_tensor_list, n - 1)
+            rc_tensor = next(iter(br.from_rc_graph(rc, n - 1)))
+            wc_tensor = CrystalGraphTensor(*[WCGraph(rc0) for rc0 in rc_tensor])
+            for c in wc_tensor.full_crystal:
+                wc_graph_tensor = bw.make_key(c.factors, n - 1)
                 wc_graph = bw.key_to_wc_graph(wc_graph_tensor)
                 if wc_graph.perm != w:
                     continue#, f"Mismatch for {w}: {wc_graph.perm} != {w}\n{wc_graph=}\n{c=}\n{wc_graph_tensor=}\n{rc_tensor=}"

@@ -52,62 +52,22 @@ def _is_row_root(root, k):
 @cache
 def _elem_factor_from_rc(rc):
     from schubmult.combinatorics.permutation import Permutation
-    from schubmult.utils.perm_utils import has_bruhat_descent
 
     if rc.perm.inv == 0:
         return ()
     if rc.is_elem_sym:
         return CrystalGraphTensor(rc.normalize())
     n = len(rc.perm)
-    k = n - 1
     weight = tuple(reversed([n - 1 - j - w for j, w in enumerate((rc.perm * Permutation.w0(n)).pad_code(n - 1))]))
-    # hw_rc, raise_seq = rc.to_highest_weight()
-    # good_tensor = None
-    # for tensor in _all_tensors(weight, tuple(range(1,n))):
-    #     if _squash_it_up(tensor).resize(len(hw_rc)) == hw_rc:
-    #         good_tensor = tensor
-    #         break
-    degree = weight[-1]
-    if degree == 0:
-        raise ValueError(f"This shouldn't happen {rc=} {degree=}")
-    stack = [[[], rc]]
-    while stack:
-        spot_list, test_rc = stack.pop()
-        if len(spot_list) == degree:
-            weight = [0] * k
-            for r, c in spot_list:
-                weight[r - 1] = 1
-            elem_sym_rc = next(iter(RCGraph.elem_sym_rcs(degree, k, weight=tuple(weight))))
-            if test_rc.resize(k).squash_product(elem_sym_rc).resize(len(rc)) == rc:
-                return CrystalGraphTensor(*_elem_factor_from_rc(test_rc), elem_sym_rc)
-            continue
-        for i in range(k):
-            for j in range(k, len(test_rc.perm)):
-                if has_bruhat_descent(test_rc.perm, i, j):
-                    row, col = test_rc.loc_of_inversion(i + 1, j + 1)
-                    if row in spot_list:
-                        continue
-                    new_rc = test_rc.toggle_ref_at(row, col)
-                    stack.append([[*spot_list, (row, col)], new_rc])
-
-    # for the_spots in itertools.combinations(range(1, len(hw_rc) + 1), degree):
-    #     test_rc = hw_rc
-    #     rows = the_spots
-    #     good = True
-    #     for spot in the_spots:
-    #         column =
-
-    #     weight = [0] * k
-    #     for r in rows:
-    #         weight[r - 1] = 1
-    #     elem_sym_rc = next(iter(RCGraph.elem_sym_rcs(degree, k, weight=tuple(weight)))).resize(len(rc))
-    #     if test_rc.resize(k).squash_product(elem_sym_rc).resize(len(hw_rc)) == hw_rc:
-    #         tensor = CrystalGraphTensor(test_rc, elem_sym_rc).reverse_raise_seq(raise_seq)
-    #         return CrystalGraphTensor(*_elem_factor_from_rc(tensor.factors[0]), tensor.factors[1])
-    # if good_tensor is None:
-    raise ValueError(f"Could not find good tensor for RC graph {rc=} {degree=} {n - 1=}")
-    # to_lower = CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)
-    # return to_lower
+    hw_rc, raise_seq = rc.to_highest_weight()
+    good_tensor = None
+    for tensor in _all_tensors(weight, tuple(range(1, n))):
+        if _squash_it_up(tensor).resize(len(hw_rc)) == hw_rc:
+            good_tensor = tensor
+            break
+    if good_tensor is None:
+        raise ValueError(f"Could not find good tensor for RC graph {rc=} {n - 1=}")
+    return CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)
 
 
 def _is_full_grassmannian_rc(rc: RCGraph) -> bool:

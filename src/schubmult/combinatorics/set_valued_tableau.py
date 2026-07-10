@@ -15,10 +15,10 @@ class SetValuedTableau(GridPrint, CrystalGraph):
     where each ``labels`` tuple is sorted ascending. Empty boxes are simply
     absent from the dict.
 
-    The tableau carries the type ``A`` crystal structure of Monical--Pechenik--
-    Scrimshaw (*Crystal structures for symmetric Grothendieck polynomials*,
-    arXiv:1807.03294): :meth:`raising_operator` is ``e_i`` and
-    :meth:`lowering_operator` is ``f_i``.
+    The tableau crystal operators are realized via the tensor model on
+    :class:`~schubmult.combinatorics.set_word.SetWord` with
+    :class:`~schubmult.combinatorics.set_word.SetLetter` factors, using
+    row-reading order over boxes (bottom-to-top, left-to-right).
     """
 
     _display_name = "SetValuedTableau"
@@ -135,7 +135,7 @@ class SetValuedTableau(GridPrint, CrystalGraph):
                 return False
         return True
 
-    # ---- crystal structure (Monical--Pechenik--Scrimshaw) --------------
+    # ---- crystal structure via SetWord/SetLetter ------------------------
     def _reading_boxes(self):
         """Row-reading order over boxes: bottom-to-top rows, left-to-right."""
         boxes = []
@@ -145,78 +145,49 @@ class SetValuedTableau(GridPrint, CrystalGraph):
                     boxes.append((r, c))
         return boxes
 
-    def _bracket(self, i):
-        """Signature bracketing for the pair ``(i, i + 1)``.
+    def _to_set_word(self):
+        from .set_word import SetLetter, SetWord
 
-        Within each box the ``i + 1`` sign (an opening ``-``) is read before the
-        ``i`` sign (a closing ``+``), so a box holding both is self-cancelling.
-        ``+`` closes the most recent unmatched ``-``. Returns the pair
-        ``(leftmost_unmatched_minus_box, rightmost_unmatched_plus_box)`` (either
-        may be ``None``).
-        """
-        open_stack = []       # boxes with an unmatched i+1 (opening '-')
-        unmatched_plus = []   # boxes with an unmatched i (closing '+')
-        for rc in self._reading_boxes():
-            labels = self._cells[rc]
-            if (i + 1) in labels:
-                open_stack.append(rc)
-            if i in labels:
-                if open_stack:
-                    open_stack.pop()
-                else:
-                    unmatched_plus.append(rc)
-        left_minus = open_stack[0] if open_stack else None
-        right_plus = unmatched_plus[-1] if unmatched_plus else None
-        return left_minus, right_plus
+        boxes = self._reading_boxes()
+        max_label = max((max(labels) for labels in self._cells.values()), default=0)
+        # Use one extra crystal rank so f_i can create i+1 even when i+1 is not
+        # yet present in the tableau (e.g. singleton {1} under f_1).
+        letter_length = max_label + 1 if max_label > 0 else 0
+        factors = [SetLetter(labels, length=letter_length) for labels in (self._cells[rc] for rc in boxes)]
+        return SetWord(*factors), boxes
+
+    @classmethod
+    def _from_set_word(cls, set_word, boxes):
+        cells = {}
+        for rc, letter in zip(boxes, set_word.factors, strict=True):
+            labels = tuple(sorted(int(v) for v in letter))
+            if labels:
+                cells[rc] = labels
+        return cls(cells)
 
     def lowering_operator(self, i):
-        """Crystal lowering operator ``f_i`` (Definition 3.1 of MPS).
-
-        Acts on the box ``b`` of the rightmost uncancelled ``+`` (an ``i``). If
-        the box ``b_right`` immediately to the right of ``b`` contains ``i``,
-        remove ``i`` from ``b_right`` and add ``i + 1`` to ``b``; otherwise
-        replace ``i`` with ``i + 1`` in ``b``. Returns ``None`` if undefined.
-        """
+        """Crystal lowering operator ``f_i`` via :class:`SetWord`."""
         if i < 1:
             return None
-        _, b = self._bracket(i)
-        if b is None:
+        set_word, boxes = self._to_set_word()
+        if len(boxes) == 0:
             return None
-        cells = {k: set(v) for k, v in self._cells.items()}
-        r, c = b
-        b_right = (r, c + 1)
-        if b_right in cells and i in cells[b_right]:
-            cells[b_right].discard(i)
-            cells[b].add(i + 1)
-        else:
-            cells[b].discard(i)
-            cells[b].add(i + 1)
-        return SetValuedTableau({k: tuple(sorted(v)) for k, v in cells.items() if v})
+        lowered = set_word.lowering_operator(i)
+        if lowered is None:
+            return None
+        return SetValuedTableau._from_set_word(lowered, boxes)
 
     def raising_operator(self, i):
-        """Crystal raising operator ``e_i`` (Definition 3.1 of MPS).
-
-        Acts on the box ``b`` of the leftmost uncancelled ``-`` (an ``i + 1``).
-        If the box ``b_left`` immediately to the left of ``b`` contains
-        ``i + 1``, remove ``i + 1`` from ``b_left`` and add ``i`` to ``b``;
-        otherwise replace ``i + 1`` with ``i`` in ``b``. Returns ``None`` if
-        undefined.
-        """
+        """Crystal raising operator ``e_i`` via :class:`SetWord`."""
         if i < 1:
             return None
-        b, _ = self._bracket(i)
-        if b is None:
+        set_word, boxes = self._to_set_word()
+        if len(boxes) == 0:
             return None
-        cells = {k: set(v) for k, v in self._cells.items()}
-        r, c = b
-        b_left = (r, c - 1)
-        if b_left in cells and (i + 1) in cells[b_left]:
-            cells[b_left].discard(i + 1)
-            cells[b].add(i)
-        else:
-            cells[b].discard(i + 1)
-            cells[b].add(i)
-        return SetValuedTableau({k: tuple(sorted(v)) for k, v in cells.items() if v})
+        raised = set_word.raising_operator(i)
+        if raised is None:
+            return None
+        return SetValuedTableau._from_set_word(raised, boxes)
 
     @property
     def crystal_weight(self):

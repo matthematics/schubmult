@@ -205,24 +205,12 @@ def main(n):
     @cache
     def _poly_for(perm):
         comp = perm.pad_code(n - 1)
-        gwc = WCGraph.grove_wcs(comp)
-
-        did = set()
-        def _keep(k):
-            if k in did:
-                return False
-            wcg = _key_to_wc(k)
+        groth_expr = Gx1.from_expr(_grove_expand(comp))
+        result = 0
+        for perm1, coeff in groth_expr.items():
+            result += coeff * untagged_groth_elem(perm1, n - 1)
             
-            if wcg.resize(n - 1) in gwc:
-                did.add(k)
-                return True
-            return False
-        keys = set()
-        
-        for wc in untagged_groth_elem(perm, length).keys():
-            if _keep(wc):
-                keys.add(wc)
-        return bw.from_dict({k: 1 for k in keys})
+        return result
 
     for perm1, perm2 in itertools.combinations(interestin_perms, 2):
         # perm1 = uncode([0,0,0,1])
@@ -231,22 +219,20 @@ def main(n):
         comp2 = perm2.pad_code(n-1)
         poly1 = _poly_for(perm1)
         poly2 = _poly_for(perm2)
-        # def _smash_it(poly):
-        #     poly_old = poly
-        #     poly = 0
-        #     the_wc_key = {}
-        #     for key, coeff in poly_old.items():
-        #         wcc = bw.key_to_wc_graph(key).resize(n - 1)
-        #         #if coeff > 0:
-        #         real_key = key
-        #         if wcc in the_wc_key:
-        #             real_key = the_wc_key[wcc]
-        #         else:
-        #             the_wc_key[wcc] = key
-        #         poly += coeff * bw(real_key)
-        #     return poly
-        # poly1 = _smash_it(poly1)
-        # poly2 = _smash_it(poly2)
+        def _smash_it(poly, comp):
+            # poly_old = poly
+            # poly = 0
+            # the_wc_key = {}
+            # #grv = WCGraph.grove_wcs(comp, n - 1)
+            # for key, coeff in poly_old.items():
+            #     wcc = bw.key_to_wc_graph(key).resize(n - 1)
+            #     if wcc.grove_weight != tuple(comp):
+            #         continue
+            #     #if coeff > 0:
+            #     poly += coeff * bw(key)
+            return poly
+        poly1 = _smash_it(poly1, comp1)
+        poly2 = _smash_it(poly2, comp2)
         if any(v < 0 for v in poly1.values()) or any(v < 0 for v in poly2.values()):
             print(f"Negative coefficient")# for {comp1=}, {comp2=}: {poly1=}, {poly2=}")
             
@@ -264,12 +250,12 @@ def main(n):
                 if wc.grove_weight == wc.length_vector:
                     real_product += v * Grove1(*wc.grove_weight)
         assert (real_product_g.expand()-(_grove_expand(comp1) * _grove_expand(comp2)).expand().subs(Gx._beta, 1)).expand() == 0, f"Mismatch for {comp1=}, {comp2=}: {real_product_g=} vs {(_grove_expand(comp1) * _grove_expand(comp2))=}"
+        assert (real_product_g.expand() - real_product.expand()).expand() == 0, f"Mismatch for {comp1=}, {comp2=}: {real_product_g=} vs {real_product=}"
         painted_potato = 0
         for wc, v in try_poly.items():
             #assert sympify(real_product.get(wc.perm, 0)).subs(Gx._beta, 1) == v, f"Mismatch for {perm1=}, {perm2=}: {try_poly=} vs {real_product=}"
             if wc.grove_weight == wc.length_vector:
-                if wc.perm in real_product_g.keys():
-                    painted_potato += v * Grove1(*wc.grove_weight)
+                painted_potato += v * Grove1(*wc.grove_weight)
                 #_grove_elem(wc.forest_weight)
         assert (real_product.expand() - try_poly.polyvalue(Gx.genset, beta=1)).expand() == 0, f"Mismatch for {perm1=}, {perm2=}: {(try_poly-real_product)=}"
         try:

@@ -628,22 +628,40 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return len(self.perm_word) - self.perm.inv
 
     def raising_operator(self, i: int) -> WCGraph | None:
-        from .set_word import SetWord
-        if i < 1 or i >= len(self):
+        from .increasing_tableau import IncreasingTableau
+
+        if i <= 0 or i >= len(self):
             return None
-        result = SetWord.from_wc_graph(self).raising_operator(i)
-        if result is None:
+        p_tab, q_tab = self.hecke_invariant
+        q_next = q_tab.raising_operator(i)
+        if q_next is None:
             return None
-        return result.to_wc_graph(self.perm.max_descent).resize(len(self))
+        try:
+            compat, word = IncreasingTableau.hecke_column_uninsert_rsk(p_tab, q_next)
+            result = WCGraph.from_word_compatible(word, compat, length=len(self))
+        except Exception:
+            return None
+        if result.perm != self.perm or not result.is_valid:
+            return None
+        return result
 
     def lowering_operator(self, i: int) -> WCGraph | None:
-        from .set_word import SetWord
-        if i < 1 or i >= len(self):
+        from .increasing_tableau import IncreasingTableau
+
+        if i <= 0 or i >= len(self):
             return None
-        result = SetWord.from_wc_graph(self).lowering_operator(i)
-        if result is None:
+        p_tab, q_tab = self.hecke_invariant
+        q_next = q_tab.lowering_operator(i)
+        if q_next is None:
             return None
-        return result.to_wc_graph(self.perm.max_descent).resize(len(self))
+        try:
+            compat, word = IncreasingTableau.hecke_column_uninsert_rsk(p_tab, q_next)
+            result = WCGraph.from_word_compatible(word, compat, length=len(self))
+        except Exception:
+            return None
+        if result.perm != self.perm or not result.is_valid:
+            return None
+        return result
 
     @classmethod
     @cache

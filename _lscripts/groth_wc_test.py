@@ -9,40 +9,41 @@ if __name__ == "__main__":
 
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    for u in perms:
-        if u.inv == 0:
-            continue
-        for v in perms:
-            if v.inv == 0:
-                    continue
-            for i in range(u.max_descent, n):
+    comps = [tuple(perm.pad_code(n - 1)) for perm in perms]
+    GroveDual = FreeAlgebra(GroveBasis)
+    for u in comps:
+        
+        for v in comps:
+            # if v.inv == 0:
+            #         continue
+            for i in range(len(u), n):
             
                 
-                for j in range(v.max_descent, n):
-                    the_product = AGx(u, i) * AGx(v, j)
+                for j in range(len(v), n):
+                    the_product = GroveDual(*pad_tuple(u, i)) * GroveDual(*pad_tuple(v, j))
                     # print(f"Product of {(u, i), (v, j)} = {the_product}")
                     #result_dict = {}
-                    the_uc = next(iter([rc for rc in WCGraph.all_wc_graphs(u, i) if rc.is_reduced]))
+                    the_uc = next(iter([rc for rc in WCGraph.grove_wcs(u, i) if rc.is_reduced]))
                     if len(the_uc) != i:
                         raise ValueError(f"Unexpected length {len(the_uc)} for u={u} and i={i}")
                     
-                    the_vc = next(iter([rc for rc in WCGraph.all_wc_graphs(v, j) if rc.is_reduced]))
+                    the_vc = next(iter([rc for rc in WCGraph.grove_wcs(v, j) if rc.is_reduced]))
                     if len(the_vc) != j:
                         raise ValueError(f"Unexpected length {len(the_vc)} for v={v} and j={j}")
-                    for (w, length), coeff in the_product.items():
+                    for w, coeff in the_product.items():
                         # print(f"Checking {(w, length)} with coeff {coeff}")
-                        if w.max_descent > length:
+                        if len(w) > i + j:
                             print("waring")
                             continue
                         result = 0
                         #coeff = sympify(coeff).subs(Gx._beta, -1)
                         if coeff == 0:
                             continue
-                        if length != i + j:
-                            print(f"Unexpected length {length} for product of {(u, i), (v, j)}, {coeff=}")
-                            continue
+                        # if length != i + j:
+                        #     print(f"Unexpected length {length} for product of {(u, i), (v, j)}, {coeff=}")
+                        #     continue
                         
-                        for wc in WCGraph.all_wc_graphs(w, length):
+                        for wc in WCGraph.grove_wcs(w, i + j):
                             up, down = wc.vertical_cut(i)
                             if len(up) != i or len(down) != j:
                                 raise ValueError(f"Unexpected lengths {len(up)}, {len(down)} for vertical cut of {wc} at {i}")
