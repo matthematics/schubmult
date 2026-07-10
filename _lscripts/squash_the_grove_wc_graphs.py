@@ -10,6 +10,8 @@ bw = BoundedWCFactorAlgebra()
 from sympy import pretty_print, sympify, Pow, Mul
 from schubmult.rings.polynomial_algebra import Grove, GrovePolyBasis
 
+Gx1 = GrothendieckRing(Gx.genset, beta=1)
+
 def groth_to_schub_as_rc(groth_perm: Permutation, length):
     from schubmult.combinatorics.pipe_dream import PipeDream
 
@@ -183,7 +185,7 @@ def main(n):
         # Gx.from_expr is a ring homomorphism, so caching this per single comp
         # and multiplying in the Gx ring reproduces Gx.from_expr(prod of exprs)
         # without the per-pair symbolic polynomial multiply + re-parse.
-        return Gx.from_expr(_grove_expand(comp))
+        return Gx1.from_expr(_grove_expand(comp))
 
     @cache
     def _all_wcs(perm):
@@ -205,11 +207,22 @@ def main(n):
         comp = perm.pad_code(n - 1)
         gwc = WCGraph.grove_wcs(comp)
 
+        did = set()
         def _keep(k):
+            if k in did:
+                return False
             wcg = _key_to_wc(k)
-            return wcg.resize(n - 1) in gwc or wcg.perm != perm
-
-        return bw.from_dict({k: v for k, v in untagged_groth_elem(perm, length).items() if _keep(k)})
+            
+            if wcg.resize(n - 1) in gwc:
+                did.add(k)
+                return True
+            return False
+        keys = set()
+        
+        for wc in untagged_groth_elem(perm, length).keys():
+            if _keep(wc):
+                keys.add(wc)
+        return bw.from_dict({k: 1 for k in keys})
 
     for perm1, perm2 in itertools.combinations(interestin_perms, 2):
         # perm1 = uncode([0,0,0,1])
@@ -218,23 +231,66 @@ def main(n):
         comp2 = perm2.pad_code(n-1)
         poly1 = _poly_for(perm1)
         poly2 = _poly_for(perm2)
+        # def _smash_it(poly):
+        #     poly_old = poly
+        #     poly = 0
+        #     the_wc_key = {}
+        #     for key, coeff in poly_old.items():
+        #         wcc = bw.key_to_wc_graph(key).resize(n - 1)
+        #         #if coeff > 0:
+        #         real_key = key
+        #         if wcc in the_wc_key:
+        #             real_key = the_wc_key[wcc]
+        #         else:
+        #             the_wc_key[wcc] = key
+        #         poly += coeff * bw(real_key)
+        #     return poly
+        # poly1 = _smash_it(poly1)
+        # poly2 = _smash_it(poly2)
         if any(v < 0 for v in poly1.values()) or any(v < 0 for v in poly2.values()):
             print(f"Negative coefficient")# for {comp1=}, {comp2=}: {poly1=}, {poly2=}")
             
+            
+            #poly1 = bw.from_dict({k: v for k, v in poly1.items() if v >= 0})
+            
         try_poly = (poly1 * poly2).to_wc_graph_ring_element()
         
-        real_product_g = Gx.from_dict({k: sympify(v).subs(Gx._beta, 1) for k, v in (_gx_of(comp1) * _gx_of(comp2)).items()})
+        real_product_g = Gx1.from_expr((_grove_expand(comp1) * _grove_expand(comp2)))
+        #Gx.from_dict({k: sympify(v).subs(Gx._beta, 1) for k, v in ((_grove_expand(comp1) * _grove_expand(comp2))).items()})
         real_product = 0
         for k, v in real_product_g.items():
-            for fw in _grove_weights_of(k):
-                real_product += v * _grove_elem(fw)
-            
+            for wc in _all_wcs(k):
+            #for fw in _grove_weights_of(k):
+                if wc.grove_weight == wc.length_vector:
+                    real_product += v * Grove1(*wc.grove_weight)
+        assert (real_product_g.expand()-(_grove_expand(comp1) * _grove_expand(comp2)).expand().subs(Gx._beta, 1)).expand() == 0, f"Mismatch for {comp1=}, {comp2=}: {real_product_g=} vs {(_grove_expand(comp1) * _grove_expand(comp2))=}"
         painted_potato = 0
         for wc, v in try_poly.items():
             #assert sympify(real_product.get(wc.perm, 0)).subs(Gx._beta, 1) == v, f"Mismatch for {perm1=}, {perm2=}: {try_poly=} vs {real_product=}"
-            if wc.forest_weight == wc.length_vector:
-                painted_potato += v * _grove_elem(wc.forest_weight)
-        assert real_product.almosteq(painted_potato), f"Mismatch for {perm1=}, {perm2=}: {(painted_potato-real_product)=}"
+            if wc.grove_weight == wc.length_vector:
+                if wc.perm in real_product_g.keys():
+                    painted_potato += v * Grove1(*wc.grove_weight)
+                #_grove_elem(wc.forest_weight)
+        assert (real_product.expand() - try_poly.polyvalue(Gx.genset, beta=1)).expand() == 0, f"Mismatch for {perm1=}, {perm2=}: {(try_poly-real_product)=}"
+        try:
+            
+            assert real_product.almosteq(painted_potato), f"Mismatch for {perm1=}, {perm2=}: {(painted_potato-real_product)=}\n{painted_potato=}\n{real_product=}\n"
+        except AssertionError as e:
+            print(f"FAIL: {perm1=}, {perm2=}: {(painted_potato-real_product)=}\n{painted_potato=}\n{real_product=}\n")
+            print("Offenders:")
+            offenders = {}
+            for wc, v in try_poly.items():
+                if wc.grove_weight in (painted_potato - real_product).keys() and wc.grove_weight == wc.length_vector:
+                    offenders[wc.grove_weight] = offenders.get(wc.grove_weight, []) + [(wc, v)]
+                    #offenders[wc.forest_weight] = offenders.get(wc.forest_weight, []) + [(wc, v)]
+            for weight, st_list in offenders.items():
+                print(f"{Grove1(*weight)=}")
+                for wc, v in st_list:
+                    print(f"{v=}")
+                    pretty_print(wc)
+                    print(f"{wc.perm=}")
+                #pretty_print(wc)
+            raise e
         print(f"Success {comp1=}, {comp2=}")
         # break
         # tagged = tagged0.to_wc_graph_ring_element()

@@ -22,7 +22,7 @@ if __name__ == "__main__":
                     the_product = AGx(u, i) * AGx(v, j)
                     # print(f"Product of {(u, i), (v, j)} = {the_product}")
                     #result_dict = {}
-                    the_uc = next(iter([rc for rc in WCGraph.all_wc_graphs(u, i) if rc.is_reduced]))
+                    the_uc = next(iter([rc for rc in WCGraph.all_wc_graphs(u, i) if rc.forest_weight == rc.length_vector and rc.length_vectorfa]))
                     if len(the_uc) != i:
                         raise ValueError(f"Unexpected length {len(the_uc)} for u={u} and i={i}")
                     

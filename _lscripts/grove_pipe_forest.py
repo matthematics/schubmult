@@ -28,19 +28,19 @@ if __name__ == "__main__":
 
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    comps = [tuple(perm.pad_code(n - 1)) for perm in perms]
-    # for k in range(1, n):
-    #     for p in range(1, k + 1):
-    for comp in comps:
+    # comps = [tuple(perm.pad_code(n - 1)) for perm in perms]
+    # # for k in range(1, n):
+    # #     for p in range(1, k + 1):
+    Grove1 = PolynomialAlgebra(GrovePolyBasis(Gx.genset, 1))
+    for perm in perms:
         #    w = uncode([0] * (k - p) + [1] * p)
-        dct = WCGraph.grove_to_forest(comp, beta=Gx._beta)
-        # for bpd, rc_set in dct.items():
-        #     assert len([bpd0 for bpd0 in BPD.all_unreduced_bpds(w) if bpd0.co_bpd().perm == bpd.co_bpd().perm]) == len(rc_set), f"Mismatch for {w}: {bpd=}, {len([bpd0 for bpd0 in BPD.all_unreduced_bpds(w) if bpd0.co_bpd().perm == bpd.co_bpd().perm])=}, {len(rc_set)=}"
-        print(f"{comp=}: {dct}")
-        poly1 = grove_polynomial(comp, Sx.genset, beta=Gx._beta)
-        poly2 = 0
-        for comp2, coeff in dct.items():
-            poly2 += coeff * Forest(*comp2).expand()
-        #poly2 = sum([rc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for bpd, rcs in groth_to_schub
-        assert (poly1 - poly2).expand() == 0, f"Failed for {comp=}: {poly1=}, {poly2=}"
-        print("Success ", comp)
+        dct = {}
+        for wc in WCGraph.all_wc_graphs(perm, n - 1):
+            wt = wc.grove_invariant
+            dct[wt] = dct.get(wt, set())
+            dct[wt].add(wc)
+        for wt, wcs in dct.items():
+            the_sum = sum([wc.polyvalue(Sx.genset, beta=1) for wc in wcs])
+            grove_poly = Grove1(*wt.length_vector).expand()
+            assert (the_sum - grove_poly).expand() == 0, f"Mismatch for {perm}, {wt}: {the_sum} != {grove_poly}"
+            print("GOOD", perm, wt)

@@ -752,10 +752,49 @@ $$\mathfrak{G}^{(\beta)}_w(x)=\sum_{F\in \mathrm{IF}} \beta^{|F|-\ell(w)}a_w^F\g
 where 
 $$a_w^F = \#\{W\in \WC_\forest(w)\mid F(W) = F\}$$
 \end{corollary}
+
+\section{Grothendieck Cauchy formula}
+
+Define
+$$F_k(x;y) = \prod_{i=1}^k (x_i + y_1 + x_iy_1)$$
+
+$$F_k(x;y) = (1+y_1)^k\prod_{i=1}^k\left(x_i + \frac{y_1}{1+y_1}\right)$$
+Set $y_1=e^{z_1} - 1$, then
+$$F_k(x;y) = e^{kz_1}\prod_{i=1}^k \left(x_i + 1 - e^{-z_1}\right)$$
+Set $x_i = e^{-a_i} - 1$, then
+$$F_k(x;y) = e^{kz_1}\prod_{i=1}^k \left(e^{-a_i} - e^{-z_1}\right)$$
+% Then
+% $$F_k(x;y) = \frac{1}{y_1^k}\sum_{i=0}^{k} f_{i,k}(x)\left(1 + \frac{1}{y_1}\right)^i$$
+% Make the change of variables
+% $$z_1 = y_1^{-1}$$
+% we obtain
+% $$F_k(x;z) = \frac{1}{z_1^k}\sum_{i=0}^{k} f_{i,k}(x) (1 + z_1)^i$$
+% Setting
+% $$z_1 = e^{-a_1} + 1$$
+% we obtain
+% $$F_k(x;a) = e^{ka_1}\sum_{i=0}^{k} f_{i,k}(x) (e^{-a_1} + 1)^i$$
+% which is
+% $$F_k(x;a) = e^{ka_1}\sum_{i=0}^{k}\sum_{j=0}^i \binom{i}{j}f_{i,k}(x)e^{-ja_1}$$
+% which is
+% $$F_k(x;a) = \sum_{i=0}^{k}\sum_{j=0}^i \binom{i}{j}f_{i,k}(x)e^{(k-j)a_1}$$
+% and setting
+% $$t_1 = e^{a_1}$$
+% we obtain
+% $$F_k(x;t) = \sum_{i=0}^{k}\sum_{j=0}^{k - i} \binom{k - i}{j}f_{k - i,k}(x)t_1^{k-j}$$
+% And if $j = k - m$, then
+% $$F_k(x;t) = \sum_{i=0}^{k}\sum_{m=0}^{i} \binom{k - i}{k - m}f_{k - i,k}(x)t_1^m$$
+% Interchanging,
+% $$F_k(x;t) = \sum_{m=0}^{k}\sum_{i=0}^{m} \binom{k - i}{k - m}f_{k - i,k}(x)t_1^m$$
+% And $p = k - i$ gives
+% $$F_k(x;t) = \sum_{m=0}^{k}\sum_{p=k - m}^{k} \binom{p}{k - m}f_{p,k}(x)t_1^m$$
+% interchanging again
+% $$F_k(x;t) = \sum_{p=0}^{k}\sum_{m=k - p}^{k} \binom{p}{k - m}f_{p,k}(x)t_1^m$$
+% pulling out $f_{p,k}(x)$
+% $$F_k(x;t) = \sum_{p=0}^{k} f_{p,k}(x)t_1^{k-p}(1+t_1)^p$$
 % Sort $A=\{(a_i,b_i)\}$ in lexicographical order, increasing in the first coordinate and decreasing in the second coordinate. By construction, $b_1\cdots b_n$ is a Hecke word and $a_1\cdots a_n$ is a compatible sequence for this word. We claim that the product $b_1\cdots b_n$ in the Hecke monoid is equal to $\wof{F}$. 
 
-% To see this, observe that any choice function $\mathbf{w}:\mathrm{IN}(F)\to \mathbb{N}$ satisfying $\mathbf{w}(v)\in\kappa(v)$ for $v\in\mathrm{IN}(F)$ gives a  sequence $a_1\cdots a_n$ for which there is a decreasing labeling $Q(\mathbf{w})$ of shape $F$ for which the inverse of $(P,Q(\mathbf{w}))$ is a reduced word for $\wof{F}$ for which $a_1\cdots a_n$ is a compatible sequence. Iterating from largest set values to smallest and applying the exchange property gives the result.
-
+% To see this, observe that any choice `function $\mathbf{w}:\mathrm{IN}(F)\to \mathbb{N}$ satisfying $\mathbf{w}(v)\in\kappa(v)$ for $v\in\mathrm{IN}(F)$ gives a  sequence $a_1\cdots a_n$ for which there is a decreasing labeling $Q(\mathbf{w})$ of shape $F$ for which the inverse of $(P,Q(\mathbf{w}))$ is a reduced word for $\wof{F}$ for which $a_1\cdots a_n$ is a compatible sequence. Iterating from largest set values to smallest and applying the exchange property gives the result.
+'
 % let $\mathbf{w}:F\to \mathbb{N}$ be a function satisfying the following:
 
 % \begin{enumerate}

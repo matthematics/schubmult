@@ -161,6 +161,8 @@ def main(n):
     perms = Permutation.all_permutations(n)
     interestin_perms = [perm for perm in perms if perm.inv != 0]
     for perm in perms:
+        if perm.inv == 0:
+            continue
         poly = untagged_groth_elem(perm, length)
         mapping = {}
         unmapping = {}
@@ -171,10 +173,10 @@ def main(n):
             wc = bw.key_to_wc_graph(key).resize(n - 1)
             #wcc = bw.key_to_wc_graph(bw.make_key(k, key.size)).resize(n - 1)
             # if wc not in mapping:
-            spinach = key.raising_operator
-            spinach2 = key.lowering_operator
-            wc.raising_operator = lambda i: bw.key_to_wc_graph(bw.make_key(spinach(i), key.size)) if spinach(i) is not None else None
-            wc.lowering_operator = lambda i: bw.key_to_wc_graph(bw.make_key(spinach2(i), key.size)) if spinach2(i) is not None else None
+            # spinach = key.raising_operator
+            # spinach2 = key.lowering_operator
+            # wc.raising_operator = lambda i: bw.key_to_wc_graph(bw.make_key(spinach(i), key.size)) if spinach(i) is not None else None
+            # wc.lowering_operator = lambda i: bw.key_to_wc_graph(bw.make_key(spinach2(i), key.size)) if spinach2(i) is not None else None
 
             mapping[wc] = key
             
@@ -201,7 +203,7 @@ def main(n):
             pantalones += pato
 
         assert r.from_expr(pantalones.expand()).almosteq(r(perm)), f"Grothendieck polynomial for {perm} does not match sum of crystals, r.from_expr({pantalones.expand()}) = {r.from_expr(pantalones.expand())} != r({perm}) = {r(perm)}"
-        assert stt == WCGraph.all_wc_graphs(perm, n - 1), f"Crystals do not cover all WC graphs for {perm}, missing {set(WCGraph.all_wc_graphs(perm, n - 1)) - stt}"
+        assert stt == WCGraph.all_wc_graphs(perm, n - 1), f"Crystals do not cover all WC graphs for {perm}, missing {set(WCGraph.all_wc_graphs(perm, n - 1)) - stt}\n{stt=}"
 
 def test_crystal_well_defined(n, verbose=True):
     """Test whether the induced crystal structure on WCGraphs is well-defined.
@@ -267,7 +269,7 @@ def test_crystal_well_defined(n, verbose=True):
                             print(
                                 f"[FAIL] perm={perm} op={op_name} i={i}: "
                                 f"{len(keys)} reps -> {len(images)} distinct WCGraphs"
-                                f"{' + None' if has_none else ''}\n       wc={wc}",
+                                f"{' + None' if has_none else ''}\n       wc={wc}\n{images=}",
                             )
 
     print(

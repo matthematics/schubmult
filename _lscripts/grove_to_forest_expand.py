@@ -28,3 +28,5 @@ if __name__ == "__main__":
         expansion = grove_in_forests(comp)
         forests = sorted(key for key, coeff in expansion.items() if coeff != 0)
         print(f"grove{comp} -> {forests}")
+
+        

@@ -18,12 +18,20 @@ class CrystalGraph(Printable):
         raise NotImplementedError
 
     def phi(self, i):
-        if i < 1 or i >= self.crystal_length():
-            if i - 1 < self.crystal_length():
-                return self.epsilon(i) + self.crystal_weight[i - 1]
-            return self.epsilon(i)
-        return self.epsilon(i) + self.crystal_weight[i - 1] - self.crystal_weight[i]
-
+        # if i < 1 or i >= self.crystal_length():
+        #     if i - 1 < self.crystal_length():
+        #         return self.epsilon(i) + self.crystal_weight[i - 1]
+        #     return self.epsilon(i)
+        # return self.epsilon(i) + self.crystal_weight[i - 1] - self.crystal_weight[i]
+        if i > 0 and i < self.crystal_length():
+            cnt = 0
+            rc = self
+            while rc is not None:
+                rc = rc.lowering_operator(i)
+                if rc is not None:
+                    cnt += 1
+            return cnt
+        return 0
 
     def epsilon(self, i):
         if i > 0 and i < self.crystal_length():
@@ -65,12 +73,13 @@ class CrystalGraph(Printable):
         while found:
             found = False
             for row in range(start, length):
-                g0 = g.raising_operator(row)
-                if g0 is not None:
-                    found = True
-                    g = g0
-                    raise_seq.append(row)
-                    break
+                g0 = g
+                while g0 is not None:
+                    g0 = g.raising_operator(row)
+                    if g0 is not None:
+                        found = True
+                        g = g0
+                        raise_seq.append(row)
         return (g, tuple(raise_seq))
 
     def crystal_length(self):
@@ -304,7 +313,7 @@ class CrystalGraphTensor(CrystalGraph):
         full_crystals = [f.full_crystal for f in self.factors]
         highest_weights = set()
         for elements in itertools.product(*full_crystals):
-            highest_weights.add(CrystalGraphTensor(*elements).to_highest_weight()[0])
+            highest_weights.add(self.__class__(*elements).to_highest_weight()[0])
         return highest_weights
 
     def _sympystr(self, printer):
@@ -345,13 +354,13 @@ class CrystalGraphTensor(CrystalGraph):
                 return None
             new_factors = list(self.factors)
             new_factors[k] = result
-            return CrystalGraphTensor(*new_factors)
+            return self.__class__(*new_factors)
         result = self.factors[0].lowering_operator(index)
         if result is None:
             return None
         new_factors = list(self.factors)
         new_factors[0] = result
-        return CrystalGraphTensor(*new_factors)
+        return self.__class__(*new_factors)
 
     def raising_operator(self, index):
         n = len(self.factors)
@@ -363,13 +372,13 @@ class CrystalGraphTensor(CrystalGraph):
                     return None
                 new_factors = list(self.factors)
                 new_factors[k] = result
-                return CrystalGraphTensor(*new_factors)
+                return self.__class__(*new_factors)
         result = self.factors[0].raising_operator(index)
         if result is None:
             return None
         new_factors = list(self.factors)
         new_factors[0] = result
-        return CrystalGraphTensor(*new_factors)
+        return self.__class__(*new_factors)
 
     def epsilon(self, i):
         return self._left_folded_ep_phi(i)[-1][0]

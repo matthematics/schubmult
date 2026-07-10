@@ -248,6 +248,43 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         def __eq__(self, other):
             return isinstance(other, BoundedWCFactorAlgebra._key) and self.size == other.size and self.factors == other.factors
 
+        def raising_operator(self, index):
+            n = len(self.factors)
+            ep = self._left_folded_ep_phi(index)
+            for k in range(n - 1, 0, -1):
+                if self.factors[k].epsilon(index) > ep[k - 1][1]:
+                    result = self.factors[k].raising_operator(index)
+                    if result is None:
+                        return None
+                    new_factors = list(self.factors)
+                    new_factors[k] = result
+                    return type(self)(tuple(new_factors), self.size)
+            result = self.factors[0].raising_operator(index)
+            if result is None:
+                return None
+            new_factors = list(self.factors)
+            new_factors[0] = result
+            return type(self)(tuple(new_factors), self.size)
+
+        def lowering_operator(self, index):
+            n = len(self.factors)
+            ep = self._left_folded_ep_phi(index)
+            for k in range(n - 1, 0, -1):
+                if self.factors[k].epsilon(index) < ep[k - 1][1]:
+                    continue
+                result = self.factors[k].lowering_operator(index)
+                if result is None:
+                    return None
+                new_factors = list(self.factors)
+                new_factors[k] = result
+                return type(self)(tuple(new_factors), self.size)
+            result = self.factors[0].lowering_operator(index)
+            if result is None:
+                return None
+            new_factors = list(self.factors)
+            new_factors[0] = result
+            return type(self)(tuple(new_factors), self.size)
+
     def __init__(self, domain=None, post_normalize=False):
         super().__init__(domain=domain)
         self.post_normalize = post_normalize
