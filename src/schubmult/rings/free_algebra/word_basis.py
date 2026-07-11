@@ -516,7 +516,6 @@ class WordBasis(FreeAlgebraBasis):
     def transition(cls, other_basis):
         from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
-        from .grothendieck_basis import GrothendieckBasis
         from .grove_basis import GroveBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
@@ -548,8 +547,6 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_forest(x)
         if other_basis == MonomialSlideBasis:
             return lambda x: cls.transition_monomial_slide(x)
-        if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
-            return lambda x: cls.transition_grothendieck(x, basis_cls=other_basis)
         if other_basis == GroveBasis:
             return lambda x: cls.transition_grove(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))
