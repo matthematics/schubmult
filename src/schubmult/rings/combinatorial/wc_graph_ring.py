@@ -1,6 +1,6 @@
 
 from schubmult.combinatorics.wc_graph import WCGraph
-from schubmult.rings.free_algebra import WordBasis
+from schubmult.rings.free_algebra import FreeAlgebra, GrothendieckBasis, WordBasis
 from schubmult.symbolic import S, sympify_sympy, sympy_Mul
 
 from ..schubert.grothendieck_ring import Gx
@@ -181,6 +181,14 @@ class WCGraphRing(SchubertMonomialRing):
             n = len(perm.trimcode)
         return self.from_dict(dict.fromkeys(WCGraph.all_wc_graphs(perm, n), S.One))
 
+    def to_free_algebra_element(self, elem, basis=GrothendieckBasis):
+        dual_groth = FreeAlgebra(GrothendieckBasis)
+        result = 0
+        for k, v in elem.items():
+            result += v * dual_groth((k.perm, len(k)))
+        if basis != GrothendieckBasis:
+            result = result.change_basis(basis)
+        return result
 
     def trim_operator(self, i, rc):
         res = self(rc).divdiff(i)

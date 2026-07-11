@@ -3,7 +3,6 @@ from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialB
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import Symbol
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
-from schubmult.utils.tuple_utils import pad_tuple
 
 """
 Grove polynomial basis for Schubert calculus.
@@ -48,9 +47,12 @@ class GrovePolyBasis(PolynomialBasis):
 
     def to_monoms(self, key):
         """Expand a grove key into a dict of monomial exponent tuples."""
-        from schubmult.symbolic.poly.variables import genset_dict_from_expr
+        from schubmult import WCGraph
 
-        dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(self._grove_poly(key), self.genset).items()}
+        dct = {}
+        for wc in WCGraph.grove_wcs(key):
+            dct[wc.length_vector] = dct.get(wc.length_vector, 0) + 1
+        #dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(self._grove_poly(key), self.genset).items()}
         return dct
 
     def expand(self, dct):
@@ -68,6 +70,8 @@ class GrovePolyBasis(PolynomialBasis):
         """Return a transition function from grove basis to *other_basis*."""
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
 
+        if isinstance(other_basis, GrovePolyBasis):
+            return lambda x: x
         if isinstance(other_basis, MonomialBasis):
             return self.transition_monomial
 

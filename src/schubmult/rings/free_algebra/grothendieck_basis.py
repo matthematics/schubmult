@@ -139,6 +139,5 @@ class GrothendieckBasis(FreeAlgebraBasis):
 
     @classmethod
     def dual_basis(cls):
-
-        # Placeholder until a dedicated Groth polynomial dual basis is added.
-        return
+        from ..polynomial_algebra.grothendieck_poly_basis import GrothendieckPolyBasis
+        return GrothendieckPolyBasis
