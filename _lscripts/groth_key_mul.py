@@ -127,7 +127,7 @@ def untagged_groth_elem(perm, length):
             #         term_tensor = term_tensor * groth_elem_to_schub_elem_as_rc(deg, numvars, length)
 
             result += schub_coeff * scalar * groth_term
-
+            result = result.ring.from_dict({k: v.subs(Gx._beta, 1) for k, v in result.items() if v != 0})
     return result
 
 
@@ -152,43 +152,66 @@ def tensor_bensor(rw_r_elem):
 def _to_wc(key):
     return bw.key_to_wc_graph(key)
     #return key
-
 def main(n):
     from schubmult.rings.polynomial_algebra import KeyPolyBasis, PolynomialAlgebra
+    import itertools
     KeyPoly = PolynomialAlgebra(KeyPolyBasis(Gx.genset))
     length = n + 2
     Gx1 = GrothendieckRing(Gx.genset, beta=1)
-    WCGraph._double = False
-    for perm in Permutation.all_permutations(n):
-        print("Myperm is ", perm)
-        tagged0 = untagged_groth_elem(perm, length)
-        if perm.inv == 0:
+    for perm1, perm2 in itertools.product(Permutation.all_permutations(n), repeat=2):
+        
+        if perm1.inv == 0 or perm2.inv == 0:
             continue
-        # tagged = tagged0.to_wc_graph_ring_element()
+        # if len(perm2.descents()) > 1 or len(perm1.descents()) > 1 or (perm2.max_descent < perm1.max_descent):
+        #     continue
+        # if not perm1.is_dominant:
+        #     continue
+        print("Myperm is ", perm1, perm2)
+        # tagged0 = bw.from_dict({k: v for k, v in untagged_groth_elem(perm1, length).items() if _to_wc(k).perm == perm1})
+        # tagged1 = bw.from_dict({k: v for k, v in untagged_groth_elem(perm2, length).items() if _to_wc(k).perm == perm2})
+        tagged0 = untagged_groth_elem(perm1, length)
+        tagged1 = untagged_groth_elem(perm2, length)
+        prd = Gx1.from_dict({k:v for k, v in (Gx1(perm1) * Gx1(perm2)).items() if v != 0})
+        #taggo = bw.from_dict({k: v for k, v in (tagged0 * tagged1).items() if _to_wc(k).perm in {kk for kk, vv in prd.items() if vv != 0}})
+        #taggo = bw.from_dict({k: v for k, v in (tagged0 * tagged1).items() if _to_wc(k).perm in {kk for kk, vv in prd.items() if vv != 0}}).to_wc_graph_ring_element()
+        taggowc = (tagged0 * tagged1).to_wc_graph_ring_element()
+        taggo = tagged0 * tagged1
+        
+        #tagged = tagged0.to_wc_graph_ring_element()
+        #taggo = {CrystalGraphTensor(k1, k2): v1*v2 for (k1, v1), (k2, v2) in itertools.product(tagged0.items(), tagged1.items())}
         # assert all((v.subs(Gx._beta, 1) == 1 and wc.perm == perm) for wc, v in tagged.items() if v.subs(Gx._beta, 1) != 0), f"WCGraph mismatch for {perm.trimcode} in S_{n}, {perm=}, {[(wc.perm, v) for wc, v in tagged.items() if v != 0]}"
         
-        crystals = set()
+        crystals = {}
         #hw_stinkbat = {}
-        for key, coeff in tagged0.items():
-        #for key, coeff in tagged.items():
-            # if bw.key_to_wc_graph(key).perm == perm:
-            #     crys = frozenset([bw.key_to_wc_graph(kk) for kk in key.full_squared_crystal if bw.key_to_wc_graph(kk).perm == perm])
-            #     crystals[crys] = 1#coeff.subs(Gx._beta, 1)
+        
+            #return key
+        for key, coeff in taggo.items():
+            if taggowc.get(_to_wc(key), 0) == 0:
+                continue
+            if any(key in c for c in crystals):
+                continue
+            keysq = CrystalGraphTensor(*(kk.square for kk in key.factors))
+            def _unwrap(k):
+                return bw.make_key([kk.unwrap() for kk in k.factors], key.size)
+                #return k
+            crys = frozenset({_unwrap(k) for k in keysq.full_crystal_bothways(lambda x: _to_wc(_unwrap(x)).perm == _to_wc(key).perm  and taggowc.get(_to_wc(_unwrap(x)), 0) == coeff)})
+            crystals[crys] = taggowc.get(_to_wc(key), 0)
             #squared_key = CrystalGraphTensor(*(kk.square for kk in key.factors))#.to_highest_weight()[0]
             #hw_key = bw.make_key([kk.unwrap() for kk in squared_key.factors], key.size)
             #if squared_key.is_highest_weight and bw.key_to_wc_graph(key).perm == perm:
             # if key.is_highest_weight and bw.key_to_wc_graph(key).perm == perm:
             #     hw_stinkbat[key] = 1#coeff.subs(Gx._beta, 1)
-            if any(_to_wc(key) in c for c in crystals):
-                continue
-            if _to_wc(key).perm == perm:
-                the_set = frozenset({_to_wc(bagget) for bagget in key.full_crystal_bothways(lambda x: _to_wc(x).perm == perm)})# and _to_wc(x).hecke_invariant[0] == _to_wc(key).hecke_invariant[0])})
-                if the_set:
-                    crystals.add(the_set)
+            
+            #if _to_wc(key.factors[0]).perm == perm1 and _to_wc(key.factors[1]).perm == perm2:
+            # if _to_wc(key).perm not in prd:
+            #     continue
+            # the_set = frozenset(key.full_crystal_bothways(lambda x: _to_wc(x).perm == _to_wc(key).perm))
+            # if the_set:
+            #     crystals[the_set] = coeff.subs(Gx._beta, 1)
         
         poly = 0
         #for crys, coeff in hw_stinkbat.items():
-        for crys in crystals:
+        for crys, coeff in crystals.items():
             spanko = 0
             # squared_key = CrystalGraphTensor(*(kk.square for kk in crys.factors))
             #wc_base = bw.key_to_wc_graph(crys)
@@ -202,18 +225,18 @@ def main(n):
             #         continue
             #     spanko += coeff * wc.polyvalue(Gx.genset, beta=1)
             for key in crys:
-                #wc = bw.key_to_wc_graph(key)
-                #spanko += _to_wc(key).polyvalue(Gx.genset, beta=1)
-                spanko += key.polyvalue(Gx.genset, beta=1)
+                wc = _to_wc(key)
+                #wc2 = _to_wc(key.factors[1])
+                spanko += coeff * wc.polyvalue(Gx.genset, beta=1)
                 #spanko += coeff *    keykey[0].polyvalue(Gx.genset, beta=1)
             print(KeyPoly.from_expr(spanko))
         
             poly += spanko
         poly = poly.expand()
-        print("Num crystals for ", perm, " is ", len(crystals))
+        print("Num crystals for ", perm1, perm2, " is ", len(crystals))
         # if len(crystals) > 1:
         #     input()
-        assert (poly - Gx1(perm).expand()).expand() == 0, f"Failed for {perm.trimcode} in S_{n}, got {poly} vs {Gx1(perm).expand()}"
+        assert (poly - (Gx1(perm1)* Gx1(perm2)).expand()).expand() == 0, f"Failed for {perm1.trimcode}, {perm2.trimcode} in S_{n}, got {poly} vs {(Gx1(perm1)* Gx1(perm2)).expand()}"
         
 
 if __name__ == "__main__":

@@ -47,6 +47,8 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     concatenated row word (1-indexed simple reflections).
     """
 
+    _double = False # condition for double raising/lowering operators
+
     @property
     def args(self) -> tuple:
         return ()
@@ -627,6 +629,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     def excess(self):
         return len(self.perm_word) - self.perm.inv
 
+
     def raising_operator(self, i: int) -> WCGraph | None:
         from .increasing_tableau import IncreasingTableau
 
@@ -636,6 +639,10 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         q_next = q_tab.raising_operator(i)
         if q_next is None:
             return None
+        if self._double:
+            q_next = q_next.raising_operator(i)
+            if q_next is None:
+                return None
         try:
             compat, word = IncreasingTableau.hecke_column_uninsert_rsk(p_tab, q_next)
             result = WCGraph.from_word_compatible(word, compat, length=len(self))
@@ -654,6 +661,10 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         q_next = q_tab.lowering_operator(i)
         if q_next is None:
             return None
+        if self._double:
+            q_next = q_next.lowering_operator(i)
+            if q_next is None:
+                return None
         try:
             compat, word = IncreasingTableau.hecke_column_uninsert_rsk(p_tab, q_next)
             result = WCGraph.from_word_compatible(word, compat, length=len(self))
