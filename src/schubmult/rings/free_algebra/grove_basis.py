@@ -47,14 +47,14 @@ class GroveBasis(FreeAlgebraBasis):
     @classmethod
     def transition_grothendieck(cls, key):
         """Transition a grove key to the Grothendieck basis via WC graph enumeration."""
-        from schubmult.rings.combinatorial import WCGraphRing
+        from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
 
         r = WCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
 
         for wc in all_rcs:
-            if wc.forest_weight == key:
+            if wc.grove_weight == key:
                 dct[(wc.perm, len(wc))] = dct.get((wc.perm, len(wc)), S.Zero) + S.One
         return dct
 

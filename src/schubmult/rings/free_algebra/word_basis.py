@@ -297,6 +297,24 @@ class WordBasis(FreeAlgebraBasis):
         return dct
 
     @classmethod
+    def transition_grove(cls, key):
+        """Transition a word key to the grove basis via WC graph enumeration."""
+        from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+        r = WCGraphRing()
+        dct = {}
+        all_rcs = r.monomial(*key)
+        seen = {}
+        for wc in all_rcs:
+            indfor = wc.grove_invariant
+            code_key = indfor.grove_weight
+            if code_key not in seen:
+                seen[code_key] = indfor
+            elif seen[code_key] != indfor:
+                continue
+            dct[code_key] = dct.get(code_key, S.Zero) + S.One
+        return dct
+
+    @classmethod
     def dual_basis(cls):
         """Return the MonomialBasis as the dual of WordBasis."""
         from ..polynomial_algebra.monomial_basis import MonomialBasis
@@ -533,5 +551,5 @@ class WordBasis(FreeAlgebraBasis):
         if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
             return lambda x: cls.transition_grothendieck(x, basis_cls=other_basis)
         if other_basis == GroveBasis:
-            return lambda x: FreeAlgebraBasis.compose_transition(GrothendieckBasis.transition(other_basis), cls.transition_grothendieck(x))
+            return lambda x: cls.transition_grove(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))

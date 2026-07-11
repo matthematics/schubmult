@@ -2,7 +2,6 @@ from functools import cache
 
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
-from schubmult.utils.perm_utils import add_perm_dict
 
 from ..printing import GrothendieckPoly
 from .free_algebra_basis import FreeAlgebraBasis
@@ -85,33 +84,34 @@ class GrothendieckBasis(FreeAlgebraBasis):
     #         donkeydict = {k: v for k, v in add_perm_dict_with_coeff(donkeydict, wtt, coeff=coeff).items() if v != S.Zero}
     #     return donkeydict
 
-    @classmethod
-    def transition_grove(cls, key):
-        """Transition a Groth basis key to the Grove basis.
+    # @classmethod
+    # def transition_grove(cls, key):
+    #     """Transition a Groth basis key to the Grove basis.
 
-        Returns ``{(grove_key): coeff}`` where ``coeff`` is the coefficient
-        of ``G_perm`` in ``g_{grove_key}`` on the polynomial side, interpreted
-        as the dual-basis coefficient.
-        """
-        from schubmult.combinatorics.wc_graph import WCGraph
-        dct = {}
-        for wc in WCGraph.all_wc_graphs(key[0], key[1]):
-            if wc.forest_weight == wc.length_vector:
-                dct[wc.forest_weight] = dct.get(wc.forest_weight, S.Zero) + S.One
-        return dct
+    #     Returns ``{(grove_key): coeff}`` where ``coeff`` is the coefficient
+    #     of ``G_perm`` in ``g_{grove_key}`` on the polynomial side, interpreted
+    #     as the dual-basis coefficient.
+    #     """
+    #     from schubmult.combinatorics.wc_graph import WCGraph
+    #     dct = {}
+    #     for wc in WCGraph.all_wc_graphs(key[0], key[1]):
+    #         if wc.forest_weight == wc.length_vector:
+    #             dct[wc.forest_weight] = dct.get(wc.forest_weight, S.Zero) + S.One
+    #     return dct
 
     @classmethod
     def transition(cls, other_basis):
         # from .elementary_basis import ElementaryBasis
         from .grove_basis import GroveBasis
         from .schubert_basis import SchubertBasis
+        from .word_basis import WordBasis
 
         if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
             return lambda x: {x: S.One}
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(*x)
         if other_basis == GroveBasis:
-            return lambda x: cls.transition_grove(x)
+            return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(*x))
 
     @classmethod
@@ -119,20 +119,20 @@ class GrothendieckBasis(FreeAlgebraBasis):
         perm, numvars = cls.as_key(k)
         return GrothendieckPoly((perm, numvars), "x", prefix="A")
 
-    @classmethod
-    @cache
-    def product(cls, key1, key2, coeff=S.One):
-        """Multiply two keys by transitioning to WordBasis and back."""
-        from .schubert_basis import SchubertBasis
+    # @classmethod
+    # @cache
+    # def product(cls, key1, key2, coeff=S.One):
+    #     """Multiply two keys by transitioning to WordBasis and back."""
+    #     from .schubert_basis import SchubertBasis
 
-        left = cls.transition(SchubertBasis)(key1)
-        right = cls.transition(SchubertBasis)(key2)
-        ret = {}
+    #     left = cls.transition(SchubertBasis)(key1)
+    #     right = cls.transition(SchubertBasis)(key2)
+    #     ret = {}
 
-        for key_schub_right, v in right.items():
-            for key_schub_left, v2 in left.items():
-                ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
-        return ret
+    #     for key_schub_right, v in right.items():
+    #         for key_schub_left, v2 in left.items():
+    #             ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
+    #     return ret
 
     def __hash__(self):
         return hash((self.__class__, "Hot potato"))
