@@ -466,7 +466,7 @@ class IncreasingTableau(Plactic):
 
     @classmethod
     def from_word(cls, word):
-        return cls().ed_insert(*word)
+        return cls().hecke_insert(*word)
 
     def right_zero_act(self, length):
         from schubmult import ASx, RCGraph, uncode

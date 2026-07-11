@@ -86,6 +86,50 @@ class CrystalGraph(Printable):
         """Return the length of the crystal element."""
         raise NotImplementedError
 
+    @property
+    def square(self):
+        class CrystalGraphSquare(CrystalGraph):
+            def __init__(self, base_crystal):
+                self.base_crystal = base_crystal
+
+            @property
+            def crystal_weight(self):
+                return self.base_crystal.crystal_weight
+
+            def raising_operator(self, index):
+                base_raised = self.base_crystal.raising_operator(index)
+                if base_raised is None:
+                    return None
+                base_raised = base_raised.raising_operator(index)
+                if base_raised is None:
+                    return None
+                return CrystalGraphSquare(base_raised)
+
+            def lowering_operator(self, index):
+                base_lowered = self.base_crystal.lowering_operator(index)
+                if base_lowered is None:
+                    return None
+                base_lowered = base_lowered.lowering_operator(index)
+                if base_lowered is None:
+                    return None
+                return CrystalGraphSquare(base_lowered)
+
+            def crystal_length(self):
+                return self.base_crystal.crystal_length()
+
+            def unwrap(self):
+                return self.base_crystal
+
+            def __hash__(self):
+                return hash(self.base_crystal)
+
+            def __eq__(self, other):
+                if not isinstance(other, CrystalGraphSquare):
+                    return False
+                return self.base_crystal == other.base_crystal
+
+        return CrystalGraphSquare(self)
+
     def reverse_raise_seq(self, raise_seq):
         rc = self
         for row in reversed(raise_seq):
@@ -123,6 +167,57 @@ class CrystalGraph(Printable):
     def full_crystal(self):
         hw, _ = self.to_highest_weight()
         return hw.crystal_beneath
+
+    def full_crystal_bothways(self, condition=None):
+        ret = set()
+        stack = [self]
+        while len(stack) > 0:
+            elem = stack.pop()
+            if condition is not None and not condition(elem):
+                continue
+            ret.add(elem)
+            for i in range(1, elem.crystal_length()):
+                new_elem = elem.lowering_operator(i)
+                while new_elem is not None and (condition is None or condition(new_elem)):
+                    if new_elem not in ret and (condition is None or condition(new_elem)):
+                        stack.append(new_elem)
+                    new_elem = new_elem.lowering_operator(i)
+
+                new_elem = elem.raising_operator(i)
+                while new_elem is not None and (condition is None or condition(new_elem)):
+                    if new_elem not in ret and (condition is None or condition(new_elem)):
+                        stack.append(new_elem)
+                    new_elem = new_elem.raising_operator(i)
+        return ret
+
+    @property
+    def full_squared_crystal(self):
+        ret = set()
+        stack = [self]
+        while len(stack) > 0:
+            elem = stack.pop()
+            ret.add(elem)
+            for i in range(1, elem.crystal_length()):
+                new_elem = elem.lowering_operator(i)
+                if new_elem is not None:
+                    new_elem = new_elem.lowering_operator(i)
+                while new_elem is not None:
+                    if new_elem not in ret:
+                        stack.append(new_elem)
+                    new_elem = new_elem.lowering_operator(i)
+                    if new_elem is not None:
+                        new_elem = new_elem.lowering_operator(i)
+
+                new_elem = elem.raising_operator(i)
+                if new_elem is not None:
+                    new_elem = new_elem.raising_operator(i)
+                while new_elem is not None:
+                    if new_elem not in ret:
+                        stack.append(new_elem)
+                    new_elem = new_elem.raising_operator(i)
+                    if new_elem is not None:
+                        new_elem = new_elem.raising_operator(i)
+        return ret
 
     @property
     def crystal_beneath(self):
@@ -273,6 +368,42 @@ class CrystalGraphTensor(CrystalGraph):
         for factor in self.factors[1:]:
             result = tuple(a + b for a, b in zip_longest(result, factor.crystal_weight, fillvalue=0))
         return result
+
+    # @property
+    # def square(self):
+    #     class CrystalGraphTensorSquare(CrystalGraph):
+    #         def __init__(self, base_tensor):
+    #             self.base_tensor = base_tensor
+
+    #         @property
+    #         def crystal_weight(self):
+    #             return self.base_tensor.crystal_weight
+
+    #         def raising_operator(self, index):
+    #             new_factors = []
+    #             for factor in self.base_tensor.factors:
+    #                 raised = factor.raising_operator(index)
+    #                 if raised is None:
+    #                     return None
+    #                 new_factors.append(raised)
+    #             return CrystalGraphTensorSquare(CrystalGraphTensor(*new_factors))
+
+    #         def lowering_operator(self, index):
+    #             new_factors = []
+    #             for factor in self.base_tensor.factors:
+    #                 lowered = factor.lowering_operator(index)
+    #                 if lowered is None:
+    #                     return None
+    #                 new_factors.append(lowered)
+    #             return CrystalGraphTensorSquare(CrystalGraphTensor(*new_factors))
+
+    #         def crystal_length(self):
+    #             return self.base_tensor.crystal_length()
+
+    #         def unwrap(self):
+    #             return self.base_tensor
+
+    #     return CrystalGraphTensorSquare(self)
 
     def __hash__(self):
         return hash(self.factors)

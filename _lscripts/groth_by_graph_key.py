@@ -149,6 +149,9 @@ def tensor_bensor(rw_r_elem):
             ret += coeff * (-1)**(len(wc2.perm_word) - wc2.perm.inv) * rw(wc)@ r(rc) @ rw(wc2)
     return ret
 
+def _to_wc(key):
+    return bw.key_to_wc_graph(key)
+
 def main(n):
     from schubmult.rings.polynomial_algebra import KeyPolyBasis, PolynomialAlgebra
     KeyPoly = PolynomialAlgebra(KeyPolyBasis(Gx.genset))
@@ -175,8 +178,8 @@ def main(n):
             #     hw_stinkbat[key] = 1#coeff.subs(Gx._beta, 1)
             if any(key in c for c in crystals):
                 continue
-            if bw.key_to_wc_graph(key).perm == perm:
-                the_set = frozenset(key.full_crystal_bothways(lambda x: bw.key_to_wc_graph(x).perm == perm))
+            if _to_wc(key).perm == perm:
+                the_set = frozenset(key.full_crystal_bothways(lambda x: _to_wc(x).perm == perm and _to_wc(x).hecke_invariant[0] == _to_wc(key).hecke_invariant[0]))
                 if the_set:
                     crystals.add(the_set)
         
@@ -196,16 +199,16 @@ def main(n):
             #         continue
             #     spanko += coeff * wc.polyvalue(Gx.genset, beta=1)
             for key in crys:
-                wc = bw.key_to_wc_graph(key)
-                spanko += wc.polyvalue(Gx.genset, beta=1)
+                #wc = bw.key_to_wc_graph(key)
+                spanko += _to_wc(key).polyvalue(Gx.genset, beta=1)
                 #spanko += coeff *    keykey[0].polyvalue(Gx.genset, beta=1)
             print(KeyPoly.from_expr(spanko))
         
             poly += spanko
         poly = poly.expand()
         print("Num crystals for ", perm, " is ", len(crystals))
-        if len(crystals) > 1:
-            input()
+        # if len(crystals) > 1:
+        #     input()
         assert (poly - Gx1(perm).expand()).expand() == 0, f"Failed for {perm.trimcode} in S_{n}, got {poly} vs {Gx1(perm).expand()}"
         
 
