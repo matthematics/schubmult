@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from schubmult.rings.base_ring import BaseRing, BaseRingElement
 from schubmult.rings.printing import TypedPrintingTerm
-from schubmult.symbolic import S, sympify, sympy_Mul
+from schubmult.symbolic import S, SympifyError, sympify, sympy_Mul
 
 
 class SchubertMonomialPrintingTerm(TypedPrintingTerm):
@@ -108,7 +108,7 @@ class SchubertMonomialRing(BaseRing):
         try:
             result_dict = {k: v * sympify(b) for k, v in a.items()}
             return self.from_dict(result_dict)
-        except Exception:
+        except SympifyError:
             raise NotImplementedError("Multiplication with fs not implemented for SchubertMonomialRingElement")
 
     def rmul(self, a, b):

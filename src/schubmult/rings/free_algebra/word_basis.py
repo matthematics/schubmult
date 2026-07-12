@@ -448,20 +448,25 @@ class WordBasis(FreeAlgebraBasis):
                 ret[candidate] = coeff
         return ret
 
+    # @classmethod
+    # @cache
+    # def transition_grothendieck(cls, key):
+    #     """Transition a word key (composition) to the Grothendieck basis.
+
+    #     Coefficient of ``G_w`` is the number of WC graphs of permutation ``w``
+    #     and weight ``key``, multiplied by ``beta^(|key|-inv(w))``.
+    #     """
+    #     from schubmult import WCGraphRing
+    #     r = WCGraphRing()
+    #     dct = {}
+    #     all_wcs = r.monomial(*key)
+    #     for wc, coeff in all_wcs.items():
+    #         dct[(wc.perm, len(key))] = dct.get((wc.perm, len(key)), S.Zero) + (S.NegativeOne ** (sum(key) - wc.perm.inv) * coeff)
+    #     return dct
+
+
     @classmethod
     @cache
-    def transition_grothendieck(cls, key):
-        """Transition a word key (composition) to the Grothendieck basis.
-
-        Coefficient of ``G_w`` is the number of WC graphs of permutation ``w``
-        and weight ``key``, multiplied by ``beta^(|key|-inv(w))``.
-        """
-        from .grothendieck_basis import GrothendieckBasis
-        from .schubert_basis import SchubertBasis
-        return FreeAlgebraBasis.compose_transition(SchubertBasis.transition(GrothendieckBasis), cls.transition_schubert(key))
-
-
-    @classmethod
     def transition(cls, other_basis):
         from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
@@ -500,4 +505,6 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_monomial_slide(x)
         if other_basis == GroveBasis:
             return lambda x: cls.transition_grove(x)
+        # if other_basis == GrothendieckBasis:
+        #     return lambda x: cls.transition_grothendieck(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition(SchubertBasis)(x))

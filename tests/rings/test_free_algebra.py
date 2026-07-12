@@ -133,7 +133,7 @@ from schubmult.rings.free_algebra import (
 
 @pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis])
 def test_word_basis_transitions(basis):
-    word_elem = FA(0, 3, 0, 2)
+    word_elem = FA(0, 2, 0, 1)
 
     word_elem2 = word_elem.change_basis(basis).change_basis(WordBasis)
     assert word_elem2 == word_elem

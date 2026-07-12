@@ -93,10 +93,9 @@ class BaseSchubertRing(BaseRing):
         self.zero_monom = Permutation([])
 
     def mul(self, elem, other):
-        try:
-            return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
-        except Exception:
+        if not isinstance(other, BaseSchubertElement):
             return super().mul(elem, other)
+        return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
 
     def new(self, x): ...
 

@@ -2,7 +2,7 @@ from functools import cache
 
 from sympy import Symbol, UnevaluatedExpr, sympify
 
-from schubmult.symbolic import prod
+from schubmult.symbolic import CoercionFailed, prod
 from schubmult.utils._mul_utils import add_perm_dict
 
 from .base_ring import BaseRing, BaseRingElement
@@ -78,7 +78,7 @@ class ThompsonAlgebra(BaseRing):
         try:
             other = self.domain_new(other)
             return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
+        except CoercionFailed:
             ret_elem = self.zero
             for mon1, coeff in elem.items():
                 for mon2, coeff2 in other.items():

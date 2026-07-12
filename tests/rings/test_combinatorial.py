@@ -248,7 +248,7 @@ def test_wc_graph_ring_product_agrees_with_free_algebra():
                     free_algebra_elem = AGx(wc1.perm, len(wc1)) * AGx(wc2.perm, len(wc2))
                     free_elem_test = to_agx(wc_elem)
                     assert all(v == 0 for v in (free_algebra_elem - free_elem_test).values()), (
-                        f"WCGraphRing product disagrees with AGx for {perm1}, {perm2}"
+                        f"WCGraphRing product disagrees with AGx for {perm1}, {perm2}: diff={free_algebra_elem - free_elem_test} {wc_elem=} {free_algebra_elem=} {free_elem_test=}"
                     )
 
 

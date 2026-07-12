@@ -86,10 +86,14 @@ class SchubertBasis(FreeAlgebraBasis):
     def transition_grothendieck(cls, perm, numvars):
         """Transition a Schubert key to the Grothendieck basis."""
         from schubmult import BPD, RCGraph
+        if perm.inv == 0:
+            return {(Permutation([]), numvars): S.One}
         n = len(perm)
         pw0 = perm * Permutation.w0(n)
-
+        if perm.inv == 0:
+            return {(Permutation([]), numvars): S.One}
         dct = {}
+        #for rc in RCGraph.all_rc_graphs(pw0, n):
         for rc in RCGraph.all_rc_graphs(pw0, n):
             bpd = BPD.from_rc_graph(rc)
             cobpd = bpd.co_bpd()
@@ -241,6 +245,7 @@ class SchubertBasis(FreeAlgebraBasis):
         return SchubertPolyBasis
 
     @classmethod
+    @cache
     def transition(cls, other_basis):
         """Return a transition function from SchubertBasis to *other_basis*."""
         from .composition_schubert_basis import CompositionSchubertBasis

@@ -306,7 +306,7 @@ class BetaCoxeterRing(Ring, CompositeDomain):
             other = self.domain_new(other)
             # print(f"{other=} {type(other)=}")
             return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
+        except CoercionFailed:
             pass
         # print("FasOjfao")
         if isinstance(other, BetaCoxeterElement):

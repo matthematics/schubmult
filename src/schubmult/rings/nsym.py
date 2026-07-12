@@ -64,7 +64,7 @@ class NSym(FreeAlgebra):
             other = self.domain_new(other)
             # print(f"{other=} {type(other)=}")
             return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
+        except CoercionFailed:
             pass
         if isinstance(other, NSymElement):
             if not FreeAlgebra.CAP:

@@ -597,18 +597,17 @@ class FreeAlgebra(BaseRing):
 
     def mul(self, elem, other):
         """Multiply two elements via the basis product rule."""
-        try:
-            ret = self.zero
-            for k0, v0 in elem.items():
-                for k, v in other.items():
-                    ret += self.from_dict(self._basis.product(k0, k, v * v0))
-            if self._basis == WordBasis or not FreeAlgebra.CAP:
-                return ret
-            n = FreeAlgebra.CAP
-            ret = {k: v for k, v in ret.items() if len(k[0]) <= n}
-            return self.from_dict(ret)
-        except Exception:
+        if not isinstance(other, FreeAlgebraElement):
             return super().mul(elem, other)
+        ret = self.zero
+        for k0, v0 in elem.items():
+            for k, v in other.items():
+                ret += self.from_dict(self._basis.product(k0, k, v * v0))
+        if self._basis == WordBasis or not FreeAlgebra.CAP:
+            return ret
+        n = FreeAlgebra.CAP
+        ret = {k: v for k, v in ret.items() if len(k[0]) <= n}
+        return self.from_dict(ret)
 
     def from_rc_graph(self, rc_graph):
         """Create an element from an RC graph."""
@@ -623,7 +622,7 @@ class FreeAlgebra(BaseRing):
         try:
             other = self.domain_new(other)
             return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
+        except CoercionFailed:
             pass
         if isinstance(other, FreeAlgebraElement):
             ret = self.zero

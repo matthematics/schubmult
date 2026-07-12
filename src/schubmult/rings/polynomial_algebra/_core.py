@@ -161,14 +161,13 @@ class PolynomialAlgebra(BaseRing):
 
     def mul(self, elem, other):
         """Multiply two elements via the basis product rule."""
-        try:
-            ret = self.zero
-            for k0, v0 in elem.items():
-                for k, v in other.items():
-                    ret += self.from_dict(self._basis.product(k0, k, v * v0))
-            return ret
-        except Exception:
+        if not isinstance(other, PolynomialAlgebraElement):
             return super().mul(elem, other)
+        ret = self.zero
+        for k0, v0 in elem.items():
+            for k, v in other.items():
+                ret += self.from_dict(self._basis.product(k0, k, v * v0))
+        return ret
 
     def to_domain(self):
         return self

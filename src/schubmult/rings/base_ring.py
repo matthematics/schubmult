@@ -62,7 +62,11 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys())]
+        try:
+            return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys())]
+        except Exception as e:
+            print([self[k] for k in sorted(self.keys())])
+            raise e
 
     def __add__(self, other):
         if isinstance(other, BaseRingElement):

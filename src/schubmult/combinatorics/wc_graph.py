@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import itertools
 from collections.abc import Sequence
 from functools import cache, cached_property
-from itertools import combinations
 from typing import ClassVar
 
 from schubmult.combinatorics.permutation import Permutation
@@ -13,6 +13,24 @@ from schubmult.utils._grid_print import GridPrint
 from .crystal_graph import CrystalGraph
 
 # from schubmult.utils.perm_utils import _is_compatible
+
+@cache
+def pivot_transition(perm2, target_d=None):
+    build_groth = set()
+    if target_d is None:
+        d = perm2.max_descent
+    else:
+        d = target_d
+    if perm2.max_descent < d:
+        return perm2
+    pivots = perm2.pivots()
+    for r in range(1, len(pivots) + 1):
+        for pivot_set in itertools.combinations(pivots, r):
+            pivot_set = set(pivot_set)
+            ptrans = perm2.pivot_transition(pivot_set)
+            print("Debug: ", perm2, pivot_set, ptrans)
+            build_groth.update(pivot_transition(ptrans, target_d=d))
+    return build_groth
 
 
 def _is_row_root(row: int, root: tuple[int, int]) -> bool:
@@ -815,19 +833,46 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     _z_cache: ClassVar[dict[WCGraph, set[WCGraph]]] = {}
 
     def right_zero_act(self) -> set[WCGraph]:
-        from schubmult.combinatorics.permutation import uncode
-        from schubmult.rings.free_algebra import AGx
+        from schubmult import AGx, uncode
         if self.perm.inv == 0:
             return {self._rebuild([*self, ()])}
 
         if self in WCGraph._z_cache:
             return WCGraph._z_cache[self]
 
-        up_perms = AGx(self.perm, len(self)) * AGx(uncode([0]), 1)
+        up_perms = {perm for (perm, _), v in (AGx(self.perm, len(self)) * AGx(uncode([0]), 1)).items() if v != 0}
+        # stack =
+        # ci inverse times descent
+
+        # def _cycle_comb(pivot_set):
+        #     pivot_list = sorted(pivot_set, reverse=True)
+        #     #maxd, b = self.maximal_corner
+        #     maxd = self.perm.max_descent + 1
+        #     cycle = [maxd, *pivot_list]
+        #     cycle_arr = list(range(1, len(self.perm) + 1))
+        #     for i in range(len(cycle) - 1):
+        #         cycle_arr[cycle[i] - 1] = cycle[i + 1]
+        #     cycle_arr[cycle[-1] - 1] = cycle[0]
+        #     cycle_perm = Permutation(cycle_arr)
+        #     return cycle_perm
+
+        # for r in range(1, self.perm.max_descent):
+        #     for comb in itertools.combinations(range(1, self.perm.max_descent), r):
+        #         cyc = _cycle_comb(comb)
+        #         newperm = self.perm * (~cyc)
+        #         if newperm.inv == self.perm.inv - r:
+        #             a = self.perm.max_descent + 1
+        #             for b_prime in range(a + 1, len(self.perm) + 1):
+        #                 if newperm[a - 1] < newperm[b_prime - 1]:
+        #                     new_new_perm = newperm.swap(a - 1, b_prime - 1)
+        #                     if new_new_perm.max_descent == self.perm.max_descent + 1 and new_new_perm.inv == self.perm.inv - r + 1:
+        #                         up_perms.add(new_new_perm)
+        #             #up_perms.add(newperm)
+        # #{perm for perm in Permutation.all_permutations(len(self.perm) + 1) if self.perm == perm for self.perm in pivot_transition(perm)}
 
         rc_set = set()
 
-        for perm, _ in up_perms.keys():
+        for perm in up_perms:
             for wc in type(self).all_wc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
                 if wc.zero_out_last_row() == self:
                     rc_set.add(wc)
@@ -1052,7 +1097,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             return ()
         # Choose k reflections and store each row in strict decreasing order,
         # matching the RC/WC internal row convention.
-        return tuple(tuple(sorted(combo, reverse=True)) for combo in combinations(range(1, max_reflection + 1), k))
+        return tuple(tuple(sorted(combo, reverse=True)) for combo in itertools.combinations(range(1, max_reflection + 1), k))
 
     @staticmethod
     @cache

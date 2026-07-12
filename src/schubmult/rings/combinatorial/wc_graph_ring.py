@@ -155,10 +155,10 @@ class WCGraphRing(SchubertMonomialRing):
 
     def monomial(self, *tup):
         elem = self.one
-        if len(tup) <= 1:
-            for a in tup:
-                elem = elem * self(WCGraph.one_row(a))
+        if len(tup) == 0:
             return elem
+        if len(tup) == 1:
+            return self(WCGraph.one_row(tup[0]))
         mid = len(tup) // 2
         return self.monomial(*tup[:mid]) * self.monomial(*tup[mid:])
 
