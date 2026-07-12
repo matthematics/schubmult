@@ -34,6 +34,37 @@ def test_schubert_associative():
     assert (((Sx(perm1) * Sx(perm2)) * Sx(perm3)) - (Sx(perm1) * (Sx(perm2) * Sx(perm3)))).almosteq(0)
 
 
+def test_grothendieck_expand():
+    from schubmult import Gx
+    from schubmult.symbolic import symbols, expand
+
+    x_1, x_2 = symbols("x_1 x_2")
+    beta = Gx._beta
+    assert Gx([3, 1, 2]).expand() == x_1 ** 2
+    assert expand(Gx([1, 3, 2]).expand()) == expand(x_1 + x_2 + beta * x_1 * x_2)
+    assert expand((Gx([5, 3, 4, 1, 2]).expand() * Gx([4, 1, 5, 2, 3]).expand() - (Gx([5, 3, 4, 1, 2]) * Gx([4, 1, 5, 2, 3])).expand()).expand()) == 0
+    assert (x_1 * Gx([3, 4, 1, 2])).expand() == x_1 ** 3 * x_2 ** 2
+
+
+def test_grothendieck_expr_trans():
+    from schubmult import Gx
+    from schubmult.symbolic import expand, S
+    from schubmult.abc import x, y
+
+    expr = (x[1] + y[1] * x[2]) ** 5
+    groth = Gx([]).ring.from_expr(expr)
+    assert expand(groth.as_polynomial() - expr) == S.Zero
+
+
+def test_grothendieck_associative():
+    from schubmult import Gx
+    from schubmult.symbolic import expand
+
+    perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
+    diff = ((Gx(perm1) * Gx(perm2)) * Gx(perm3)) - (Gx(perm1) * (Gx(perm2) * Gx(perm3)))
+    assert all(expand(v) == 0 for v in diff.values())
+
+
 def test_double_schubert_expand():
     from schubmult import DSx
     from schubmult.symbolic import symbols, expand
