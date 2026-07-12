@@ -24,6 +24,7 @@ from .forest_basis import ForestBasis, ForestDual
 from .free_algebra_basis import FreeAlgebraBasis
 from .fundamental_slide_basis import FundamentalSlideBasis
 from .grothendieck_basis import GrothendieckBasis
+from .grove_basis import GroveBasis
 from .j_basis import JBasis
 from .jt_basis import JTBasis
 from .key_basis import KeyBasis
@@ -50,6 +51,7 @@ __all__ = [
     "FreeAlgebraElement",
     "FundamentalSlideBasis",
     "GrothendieckBasis",
+    "GroveBasis",
     "JBasis",
     "JTBasis",
     "KeyBasis",

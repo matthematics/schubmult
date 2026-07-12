@@ -102,16 +102,14 @@ class GrothendieckBasis(FreeAlgebraBasis):
     @classmethod
     def transition(cls, other_basis):
         # from .elementary_basis import ElementaryBasis
-        from .grove_basis import GroveBasis
         from .schubert_basis import SchubertBasis
-        from .word_basis import WordBasis
+        #from .word_basis import WordBasis
 
         if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
             return lambda x: {x: S.One}
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(*x)
-        if other_basis == GroveBasis:
-            return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
+
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(*x))
 
     @classmethod
@@ -119,20 +117,22 @@ class GrothendieckBasis(FreeAlgebraBasis):
         perm, numvars = cls.as_key(k)
         return GrothendieckPoly((perm, numvars), "x", prefix="A")
 
-    # @classmethod
-    # @cache
-    # def product(cls, key1, key2, coeff=S.One):
-    #     """Multiply two keys by transitioning to WordBasis and back."""
-    #     from .schubert_basis import SchubertBasis
+    @classmethod
+    @cache
+    def product(cls, key1, key2, coeff=S.One):
+        """Multiply two keys by transitioning to WordBasis and back."""
+        from schubmult.utils._mul_utils import add_perm_dict
 
-    #     left = cls.transition(SchubertBasis)(key1)
-    #     right = cls.transition(SchubertBasis)(key2)
-    #     ret = {}
+        from .schubert_basis import SchubertBasis
 
-    #     for key_schub_right, v in right.items():
-    #         for key_schub_left, v2 in left.items():
-    #             ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
-    #     return ret
+        left = cls.transition(SchubertBasis)(key1)
+        right = cls.transition(SchubertBasis)(key2)
+        ret = {}
+
+        for key_schub_right, v in right.items():
+            for key_schub_left, v2 in left.items():
+                ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
+        return ret
 
     def __hash__(self):
         return hash((self.__class__, "Hot potato"))

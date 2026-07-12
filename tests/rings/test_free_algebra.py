@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_schubert_mul():
     from schubmult import ASx, uncode, Sx, Permutation
 
@@ -80,6 +81,7 @@ def test_sepdesc_to_schubert():
         poly = Sx(k1).expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
 
+
 def test_schubert_to_elementary():
     from schubmult import ASx, uncode, Sx
     from schubmult.rings.free_algebra import ElementaryBasis, WordBasis
@@ -93,7 +95,7 @@ def test_schubert_to_elementary():
         assert n == 5
         res = Sx([])
         for i, c in enumerate(tup):
-            res *= e(c,i+1,res.ring.genset[1:]) if i <= n else e(c,n,res.ring.genset[1:])
+            res *= e(c, i + 1, res.ring.genset[1:]) if i <= n else e(c, n, res.ring.genset[1:])
         poly = res.expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
 
@@ -105,8 +107,8 @@ def test_elementary_to_schubert():
     EE = FreeAlgebra(ElementaryBasis)
     tup = (1, 0, 1, 2, 3)
     numvars = 3
-    result = EE(tup,numvars).change_basis(SchubertBasis)
-    wbelem = EE(tup,numvars).change_basis(WordBasis)
+    result = EE(tup, numvars).change_basis(SchubertBasis)
+    wbelem = EE(tup, numvars).change_basis(WordBasis)
     for (perm, n), v in result.items():
         assert n == numvars
         res = Sx(perm)
@@ -114,46 +116,41 @@ def test_elementary_to_schubert():
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
 
 
-
-from schubmult.rings.free_algebra import WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, FA, KeyBasis, SchurElementaryBasis
-
-@pytest.mark.parametrize("basis", [
-    WordBasis, 
-    SchubertBasis, 
-    ElementaryBasis, 
+from schubmult.rings.free_algebra import (
+    WordBasis,
+    SchubertBasis,
+    ElementaryBasis,
     FundamentalSlideBasis,
-    ForestBasis, 
+    ForestBasis,
     MonomialSlideBasis,
+    FA,
     KeyBasis,
-    SchurElementaryBasis])
-def test_word_basis_transitions(basis):
-    
+    SchurElementaryBasis,
+    GrothendieckBasis,
+    GroveBasis,
+)
 
-    word_elem = FA(0,3,0,2)
+
+@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis])
+def test_word_basis_transitions(basis):
+    word_elem = FA(0, 3, 0, 2)
 
     word_elem2 = word_elem.change_basis(basis).change_basis(WordBasis)
     assert word_elem2 == word_elem
 
 
-@pytest.mark.parametrize("basis", [
-    WordBasis, 
-    SchubertBasis, 
-    ElementaryBasis, 
-    FundamentalSlideBasis,
-    ForestBasis, 
-    MonomialSlideBasis,
-    KeyBasis,
-    SchurElementaryBasis])
+@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis])
 def test_schubert_basis_transitions(basis):
     from schubmult import ASx, uncode
 
-    schub_elem = ASx(uncode([0,3,0,2]))
+    schub_elem = ASx(uncode([0, 3, 0, 2]))
 
     schub_elem2 = schub_elem.change_basis(basis).change_basis(SchubertBasis)
     assert schub_elem2 == schub_elem
 
 
 # --- SchurElementaryBasis tests ---
+
 
 def test_schur_elementary_is_key():
     assert SchurElementaryBasis.is_key(((1, 2), (0, 1, 3)))
@@ -231,5 +228,6 @@ def test_schur_elementary_printing_term():
     key = ((1, 2), (0, 1, 3))
     pt = SchurElementaryBasis.printing_term(key)
     from sympy import sstr
+
     s = sstr(pt)
     assert "SE" in s

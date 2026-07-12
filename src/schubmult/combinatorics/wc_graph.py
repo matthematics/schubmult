@@ -1094,8 +1094,11 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     _cache_by_weight: dict[tuple[Permutation, tuple[int, ...]], set[WCGraph]] = {}  # noqa: RUF012
     _grove_invariant_cache: dict[tuple[Permutation, int], dict[WCGraph, tuple[int, ...]]] = {}  # noqa: RUF012
 
+    _slow_graph_cache: dict[tuple[Permutation, int], set[WCGraph]] = {}  # noqa: RUF012
+    _slow_cache_by_weight: dict[tuple[Permutation, tuple[int, ...]], set[WCGraph]] = {}  # noqa: RUF012
+
     @classmethod
-    def all_wc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None) -> set[WCGraph]:
+    def all_wc_graphs_slow(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None) -> set[WCGraph]:
         """Generate all WC graphs with Demazure permutation ``perm`` and fixed row count.
 
         The recursion mirrors ``all_rc_graphs`` but uses Hecke/Demazure pull-out on the
@@ -1111,27 +1114,27 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             raise ValueError("Weight must have length equal to the number of rows")
 
         if weight is not None:
-            if (perm, tuple(weight)) in cls._cache_by_weight:
-                return cls._cache_by_weight[(perm, tuple(weight))]
-        elif (perm, length) in cls._graph_cache:
-            return cls._graph_cache[(perm, length)]
+            if (perm, tuple(weight)) in cls._slow_cache_by_weight:
+                return cls._slow_cache_by_weight[(perm, tuple(weight))]
+        elif (perm, length) in cls._slow_graph_cache:
+            return cls._slow_graph_cache[(perm, length)]
 
         if perm.inv == 0:
             if weight is not None and sum(weight) != 0:
-                cls._cache_by_weight[(perm, tuple(weight))] = set()
+                cls._slow_cache_by_weight[(perm, tuple(weight))] = set()
                 return set()
             ret = {cls([()] * length)}
             if weight is not None:
-                cls._cache_by_weight[(perm, tuple(weight))] = ret
+                cls._slow_cache_by_weight[(perm, tuple(weight))] = ret
             else:
-                cls._graph_cache[(perm, length)] = ret
+                cls._slow_graph_cache[(perm, length)] = ret
             return ret
 
         ret: set[WCGraph] = set()
         first_row_sizes = [weight[0]] if weight is not None else list(range(len(perm)))
         for k in first_row_sizes:
             for row, reduced_perm in cls.pull_out_var_hecke(perm, k):
-                old_set = cls.all_wc_graphs(reduced_perm, length=length - 1, weight=(None if weight is None else weight[1:]))
+                old_set = cls.all_wc_graphs_slow(reduced_perm, length=length - 1, weight=(None if weight is None else weight[1:]))
                 for old_wc in old_set:
                     new_rows = [row, *[tuple(a + 1 for a in rr) for rr in old_wc]]
                     nwc = cls(new_rows)
@@ -1143,6 +1146,67 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
                         continue
                     ret.add(nwc)
 
+        if weight is not None:
+            cls._slow_cache_by_weight[(perm, tuple(weight))] = ret
+        else:
+            cls._slow_graph_cache[(perm, length)] = ret
+        return ret
+
+    @classmethod
+    def all_wc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None, *, check_length=False) -> set[WCGraph]:
+        from schubmult.utils.schub_lib import pull_out_var
+        if check_length and length > 0 and length < len(perm.trimcode):
+            raise ValueError(f"Length must be at least the last descent of the permutation, permutation has {len(perm.trimcode)} rows and {perm=}, got {length=}")
+        if length < 0:
+            length = len(perm.trimcode)
+        if weight and len(weight) != length:
+            raise ValueError("Weight must have length equal to the number of rows")
+        if weight:
+            if (perm, tuple(weight)) in cls._cache_by_weight:
+                return cls._cache_by_weight[(perm, tuple(weight))]
+        elif (perm, length) in cls._graph_cache:
+            return cls._graph_cache[(perm, length)]
+        if perm.inv == 0:
+            cls._graph_cache[(perm, length)] = {cls([()] * length if length > 0 else [])}
+            return cls._graph_cache[(perm, length)]
+        ret = set()
+        pm = perm
+        L = [*pull_out_var(1, pm)]
+        for _, new_perm in L:
+            if length == 1 and new_perm.inv != 0:
+                continue
+            new_row_base = sorted([new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]], reverse=True)
+            new_perm_up = new_perm.shiftup(1)
+            addable_descents = set()
+            for dd in set(range(1, len(perm))) - set(new_row_base):
+                test_row = sorted((*new_row_base, dd), reverse=True)
+                if Permutation.ref_product(*test_row) @ new_perm_up == perm:
+                    addable_descents.add(dd)
+            stack = [(new_row_base, addable_descents)]
+            if weight is not None:
+                oldset = cls.all_wc_graphs(new_perm, length=length - 1, weight=weight[1:])
+            else:
+                oldset = cls.all_wc_graphs(new_perm, length=length - 1)
+            all_new_rows = set()
+            while len(stack) > 0:
+                new_row, addable_descents = stack.pop()
+                all_new_rows.add(tuple(new_row))
+                if weight is None or len(new_row) < weight[0]:
+                    for d in addable_descents:
+                        new_new_row = sorted((*new_row, d), reverse=True)
+                        addable_descents2 = set()
+                        for dd in set(range(1, len(perm))) - set(new_new_row):
+                            test_row = sorted((*new_new_row, dd), reverse=True)
+                            if Permutation.ref_product(*test_row) @ new_perm_up == perm:
+                                addable_descents2.add(dd)
+                        stack.append((new_new_row, addable_descents2))
+            for old_wc in oldset:
+                oldup = [tuple([row[i] + 1 for i in range(len(row))]) for row in old_wc]
+                for new_row in all_new_rows:
+                    nwc = cls([tuple(new_row), *oldup])
+                    assert nwc.perm == perm
+                    assert len(nwc) == length, f"{nwc=}, {length=}, {old_wc=}, {new_row=}"
+                    ret.add(nwc)
         if weight is not None:
             cls._cache_by_weight[(perm, tuple(weight))] = ret
         else:
