@@ -70,6 +70,16 @@ class SchubertPolyBasis(PolynomialBasis):
 
         return pair_length(self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])), key1[1])
 
+    def transition_grothendieck(self, dct):
+        """Transition a Schubert dict to the Grothendieck polynomial basis."""
+        from schubmult import WCGraph
+
+        res = {}
+        for dperm, coeff in dct.items():
+            for perm, coeff2 in WCGraph.schub_to_groth(dperm[0], 1).items():
+                res[(perm, dperm[1])] = res.get((perm, dperm[1]), S.Zero) + coeff * coeff2
+        return res
+
     def transition_sepdesc(self, dct, other_basis):
         """Transition from Schubert basis to separated descents basis."""
         from schubmult.abc import e
@@ -245,6 +255,8 @@ class SchubertPolyBasis(PolynomialBasis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
         from .forest_poly_basis import ForestPolyBasis
         from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis
+        from .grothendieck_poly_basis import GrothendieckPolyBasis
+        from .grove_poly_basis import GrovePolyBasis
         from .key_poly_basis import KeyPolyBasis
         from .monomial_basis import MonomialBasis
         from .monomial_slide_poly_basis import MonomialSlidePolyBasis
@@ -276,4 +288,9 @@ class SchubertPolyBasis(PolynomialBasis):
             return lambda x: self.transition_forest(x)
         if isinstance(other_basis, KeyPolyBasis):
             return lambda x: self.transition_key(x)
+        if isinstance(other_basis, GrothendieckPolyBasis):
+            return lambda x: self.transition_grothendieck(x)
+        if isinstance(other_basis, GrovePolyBasis):
+            bas = GrothendieckPolyBasis(genset=other_basis.genset)
+            return lambda x: bas.transition(other_basis)(self.transition_grothendieck(x))
         raise NotImplementedError(f"Transition from SchubertPolyBasis to {other_basis.__class__} not implemented yet")

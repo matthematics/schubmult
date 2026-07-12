@@ -128,7 +128,7 @@ def test_schubert_key_expansion():
     for perm in perms:
         assert expand(sch(perm).change_basis(KeyPolyBasis(Sx.genset)).expand() - sch(perm).expand()) == 0
 
-from schubmult.rings.polynomial_algebra import PolynomialAlgebra, MonomialBasis, SchubertPolyBasis, ElemSymPolyBasis, FundamentalSlidePolyBasis, ForestPolyBasis, MonomialSlidePolyBasis, KeyPolyBasis
+from schubmult.rings.polynomial_algebra import PolynomialAlgebra, MonomialBasis, SchubertPolyBasis, ElemSymPolyBasis, FundamentalSlidePolyBasis, ForestPolyBasis, MonomialSlidePolyBasis, KeyPolyBasis, GrothendieckPolyBasis, GrovePolyBasis
 
 @pytest.mark.parametrize("basis", [
     MonomialBasis, 
@@ -137,7 +137,10 @@ from schubmult.rings.polynomial_algebra import PolynomialAlgebra, MonomialBasis,
     FundamentalSlidePolyBasis, 
     ForestPolyBasis, 
     MonomialSlidePolyBasis, 
-    KeyPolyBasis])
+    KeyPolyBasis,
+    GrothendieckPolyBasis,
+    GrovePolyBasis,
+    ])
 def test_monomial_basis_transitions(basis):
     from schubmult.abc import x
 
