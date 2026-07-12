@@ -147,6 +147,7 @@
 \newcommand{\hr}{\mathtt{ht}}
 \newcommand{\clp}{\mathtt{clip}}
 \newcommand{\BRC}{\mathcal{BRC}}
+\newcommand{\BWC}{\mathcal{BWC}}
 \newcommand{\RC}{\mathcal{RC}}
 \newcommand{\WC}{\mathcal{WC}}
 \newcommand{\lzeromap}{\mathscr{Z}}
@@ -753,21 +754,32 @@ where
 $$a_w^F = \#\{W\in \WC_\forest(w)\mid F(W) = F\}$$
 \end{corollary}
 
-\section{Grothendieck Cauchy formula}
+\section{WC Graph ring}
 
-Define
-$$F_k(x;y) = \prod_{i=1}^k (x_i + y_1 + x_iy_1)$$
+\begin{proposition}
+The linear map
+$$\rho:\BWC\to\BRC$$
+such that
+$$\rho(W) = \begin{cases}
+W&\text{if $W$ is an RC graph}\\
+0&\text{otherwise}
+\end{cases}$$
+is a surjective ring homomorphism.
+\end{proposition}
 
-$$F_k(x;y) = (1+y_1)^k\prod_{i=1}^k\left(x_i + \frac{y_1}{1+y_1}\right)$$
-Set $y_1=e^{z_1} - 1$, then
-$$F_k(x;y) = e^{kz_1}\prod_{i=1}^k \left(x_i + 1 - e^{-z_1}\right)$$
-Set $x_i = e^{-a_i} - 1$, then
-$$F_k(x;y) = e^{kz_1}\prod_{i=1}^k \left(e^{-a_i} - e^{-z_1}\right)$$
-% Then
-% $$F_k(x;y) = \frac{1}{y_1^k}\sum_{i=0}^{k} f_{i,k}(x)\left(1 + \frac{1}{y_1}\right)^i$$
-% Make the change of variables
-% $$z_1 = y_1^{-1}$$
-% we obtain
+This homomorphism has a section.
+% $$F_k(x;y) = \prod_{i=1}^k (x_i + y_1 + x_iy_1)$$
+
+% $$F_k(x;y) = (1+y_1)^k\prod_{i=1}^k\left(x_i + \frac{y_1}{1+y_1}\right)$$
+% Set $y_1=e^{z_1} - 1$, then
+% $$F_k(x;y) = e^{kz_1}\prod_{i=1}^k \left(x_i + 1 - e^{-z_1}\right)$$
+% Set $x_i = e^{-a_i} - 1$, then
+% $$F_k(x;y) = e^{kz_1}\prod_{i=1}^k \left(e^{-a_i} - e^{-z_1}\right)$$
+% % Then
+% % $$F_k(x;y) = \frac{1}{y_1^k}\sum_{i=0}^{k} f_{i,k}(x)\left(1 + \frac{1}{y_1}\right)^i$$
+% % Make the change of variables
+% % $$z_1 = y_1^{-1}$$
+% % we obtain
 % $$F_k(x;z) = \frac{1}{z_1^k}\sum_{i=0}^{k} f_{i,k}(x) (1 + z_1)^i$$
 % Setting
 % $$z_1 = e^{-a_1} + 1$$

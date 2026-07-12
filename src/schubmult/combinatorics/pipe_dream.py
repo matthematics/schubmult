@@ -112,6 +112,18 @@ class PipeDream(PlanarHistory, GridPrint):
                 # new_grid[i + j - 1, j - 1] = self.CROSS if self[i - 1, j - 1] == self.BUMP else (self.BUMP if self[i - 1, j - 1] == self.CROSS else self.EMPTY)
         return PipeDream(new_grid)
 
+    def co_stinkbat_pipe_dream(self):
+        new_grid = self.grid.copy()
+        new_grid[:] = self.EMPTY
+        for i in range(1, self.grid.shape[0] + 1):
+            for j in range(1, self.grid.shape[1] + 1 - i):
+                if self[i - 1, j - 1] == self.CROSS:
+                    new_grid[self.rows - 1 - (i + j - 1), j - 1] = self.CROSS
+                if self[i - 1, j - 1] == self.BUMP:
+                    new_grid[self.rows - 1 - (i + j - 1), j - 1] = self.BUMP
+                # new_grid[i + j - 1, j - 1] = self.CROSS if self[i - 1, j - 1] == self.BUMP else (self.BUMP if self[i - 1, j - 1] == self.CROSS else self.EMPTY)
+        return PipeDream(new_grid)
+
     def inverse_pipe_dream(self):
         new_grid = self.grid.copy()
         new_grid[:] = self.EMPTY

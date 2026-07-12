@@ -2,6 +2,7 @@ from functools import cache
 
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
+from schubmult.utils.perm_utils import add_perm_dict
 
 from ..printing import GrothendieckPoly
 from .free_algebra_basis import FreeAlgebraBasis
@@ -36,21 +37,18 @@ class GrothendieckBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def transition_schubert(cls, perm, numvars):
-        from schubmult.combinatorics.bpd import BPD
+        from schubmult.combinatorics.pipe_dream import PipeDream
+        from schubmult.combinatorics.wc_graph import WCGraph
 
-        n = len(perm)
-        pw0 = perm * Permutation.w0(n)
-        #pw0 = perm * Permutation.w0(n)
-
+        if perm.inv == 0:
+            return {(perm, numvars): S.One}
         dct = {}
-        if perm.max_descent > numvars:
-            return dct
-        for bpd in BPD.all_unreduced_bpds(pw0, n):
-            cobpd = bpd.co_bpd()
-            if cobpd.is_reduced:
-                the_perm = cobpd.perm
+        for pd in WCGraph.all_wc_graphs(perm):
+            copd = PipeDream.from_rc_graph(pd).co_pipe_dream()
+            if copd.is_reduced:
+                the_perm = copd.perm * Permutation.w0(copd.rows)
                 if the_perm.max_descent <= numvars:
-                    dct[(the_perm, numvars)] = dct.get((the_perm, numvars), 0) + (-1) ** (perm.inv - the_perm.inv)
+                    dct[(the_perm, numvars)] = dct.get((the_perm, numvars), 0) + (S.NegativeOne) ** (the_perm.inv - perm.inv)
         return dct
 
     # @classmethod
@@ -119,20 +117,20 @@ class GrothendieckBasis(FreeAlgebraBasis):
         perm, numvars = cls.as_key(k)
         return GrothendieckPoly((perm, numvars), "x", prefix="A")
 
-    # @classmethod
-    # @cache
-    # def product(cls, key1, key2, coeff=S.One):
-    #     """Multiply two keys by transitioning to WordBasis and back."""
-    #     from .schubert_basis import SchubertBasis
+    @classmethod
+    @cache
+    def product(cls, key1, key2, coeff=S.One):
+        """Multiply two keys by transitioning to WordBasis and back."""
+        from .schubert_basis import SchubertBasis
 
-    #     left = cls.transition(SchubertBasis)(key1)
-    #     right = cls.transition(SchubertBasis)(key2)
-    #     ret = {}
+        left = cls.transition(SchubertBasis)(key1)
+        right = cls.transition(SchubertBasis)(key2)
+        ret = {}
 
-    #     for key_schub_right, v in right.items():
-    #         for key_schub_left, v2 in left.items():
-    #             ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
-    #     return ret
+        for key_schub_right, v in right.items():
+            for key_schub_left, v2 in left.items():
+                ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
+        return ret
 
     def __hash__(self):
         return hash((self.__class__, "Hot potato"))

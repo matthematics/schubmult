@@ -3,8 +3,6 @@ from schubmult.combinatorics.wc_graph import WCGraph
 from schubmult.rings.free_algebra import FreeAlgebra, GrothendieckBasis, WordBasis
 from schubmult.symbolic import S, sympify_sympy, sympy_Mul
 
-from ..schubert.grothendieck_ring import Gx
-
 #from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 from .schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 
@@ -47,6 +45,9 @@ class WCGraphRingElement(SchubertMonomialRingElement):
 
     def almosteq(self, other):
         return all(v == 0 for v in (self - other).values())
+
+    def to_free_algebra_element(self, basis=GrothendieckBasis):
+        return self.ring.to_free_algebra_element(self, basis=basis)
 
 
     def zero_out_last_row(self):
@@ -103,6 +104,9 @@ class WCGraphRingElement(SchubertMonomialRingElement):
             ret += coeff * self.ring.grass_coaction(rc)
         return ret
 
+    def normalize(self):
+        return self.broadcast.normalize()
+
     @property
     def broadcast(self):
         class BroadcastWrapper:
@@ -134,7 +138,7 @@ class WCGraphRing(SchubertMonomialRing):
     def __init__(self, *_, **__):
         self._ID = WCGraphRing._id
         WCGraphRing._id += 1
-        WCGraphRing._beta = Gx._beta
+        WCGraphRing._beta = 1
         self.dtype = type("WCGraphRingElement", (WCGraphRingElement,), {"ring": self})
 
     def __hash__(self):
@@ -145,7 +149,9 @@ class WCGraphRing(SchubertMonomialRing):
         return min(WCGraph.all_wc_graphs(rc.perm, len(rc), weight=rc.length_vector))
 
     def from_dict(self, dct):
-        return super().from_dict(dct)
+        elem = self.dtype()
+        elem.update(dct)
+        return elem
 
     def monomial(self, *tup):
         elem = self.one
