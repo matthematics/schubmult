@@ -500,4 +500,4 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_monomial_slide(x)
         if other_basis == GroveBasis:
             return lambda x: cls.transition_grove(x)
-        return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))
+        return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition(SchubertBasis)(x))

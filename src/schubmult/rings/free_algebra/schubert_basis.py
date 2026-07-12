@@ -85,12 +85,13 @@ class SchubertBasis(FreeAlgebraBasis):
     @cache
     def transition_grothendieck(cls, perm, numvars):
         """Transition a Schubert key to the Grothendieck basis."""
-        from schubmult.combinatorics.bpd import BPD
+        from schubmult import BPD, RCGraph
         n = len(perm)
         pw0 = perm * Permutation.w0(n)
 
         dct = {}
-        for bpd in BPD.all_bpds(pw0, n):
+        for rc in RCGraph.all_rc_graphs(pw0, n):
+            bpd = BPD.from_rc_graph(rc)
             cobpd = bpd.co_bpd()
             the_perm = cobpd.perm
             if the_perm.max_descent <= numvars:

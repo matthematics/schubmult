@@ -218,14 +218,14 @@ class BaseRing(Ring, CompositeDomain):
         try:
             other = self.domain_new(other)
             return self.from_dict({k: v * other for k, v in elem.items()})
-        except Exception:
+        except CoercionFailed:
             return self.mul_expr(elem, other)
 
     def mul(self, elem, other):
         try:
             other = self.domain_new(other)
             return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
+        except CoercionFailed:
             return self.mul_expr(elem, other)
 
     def to_domain(self):

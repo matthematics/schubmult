@@ -62,7 +62,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, WCGraph):
             return NotImplemented
-        return tuple(self) == tuple(other) and hash(self) == hash(other)
+        return tuple(self) == tuple(other)
 
     def __hash__(self) -> int:
         return hash((tuple(self), "Tweezers"))
@@ -1173,8 +1173,13 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         pm = perm
         L = [*pull_out_var(1, pm)]
         for _, new_perm in L:
-            if length == 1 and new_perm.inv != 0:
-                continue
+            if length == 1:
+                if new_perm.inv != 0:
+                    continue
+                new_row = sorted([new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]], reverse=True)
+                if weight is None or len(new_row) == weight[0]:
+                    ret.add(cls([tuple(new_row)]))
+                break
             new_row_base = sorted([new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]], reverse=True)
             new_perm_up = new_perm.shiftup(1)
             addable_descents = set()
@@ -1190,7 +1195,8 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             all_new_rows = set()
             while len(stack) > 0:
                 new_row, addable_descents = stack.pop()
-                all_new_rows.add(tuple(new_row))
+                if weight is None or len(new_row) == weight[0]:
+                    all_new_rows.add(tuple(new_row))
                 if weight is None or len(new_row) < weight[0]:
                     for d in addable_descents:
                         new_new_row = sorted((*new_row, d), reverse=True)
@@ -1206,6 +1212,8 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
                     nwc = cls([tuple(new_row), *oldup])
                     assert nwc.perm == perm
                     assert len(nwc) == length, f"{nwc=}, {length=}, {old_wc=}, {new_row=}"
+                    if weight is not None:
+                        assert nwc.length_vector[0] == weight[0], f"{nwc=}, {weight=}"
                     ret.add(nwc)
         if weight is not None:
             cls._cache_by_weight[(perm, tuple(weight))] = ret
