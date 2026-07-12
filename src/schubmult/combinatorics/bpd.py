@@ -320,7 +320,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @classmethod
     def all_unreduced_bpds(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None) -> set[BPD]:
-        """Enumerate all (possibly unreduced) BPDs for w by generating ASMs and mapping with from_asm."""
+        """Enumerate all (possibly unreduced) BPDs for w.
+
+        Defers to :meth:`WCGraph.all_wc_graphs`, converts each WCGraph to its
+        marked bumpless pipe dream, forgets the marks, and reduces to an
+        ordinary BPD. This is dramatically faster than enumerating ASMs."""
+        from schubmult.combinatorics.wc_graph import WCGraph
+
         if length is None:
             length = len(weight) if weight is not None else len(w)
 
@@ -340,9 +346,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 return set(cls._unreduced_bpd_cache[key])
 
         ret: set[BPD] = set()
-        for asm_rows in _all_asms_data(length):
-            asm = np.array(asm_rows, dtype=int)
-            bpd = cls.from_asm(asm)
+        for wc in WCGraph.all_wc_graphs(w, length):
+            bpd = wc.to_mbpd().to_bpd()[0].resize(length)
             if bpd.perm != w:
                 continue
             if weight is not None and tuple(weight) != bpd.weight:
