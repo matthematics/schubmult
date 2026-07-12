@@ -2,29 +2,29 @@ import pytest
 
 
 def test_basic_forest():
-    from schubmult.rings.polynomial_algebra import Forest
+    from schubmult.rings.polynomial_algebra import ForestPoly
     from schubmult.abc import x
 
-    assert (Forest(0, 2, 0, 1).expand() - (x[2] ** 2 * x[4] + x[1] * x[2] * x[4] + x[1] ** 2 * x[4] + x[2] ** 2 * x[3] + x[1] * x[2] * x[3] + x[1] ** 2 * x[3] + x[1] ** 2 * x[2] + x[1] * x[2] ** 2)).expand() == 0
+    assert (ForestPoly(0, 2, 0, 1).expand() - (x[2] ** 2 * x[4] + x[1] * x[2] * x[4] + x[1] ** 2 * x[4] + x[2] ** 2 * x[3] + x[1] * x[2] * x[3] + x[1] ** 2 * x[3] + x[1] ** 2 * x[2] + x[1] * x[2] ** 2)).expand() == 0
 
 
 def test_forest_slide_expansion():
-    from schubmult.rings.polynomial_algebra import Forest, FSlide
+    from schubmult.rings.polynomial_algebra import ForestPoly, FSlide
     from schubmult import Permutation
 
     n = 5
     perms = Permutation.all_permutations(n)
     for perm in perms:
-        assert (Forest(*perm.code).change_basis(FSlide._basis).expand() - Forest(*perm.code).expand()).expand() == 0
+        assert (ForestPoly(*perm.code).change_basis(FSlide._basis).expand() - ForestPoly(*perm.code).expand()).expand() == 0
 
 
 def test_schubert_expansion():
-    from schubmult.rings.polynomial_algebra import Forest, Schub
+    from schubmult.rings.polynomial_algebra import ForestPoly, Schub
     from schubmult import Permutation
 
     n = 5
     perms = Permutation.all_permutations(n)
-    fbasis = Forest._basis
+    fbasis = ForestPoly._basis
     for perm in perms:
         forestish = Schub(perm).change_basis(fbasis)
         base_expand = Schub(perm).expand()
@@ -32,37 +32,37 @@ def test_schubert_expansion():
 
 
 def test_forest_product():
-    from schubmult.rings.polynomial_algebra import Forest
+    from schubmult.rings.polynomial_algebra import ForestPoly
 
-    prod = Forest(0, 2, 0, 1) * Forest(2, 0, 0, 2)
+    prod = ForestPoly(0, 2, 0, 1) * ForestPoly(2, 0, 0, 2)
     expected_result = (
-        Forest(2, 2, 0, 3)
-        + Forest(2, 2, 1, 2)
-        + Forest(2, 2, 2, 1)
-        + Forest(2, 3, 0, 2)
-        + Forest(2, 3, 1, 1)
-        + Forest(2, 4, 0, 1)
-        + Forest(3, 1, 0, 3)
-        + Forest(3, 1, 1, 2)
-        + Forest(3, 1, 2, 1)
-        + 2 * Forest(3, 2, 0, 2)
-        + 2 * Forest(3, 2, 1, 1)
-        + 2 * Forest(3, 3, 0, 1)
-        + Forest(4, 0, 0, 3)
-        + Forest(4, 0, 1, 2)
-        + Forest(4, 0, 2, 1)
-        + Forest(4, 1, 0, 2)
-        + Forest(4, 1, 1, 1)
-        + 2 * Forest(4, 2, 0, 1)
-        + Forest(5, 0, 0, 2)
-        + Forest(5, 0, 1, 1)
-        + Forest(5, 1, 0, 1)
-        + Forest(6, 0, 0, 1)
+        ForestPoly(2, 2, 0, 3)
+        + ForestPoly(2, 2, 1, 2)
+        + ForestPoly(2, 2, 2, 1)
+        + ForestPoly(2, 3, 0, 2)
+        + ForestPoly(2, 3, 1, 1)
+        + ForestPoly(2, 4, 0, 1)
+        + ForestPoly(3, 1, 0, 3)
+        + ForestPoly(3, 1, 1, 2)
+        + ForestPoly(3, 1, 2, 1)
+        + 2 * ForestPoly(3, 2, 0, 2)
+        + 2 * ForestPoly(3, 2, 1, 1)
+        + 2 * ForestPoly(3, 3, 0, 1)
+        + ForestPoly(4, 0, 0, 3)
+        + ForestPoly(4, 0, 1, 2)
+        + ForestPoly(4, 0, 2, 1)
+        + ForestPoly(4, 1, 0, 2)
+        + ForestPoly(4, 1, 1, 1)
+        + 2 * ForestPoly(4, 2, 0, 1)
+        + ForestPoly(5, 0, 0, 2)
+        + ForestPoly(5, 0, 1, 1)
+        + ForestPoly(5, 1, 0, 1)
+        + ForestPoly(6, 0, 0, 1)
     )
 
     assert prod == expected_result
     assert (prod.expand() - expected_result.expand()).expand() == 0
-    assert ((Forest(0, 2, 0, 1).expand() * Forest(2, 0, 0, 2).expand()).expand() - expected_result.expand()).expand() == 0
+    assert ((ForestPoly(0, 2, 0, 1).expand() * ForestPoly(2, 0, 0, 2).expand()).expand() - expected_result.expand()).expand() == 0
 
 
 def test_fundamental_slide_change_basis():
@@ -157,7 +157,10 @@ def test_monomial_basis_transitions(basis):
     FundamentalSlidePolyBasis, 
     ForestPolyBasis, 
     MonomialSlidePolyBasis, 
-    KeyPolyBasis])
+    KeyPolyBasis,
+    GrothendieckPolyBasis,
+    GrovePolyBasis,
+    ])
 def test_schubert_basis_transitions(basis):
     from schubmult.abc import x
     from schubmult import uncode

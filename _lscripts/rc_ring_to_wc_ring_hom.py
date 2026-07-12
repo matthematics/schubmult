@@ -19,4 +19,5 @@ if __name__ == "__main__":
                 rc_try_prod = morphism(wc_prod)
                 if not rc_prod.almosteq(rc_try_prod):
                     print(f"Mismatch for {rc1}, {rc2}: {rc_prod} != {rc_try_prod}")
+        print(f"Done with perm1={perm1}, perm2={perm2}")
         
