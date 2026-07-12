@@ -310,3 +310,33 @@ def test_wc_graph_ring_resize_resizes_empty_graph_too():
     only_key = next(iter(resized.keys()))
     assert len(only_key) == 3
     assert resized[only_key] == 1
+
+def test_bounded_rc_factor_algebra_multiplies_schuberts():
+    from schubmult import Permutation, BoundedRCFactorAlgebra, Sx
+
+    n = 3
+    perms = Permutation.all_permutations(n)
+    ring = BoundedRCFactorAlgebra()
+
+    for perm1 in perms:
+        for perm2 in perms:
+            elem1 = ring.full_schub_elem(perm1, n + 2)
+            elem2 = ring.full_schub_elem(perm2, n + 2)
+            prod = (elem1 * elem2).to_rc_graph_ring_element()
+            expected_prod = Sx(perm1) * Sx(perm2)
+            assert all(expected_prod.get(rc_result.perm, 0) == c for rc_result, c in prod.items()), f"Error: Bounded RC factor algebra multiplication mismatch for permutations {perm1} and {perm2}, {prod=} {expected_prod=}"
+
+def test_bounded_wc_factor_algebra_multiplies_grothendiecks():
+    from schubmult import Permutation, BoundedWCFactorAlgebra, Gx
+
+    n = 3
+    perms = Permutation.all_permutations(n)
+    ring = BoundedWCFactorAlgebra()
+
+    for perm1 in perms:
+        for perm2 in perms:
+            elem1 = ring.full_groth_elem(perm1, n + 2, Gx._beta)
+            elem2 = ring.full_groth_elem(perm2, n + 2, Gx._beta)
+            prod = (elem1 * elem2).to_wc_graph_ring_element()
+            expected_prod = Gx(perm1) * Gx(perm2)
+            assert all(expected_prod.get(wc_result.perm, 0) == c * Gx._beta**(wc_result.perm.inv - perm1.inv - perm2.inv) for wc_result, c in prod.items() if wc_result.is_reduced), f"Error: Bounded WC factor algebra multiplication mismatch for permutations {perm1} and {perm2}, {prod=} {expected_prod=}"

@@ -12,6 +12,8 @@ from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
 from schubmult.rings.printing import PrintingTerm, TypedPrintingTerm
 from schubmult.symbolic import S
 
+from ..schubert.grothendieck_ring import Gx
+
 
 def _tensor_to_rcs(weight_tensor, descents):
     from schubmult import uncode
@@ -356,53 +358,73 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         return elem
 
 
-    def full_schub_elem(self, perm, size):
-        # def cem_schub_schur_decomp(perm, n):
-        #     from sympy import Add, Mul, Pow, expand, sympify
+    def full_groth_elem(self, perm, length, beta=None):
+        """Express the Grothendieck polynomial of ``perm`` as a tagged tensor in ``bw @ br``.
 
-        #     from schubmult import Sx, uncode
-        #     result = Sx.zero @ Sx.zero
-        #     cd = (perm.strict_mul_dominant(n)).trimcode
-        #     if any(a < n for a in cd):
-        #         toadd = min(n - a for a in cd if a < n)
-        #         cd = [a + toadd for a in cd]
-        #     domperm = uncode(cd)
-        #     reppy = sympify(expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False))
-        #     for arg in Add.make_args(reppy):
-        #         coeff, schur_part = arg.as_coeff_Mul()
-        #         part1 = Sx.one
-        #         part2 = Sx.one
-        #         for elem_arg in Mul.make_args(schur_part):
-        #             if isinstance(elem_arg, Pow):
-        #                 base, exp = elem_arg.as_base_exp()
-        #             else:
-        #                 base = elem_arg
-        #                 exp = 1
-        #             for _ in range(exp):
-        #                 if base.numvars < n:
-        #                     part1 *= base
-        #                 else:
-        #                     part2 *= base
-        #             # if elem_arg.numvars < n:
-        #             #     part1 *= elem_arg
-        #             # else:
-        #             #     part2 *= elem_arg
-        #         result += coeff * part1 @ part2
-        #     return result
-        # decomp = cem_schub_schur_decomp(perm, size)
-        from schubmult.rings.polynomial_algebra import ElemSymPolyBasis, Schub
-        schub_elem = Schub(perm, size).change_basis(ElemSymPolyBasis)
-        schub = self.zero
-        for (comp, _), coeff in schub_elem.items():
-            term = self(self.make_key((), size))
-            #grass_part = self.make_key((), size)
-            for index, part in enumerate(comp, start=1):
-                if index < size:
-                    term *= self.elem_sym(part, index, size=size)
-                else:
-                    term *= self.elem_sym(part, size, size=size)
-            schub += coeff * term
-        return schub
+        Pipeline (no RC graphs until the final step):
+
+        1. Expand the Grothendieck polynomial in the Schubert basis,
+        ``Sx.from_expr(Gx(perm).expand())``.
+        2. Rewrite each Schubert polynomial in its CEM basis, a sum of products of
+        Schubert elementary symmetrics ``e_p(x_1, ..., x_k)``.
+        3. Change basis on each Schubert elem sym factor abstractly via
+        :func:`schub_elem_sym_to_groth_elem_sym_dict`, so every CEM monomial becomes
+        a sum of products of Grothendieck elementary symmetrics, tracked only as
+        ``(p, k)`` index vectors (there is no dedicated Grothendieck-elem-sym symbol).
+        4. Expand each Grothendieck-elem-sym factor ``(p, k)`` into its tagged tensor
+        via :func:`groth_elem_to_schub_elem_as_rc`, whose left (``bw``) factor is the
+        Grothendieck elem sym over its WCGraph monomials and whose right (``br``)
+        factor is the uniquely co-pipe-dream-bijected Schubert elem sym RC graph.
+
+        Multiplying the tagged factors in the tensor ring keeps the tag paired factor
+        by factor, producing ``(gelem1 @ elem1) * (gelem2 @ elem2) * ...`` rather than a
+        single top-level ``groth @ schub`` tensor.
+        """
+        from sympy import Add, Mul, Pow, expand, sympify
+
+        from schubmult.combinatorics.permutation import uncode
+        from schubmult.symbolic.common_polys import schub_elem_sym_to_groth_elem_sym_dict
+
+        from ..schubert.schubert_ring import Sx
+        identity = self(self.make_key((), length))
+
+        if beta is None:
+            beta = Gx._beta
+
+        # Step 1: Grothendieck polynomial -> Schubert basis.
+        schub_dict = Sx.from_expr(Gx(perm).expand())
+
+        result = 0
+        for schub_perm, schub_coeff in schub_dict.items():
+            # Step 2: each Schubert polynomial -> CEM basis (products of Schubert elem syms).
+            cem_rep = expand(sympify(Sx(schub_perm).in_CEM_basis()))
+
+            for term in Add.make_args(cem_rep):
+                scalar, rest = term.as_coeff_Mul()
+
+                schub_factors = []
+                if rest != 1:
+                    for factor in Mul.make_args(rest):
+                        if isinstance(factor, Pow):
+                            base, exponent = factor.as_base_exp()
+                        else:
+                            base, exponent = factor, 1
+                        schub_factors.extend([base] * int(exponent))
+
+                groth_term = identity
+                for factor in schub_factors:
+                    conversion = schub_elem_sym_to_groth_elem_sym_dict(factor.degree, factor.numvars, beta)
+                    groth_term_add = 0
+                    for (p, k), coeff in conversion.items():
+                        for wc in WCGraph.all_wc_graphs(uncode([0] * (k - p) + [1] * p), k):
+                            groth_term_add += coeff * self(self.make_key((wc,), length))
+                    groth_term *= groth_term_add
+
+
+                result += schub_coeff * scalar * groth_term
+        result = self.from_dict({k: v.subs(Gx._beta, beta) for k, v in result.items() if v != 0})
+        return result
+
 
     def schub_elem(self, perm, size, partition=None):
         from schubmult.combinatorics.permutation import Permutation
