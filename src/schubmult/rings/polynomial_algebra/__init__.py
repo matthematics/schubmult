@@ -23,6 +23,7 @@ from .polynomial_basis import ElemSymPolyBasis, FundamentalSlidePolyBasis, Monom
 
 ForestPoly = PolynomialAlgebra(ForestPolyBasis(x))
 Grove = PolynomialAlgebra(GrovePolyBasis(x))
+GrovePoly = PolynomialAlgebra(GrovePolyBasis(x))
 Schub = PolynomialAlgebra(SchubertPolyBasis(x))
 Key = PolynomialAlgebra(KeyPolyBasis(x))
 FSlide = PolynomialAlgebra(FundamentalSlidePolyBasis(x))

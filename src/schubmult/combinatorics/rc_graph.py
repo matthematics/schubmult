@@ -870,7 +870,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return new_rc
 
     def normalize(self) -> RCGraph:
-        return self.resize(len(self.perm.trimcode))
+        return self.resize(self.perm.max_descent)
 
     def resize(self, new_length: int) -> RCGraph:
         if new_length < len(self):
