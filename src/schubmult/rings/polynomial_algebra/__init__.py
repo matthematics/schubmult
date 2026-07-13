@@ -26,6 +26,7 @@ Grove = PolynomialAlgebra(GrovePolyBasis(x))
 GrovePoly = PolynomialAlgebra(GrovePolyBasis(x))
 Schub = PolynomialAlgebra(SchubertPolyBasis(x))
 Key = PolynomialAlgebra(KeyPolyBasis(x))
+KeyPoly = PolynomialAlgebra(KeyPolyBasis(x))
 FSlide = PolynomialAlgebra(FundamentalSlidePolyBasis(x))
 Monomial = PolynomialAlgebra(MonomialBasis(x))
 DoubleForest = PolynomialAlgebra(DoubleForestPolyBasis(x, y))
@@ -46,6 +47,7 @@ __all__ = [
     "GrovePoly",
     "GrovePolyBasis",
     "Key",
+    "KeyPoly",
     "KeyPolyBasis",
     "Monomial",
     "MonomialBasis",

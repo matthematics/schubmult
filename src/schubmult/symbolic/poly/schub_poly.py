@@ -563,6 +563,28 @@ def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
     # schub = ring.from_expr(poly)
     return operator.apply(schub)
 
+def isobar_it(i, genset, elem):
+    from schubmult import Permutation
+    from schubmult.rings.schubert.nil_hecke import NilHeckeRing
+    from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+    ring = SingleSchubertRing(genset)
+    nh = NilHeckeRing(genset)
+
+    operator = nh(Permutation.ref_product(i))
+    schub = ring.from_expr((1 + genset[i + 1]) * genset[i]) * elem
+    return operator.apply(schub)
+
+def lascoux_poly(composition, genset):
+    return _lascoux_poly(tuple(composition), genset).expand()
+
+@cache
+def _lascoux_poly(composition, genset):
+    if all(composition[i] >= composition[i + 1] for i in range(len(composition) - 1)):
+        return prod([genset[i + 1] ** composition[i] for i in range(len(composition)) if composition[i] > 0])
+    for i in range(len(composition) - 1):
+        if composition[i] < composition[i + 1]:
+            return isobar_it(i + 1, genset, lascoux_poly(composition[:i] + (composition[i + 1], composition[i]) + composition[i + 2 :], genset))
+    raise ValueError(f"Unexpected composition: {composition}")
 
 @cache
 def groth_elem_as_schub_dict(perm, beta):

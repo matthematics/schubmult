@@ -1,4 +1,6 @@
 
+import numpy as np
+
 from .permutation import Permutation
 from .plactic import Plactic
 
@@ -179,6 +181,138 @@ class IncreasingTableau(Plactic):
             cols = sorted(c for (rr, c) in pcells if rr == r)
             rows.append(tuple(pcells[(r, c)] for c in cols))
         return cls(tuple(rows))
+
+    @staticmethod
+    def _normalize_corners(corners):
+        """Normalize the corner arguments of a K-JDT slide.
+
+        Accepts either the ``(row, col)`` two-integer form (a single corner) or
+        any number of ``(row, col)`` pairs, and returns a list of
+        ``(int, int)`` tuples.
+        """
+        if len(corners) == 2 and all(isinstance(c, (int, np.integer)) for c in corners):
+            return [(int(corners[0]), int(corners[1]))]
+        return [(int(c[0]), int(c[1])) for c in corners]
+
+    def up_jdt_slide(self, *corners):
+        """K-theoretic (Buch–Samuel) jeu de taquin slide toward the top-left.
+
+        Starting from one or more empty inner cells, slide entries up/left into
+        the holes. This is the genuine K-theoretic slide, so a single entry may
+        migrate into several holes at once; passing multiple corners performs
+        the simultaneous slide of all of them.
+
+        Corners may be given either as ``up_jdt_slide(row, col)`` (a single
+        corner) or as ``up_jdt_slide((r1, c1), (r2, c2), ...)``. Returns a new
+        :class:`IncreasingTableau`.
+        """
+        return self._kjdt_slide(self._normalize_corners(corners), upward=True)
+
+    def down_jdt_slide(self, *corners):
+        """K-theoretic (Buch–Samuel) jeu de taquin slide toward the bottom-right.
+
+        Starting from one or more empty outer cells, slide entries down/right
+        into the holes. As with :meth:`up_jdt_slide`, this is the genuine
+        K-theoretic slide (an entry may migrate into several holes) and passing
+        multiple corners performs the simultaneous slide of all of them.
+
+        Corners may be given either as ``down_jdt_slide(row, col)`` (a single
+        corner) or as ``down_jdt_slide((r1, c1), (r2, c2), ...)``. Returns a new
+        :class:`IncreasingTableau`.
+        """
+        return self._kjdt_slide(self._normalize_corners(corners), upward=False)
+
+    def down_jdt_slide_all_inner_corners(self):
+        """Simultaneously down-slide every valid inner corner.
+
+        Collects all inner corners of the skew shape (see
+        :attr:`iter_inner_corners`) and performs a single K-theoretic down slide
+        that moves all of them at once. Returns a new
+        :class:`IncreasingTableau`. If there are no inner corners the tableau is
+        returned unchanged.
+        """
+        corners = list(self.iter_inner_corners)
+        if not corners:
+            return self
+        return self._kjdt_slide(corners, upward=False)
+
+    def _kjdt_slide(self, corners, *, upward):
+        """Shared engine for :meth:`up_jdt_slide` / :meth:`down_jdt_slide`.
+
+        ``corners`` is a list of ``(row, col)`` empty cells to start from.
+        ``upward`` selects the direction: up/left when ``True``, down/right when
+        ``False``. Empty cells are held in ``-1`` markers and the switcher runs
+        over the entry values (descending for the upward slide, ascending for
+        the downward one), swapping every hole with the equal-valued neighbour
+        in the slide direction. Multiple holes are processed simultaneously,
+        which is what makes the slide K-theoretic.
+        """
+        if not corners:
+            raise ValueError("at least one corner is required")
+
+        for i, j in corners:
+            if self[i, j] not in (0, None):
+                raise ValueError(f"jdt_slide starting position {(i, j)} must be empty, got {self[i, j]!r}")
+
+        max_i = max(i for i, _ in corners)
+        max_j = max(j for _, j in corners)
+        new_rows = max(self._grid.shape[0], max_i + 2)
+        new_cols = max(self._grid.shape[1], max_j + 2)
+        new_grid = np.full((new_rows, new_cols), None, dtype=object)
+        new_grid[: self._grid.shape[0], : self._grid.shape[1]] = self._grid
+
+        any_move = False
+        for i, j in corners:
+            if upward:
+                up = new_grid[i - 1, j] if i - 1 >= 0 else None
+                left = new_grid[i, j - 1] if j - 1 >= 0 else None
+                if up not in (0, None) or left not in (0, None):
+                    any_move = True
+            else:
+                down = new_grid[i + 1, j] if i + 1 < new_grid.shape[0] else None
+                right = new_grid[i, j + 1] if j + 1 < new_grid.shape[1] else None
+                if down not in (0, None) or right not in (0, None):
+                    any_move = True
+            new_grid[i, j] = -1
+
+        if not any_move:
+            raise ValueError("jdt_slide starting corners have no valid moves")
+
+        max_switcher = 0
+        for i in range(new_grid.shape[0]):
+            for j in range(new_grid.shape[1]):
+                val = new_grid[i, j]
+                if val is not None and val != -1 and isinstance(val, (int, np.integer)):
+                    max_switcher = max(max_switcher, int(val))
+
+        order = range(max_switcher, 0, -1) if upward else range(1, max_switcher + 1)
+        for switcher in order:
+            dot_spots = np.where(new_grid == -1)
+            wipeout_spots = set()
+            doit_spots = set()
+            for a, b in zip(dot_spots[0], dot_spots[1]):
+                i, j = int(a), int(b)
+                if upward:
+                    neighbors = ((i - 1, j), (i, j - 1))
+                else:
+                    neighbors = ((i + 1, j), (i, j + 1))
+                for ni, nj in neighbors:
+                    if 0 <= ni < new_grid.shape[0] and 0 <= nj < new_grid.shape[1] and new_grid[ni, nj] == switcher:
+                        doit_spots.add((i, j))
+                        wipeout_spots.add((ni, nj))
+            if wipeout_spots:
+                new_grid[tuple(zip(*wipeout_spots))] = -1
+            if doit_spots:
+                new_grid[tuple(zip(*doit_spots))] = switcher
+
+        new_grid[new_grid == -1] = None
+
+        if self._inner_shape is not None:
+            new_inner_shape = _compute_inner_shape_from_grid(new_grid)
+        else:
+            new_inner_shape = None
+
+        return IncreasingTableau._from_grid(new_grid, new_inner_shape)
 
     @staticmethod
     def _is_increasing_cells(cells):

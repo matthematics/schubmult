@@ -618,6 +618,32 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         from .increasing_tableau import IncreasingTableau
         return IncreasingTableau.hecke_column_insert_rsk(self.compatible_sequence, self.perm_word)
 
+    @property
+    def strong_hecke_invariant(self):
+        """K-theoretic rectification of the diagonal-strip increasing tableau.
+
+        Lay the ``perm_word`` out along a single anti-diagonal strip, reading
+        from bottom-left to top-right, as a skew
+        :class:`~schubmult.combinatorics.increasing_tableau.IncreasingTableau`,
+        then repeatedly apply the simultaneous inner-corner K-theoretic down
+        slide until the tableau is rectified (no inner corners remain). The
+        rectified increasing tableau is the strong Hecke invariant.
+        """
+        from .increasing_tableau import IncreasingTableau
+
+        word = self.perm_word
+        m = len(word)
+        if m == 0:
+            return IncreasingTableau()
+        # Cell (m-1-i, i) carries word[i]: word[0] sits bottom-left, word[-1]
+        # top-right, so each letter occupies its own anti-diagonal cell.
+        rows = tuple(tuple([0] * (m - 1 - r) + [word[m - 1 - r]]) for r in range(m))
+        inner_shape = tuple(m - 1 - r for r in range(m))
+        tab = IncreasingTableau(rows, inner_shape=inner_shape)
+        while list(tab.iter_inner_corners):
+            tab = tab.down_jdt_slide_all_inner_corners()
+        return tab
+
     @cache
     def _convert_elem_rc(self):
         if self.is_elem_sym:
