@@ -835,6 +835,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         rc_self = self.resize(len(rc) + N)
         return self._rebuild([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
 
+    @cache
     def squash_product(self, rc: WCGraph) -> WCGraph:
         combined_rc = self.disjoint_union(rc)
         while len(combined_rc) > len(self):

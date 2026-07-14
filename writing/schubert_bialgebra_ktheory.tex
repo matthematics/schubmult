@@ -132,6 +132,7 @@
 \newcommand{\mot}[1]{\xleftarrow{#1}}
 \newcommand{\grass}{\mathcal{G}}
 \newcommand{\plac}{\mathrm{Plac}}
+\newcommand{\kplac}{\mathrm{Plac}^K}
 
 \newcommand{\cperm}[1]{\llbracket #1\rrbracket}
 \newcommand{\cpcf}[5]{d^{#1,#2}_{#3}\left(#4\mid #5\right)}
@@ -767,7 +768,18 @@ W&\text{if $W$ is an RC graph}\\
 is a surjective ring homomorphism.
 \end{proposition}
 
-This homomorphism has a section.
+\begin{definition}
+This homomorphism has a section. Specifically, for each $n>0$ define a ring $\kplac_n$ to be the algebra spanned by the $n$-Grassmannian WC graphs with multiplication given by the squash product. Then we have a surjective ring homomorphism
+$$\kplac_n\to \plac_n$$
+obtained on elementary symmetric WC graphs by sending $E_{p,k}^{\beta}$ with $|\beta|>p$ to $E_{|\beta|,k}^{\beta}$. Define 
+$$\mathcal{M}_n^K = \bigotimes_{i=1}^n \kplac_i$$
+There is an evident homomorphism $\mathcal{M}_n^K\to \mathcal{M}_n$ obtained by applying the above homomorphism to each factor. We have a commutative diagram
+$$\begin{tikzcd}
+\mathcal{M}_n^K \arrow[r]\arrow[d]  & \mathcal{M}_n\arrow[d]  \\
+\BWC_n \arrow[r, dashed] & \BRC_n 
+\end{tikzcd}$$
+
+\end{definition}
 % $$F_k(x;y) = \prod_{i=1}^k (x_i + y_1 + x_iy_1)$$
 
 % $$F_k(x;y) = (1+y_1)^k\prod_{i=1}^k\left(x_i + \frac{y_1}{1+y_1}\right)$$
