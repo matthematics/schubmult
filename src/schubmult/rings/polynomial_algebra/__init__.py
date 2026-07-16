@@ -30,6 +30,7 @@ Key = PolynomialAlgebra(KeyPolyBasis(x))
 KeyPoly = PolynomialAlgebra(KeyPolyBasis(x))
 FSlide = PolynomialAlgebra(FundamentalSlidePolyBasis(x))
 SlidePoly = PolynomialAlgebra(FundamentalSlidePolyBasis(x))
+GlidePoly = PolynomialAlgebra(GlidePolyBasis(x))
 Monomial = PolynomialAlgebra(MonomialBasis(x))
 DoubleForest = PolynomialAlgebra(DoubleForestPolyBasis(x, y))
 GrothendieckPoly = PolynomialAlgebra(GrothendieckPolyBasis(x))
@@ -44,6 +45,8 @@ __all__ = [
     "ForestPoly",
     "ForestPolyBasis",
     "FundamentalSlidePolyBasis",
+    "GlidePoly",
+    "GlidePolyBasis",
     "GrothendieckPoly",
     "GrothendieckPolyBasis",
     "GrovePoly",

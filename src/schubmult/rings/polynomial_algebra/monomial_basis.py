@@ -1,6 +1,6 @@
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import Add, Mul, S
-from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
 
 from .base_polynomial_basis import PolynomialBasis
 
@@ -94,18 +94,32 @@ class MonomialBasis(PolynomialBasis):
         dct_reversed = {tuple(reversed(k)): v for k, v in dct.items()}
         return self.transition_schubert(dct_reversed, other_basis)
 
-    def transition_schubert(self, dct, other_basis):
+    def transition_schubert_key(self, key):
+        from schubmult import Sx
+        from schubmult.abc import H
+        val = Sx.one
+        for i, p in enumerate(key, start=1):
+            if p == 0:
+                continue
+            val *= H(p, 1, [self.genset[i]], [0 for _ in range(p)])
+        return {(k, len(key)): v for k, v in val.items()}
+
+    def transition_schubert(self, dct):
         """Transition monomials to the Schubert basis by grouping by length."""
         ret = {}
-        dct_by_length = {}
-        for k, v in dct.items():
-            dct_by_length[len(k)] = dct_by_length.get(len(k), {})
-            dct_by_length[len(k)][k] = v
+        # dct_by_length = {}
+        # for k, v in dct.items():
+        #     dct_by_length[len(k)] = dct_by_length.get(len(k), {})
+        #     dct_by_length[len(k)][k] = v
 
-        for length, dctt in dct_by_length.items():
-            schub_dict = other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in dctt.items()]))
-            schub_dict_with_length = {(k, length): v for k, v in schub_dict.items()}
-            ret = add_perm_dict(ret, schub_dict_with_length)
+        # for length, dctt in dct_by_length.items():
+        #     schub_dict = other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in dctt.items()]))
+        #     schub_dict_with_length = {(k, length): v for k, v in schub_dict.items()}
+        #     ret = add_perm_dict(ret, schub_dict_with_length)
+        # return ret
+        for k, v in dct.items():
+            schub_dict = self.transition_schubert_key(k)
+            ret = add_perm_dict_with_coeff(ret, schub_dict, coeff=v)
         return ret
 
     def transition_double_forest(self, dct, other_basis):
@@ -139,7 +153,7 @@ class MonomialBasis(PolynomialBasis):
         if isinstance(other_basis, MonomialBasis):
             return lambda x: other_basis.attach_key(x)
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: self.transition_schubert(x, other_basis)
+            return lambda x: self.transition_schubert(x)
         if isinstance(other_basis, MonomialSlidePolyBasis):
             return lambda x: self.transition_slide(x, other_basis)
         if isinstance(other_basis, DoubleForestPolyBasis):
