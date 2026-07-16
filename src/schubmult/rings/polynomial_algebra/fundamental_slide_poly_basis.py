@@ -200,7 +200,7 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         return tuple(x)
 
     def printing_term(self, k):
-        return GenericPrintingTerm(f"FSlide{k}", "")
+        return GenericPrintingTerm(f"SlidePoly{k}", "")
 
     def __init__(self, genset):
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis

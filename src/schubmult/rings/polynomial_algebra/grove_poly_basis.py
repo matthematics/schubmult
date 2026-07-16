@@ -29,7 +29,7 @@ class GrovePolyBasis(PolynomialBasis):
         return tuple(x)
 
     def printing_term(self, k):
-        return GenericPrintingTerm(f"Grove{k}", "")
+        return GenericPrintingTerm(f"GrovePoly{k}", "")
 
     def __init__(self, genset, beta=Symbol("beta")):
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis

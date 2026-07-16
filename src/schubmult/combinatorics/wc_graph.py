@@ -835,6 +835,32 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         rc_self = self.resize(len(rc) + N)
         return self._rebuild([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
 
+    @property
+    def is_quasi_yamanouchi(self) -> bool:
+        for i in range(1, len(self)):
+            if max(self[i], default=0) <= min(self[i - 1], default=0) and min(self[i - 1], default=0) >= i + 1:
+                return False
+        return True
+
+    @property
+    def dst(self):
+        if self.is_quasi_yamanouchi:
+            return self
+        rows = [*self]
+        changed = True
+        while changed:
+            changed = False
+            for i in range(1, len(rows)):
+                if max(rows[i], default=0) <= min(rows[i - 1], default=0) and min(rows[i - 1], default=0) >= i + 1:
+                    rows[i] = sorted({*rows[i - 1], *rows[i]}, reverse=True)
+                    rows[i - 1] = []
+                    changed = True
+                    break
+        ret = WCGraph([tuple(row) for row in rows])
+        if not ret.is_quasi_yamanouchi:
+            raise ValueError("DST failed to produce a quasi-Yamanouchi graph")
+        return ret
+
     @cache
     def squash_product(self, rc: WCGraph) -> WCGraph:
         combined_rc = self.disjoint_union(rc)
@@ -912,6 +938,11 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
         WCGraph._z_cache[self] = rc_set
         return rc_set
+
+    @classmethod
+    def principal_wc(cls, perm, length):
+        from schubmult.combinatorics.rc_graph import RCGraph
+        return cls(RCGraph.principal_rc(perm, length))
 
     def product(self, other: SchubertMonomialGraph) -> dict[WCGraph, int]:
         """Compute the product of this WC graph with another."""

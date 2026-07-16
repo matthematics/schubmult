@@ -113,7 +113,7 @@ class ForestPolyBasis(PolynomialBasis):
         return tuple(x)
 
     def printing_term(self, k):
-        return GenericPrintingTerm(f"Forest{k}", "")
+        return GenericPrintingTerm(f"ForestPoly{k}", "")
 
     def __init__(self, genset):
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis

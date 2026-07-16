@@ -37,6 +37,8 @@ from .separated_descents_basis import SeparatedDescentsBasis, _SeparatedDescents
 from .word_basis import WordBasis
 from .z_basis import ZBasis
 
+GroveDual = FreeAlgebra(GroveBasis)
+
 __all__ = [
     "FA",
     "ADSx",
@@ -52,6 +54,7 @@ __all__ = [
     "FundamentalSlideBasis",
     "GrothendieckBasis",
     "GroveBasis",
+    "GroveDual",
     "JBasis",
     "JTBasis",
     "KeyBasis",

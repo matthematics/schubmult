@@ -255,6 +255,7 @@ class SchubertPolyBasis(PolynomialBasis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
         from .forest_poly_basis import ForestPolyBasis
         from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis
+        from .glide_poly_basis import GlidePolyBasis
         from .grothendieck_poly_basis import GrothendieckPolyBasis
         from .grove_poly_basis import GrovePolyBasis
         from .key_poly_basis import KeyPolyBasis
@@ -290,7 +291,7 @@ class SchubertPolyBasis(PolynomialBasis):
             return lambda x: self.transition_key(x)
         if isinstance(other_basis, GrothendieckPolyBasis):
             return lambda x: self.transition_grothendieck(x)
-        if isinstance(other_basis, GrovePolyBasis):
+        if isinstance(other_basis, GrovePolyBasis) or isinstance(other_basis, GlidePolyBasis):
             bas = GrothendieckPolyBasis(genset=other_basis.genset)
             return lambda x: bas.transition(other_basis)(self.transition_grothendieck(x))
         raise NotImplementedError(f"Transition from SchubertPolyBasis to {other_basis.__class__} not implemented yet")

@@ -15,6 +15,25 @@ def hom_bw_to_br(bw_elem):
         ret += coeff * br(new_key)
     return ret
 
+def _g_grove_extractor(rc_elem, indexes):
+    """The operator G_i on rc graphs, which is the composition of the quasi-shift and trim-descent operations."""
+    result = f.zero
+    if len(indexes) > 0:
+        desc, is_left_child = indexes[-1]      
+        for rc, coeff in rc_elem.items():
+            forest = weak_composition_to_indfor(rc.forest_weight)
+            if desc not in forest.trim_descents:
+                continue
+            if is_left_child:
+                result += coeff * f(rc).forest_trim(desc)
+            else:
+                result += coeff * (f(rc).forest_trim(desc) - f(rc).quasi_shift(desc) + f(rc).quasi_shift(desc + 1))
+        if len(indexes) > 1:
+            return _g_grove_extractor(result, indexes=indexes[:-1])
+    else:
+        result = rc_elem
+    result_values = [v for k, v in result.items() if k.perm.inv == 0]
+    return sum(result_values)
 
 if __name__ == "__main__":
     import sys

@@ -90,6 +90,23 @@ class GrothendieckPolyBasis(PolynomialBasis):
     def zero_monom(self):
         return (Permutation([]), 0)
 
+    def transition_glide_key(self, key):
+        """Decompose a Grothendieck polynomial into glide polynomials via omega insertion on RC-graphs."""
+        from schubmult import WCGraph
+
+        dct = {}
+        for wc in WCGraph.all_wc_graphs(key[0], key[1]):
+            if wc.is_quasi_yamanouchi:
+                dct[wc.length_vector] = dct.get(wc.length_vector, S.Zero) + S.One
+        return dct
+
+    def transition_glide(self, dct):
+        """Transition a Grothendieck dict to the glide polynomial basis."""
+        res = {}
+        for k, v in dct.items():
+            res = add_perm_dict_with_coeff(res, self.transition_glide_key(k), coeff=v)
+        return res
+
     def to_monoms(self, key):
         """Expand a Grothendieck key into a dict of monomial exponent tuples."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
@@ -122,12 +139,16 @@ class GrothendieckPolyBasis(PolynomialBasis):
 
     def transition(self, other_basis):
         """Return a transition function from Grothendieck basis to *other_basis*."""
+        from .glide_poly_basis import GlidePolyBasis
         from .grove_poly_basis import GrovePolyBasis
         from .monomial_basis import MonomialBasis
         from .schubert_poly_basis import SchubertPolyBasis
 
+
         if isinstance(other_basis, GrothendieckPolyBasis):
             return lambda x: dict(x)
+        if isinstance(other_basis, GlidePolyBasis):
+            return lambda x: self.transition_glide(x)
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: self.transition_schubert(x)
         if isinstance(other_basis, MonomialBasis):

@@ -4,8 +4,11 @@ from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
 from schubmult.rings.polynomial_algebra import *
 from schubmult.symbolic.common_polys import *
 from schubmult.symbolic.poly.variables import *
+from schubmult.rings.polynomial_algebra import *
 from schubmult.utils._mul_utils import add_perm_dict
 from schubmult.utils.tuple_utils import pad_tuple
+
+import itertools
 
 f = ForestRCGraphRing()
 
@@ -81,7 +84,7 @@ def _forest_weight(wc):
     return wc._snap_reduced().forest_weight
 
 def grove_rc_try(comp, beta, length):
-    """Grove polynomial of ``comp`` built by inverting the omega insertion.
+    """GrovePoly polynomial of ``comp`` built by inverting the omega insertion.
 
     We enumerate the compatible set-valued labelings ``kappa`` of the indexed
     forest ``F = weak_composition_to_indfor(comp)`` (the grove definition), and
@@ -164,93 +167,47 @@ def grove_rc_try(comp, beta, length):
         result += (beta ** (len(wc.perm_word) - sum(comp))) * wc.polyvalue(Sx.genset)
     return result
 
+def _grove_it_up(comp, bw, n):
+    grove_asgroth = GrovePoly(*comp).change_basis(GrothendieckPolyBasis)
+    # groth = bw.full_groth_elem(uncode(comp), n, 1)
+    grove = 0
+    for (perm, length), coeff in grove_asgroth.items():
+        grove += coeff * bw.full_groth_elem(perm, n, 1)
+        # rc_key = bw.key_to_wc_graph(key).resize(len(comp))
+        # if rc_key.grove_weight == tuple(comp) or rc_key.perm != uncode(comp):
+        # grove += coeff * bw(key)
+    #grove = bw.from_dict({k: v for k, v in grove.items() if (bw.key_to_wc_graph(k).resize(len(comp)).grove_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
+    return grove
+
 if __name__ == "__main__":
     import sys
 
+    bw = BoundedWCFactorAlgebra()
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    comps = [perm.pad_code(n -  1) for perm in perms]
-    for comp in comps:
-        
-        #grove_try = grove_rc_try(comp, Gx._beta, n - 1)
-        # forest_dict = grove_as_forest_dict(comp, beta=Gx._beta, length=n - 1)
-        # forest_result = Forest.from_dict(forest_dict)
-        # forest_rcs = {k for k in RCGraph.all_rc_graphs(uncode(comp), n - 1) if k.is_forest_rc}
-        # fatpants_sum = 0
-        # for dinkbat in forest_rcs:
-        #     new_comp = dinkbat.forest_weight
-        #     grove_result = grove_polynomial(new_comp, Sx.genset, Gx._beta)
-        #     grove_try = sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in WCGraph.grove_wcs(new_comp, n - 1, dinkbat)])
-        #     diff =  (grove_result - grove_try).expand() 
-        #     assert diff == 0, f"Mismatch for {new_comp}: {grove_result} != {grove_try}\n{dinkbat=}\nDiff: {diff}"
-        #     print(f"Puncho! {dinkbat.is_principal=}")
-        #     fatpants_sum += grove_try
-        # print("Hofer gonk")
+    comps = [tuple(perm.pad_code(n -  1)) for perm in perms]
+    the_poles = {}
+    for comp1, comp2 in itertools.product(comps, repeat=2):
 
-        wc_set = WCGraph.all_wc_graphs(uncode(comp), n - 1)
-        # for dinkbat in forest_rcs:
-        #     wc_set -= WCGraph.grove_wcs(dinkbat.forest_weight, n - 1, dinkbat)
-        fatpants_sum = 0
-        # while wc_set:
-        new_forest_rcs = {wc for wc in wc_set if wc.forest_weight == wc.length_vector}
-        for dinkbat in new_forest_rcs:
-            gang = WCGraph.grove_wcs(dinkbat.forest_weight, n - 1, dinkbat)
-            #assert gang.issubset(wc_set), f"Mismatch for {dinkbat.forest_weight}: {gang.difference(wc_set)}"
-            #wc_set -= gang
-            grover = sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in gang])
-            assert (grover - (Gx._beta ** (len(dinkbat.perm_word) - sum(comp))) * grove_polynomial(dinkbat.forest_weight, Sx.genset, Gx._beta)).expand() == 0, f"Mismatch for {dinkbat.forest_weight}: {grover} != {(Gx._beta ** (len(gang.pop().perm_word) - sum(dinkbat.forest_weight))) * grove_polynomial(dinkbat.forest_weight, Sx.genset, Gx._beta)}"
-            print("Profie")
-            fatpants_sum += grover
-            #sum([wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True) for wc in gang])
-        assert (fatpants_sum - grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)).expand() == 0, f"Mismatch for {comp}: {fatpants_sum} != {grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)}\nDiff: {(fatpants_sum - grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)).expand()}"
-        print("Potato piston")
-        # grothy = grothendieck_poly(uncode(comp), Sx.genset, ZeroGeneratingSet(), Gx._beta)
-        # assert (fatpants_sum - grothy).expand() == 0, f"Mismatch for {comp}: {fatpants_sum} != {grothy}\nDiff: {(fatpants_sum - grothy).expand()}"
-    # for w in perms:
-    #     if w.inv == 0:
-    #         continue
-        # groth_result = grothendieck_poly(w, Sx.genset, ZeroGeneratingSet(), Gx._beta)
-        # spinach = groth_as_rc(w, beta=Gx._beta, length=n - 1)
-        # assert (spinach.polyvalue(Sx.genset) - groth_result).expand() == 0, f"Mismatch for {w}: {spinach.polyvalue(Sx.genset)} != {groth_result}"
-        # print(spinach)
-        # print("This is certainly a baked potato")
-        # comps = set([rc.forest_weight for rc in spinach])
-        # result = 0
-        # for comp in comps:
-        #     word = []
-        #     forest = weak_composition_to_indfor(comp)
-        #     while forest.trim_descents:
-        #         desc = forest.trim_descents[0]
-        #         word = [(desc, forest.is_left_child(desc)), *word]
-        #         forest = forest.trim_descent(desc)
-        #     result += _g_grove_extractor(spinach, indexes=word, beta=Gx._beta) * grove_polynomial(comp, Sx.genset, Gx._beta)
-        
-        # assert (result - groth_result).expand() == 0, f"Mismatch for {w}: {result=}, {groth_result=}\ndiff={(result - groth_result).expand()}"
-        #print(f"Success for {w}")
+        if comp1 not in the_poles:
+            grove1 = _grove_it_up(comp1, bw, n)
+            the_poles[comp1] = grove1
+        else:
+            grove1 = the_poles[comp1]
+        if comp2 not in the_poles:
+            grove2 = _grove_it_up(comp2, bw, n)
+            the_poles[comp2] = grove2
+        else:
+            grove2 = the_poles[comp2]
 
-        # fordict = {}
-        # for wc in WCGraph.all_wc_graphs(w, n - 1):
-        #     word = []
-        #     compat = []
-        #     perm_last = Permutation([])
-        #     letter_last = 0
-        #     append_val = 1
-        #     for a in wc.perm_word:
-        #         new_perm = perm_last @ Permutation.ref_product(a)
-        #         if new_perm != perm_last:
-        #             word.append(a)
-        #             perm_last = new_perm
-        #             if a >= letter_last:
-        #                 append_val += 1
-        #             compat.append(append_val)
-        #             letter_last = a
-        #     rc = RCGraph.from_reduced_compatible(word, compat)
-        #     fordict[rc.forest_invariant] = fordict.get(rc.forest_invariant, 0) + wc.polyvalue(Sx.genset, beta=Gx._beta, prop_beta=True)
-        # testo = {}
-        # for invar, val in fordict.items():
-        #     cd = invar.forest.code
-        #     if cd in testo:
-        #         assert (testo[cd] - val).expand() == 0, f"Mismatch for invariant {invar} code {cd}: {testo[cd]} != {val}"
-        #     else:
-        #         testo[cd] = val
-        # print("happy")
+        producto = (grove1 * grove2).to_wc_graph_ring_element().resize(n - 1)
+
+        real_prod = GrovePoly(*comp1) * GrovePoly(*comp2)
+
+        checko_prod = 0
+        for wc, v in producto.items():
+            if wc.forest_weight == wc.length_vector:
+                checko_prod += v * GrovePoly(*wc.forest_weight)
+
+        assert real_prod.almosteq(checko_prod), f"Failed for {comp1} * {comp2}: {real_prod-checko_prod=}"
+        print("Pantoopa fatcough")

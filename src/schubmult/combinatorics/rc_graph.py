@@ -180,12 +180,6 @@ class RCGraph(WCGraph, CrystalGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
 
-    @property
-    def is_quasi_yamanouchi(self) -> bool:
-        for i in range(1, len(self)):
-            if max(self[i], default=0) < min(self[i - 1], default=0) and min(self[i - 1], default=0) >= i + 1:
-                return False
-        return True
 
     def loc_of_inversion(self, a, b):
         lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
