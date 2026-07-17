@@ -575,7 +575,8 @@ def isobar_it(i, genset, elem):
     return operator.apply(schub)
 
 def lascoux_poly(composition, genset):
-    return _lascoux_poly(tuple(composition), genset).expand()
+    from .. import expand
+    return expand(_lascoux_poly(tuple(composition), genset))
 
 @cache
 def _lascoux_poly(composition, genset):

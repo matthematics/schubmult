@@ -63,7 +63,7 @@ class GlidePolyBasis(PolynomialBasis):
 
     def expand(self, dct):
         """Expand a glide basis dict into a symbolic polynomial expression."""
-        return sum([v * self._monomial_basis.from_dict(self.to_monoms(key)).expand() for key, v in dct.items()])
+        return sum([v * self._monomial_basis.expand(self.to_monoms(key)) for key, v in dct.items()])
 
     def transition_monomial(self, dct):
         """Transition from glide basis to monomial basis."""
