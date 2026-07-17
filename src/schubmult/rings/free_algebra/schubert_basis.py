@@ -258,6 +258,7 @@ class SchubertBasis(FreeAlgebraBasis):
         from .j_basis import JBasis
         from .jt_basis import JTBasis
         from .key_basis import KeyBasis
+        from .lascoux_basis import LascouxBasis
         from .monomial_slide_basis import MonomialSlideBasis
         from .schubert_schur_basis import SchubertSchurBasis
         from .schur_elementary_basis import SchurElementaryBasis
@@ -282,7 +283,7 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
         if isinstance(other_basis, type) and issubclass(other_basis, GrothendieckBasis):
             return lambda x: cls.transition_grothendieck(*x)
-        if other_basis == GroveBasis or other_basis == GlideBasis:
+        if other_basis == GroveBasis or other_basis == GlideBasis or other_basis == LascouxBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
         raise NotImplementedError(f"Transition from SchubertBasis to {other_basis} is not implemented.")
 

@@ -29,6 +29,7 @@ from .grove_basis import GroveBasis
 from .j_basis import JBasis
 from .jt_basis import JTBasis
 from .key_basis import KeyBasis
+from .lascoux_basis import LascouxBasis
 from .monomial_slide_basis import MonomialSlideBasis
 from .nelementary_basis import NElementaryBasis
 from .schubert_basis import SchubertBasis
@@ -62,6 +63,7 @@ __all__ = [
     "JBasis",
     "JTBasis",
     "KeyBasis",
+    "LascouxBasis",
     "MonomialSlideBasis",
     "NElementaryBasis",
     "SchubertBasis",

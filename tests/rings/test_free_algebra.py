@@ -129,10 +129,11 @@ from schubmult.rings.free_algebra import (
     GrothendieckBasis,
     GroveBasis,
     GlideBasis,
+    LascouxBasis,
 )
 
 
-@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis, GroveBasis, GlideBasis])
+@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis, GroveBasis, GlideBasis, LascouxBasis])
 def test_word_basis_transitions(basis):
     word_elem = FA(0, 2, 0, 1)
 
@@ -140,7 +141,7 @@ def test_word_basis_transitions(basis):
     assert word_elem2 == word_elem
 
 
-@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis, GroveBasis, GlideBasis])
+@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis, GroveBasis, GlideBasis, LascouxBasis])
 def test_schubert_basis_transitions(basis):
     from schubmult import ASx, uncode
 

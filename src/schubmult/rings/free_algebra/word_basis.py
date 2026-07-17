@@ -432,6 +432,24 @@ class WordBasis(FreeAlgebraBasis):
         return dct
 
     @classmethod
+    def transition_lascoux(cls, key):
+        from schubmult.combinatorics.wc_graph import WCGraph
+        from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+        r = WCGraphRing()
+        dct = {}
+        all_wcs = r.monomial(*key)
+
+        def _extremal_weight(wc):
+            hecke_class_lengths = {wcc.length_vector for wcc in WCGraph.all_wc_graphs(wc.perm, len(wc)) if wcc.strong_hecke_invariant == wc.strong_hecke_invariant}
+            return min(hecke_class_lengths)
+
+        for wc in all_wcs:
+            code_key = _extremal_weight(wc)
+            if code_key == wc.perm.pad_code(len(wc)):
+                dct[code_key] = dct.get(code_key, S.Zero) + S.One
+        return dct
+
+    @classmethod
     def transition_glide(cls, key):
         from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
 
@@ -494,6 +512,7 @@ class WordBasis(FreeAlgebraBasis):
         from .j_basis import JBasis
         from .jt_basis import JTBasis
         from .key_basis import KeyBasis
+        from .lascoux_basis import LascouxBasis
 
         # from .key_basis import KeyBasis
         from .monomial_slide_basis import MonomialSlideBasis
@@ -527,4 +546,6 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_glide(x)
         if other_basis == GrothendieckBasis:
             return lambda x: cls.transition_grothendieck(x)
+        if other_basis == LascouxBasis:
+            return lambda x: cls.transition_lascoux(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition(SchubertBasis)(x))
