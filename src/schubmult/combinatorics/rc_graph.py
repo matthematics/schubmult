@@ -2166,10 +2166,6 @@ class RCGraph(WCGraph, CrystalGraph):
         return not (self <= other)
 
     @property
-    def is_principal(self) -> bool:
-        return self.perm == uncode(self.length_vector)
-
-    @property
     def inv(self) -> int:
         return self.perm.inv
 

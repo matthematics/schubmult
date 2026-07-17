@@ -137,10 +137,35 @@ class GrothendieckPolyBasis(PolynomialBasis):
             res = add_perm_dict_with_coeff(res, self.transition_grove_key(k), coeff=v)
         return res
 
+    def transition_lascoux_key(self, key):
+        """Decompose a Grothendieck polynomial into Lascoux polynomials via omega insertion on RC-graphs."""
+        from schubmult import WCGraph
+
+        by_invariant = {}
+        for wc in WCGraph.all_wc_graphs(key[0], key[1]):
+            invar = wc.strong_hecke_invariant
+            if invar not in by_invariant:
+                by_invariant[invar] = wc.length_vector
+            elif wc.length_vector < by_invariant[invar]:
+                by_invariant[invar] = wc.length_vector
+
+        dct = {}
+        for invar, length_vector in by_invariant.items():
+            dct[length_vector] = dct.get(length_vector, S.Zero) + S.One
+        return dct
+
+    def transition_lascoux(self, dct):
+        """Transition a Grothendieck dict to the Lascoux polynomial basis."""
+        res = {}
+        for k, v in dct.items():
+            res = add_perm_dict_with_coeff(res, self.transition_lascoux_key(k), coeff=v)
+        return res
+
     def transition(self, other_basis):
         """Return a transition function from Grothendieck basis to *other_basis*."""
         from .glide_poly_basis import GlidePolyBasis
         from .grove_poly_basis import GrovePolyBasis
+        from .lascoux_poly_basis import LascouxPolyBasis
         from .monomial_basis import MonomialBasis
         from .schubert_poly_basis import SchubertPolyBasis
 
@@ -151,6 +176,8 @@ class GrothendieckPolyBasis(PolynomialBasis):
             return lambda x: self.transition_glide(x)
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: self.transition_schubert(x)
+        if isinstance(other_basis, LascouxPolyBasis):
+            return lambda x: self.transition_lascoux(x)
         if isinstance(other_basis, MonomialBasis):
             def sum_dct(*dcts):
                 res = {}
@@ -165,4 +192,4 @@ class GrothendieckPolyBasis(PolynomialBasis):
         if isinstance(other_basis, GrovePolyBasis):
             return lambda x: self.transition_grove(x)
 
-        return lambda x: PolynomialBasis.compose_transition(SchubertPolyBasis(self.monomial_basis.genset).transition(other_basis), self.transition_schubert(x))
+        return lambda x: PolynomialBasis.compose_transition(SchubertPolyBasis(self.genset).transition(other_basis), self.transition_schubert(x))

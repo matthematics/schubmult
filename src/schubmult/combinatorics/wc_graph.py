@@ -265,6 +265,11 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         Cached on the (hashable) ``mbpd`` argument."""
         return mbpd.phi().to_wcgraph()
 
+    @property
+    def is_principal(self) -> bool:
+        from schubmult.combinatorics.permutation import uncode
+        return self.perm == uncode(self.length_vector)
+
     @classmethod
     def grove_wcs(cls, comp, length=None, base_rc=None) -> set[WCGraph]:
         """Grove polynomial of ``comp`` built by inverting the omega insertion.

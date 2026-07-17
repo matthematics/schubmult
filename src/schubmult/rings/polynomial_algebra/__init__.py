@@ -20,6 +20,7 @@ from .glide_poly_basis import GlidePolyBasis
 from .grothendieck_poly_basis import GrothendieckPolyBasis
 from .grove_poly_basis import GrovePolyBasis
 from .key_poly_basis import KeyPolyBasis
+from .lascoux_poly_basis import LascouxPolyBasis
 from .polynomial_basis import ElemSymPolyBasis, FundamentalSlidePolyBasis, MonomialBasis, MonomialSlidePolyBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
 
 ForestPoly = PolynomialAlgebra(ForestPolyBasis(x))
@@ -34,6 +35,7 @@ GlidePoly = PolynomialAlgebra(GlidePolyBasis(x))
 Monomial = PolynomialAlgebra(MonomialBasis(x))
 DoubleForest = PolynomialAlgebra(DoubleForestPolyBasis(x, y))
 GrothendieckPoly = PolynomialAlgebra(GrothendieckPolyBasis(x))
+LascouxPoly = PolynomialAlgebra(LascouxPolyBasis(x))
 
 __all__ = [
     "PA",
@@ -54,6 +56,8 @@ __all__ = [
     "Key",
     "KeyPoly",
     "KeyPolyBasis",
+    "LascouxPoly",
+    "LascouxPolyBasis",
     "Monomial",
     "MonomialBasis",
     "MonomialSlidePolyBasis",
