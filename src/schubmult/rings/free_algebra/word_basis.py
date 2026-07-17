@@ -432,6 +432,24 @@ class WordBasis(FreeAlgebraBasis):
         return dct
 
     @classmethod
+    def transition_glide(cls, key):
+        from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
+
+        r = WCGraphRing()
+        dct = {}
+        all_wcs = r.monomial(*key)
+        invariants = {}
+        for wc, coeff in all_wcs.items():
+            fatpork = wc.dst
+            wt = fatpork.length_vector
+            if wt not in invariants:
+                invariants[wt] = fatpork
+            elif invariants[wt] != fatpork:
+                continue
+            dct[wt] = dct.get(wt, S.Zero) + coeff
+        return dct
+
+    @classmethod
     def transition_fundamental_slide(cls, key):
         from schubmult.abc import x
         from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
@@ -470,6 +488,7 @@ class WordBasis(FreeAlgebraBasis):
     def transition(cls, other_basis):
         from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
+        from .glide_basis import GlideBasis
         from .grothendieck_basis import GrothendieckBasis
         from .grove_basis import GroveBasis
         from .j_basis import JBasis
@@ -504,6 +523,8 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_monomial_slide(x)
         if other_basis == GroveBasis:
             return lambda x: cls.transition_grove(x)
+        if other_basis == GlideBasis:
+            return lambda x: cls.transition_glide(x)
         if other_basis == GrothendieckBasis:
             return lambda x: cls.transition_grothendieck(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition(SchubertBasis)(x))

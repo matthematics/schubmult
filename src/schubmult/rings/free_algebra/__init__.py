@@ -23,6 +23,7 @@ from .elementary_basis import ElementaryBasis
 from .forest_basis import ForestBasis, ForestDual
 from .free_algebra_basis import FreeAlgebraBasis
 from .fundamental_slide_basis import FundamentalSlideBasis
+from .glide_basis import GlideBasis
 from .grothendieck_basis import GrothendieckBasis
 from .grove_basis import GroveBasis
 from .j_basis import JBasis
@@ -38,6 +39,7 @@ from .word_basis import WordBasis
 from .z_basis import ZBasis
 
 GroveDual = FreeAlgebra(GroveBasis)
+GlideDual = FreeAlgebra(GlideBasis)
 
 __all__ = [
     "FA",
@@ -52,6 +54,8 @@ __all__ = [
     "FreeAlgebraBasis",
     "FreeAlgebraElement",
     "FundamentalSlideBasis",
+    "GlideBasis",
+    "GlideDual",
     "GrothendieckBasis",
     "GroveBasis",
     "GroveDual",
