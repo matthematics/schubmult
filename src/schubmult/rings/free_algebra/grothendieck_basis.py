@@ -148,6 +148,7 @@ class GrothendieckBasis(FreeAlgebraBasis):
         return GenericPrintingTerm((perm, numvars), "AGx")
 
     @classmethod
+    @cache
     def product(cls, key1, key2, coeff=S.One):
         """Multiply two keys by transitioning to WordBasis and back."""
         from schubmult.utils._mul_utils import add_perm_dict

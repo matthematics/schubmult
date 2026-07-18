@@ -743,7 +743,7 @@ $$\WC(\kappa) = \{(a_i, b_i + 1 - a_i)\mid (a_i, b_i)\in A\}$$
 \end{definition}
 
 \begin{theorem}
-For a permutation $w$, let $\WC_\forest(w)$ be the set of $W\in\WC(w)$ such that $\wtt(W) = \code(F(W))$. Then we have that $\WC(w)$ is the disjoint union of $\WC(\mathrm{Komp}_{P(W)}(F(W)))$ for $W\in \WC_\forest(w)$. 
+For a permutation $w$, let $\WC_\forest(w, F)$ be the set of $W\in\WC(w)$ such that $\code_\forest(W) = \code(F)$. Then we have that $\WC(w)$ is the disjoint union of $\WC(\mathrm{Komp}_{P(W)}(F(W)))$ for $W\in \WC_\forest(w, F)$.
 % Furthermore, the Grothendieck polynomial $\mathfrak{G}^{(\beta)}_w(x)$ satisfies
 % $$\mathfrak{G}^{(\beta)}_w(x)=\sum_{\substack{W\in \WC(w)\\\wtt(W) = \code(F(W))}} \beta^{|W|-\ell(w)}\grove_{F(W)}(x)$$
 \end{theorem}
@@ -752,12 +752,22 @@ For a permutation $w$, let $\WC_\forest(w)$ be the set of $W\in\WC(w)$ such that
 The Grothendieck polynomial $\mathfrak{G}^{(\beta)}_w(x)$ satisfies
 $$\mathfrak{G}^{(\beta)}_w(x)=\sum_{F\in \mathrm{IF}} \beta^{|F|-\ell(w)}a_w^F\grove_F(x)$$
 where 
-$$a_w^F = \#\{W\in \WC_\forest(w)\mid F(W) = F\}$$
+$$a_w^F = \#\{W\in \WC_\forest(w, F)\mid \wtt(W) = \code(F)\}$$
 \end{corollary}
 
 \begin{theorem}
 Let $a$ be a composition. Let $w$ be the permutation such that $\code(w) = a$. Then we have that
-$$\grove_a(x) = \sum_{W\in\forest\WC(a)\cap \WC_{\mathrm{QY}}(w)} \mathcal{G}_{\wtt(W)}(x)$$
+$$\grove_a(x) = \sum_{W\in\WC_\forest(w, a)\cap \WC_{\mathrm{QY}}(w)} \mathcal{G}_{\wtt(W)}(x)$$
+\end{theorem}
+
+\begin{definition}
+We define an invariant $\widetilde{P}_\forest(W)$ of a WC graph $W$ to be the WC graph $C$ such that $\code_\forest(C) = \wtt(C) = \code_\forest(W)$ and there exists a $\kappa\in \mathrm{Komp}_{P(C)}(F(C))$ such that $W\in \WC(\kappa)$.
+\end{definition}
+
+\begin{theorem}[Dual Grove LR rule]
+Suppose
+$$\grove_a^*\sqcupplus \grove_b^* = \sum_c P_{ab}^c\grove_c^*$$
+for integers $P_{ab}^c$, with $\ell(a)=p$ and $\ell(b)=q$. Let $C$ be a WC graph with $\hr(C)=p+q$ such that $\code_\forest(C)=\wtt(C)=c$. Then $P_{ab}^c$ is the number of WC graphs $W$ with $\widetilde{P}_\forest(W) = \widetilde{P}_\forest(C)$ such that $\code_\forest(\clp^p(W)) = \wtt(\clp^p(W)) = a$ and $\code_\forest(\trm^p(W)) = \wtt(\trm^p(W)) = b$.
 \end{theorem}
 
 \section{Hecke insertion, \texorpdfstring{$K$}{K}-Knuth equivalence, and Lascoux classes}
@@ -783,64 +793,51 @@ Lascoux classes.
 \newcommand{\lasc}{\mathfrak{L}}
 \newcommand{\pib}{\pi^{(\beta)}}
 
-\subsection{The diagonal word of a WC graph}
+%\subsection{The diagonal skew tableau WC graph}
 
-Recall from the definition of a WC graph that the elements of $W$ are listed as
-$w_1<w_2<\cdots<w_n$ in the total order on $\mathbb{N}\times\mathbb{N}$, with
-$w_i=(a_i,b_i)$, and that
-$$s(a_i,b_i)=s_{a_i+b_i-1}.$$
 
-\begin{definition}
-The \emph{diagonal word} of a WC graph $W$ is the word of positive integers
-$$\dwd(W)=(a_1+b_1-1,\ a_2+b_2-1,\ \ldots,\ a_n+b_n-1),$$
-read in the total order on $W$. Thus $\mathrm{word}(W)=(s_{c_1},\ldots,s_{c_n})$
-where $\dwd(W)=(c_1,\ldots,c_n)$, and
-$$\wof{W}=s_{c_1}\hprod s_{c_2}\hprod\cdots\hprod s_{c_n}$$
-is the Hecke product of the letters of $\dwd(W)$.
-\end{definition}
+% \subsection{Hecke insertion and \texorpdfstring{$K$}{K}-Knuth equivalence}
 
-\subsection{Hecke insertion and \texorpdfstring{$K$}{K}-Knuth equivalence}
+% We use \emph{Hecke row insertion} in the sense of
+% Buch--Kresch--Shimozono--Tamvakis--Yong~\cite{buch2008factorsequences}. Recall
+% that an \emph{increasing tableau} is a filling of a straight (Young-diagram)
+% shape by positive integers that is strictly increasing along rows and down
+% columns. Hecke insertion of a word $c=(c_1,\ldots,c_n)$ produces a pair
+% $$\bigl(\Pw(c),\Qw(c)\bigr),$$
+% where $\Pw(c)$ is an increasing tableau (the \emph{insertion tableau}) and
+% $\Qw(c)$ is a set-valued standard recording tableau of the same shape, obtained
+% by inserting $c_1,\ldots,c_n$ in order; each insertion either creates one new
+% box or leaves the shape unchanged, the latter being the $K$-theoretic feature.
+% For a WC graph $W$ we write
+% $$\Pw(W)=\Pw(\dwd(W)),\qquad \Qw(W)=\Qw(\dwd(W)).$$
 
-We use \emph{Hecke row insertion} in the sense of
-Buch--Kresch--Shimozono--Tamvakis--Yong~\cite{buch2008factorsequences}. Recall
-that an \emph{increasing tableau} is a filling of a straight (Young-diagram)
-shape by positive integers that is strictly increasing along rows and down
-columns. Hecke insertion of a word $c=(c_1,\ldots,c_n)$ produces a pair
-$$\bigl(\Pw(c),\Qw(c)\bigr),$$
-where $\Pw(c)$ is an increasing tableau (the \emph{insertion tableau}) and
-$\Qw(c)$ is a set-valued standard recording tableau of the same shape, obtained
-by inserting $c_1,\ldots,c_n$ in order; each insertion either creates one new
-box or leaves the shape unchanged, the latter being the $K$-theoretic feature.
-For a WC graph $W$ we write
-$$\Pw(W)=\Pw(\dwd(W)),\qquad \Qw(W)=\Qw(\dwd(W)).$$
+% We record the three properties we use; all are due to
+% \cite{buch2008factorsequences} and \cite{buch2016minuscule}.
 
-We record the three properties we use; all are due to
-\cite{buch2008factorsequences} and \cite{buch2016minuscule}.
+% \begin{theorem}[\cite{buch2008factorsequences}]
+% \label{theorem:hecke-bijection}
+% Hecke insertion $c\mapsto(\Pw(c),\Qw(c))$ is a bijection from words of positive
+% integers to pairs $(P,Q)$ in which $P$ is an increasing tableau and $Q$ is a
+% set-valued standard recording tableau of the same shape.
+% \end{theorem}
 
-\begin{theorem}[\cite{buch2008factorsequences}]
-\label{theorem:hecke-bijection}
-Hecke insertion $c\mapsto(\Pw(c),\Qw(c))$ is a bijection from words of positive
-integers to pairs $(P,Q)$ in which $P$ is an increasing tableau and $Q$ is a
-set-valued standard recording tableau of the same shape.
-\end{theorem}
+% \begin{definition}
+% \label{definition:kknuth}
+% The \emph{$K$-Knuth equivalence} $\kk$ is the equivalence relation on words of
+% positive integers generated by the following moves, in which $\mathbf{u}$ and
+% $\mathbf{v}$ are arbitrary words and $a,b,c$ are positive integers:
+% \begin{align}
+% (\mathbf{u},a,a,\mathbf{v}) &\kk (\mathbf{u},a,\mathbf{v}),\\
+% (\mathbf{u},a,b,a,\mathbf{v}) &\kk (\mathbf{u},b,a,b,\mathbf{v}),\\
+% (\mathbf{u},a,b,c,\mathbf{v}) &\kk (\mathbf{u},a,c,b,\mathbf{v}) && \text{if } b<a<c,\\
+% (\mathbf{u},a,b,c,\mathbf{v}) &\kk (\mathbf{u},b,a,c,\mathbf{v}) && \text{if } a<c<b.
+% \end{align}
+% \end{definition}
 
-\begin{definition}
-\label{definition:kknuth}
-The \emph{$K$-Knuth equivalence} $\kk$ is the equivalence relation on words of
-positive integers generated by the following moves, in which $\mathbf{u}$ and
-$\mathbf{v}$ are arbitrary words and $a,b,c$ are positive integers:
-\begin{align}
-(\mathbf{u},a,a,\mathbf{v}) &\kk (\mathbf{u},a,\mathbf{v}),\\
-(\mathbf{u},a,b,a,\mathbf{v}) &\kk (\mathbf{u},b,a,b,\mathbf{v}),\\
-(\mathbf{u},a,b,c,\mathbf{v}) &\kk (\mathbf{u},a,c,b,\mathbf{v}) && \text{if } b<a<c,\\
-(\mathbf{u},a,b,c,\mathbf{v}) &\kk (\mathbf{u},b,a,c,\mathbf{v}) && \text{if } a<c<b.
-\end{align}
-\end{definition}
-
-The last two moves are the $K$-theoretic Knuth relations and the first two are
-the idempotency and braid relations of the $0$-Hecke monoid. In particular
-$K$-Knuth equivalence refines Hecke equivalence: if $c\kk c'$ then
-$s_{c_1}\hprod\cdots\hprod s_{c_n}=s_{c'_1}\hprod\cdots\hprod s_{c'_m}$.
+% The last two moves are the $K$-theoretic Knuth relations and the first two are
+% the idempotency and braid relations of the $0$-Hecke monoid. In particular
+% $K$-Knuth equivalence refines Hecke equivalence: if $c\kk c'$ then
+% $s_{c_1}\hprod\cdots\hprod s_{c_n}=s_{c'_1}\hprod\cdots\hprod s_{c'_m}$.
 
 \begin{theorem}[\cite{buch2008factorsequences,buch2016minuscule}]
 \label{theorem:kknuth-invariant}
@@ -854,16 +851,16 @@ $\Pw(c)$.
 \end{enumerate}
 \end{theorem}
 
-\begin{definition}
-\label{definition:lascoux-class}
-The \emph{Lascoux class} of a WC graph $W$ is the $K$-Knuth equivalence class of
-$\dwd(W)$, equivalently the insertion tableau $\Pw(W)$. We write
-$$[W]=\bigl[\dwd(W)\bigr]_{K}=\Pw(W).$$
-By Theorem~\ref{theorem:kknuth-invariant}(2), every $W$ in a fixed Lascoux class
-has the same permutation $\wof{W}$; we call it the permutation of the class.
-\end{definition}
+% \begin{definition}
+% \label{definition:lascoux-class}
+% The \emph{Lascoux class} of a WC graph $W$ is the $K$-Knuth equivalence class of
+% $\dwd(W)$, equivalently the insertion tableau $\Pw(W)$. We write
+% $$[W]=\bigl[\dwd(W)\bigr]_{K}=\Pw(W).$$
+% By Theorem~\ref{theorem:kknuth-invariant}(2), every $W$ in a fixed Lascoux class
+% has the same permutation $\wof{W}$; we call it the permutation of the class.
+% \end{definition}
 
-\subsection{Lascoux polynomials}
+% \subsection{Lascoux polynomials}
 
 Let $\partial_i$ denote the $i$th divided difference operator,
 $$\partial_i f=\frac{f-s_i f}{x_i-x_{i+1}},$$
@@ -890,6 +887,32 @@ $\beta^0$ part) is the key (Demazure) polynomial $\kappa_\alpha$.
 \end{definition}
 
 \subsection{The Grothendieck-to-Lascoux expansion}
+
+Recall from the definition of a WC graph that the elements of $W$ are listed as
+$w_1<w_2<\cdots<w_n$ in the total order on $\mathbb{N}\times\mathbb{N}$, with
+$w_i=(a_i,b_i)$, and that
+$$s(a_i,b_i)=s_{a_i+b_i-1}.$$
+
+\newcommand{\hi}{\mathfrak{L}}
+\begin{definition}
+For a WC graph $W$, define the \emph{diagonal skew tableau} $\dwd(W)$ to be the unique tableau of skew shape $\mathrm{st}(|W|)/\mathrm{st}(|W|-1)$ whose reading word is $\mathrm{word}(W)$. The Lascoux invariant $\hi(W)$ of $W$ is the greedy rectification of $\dwd(W)$. We can in fact apply this to any word.
+\end{definition}
+
+% \begin{theorem}
+% Let $\mathrm{Word}(n)$ be the set of words in the alphabet $\{1, 2, \ldots, n\}$. Then the map
+% $$\hi:\mathrm{Word}(m, n) \to \mathrm{Inc}_n$$
+% is injective, where $\mathrm{Inc}_n$ is the set of increasing tableaux of straight shape with entries in $\{1, 2, \ldots, n\}$. For two such words $W_1$ and $W_2$, we have that
+% $$\hi(W_1) = \hi(W_2)$$
+% if and only if
+% $$W_1\equiv_K W_2$$
+% \end{theorem}
+
+\begin{theorem}[Dual Lascoux LR rule]
+Suppose
+$$\mathcal{L}_a^*\sqcupplus \mathcal{L}_b^* = \sum_c L_{ab}^c\mathcal{L}_c^*$$
+for integers $L_{ab}^c$, with $\ell(a)=p$ and $\ell(b)=q$. Let $C$ be a WC graph with $\hr(C)=p+q$ such that $\wtt(\hi(C)) = \wtt(C) = c$. Then $L_{ab}^c$ is the number of WC graphs $W$ with $\hi(W) = \hi(C)$ such that $\wtt(\hi(\clp^p(W))) = \wtt(\clp^p(W)) = a$ and $\wtt(\hi(\trm^p(W))) = \wtt(\trm^p(W)) = b$.
+\end{theorem}
+
 
 The next theorem is the symmetric statement of
 Buch--Kresch--Shimozono--Tamvakis--Yong, in the WC-graph normalization: grouping
@@ -1258,6 +1281,36 @@ are established.
 
 %$v_i$ is the unique element of $\mathrm{IN}(F)$ such that $Q(v_i)=i$. By properties of the insertion algorithm,
 %$$P(v)
+
+\section{Formulas}
+
+\emph{Claim}: Every Grothendieck polynomial $\mathfrak{G}_w(x)$ can be expressed as a sum of products of ordinary elementary symmetric stable Grothendieck polynomials with integer coefficients, with the number of factors of the product fixed (allowing degree $0$ factors) each being in a fixed number of $x$ variables.
+
+Let $\mathfrak{K}^i$ denote the operator $\partial^i(1 + y_{i + 1})$, acting on the $y$ variables. Consider the product of operators
+$$\mathfrak{K}^{i + p}\cdots \mathfrak{K}^{i + 1}\mathfrak{K}^i = \partial^{i + p}\cdots \partial^{i + 1}\partial^iE_p(\tau^i y;1)$$
+We have that the top degree factorial elementary stable Grothendieck polynomial in $k$ variables is
+$$\mathfrak{E}_k(x;y) = E_{k}\left(\frac{x}{1 + x}; y_1\right)E_{k}(x; 1)$$
+where $E_k$ is the ordinary top degree factorial elementary symmetric polynomial. Thus, for a dominant permutation, applying such a product of operators gives
+$$\mathfrak{K}^{i + p}\cdots \mathfrak{K}^{i + 1}\mathfrak{K}^i\prod_{j = 1}\mathfrak{E}_{\lambda_j}(x;y_j)$$ 
+$$=\partial^{i + p}\cdots \partial^{i + 1}\partial^iE_p(\tau^i y;1)\prod_{j=1}E_{\lambda_j}\left(\frac{x}{1 + x}; y_j\right)E_{\lambda_j}(x; 1)$$
+Applying the Schubert formulas and setting $y_i=0$ yields a sum of products of ordinary elementary symmetric stable Grothendieck polynomials with the same length as $\lambda$ with the $i$th factor having $\lambda_i$ $x$ variables.
+
+Abbreviate such a strip by $\mathfrak{K}^{[i;p]}$. For each permutation $u$, we have that
+$$\mathfrak{K}^u = \mathfrak{K}^{[1; \code_1(u)]}\mathfrak{K}^{[2; \code_2(u)]}\cdots \mathfrak{K}^{[n; \code_n(u)]}$$
+Iterating the above argument, we obtain the claim.
+
+
+Sanity:
+
+$\mathfrak{E}_k(x;y_1) = E_k(\overline{x};y_1)E_k(x;1)$
+
+Apply
+
+$\mathfrak{E}_{k - 1, k}(x;y_1, y_2) = E_{k - 1, k}(\overline{x};y_1, y_2)E_k(x;1)(1 + y_1) - E_k(\overline{x};y_1)E_k(x; 1)$
+
+$$\mathfrak{E}_{k - 2, k}(x;y_1, y_2, y_3) = E_{k - 2, k}(\overline{x};y_1, y_2, y_3)E_k(x;1)E_2(y;1)$$
+$$- E_{k - 1, k}(\overline{x};y_1, y_2)E_k(x;1)E_{1,2}(y_1, y_2;1) + E_k(\overline{x};y_1)E_k(x; 1)$$
+
 \cite{samuelmolev}
 \bibliographystyle{acm}
 \bibliography{schubert_bialgebra}

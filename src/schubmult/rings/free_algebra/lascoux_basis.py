@@ -46,7 +46,6 @@ class LascouxBasis(FreeAlgebraBasis):
     def transition_grothendieck(cls, key):
         """Transition a Lascoux composition to the Grothendieck basis via WC graphs."""
         from schubmult import WCGraphRing
-        from schubmult.combinatorics.wc_graph import WCGraph
 
         # from schubmult import uncode
         r = WCGraphRing()
@@ -54,13 +53,9 @@ class LascouxBasis(FreeAlgebraBasis):
         # all_rcs = {rc: coeff for rc, coeff in r.monomial(*key).items() if rc.extremal_weight == key}
         all_wcs = r.monomial(*key)
 
-        def _extremal_weight(wc):
-            hecke_class_lengths = {wcc.length_vector for wcc in WCGraph.all_wc_graphs(wc.perm, len(wc)) if wcc.strong_hecke_invariant == wc.strong_hecke_invariant}
-            return min(hecke_class_lengths)
-
         for wc in all_wcs.keys():
             # for hw_rc in RCGraph.all_hw_rcs(perm, len(key)):
-            if _extremal_weight(wc) == key:
+            if wc.extremal_weight == key:
                 dct[(wc.perm, len(key))] = dct.get((wc.perm, len(key)), S.Zero) + 1
         # seen = set()
         # for rc, coeff in all_rcs.items():

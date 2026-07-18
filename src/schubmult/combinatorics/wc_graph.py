@@ -731,12 +731,8 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @classmethod
     @cache
-    def _extremal_weight(cls, hw_rc):
-        import numpy as np
-
-        properly_sortable = [rc for rc in hw_rc.full_crystal if rc.sorted_length_vector == hw_rc.length_vector]
-        min_vec = min([(i, np.cumsum(properly_sortable[i].length_vector).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
-        return properly_sortable[min_vec].length_vector
+    def _extremal_weight(cls, perm: Permutation, length, h_inv):
+        return min(wc.length_vector for wc in WCGraph.all_wc_graphs(perm, length) if wc.strong_hecke_invariant == h_inv)
 
     @cached_property
     def sorted_length_vector(self):
@@ -746,7 +742,8 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     @property
     def extremal_weight(self):
         # from schubmult.utils.tuple_utils import pad_tuple
-        return WCGraph._extremal_weight(self.to_highest_weight()[0])
+        from schubmult.utils.tuple_utils import pad_tuple
+        return pad_tuple(WCGraph._extremal_weight(self.perm, len(self), self.strong_hecke_invariant), len(self))
 
     @classmethod
     @cache

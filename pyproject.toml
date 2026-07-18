@@ -169,6 +169,7 @@ include-package-data = false
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["schubmult*"]  # package names should match these glob patterns (["*"] by default)
+exclude = ["_lscripts*", "writing*"]
 namespaces = false
 
 [tool.setuptools.dynamic]

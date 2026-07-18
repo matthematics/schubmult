@@ -433,18 +433,13 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_lascoux(cls, key):
-        from schubmult.combinatorics.wc_graph import WCGraph
         from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
         r = WCGraphRing()
         dct = {}
         all_wcs = r.monomial(*key)
 
-        def _extremal_weight(wc):
-            hecke_class_lengths = {wcc.length_vector for wcc in WCGraph.all_wc_graphs(wc.perm, len(wc)) if wcc.strong_hecke_invariant == wc.strong_hecke_invariant}
-            return min(hecke_class_lengths)
-
         for wc in all_wcs:
-            code_key = _extremal_weight(wc)
+            code_key = wc.extremal_weight
             if code_key == wc.perm.pad_code(len(wc)):
                 dct[code_key] = dct.get(code_key, S.Zero) + S.One
         return dct
