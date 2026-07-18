@@ -1,6 +1,9 @@
+from functools import cache
+
 from schubmult.combinatorics.permutation import uncode
 from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
 from schubmult.rings.printing import GenericPrintingTerm
+from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
 
 """
@@ -103,9 +106,13 @@ class LascouxPolyBasis(PolynomialBasis):
 
         return lambda x: PolynomialBasis.compose_transition(self._monomial_basis.transition(other_basis), self.transition_monomial(x))
 
-    # def product(self, key1, key2, coeff=S.One):
-    #     """Multiply two Lascoux keys using the Lascoux product rule."""
-    #     return {c: v * coeff for c, v in lascoux_product(key1, key2).items()}
+    @cache
+    def product(self, key1, key2, coeff=S.One):
+        """Multiply two Lascoux keys using the Lascoux product rule."""
+        from ._core import PolynomialAlgebra
+        from .glide_poly_basis import GlidePolyBasis
+        GlidePoly = PolynomialAlgebra(GlidePolyBasis(self.genset))
+        return dict((coeff * GlidePoly.from_dict(self.transition_glide({key1: 1})) * GlidePoly.from_dict(self.transition_glide({key2: 1}))).change_basis(self))
 
     @property
     def zero_monom(self):

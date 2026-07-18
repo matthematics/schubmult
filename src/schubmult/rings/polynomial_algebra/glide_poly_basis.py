@@ -1,6 +1,9 @@
+from functools import cache
+
 from schubmult.combinatorics.permutation import uncode
 from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
 from schubmult.rings.printing import GenericPrintingTerm
+from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
 
 """
@@ -9,6 +12,94 @@ Fundamental slide polynomial basis for Schubert calculus.
 This module implements the fundamental slide polynomial basis, which provides
 an alternative basis for expressing Schubert polynomials and their products.
 """
+
+
+def glide_monomials(key):
+    """Monomial expansion of the glide polynomial :math:`\\mathcal{G}_{key}`.
+
+    Returns a dict mapping each exponent tuple ``v`` (a weak composition of the
+    same length as ``key``) to the integer coefficient of the monomial
+    :math:`x^v`, i.e. the number of glides of ``key`` with weight ``v``. The
+    corresponding power of ``beta`` for the weight ``v`` is
+    ``sum(v) - sum(key)`` (the excess), which is constant across all glides of a
+    given weight, so it need not be stored explicitly.
+    """
+    from schubmult.combinatorics.wc_graph import WCGraph
+
+    key = tuple(key)
+    perm = uncode(key)
+    principal = WCGraph.principal_wc(perm, len(key))
+    dct = {}
+    for wc in WCGraph.all_wc_graphs(perm, len(key)):
+        if wc.dst == principal:
+            v = wc.length_vector
+            dct[v] = dct.get(v, 0) + 1
+    return dct
+
+
+def glide_product(key1, key2):
+    """Structure constants for a product of two glide polynomials.
+
+    Implements the Littlewood-Richardson rule of O. Pechenik and D. Searles,
+    "Decompositions of Grothendieck Polynomials" (arXiv:1611.02545), Theorem
+    4.9, which expands the product of the glide polynomials indexed by the weak
+    compositions ``key1`` and ``key2`` in the glide basis:
+
+    .. math::
+
+        \\mathcal{G}_a \\, \\mathcal{G}_b
+            = \\sum_c \\beta^{|c| - |a| - |b|} \\, g_{a,b}^{c} \\, \\mathcal{G}_c .
+
+    Rather than enumerating the genomic shuffle set directly, we compute the
+    (uniquely determined) coefficients by expanding the product in monomials and
+    straightening into the glide basis with the leading-term algorithm from the
+    proof that the glide polynomials form a basis (Theorem 2.6). Because the
+    excess of a glide of ``v`` equals ``sum(v) - sum(index)``, the power of
+    ``beta`` is recovered from the total degree and only the positive integer
+    multiplicities :math:`g_{a,b}^{c}` are returned.
+
+    Both compositions are padded with trailing zeros to a common length ``n``;
+    every key ``c`` in the returned dict is a weak composition of length ``n``.
+    """
+    a = tuple(key1)
+    b = tuple(key2)
+    n = max(len(a), len(b))
+    a = a + (0,) * (n - len(a))
+    b = b + (0,) * (n - len(b))
+
+    # Monomial expansion of the product G_a * G_b as {weight: coefficient}.
+    ma = glide_monomials(a)
+    mb = glide_monomials(b)
+    product = {}
+    for va, ca in ma.items():
+        for vb, cb in mb.items():
+            v = tuple(x + y for x, y in zip(va, vb))
+            product[v] = product.get(v, 0) + ca * cb
+
+    def leading_key(v):
+        # Total order of arXiv:1611.02545, Thm 2.6: strictly more zeros is
+        # larger; ties are broken by reverse-lexicographic order (ordinary
+        # lexicographic order on the reversed vector).
+        return (v.count(0), tuple(reversed(v)))
+
+    result = {}
+    while product:
+        v_star = max(product, key=leading_key)
+        # The leading monomial of G_{v_star} is x^{v_star} with coefficient 1,
+        # so its coefficient in the product is the structure constant.
+        coeff = product.pop(v_star)
+        if coeff == 0:
+            continue
+        result[v_star] = coeff
+        for w, cnt in glide_monomials(v_star).items():
+            if w == v_star:
+                continue
+            new = product.get(w, 0) - coeff * cnt
+            if new == 0:
+                product.pop(w, None)
+            else:
+                product[w] = new
+    return result
 
 
 # def _glide_polynomial(key, genset):
@@ -46,13 +137,7 @@ class GlidePolyBasis(PolynomialBasis):
 
     def to_monoms(self, key):
         """Expand a glide key into a dict of monomial exponent tuples."""
-        from schubmult.combinatorics.wc_graph import WCGraph
-        key = tuple(key)
-        the_set = {wc for wc in WCGraph.all_wc_graphs(uncode(key), len(key)) if wc.dst == WCGraph.principal_wc(uncode(key), len(key))}
-        dct = {}
-        for wc in the_set:
-            dct[wc.length_vector] = dct.get(wc.length_vector, 0) + 1
-        return dct
+        return glide_monomials(key)
 
     @classmethod
     def dual_basis(cls):
@@ -81,9 +166,10 @@ class GlidePolyBasis(PolynomialBasis):
 
         return lambda x: PolynomialBasis.compose_transition(self._monomial_basis.transition(other_basis), self.transition_monomial(x))
 
-    # def product(self, key1, key2, coeff=S.One):
-    #     """Multiply two glide keys using the glide product rule."""
-    #     return {c: v * coeff for c, v in glide_product(key1, key2).items()}
+    @cache
+    def product(self, key1, key2, coeff=S.One):
+        """Multiply two glide keys using the glide product rule."""
+        return {c: v * coeff for c, v in glide_product(key1, key2).items()}
 
     @property
     def zero_monom(self):

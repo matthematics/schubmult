@@ -47,9 +47,9 @@ class GrothendieckPolyBasis(PolynomialBasis):
             working_genset = self.ring.genset
         else:
             if genset is None:
-                from ..schubert.schubert_ring import Sx
+                from ..schubert.grothendieck_ring import GrothendieckRing, Gx
 
-                self.ring = Sx
+                self.ring = GrothendieckRing(genset=Gx.genset, beta=1)
                 working_genset = self.ring.genset
             else:
                 from ..schubert.grothendieck_ring import GrothendieckRing
@@ -112,6 +112,7 @@ class GrothendieckPolyBasis(PolynomialBasis):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         return {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
+
 
     @classmethod
     def dual_basis(cls):
