@@ -24,6 +24,7 @@ constants of Theorem 4.x (the "Schubert pipe puzzle" specialization).
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, expand, sympify
+from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
 from schubmult.utils.perm_utils import add_perm_dict
 
 __all__ = ["grothmult_double", "separated_descents_coeffs"]
@@ -166,10 +167,16 @@ def _coeffs_on_grid(u, v, var1, var2, beta, k, n):
     return results
 
 
-def _coeffs_on_grid_plus(u, v, var1, var2, beta, k, n):
+def _coeffs_on_grid_plus(u, v, var1, var2, beta, k, n, mangle_genset=False):
     """Enumerate pipe puzzles on a fixed ``n`` by ``n`` grid (Theorem 2.5).
 
     Returns a dict ``{w: c_{u,v}^w}`` (coefficients not yet simplified).
+    
+    When ``mangle_genset`` is True, the variables in ``var2`` are permuted 
+    according to each result permutation ``w`` in the output. Specifically,
+    for each result permutation ``w``, we apply the transformation:
+        var2[j] -> var2[w[j-1]]
+    This effectively reorders the generating set indices based on w.
     """
     u_inv = _inverse_one_line(_one_line(u, n))
     v_inv = _inverse_one_line(_one_line(v, n))
@@ -194,6 +201,32 @@ def _coeffs_on_grid_plus(u, v, var1, var2, beta, k, n):
     def record(bottom, weight):
         # ``bottom`` is w^{-1} in one-line notation (column -> label).
         w = ~Permutation(list(bottom))
+        
+        if mangle_genset:
+            # Apply permutation to var2 indices in the weight
+            # The new genset is [0, *[var2[w[ii]] for ii in range(len(w))]],
+            # which means position j in the new indexing has what was at position w[j-1] in the old indexing.
+            # So we substitute var2[j] with var2[w_inv[j]], where w_inv is the inverse permutation.
+            if not isinstance(yvar, GeneratingSet_base):
+                yvar_genset = CustomGeneratingSet(yvar)
+            else:
+                yvar_genset = yvar
+            
+            w_inv = ~w  # Inverse permutation
+            subs_dict = {}
+            weight_sympified = sympify(weight)
+            for symbol in weight_sympified.free_symbols:
+                idx = yvar_genset.index(symbol)
+                if idx != -1:
+                    # idx is 1-indexed from GeneratingSet.index()
+                    # Apply inverse transformation: var2[idx] -> var2[w_inv[idx]]
+                    if idx <= len(w_inv):
+                        new_idx = w_inv[idx - 1]  # Convert to 0-indexed, apply w_inv, result is 1-indexed
+                        subs_dict[symbol] = yvar_genset[new_idx]
+            
+            if subs_dict:
+                weight = weight_sympified.xreplace(subs_dict)
+        
         results[w] = results.get(w, S.Zero) + weight
 
 
@@ -284,7 +317,7 @@ def separated_descents_coeffs(u, v, var1, var2, beta=None, grid_size=None):
 
     return clean(_coeffs_on_grid(u, v, var1, var2, beta, k, grid_size))
 
-def separated_descents_coeffs_plus(u, v, var1, var2, beta=None, grid_size=None):
+def separated_descents_coeffs_plus(u, v, var1, var2, beta=None, grid_size=None, mangle_genset=False):
     r"""Coefficients ``c_{u,v}^w(var1, var2)`` for a single pair ``u``, ``v``.
 
     ``var1`` are the ``t`` variables (secondary variables of ``v`` and ``w``),
@@ -311,7 +344,7 @@ def separated_descents_coeffs_plus(u, v, var1, var2, beta=None, grid_size=None):
         n = max(len(u), len(v), 2)
         grid_size = max(n, (n - 1) + _grothendieck_x_degree(u) + _grothendieck_x_degree(v))
 
-    return clean(_coeffs_on_grid_plus(u, v, var1, var2, beta, k, grid_size))
+    return clean(_coeffs_on_grid_plus(u, v, var1, var2, beta, k, grid_size, mangle_genset=mangle_genset))
 
 
 def grothmult_double(perm_dict, v, var1, var2, beta=None):
@@ -335,7 +368,7 @@ def grothmult_double(perm_dict, v, var1, var2, beta=None):
         ret = add_perm_dict(ret, {w: c * coeff for w, c in single.items()})
     return {w: c for w, c in ret.items() if expand(sympify(c)) != S.Zero}
 
-def grothmult_double_plus(perm_dict, v, var1, var2, beta=None):
+def grothmult_double_plus(perm_dict, v, var1, var2, beta=None, mangle_genset=False):
     r"""Separated-descents product of double Grothendieck polynomials.
 
     Given ``perm_dict = {u: coeff_u}`` and a permutation ``v`` such that every
@@ -352,6 +385,6 @@ def grothmult_double_plus(perm_dict, v, var1, var2, beta=None):
     v = Permutation(v)
     ret = {}
     for u, coeff in perm_dict.items():
-        single = separated_descents_coeffs_plus(u, v, var1, var2, beta=beta)
+        single = separated_descents_coeffs_plus(u, v, var1, var2, beta=beta, mangle_genset=mangle_genset)
         ret = add_perm_dict(ret, {w: c * coeff for w, c in single.items()})
     return {w: c for w, c in ret.items() if expand(sympify(c)) != S.Zero}

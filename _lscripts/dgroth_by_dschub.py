@@ -19,25 +19,50 @@ from schubmult.utils.schub_lib import (
 from schubmult.mult.separated_descents import grothmult_double_plus
 #from schubmult.utils._mul_utils import add_perm_dict_with_coeff
 beta = Gx._beta
-one_genset = [S.NegativeOne for _ in range(50)]
+
 #negy_dict = {y[i]: -y[i] for i in range(20)}
 
 @cache
 def _elem_sym_perms(perm, k):
     return elem_sym_perms(perm, k, k)
 
-def groth_w0(n, beta):
+def groth_w0(n, ring, beta):
     ring = DSx([]).ring
+    genset = ring.genset
+    coeff_genset = ring.coeff_genset
     start_elem = ring.one
     for i in range(n - 1, 0, -1):
         new_start_elem = 0
-        yvar = ring.coeff_genset[n - i]
+        yvar = coeff_genset[n - i]
         bvar = (1 + beta * yvar)
-        var2 = [ring.coeff_genset[j] * bvar for j in range(1, 25)]
+        var2 = [coeff_genset[j] * bvar for j in range(1, 25)]
         
         for permo, coeff in start_elem.items():
             #new_elem = ringa(permo) * E(i, i, ring.genset[1:], ringb.coeff_genset[1:])
             for elem_perm, diff in _elem_sym_perms(permo, i):
+                new_start_elem += coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(i) if permo[p] == elem_perm[p]]) * ring(elem_perm)
+            #new_start_elem += coeff * ring.from_dict({k: (1 + beta*ring.coeff_genset[n - i])**((k.inv - permo.inv)) * v for k, v in new_elem.items()})
+        # a_j to y_j(1 + y_{n - i})
+        start_elem = new_start_elem
+        #start_elem = new_start_elem
+    return start_elem
+
+
+def dom_groth(dom_perm, ring, beta):
+    ring = DSx([]).ring
+    genset = ring.genset
+    coeff_genset = ring.coeff_genset
+    start_elem = ring.one
+    lengths = (~dom_perm).trimcode
+    for i, length in enumerate(lengths, start=1):
+        new_start_elem = 0
+        yvar = coeff_genset[i]
+        bvar = (1 + beta * yvar)
+        var2 = [coeff_genset[j] * bvar for j in range(1, 25)]
+        
+        for permo, coeff in start_elem.items():
+            #new_elem = ringa(permo) * E(i, i, ring.genset[1:], ringb.coeff_genset[1:])
+            for elem_perm, diff in _elem_sym_perms(permo, length):
                 new_start_elem += coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(i) if permo[p] == elem_perm[p]]) * ring(elem_perm)
             #new_start_elem += coeff * ring.from_dict({k: (1 + beta*ring.coeff_genset[n - i])**((k.inv - permo.inv)) * v for k, v in new_elem.items()})
         # a_j to y_j(1 + y_{n - i})
@@ -63,36 +88,41 @@ def groth_w0(n, beta):
 def groth_poly(perm, beta, return_dict=False):
     
     ring = DSx([]).ring
-    print("Pantacka fart ")
-    t = DSx([], "t").ring.coeff_genset
-    subs_dict = {t[i]: -ring.genset[i]/(1 + beta * ring.genset[i]) for i in range(20)}
-    #return grothmult_double_plus({Permutation.w0(len(perm)): 1}, Permutation([]), [-yy / (1 + beta * yy) for yy in t[:20]], ring.coeff_genset, beta=beta)[perm].subs(subs_dict).expand().simplify().expand()
-    if perm.inv == 0:
-        return S.One
+    # print("Pantacka fart ")
+    ringt = DSx([], "t").ring
+    # subs_dict = {t[i]: -ring.genset[i]/(1 + beta * ring.genset[i]) for i in range(20)}
+    # #return grothmult_double_plus({Permutation.w0(len(perm)): 1}, Permutation([]), [-yy / (1 + beta * yy) for yy in t[:20]], ring.coeff_genset, beta=beta)[perm].subs(subs_dict).expand().simplify().expand()
+    # if perm.inv == 0:
+    #     return S.One
     n = len(perm)
     #d = min([i for i in range(1, n) if i not in perm.descents()])
     # perm2 = perm.swap(d, d + 1)
     # swp = Permutation.ref_product(d + 1)
-    perm2 = Permutation.w0(n)
+    # perm2 = Permutation.w0(n)
     swp = (~perm) * Permutation.w0(n)
-    # ret = grothmult_double_plus({perm: 1}, Permutation([]), ring.genset, ring.coeff_genset, beta=beta)
-    ret = grothmult_double_plus({perm2: 1}, Permutation([]), [0, *[ring.genset[swp[i]] for i in range(20)]], ring.coeff_genset, beta=beta)
-    #print({k: v.expand() for k, v in ret.items()})
-    if return_dict:
-        return {k: v.expand() for k, v in ret.items()}
-    return ret[swp]
+    # # ret = grothmult_double_plus({perm: 1}, Permutation([]), ring.genset, ring.coeff_genset, beta=beta)
+    # ret = grothmult_double_plus({perm2: 1}, Permutation([]), [0, *[ring.genset[swp[i]] for i in range(20)]], ring.coeff_genset, beta=beta)
+    # #print({k: v.expand() for k, v in ret.items()})
+    # if return_dict:
+    #     return {k: v.expand() for k, v in ret.items()}
+    # return ret[swp]
     # # start_elem = ring.one
-    # start_dict = {Permutation([]): S.One}
-    # n = len(perm)
-    # # if perm == Permutation.w0(n):
-    # #     return groth_w0(n, beta)
-    # for i in range(1, n):
-    #     new_start_dict = {}
-    #     for permo, coeff in start_dict.items():
-    #         new_start_dict = add_perm_dict_with_coeff(grothmult_double_plus({uncode([1] * (n - i)): 1}, permo, ring.genset, ring.coeff_genset[i:], beta=beta), new_start_dict, coeff=coeff)
-    #     start_dict = new_start_dict
-    # #return start_dict[perm]
-    # return start_dict[(~perm) * Permutation.w0(n)]
+    start_dict = {Permutation([]): S.One}
+    n = len(perm)
+    # if perm == Permutation.w0(n):
+    #     return groth_w0(n, beta)
+    for i in range(1, n):
+        new_start_dict = {}
+        for permo, coeff in start_dict.items():
+            #new_start_dict = add_perm_dict_with_coeff(grothmult_double_plus({uncode([1] * (n - i)): coeff}, permo, ringt.genset, ring.coeff_genset[i - 1:], beta=beta), new_start_dict, coeff=1)
+            new_start_dict = add_perm_dict_with_coeff(grothmult_double_plus({uncode([1] * (n - i)): coeff}, permo, ringt.genset, ring.coeff_genset[i - 1:], beta=beta), new_start_dict, coeff=1)
+        start_dict = new_start_dict
+    #return start_dict[perm]
+    #subs_dict = {ringt.genset[i]: ring.genset[(swp)[i - 1]] for i in range(1, 20)}
+    start_dict = {k: v.subs({ringt.genset[i]: ring.genset[(~k)[i - 1]] for i in range(1, 20)}).expand() for k, v in start_dict.items()}
+    if return_dict:
+        return {k: v.expand() for k, v in start_dict.items()}
+    return start_dict[swp]
 
 def groth_poly_pull(perm, beta, varnum):    
     ring = DSx([]).ring
@@ -138,12 +168,17 @@ def groth_poly_pull(perm, beta, varnum):
     # return start_elem
 
 
-def isobaric_strip_on_dschub(start, length, schub_perm):
+def isobaric_strip_on_dschub(start, length, schub_perm, beta):
     start_schub = DSx(schub_perm)
     
     ring = start_schub.ring
-    var_strip = ring.genset[start + 1:start + length + 1]
-    bigger_schub = E(length, length, var_strip, one_genset) * start_schub
+    #var_strip = ring.genset[start + 1:start + length + 1]
+    #one_genset = [-(beta**(-1)) for _ in range(50)]
+    bigger_schub = ring.zero
+    positions = list(range(start + 1, start + length + 1))
+    for perm, coeff in start_schub.items():
+        for elem_perm, diff, sign in elem_sym_positional_perms(perm, length, *positions):
+            bigger_schub += sign * coeff * (beta**diff) * prod([ring.coeff_genset[perm[positions[p] - 1]]*beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]]) *ring(elem_perm)
     stripness = list(range(start, start + length))
     ret_schub = ring.from_dict({k: v for k, v in bigger_schub.items()})
     for desc in stripness:
@@ -151,16 +186,16 @@ def isobaric_strip_on_dschub(start, length, schub_perm):
     return ret_schub
 
 @cache
-def apply_isobaric_to_schub(diff_perm, schub_perm):
+def apply_isobaric_to_schub(diff_perm, schub_perm, beta):
     elem = DSx(schub_perm)
     
-    strips = [[i, diff_perm.trimcode[i - 1]] for i in range(1, diff_perm.max_descent + 1)]
+    strips = [[i, (diff_perm).trimcode[i - 1]] for i in range(1, (diff_perm).max_descent + 1)]
     for strip in reversed(strips):
         if strip[1] == 0:
             continue
         new_elem = elem.ring.zero
         for perm, coeff in elem.items():
-            new_elem += coeff * isobaric_strip_on_dschub(strip[0], strip[1], perm)
+            new_elem += coeff * isobaric_strip_on_dschub(strip[0], strip[1], perm, beta=beta)
         elem = new_elem
     return elem
 
@@ -173,22 +208,24 @@ def apply_isobaric_to_schub(diff_perm, schub_perm):
     
 #     return pants_ring(dom).as_polynomial()
 
-def alt_grothendieck_poly(perm):
+def alt_grothendieck_poly(perm, beta):
     from schubmult.abc import z
-    dom = perm.minimal_dominant_above()
+    dom_perm = Permutation.w0(len(perm))
+    #dom_perm = perm.minimal_dominant_above()
     #Permutation.w0(len(perm))
-    diff_perm = (~perm) * dom
+    diff_perm = (~perm) * dom_perm
     ring = DSx([]).ring
-    first_potato = ring.from_expr(dom_groth(dom, ring.genset, ring.coeff_genset, beta))
+    first_potato = groth_w0(len(perm), ring, beta=beta)
+    #dom_groth(dom_perm, ring, beta=beta)
     schub_elem = ring.zero
     for perm2, coeff in first_potato.items():
-        schub_elem += coeff * apply_isobaric_to_schub(diff_perm, perm2)
-    fat_scubs = {y[i]: z[i] - 1 for i in range(1, 50)}
+        schub_elem += coeff * apply_isobaric_to_schub(diff_perm, perm2, beta=beta)
     return ring.from_dict({k: v.expand() for k, v in schub_elem.items()})
 
 
 if __name__ == "__main__":
     import sys
+    from sympy import latex
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
     ring = DSx([]).ring
@@ -201,22 +238,36 @@ if __name__ == "__main__":
         mx = 2
         if perm.inv == 0:
             continue
-        for varnum in  range(1, mx):
-            print(f"Trying {perm} {varnum}")
-            #groth1 = groth_poly(perm, 1)
-            #genset = MaskedGeneratingSet(ring.coeff_genset, index_mask = [varnum])
-            groth1 = groth_poly(perm, beta=Gx._beta, return_dict=False)
-            print(f"Fat computer")
-            good = True
-            #for perm2, coeff in groth1_dct.items():
-            #    groth1 = coeff
-            groth2 = grothendieck_poly(perm, ring.genset, ring.coeff_genset, beta=Gx._beta).expand()
-            diff = (groth1 - groth2).expand()
-            try:
-                assert diff == 0, f"Grothendieck polynomial for {perm} does not match: {diff=}, \n{groth1=}\n {groth2=}"
-            except AssertionError as e:
-                good = False
-            if good:
-                print("Happy pants")
-            else:
-                print("Sad pants")
+        #print(latex(alt_grothendieck_poly(perm).expand(deep=False)))
+        _beta = 1
+        groth1 = alt_grothendieck_poly(perm, beta=_beta).as_polynomial().expand()
+        groth2 = grothendieck_poly(perm, ring.genset, ring.coeff_genset, beta=_beta).expand()
+        diff = (groth1 - groth2).expand()
+        try:
+            assert diff == 0, f"Grothendieck polynomial for {perm} does not match: {diff=}, \n{groth1=}\n {groth2=}"
+        except AssertionError as e:
+            print(e)
+            continue
+        print(f"Happy pants {perm}")
+        # for varnum in  range(1, mx):
+        #     print(f"Trying {perm} {varnum}")
+        #     #groth1 = groth_poly(perm, 1)
+        #     #genset = MaskedGeneratingSet(ring.coeff_genset, index_mask = [varnum])
+        #     groth1_dct = groth_poly(perm, beta=Gx._beta, return_dict=True)
+        #     print(f"Fat computer")
+        #     good = False
+        #     for perm2, coeff in groth1_dct.items():
+        #         groth1 = coeff
+        #         groth2 = grothendieck_poly(perm, ring.genset, ring.coeff_genset, beta=Gx._beta).expand()
+        #         diff = (groth1 - groth2).expand()
+        #         try:
+        #             assert diff == 0, f"Grothendieck polynomial for {perm} does not match: {diff=}, \n{groth1=}\n {groth2=}"
+        #         except AssertionError as e:
+        #             #good = False
+        #             continue
+        #         good = True
+        #         break
+        #     if good:
+        #         print("Happy pants")
+        #     else:
+        #         print("Sad pants")
