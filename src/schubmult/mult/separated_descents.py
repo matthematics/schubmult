@@ -171,8 +171,8 @@ def _coeffs_on_grid_plus(u, v, var1, var2, beta, k, n, mangle_genset=False):
     """Enumerate pipe puzzles on a fixed ``n`` by ``n`` grid (Theorem 2.5).
 
     Returns a dict ``{w: c_{u,v}^w}`` (coefficients not yet simplified).
-    
-    When ``mangle_genset`` is True, the variables in ``var2`` are permuted 
+
+    When ``mangle_genset`` is True, the variables in ``var2`` are permuted
     according to each result permutation ``w`` in the output. Specifically,
     for each result permutation ``w``, we apply the transformation:
         var2[j] -> var2[w[j-1]]
@@ -201,7 +201,7 @@ def _coeffs_on_grid_plus(u, v, var1, var2, beta, k, n, mangle_genset=False):
     def record(bottom, weight):
         # ``bottom`` is w^{-1} in one-line notation (column -> label).
         w = ~Permutation(list(bottom))
-        
+
         if mangle_genset:
             # Apply permutation to var2 indices in the weight
             # The new genset is [0, *[var2[w[ii]] for ii in range(len(w))]],
@@ -211,7 +211,7 @@ def _coeffs_on_grid_plus(u, v, var1, var2, beta, k, n, mangle_genset=False):
                 yvar_genset = CustomGeneratingSet(yvar)
             else:
                 yvar_genset = yvar
-            
+
             w_inv = ~w  # Inverse permutation
             subs_dict = {}
             weight_sympified = sympify(weight)
@@ -223,10 +223,10 @@ def _coeffs_on_grid_plus(u, v, var1, var2, beta, k, n, mangle_genset=False):
                     if idx <= len(w_inv):
                         new_idx = w_inv[idx - 1]  # Convert to 0-indexed, apply w_inv, result is 1-indexed
                         subs_dict[symbol] = yvar_genset[new_idx]
-            
+
             if subs_dict:
                 weight = weight_sympified.xreplace(subs_dict)
-        
+
         results[w] = results.get(w, S.Zero) + weight
 
 

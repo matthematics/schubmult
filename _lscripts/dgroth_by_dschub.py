@@ -52,22 +52,19 @@ def dom_groth(dom_perm, ring, beta):
     ring = DSx([]).ring
     genset = ring.genset
     coeff_genset = ring.coeff_genset
-    start_elem = ring.one
+    start_elem = ring.one    
     lengths = (~dom_perm).trimcode
-    for i, length in enumerate(lengths, start=1):
+    n = len(lengths) + 1
+    for i in range(n - 1, 0, -1):
         new_start_elem = 0
-        yvar = coeff_genset[i]
+        yvar = coeff_genset[n - i]
         bvar = (1 + beta * yvar)
         var2 = [coeff_genset[j] * bvar for j in range(1, 25)]
-        
+        length = lengths[n - i - 1]
         for permo, coeff in start_elem.items():
-            #new_elem = ringa(permo) * E(i, i, ring.genset[1:], ringb.coeff_genset[1:])
             for elem_perm, diff in _elem_sym_perms(permo, length):
-                new_start_elem += coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(i) if permo[p] == elem_perm[p]]) * ring(elem_perm)
-            #new_start_elem += coeff * ring.from_dict({k: (1 + beta*ring.coeff_genset[n - i])**((k.inv - permo.inv)) * v for k, v in new_elem.items()})
-        # a_j to y_j(1 + y_{n - i})
+                new_start_elem += coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(length) if permo[p] == elem_perm[p]]) * ring(elem_perm)
         start_elem = new_start_elem
-        #start_elem = new_start_elem
     return start_elem
 
 # def groth_poly(perm, beta):
@@ -210,13 +207,13 @@ def apply_isobaric_to_schub(diff_perm, schub_perm, beta):
 
 def alt_grothendieck_poly(perm, beta):
     from schubmult.abc import z
-    dom_perm = Permutation.w0(len(perm))
-    #dom_perm = perm.minimal_dominant_above()
+    #dom_perm = Permutation.w0(len(perm))
+    dom_perm = perm.minimal_dominant_above()
     #Permutation.w0(len(perm))
     diff_perm = (~perm) * dom_perm
     ring = DSx([]).ring
-    first_potato = groth_w0(len(perm), ring, beta=beta)
-    #dom_groth(dom_perm, ring, beta=beta)
+    #first_potato = groth_w0(len(perm), ring, beta=beta)
+    first_potato = dom_groth(dom_perm, ring, beta=beta)
     schub_elem = ring.zero
     for perm2, coeff in first_potato.items():
         schub_elem += coeff * apply_isobaric_to_schub(diff_perm, perm2, beta=beta)
@@ -239,7 +236,7 @@ if __name__ == "__main__":
         if perm.inv == 0:
             continue
         #print(latex(alt_grothendieck_poly(perm).expand(deep=False)))
-        _beta = 1
+        _beta = Gx._beta
         groth1 = alt_grothendieck_poly(perm, beta=_beta).as_polynomial().expand()
         groth2 = grothendieck_poly(perm, ring.genset, ring.coeff_genset, beta=_beta).expand()
         diff = (groth1 - groth2).expand()
