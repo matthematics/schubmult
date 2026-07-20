@@ -1207,21 +1207,170 @@ W&\text{if $W$ is an RC graph}\\
 is a surjective ring homomorphism.
 \end{proposition}
 
-\begin{definition}
-This homomorphism has a section. Specifically, for each $n>0$ define a ring $\kplac_n$ to be the algebra spanned by the $n$-Grassmannian WC graphs with multiplication given by the squash product. Then we have a surjective ring homomorphism
-$$\kplac_n\to \plac_n$$
-obtained on elementary symmetric WC graphs by sending $E_{p,k}^{\beta}$ with $|\beta|>p$ to $E_{|\beta|,k}^{\beta}$. Define 
-$$\mathcal{M}_n^K = \bigotimes_{i=1}^n \kplac_i$$
-There is an evident homomorphism $\mathcal{M}_n^K\to \mathcal{M}_n$ obtained by applying the above homomorphism to each factor. We have a commutative diagram
-$$\begin{tikzcd}
-\mathcal{M}_n^K \arrow[r]\arrow[d]  & \mathcal{M}_n\arrow[d]  \\
-\BWC_n \arrow[r, dashed] & \BRC_n 
-\end{tikzcd}$$
+\section{The \texorpdfstring{$K$}{K}-plactic monoid and algebra}
+\label{section:kplactic}
 
+The reduced theory of \cite{samuelmolev} attaches to each rank $k$ a
+\emph{plactic monoid} $\plac_k$: the set of height-$k$ RC graphs whose
+permutation is $k$-Grassmannian, made into a monoid by the squash product, which
+is a combinatorial model for the ring of Schur polynomials in $k$ variables. We
+now introduce its $K$-theoretic, set-valued analogue. It is obtained by replacing
+RC graphs with WC graphs and, correspondingly, semistandard Young tableaux and
+Schur polynomials with their set-valued and stable Grothendieck counterparts.
+
+Recall that a permutation $w$ is $k$-\emph{Grassmannian} if it is either the
+identity or has a unique descent, located at position $k$. For such a $w$ the
+associated partition
+$$\lambda(w)=\bigl(w(k)-k,\ w(k-1)-(k-1),\ \ldots,\ w(1)-1\bigr)$$
+has at most $k$ parts, and the Grothendieck polynomial
+$\mathfrak{G}^{(\beta)}_w$, expressed in the variables $x_1,\ldots,x_k$, is the
+stable (Grassmannian) Grothendieck polynomial $G_{\lambda(w)}(x_1,\ldots,x_k)$;
+its lowest-degree component is the Schur polynomial
+$s_{\lambda(w)}(x_1,\ldots,x_k)$. By the WC-graph formula
+$\mathfrak{G}^{(\beta)}_w(x)=\sum_{W\in\WC(w)}\beta^{|W|-\ell(w)}x^{\wtt(W)}$,
+the height-$k$ WC graphs of a $k$-Grassmannian permutation are the set-valued
+analogue of the semistandard tableaux enumerated by a Schur polynomial.
+
+\begin{definition}[Squash product]\label{definition:ksquash}
+Let $W_1$ and $W_2$ be bounded WC graphs of height $k$. Their \emph{disjoint
+union} $W_1\star W_2$ is formed by shifting every entry of $W_2$ upward far
+enough that each reflection $s(a,b)$ used by $W_2$ exceeds---and hence Hecke
+commutes with---every reflection used by $W_1$, and then overlaying the two
+graphs row by row. The weight is additive, $\wtt(W_1\star
+W_2)=\wtt(W_1)+\wtt(W_2)$. The \emph{squash product} is
+$$W_1\boxtimes W_2=\clp^{k}(W_1\star W_2),$$
+the clip of the disjoint union back down to $k$ rows
+(Definition~\ref{definition:kcliptrim}).
 \end{definition}
 
-Here the squash product is precisely the restriction of $\sqcupplus$
-(Definition~\ref{definition:kringproduct}) to $n$-Grassmannian WC graphs.
+On $k$-Grassmannian factors the squash product is exactly the single surviving
+term of the ring product $\sqcupplus$ of
+Definition~\ref{definition:kringproduct}: since the clip $\clp^{k}$ and trim
+$\trm^{k}$ of $W_1\star W_2$ recover $W_1$ and $W_2$ respectively,
+$$W_1\boxtimes W_2 = W_1\sqcupplus W_2\qquad(\hr(W_1)=\hr(W_2)=k).$$
+In particular $\boxtimes$ is associative, being the restriction of the
+associative product $\sqcupplus$ (Theorem~\ref{theorem:kring}) to
+$n$-Grassmannian WC graphs.
+
+\begin{definition}[$K$-plactic monoid and algebra]\label{definition:kplac-monoid}
+The \emph{$K$-plactic monoid of rank $k$} is the set
+$$\kplac_k=\bigl\{\,W\in\BWC_k:\wof{W}\text{ is }k\text{-Grassmannian}\,\bigr\}$$
+of height-$k$ WC graphs whose permutation has no descent or a single descent at
+$k$, equipped with the squash product $\boxtimes$. It is a monoid with unit the
+empty height-$k$ WC graph. The \emph{$K$-plactic algebra} $\mathbb{Z}\kplac_k$ is
+its monoid algebra: the free abelian group on $\kplac_k$ with the bilinear
+extension of $\boxtimes$.
+\end{definition}
+
+\begin{theorem}\label{theorem:kplac-monoid}
+The set $\kplac_k$ is closed under $\boxtimes$, and $(\kplac_k,\boxtimes)$ is an
+associative monoid. It is the set-valued analogue of the plactic monoid
+$\plac_k$ of semistandard tableaux of at most $k$ rows: the degeneration
+that discards every WC graph $W$ with $|W|>\ell(\wof{W})$ (equivalently, restricts
+to RC graphs) sends $\kplac_k$ onto $\plac_k$ and $\boxtimes$ to the classical
+squash product.
+\end{theorem}
+\begin{proof}
+Closure holds because $\clp^{k}$ carries a height-$2k$ WC graph whose top and
+bottom halves are $k$-Grassmannian to a height-$k$ WC graph whose permutation is
+again $k$-Grassmannian: the transition $\lzeromap$
+(Proposition~\ref{proposition:lzero-transition}) preserves the property of having
+a single descent at the top row. Associativity is the restriction of
+Theorem~\ref{theorem:kring}. The degeneration is the restriction of the
+retraction $\rho:\BWC\to\BRC$ (which is a ring homomorphism), and on RC graphs
+$\clp^{k}=\zeromap^{\,k}$ agrees with the reduced clip of \cite{samuelmolev}, so
+$\rho$ intertwines $\boxtimes$ with the reduced squash product.
+\end{proof}
+
+The squash product realizes stable Grothendieck multiplication, in exact
+parallel with the crystal isomorphism of the reduced theory
+\cite{samuelmolev}. We record this as the $K$-theoretic analogue.
+
+\begin{theorem}\label{theorem:squash-crystal-wc}
+Let $u,v$ be $k$-Grassmannian permutations. Then the disjoint union induces a
+weight-preserving bijection
+$$\{W\in\kplac_k:\wof{W}=u\}\times\{W'\in\kplac_k:\wof{W'}=v\}
+\ \longrightarrow\ \{U\in\BWC_{2k}:\clp^{k}(U)\in\kplac_k(u),\ \trm^{k}(U)\in\kplac_k(v)\},$$
+and clipping back to $k$ rows decomposes the result according to the
+$K$-theoretic Littlewood--Richardson (Buch) rule
+\cite{buch2008factorsequences}: writing
+$\lambda,\mu$ for the partitions of $u,v$,
+$$\sum_{\substack{W\in\kplac_k(u)\\ W'\in\kplac_k(v)}}W\boxtimes W'
+=\sum_{\nu}c^{\nu}_{\lambda\mu}(\beta)\!\!\sum_{\substack{W''\in\kplac_k\\ \lambda(\wof{W''})=\nu}}\!\!W'',$$
+where $c^{\nu}_{\lambda\mu}(\beta)$ are the structure constants of the stable
+Grothendieck polynomials, $G_\lambda G_\mu=\sum_\nu c^{\nu}_{\lambda\mu}(\beta)G_\nu$.
+\end{theorem}
+
+For a $k$-Grassmannian permutation $w$ we assemble the WC graphs of $w$ into a
+single element of the $K$-plactic algebra.
+
+\begin{definition}\label{definition:groth-element}
+For a $k$-Grassmannian permutation $w$, the \emph{Grothendieck element} is
+$$\mathbf{G}_w=\sum_{\substack{W\in\kplac_k\\ \wof{W}=w}}W\ \in\ \mathbb{Z}\kplac_k,$$
+the sum of all height-$k$ WC graphs with permutation $w$. Under the weight map
+$W\mapsto\beta^{|W|-\ell(w)}x^{\wtt(W)}$ it maps to the stable Grothendieck
+polynomial $G_{\lambda(w)}(x_1,\ldots,x_k)$.
+\end{definition}
+
+\begin{theorem}\label{theorem:groth-subring}
+As $w$ ranges over the $k$-Grassmannian permutations, the Grothendieck elements
+$\mathbf{G}_w$ are linearly independent and span a commutative subring
+$\mathbf{G}_k\subseteq\mathbb{Z}\kplac_k$. The weight map induces a ring
+isomorphism
+$$\mathbf{G}_k\ \xrightarrow{\ \sim\ }\ \mathbb{Z}\bigl[G_{\lambda}(x_1,\ldots,x_k):\lambda\ \text{a partition with}\le k\ \text{parts}\bigr],\qquad
+\mathbf{G}_w\longmapsto G_{\lambda(w)}(x_1,\ldots,x_k),$$
+onto the ring generated by the stable Grothendieck polynomials in $k$ variables.
+Passing to lowest degree recovers the classical model: $\mathbf{G}_k$ degenerates
+to the ring of symmetric polynomials spanned by the Schur polynomials
+$s_\lambda(x_1,\ldots,x_k)$, and $\mathbf{G}_w$ to the Schur element of
+$\plac_k$.
+\end{theorem}
+\begin{proof}
+Distinct $k$-Grassmannian permutations have disjoint sets of WC graphs, so the
+$\mathbf{G}_w$ are linearly independent. By
+Theorem~\ref{theorem:squash-crystal-wc} the squash product of two Grothendieck
+elements decomposes with the same structure constants as the product of the
+corresponding stable Grothendieck polynomials,
+$$\mathbf{G}_u\boxtimes\mathbf{G}_v=\sum_{w}c^{w}_{u,v}(\beta)\,\mathbf{G}_w,
+\qquad
+G_{\lambda(u)}\,G_{\lambda(v)}=\sum_{w}c^{w}_{u,v}(\beta)\,G_{\lambda(w)},$$
+where $c^{w}_{u,v}(\beta)$ are the $K$-theoretic Littlewood--Richardson
+(Buch) coefficients. Hence the span $\mathbf{G}_k$ is a subring, the assignment
+$\mathbf{G}_w\mapsto G_{\lambda(w)}$ is a ring homomorphism, and it is bijective
+onto the stated ring because the stable Grothendieck polynomials of partitions
+with at most $k$ parts are a $\mathbb{Z}$-basis of it. Commutativity follows since
+the target ring is commutative. Setting $\beta=0$ (equivalently, retaining the
+lowest-degree part, which is $\rho$ followed by symmetrization) sends
+$G_\lambda\mapsto s_\lambda$ and recovers the plactic model of \cite{samuelmolev}.
+\end{proof}
+
+\begin{remark}
+Theorem~\ref{theorem:groth-subring} is the $K$-theoretic analogue of the
+statement that, inside the plactic algebra, the sums of tableaux of fixed shape
+span a commutative ring isomorphic to the ring of Schur polynomials. Here shapes
+are replaced by $k$-Grassmannian permutations, tableaux by WC graphs,
+Knuth equivalence by $K$-Knuth equivalence (Section~\ref{section:kknuth}), and
+Schur polynomials by stable Grothendieck polynomials.
+\end{remark}
+
+The $K$-plactic algebras also carry the degeneration to the reduced plactic
+algebras and assemble into a tensor model for $\BWC_n$.
+
+\begin{definition}
+For each $n>0$ there is a surjective ring homomorphism
+$$\mathbb{Z}\kplac_n\to \mathbb{Z}\plac_n$$
+obtained on elementary symmetric WC graphs by sending $E_{p,k}^{\beta}$ with
+$|\beta|>p$ to $E_{|\beta|,k}^{\beta}$; it is the restriction of the retraction
+$\rho$ and provides a section of the inclusion $\plac_n\hookrightarrow\kplac_n$.
+Define
+$$\mathcal{M}_n^K = \bigotimes_{i=1}^n \mathbb{Z}\kplac_i.$$
+There is an evident homomorphism $\mathcal{M}_n^K\to \mathcal{M}_n$ obtained by
+applying the above homomorphism to each factor, giving a commutative diagram
+$$\begin{tikzcd}
+\mathcal{M}_n^K \arrow[r]\arrow[d]  & \mathcal{M}_n\arrow[d]  \\
+\BWC_n \arrow[r, dashed] & \BRC_n
+\end{tikzcd}$$
+\end{definition}
 
 \begin{remark}
 The compatibility of $\sqcupplus$ with the Lascoux decomposition of
@@ -1284,10 +1433,86 @@ are established.
 
 \section{Formulas}
 
+Define the double grothendieck polynomial $\mathfrak{G}_w(x;y)$ by
+$$\mathfrak{G}_w^{(\beta)}(x;y) = \sum_{W\in\WC(w)}\beta^{|W|-\ell(w)}(x\ominus y)^W$$
+where 
+$$(x\ominus y)^{W} = \prod_{(i, j)\in W}\left(\frac{x_i - y_j}{1+\beta y_j}\right)$$
+
+$$\omega^i = \frac{(1+\beta t_i) - s_i(1+\beta t_{i})}{t_i - t_{i+1}}=\frac{(1 - s_i)(1+\beta t_i)}{t_i - t_{i+1}} = \delta^i(1 + \beta t_i)$$
+where $\delta^i$ is the divided difference operator on the $t$ variables. Leibniz rule,
+$$\omega^i(fg) = \omega^i(f)g + f(\delta^i + s_i)g$$
+% For $\mathbf{w}_1\cdots \mathbf{w}_n$ a reduced word, we obtain
+% $$\omega^w(fg) = \sum_{\mathbf{a}\text{ subword}} \omega^{\mathbf{w}_{i_1}}\cdots \omega^{\mathbf{w}_{i_k}}(f)(\delta^{\mathbf{w}_{i_1}}\cdots \delta^{\mathbf{w}_{i_k}} + s_{\mathbf{w}_{i_1}}\cdots s_{\mathbf{w}_{i_k}})g$$
+Let $\mathbf{w}_1\cdots\mathbf{w}_n$ be a reduced word for $w$. Let $\mathbf{u}_1\cdots \mathbf{u}_n$ be a subword, meaning $\mathbf{u}_i\in\{1,\mathbf{w}_i\}$. Let $\mathbf{v}$ be a second subword in the complementary spaces of $\mathbf{u}$, meaning $\mathbf{v}_i\in\{1,\mathbf{w}_i\}$ and $\mathbf{v}_i = 1$ if $\mathbf{u}_i = \mathbf{w}_i$. Then let
+$$\omega^{\mathbf{u}} = \omega^{\mathbf{u}_1}\cdots \omega^{\mathbf{u}_n}$$
+and let
+$$\pi^i=\begin{cases}
+\omega^i & \text{if }\mathbf{v}_i=\mathbf{w}_i\\
+1 & \text{if }\mathbf{u}_i=\mathbf{w}_i\\
+\delta^i + s_i & \text{if }\mathbf{u}_i=1\text{ and }\mathbf{v}_i=1
+\end{cases}$$
+and let
+$$\omega^{\mathbf{w}/\mathbf{u}}_{\mathbf{v}} = \pi^1\cdots \pi^n$$
+Then we have the following general Leibniz rule:
+$$\omega^w(fg) = \sum_{\mathbf{u},\mathbf{v}}\omega^{\mathbf{u}}(f)\omega^{\mathbf{w}/\mathbf{u}}_{\mathbf{v}}(g)$$
+where the sum is over all subwords $\mathbf{u}$ and $\mathbf{v}$ in complementary spaces of $\mathbf{u}$.
+
+To make this independent of subwords, we can define $\omega^w_u$ as
+$$\omega^w_u = \sum_{\mathbf{u},\mathbf{v}}\beta^{|\mathbf{u}| - \ell(u)}\omega^{\mathbf{w}/\mathbf{u}}_{\mathbf{v}}$$
+where the sum is over all subwords $\mathbf{u}$ of $w$ whose Hecke product is $u$, with $\mathbf{v}$ in the complementary spaces of $\mathbf{u}$. Then we have
+$$\omega^w(fg) = \sum_{u}\omega^u(f)\omega^w_u(g)$$
+
+$$\partial^i\frac{y_i}{1+\beta y_i} = \frac{\frac{y_i}{1 + \beta y_i} - \frac{y_{i+1}}{1+\beta y_{i+1}}}{y_i - y_{i+1}}$$
+$$= \frac{\frac{y_i}(1+\beta y_{i+1}) - y_{i+1}(1+\beta y_i){(1 + \beta y_i)(1+\beta y_{i+1})}}{y_i - y_{i+1}}$$
+$$= \frac{1}{(1 + \beta y_i)(1+\beta y_{i+1})}$$
+
+$$+s_i= \frac{1 + y_{i+1}}{(1 + \beta y_i)(1+\beta y_{i+1})}$$
+$$= \frac{1 + \beta y_{i+1} - (\beta - 1)y_{i+1}}{(1 + \beta y_i)(1+\beta y_{i+1})}$$
+$$= \frac 1{1+\beta y_i} - \frac{(\beta - 1)y_{i+1}}{(1 + \beta y_i)(1+\beta y_{i+1})}$$
+
+
+$\partial^i\otimes 1 + s_i\otimes \partial^i + s_i\otimes s_i$
+$\partial^i\otimes 1 + s_i\otimes (\partial^i + s_i)$
+
+$(\partial^i + s_i)\otimes 1 + s_i\otimes (\partial^i + s_i) - s_i \otimes 1$
+
+
+$$\pi^i = \frac{(1 + x_{i+1}) - (1 + x_i)s_i}{x_i - x_{i+1}}$$
+$$\partial^i(1+ x_{i+1})=(1+y_1)\partial^i(x_{i+1}\ominus y_1) + y_1\partial^i = (x_i\ominus y_1)\partial^i + y_1\partial^i - 1$$
+
+%$\mu_1,\mu_2$ dominant.
+\newcommand{\groth}{\mathfrak{G}}
+%\end{math}}
+$$\mathfrak{G}_{\mu}(x;y) = y^{-|W|}\sch_{\mu}(x;y)$$
+
+$$\pi^{p}\cdots \pi^1 = \partial^{p}\cdots \partial^1E_p(x;1)$$
+
+Write
+$$w = c[\code^*_n(w);n]\cdots c[\code^*_1(w);1]$$
+
+$$\sch_{\mu}(y;1)^{-1}\partial^{\code^*_1(w)}\sum E_{p-\ell(\mu, v)}(y_{P(\mu, v)};1)\sch_v(x;y)$$
+
+$$\pi^i = \frac{1}{x_i - x_{i+1}}((1 + x_{i + 1}) - (1 + x_i)s_i)$$
+
+
+$$(1 + \beta x_i)\partial^i - \beta$$
+
+$$\mathfrak{G}_{\mu}(x;y) = (1\ominus 0)^{W}\sch_{\mu}(x;y)$$
+
+$$\mathfrak{G}_{\mu}(x;y) = (1\ominus 0)^{W}\sch_{\mu}(x;y)$$
+$$\partial^i(1 + x_{i+1} - x_i + x_i)$$
+
+$$(1+ y)^{\mu}\partial^i(1 + \beta x_{i+1})\sch_{\mu}(x;y)$$
+
+
+%where $c[i;j]$ is the cyclic permutation $(i\ i+1\ \cdots\ j)$, and $\code^*_i(w)$ is the $i$th entry of the code of $w^{-1}$. Then we have
+
+%$$\pi^1\pi^2(fg) = \pi^1(\pi^2(f)g + f(\delta^2 + s_2)g) = (\pi^{12}(f)g + \pi^2(f)(\delta^1+s_1)(g) + \pi^1(f))
+
 \emph{Claim}: Every Grothendieck polynomial $\mathfrak{G}_w(x)$ can be expressed as a sum of products of ordinary elementary symmetric stable Grothendieck polynomials with integer coefficients, with the number of factors of the product fixed (allowing degree $0$ factors) each being in a fixed number of $x$ variables.
 
-Let $\mathfrak{K}^i$ denote the operator $\partial^i(1 + y_{i + 1})$, acting on the $y$ variables. Consider the product of operators
-$$\mathfrak{K}^{i + p}\cdots \mathfrak{K}^{i + 1}\mathfrak{K}^i = \partial^{i + p}\cdots \partial^{i + 1}\partial^iE_p(\tau^i y;1)$$
+Let $\mathfrak{K}^i$ denote the operator $(1 + y_{i + 1})\partial^i - 1$, acting on the $y$ variables. Consider the product of operators
+$$\mathfrak{K}^{i + p}\cdots \mathfrak{K}^{i + 1}\mathfrak{K}^{i} = ((1+ y_{i+p})\partial^{i+p} - 1)\cdots ((1 + y_{i+1})\partial^{i+1} - 1)((1 + y_i)\partial^i - 1)E_p(\tau^i y;1)$$
 We have that the top degree factorial elementary stable Grothendieck polynomial in $k$ variables is
 $$\mathfrak{E}_k(x;y) = E_{k}\left(\frac{x}{1 + x}; y_1\right)E_{k}(x; 1)$$
 where $E_k$ is the ordinary top degree factorial elementary symmetric polynomial. Thus, for a dominant permutation, applying such a product of operators gives
@@ -1300,16 +1525,29 @@ $$\mathfrak{K}^u = \mathfrak{K}^{[1; \code_1(u)]}\mathfrak{K}^{[2; \code_2(u)]}\
 Iterating the above argument, we obtain the claim.
 
 
-Sanity:
+$X_i = X_i - 1$
 
-$\mathfrak{E}_k(x;y_1) = E_k(\overline{x};y_1)E_k(x;1)$
+$Y_i = y_i + 1$
 
-Apply
+$$x_i + y_j + x_iy_j$$
 
-$\mathfrak{E}_{k - 1, k}(x;y_1, y_2) = E_{k - 1, k}(\overline{x};y_1, y_2)E_k(x;1)(1 + y_1) - E_k(\overline{x};y_1)E_k(x; 1)$
+$$h_1^2 - h_2 + h_1$$
 
-$$\mathfrak{E}_{k - 2, k}(x;y_1, y_2, y_3) = E_{k - 2, k}(\overline{x};y_1, y_2, y_3)E_k(x;1)E_2(y;1)$$
-$$- E_{k - 1, k}(\overline{x};y_1, y_2)E_k(x;1)E_{1,2}(y_1, y_2;1) + E_k(\overline{x};y_1)E_k(x; 1)$$
+$$x_i\oplus y_j = Y_j(X_i - \frac 1{Y_j})$$
+$$Z_j^{-1}(X_i - Z_j)$$
+
+$$\sum_i (1+y_1)^i E_{i,k}(x;y)E_{k-i}(y(1+y_1);-y_1)$$
+
+$$\prod_{i=1}^{n - 1} E_{n - i}(x\oplus y_i)$$
+
+$$\groth_{w_0}(x;y) = \sum_{u\in S_n}\partial_{w_0u^{-1}}^{w_0w^{-1}}(\groth_{w_0}(x;y))\mid_{x=y}\sch_u(x;y)$$
+
+\section{Abstract Pieri rings}
+
+% An abstract Pieri ring is a module $M$ over a polynomial ring with basis $X_w(y)$ for $w\in S_\infty$ with the following conditions. For arbitrary indeterminates $t$, we define operators $\widehat{E}_{p,k}(t)$ acting on $M[t]$, and polynomials 
+% $$E_{p,k}(y_1,\ldots,y_k;t_1,\ldots,t_{k+1-p})$$
+% in the $y$ variables with coefficients in $\mathbb{Z}[t]$, such that if $k < 0$ or $p > k$, then $E_{p,k}(y;t)=0$, and if $p=0$, then $E_{p,k}(t)=1$. We have that for $k\ge 1$ and $p\ge 1$, the operators satisfy the following relations:
+% $$\widehat{E}_{p,k}(t)\cdot X_e(y)=\sum_{i=1}^{p} E_{p - i, k - i}(y;t)X_{c[i,k]}(y)$$
 
 \cite{samuelmolev}
 \bibliographystyle{acm}

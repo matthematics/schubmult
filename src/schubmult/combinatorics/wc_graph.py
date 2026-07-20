@@ -582,10 +582,14 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             result = (i + j - 1, i + j)
         return result
 
-    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False) -> Expr:
+    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False, minus_convention=False) -> Expr:
         if crystal:
             raise NotImplementedError("WCGraph is not a crystal graph")
         ret = S.One
+        def _combine(a, b, bet):
+            if minus_convention:
+                return (a - b)*(1 + bet * b)**(S.NegativeOne)
+            return a + b + beta * a * b
         if beta is None:
             for i, row in enumerate(self):
                 if y is None:
@@ -597,7 +601,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
             if y is None:
                 ret *= x[i + 1] ** len(row)
             else:
-                ret *= prod([x[i + 1] + y[row[j] - i] + beta * x[i + 1] * y[row[j] - i] for j in range(len(row))])
+                ret *= prod([_combine(x[i + 1], y[row[j] - i], beta) for j in range(len(row))])
         if prop_beta:
             ret *= beta ** (len(self.perm_word) - self.hecke_perm.inv)
         else:

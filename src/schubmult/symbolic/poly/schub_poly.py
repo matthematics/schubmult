@@ -462,6 +462,12 @@ def div_diff(poly, v1, v2):
 def _groth_plus(x1, y1, beta):
     return x1 + y1 + beta * x1 * y1
 
+def _groth_minus(x1, y1, beta, keep_as_schub=False):
+    from schubmult import Sx
+    if keep_as_schub:
+        return (Sx.from_expr(x1 - y1 - beta * x1 * y1))
+    return (x1  - y1 - beta * x1 * y1)
+
 
 def _groth_div_diff(val, index, x, beta):
     from schubmult.rings.schubert.schubert_ring import DoubleSchubertElement, SingleSchubertRing
@@ -469,6 +475,8 @@ def _groth_div_diff(val, index, x, beta):
     ring = SingleSchubertRing(x)
     if not isinstance(val, DoubleSchubertElement):
         val = ring.from_expr(val)
+    else:
+        val = ring.from_expr(val.as_polynomial())
     up_val = (S.One + beta * x[index + 1]) * val
     rval = ring.from_dict({w.swap(index - 1, index): coeff for w, coeff in up_val.items() if w[index - 1] > w[index]})
     return rval
@@ -489,6 +497,23 @@ def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
     if keep_as_schub:
         return result
     return result.as_polynomial()
+
+@cache
+def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False):
+    from schubmult.combinatorics.permutation import Permutation
+
+    if perm.inv == 0:
+        return S.One
+    n = len(perm)
+    w0 = Permutation.w0(n)
+    if perm == w0:
+        return prod([_groth_minus(x[i], y[j], beta, keep_as_schub=keep_as_schub) for i in range(1, n) for j in range(1, n + 1 - i)])
+    desc = min([i for i in range(n) if i not in (perm.descents())])
+    result = _groth_div_diff(grothendieck_poly2(perm.swap(desc, desc + 1), x, y, beta, keep_as_schub=True), desc + 1, x, beta)
+    if keep_as_schub:
+        return result
+    return result.as_polynomial()
+
 
 
 def to_groth(val, x, y, beta):

@@ -570,9 +570,14 @@ class DoubleSchubertRing(BaseSchubertRing):
             return res
         if isinstance(x, Pow):
             res = elem
-            for _ in range(int(x.args[1])):
-                res = self.mul_expr(res, x.args[0])
-            return res
+            base = x.args[0]
+            exponent = x.args[1]
+            if x.args[1] >= 0:
+                #raise ValueError(f"Cannot multiply {elem} with {x}")
+                for _ in range(int(exponent)):
+                    res = self.mul_expr(res, base)
+                return res
+        #print(f"Fell through {x=}")
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def new(self, x):
