@@ -1,5 +1,5 @@
-"""Dump full anatomy of ONE moved case with an up-neighbour: cycles of pi, pi t_kB, pi t_rk,
-and where the down-partner r lives (in C or a spectator?), plus spectator validity at k-1."""
+"""Examine j>1 cases (pi(k) != B): full cycle-surgery anatomy to find the intrinsic down rule.
+Correct convention throughout."""
 import sys
 from schubmult import *  # noqa
 from schubmult.combinatorics.permutation import Permutation
@@ -25,18 +25,25 @@ def enumerate_pieri(u, k, N):
                 else: continue
                 results.setdefault(nperm, nqw); stack.append((nperm, used_a | {a}, b, nqw, nperm.inv))
     return results
+def orbit_from(perm, start):
+    c = [start]; cur = perm[start-1]
+    while cur != start: c.append(cur); cur = perm[cur-1]
+    return c
 def cyc_all(perm, N):
     seen = set(); cycs = []
     for x in range(1, N+1):
         if x in seen or perm[x-1] == x: continue
-        c = [x]; seen.add(x); cur = perm[x-1]
-        while cur != x: c.append(cur); seen.add(cur); cur = perm[cur-1]
-        cycs.append(c)
+        c = orbit_from(perm, x); seen |= set(c); cycs.append(c)
     return cycs
-def valid_level(cyc, m):
-    big = [x for x in cyc if x > m]
-    return len(big) == 1  # exactly one index > m (its top)
-def run(n, maxshow=6):
+def descent_u(u, cyc):
+    # unique a_i in cyc (non-top) with u(a_i)>u(a_{i-1}) per paper; compute descents crudely:
+    # normal form (a_p,...,a_1,b): b=max. orbit from b: [b, a_p, a_{p-1},...,a_1]. descent = a_i with u(a_i)>u(prev in reduced word)
+    b = max(cyc); orb = orbit_from_perm_cycle(cyc, b)
+    return b, orb
+def orbit_from_perm_cycle(cyc, b):
+    # cyc is a list orbit; rotate so it starts at b
+    i = cyc.index(b); return cyc[i:]+cyc[:i]
+def run(n, want=20):
     N = 2*n; perms = list(Permutation.all_permutations(n)); shown = 0
     for u in perms:
         u = Permutation(u)
@@ -50,24 +57,24 @@ def run(n, maxshow=6):
                 w = Permutation(w)
                 if val(u, k) == val(w, k) or w in Rk: continue
                 pi = (~u)*w
+                if pi[k-1] == max(orbit_from(pi, k)): continue  # skip j==1 (pi(k)=B)
                 ups = [b for b in range(k+1, N+1)
-                       if (w.inv - w.swap(k-1, b-1).inv in (1, 1-2*(b-k))) and w.swap(k-1, b-1) in Rkm1]
+                       if (w.inv - w.swap(k-1, b-1).inv) in (1, 1-2*(b-k)) and w.swap(k-1, b-1) in Rkm1]
                 if not ups: continue
                 downs = [a for a in range(1, k)
-                         if (w.inv - w.swap(a-1, k-1).inv in (1, 1-2*(k-a))) and w.swap(a-1, k-1) in Rkm1]
-                allcyc = cyc_all(pi, N)
-                C = next(c for c in allcyc if k in c); B = max(C)
-                spec = [c for c in allcyc if k not in c]
-                spec_ok_km1 = all(valid_level(c, k-1) for c in spec)
-                b = ups[0]; r = downs[0] if downs else None
-                pi_up = cyc_all((~u)*w.swap(k-1, b-1), N)
-                pi_dn = cyc_all((~u)*w.swap(r-1, k-1), N) if r else None
+                         if (w.inv - w.swap(a-1, k-1).inv) in (1, 1-2*(k-a)) and w.swap(a-1, k-1) in Rkm1]
+                C = orbit_from(pi, k); B = max(C)
+                orb = orbit_from_perm_cycle(C, B)  # [B, a_p, ..., a_1]
+                # positions: orb = [B=orb0, orb1=a_p, ..., orb_last=a_1]; k somewhere
+                kpos = orb.index(k)
+                # u-values along orb
+                uvals = [val(u, x) for x in orb]
+                a = downs[0] if downs else None
+                apos = orb.index(a) if a in orb else None
                 print(f"u={tuple(u)} w={tuple(w)} k={k} B={B}")
-                print(f"   pi cycles = {allcyc}   C={C}  spectators={spec}")
-                print(f"   spectators valid at k-1? {spec_ok_km1}")
-                print(f"   up b={b}: pi t_kB cycles = {pi_up}")
-                print(f"   downs={downs}  r={r}: pi t_rk cycles = {pi_dn}   r in C? {r in C if r else None}")
+                print(f"   orb[B,a_p..a_1]={orb}  u(orb)={uvals}  k at pos {kpos}")
+                print(f"   pi(k)={pi[k-1]}  down a={a} at orb pos {apos}  (pi^-1(k)={(~pi)[k-1]})")
                 shown += 1
-                if shown >= maxshow: return
+                if shown >= want: return
 if __name__ == "__main__":
     run(int(sys.argv[1]) if len(sys.argv) > 1 else 5)
