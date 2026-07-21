@@ -8,6 +8,7 @@ class SetLetter(CrystalGraph, frozenset):
 
     def __new__(cls, iterable, length=None):
         obj = frozenset.__new__(cls, iterable)
+        length = 100
         if length is not None:
             obj._length = length
         else:

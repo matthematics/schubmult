@@ -625,7 +625,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     @property
     def hecke_invariant(self):
         from .increasing_tableau import IncreasingTableau
-        return IncreasingTableau.hecke_column_insert_rsk(self.compatible_sequence, self.perm_word)
+        return IncreasingTableau.hecke_column_insert_rsk(self.compatible_sequence, tuple(reversed(self.perm_word)))
 
     @property
     def strong_hecke_invariant(self):
@@ -698,13 +698,13 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         q_next = q_tab.raising_operator(i)
         if q_next is None:
             return None
-        if self._double:
-            q_next = q_next.raising_operator(i)
-            if q_next is None:
-                return None
+        # if self._double:
+        #     q_next = q_next.raising_operator(i)
+        #     if q_next is None:
+        #         return None
         try:
             compat, word = IncreasingTableau.hecke_column_uninsert_rsk(p_tab, q_next)
-            result = WCGraph.from_word_compatible(word, compat, length=len(self))
+            result = WCGraph.from_word_compatible(tuple(reversed(word)), compat, length=len(self))
         except Exception:
             return None
         if result.perm != self.perm or not result.is_valid:
@@ -720,13 +720,13 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         q_next = q_tab.lowering_operator(i)
         if q_next is None:
             return None
-        if self._double:
-            q_next = q_next.lowering_operator(i)
-            if q_next is None:
-                return None
+        # if self._double:
+        #     q_next = q_next.lowering_operator(i)
+        #     if q_next is None:
+        #         return None
         try:
             compat, word = IncreasingTableau.hecke_column_uninsert_rsk(p_tab, q_next)
-            result = WCGraph.from_word_compatible(word, compat, length=len(self))
+            result = WCGraph.from_word_compatible(tuple(reversed(word)), compat, length=len(self))
         except Exception:
             return None
         if result.perm != self.perm or not result.is_valid:

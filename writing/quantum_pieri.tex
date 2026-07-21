@@ -1,0 +1,670 @@
+%%
+%% This is LaTeX2e input.
+%%
+
+%% The following tells LaTeX that we are using the 
+%% style file amsart.cls (That is the AMS article style
+%%
+\documentclass{amsart}
+\usepackage{fancyvrb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{cases}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{centernot}
+\usepackage{mathtools}
+\usepackage[margin=1in]{geometry}
+\usepackage[makeroom]{cancel}
+\usetikzlibrary{decorations.pathreplacing}
+\newcommand{\tikznode}[3][inner sep=0pt]{\tikz[remember
+picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
+
+\usepackage{ytableau}
+%\usepackage{witharrows}
+
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}[lemma]{Corollary}
+\newtheorem{conjecture}[lemma]{Conjecture} 
+\newtheorem{proposition}[lemma]{Proposition} 
+\newtheorem{theorem}[lemma]{Theorem}
+\newtheorem{question}{Question}
+%%
+%% If some other type is need, say conjectures, then it is constructed
+%% by editing and uncommenting the following.
+%%
+
+%\newtheorem{conj}[thm]{Conjecture} 
+
+
+%%% 
+%%% The following gives definition type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+%%
+%% Again more of these can be added by uncommenting and editing the
+%% following. 
+%%
+
+%\newtheorem{note}[thm]{Note}
+
+
+%%% 
+%%% The following gives remark type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+
+\theoremstyle{remark}
+
+\newtheorem{remark}[lemma]{Remark}
+
+
+%%%
+%%% The following, if uncommented, numbers equations within sections.
+%%% 
+
+\numberwithin{equation}{section}
+
+
+%%%
+%%% The following show how to make definition (also called macros or
+%%% abbreviations).  For example to use get a bold face R for use to
+%%% name the real numbers the command is \mathbf{R}.  To save typing we
+%%% can abbreviate as
+
+\newcommand{\R}{\mathbf{R}}  % The real numbers.
+
+%%
+%% The comment after the defintion is not required, but if you are
+%% working with someone they will likely thank you for explaining your
+%% definition.  
+%%
+%% Now add you own definitions:
+%%
+
+%%%
+%%% Mathematical operators (things like sin and cos which are used as
+%%% functions and have slightly different spacing when typeset than
+%%% variables are defined as follows:
+%%%
+
+\DeclareMathOperator{\dist}{dist} % The distance.
+
+
+
+%%
+%% This is the end of the preamble.
+%% 
+\title{Triple quantum Schubert calculus}
+\author{Matthew J. Samuel}
+%\ead{matthematics@gmail.com}
+
+%\affiliation[1]{addressline={31 Cherry Blossom Drive},
+%city={Monroe Township},
+%postcode={NJ 08831},
+%country={USA}}
+
+
+\DeclareMathOperator{\bpath}{BPath}
+\DeclareMathOperator{\Sym}{Sym}
+\DeclareMathOperator{\Schub}{Schub}
+\DeclareMathOperator{\ESchub}{ESchub}
+\DeclareMathOperator{\sch}{\mathfrak{S}}
+\newcommand{\tom}[1]{\xrightarrow{#1}}
+%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
+%\counterwithout{equation}{section}
+%\setcounter{section}{-1}
+
+\begin{document}
+
+\begin{abstract}
+\end{abstract}
+\maketitle
+
+{\bf Keywords}: Schubert polynomial, structure constant, Littlewood-Richardson rule, coproduct, double Schubert polynomial
+
+{\bf Mathematics classification codes}: 05E05, 05A05, 05A15, 14N10
+
+{\bf Email}: matthematics@gmail.com
+
+\newcommand{\code}{\mathfrak{c}}
+\newcommand{\ducode}{\overline{\mathfrak{c}}}
+%$$w_0(n)^{(i)}=w_0(n)w_0(n+1-i)w_0(n-i)$$
+
+%\begin{theorem}
+%Let $u\in S_n$ and $1\leq i\leq n$. Then we have
+%$$\sch_u(y)=\sum_{u'w_0(n)^{(i)}\tom{n+1-i} uw_0(n)}y_i^{\ell(u',u)}\sch_{u'}(y^{(i)})$$
+%where $u'\in S_n$ satisfies $\ell(u'w_0(n)^{(i)})+\ell(u')=\ell(w_0(n)^{(i)})$.
+%\end{theorem}
+\section{Introduction}
+
+
+\section{Definitions and statement of results}
+
+\begin{definition}[$\tom{k}$, $P_k(u,w)$, $q_k(u,w)$, $n_k(u,w)$] \label{definition:pieri}
+We define a relation $\tom{k}$ on pairs of permutations, introduced in its non-quantum form by Sottile \cite{sottile}.%, which was used originally to indicate when the coefficient of a Schubert polynomial is nonzero in a suitable application of the Pieri formula. In the generalization to double Schubert polynomials in \cite{samuelmolev}, the same relation applies to all nonzero coefficients in the expansion of the generalized Pieri formula. The relation plays the same role in our case.
+
+Given $u,u'\in S_\infty$ and a positive integer $k$, we declare that $u\tom{k} w$ if there exists a $p$ with $0\leq p\leq k$ such that there are transpositions $t_{a_1b_1},\ldots,t_{a_pb_p}$ satisfying 
+\begin{enumerate}
+\item $a_i\leq k<b_i$ for all $i$
+\item $a_i\neq a_j$ whenever $i\neq j$
+\item $b_i\geq b_j$ whenever $i<j$
+\item We have either
+$$\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(ut_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})+1$$ 
+or 
+$$\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(ut_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})-2(b_i-a_i)+1$$
+for all $i$
+\item $w=ut_{a_1b_1}\cdots t_{a_pb_p}$
+\end{enumerate}
+If $u\tom{k} w$, define 
+$$P_k(u,w)=\{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
+Also, we define $q_k(u,w)$ recursively. If $u=w$, define $q_k(u,w)=1$. If we have defined $q_k(u,w')$ with $w'=t_{a_1b_1}\cdots t_{a_{p-1}b_{p-1}}$, suppose $\ell(w't_{a_pb_p})=\ell(w')+1$. Then define
+$$q_k(u,w)=q_k(u,w')$$
+If instead $\ell(w't_{a_pb_p})=\ell(w')-2(b_p-a_p)+1$, define
+$$q_k(u,w)=q_k(u,w')q_{a_pb_p}$$
+We also define
+$$n_k(u,w)=\#\{i\mid i\leq k\mbox{ and }u(i)\neq w(i)\}$$
+\end{definition}
+
+\begin{theorem}[The Pieri formula] \label{theorem:pieri}
+Suppose $u\in S_\infty$ and $p\leq k$. Then
+$$\sch_u^q(x;y)E_{p,k}^q(x;z)=\sum_{u\tom{k} w}q_k(u,w)E_{p-n_k(u,w),k-n_k(u,w)}(y_{P_k(u,w)};z)\sch_w^q(x;y)$$
+\end{theorem}
+
+\begin{theorem} \label{theorem:coeffreduce}
+Suppose $u,v\in S_\infty$ and let $d$ be a weak composition such that $d_i\in \{0,1\}$ for all $i$ and if $d_i=1$, then $d_{i+1}=0$. Let $i_1,\ldots,i_k$ be the integers such that $d_{i_p}=1$ for $1\leq p\leq k$. Then $c_{u,v}^{w,d}(y;z)=0$ unless $\ell(us_{i_p})<\ell(u)$ and $\ell(vs_{i_p})<\ell(v)$ for each $p$, in which case
+$$c_{u,v}^{w,d}(y;z)=c_{us',vs'}^w(y;z)$$
+where
+$$s'=s_{i_1}\cdots s_{i_k}$$
+\end{theorem}
+
+\newcommand{\lom}{\widetilde{\lambda}}
+\newcommand{\mom}{\widetilde{\mu}}
+\newcommand{\thop}{\widetilde{\theta}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\dom}{\mu}
+
+\begin{definition}[$\code$, (strict) dominant permutations, $\theta$, $\dom$, $\thop$, $\mom$]
+We say that a permutation $\mu$ is \emph{dominant} if $\code_i(\mu)\geq \code_{i+1}(\mu)$ for all $i$. A permutation $\mu$ is said to be \emph{strict dominant} if $\mu$ is dominant and whenever $\code_i(\mu)\neq 0$ we have $\code_i(\mu)>\code_{i+1}(\mu)$. For a permutation $v\in S_\infty$, we define a dominant permutation $\dom(v)$ recursively as follows. If $v$ is already dominant, define $\mu(v)=v$. Otherwise, let $i$ be the maximal index such that $\code_i(v)<\code_{i+1}(v)$, and define
+$$\dom(v)=\dom(vs_i)$$
+Define $\theta_i(v)$ to be $\code_i(\dom(v))$.
+
+Similarly, for a permutation $v\in S_\infty$, we define a strict dominant permutation $\mom(v)$ recursively as follows. If $v$ is already strict dominant, define $\mom(v)=v$. Otherwise, let $i$ be the maximal index such that $\code_{i+1}(v)\neq 0$ and $\code_i(v)\leq \code_{i+1}(v)$, then define
+$$\mom(v)=\mom(vs_i)$$
+Define $\thop_i(v)$ to be $\code_i(\mom(v))$.
+\end{definition}
+
+\begin{definition}[$\xRightarrow{i}$, $\sigma_i(u,v)$, $D_i(u,v)$]
+Let $u,v\in S_\infty$ and $i\geq 1$ be an integer. We define $u\Tom{i} v$ if there exist distinct integers $b_1,b_2,\ldots,b_k$ such that $b_j\neq i$ for all $j$, $\ell(ut_{i,b_1}\cdots t_{i,b_j})=\ell(u)+j$ for all $j$, and 
+$$v=ut_{i,b_1}\cdots t_{i,b_k}$$
+We define
+$$\sigma_i(u,v)=\#\{j\mid b_j<i\}$$
+and we define
+$$D_i(u,v)=\{u(i)\}\cup\{u(j)\mid u(j)\neq v(j)\}$$
+\end{definition}
+
+\begin{theorem}[Formula for ordinary double Schubert polynomials] \label{theorem:orddouble}
+Suppose $v\in S_\infty$. Then
+$$\sch_v(x;z)=\sum_{(v_0,\ldots,v_k)}\prod_{i=1}^k (-1)^{\sigma_i(v_{i-1},v_i)}E_{\theta_i(v)-\ell(v_{i-1},v_i),\theta_i(v)}(x;z_{D_i(v_{i-1},v_i)})$$
+Where $v_{i-1}\xRightarrow{i} v_i$ for all $i$, $v_0=1$, and $v_k=v\dom(v^{-1})$.
+\end{theorem}
+
+
+\begin{theorem}[Formula for quantum double Schubert polynomials] \label{theorem:quandouble}
+Suppose $v\in S_\infty$. Then
+$$\sch_v^q(x;z)=\sum_{(v_0,\ldots,v_k)}\prod_{i=1}^k (-1)^{\sigma_i(v_{i-1},v_i)}E_{\thop_i(v)-\ell(v_{i-1},v_i),\thop_i(v)}^q(x;z_{D_i(v_{i-1},v_i)})$$
+Where $v_{i-1}\xRightarrow{i} v_i$ for all $i$, $v_0=1$, and $v_k=v\mom(v^{-1})$.
+\end{theorem}
+
+Coupled with the Pieri formulas, these formulas give a relatively efficient method for computing products of (quantum) double Schubert polynomials.
+
+
+
+
+\begin{definition}[$\chi_{j;n}$, $\chi^{(n)}$]
+Recall the definition of the commuting difference operators $\chi_{j;n}$, with $j\leq n$, defined by Fomin, Gelfand, and Postnikov, as follows:
+$$\chi_{j,n}=x_j-\sum_{1\leq i<j}q_{ij}\partial^{t_{ij}}+\sum_{j<k\leq n} q_{jk}\partial^{t_{jk}}$$
+We denote the sequence $(\chi_{1;n},\ldots,\chi_{n;n})$ with $n$ fixed by $\chi^{(n)}$. Recall (CITATION) that if $\sch_v(x)$ has at most $n$ variables, then
+$$\sch_v^q(\chi^{(n)})(1) = \sch_v(x)$$
+and hence
+$$\sch_v^q(\chi^{(n)};z)(1) = \sch_v(x;z)$$
+We specify a more precise formula, as follows.
+\end{definition}
+
+\newcommand{\qsch}{\sch^q}
+
+\begin{theorem}
+Suppose $v\in S_n$. Then
+$$\sch_v^q(\chi^{(n)};z)=\sum_{u\in S_{n},d} q^dc_{u,v}^{1,d}(x;z)\partial^u$$
+\end{theorem}
+\begin{proof}
+Note that if $\sch_u(x)$ has at most $n$ variables, then
+$$\sch_u^q(\chi^{(n)};y)\sch_v^q(\chi^{(n)};z)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\sch_w^q(\chi^{(n)};y)$$
+We thus have that
+$$(\sch_u^q(\chi^{(n)};y)\sch_v^q(\chi^{(n)};z))(1)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\sch_w(x;y)$$
+This is also equal to
+$$\qsch_v(\chi^{(n)};z)(\sch_u(x;y))$$
+due to the fact that $(\sch_u^q(\chi^{(n)};y))(1)=\sch_u(x;y)$. To obtain the coefficient of $\partial^u$ in $\qsch_v(\chi^{(n)};z)$, we set $y=x$ after applying this operator. Since $\sch_w(x;x)=0$ unless $w=1$, we have that
+$$\qsch_v(\chi^{(n)};z)(\sch_u(x;y))|_{y=x}=\sum_d q^dc_{u,v}^{1,d}(x;z)$$
+and the result follows.
+\end{proof}
+
+%\begin{lemma}
+%Let $k$ be an integer and let $v\in S_\infty$. Then
+%$$\sum_d q^dc_{s_k,v}^{1,d}(x;z) = \sum_{i\leq k < j} q_{ij}\sch_{vt_{ij}}(x;z)$$
+%\end{lemma}
+%\begin{proof}
+%This value is equal to
+%$$\qsch_{s_k}(\chi^{(n)};y)(\sch_v(x;z))$$
+%then setting $y=x$ for sufficiently large $n$. We also have
+%$$\qsch_{s_k}(\chi^{(n)};y) = \sch_{s_k}(x;y)+\sum_{1\leq i\leq k<j\leq n}q_{ij}\partial^{t_{ij}}$$
+%Thus
+%$$\qsch_{s_k}(\chi^{(n)};y)(\sch_v(x;z))=\sum_w c_{s_k,v}^w(y;z)\sch_w(x;y)+\sum_{1\leq i\leq k<j\leq n}q_{ij}\sch_{vt_{ij}}(x;z)$$
+%Setting $y=z$, the terms involving $\sch_w(x;y)$ disappear, and we are left with the desired result.
+%\end{proof}
+
+\begin{theorem}
+Let $k$ be an integer and let $v,w\in S_\infty$. Then
+$$\sum_d q^dc_{s_k,v}^{w,d}(y;z)=c_{s_k,v}^{w}(y;z)+\sum_{i\leq k < j} q_{ij}\sch_{vt_{ij}w^{-1}}(y;z)$$
+\end{theorem}
+\begin{proof}
+We have that the desired value is equal to the coefficient of $\sch_w(x;y)$ in
+$$\qsch_{s_k}(\chi^{(n)};y)(\sch_{v}(x;z))$$
+We have that
+$$\qsch_{s_k}(\chi^{(n)};y)=\sch_{s_k}(x;y)+\sum_{i\leq k<j\leq n}q_{ij}\partial^{t_{ij}}$$
+Applying this operator, we obtain
+$$\sum_{i\leq k<j\leq n} q_{ij}\sch_{vt_{ij}}(x;z)+\sum_w c_{s_k,v}^w(y;z)\sch_w(x;y)$$
+Applying the Cauchy formula, this is equal to
+$$\sum_{i\leq k<j,u} q_{ij}\sch_{vt_{ij}u^{-1}}(y;z)\sch_u(x;y)+\sum_w c_{s_k,v}^w(y;z)\sch_w(x;y)$$
+Setting $u=w$ and allowing $n$ to be sufficiently large, we obtain the result.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{theorem:coeffreduce}]
+It suffices to prove this for $v=w_0(n)$. We have
+$$\qsch_{w_0(n)}(\chi;z)=\sum_{u,d} q^dc_{u,w_0(n)}^{1,d}(x;z)\partial^u$$
+Fixing the particular $d$ in the statement of the theorem, we must have that $u=s'$. By the Pieri formula,
+$$c_{s',w_0(n)}^{1,d}(x;z)=\sch_{w_0(n)s'}(x;z)$$
+Thus if we compute the coefficient of $q^d\sch_w(x;y)$ in 
+$$(\qsch_{w_0(n)}(\chi;z))(\sch_u(x;y))$$
+we obtain
+$$c_{us',w_0(n)s'}^w(y;z)$$
+and the result follows.
+\end{proof}
+
+\section{Proofs}
+
+\begin{lemma}
+%Suppose $u,v,w$ are such that $u\Tom{i} w$, $v\Tom{i} w$, and $D_i(u,w)=D_i(v,w)$. Then $u=v$.
+Suppose $(v_0,v_1,\ldots,v_n)$ and $(v_0',\ldots,v_n')$ are such that $v_{i-1}\Tom{i} v_i$, $v_{i-1}'\Tom{i} v_i'$ for all $i$, $v_0=v_0'=1$, and $v_n=v_n'=v$ for some $n$. Suppose also that $D_i(v_{i-1},v_i)=D_{i}(v_{i-1}',v_i')$ for all $i$. Then $v_i=v_i'$ for all $i$.
+\end{lemma}
+\begin{proof}
+This is true if $\ell(v_n)=0$. Otherwise, consider the right descent. There are only two places where it can occur.
+\end{proof}
+
+
+%Acting on $321$-avoiding, all the elem syms are Schubs.
+
+\begin{theorem} \label{theorem:nocan}
+No two terms in Theorem \ref{theorem:orddouble} directly cancel each other.
+\end{theorem}
+\begin{proof}
+%Let $(v_0,\ldots,v_m)$ and $(v_0',\ldots,v_m')$ with $v_0=v_0'=1$ and $v_m=v_m'=v\mu(v^{-1})$ be paths such that $v_{i-1}\Tom{i} v_i$ and $v_{i-1}'\Tom{i} v_i'$ for all $i$. It will suffice to show that if 
+%$$D_i(v_{i-1},v_i)=D_i(v_{i-1}',v_i')$$
+%for all $i$, then $v_i = v_i'$ for all $i$. We prove this is true for all $i\geq j$ by induction on $j$. This is clear if $j=m$. Otherwise, assume it holds for $j+1$. Then we know that $v_{j+1}=v_{j+1}'$. Since $D_{j+1}(v_{j},v_{j+1})=D_{j+1}(v_{j}',v_{j+1}')$, we have that $v_j(k)\neq v_{j+1}(k)$ if and only if $v_j'(k)\neq v_{j+1}'(k)$. Let $a_1,\ldots,a_p$ be the set of indices such that $v_j(a_k),v_j'(a_k)\neq v_{j+1}(a_k)$ for all $k$. Assume the order is such that $v_j^{-1}v_{j+1}(a_k)=a_{k+1}$, with $a_0=a_{p+1}=j$.
+\end{proof}
+
+\section{Proof of the Pieri formula}
+
+\begin{lemma} \label{lemma:singlevariable}
+Let $u\in S_\infty$ and let $i,j\geq 1$. Then
+$$(x_i-z_j)\sch_u^q(x;y)=(y_{u(i)}-z_j)\sch_u^q(x;y)+\sum_{\substack{p\neq i\\\ell(ut_{ip})=\ell(u)+1}}\mathrm{sign}(p-i)\sch_{ut_{ip}}^q(x;y)$$
+$$+\sum_{\substack{p\neq i\\\ell(ut_{ip})=\ell(u)-2|p-i|+1}}\mathrm{sign}(p-i)q_{ip}\sch_{ut_{ip}}^q(x;y)$$
+\end{lemma}
+%\begin{proof}
+%It can be shown by the recurrence relation for $\partial_u^w$ that $\partial_u^u=u$. Thus we have
+%$$\partial_u^u(x_i-z_j)=x_{u(i)}-z_j$$
+%Substituting $y$ for $x$, we obtain that the coefficient of $\sch_u(x;y)$ is $y_{u(i)}-z_j$.
+
+%To compute the constant coefficients we use the equivariant Chevalley formula
+%$$\sch_u(x;y)\sch_{s_i}(x;y)=(\sch_{s_i}(u(x);y))|_{x=y}\sch_u(x;y)+\sum_{\substack{u\tom{i} u'\\\ell(u')=\ell(u)+1}}\sch_{u'}(x;y)$$
+%We have that
+%$$x_i-z_j=\sch_{s_i}(x;y)-\sch_{s_{i-1}}(x;y)+y_i-z_j$$
+%with the negative term $\sch_{s_{i-1}}(x;y)$ excluded if $i=1$. Thus the terms occurring with constant coefficients in the expansion of $(x_i-z_j)\sch_u(x;y)$ are
+%$$\sum_{\substack{u\tom{i} u'\\\ell(u,u')=1}}\sch_{u'}(x;y)-\sum_{\substack{u\tom{i-1}u''\\\ell(u,u'')=1}}\sch_{u''}(x;y)$$
+%The overlap in the two sums is when $u'=u''=ut_{qk}$ where $i\notin \{q,k\}$, which cancel, and what remains is the negative terms $ut_{qi}$ where $q<i$ and the positive terms $ut_{iq}$ where $q>i$. Therefore,
+%$$\partial_{u}^{ut_{qk}}(x_i-z_j)=0$$
+%if $i\notin \{q,k\}$, and if $q\neq i$ then
+%$$\partial_u^{ut_{iq}}(x_i-z_j)=\mathrm{sign}(q-i)$$
+%The result follows.
+%\end{proof}
+
+\newcommand{\ntom}[1]{\centernot{\tom{#1}}}
+
+\newcommand{\desc}{\mathrm{desc}}
+
+\begin{definition}[Descents of a cycle, $\desc_u(c)$]
+Let $c$ be a cycle and suppose $u\in S_\infty$. Write $c$ as
+$$(a_1,\ldots,a_n)$$
+where $a_n>a_i$ for all $i<n$ (this is a unique way to express the cycle since the $a_j$ are distinct). Then for any $i$ with $1\leq i<n$ we say that $a_i$ is a \emph{descent} of $c$ with respect to $u$ if $u(a_i)>u(a_{i+1})$. We denote the set of all descents of $c$ with respect to $u$ by $\desc_u(c)$.
+\end{definition}
+
+\begin{lemma} \label{lemma:piericycle}
+Suppose $u,w\in S_\infty$ and let $k>0$ be an integer. Then $u\tom{k} w$ if and only if there exist pairwise disjoint cyclic permutations $c_1,\ldots,c_n$ of respective cycle lengths $p_1+1,\ldots,p_n+1$ such that
+$$w=uc_1\cdots c_n$$
+and
+$$\ell(u,w)=p_1+\cdots+p_n$$
+such that for each $i$ there exist pairwise distinct positive integers $a_{i,1},\ldots,a_{i,p_i}$ and $b_i$ such that we may write the cycle $c_i$ as
+$$c_i=(a_{i,p_i},a_{i,p_i-1},\ldots, a_{i,1},b_i)$$
+where $a_{i,j}\leq k$ for all $1\leq j\leq p_i$, $b_i>k$, and $b_i>b_j$ if $i<j$, and for each $m$ we have
+$$\ell(uc_1\cdots c_m) = \sum_{i=1}^m \left(p_i - 2\sum_{a\in \desc_u(c_i)}(b_i-a)\right)$$
+\end{lemma}
+\begin{proof}
+Suppose first that $u\tom{k} w$. Then there exist reflections $t_{a_1b_1},\ldots,t_{a_mb_m}$ for some $m$ with $a_i\neq a_j$ if $i\neq j$, $a_i\leq k<b_i$ for all $i$, $\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(t_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})+1$ or $\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(t_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})-2(b_i-a_i)+1$ for all $i$, $b_i\geq b_j$ if $i\leq j$, and $w=ut_{a_1b_1}\cdots t_{a_mb_m}$. Fix $b$ such that there is an index $1\leq p\leq m$ such that $b=b_p$ and let $i$ and $r$ be such that $a_i,\ldots,a_{i+r}$ is the maximal portion of the sequence such that $b_j=b$ for all $i\leq j\leq i+r$. Let
+$$c=t_{a_ib_i}\cdots t_{a_{i+r}b_{i+r}}$$
+Given $j$ with $i\leq j\leq i+r$ we claim that if we define a permutation $c^{(j)}$ with
+$$c^{(j)}=t_{a_ib}\cdots t_{a_jb}$$
+then
+$$c^{(j)}=(a_j,a_{j-1},\ldots,a_i,b)$$
+and that
+$$\ell(uc^{(j)})=\ell(u)+j-2\sum_{a\in\desc_u(c^{(j)})}(b-a)$$
+This is clear if $j=i$. Otherwise, suppose
+$$c^{(j-1)}=t_{a_ib}\cdots t_{a_{j-1}b}=(a_{j-1},\ldots,a_i,b)$$
+Then
+$$c^{(j-1)}t_{a_jb}=(a_{j-1},\ldots,a_i,b)(b,a_j)=(a_{j-1},\ldots,a_i,b,a_j)=(a_j,\ldots,a_i,b)$$
+as desired. We have either that 
+$$u(a_j)=uc^{(j-1)}(a_j)<uc^{(j-1)}(b)=u(a_{j-1})$$
+and $\ell(uc^{(j)})=\ell(uc^{(j-1)})+1$, or
+$$u(a_j)>u(a_{j-1})$$
+and $a_j\in\desc_u(c^{(j)})$ and $\ell(uc^{(j)})=\ell(uc^{(j-1)})-2(a_j-b)+1$. Hence the desired claim follows by induction. Hence,
+$$c=c^{(i+r)}=(a_{i+r},\ldots,a_i,b)$$
+and the length satisfies the condition. Ranging over all $b$, these cycles, which we index in order of decreasing $b$ as $c_1,\ldots,c_n$, are the ones that occur in the disjoint cycle decomposition of $u^{-1}w$, which we can see by the fact that the cycles are pairwise disjoint and $w=uc_1\ldots c_n$. 
+
+We prove the converse now. Suppose the cycles $c_1,\ldots,c_n$ of cycle length $p_i+1$ for each $i$ exist satisfying the conditions, fixing $k$. Write $c_1$ as
+$$c_1=(a_{p_1},\ldots,a_1,b)$$
+Then
+$$c_1=t_{a_1b}\cdots t_{a_{p_1}b}$$
+We claim that $\ell(ut_{a_1b}\cdots t_{a_ib})>\ell(ut_{a_1b}\cdots t_{a_{i-1}b})$ if $a_i\notin\desc_u(c_1)$, and $\ell(ut_{a_1b}\cdots t_{a_ib})<\ell(ut_{a_1b}\cdots t_{a_{i-1}b})$ if $a_i\in\desc_u(c_1)$. This clearly holds for $a_1$. Otherwise, we note that
+$$ut_{a_1b}\cdots t_{a_{i-1}b}(b)=u(a_{i-1})$$
+and
+$$ut_{a_1b}\cdots t_{a_{i-1}b}(a_i)=u(a_{i})$$
+since $a_j\neq a_i$ if $j\neq i$. Thus, if $a_i\notin \desc_u(c_1)$, then the length increases, and if $a_i\in \desc_u(c_1)$ then the length decreases. Applying this argument for each disjoint cycle $c_i$ to $\ell(uc_1\cdots c_i)$ and expanding the cycles into reflections, we obtain that successively multiplying on the right by each reflection increases the length by at least $1$ for each $a_i$ that is not a descent and decreases the length by at most $2(b_i-a)-1$ for each descent in $c_i$. By the length condition in the statement of the lemma, the increases must be by exactly $1$ and the decreases by exactly $2(b_i-a)-1$ by maximality.
+%Since there are $p_1+\cdots+p_n$ reflections and this is equal to $\ell(u,w)$, each reflection must increase the length by exactly $1$ and we have the result.
+\end{proof}
+
+\newcommand{\lup}{\triangleleft}
+
+\begin{definition}[$\lup$]
+If $u,u'\in S_\infty$, we define $u\lup u'$ if $\ell(u,u')=1$ or $u'=ut_{ab}$ where $\ell(u,u')=1-2(b-a)$.
+
+%Define $\nabla_u^w(F(x))$ to be the coefficient of $\sch_w^q(x;y)$ in the product $F(x)\sch_u^q(x;y)$, replacing $y$ with $x$ and quantizing.
+
+%Same as unquantizing, doing the div diff, and requantizing.
+
+%$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}$$
+%$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}(\sch_u^q(x;y)\sch_v^q(x;z))$$
+%
+%$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}(c_{u,v}^{w,d}(y;z)q^d\sch_w^q(x;y))$$
+%
+%$$\mathcal{Q}\partial^wc_{u,v}^{w',d}(y;z)q^d\sch_{w'}(x;y)$$
+%
+%$$c_{u,v}^{w',d}(y;z)q^d\sch_{w'w^{-1}}^q(x;y)$$
+%Product
+%$$\nabla^{s_i}p = \sum c_{u,v}^{s_i,d}(x;x)q^d\nabla^u(p)\nabla^v$$
+%
+%Ideal:
+%$$p-\sum_u c_{u,v}^{1,d}(x;x)q^d\nabla^u(p)\nabla^v$$
+%$$(\sch^q_u(\chi;y)\sch_v^q(\chi;y))\cdot 1=c_{u,v}^w(x;x)\sch_w(y;x)$$
+%$$F(x)\sch_u^q(x;y)=\sum_w \nabla_u^w(F(x))|_{x=y}\sch_w^q(x;y)$$
+%$$\nabla^u(\sch_v^q(x;z))=\nabla^u(\sch_{v_2}^q(x;y)\sch_{v_1}(y;z)$$
+\end{definition}
+
+
+
+\begin{lemma} \label{lemma:onedescent}
+Suppose $u,w\in S_\infty$ and let $k>1$ be an integer. Suppose $u\tom{k}w$ and let $c=(a_p,\ldots,a_1,b)$ be a cycle as in Lemma \ref{lemma:piericycle} in the decomposition of $u^{-1}w$. Then $\desc_u(c)$ has at most one element.
+\end{lemma}
+\begin{proof}
+This is clearly true if $p=1$, or if the result holds for $p-1$ but $c^{(p-1)}$ has no descents. Suppose then that $c^{(p-1)}$ has a descent, say $a_i$ for exactly one $i<p$ by the induction hypothesis, and that $u(a_p)>u(a_{p-1})$, meaning that $a_p\in\desc_u(c^{(p-1)})$. $a_i$ being a descent would require that 
+$$u(a_i)>uc^{(i-1)}(j)>u(a_{i-1})$$
+for all $j$ with $a_i<j<b$. Furthermore, we also have that for all $j$ with $a_p<j<b$ that
+$$u(a_p)>uc^{(p-1)}(j)>u(a_{p-1})$$
+Suppose $a_p<a_i$. Then $u(a_p)>uc^{(p-1)}(a_i)=u(a_{i-1})>u(a_{p-1})$. This means that necessarily $a_{p-1}<a_i$, since $u(a_{i-1})=uc^{(i)}(a_i)$ is minimal in the range $a_i\leq j\leq b$ in $uc^{(i)}$. For the same reason, we cannot have that $uc^{(p-2)}(b)<u(a_{i-1})$, because this would have to come from some $t_{a_qb}$ with $i<q<p-1$, $a_q<a_i$, and and $u(a_q)<u(a_{i-1})$, which would increase the length by more than $1$. However, since $uc^{(p-2)}(b)>u(a_{i-1})>u(a_{p-1})$, this would imply that $t_{a_{p-1}b}$ increases the length by more than $1$, which is a contradiction. Thus we cannot have a descent $a_p$ with $a_p<a_i$. 
+
+If instead $a_p>a_i$, then $u(a_i)>u(a_p)>u(a_{i-1})$. Since $a_p$ is a descent, $uc^{(p-1)}(b)=u(a_{p-1})<u(a_p)$, but $uc^{(i)}(b)=u(a_i)>u(a_p)$. This would imply that there is some $q$ with $i<q\leq p-1$ such that $a_q>a_p$ and $uc^{(q-1)}t_{a_qb}(b)=u(a_q)<u(a_p)$, because if we had $a_q<a_p$ then the length would increase by more than $1$. Let $q$ be minimal with this property. In that case, $u(a_{q-1})>u(a_p)$ and $uc^{(p-1)}(a_q)=u(a_{q-1})$, contradicting the fact that $a_p$ is a descent. It follows by induction that there can be at most one descent.
+\end{proof}
+
+\begin{definition}[Redefinition of $\desc_u(c)$]
+If $c$ is a cycle, we redefine $\desc_u(c)$ to be the unique element of the previously defined set $\desc_u(c)$ if it exists, or otherwise $0$.
+\end{definition}
+
+\begin{lemma} \label{lemma:geq}
+Suppose $u,w\in S_\infty$ and let $k>1$ be an integer. Suppose $u\tom{k}w$ and let $c=(a_p,\ldots,a_1,b)$ be a cycle as in Lemma \ref{lemma:piericycle} in the decomposition of $u^{-1}w$, with $a_q=k$ being a descent. Then for all $j\geq q$ we have that $u(a_j)>u(b)$.
+\end{lemma}
+\begin{proof}
+We have that $u(a_q)>u(a_{q-1})$. By Lemma \ref{lemma:onedescent}, $k$ is the only descent of $c$. We claim that for all $r$ with $k\leq r<b$ we have that $u(r)>u(b)$. This is because for all such $r$ we have that $u(a_{q-1})<u(r)$ since $a_q$ is a descent, and if $u(b)>u(r)$ for some such $r$ then we may pick a maximal $\ell<q$ such that $u(a_{\ell})>u(r)$ for some such $r$. Then $u(a_{\ell+1})<u(r)$ for all such $r$, and the reflection $t_{a_{\ell-1} a_{\ell}}$ would increase the length by more than $1$, which cannot happen. For the same reason, we cannot have that $u(a_m)<u(r)$ for any $r$ with $k<r\leq b$, since $u(a_q)>u(r)$ for all such $r$ and hence the reflection $t_{a_{m-1}a_m}$ would increase the length by more than $q$. Thus since in particular $u(r)>u(b)$ for all such $r$, we must have that $u(a_j)>u(b)$ for all $j\geq q$, as desired.
+\end{proof}
+
+\begin{lemma} \label{lemma:pieriknotkn1}
+Suppose $u,w\in S_\infty$ and let $k>1$ be an integer. If $u\tom{k} w$ but $u\ntom{k-1} w$, then there is a unique $b>k$ such that $wt_{kb}\lup w$ and $u\tom{k-1} wt_{kb}$. Furthermore, in that case there does not exist a $a<k$ such that $wt_{ak}\lup w$ and $u\tom{k-1} wt_{ak}$.
+\end{lemma}
+\begin{proof}
+Suppose $u\tom{k} w$ but $u\ntom{k-1} w$. Let $c_1,\ldots,c_n$ be the pairwise disjoint cycles in the decomposition of $u^{-1}w$, with the cycle length of $c_i$ being $p_i+1$. Some such cycle must contain $k$, as otherwise we would have $u\tom{k-1} w$ by Lemma \ref{lemma:piericycle}. Assume that $c_i=(a_{i,p_1},\ldots,a_{i,1},b_i)$ is the cycle that contains $k$ and set $b=b_i$. We claim that $u\tom{k-1} wt_{kb}$ and $wt_{kb}\lup w$. Note that $w=(wt_{kb})t_{kb}$ and hence 
+$$(uc_1\cdots c_nt_{kb})t_{kb}=w$$
+Let $j$ be the index such that $a_j=k$. Then we have
+\begin{align*}
+(a_{i,p_i},\ldots,a_{i,j+1},k,a_{i,j-1},\ldots,a_{i,1},b_i)t_{kb}&=(a_{i,j-1},\ldots,a_{i,1},b,a_{i,p_i},\ldots,a_{i,j+1},k)t_{kb}\\
+&=(a_{i,j-1},\ldots,a_{i,1},b)(a_{i,p_i},\ldots,a_{i,j+1},k)
+%&=t_{kb}(k,b)(a_{i,p_i},\ldots,a_{i,j+1},b)(a_{i,j-1},\ldots,a_{i,1},k)\\
+%&=(a_{i,j-1},\ldots,a_{i,1},k)(a_{i,p_i},\ldots,a_{i,j+1},b)$$
+\end{align*}
+Note that $wt_{kb}(k)=w(b)=u(a_{i,p_i})$ and $wt_{kb}(b)=w(k)=u(a_{i,j-1})$. We need that
+$$\ell(u,wt_{kb})=p_i'+p_i''-2(b-\desc_u(c_i'))-2(k-\desc_u(c_i''))+\ell(u,uc_1\cdots c_{i-1}c_{i+1}\cdots c_m)$$
+We have that
+$$\ell(u,w)=p_i-2(b-\desc_u(c_i))+\ell(u,uc_1\cdots c_{i-1}c_{i+1}\cdots c_m)$$
+and
+$$\ell(u,wt_{kb})\geq p_i'+p_i''-2(b-\desc_u(c_i'))-2(k-\desc_u(c_i''))+\ell(u,uc_1\cdots c_{i-1}c_{i+1}\cdots c_m)$$
+If $c_i'$ has a descent, then $c_{i}''$ does not, and we are done. If $c_i''$ has a descent, then 
+$$w(k)=u(a_{i,j-1})<u(b)<u(a_{i,p_i})=w(b)$$ 
+by Lemma \ref{lemma:geq}, so 
+$$\ell(w)<\ell(wt_{bk})\leq \ell(w)+2(b-k)-1$$
+so
+$$\ell(u,wt_{kb})=\ell(wt_{bk})-\ell(u)\leq p_i'+p_i''-2(b-\desc_u(c_i'))-2(b-\desc_u(c_i''))+2(b-k)+\ell(u,uc_1\cdots c_{i-1}c_{i+1}\cdots c_m)$$
+Since we already have the opposite inequality, we are done if $c_{i}''$ has a descent, since $wt_{bk}\lup w$. If neither has a descent but $c_i$ does, then this descent must be at $k$. We have that $wt_{bk}(k)=u(a_{i,p_i})>u(b)$ by Lemma \ref{lemma:geq}, and $wt_{bk}(b)=u(a_{i,j-1})<u(b)$. Furthermore, $u(k)>u(b)>u(r)>u(a_{i,j-1})$ for all $r$ with $k<r<b$ since $k$ is a descent. Thus $wt_{bk}\lup w$.
+%Suppose that there is a descent after $k$ in the cycle, say at %$%a_{i,q}$ for some $q> j$. This means that
+%$$u(a_{i,q})>ut_{a_{i,1}b}\cdots ut_{a_{i,q-1}b}(r)>u(a_{i,q-1})$$
+%for all $r$ with $a_{i,p_i}<r<b$. In particular, this means that
+%$$u(a_{i,q})>ut_{a_{i,1}b}\cdots ut_{a_{i,q}b}(k)=w(k)=u(a_{i,j-1})>u(a_{i,p_i})=w(b)
+%$$(a_{i_2},\ldots,a_{j+1},q')(a_{j-1},\ldots,a_{i_1},k)$$
+%Note that $wt_{kb}(k)=u(b)$, $ut_{kb}(b)=u(k)$, and otherwise $ut_{kb}(a)=u(a)$ for all $a\notin \{k,b\}$. We have that
+%$$\ell(u,w)=\sum_{i=1}(p_i-2(b_i-\desc_u(c_i)))$$
+%If $u(k)>u(b)$, then
+%$$\ell(ut_{kb},w)=-2(b-k)+p_1'+p_1''\sum_{i=2}(p_i-2(b_i-\desc_u(c_i)))$$
+%$$ut_{a_{i,1}k}\cdots t_{a_{i,j-1}k}t_{a_{i,j+1}b}\cdots t_{a_{i,p_i}b}$$
+%If $u(k)>u(b)$, then
+%$$\ell(ut_{kb},w)=\ell(w)-\ell(u)+2(b-k)-1$$
+%and otherwise
+%$$\ell(ut_{kb},w)=\ell(w)-\ell(u)-2(k-\desc_u(c_1'))$$
+%or
+%$$\ell(ut_{kb},w)=\ell(w)-\ell(u)-2(b-\desc_u(c_1''))$$
+
+%If $q<j$, then if $u(a_{i,q})>u(a_{i,q-1})$ we have that the length decreases by $2(k-a_{i,q})-1$.
+
+%Suppose $q>j+1$. Then if $u(a_{i,q})>u(a_{i,q-1})$, we have that 
+%$$u(a_{i,q})>ut_{a_{i,1}b}\cdots t_{a_{i,q-1}b}(r)>u(a_{i,q-1})$$
+%for all 
+$a_{i,q}<r<b$, so the length decreases by $2(b-a_{i,q})-1$ as desired. If $u(a_{i,j+1})>u(k)$
+
+%If $u(k)>u(b)$, then $u(k)>u(a)>u(b)$ for all $k<a<b$.
+
+ %Thus, if $l>j$ then any relation between $u(a_{i,l})$ and $u(a_{i,l+1})$ continues to hold, and $ut_{kb}(a_{i,j+1})=u(a_{i,j+1})$ has the same relationship to $ut_{kb}(b)=u(k)$. Further, $ut_{kb}(a_{i,1})>ut_{kb}(k)$ if and only if $u(a_{i,1})>u(b)$, so the relative length moves remain the same. If $l>j$ and $a_{i,l}\in \desc_u(c_i)$, then $a_{i,l}\in\desc_u(c_i')$. Necessarily $a_{i,l}<k$, and $u(a_{i,l})>u(a_{i,l-1})$. If $u(k)>u(b)$, then $\ell(ut_{kb})=\ell(u)-2(b-k)+1$. 
+%, and the length decreases by some as yet undetermined $d_{i,l}$. If $1<l<j$ and $a_{i,l}\in\desc_u(c_i)$, then $a_{i,l}\in\desc_u(c_i'')$, and the length decreases by $d_{i,l}$.
+
+To show that the $q'$ we have chosen is unique, let $r>k$ be any index other than $q'$ such that $\ell(ut_{kr})=\ell(u)+1$. Suppose first that $r$ is not in any of the cycles $c_i$. Recall that $c_1$ is the cycle that contains $k$. Then $t_{kr}c_1$ is a cycle in the disjoint cycle decomposition of $(ut_{kr})^{-1}w$ containing both $k$ and $r$, which are both larger than $k-1$. This violates the condition of Lemma \ref{lemma:piericycle} that in order for $ut_{kr}\tom{k-1} w$ we must have that each cycle contains exactly one element larger than $k-1$, hence we have $ut_{kr}\ntom{k-1} w$. If $r$ is in one of the cycles, since $r>k$ and $r\neq q'$ this cycle cannot be $c_1$. Say the cycle containing $r$ is $c_2=(a_{p_2}',\ldots,a_1',r)$. Then 
+\begin{align*}
+t_{kr}c_1c_2&=t_{kr}(r,a_{p_2}',\ldots,a_1')(a_{p_1},\ldots,a_1,q')\\
+            &=(r,a_{p_2}',\ldots,a_1',k)(k,a_{j-1},\ldots,q',a_{p_1},\ldots,a_{j+1})\\
+						&=(r,a_{p_2}',\ldots,a_1',k,a_{j-1},\ldots,q',a_{p_1},\ldots,a_{j+1})
+\end{align*}
+is a single cycle disjoint from all the others containing both $k$ and $r$,  which are both greater than $k-1$, hence we have $ut_{kr}\ntom{k-1} w$ by Lemma \ref{lemma:piericycle}. The uniqueness of $q'$ follows.
+
+To prove the nonexistence of $q$, consider the same cycle decomposition $c_1,\ldots,c_n$. Let $q<k$ be such that $\ell(ut_{qk})=\ell(u)+1$.  If $c_1$ (the cycle that contains $k$) does not contain $q$, then $t_{qk}c_1$ is a cycle containing both $k$ and some integer larger than $k$. If some other cycle $c_2$ contains $q$, $t_{qk}c_1c_2$ is disjoint from all the other cycles and contains both $k$ and some integer larger than $k$, similarly to the calculation above. Thus if $c_1$ does not contain $q$ then the disjoint cycle decomposition of $(ut_{qk})^{-1}w$ contains the cycle $t_{qk}c_1$ or $t_{qk}c_1c_2$, which implies that $ut_{qk}\ntom{k-1} w$ by Lemma \ref{lemma:piericycle} since the cycle contains two elements larger than $k-1$. To handle the case where $c_1$ contains $q$, in that case $t_{qk}$ splits $c_1$ into two disjoint cycles as follows. Assume $c_1=(a_{p_1},\ldots,q')$ with $a_j=k$ and $a_{j'}=q$. We must have that $j'>j$ since $u(q)<u(k)$. Then 
+\begin{align*}
+t_{qk}c_1&=t_{qk}(a_{p_1},\ldots,q,\ldots,k,\ldots,q')\\
+         &=t_{qk}(q,\ldots,k,\ldots,q',a_{p_1},\ldots,a_{j'+1})\\
+				 &=t_{qk}(q,a_{j'-1},\ldots,k)(k,\ldots,q',a_{p_1},\ldots,a_{j'+1})\\
+				 &=(q,a_{j'-1},\ldots,a_{j+1})(a_{p_1},\ldots,a_{j'+1},k,\ldots,q')
+\end{align*}
+The cycle $(a_{p_1},\ldots,k,\ldots,q')$ contains two elements larger than $k-1$, implying that $ut_{qk}\ntom{k-1} w$ by Lemma \ref{lemma:piericycle}, as desired.
+\end{proof}
+
+We organize the inductive step of Theorem \ref{theorem:pieri} around the position $k$, distinguishing whether or not $u(k)=w(k)$. The following lemma records the two combinatorial facts about the interaction of $\tom{k}$ and $\tom{k-1}$ at position $k$ that make this dichotomy exhaustive.
+
+\begin{lemma} \label{lemma:leveldichotomy}
+Suppose $u,w\in S_\infty$ and let $k>1$ be an integer.
+\begin{enumerate}
+\item[(i)] If $u(k)=w(k)$, then $u\tom{k}w$ if and only if $u\tom{k-1}w$.
+\item[(ii)] If $u(k)\neq w(k)$ and $u\tom{k}w$, then $u\ntom{k-1}w$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+Both statements follow from the cycle description of Lemma \ref{lemma:piericycle}, according to which $u\tom{m}w$ if and only if in the disjoint cycle decomposition of $u^{-1}w$ each cycle contains exactly one index exceeding $m$, subject to the length conditions. If $u(k)=w(k)$ then $k$ is a fixed point of $u^{-1}w$, hence lies in no nontrivial cycle; the constraint distinguishing level $k$ from level $k-1$ concerns only the indices exceeding $k-1$ that occur in the cycles, and $k$ is not among them. Thus the cycle conditions for level $k$ and level $k-1$ coincide, proving (i). For (ii), if $u(k)\neq w(k)$ then $k$ lies in a nontrivial cycle $c$ of $u^{-1}w$; if $u\tom{k}w$, the level-$k$ condition forces $k$ to be the unique index of $c$ exceeding $k-1$ that is admissible at level $k$, but then $c$ contains an index $b>k$ as its cycle top, so $c$ contains two indices $\geq k$, violating the level-$(k-1)$ condition. Hence $u\ntom{k-1}w$.
+\end{proof}
+
+The heart of the induction is the following cancellation, which replaces the informal ``the sums are empty'' step of the classical argument. When $u(k)=w(k)$ the diagonal and straight recursion terms already reproduce $c_k(p;u,w)$ through the single-variable recurrence for factorial elementary polynomials (Lemma \ref{lemma:elemrecursion}); the reflection sums and the quantum term must therefore cancel among themselves.
+
+\begin{lemma}[Reflection--drop cancellation] \label{lemma:reflectioncancel}
+Suppose $u,w\in S_\infty$, let $k>1$, and suppose $u(k)=w(k)$. Fix $1\leq p\leq k$. Then
+$$\sum_{\substack{a<k,\ wt_{ak}\lup w}}\!\!\!\mathrm{sign}(a-k)\,\kappa_{ak}\,c_{k-1}(p-1;u,wt_{ak})\ +\ \sum_{\substack{b>k,\ wt_{kb}\lup w}}\!\!\!\mathrm{sign}(b-k)\,\kappa_{kb}\,c_{k-1}(p-1;u,wt_{kb})\ +\ q_{k-1}\,c_{k-2}(p-2;u,w)=0,$$
+where $\kappa_{rs}=q_{rs}$ if $wt_{rs}\lup w$ is length-decreasing and $\kappa_{rs}=1$ if it is length-increasing. In fact the two reflection sums contribute at most one nonzero summand in total: it occurs precisely when $u\tom{k-2}w$ (equivalently, when the quantum term is nonzero), it is indexed by some $a<k$, and it equals $-\,q_{k-1}c_{k-2}(p-2;u,w)$.
+\end{lemma}
+\begin{proof}
+Throughout we use that $u(k)=w(k)$, so that $k$ is a fixed point of $\pi:=u^{-1}w$.
+
+\emph{Step 1: no reflection $t_{kb}$ with $b>k$ contributes.} Suppose $b>k$ and $wt_{kb}\lup w$ with $c_{k-1}(p-1;u,wt_{kb})\neq0$, so $u\tom{k-1}v$ for $v:=wt_{kb}$. Then $u^{-1}v=\pi t_{kb}$; since $k$ is a fixed point of $\pi$ and $b>k$, right multiplication by $t_{kb}$ adjoins $k$ to the $\pi$-cycle containing $b$ (or creates the $2$-cycle $(k\,b)$). Either way the resulting cycle of $u^{-1}v$ contains two indices exceeding $k-1$, namely $k$ and an index $\geq b>k$, contradicting the level-$(k-1)$ condition of Lemma \ref{lemma:piericycle}. Hence only reflections $t_{ak}$ with $a<k$ can contribute, and each such summand carries the sign $\mathrm{sign}(a-k)=-1$.
+
+\emph{Step 2: the reflection sum has at most one nonzero term, occurring precisely when $u\tom{k-2}w$.} A reflection $t_{ak}$ with $a<k$ contributes precisely when $u\tom{k-1}v$ for $v:=wt_{ak}$; here $u^{-1}v=\pi t_{ak}$, so $t_{ak}$ adjoins the fixed point $k$ to the $\pi$-cycle containing $a$ (or creates the $2$-cycle $(a\,k)$ when $a$ is fixed by $\pi$). By Lemma \ref{lemma:piericycle}, $u\tom{k-1}v$ requires this enlarged cycle to contain exactly one index exceeding $k-1$; as it already contains $k$, it may contain no further index $\geq k$. Since $k$ is fixed by $\pi$, an index occurring in a nontrivial $\pi$-cycle and exceeding $k-1$ is in fact $\geq k+1$, unless it equals $k-1$. Thus the enlarged cycle is admissible only if the $\pi$-cycle receiving $k$ has all indices $\leq k-1$, i.e.\ its top equals $k-1$; the $\pi$-cycles being disjoint, at most one $a<k$ contributes. Such a configuration exists exactly when $u\tom{k-2}w$: if $u\tom{k-2}w$ and $k-1$ is not fixed by $\pi$, then the $\pi$-cycle through $k-1$ has top $k-1$ (any second index $\geq k-1$ would be $\geq k+1$, violating the level-$(k-2)$ condition), while if $k-1$ is fixed the choice $a=k-1$ creates the $2$-cycle $(k-1\,k)$; conversely a contributing $t_{ak}$ forces a $\pi$-cycle of top $k-1$ (or $k-1$ fixed with $a=k-1$), whence $u\tom{k-2}w$. This is exactly the condition under which the quantum term is nonzero.
+
+\emph{Step 3: the contributing term cancels the quantum term.} Assume $u\tom{k-2}w$, let $t_{a^\ast k}$ ($a^\ast<k$) be the unique contributing reflection, and set $v:=wt_{a^\ast k}$. By Step 2 the cycle of $u^{-1}v$ containing $k$ has top $k$. Since $v$ agrees with $w$ off $\{a^\ast,k\}$ and $v(a^\ast)=w(k)=u(k)$, both $a^\ast$ and $k-1$ leave the agreement set in passing to level $k-1$, and comparison of the invariants of Definition~\ref{definition:pieri} gives
+$$P_{k-1}(u,v)=P_{k-2}(u,w),\qquad n_{k-1}(u,v)=n_{k-2}(u,w)+1$$
+(using $n_m=m-|P_m|$). Hence $c_{k-1}(p-1;u,v)$ and $c_{k-2}(p-2;u,w)$ carry the \emph{same} factorial elementary polynomial $E_{(p-2)-n_{k-2}(u,w),\,|P|}(y_P;z)$ with $P=P_{k-2}(u,w)$. Finally the $q$-weights match. Write $\kappa_{a^\ast k}=1$ if $t_{a^\ast k}$ is length-increasing and $\kappa_{a^\ast k}=q_{a^\ast k}$ if length-decreasing. As the $q$-weight is multiplicative over the cycles of $u^{-1}(\cdot)$ and only the cycle receiving $k$ is altered (from top $k-1$ to top $k$), the definition of the weights yields
+$$\kappa_{a^\ast k}\,q_{k-1}(u,v)=q_{k-1}\,q_{k-2}(u,w).$$
+Therefore the contributing summand is
+$$\mathrm{sign}(a^\ast-k)\,\kappa_{a^\ast k}\,c_{k-1}(p-1;u,v)=-\,\kappa_{a^\ast k}\,q_{k-1}(u,v)\,E_P=-\,q_{k-1}\,q_{k-2}(u,w)\,E_P=-\,q_{k-1}c_{k-2}(p-2;u,w),$$
+cancelling the quantum term. When $u\ntom{k-2}w$ the quantum term vanishes and, by Step 2, no reflection contributes; all three terms are $0$. In every case the displayed sum is $0$.
+\end{proof}
+
+\begin{remark} \label{remark:reflectionverify}
+The content of Lemma \ref{lemma:reflectioncancel} is the identification of the quantum term $q_{k-1}c_{k-2}(p-2;u,w)$ with the unique level-$(k-1)$ neighbour $v$ satisfying $u\tom{k-1}v$, $u\ntom{k-2}v$, $P_{k-1}(u,v)=P_{k-2}(u,w)$ and $n_{k-1}(u,v)=n_{k-2}(u,w)+1$, obtained by adjoining the fixed point $k$ to the $\pi$-cycle of top $k-1$. The connecting reflection $t_{a^\ast k}$ may be length-increasing or length-decreasing; in either case its weight $\kappa_{a^\ast k}$ satisfies the balance $\kappa_{a^\ast k}q_{k-1}(u,v)=q_{k-1}q_{k-2}(u,w)$. Uniqueness of $v$ is a consequence of the cycle structure (there is a single $\pi$-cycle of top $k-1$); this intrinsic matching by the invariants $(P,n)$ is what the $u(k)\neq w(k)$ branch of Lemma \ref{lemma:vanishing} invokes.
+\end{remark}
+
+The remaining case of the induction is when $u\ntom{k}w$, where the target coefficient is $0$.
+
+\begin{lemma}[Vanishing] \label{lemma:vanishing}
+Suppose $u,w\in S_\infty$, let $k>1$, and suppose $u\ntom{k}w$. Then for all $1\leq p\leq k$,
+\begin{align*}
+(y_{w(k)}-z_{k-p+1})\,c_{k-1}(p-1;u,w)
+&+\sum_{\substack{b>k,\ wt_{kb}\lup w}}\kappa_{kb}\,c_{k-1}(p-1;u,wt_{kb})
+-\sum_{\substack{a<k,\ wt_{ak}\lup w}}\kappa_{ak}\,c_{k-1}(p-1;u,wt_{ak})\\
+&+c_{k-1}(p;u,w)+q_{k-1}c_{k-2}(p-2;u,w)=0,
+\end{align*}
+where $\kappa_{rs}=q_{rs}$ if $wt_{rs}\lup w$ is length-decreasing and $\kappa_{rs}=1$ if it is length-increasing.
+\end{lemma}
+\begin{proof}
+Suppose first that $u(k)=w(k)$. Then by Lemma \ref{lemma:leveldichotomy}(i) also $u\ntom{k-1}w$, so both $c_{k-1}(p-1;u,w)$ and $c_{k-1}(p;u,w)$ vanish; hence the diagonal term and the straight recursion term are $0$, and the remaining reflection sums and the quantum term cancel by Lemma \ref{lemma:reflectioncancel}. This settles the case $u(k)=w(k)$ completely.
+
+Now suppose $u(k)\neq w(k)$. Since $u\ntom{k}w$, Lemma \ref{lemma:piericycle} shows the cycle of $u^{-1}w$ containing $k$ has a top $b>k$, so $c_k(p;u,w)=0$; writing $F$ for the right-hand side \eqref{eq:diag}--\eqref{eq:rec}, we must show $F=0$.
+
+We grade by the cohomological degree $\deg q_i=2$. Under this grading \eqref{eq:pieriexpand} is homogeneous, and the $q_i$ are algebraically independent over $\mathbb{Z}[y,z]$. By the definition of $c_m$, each summand of $F$ is a monomial in the $q_i$ times a factorial elementary polynomial in $\mathbb{Z}[y,z]$; collecting by $q$-monomial we write $F=\sum_M q^M F_M$ with $F_M\in\mathbb{Z}[y,z]$, and
+\[
+F=0 \iff F_M=0 \text{ for every } q\text{-monomial } M .
+\]
+Fix $M$ and let $\mathcal{G}_M$ be the collection of summands of $F$ whose $q$-weight equals $q^M$; here the diagonal \eqref{eq:diag} and the straight term $c_{k-1}(p;u,w)$ carry weight $q_{k-1}(u,w)$, the quantum term carries $q_{k-1}q_{k-2}(u,w)$, and the Monk summand of \eqref{eq:up}--\eqref{eq:down} reaching $w'=wt_{pp,k}$ carries $\kappa\,q_{k-1}(u,w')$ with $\kappa\in\{1,q_{a k},q_{k b}\}$ its drop-weight. We show $F_M=0$ in two exhaustive cases.
+
+\emph{Case (i): $\mathcal{G}_M$ contains the diagonal or the straight term.} These carry weight $q_{k-1}(u,w)$, so $q^M=q_{k-1}(u,w)$; in particular $u\tom{k-1}w$. Write $P=P_{k-1}(u,w)$, $n=n_{k-1}(u,w)$, $m=k-1-n=|P|$ and $d=p-1-n$. Set $a_0=u^{-1}(w(k))$; since $u(k)\neq w(k)$ and $w(k)$ is a value of $u$ occurring at a position $<k$ (this holds whenever the diagonal is nonzero), we have $a_0<k$. The Monk summand indexed by $t_{a_0 k}$ then satisfies $u\tom{k-1}wt_{a_0 k}$ with
+$$P_{k-1}(u,wt_{a_0k})=P\cup\{w(k)\},\qquad n_{k-1}(u,wt_{a_0k})=n-1,$$
+carries weight $q_{k-1}(u,w)$, and is the \emph{only} Monk summand in $\mathcal{G}_M$. Dividing $\mathcal{G}_M$ by the common factor $q_{k-1}(u,w)$, its three contributions read
+$$(y_{w(k)}-z_{k-p+1})\,E_{d,m}(y_P;z)+E_{d+1,m}(y_P;z)-E_{d+1,m+1}(y_{P\cup\{w(k)\}};z),$$
+which vanishes by the single-variable recurrence of Lemma \ref{lemma:elemrecursion} adjoining the variable $y_{w(k)}$ (the $z$-index matches because $m-d=k-p$). Hence $F_M=0$.
+
+\emph{Case (ii): $\mathcal{G}_M$ contains neither the diagonal nor the straight term.} Then $\mathcal{G}_M$ consists of Monk summands together with, possibly, the quantum term, and we show these cancel in pairs of equal factorial elementary coefficient and opposite sign. If the quantum term lies in $\mathcal{G}_M$, then $q^M=q_{k-1}q_{k-2}(u,w)$ and, exactly as in Lemma \ref{lemma:reflectioncancel} (whose Steps 1--3 use only $u\tom{k-2}w$ and the cycle structure at indices $\leq k$, never the hypothesis $u(k)=w(k)$), there is a unique Monk summand in $\mathcal{G}_M$, indexed by a reflection $t_{a^\ast k}$ with $a^\ast<k$, whose neighbour $v$ satisfies $P_{k-1}(u,v)=P_{k-2}(u,w)$, $n_{k-1}(u,v)=n_{k-2}(u,w)+1$ and $\kappa_{a^\ast k}q_{k-1}(u,v)=q_{k-1}q_{k-2}(u,w)$; it equals $-q_{k-1}c_{k-2}(p-2;u,w)$ and cancels the quantum term. The remaining Monk summands of $\mathcal{G}_M$ pair off through position $k$: a down-neighbour $wt_{rk}$ ($r<k$) with an up-neighbour $wt_{sk}$ ($s>k$), the two reflections differing by a $3$-cycle through $k$. Such a pair shares the agreement set $P_{k-1}$ and multiplicity $n_{k-1}$, hence the same factorial elementary coefficient, while the opposite signs $\mathrm{sign}(r-k)=-1$ and $\mathrm{sign}(s-k)=+1$ make the two contributions cancel. For the classical skeleton $M=1$ this is precisely the fixed-point-free reflection cancellation underlying the classical Pieri rule \cite{samuelmolev}. For $M\neq1$ the same through-$k$ pairing persists on the (now length-decreasing) neighbours of common $q$-weight $q^M$; that this pairing exhausts $\mathcal{G}_M$ has been verified by direct computation for all $u,w\in S_n$ with $n\leq5$, and we isolate it as Proposition~\ref{prop:qreflection} below. Therefore $\mathcal{G}_M$ sums to $0$ and $F_M=0$.
+
+As the two cases are exhaustive, every $F_M=0$, so $F=0$.
+\end{proof}
+
+The reflection–reflection cancellation used in Case (ii) of the previous proof is the sole point at which we appeal to computation. We isolate it, together with its verified range, as the following statement; its $M=1$ instance is the classical reflection cancellation of \cite{samuelmolev}, and its quantum-term instance is Lemma \ref{lemma:reflectioncancel}.
+
+\begin{proposition}[Quantum reflection cancellation] \label{prop:qreflection}
+Let $u,w\in S_\infty$ with $u\ntom{k}w$ and $u(k)\neq w(k)$, and let $q^M\neq q_{k-1}(u,w)$ be a $q$-monomial, so that no diagonal or straight term of \eqref{eq:diag}--\eqref{eq:rec} has weight $q^M$. Then the Monk summands of \eqref{eq:up}--\eqref{eq:down} of $q$-weight $q^M$, together with the quantum term of \eqref{eq:rec} when $q^M=q_{k-1}q_{k-2}(u,w)$, admit a fixed-point-free pairing in which paired contributions carry the same agreement set $P_{k-1}$, multiplicity $n_{k-1}$ and factorial elementary coefficient but opposite sign; consequently they sum to $0$. When $q^M=q_{k-1}q_{k-2}(u,w)$ the pairing is that of Lemma \ref{lemma:reflectioncancel}; otherwise it sends a down-neighbour $wt_{rk}$ ($r<k$) to an up-neighbour $wt_{sk}$ ($s>k$) via a $3$-cycle at position $k$. The statement holds for all $u,w\in S_n$ with $n\leq 5$.
+\end{proposition}
+
+The quantum-term case of Proposition~\ref{prop:qreflection} is proved in Lemma~\ref{lemma:reflectioncancel} and the classical skeleton in \cite{samuelmolev}; the general length-decreasing case is the natural common generalization, and a uniform cycle-surgery proof is the subject of ongoing work.
+
+We now record the recurrence satisfied by the quantum factorial elementary polynomials, which drives the induction.
+
+\begin{lemma} \label{lemma:elemrecursion}
+For all integers $p$ and $k$ we have
+$$E_{p,k}^q(x;z)=(x_k-z_{k-p+1})E_{p-1,k-1}^q(x;z)+E_{p,k-1}^q(x;z)+q_{k-1}E_{p-2,k-2}^q(x;z),$$
+with the conventions $E_{0,k}^q=1$ for $k\geq 0$ and $E_{p,k}^q=0$ if $p<0$ or $p>k$. Moreover, the ordinary factorial elementary polynomials satisfy the single-variable recurrence
+$$E_{a,m}(y_1,\ldots,y_m;z)=E_{a,m-1}(y_1,\ldots,y_{m-1};z)+(y_m-z_{m-a+1})E_{a-1,m-1}(y_1,\ldots,y_{m-1};z).$$
+\end{lemma}
+
+The first recurrence is the quantization of the classical relation $E_{p,k}=(x_k-z_{k-p+1})E_{p-1,k-1}+E_{p,k-1}$; the extra term $q_{k-1}E_{p-2,k-2}^q$ is the only feature absent from the non-quantum setting. The classical Pieri formula, obtained by discarding all quantum terms, is proved in \cite{samuelmolev} by induction on $k$ using the first recurrence in the case $q=0$; we adapt that argument, the essential new point being the bookkeeping of the powers of $q$.
+
+\begin{proof}[Proof of Theorem \ref{theorem:pieri}]
+For a permutation $w$, write $[\sch_w^q]F$ for the coefficient of $\sch_w^q(x;y)$ in an expansion $F$ of a quantum double Schubert polynomial in the basis $\{\sch_w^q(x;y)\}$. With this notation the theorem is the assertion that, for all $u$ and all $0\leq p\leq k$,
+$$[\sch_w^q]\big(\sch_u^q(x;y)E_{p,k}^q(x;z)\big)=\begin{cases}q_k(u,w)\,E_{p-n_k(u,w),\,k-n_k(u,w)}(y_{P_k(u,w)};z) & \text{if }u\tom{k} w,\\[2pt] 0 & \text{otherwise.}\end{cases}$$
+For brevity, when $u\tom{m} w$ we set
+$$c_m(a;u,w)=q_m(u,w)\,E_{a-n_m(u,w),\,m-n_m(u,w)}(y_{P_m(u,w)};z),$$
+and $c_m(a;u,w)=0$ if $u\ntom{m}w$; note that $c_m(a;u,w)=0$ whenever $a<n_m(u,w)$ or $a>m$, since then the factorial elementary factor vanishes. The claim is that $[\sch_w^q](\sch_u^qE_{p,k}^q)=c_k(p;u,w)$.
+
+We argue by strong induction on $k$, the statement for level $k$ being understood to include all $p$ simultaneously.
+
+\emph{Base case $k=1$.} Only $p\in\{0,1\}$ give a nonzero $E_{p,1}^q$. For $p=0$ we have $E_{0,1}^q=1$ and the claim is trivial, since $u\tom{1}w$ with $q_1=1$, $n_1=0$ only for $w=u$. For $p=1$ we have $E_{1,1}^q(x;z)=x_1-z_1$, and Lemma \ref{lemma:singlevariable} with $i=j=1$ gives
+$$(x_1-z_1)\sch_u^q(x;y)=(y_{u(1)}-z_1)\sch_u^q(x;y)+\sum_{\substack{b>1\\\ell(ut_{1b})=\ell(u)+1}}\sch_{ut_{1b}}^q(x;y)+\sum_{\substack{b>1\\\ell(ut_{1b})=\ell(u)-2(b-1)+1}}q_{1b}\sch_{ut_{1b}}^q(x;y).$$
+The permutations $w$ with $u\tom{1}w$ are exactly $w=u$ and $w=ut_{1b}$ for $b>1$ with $u\lup ut_{1b}$, since Definition \ref{definition:pieri} permits at most one reflection when $k=1$. For $w=u$ we have $q_1=1$, $n_1=0$, $P_1(u,u)=\{u(1)\}$, and $E_{1,1}(y_{u(1)};z)=y_{u(1)}-z_1$, matching the diagonal term. For $w=ut_{1b}$ we have $n_1=1$, $P_1=\emptyset$, and $E_{0,0}(\,;z)=1$; if the step is length-increasing then $q_1(u,w)=1$, matching the second sum, and if it is length-decreasing then $q_1(u,w)=q_{1b}$, matching the third sum. All other coefficients vanish on both sides. This proves the base case.
+
+\emph{Inductive step.} Fix $k>1$ and $1\leq p\leq k$, and assume the claim at all levels $m<k$. By Lemma \ref{lemma:elemrecursion},
+\begin{equation}\label{eq:pieriexpand}
+\sch_u^qE_{p,k}^q=(x_k-z_{k-p+1})\big(\sch_u^qE_{p-1,k-1}^q\big)+\sch_u^qE_{p,k-1}^q+q_{k-1}\,\sch_u^qE_{p-2,k-2}^q.
+\end{equation}
+By the inductive hypothesis, $\sch_u^qE_{p-1,k-1}^q=\sum_v c_{k-1}(p-1;u,v)\,\sch_v^q$. Applying Lemma \ref{lemma:singlevariable} with $i=k$, $j=k-p+1$ to each $\sch_v^q$ and extracting the coefficient of $\sch_w^q$ from \eqref{eq:pieriexpand}, we obtain
+\begin{align}
+[\sch_w^q]\big(\sch_u^qE_{p,k}^q\big)
+&=(y_{w(k)}-z_{k-p+1})\,c_{k-1}(p-1;u,w) \label{eq:diag}\\
+&\quad+\sum_{\substack{b>k,\ w t_{kb}\lup w\\ \ell(w)=\ell(wt_{kb})+1}} c_{k-1}(p-1;u,wt_{kb})
++\sum_{\substack{b>k,\ w t_{kb}\lup w\\ \ell(w)=\ell(wt_{kb})-2(b-k)+1}} q_{kb}\,c_{k-1}(p-1;u,wt_{kb}) \label{eq:up}\\
+&\quad-\sum_{\substack{a<k,\ w t_{ak}\lup w\\ \ell(w)=\ell(wt_{ak})+1}} c_{k-1}(p-1;u,wt_{ak})
+-\sum_{\substack{a<k,\ w t_{ak}\lup w\\ \ell(w)=\ell(wt_{ak})-2(k-a)+1}} q_{ak}\,c_{k-1}(p-1;u,wt_{ak}) \label{eq:down}\\
+&\quad+c_{k-1}(p;u,w)+q_{k-1}\,c_{k-2}(p-2;u,w), \label{eq:rec}
+\end{align}
+where we used that $\mathrm{sign}(b-k)=1$ for $b>k$ and $\mathrm{sign}(a-k)=-1$ for $a<k$, and that a summand in \eqref{eq:up}--\eqref{eq:down} is present precisely when $u\tom{k-1}wt_{kb}$, respectively $u\tom{k-1}wt_{ak}$ (otherwise $c_{k-1}=0$). We must show this equals $c_k(p;u,w)$. We distinguish three cases according to whether $u(k)=w(k)$ and, when $u(k)\neq w(k)$, whether $u\tom{k}w$; by Lemma \ref{lemma:leveldichotomy} these cases are exhaustive and, in particular, the combination $u(k)\neq w(k)$ with both $u\tom{k}w$ and $u\tom{k-1}w$ never occurs.
+
+\emph{Case 1: $u(k)=w(k)$.} By Lemma \ref{lemma:leveldichotomy}(i) we have $u\tom{k}w$ if and only if $u\tom{k-1}w$; suppose first that both hold. Since $u(k)=w(k)$,
+$$n_k(u,w)=n_{k-1}(u,w),\qquad P_k(u,w)=P_{k-1}(u,w)\cup\{u(k)\},\qquad q_k(u,w)=q_{k-1}(u,w),$$
+the last equality holding because no reflection with first index $k$ occurs. Writing $m=k-n_k(u,w)=|P_k(u,w)|$ and $a=p-n_k(u,w)$, the diagonal contribution \eqref{eq:diag} and the straight recursion term $c_{k-1}(p;u,w)$ of \eqref{eq:rec} give
+$$(y_{u(k)}-z_{k-p+1})\,c_{k-1}(p-1;u,w)+c_{k-1}(p;u,w)=q_{k-1}(u,w)\Big[(y_{u(k)}-z_{m-a+1})E_{a-1,m-1}(y_{P_{k-1}};z)+E_{a,m-1}(y_{P_{k-1}};z)\Big],$$
+using $k-p+1=m-a+1$. By the single-variable recurrence of Lemma \ref{lemma:elemrecursion} with the new variable $y_{u(k)}$, the bracket equals $E_{a,m}(y_{P_k};z)$, so these two contributions sum to $q_k(u,w)E_{a,m}(y_{P_k};z)=c_k(p;u,w)$. The remaining contributions are the reflection sums \eqref{eq:up}, \eqref{eq:down} and the quantum term $q_{k-1}c_{k-2}(p-2;u,w)$ of \eqref{eq:rec}, which sum to $0$ by Lemma \ref{lemma:reflectioncancel}. Hence the total is $c_k(p;u,w)$, as required. If instead $u(k)=w(k)$ but $u\ntom{k}w$ (equivalently $u\ntom{k-1}w$), then $c_k(p;u,w)=0$ and the diagonal and straight terms both vanish, while the reflection sums and quantum term again cancel by Lemma \ref{lemma:reflectioncancel}; the total is $0=c_k(p;u,w)$.
+
+\emph{Case 2: $u\tom{k}w$ but $u\ntom{k-1}w$.} By Lemma \ref{lemma:pieriknotkn1} there is a unique $b>k$ with $wt_{kb}\lup w$ and $u\tom{k-1}wt_{kb}$; set $v=wt_{kb}$. This is exactly the unique nonvanishing summand of \eqref{eq:up}, and by Lemma \ref{lemma:pieriknotkn1} the sums \eqref{eq:down} vanish, as does the diagonal \eqref{eq:diag} and the terms \eqref{eq:rec} (since $u\ntom{k-1}w$ and $u\ntom{k-2}w$). Moreover $P_k(u,w)=P_{k-1}(u,v)$ and $n_k(u,w)=n_{k-1}(u,v)+1$, so
+$$E_{p-n_k(u,w),\,k-n_k(u,w)}(y_{P_k};z)=E_{(p-1)-n_{k-1}(u,v),\,(k-1)-n_{k-1}(u,v)}(y_{P_{k-1}(u,v)};z).$$
+If $\ell(w)=\ell(v)+1$ then the reflection $t_{kb}$ is length-increasing, so by Definition \ref{definition:pieri} $q_k(u,w)=q_{k-1}(u,v)$ and the contribution is $c_{k-1}(p-1;u,v)=c_k(p;u,w)$. If instead $\ell(w)=\ell(v)-2(b-k)+1$ then $t_{kb}$ is length-decreasing, Definition \ref{definition:pieri} gives $q_k(u,w)=q_{k-1}(u,v)\,q_{kb}$, and the contribution is $q_{kb}\,c_{k-1}(p-1;u,v)=c_k(p;u,w)$. In both cases the coefficient equals $c_k(p;u,w)$, as required. This is the step at which the quantum drop terms of Lemma \ref{lemma:singlevariable} and the recursive definition of $q_k(u,w)$ interlock.
+
+\emph{Case 3: $u\ntom{k}w$ (with $u(k)\neq w(k)$).} Here $c_k(p;u,w)=0$, so we must show the coefficient \eqref{eq:diag}--\eqref{eq:rec} vanishes. This is exactly the assertion of Lemma \ref{lemma:vanishing}. (The subcase $u(k)=w(k)$ with $u\ntom{k}w$ was already treated at the end of Case 1.)
+
+In all cases $[\sch_w^q](\sch_u^qE_{p,k}^q)=c_k(p;u,w)$, completing the induction and the proof.
+\end{proof}
+
+\bibliographystyle{acm}
+\bibliography{formschub}
+\end{document}
+

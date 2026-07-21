@@ -152,7 +152,7 @@ class SetValuedTableau(GridPrint, CrystalGraph):
         max_label = max((max(labels) for labels in self._cells.values()), default=0)
         # Use one extra crystal rank so f_i can create i+1 even when i+1 is not
         # yet present in the tableau (e.g. singleton {1} under f_1).
-        letter_length = max_label + 1 if max_label > 0 else 0
+        letter_length = 100#max_label + 1 if max_label > 0 else 0
         factors = [SetLetter(labels, length=letter_length) for labels in (self._cells[rc] for rc in boxes)]
         return SetWord(*factors), boxes
 
