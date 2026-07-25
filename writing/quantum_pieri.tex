@@ -9,6 +9,7 @@
 \usepackage{fancyvrb}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{cases}
 \usepackage{caption}
@@ -18,11 +19,14 @@
 \usepackage{mathtools}
 \usepackage[margin=1in]{geometry}
 \usepackage[makeroom]{cancel}
-\usetikzlibrary{decorations.pathreplacing}
+\usepackage{chemarrow}
+\usetikzlibrary{decorations.pathreplacing, decorations.pathmorphing, math}
 \newcommand{\tikznode}[3][inner sep=0pt]{\tikz[remember
 picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 
-\usepackage{ytableau}
+
+
+%\usepackage{ytableau}
 %\usepackage{witharrows}
 
 \newtheorem{lemma}{Lemma}[section]
@@ -46,8 +50,9 @@ picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 %%% 
 
 \theoremstyle{definition}
-\newtheorem{definition}{Definition}[section]
-\newtheorem{example}{Example}[section]
+\newtheorem{definition}[lemma]{Definition}
+\newtheorem{example}[lemma]{Example}
+\newtheorem{method}[lemma]{Method}
 
 %%
 %% Again more of these can be added by uncommenting and editing the
@@ -120,7 +125,15 @@ picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 \DeclareMathOperator{\Schub}{Schub}
 \DeclareMathOperator{\ESchub}{ESchub}
 \DeclareMathOperator{\sch}{\mathfrak{S}}
-\newcommand{\tom}[1]{\xrightarrow{#1}}
+\DeclareMathOperator{\qsch}{\widetilde{\mathfrak{S}}}
+
+
+\newcommand{\xrightsquigarrow}[2][]{%
+	\mathrel{\mathop{\rightsquigarrow}\limits^{\scriptstyle #2}%
+	\ifx\hfuzz#1\hfuzz\else_{\scriptstyle #1}\fi}%
+}
+
+\newcommand{\tom}[1]{\ensuremath{\xrightsquigarrow{#1}}}
 %\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
 %\counterwithout{equation}{section}
 %\setcounter{section}{-1}
@@ -139,6 +152,7 @@ picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 
 \newcommand{\code}{\mathfrak{c}}
 \newcommand{\ducode}{\overline{\mathfrak{c}}}
+\newcommand{\wte}{\mathbf{E}}
 %$$w_0(n)^{(i)}=w_0(n)w_0(n+1-i)w_0(n-i)$$
 
 %\begin{theorem}
@@ -149,10 +163,129 @@ picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 \section{Introduction}
 
 
+
 \section{Definitions and statement of results}
 
-\begin{definition}[$\tom{k}$, $P_k(u,w)$, $q_k(u,w)$, $n_k(u,w)$] \label{definition:pieri}
-We define a relation $\tom{k}$ on pairs of permutations, introduced in its non-quantum form by Sottile \cite{sottile}.%, which was used originally to indicate when the coefficient of a Schubert polynomial is nonzero in a suitable application of the Pieri formula. In the generalization to double Schubert polynomials in \cite{samuelmolev}, the same relation applies to all nonzero coefficients in the expansion of the generalized Pieri formula. The relation plays the same role in our case.
+\subsection{Quantum double Schubert polynomials and triple quantum Schubert structure constants}
+We fix $n\geq 1$ and write
+$$x=(x_1,\ldots,x_n),\qquad y=(y_1,\ldots,y_n),\qquad q=(q_1,\ldots,q_{n-1}).$$
+For $1\leq a<b\leq n$, set
+$$q_{ab}:=q_aq_{a+1}\cdots q_{b-1},$$
+and use the cohomological grading $\deg q_i=2$ (equivalently $\deg q_{ab}=2(b-a)$).
+
+Let $s_i$ act on the $y$-variables by swapping $y_i,y_{i+1}$, and define the divided difference operators
+$$\partial_i^{(y)}f:=\frac{f-s_i f}{y_i-y_{i+1}}\qquad(1\leq i\leq n-1).$$
+For $w\in S_n$, if $w=s_{i_1}\cdots s_{i_r}$ is any reduced word, set
+$$\partial_w^{(y)}:=\partial_{i_1}^{(y)}\cdots \partial_{i_r}^{(y)}.$$
+
+Following Kirillov--Maeno \cite{kirillov2000quantum}, define the quantum elementary polynomials $e_j^{(q)}(x_1,\ldots,x_k)$ by
+$$\Delta_k(t\mid x_1,\ldots,x_k):=\sum_{j=0}^k t^{k-j}e_j^{(q)}(x_1,\ldots,x_k),$$
+where
+$$\Delta_k(t\mid x_1,\ldots,x_k)=\det\!\begin{pmatrix}
+x_1+t & q_1 & 0 & \cdots & 0\\
+-1 & x_2+t & q_2 & \ddots & \vdots\\
+0 & -1 & x_3+t & \ddots & 0\\
+\vdots & \ddots & \ddots & \ddots & q_{k-1}\\
+0 & \cdots & 0 & -1 & x_k+t
+\end{pmatrix}.
+$$
+
+Let $w_0\in S_n$ be the longest permutation. The top quantum double Schubert polynomial is
+$$\qsch_{w_0}(x;y):=\prod_{i=1}^{n-1}\Delta_i(-y_{n-i}\mid x_1,\ldots,x_i),$$
+and for $w\in S_n$ we define
+$$\qsch_w(x;y):=(-1)^{\ell(w_0) - \ell(w)}\partial_{ww_0}^{(y)}\qsch_{w_0}(x;y).$$
+Its specialization
+$$\qsch_w(x):=\qsch_w(x;0)$$
+is the quantum Schubert polynomial. In particular, at $q=0$ these recover the ordinary double and single Schubert polynomials.
+
+Given their stability property, we may let the number of variables be infinite, indexing the polynomials by $S_\infty$. As a module over $\mathbb{Z}[q][y]$, the quantum double Schubert polynomials form a basis of $\mathbb{Z}[q][x,y]$, and we may write
+$$\qsch_u(x;y)\qsch_v(x;z)=\sum_{w,d}q^dc_{u,v}^{w,d}(y;z)\qsch_w(x;y)$$
+where $d=(d_1,\ldots,d_{n-1})$ is a weak composition and $q^d=q_1^{d_1}\cdots q_{n-1}^{d_{n-1}}$. The coefficients $c_{u,v}^{w,d}(y;z)$ are the \emph{triple quantum Schubert structure constants}, which are polynomials in $y$ and $z$ with integer coefficients. This product respects the grading where for each $i$, $\deg y_i=\deg z_i=1$ and $\deg q_i=2$. In particular, if $c_{u,v}^{w,d}(y;z)\neq 0$, then $\deg c_{u,v}^{w,d}(y;z)=\ell(u)+\ell(v)-\ell(w)+2\sum_i d_i$. Unlike the usual triple Schubert structure constants, they do not exhibit triangularity in Bruhat order, and indeed we may have $\ell(w) < \ell(u) + \ell(v)$.
+
+For $d=(0,\ldots,0)$, this is the ordinary triple Schubert calculus structure constant, and it was proved in \cite{gao2025grahampositivitytripleschubert} that these have the positivity property that they are polynomials in the differences $y_i-z_j$ with nonnegative integer coefficients. We will refer to this as \emph{triple Schubert positivity}. We have the following conjecture:
+\begin{conjecture}
+For all $u,v,w$ and $d$, the structure constants $c_{u,v}^{w,d}(y;z)$ exhibit triple Schubert positivity.
+\end{conjecture}
+We will provide formulas below that demonstrate this in special cases. In particular, we prove
+
+\begin{theorem}
+Suppose $u,v,w\in S_\infty$ and $v$ is $k$-Grassmannian for some $k$. Then for any $d$, $c_{u,v}^{w;d}(y;z)$ exhibits triple Schubert positivity.
+\end{theorem}
+
+\subsection{The parabolic case}
+
+Unlike ordinary cohomology or equivariant cohomology, quantum cohomology and equivariant quantum cohomology do not demonstrate simple functoriality, in the sense that a projection of the complete flag variety $G/B$ to a partial flag variety $G/P$ does not induce a homomorphism of rings $QH_T^*(G/P)\to QH_T^*(G/B)$, and indeed the quantum cohomology of $G/P$ is not isomorphic to the subring of the quantum cohomology of $G/B$ generated by the Schubert classes indexed by $W^P$. This is reflected in the fact that there are parabolic quantum double Schubert polynomials defined in a different manner that represent Schubert classes in $QH_T^*(G/P)$ \cite{lam2014quantum} and are not in general equal to the quantum double Schubert polynomials above.
+
+\begin{definition}[Parabolic quantum double Schubert polynomials]
+	Following Lam and Shimozono \cite{lam2014quantum}, we define parabolic quantum double Schubert polynomials as follows. Fix an integer $n>0$. A parabolic subgroup $W_P$ of $S_{n}$, which has Coxeter generators $s_1,\ldots,s_{n-1}$, is generated by a subset $P\subseteq \{s_1,\ldots,s_{n-1}\}$. In terms of the subgroup's properties, it is most natural to identify $P$ by the reflections that it \emph{excludes}. If $P$ is generated by $S\setminus \{s_{i_1},\ldots,s_{i_k}\}$ in increasing order, we define integers $n_1,\ldots,n_{k+1}$ with
+	$$n_1+\cdots+n_{k+1}=n$$
+	by $n_1 = i_1$ and $n_p = i_{p} - i_{p-1}$ for $2\leq p\leq k+1$. Then $N_j$ for $j\geq 1$ is defined by
+	$$N_j = n_1+\cdots+n_j$$
+	for $0\leq j\leq k+1$.
+	
+	For such a setup, define a matrix $D^P_j$ to be the $n\times n$ matrix with $x_1,\ldots,x_n$ on the diagonal, $-1$ on the superdiagonal, and $(-1)^{n_{j+1}+1}q_j$ at $(N_{j+1},N_{j-1}+1)$ for $1\leq j\leq k$. Notice that there are precisely $k$ $q$ variables, and we set
+	$$\deg q_j = n_j + n_{j+1}$$  
+	
+	Define 
+	$$\Delta^P_j(t;x)=\det(D^P_j-t\mathrm{Id})$$
+	Then we define the parabolic quantum double Schubert polynomials $\qsch_w^P(x;y)$ for $w\in W^P$ by
+	$$\qsch^P_w(x;y)=(-1)^{\ell(w(w_0^P)^{-1})}\partial_{w(w_0^P)^{-1}}^{(y)}\prod_{j=1}^k \Delta^P_j(-y_{n - N_{j+1}+1},\ldots,-y_{n-N_j};x)$$
+	where $w_0^P$ is the longest element of $W^P$. 
+	
+	Taken as defined, when we vary $n$ these polynomials are not stable under inclusion and do not form a basis of $\mathbb{Z}[q][x_1,\ldots,x_n;y]$ as a module over $\mathbb{Z}[q][y]$. To obtain stability and a basis, instead we fix $n$ and choose $N>n$ as large as we would like, maintaining $N_{k+1}=n$ and setting $n_{k+2} = N-n$. From a cohomological perspective, this introduces ``extraneous'' polynomials that are indexed by elements not in $W^P$. The full indexing set is $W^{P^+}\subset S_\infty$, where
+	$$P^+ = P \cup \{s_{n+1},s_{n+2},\ldots\}$$
+\end{definition}
+
+\begin{example}
+As equivariant cohomology rings of finite dimensional projective varieties over $\mathbb{C}$ are finitely generated modules over the coefficient ring, it is fully expected that products of double Schubert polynomials may include terms indexed by permutations that do not lie within the indexing set of the basis of Schubert classes. For example, consider the following non-quantum double Schubert polynomial product, with $P=\{s_1,s_2\}$ and basis elements in $S_4$:
+\begin{align*}
+\sch_{2413}(x;y)\sch_{3412}(x;y)
+&= - (\alpha_1+\alpha_2)(\alpha_1+\alpha_2+\alpha_3)(\alpha_2+\alpha_3)\,\sch_{3412}(x;y) \\
+&\quad + (\alpha_1+\alpha_2)(\alpha_1+2\alpha_2+2\alpha_3+\alpha_4)\,\sch_{35124}(x;y) \\
+&\quad - (\alpha_1+\alpha_2)\,\sch_{361245}(x;y) \\
+&\quad - (\alpha_1+2\alpha_2+2\alpha_3+\alpha_4)\,\sch_{45123}(x;y) \\
+&\quad + \sch_{461235}(x;y).
+\end{align*}
+Not only does the product $\qsch_{2413}^{P}(x;y)\qsch_{3412}^{P}(x;y)$ include extra terms indexed by permutations in $W^P$, there are also terms with nonzero coefficients that are in $W^{P^+}\setminus W^P$:
+\begin{align*}
+q_1(\alpha_1\alpha_2+\alpha_1\alpha_3+\alpha_2\alpha_3+\alpha_2^2)\,\qsch_{132}^{P}(x;y)
+&+ q_1(\alpha_1+\alpha_2)\,\qsch_{231}^{P}(x;y) \\
+&+ q_1(\alpha_2+\alpha_3)\,\qsch_{1423}^{P}(x;y) \\
+&+ \color{red}{q_1(\alpha_1+\alpha_2)\,\qsch_{13254}^{P^+}(x;y)} \\
+&+ \color{red}{q_1\,\qsch_{14253}^{P^+}(x;y)} \\
+&+ q_1\,\qsch_{15234}^{P}(x;y) \\
+&+ q_1\,\qsch_{2413}^{P}(x;y)
+\end{align*}
+\end{example}
+\begin{definition}[$q$-vectors and Peterson-Woodward lifts]
+	Define $Q^\vee$, for legacy purposes, to be the set of weak compositions. For an integer $i$ and $d\in Q^\vee$, define
+	$$\langle d\rangle_i = 2d_i - d_{i-1} - d_{i + 1}$$
+	The double indexed version will be denoted by
+	$$\langle d\rangle_{ij} = \sum_{k=i}^{j-1}\langle d\rangle_k$$
+
+	For a parabolic subgroup $W_P$, we define $Q^\vee_P$ to be the set of weak compositions $d$ such that $\langle d\rangle_i = 0$ for all $s_i\notin P$. The $q$-vectors in $W^P$ are indexed by $Q^\vee/Q^\vee_P$.
+
+	Let $d_P\in Q^\vee/Q^\vee_P$. A \emph{Peterson-Woodward lift} of $d_P$ is a $d\in Q^\vee$ such that $d_P\in d+ Q_P^\vee$ and $\langle d\rangle_{ij}\in \{0,-1\}$ for all $i,j$ such that $s_{i},\ldots,s_{j-1}\in P$.
+ \end{definition}
+
+ \begin{method}[Checking the Peterson-Woodward lift property]
+ While backing out a Peterson-Woodward lift is difficult, going in the other direction is not. Suppose $d\in Q^\vee$ and $P$ is parabolic. If there is any $i\in P$ such that $\langle d\rangle_i\notin\{0,-1\}$, then $d$ is not a Peterson-Woodward lift. If this condition does hold, let $z_P(d)$ be the set of all indexes $i$ such that $\langle d\rangle_i = 0$. This set is naturally divided into maximal disjoint intervals $I_1,\ldots,I_m$. We must check the additional condition that for each such $I$ and each pair $i<j$ with $i,j-1\in I$, the condition $\langle d\rangle_{ij}\in\{0,-1\}$ holds. If it does, then $d$ is a Peterson-Woodward lift of a unique $d_P\in Q^\vee/Q^\vee_P$. We denote this $d_P$ by $\pi_P(d)$. We prove the following result.
+ \end{method}
+
+ \begin{proposition}
+Let $W_P$ be a parabolic subgroup of $S_\infty$ with $P=P^+$ and let $u,v,w\in W^{P}$. Then for any $d_P = \pi_P(d)\in Q^\vee/Q_P^\vee$, we have that
+$$c_{u,v}^{w,d_P}(y;z) = c_{u,v}^{ww_Pw_{z_P(d)},d}(y;z),$$
+\end{proposition}
+
+Thus, though we lack a simple functoriality property, we can reduce the computation of parabolic triple quantum Schubert structure constants completely to the complete flag variety case with an efficient algorithm. We obtain a nontrivial corollary from this.
+
+\begin{corollary}[Triple quantum Schubert positivity for the Grassmannian case]
+Suppose $u,v,w\in S_n$ are $k$-Grassmannian, where $P$ is the corresponding parabolic subroup such that $n_1 = k$ and $n_2 = n - k$. Then $c_{u,v}^{w;d}(y;z)$ exhibits triple Schubert positivity.
+\end{corollary}
+
+
+\begin{definition}[$\tom{k}$, $P_k(u,w)$, $q_k(u,w)$, $E_{p,k}(y;z)$, $\wte_k(y_A;z)$] \label{definition:pieri}
+We define a relation $\tom{k}$ on pairs of permutations, introduced in its non-quantum form by Sottile \cite{sottile}, which was used originally to indicate when the coefficient of a Schubert polynomial is nonzero in a suitable application of the Pieri formula. In the generalization to double Schubert polynomials in \cite{samuelmolev}, the same relation applies to all nonzero coefficients in the expansion of the generalized Pieri formula. The relation plays the same role in our case. 
 
 Given $u,u'\in S_\infty$ and a positive integer $k$, we declare that $u\tom{k} w$ if there exists a $p$ with $0\leq p\leq k$ such that there are transpositions $t_{a_1b_1},\ldots,t_{a_pb_p}$ satisfying 
 \begin{enumerate}
@@ -166,19 +299,32 @@ $$\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(ut_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})-
 for all $i$
 \item $w=ut_{a_1b_1}\cdots t_{a_pb_p}$
 \end{enumerate}
+In contrast to the non-quantum case, $u\tom{k} w$ does not imply that $\ell(u) \leq \ell(w)$, as the final condition can cause the length of the permutation to drop. For intuition, the condition $\ell(ut_{ab}) = \ell(u) - 2(b - a) + 1$ means that if we write the reflection $t_{ab}$ as
+$$s_{b}s_{b-1}\cdots s_{a+1}s_as_{a+1}\cdots s_{b-1}s_b$$
+then each simple reflection in this word cancels a corresponding simple reflection in a reduced word for $u$, as opposite to the length-increase case where there is a word for which precisely one simple reflection is inserted, regardless of the length of the reflection as a permutation.
+
 If $u\tom{k} w$, define 
 $$P_k(u,w)=\{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
 Also, we define $q_k(u,w)$ recursively. If $u=w$, define $q_k(u,w)=1$. If we have defined $q_k(u,w')$ with $w'=t_{a_1b_1}\cdots t_{a_{p-1}b_{p-1}}$, suppose $\ell(w't_{a_pb_p})=\ell(w')+1$. Then define
 $$q_k(u,w)=q_k(u,w')$$
 If instead $\ell(w't_{a_pb_p})=\ell(w')-2(b_p-a_p)+1$, define
 $$q_k(u,w)=q_k(u,w')q_{a_pb_p}$$
-We also define
-$$n_k(u,w)=\#\{i\mid i\leq k\mbox{ and }u(i)\neq w(i)\}$$
+
+Suppose $y$ and $z$ are sets of variables and $0\leq p\leq k$ are integers. We define $E_{p,k}(y;z)$ to be the factorial elementary symmetric polynomial in $y$ and $z$. For specificity, this is the double Schubert polynomial $\sch_{c[p,k]}(y;z)$ where
+$$c[p,k] = s_{k-p+1}\cdots s_{k-1}s_k$$
+If $p=0$, the polynomial is identically $1$. If $p=k$, $E_{k,k}(y;z)$ can be simply written as
+$$E_{k,k}(y;z)=\prod_{i=1}^k(y_i-z_1)$$
+An explicit formula can be written for general $p$ without too much trouble as well, using e.g. \cite{molev1999littlewood}:
+$$E_{p,k}(y;z)=\sum_{1\leq i_1<\cdots<i_p\leq k}\prod_{j=1}^p(y_{i_j}-z_{i_j-j+1})$$
+
+If $A=\{a_1<\cdots<a_r\}$ is a set of positive integers with $r\leq k$. We define
+$$\wte_k(y_A;z)=E_{r,k}(y_{a_1},\ldots,y_{a_r};z_1,\ldots,z_{k + 1 - r})$$
+which will be used in the statement of the Pieri formula to express coefficients.
 \end{definition}
 
 \begin{theorem}[The Pieri formula] \label{theorem:pieri}
 Suppose $u\in S_\infty$ and $p\leq k$. Then
-$$\sch_u^q(x;y)E_{p,k}^q(x;z)=\sum_{u\tom{k} w}q_k(u,w)E_{p-n_k(u,w),k-n_k(u,w)}(y_{P_k(u,w)};z)\sch_w^q(x;y)$$
+$$\qsch_u(x;y)E_{p,k}^q(x;z)=\sum_{u\tom{k} w}q_k(u,w)\wte_k(y_{P_k(u,w)};z)\qsch_w(x;y)$$
 \end{theorem}
 
 \begin{theorem} \label{theorem:coeffreduce}
@@ -222,7 +368,7 @@ Where $v_{i-1}\xRightarrow{i} v_i$ for all $i$, $v_0=1$, and $v_k=v\dom(v^{-1})$
 
 \begin{theorem}[Formula for quantum double Schubert polynomials] \label{theorem:quandouble}
 Suppose $v\in S_\infty$. Then
-$$\sch_v^q(x;z)=\sum_{(v_0,\ldots,v_k)}\prod_{i=1}^k (-1)^{\sigma_i(v_{i-1},v_i)}E_{\thop_i(v)-\ell(v_{i-1},v_i),\thop_i(v)}^q(x;z_{D_i(v_{i-1},v_i)})$$
+$$\qsch_v(x;z)=\sum_{(v_0,\ldots,v_k)}\prod_{i=1}^k (-1)^{\sigma_i(v_{i-1},v_i)}E_{\thop_i(v)-\ell(v_{i-1},v_i),\thop_i(v)}^q(x;z_{D_i(v_{i-1},v_i)})$$
 Where $v_{i-1}\xRightarrow{i} v_i$ for all $i$, $v_0=1$, and $v_k=v\mom(v^{-1})$.
 \end{theorem}
 
@@ -235,26 +381,24 @@ Coupled with the Pieri formulas, these formulas give a relatively efficient meth
 Recall the definition of the commuting difference operators $\chi_{j;n}$, with $j\leq n$, defined by Fomin, Gelfand, and Postnikov, as follows:
 $$\chi_{j,n}=x_j-\sum_{1\leq i<j}q_{ij}\partial^{t_{ij}}+\sum_{j<k\leq n} q_{jk}\partial^{t_{jk}}$$
 We denote the sequence $(\chi_{1;n},\ldots,\chi_{n;n})$ with $n$ fixed by $\chi^{(n)}$. Recall (CITATION) that if $\sch_v(x)$ has at most $n$ variables, then
-$$\sch_v^q(\chi^{(n)})(1) = \sch_v(x)$$
+$$\qsch_v(\chi^{(n)})(1) = \sch_v(x)$$
 and hence
-$$\sch_v^q(\chi^{(n)};z)(1) = \sch_v(x;z)$$
+$$\qsch_v(\chi^{(n)};z)(1) = \sch_v(x;z)$$
 We specify a more precise formula, as follows.
 \end{definition}
 
-\newcommand{\qsch}{\sch^q}
-
 \begin{theorem}
 Suppose $v\in S_n$. Then
-$$\sch_v^q(\chi^{(n)};z)=\sum_{u\in S_{n},d} q^dc_{u,v}^{1,d}(x;z)\partial^u$$
+$$\qsch_v(\chi^{(n)};z)=\sum_{u\in S_{n},d} q^dc_{u,v}^{1,d}(x;z)\partial^u$$
 \end{theorem}
 \begin{proof}
 Note that if $\sch_u(x)$ has at most $n$ variables, then
-$$\sch_u^q(\chi^{(n)};y)\sch_v^q(\chi^{(n)};z)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\sch_w^q(\chi^{(n)};y)$$
+$$\qsch_u(\chi^{(n)};y)\qsch_v(\chi^{(n)};z)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\qsch_w(\chi^{(n)};y)$$
 We thus have that
-$$(\sch_u^q(\chi^{(n)};y)\sch_v^q(\chi^{(n)};z))(1)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\sch_w(x;y)$$
+$$(\qsch_u(\chi^{(n)};y)\qsch_v(\chi^{(n)};z))(1)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\sch_w(x;y)$$
 This is also equal to
 $$\qsch_v(\chi^{(n)};z)(\sch_u(x;y))$$
-due to the fact that $(\sch_u^q(\chi^{(n)};y))(1)=\sch_u(x;y)$. To obtain the coefficient of $\partial^u$ in $\qsch_v(\chi^{(n)};z)$, we set $y=x$ after applying this operator. Since $\sch_w(x;x)=0$ unless $w=1$, we have that
+due to the fact that $(\qsch_u(\chi^{(n)};y))(1)=\sch_u(x;y)$. To obtain the coefficient of $\partial^u$ in $\qsch_v(\chi^{(n)};z)$, we set $y=x$ after applying this operator. Since $\sch_w(x;x)=0$ unless $w=1$, we have that
 $$\qsch_v(\chi^{(n)};z)(\sch_u(x;y))|_{y=x}=\sum_d q^dc_{u,v}^{1,d}(x;z)$$
 and the result follows.
 \end{proof}
@@ -301,34 +445,116 @@ $$c_{us',w_0(n)s'}^w(y;z)$$
 and the result follows.
 \end{proof}
 
-\section{Proofs}
+\section{Quantum to classical reduction for Grassmannian products}
 
-\begin{lemma}
-%Suppose $u,v,w$ are such that $u\Tom{i} w$, $v\Tom{i} w$, and $D_i(u,w)=D_i(v,w)$. Then $u=v$.
-Suppose $(v_0,v_1,\ldots,v_n)$ and $(v_0',\ldots,v_n')$ are such that $v_{i-1}\Tom{i} v_i$, $v_{i-1}'\Tom{i} v_i'$ for all $i$, $v_0=v_0'=1$, and $v_n=v_n'=v$ for some $n$. Suppose also that $D_i(v_{i-1},v_i)=D_{i}(v_{i-1}',v_i')$ for all $i$. Then $v_i=v_i'$ for all $i$.
+\begin{theorem}[{\cite[Theorem~2.7]{huang2015equivariant}}] \label{theorem:quantclass}
+	We have the following.
+	\begin{enumerate}
+	\item $c_{u,v}^{w,d}(y;y)=0$ unless $\mathrm{sgn}_i(w)+\langle d\rangle_i\leq \mathrm{sgn}_i(u)+\mathrm{sgn}_i(v)$ for all $i$.
+	\item If $\mathrm{sgn}_k(w)+\langle d\rangle_k=\mathrm{sgn}_k(u)+\mathrm{sgn}_k(v)=2$ for some $k$, then
+	$$c_{u,v}^{w,d}(y;y)=c_{us_k,vs_k}^{ws_k,d-\delta_k}(y;y)=\begin{cases}
+	c_{us_k,v}^{ws_k,d-\delta_k}(y;y) & \text{if $\mathrm{sgn}_k(w)=0$}\\
+	c_{us_k,v}^{ws_k,d}(y;y) & \text{if $\mathrm{sgn}_k(w)=1$}
+	\end{cases}$$
+	\end{enumerate}
+	This is symmetric in $u$ and $v$.
+\end{theorem}
+
+\begin{corollary}[{\cite[Corollary~2.8]{huang2015equivariant}}] \label{corollary:quantclass28}
+	Let $u,v,w\in S_\infty$ and $d\in Q^\vee$. Fix an index $i$.
+	\begin{enumerate}
+	\item If $\langle d\rangle_i=\mathrm{sgn}_i(u)=0$ and $\mathrm{sgn}_i(w)=\mathrm{sgn}_i(v)=1$, then
+	$$c_{u,v}^{w,d}(y;y)=c_{u,vs_i}^{ws_i,d}(y;y).$$
+	\item If $\langle d\rangle_i=\mathrm{sgn}_i(u)=1$ and $\mathrm{sgn}_i(w)=\mathrm{sgn}_i(v)=0$, then
+	$$c_{u,v}^{w,d}(y;y)=c_{us_i,v}^{ws_i,d-\delta_i}(y;y).$$
+	\end{enumerate}
+	This is symmetric in $u$ and $v$.
+\end{corollary}
+
+\begin{lemma} \label{lemma:quantumtoordinary}
+We have that
+$$c_{u,v}^{w,d}(y;z)=\sum_{v_1\cdot v_2=v}c_{u,v_2}^{w,d}(y;y)\sch_{v_1}(y;z)$$
 \end{lemma}
-\begin{proof}
-This is true if $\ell(v_n)=0$. Otherwise, consider the right descent. There are only two places where it can occur.
-\end{proof}
 
-
-%Acting on $321$-avoiding, all the elem syms are Schubs.
-
-\begin{theorem} \label{theorem:nocan}
-No two terms in Theorem \ref{theorem:orddouble} directly cancel each other.
+\begin{theorem}[Quantum reduction holds for triple quantum Schubert coefficients]\label{theorem:quantclassz}
+We have the following.
+	\begin{enumerate}
+	\item $c_{u,v}^{w,d}(y;z)=0$ unless $\mathrm{sgn}_i(w)+\langle d\rangle_i\leq \mathrm{sgn}_i(u)+\mathrm{sgn}_i(v)$ for all $i$.
+	\item If $\mathrm{sgn}_k(w)+\langle d\rangle_k=\mathrm{sgn}_k(u)+\mathrm{sgn}_k(v)=2$ for some $k$, then
+	$$c_{u,v}^{w,d}(y;z)=c_{us_k,vs_k}^{ws_k,d-\delta_k}(y;z)=\begin{cases}
+	c_{us_k,v}^{ws_k,d-\delta_k}(y;z) & \text{if $\mathrm{sgn}_k(w)=0$}\\
+	c_{us_k,v}^{ws_k,d}(y;z) & \text{if $\mathrm{sgn}_k(w)=1$}
+	\end{cases}$$
+	\end{enumerate}
+	This is symmetric in $u$ and $v$.
 \end{theorem}
 \begin{proof}
-%Let $(v_0,\ldots,v_m)$ and $(v_0',\ldots,v_m')$ with $v_0=v_0'=1$ and $v_m=v_m'=v\mu(v^{-1})$ be paths such that $v_{i-1}\Tom{i} v_i$ and $v_{i-1}'\Tom{i} v_i'$ for all $i$. It will suffice to show that if 
-%$$D_i(v_{i-1},v_i)=D_i(v_{i-1}',v_i')$$
-%for all $i$, then $v_i = v_i'$ for all $i$. We prove this is true for all $i\geq j$ by induction on $j$. This is clear if $j=m$. Otherwise, assume it holds for $j+1$. Then we know that $v_{j+1}=v_{j+1}'$. Since $D_{j+1}(v_{j},v_{j+1})=D_{j+1}(v_{j}',v_{j+1}')$, we have that $v_j(k)\neq v_{j+1}(k)$ if and only if $v_j'(k)\neq v_{j+1}'(k)$. Let $a_1,\ldots,a_p$ be the set of indices such that $v_j(a_k),v_j'(a_k)\neq v_{j+1}(a_k)$ for all $k$. Assume the order is such that $v_j^{-1}v_{j+1}(a_k)=a_{k+1}$, with $a_0=a_{p+1}=j$.
+For (1), we note that since $\mathrm{sgn}_i(v_2)\leq \mathrm{sgn}_i(v)$ for any factorization $v_1\cdot v_2=v$, we have that $\mathrm{sgn}_i(w)+\langle d\rangle_i\leq \mathrm{sgn}_i(u)+\mathrm{sgn}_i(v_2)$ is a necessary condition for $c_{u,v_2}^{w,d}(y;y)\neq 0$. The result then follows from Lemma \ref{lemma:quantumtoordinary}.
+
+For (2), we note that if $\mathrm{sgn}_k(w)+\langle d\rangle_k=\mathrm{sgn}_k(u)+\mathrm{sgn}_k(v)=2$, then since $\mathrm{sgn}_k(v_2)=\mathrm{sgn}_k(v)$ for any factorization $v_1\cdot v_2=v$ such that $c_{u,v_2}^{w,d}(y;y)\neq 0$, Theorem \ref{theorem:quantclass}(2) holds for each term in the sum in Lemma \ref{lemma:quantumtoordinary}, and the result follows.
 \end{proof}
+
+\begin{corollary}[$z$-version of Corollary \ref{corollary:quantclass28}(2)] \label{corollary:quantclass28z}
+Let $u,v,w\in S_\infty$ and $d\in Q^\vee$, and fix an index $i$ with $\mathrm{sgn}_i(v)=0$. If $\langle d\rangle_i=\mathrm{sgn}_i(u)=1$ and $\mathrm{sgn}_i(w)=0$, then
+$$c_{u,v}^{w,d}(y;z)=c_{us_i,v}^{ws_i,d-\delta_i}(y;z).$$
+\end{corollary}
+\begin{proof}
+Since $\mathrm{sgn}_i(v_2)\leq \mathrm{sgn}_i(v)=0$ for every factorization $v_1\cdot v_2=v$, the hypotheses of Corollary \ref{corollary:quantclass28}(2) hold for each term $c_{u,v_2}^{w,d}(y;y)$ appearing in Lemma \ref{lemma:quantumtoordinary}, so $c_{u,v_2}^{w,d}(y;y)=c_{us_i,v_2}^{ws_i,d-\delta_i}(y;y)$. Resumming via Lemma \ref{lemma:quantumtoordinary} gives the claim.
+\end{proof}
+
+% \begin{lemma}
+% Suppose $c_{u,v}^{w,d}(y;z)\neq 0$ and $0\leq p\leq k$. Then for all $w'$ such that $u\tom{k} w'$ we have that $c_{u,v}^{w',d'}(y;z)\neq 0$ if and only if there exist $d = d_0, d_1,\ldots,d_p = d'$ and
+% $w=w_0\tom{k} w_1\tom{k}\cdots\tom{k} w_p=w'$
+% such that for each $0< a \leq p$, either
+% \begin{enumerate}
+% \item $d_a = d_{a-1}$ and $\ell(w_a) = \ell(w_{a-1}) + 1$, or
+% \item $\ell(w_a) = \ell(w_{a-1}) - 1$ and $\langle d_a\rangle_k = \langle d_{a-1}\rangle_k + 2$, $\langle d_a\rangle_{k-1} = \langle d_{a-1}\rangle_{k-1} - 1$, $\langle d_a\rangle_{k+1} = \langle d_{a-1}\rangle_{k+1} - 1$, and $\langle d_a\rangle_j = \langle d_{a-1}\rangle_j$ for all other $j$.
+% \item There exist $q\leq k \leq r$ with $q\neq r$ such that 
+% $$\ell(w_a) = \ell(w_{a-1}) - 2(r-q) + 1$$
+% and $\langle d_a\rangle_q = \langle d_{a-1}\rangle_q + 1$, $\langle d_a\rangle_r = \langle d_{a-1}\rangle_r + 1$, $\langle d_a\rangle_{q-1} = \langle d_{a-1}\rangle_{q-1} - 1$, $\langle d_a\rangle_{r+1} = \langle d_{a-1}\rangle_{r+1} - 1$, and $\langle d_a\rangle_j = \langle d_{a-1}\rangle_j$ for all other $j$.
+% \end{enumerate}
+% \end{lemma}
+
+% Thus if $c_{u,v}^{w,d}(y;z) = p(y;z)\neq 0$, then for each $i$ we have that
+% $$\langle d\rangle_i \geq \ell(w) + \deg p - \ell(u) - \ell(v)$$
+
+\begin{lemma}[Reduction to a coroot supported at $k$] \label{lemma:offkreduction}
+Let $u,v,w\in S_\infty$ and let $d\in Q^\vee$. Suppose $v$ has precisely one descent, which is $k$. If $c_{u,v}^{w,d}(y;z)\neq 0$, then there exist $u',w'\in S_\infty$ and $d'\in Q^\vee$ with $0\leq d'\leq d$ such that
+$$c_{u,v}^{w,d}(y;z)=c_{u',v}^{w',d'}(y;z)$$
+and $\langle d'\rangle_i\leq 0$ for all $i\neq k$. Moreover, if $d'\neq 0$ then $\langle d'\rangle_k>0$.
+\end{lemma}
+\begin{proof}
+Suppose $\langle d\rangle_i>0$ for some $i\neq k$, and choose such an $i$ to be maximal. Because $v$ is $k$-Grassmannian, $\mathrm{sgn}_i(v)=0$, so Theorem \ref{theorem:quantclassz}(1) forces
+$$\mathrm{sgn}_i(w)+\langle d\rangle_i\leq \mathrm{sgn}_i(u)+\mathrm{sgn}_i(v)=\mathrm{sgn}_i(u)\leq 1.$$
+Since $\langle d\rangle_i\geq 1$, we conclude $\langle d\rangle_i=1$, $\mathrm{sgn}_i(u)=1$, and $\mathrm{sgn}_i(w)=0$. These are exactly the hypotheses of Corollary \ref{corollary:quantclass28z} (note $\mathrm{sgn}_i(v)=0$), so
+$$c_{u,v}^{w,d}(y;z)=c_{us_i,v}^{ws_i,d-\delta_i}(y;z).$$
+Moreover $\langle d\rangle_i=2d_i-d_{i-1}-d_{i+1}=1$ with $d_{i\pm 1}\geq 0$ forces $d_i\geq 1$, so $d-\delta_i\in Q^\vee$ with $0\leq d-\delta_i\leq d$ and $|d-\delta_i|<|d|$. Replacing $(u,w,d)$ by $(us_i,v\text{ fixed},ws_i,d-\delta_i)$ and iterating, the quantity $|d|$ strictly decreases at each step, so the process terminates in a triple $(u',w',d')$ with $\langle d'\rangle_i\leq 0$ for all $i\neq k$.
+
+Finally, for any finitely supported $d'\in Q^\vee$ the values $\langle d'\rangle_i=2d'_i-d'_{i-1}-d'_{i+1}$ telescope to $\sum_i\langle d'\rangle_i=0$. Hence $\langle d'\rangle_k=-\sum_{i\neq k}\langle d'\rangle_i\geq 0$, with equality if and only if $\langle d'\rangle_i=0$ for all $i$, i.e.\ $d'=0$. Thus $d'\neq 0$ implies $\langle d'\rangle_k>0$.
+\end{proof}
+
+% \begin{lemma}
+% %Suppose $u,v,w$ are such that $u\Tom{i} w$, $v\Tom{i} w$, and $D_i(u,w)=D_i(v,w)$. Then $u=v$.
+% Suppose $(v_0,v_1,\ldots,v_n)$ and $(v_0',\ldots,v_n')$ are such that $v_{i-1}\Tom{i} v_i$, $v_{i-1}'\Tom{i} v_i'$ for all $i$, $v_0=v_0'=1$, and $v_n=v_n'=v$ for some $n$. Suppose also that $D_i(v_{i-1},v_i)=D_{i}(v_{i-1}',v_i')$ for all $i$. Then $v_i=v_i'$ for all $i$.
+% \end{lemma}
+% \begin{proof}
+% This is true if $\ell(v_n)=0$. Otherwise, consider the right descent. There are only two places where it can occur.
+% \end{proof}
+
+
+% %Acting on $321$-avoiding, all the elem syms are Schubs.
+
+% \begin{theorem} \label{theorem:nocan}
+% No two terms in Theorem \ref{theorem:orddouble} directly cancel each other.
+% \end{theorem}
+% \begin{proof}
 
 \section{Proof of the Pieri formula}
 
 \begin{lemma} \label{lemma:singlevariable}
 Let $u\in S_\infty$ and let $i,j\geq 1$. Then
-$$(x_i-z_j)\sch_u^q(x;y)=(y_{u(i)}-z_j)\sch_u^q(x;y)+\sum_{\substack{p\neq i\\\ell(ut_{ip})=\ell(u)+1}}\mathrm{sign}(p-i)\sch_{ut_{ip}}^q(x;y)$$
-$$+\sum_{\substack{p\neq i\\\ell(ut_{ip})=\ell(u)-2|p-i|+1}}\mathrm{sign}(p-i)q_{ip}\sch_{ut_{ip}}^q(x;y)$$
+$$(x_i-z_j)\qsch_u(x;y)=(y_{u(i)}-z_j)\qsch_u(x;y)+\sum_{\substack{p\neq i\\\ell(ut_{ip})=\ell(u)+1}}\mathrm{sign}(p-i)\qsch_{ut_{ip}}(x;y)$$
+$$+\sum_{\substack{p\neq i\\\ell(ut_{ip})=\ell(u)-2|p-i|+1}}\mathrm{sign}(p-i)q_{ip}\qsch_{ut_{ip}}(x;y)$$
 \end{lemma}
 %\begin{proof}
 %It can be shown by the recurrence relation for $\partial_u^w$ that $\partial_u^u=u$. Thus we have
@@ -361,13 +587,15 @@ where $a_n>a_i$ for all $i<n$ (this is a unique way to express the cycle since t
 \begin{lemma} \label{lemma:piericycle}
 Suppose $u,w\in S_\infty$ and let $k>0$ be an integer. Then $u\tom{k} w$ if and only if there exist pairwise disjoint cyclic permutations $c_1,\ldots,c_n$ of respective cycle lengths $p_1+1,\ldots,p_n+1$ such that
 $$w=uc_1\cdots c_n$$
-and
-$$\ell(u,w)=p_1+\cdots+p_n$$
-such that for each $i$ there exist pairwise distinct positive integers $a_{i,1},\ldots,a_{i,p_i}$ and $b_i$ such that we may write the cycle $c_i$ as
+where for each $i$ there exist pairwise distinct positive integers $a_{i,1},\ldots,a_{i,p_i}$ and $b_i$ such that we may write the cycle $c_i$ as
 $$c_i=(a_{i,p_i},a_{i,p_i-1},\ldots, a_{i,1},b_i)$$
-where $a_{i,j}\leq k$ for all $1\leq j\leq p_i$, $b_i>k$, and $b_i>b_j$ if $i<j$, and for each $m$ we have
-$$\ell(uc_1\cdots c_m) = \sum_{i=1}^m \left(p_i - 2\sum_{a\in \desc_u(c_i)}(b_i-a)\right)$$
+with $a_{i,j}\leq k$ for all $1\leq j\leq p_i$, $b_i>k$, and $b_i>b_j$ if $i<j$, and such that for each $m$ we have
+$$\ell(u,uc_1\cdots c_m) = \sum_{i=1}^m \left(p_i - 2\sum_{a\in \desc_u(c_i)}(b_i-a)\right)$$
+and
+$$\ell(u,w)+\deg q_k(u,w)=p_1+\cdots+p_n$$
 \end{lemma}
+%Note that $\ell(u,w)=\ell(u,uc_1\cdots c_n)$ need not be positive: each descent $a\in\desc_u(c_i)$ contributes a length drop of $2(b_i-a)-1$. These drops are recorded in the grading, where $q_k(u,w)$ has $q$-degree $\sum_{i=1}^n 2\sum_{a\in\desc_u(c_i)}(b_i-a)$ under $\deg q_{ab}=2(b-a)$, so that
+
 \begin{proof}
 Suppose first that $u\tom{k} w$. Then there exist reflections $t_{a_1b_1},\ldots,t_{a_mb_m}$ for some $m$ with $a_i\neq a_j$ if $i\neq j$, $a_i\leq k<b_i$ for all $i$, $\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(t_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})+1$ or $\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(t_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})-2(b_i-a_i)+1$ for all $i$, $b_i\geq b_j$ if $i\leq j$, and $w=ut_{a_1b_1}\cdots t_{a_mb_m}$. Fix $b$ such that there is an index $1\leq p\leq m$ such that $b=b_p$ and let $i$ and $r$ be such that $a_i,\ldots,a_{i+r}$ is the maximal portion of the sequence such that $b_j=b$ for all $i\leq j\leq i+r$. Let
 $$c=t_{a_ib_i}\cdots t_{a_{i+r}b_{i+r}}$$
@@ -406,14 +634,14 @@ since $a_j\neq a_i$ if $j\neq i$. Thus, if $a_i\notin \desc_u(c_1)$, then the le
 \begin{definition}[$\lup$]
 If $u,u'\in S_\infty$, we define $u\lup u'$ if $\ell(u,u')=1$ or $u'=ut_{ab}$ where $\ell(u,u')=1-2(b-a)$.
 
-%Define $\nabla_u^w(F(x))$ to be the coefficient of $\sch_w^q(x;y)$ in the product $F(x)\sch_u^q(x;y)$, replacing $y$ with $x$ and quantizing.
+%Define $\nabla_u^w(F(x))$ to be the coefficient of $\qsch_w(x;y)$ in the product $F(x)\qsch_u(x;y)$, replacing $y$ with $x$ and quantizing.
 
 %Same as unquantizing, doing the div diff, and requantizing.
 
 %$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}$$
-%$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}(\sch_u^q(x;y)\sch_v^q(x;z))$$
+%$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}(\qsch_u(x;y)\qsch_v(x;z))$$
 %
-%$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}(c_{u,v}^{w,d}(y;z)q^d\sch_w^q(x;y))$$
+%$$\mathcal{Q}\partial^w\mathcal{Q}^{-1}(c_{u,v}^{w,d}(y;z)q^d\qsch_w(x;y))$$
 %
 %$$\mathcal{Q}\partial^wc_{u,v}^{w',d}(y;z)q^d\sch_{w'}(x;y)$$
 %
@@ -423,9 +651,9 @@ If $u,u'\in S_\infty$, we define $u\lup u'$ if $\ell(u,u')=1$ or $u'=ut_{ab}$ wh
 %
 %Ideal:
 %$$p-\sum_u c_{u,v}^{1,d}(x;x)q^d\nabla^u(p)\nabla^v$$
-%$$(\sch^q_u(\chi;y)\sch_v^q(\chi;y))\cdot 1=c_{u,v}^w(x;x)\sch_w(y;x)$$
-%$$F(x)\sch_u^q(x;y)=\sum_w \nabla_u^w(F(x))|_{x=y}\sch_w^q(x;y)$$
-%$$\nabla^u(\sch_v^q(x;z))=\nabla^u(\sch_{v_2}^q(x;y)\sch_{v_1}(y;z)$$
+%$$(\sch^q_u(\chi;y)\qsch_v(\chi;y))\cdot 1=c_{u,v}^w(x;x)\sch_w(y;x)$$
+%$$F(x)\qsch_u(x;y)=\sum_w \nabla_u^w(F(x))|_{x=y}\qsch_w(x;y)$$
+%$$\nabla^u(\qsch_v(x;z))=\nabla^u(\qsch_{v_2}(x;y)\sch_{v_1}(y;z)$$
 \end{definition}
 
 
@@ -440,7 +668,9 @@ for all $j$ with $a_i<j<b$. Furthermore, we also have that for all $j$ with $a_p
 $$u(a_p)>uc^{(p-1)}(j)>u(a_{p-1})$$
 Suppose $a_p<a_i$. Then $u(a_p)>uc^{(p-1)}(a_i)=u(a_{i-1})>u(a_{p-1})$. This means that necessarily $a_{p-1}<a_i$, since $u(a_{i-1})=uc^{(i)}(a_i)$ is minimal in the range $a_i\leq j\leq b$ in $uc^{(i)}$. For the same reason, we cannot have that $uc^{(p-2)}(b)<u(a_{i-1})$, because this would have to come from some $t_{a_qb}$ with $i<q<p-1$, $a_q<a_i$, and and $u(a_q)<u(a_{i-1})$, which would increase the length by more than $1$. However, since $uc^{(p-2)}(b)>u(a_{i-1})>u(a_{p-1})$, this would imply that $t_{a_{p-1}b}$ increases the length by more than $1$, which is a contradiction. Thus we cannot have a descent $a_p$ with $a_p<a_i$. 
 
-If instead $a_p>a_i$, then $u(a_i)>u(a_p)>u(a_{i-1})$. Since $a_p$ is a descent, $uc^{(p-1)}(b)=u(a_{p-1})<u(a_p)$, but $uc^{(i)}(b)=u(a_i)>u(a_p)$. This would imply that there is some $q$ with $i<q\leq p-1$ such that $a_q>a_p$ and $uc^{(q-1)}t_{a_qb}(b)=u(a_q)<u(a_p)$, because if we had $a_q<a_p$ then the length would increase by more than $1$. Let $q$ be minimal with this property. In that case, $u(a_{q-1})>u(a_p)$ and $uc^{(p-1)}(a_q)=u(a_{q-1})$, contradicting the fact that $a_p$ is a descent. It follows by induction that there can be at most one descent.
+If instead $a_p>a_i$, then $u(a_i)>u(a_p)>u(a_{i-1})$. Since $a_p$ is a descent, $uc^{(p-1)}(b)=u(a_{p-1})<u(a_p)$, but $uc^{(i)}(b)=u(a_i)>u(a_p)$. This would imply that there is some $q$ with $i<q\leq p-1$ such that $a_q>a_p$ and $uc^{(q-1)}t_{a_qb}(b)=u(a_q)<u(a_p)$, because if we had $a_q<a_p$ then the length would increase by more than $1$. Let $q$ be minimal with this property. In that case, $u(a_{q-1})>u(a_p)$ and $uc^{(p-1)}(a_q)=u(a_{q-1})$, contradicting the fact that $a_p$ is a descent. 
+
+Having excluded the cases $a_p>a_i$ and $a_p<a_i$, by the assumption that $a_p\neq a_i$ it follows by induction that there can be at most one descent.
 \end{proof}
 
 \begin{definition}[Redefinition of $\desc_u(c)$]
@@ -451,7 +681,7 @@ If $c$ is a cycle, we redefine $\desc_u(c)$ to be the unique element of the prev
 Suppose $u,w\in S_\infty$ and let $k>1$ be an integer. Suppose $u\tom{k}w$ and let $c=(a_p,\ldots,a_1,b)$ be a cycle as in Lemma \ref{lemma:piericycle} in the decomposition of $u^{-1}w$, with $a_q=k$ being a descent. Then for all $j\geq q$ we have that $u(a_j)>u(b)$.
 \end{lemma}
 \begin{proof}
-We have that $u(a_q)>u(a_{q-1})$. By Lemma \ref{lemma:onedescent}, $k$ is the only descent of $c$. We claim that for all $r$ with $k\leq r<b$ we have that $u(r)>u(b)$. This is because for all such $r$ we have that $u(a_{q-1})<u(r)$ since $a_q$ is a descent, and if $u(b)>u(r)$ for some such $r$ then we may pick a maximal $\ell<q$ such that $u(a_{\ell})>u(r)$ for some such $r$. Then $u(a_{\ell+1})<u(r)$ for all such $r$, and the reflection $t_{a_{\ell-1} a_{\ell}}$ would increase the length by more than $1$, which cannot happen. For the same reason, we cannot have that $u(a_m)<u(r)$ for any $r$ with $k<r\leq b$, since $u(a_q)>u(r)$ for all such $r$ and hence the reflection $t_{a_{m-1}a_m}$ would increase the length by more than $q$. Thus since in particular $u(r)>u(b)$ for all such $r$, we must have that $u(a_j)>u(b)$ for all $j\geq q$, as desired.
+We have that $u(a_q)>u(a_{q-1})$. By Lemma \ref{lemma:onedescent}, $k$ is the only descent of $c$. We claim that for all $r$ with $k\leq r<b$ we have that $u(r)>u(b)$. This is because for all such $r$ we have that $u(a_{q-1})<u(r)$ since $a_q$ is a descent, and if $u(b)>u(r)$ for some such $r$ then we may pick a maximal $\ell<q$ such that $u(a_{\ell})>u(r)$ for some such $r$. Then $u(a_{\ell+1})<u(r)$ for all such $r$, and the reflection $t_{a_{\ell-1} b}$ would increase the length by more than $1$, which cannot happen. For the same reason, we cannot have that $u(a_m)<u(r)$ for any $r$ with $k<r\leq b$, since $u(a_q)>u(r)$ for all such $r$ and hence the reflection $t_{a_{m-1}a_m}$ would increase the length by more than $q$. Thus since in particular $u(r)>u(b)$ for all such $r$, we must have that $u(a_j)>u(b)$ for all $j\geq q$, as desired.
 \end{proof}
 
 \begin{lemma} \label{lemma:pieriknotkn1}
@@ -636,25 +866,25 @@ $$E_{a,m}(y_1,\ldots,y_m;z)=E_{a,m-1}(y_1,\ldots,y_{m-1};z)+(y_m-z_{m-a+1})E_{a-
 The first recurrence is the quantization of the classical relation $E_{p,k}=(x_k-z_{k-p+1})E_{p-1,k-1}+E_{p,k-1}$; the extra term $q_{k-1}E_{p-2,k-2}^q$ is the only feature absent from the non-quantum setting. The classical Pieri formula, obtained by discarding all quantum terms, is proved in \cite{samuelmolev} by induction on $k$ using the first recurrence in the case $q=0$; we adapt that argument, the essential new point being the bookkeeping of the powers of $q$.
 
 \begin{proof}[Proof of Theorem \ref{theorem:pieri}]
-For a permutation $w$, write $[\sch_w^q]F$ for the coefficient of $\sch_w^q(x;y)$ in an expansion $F$ of a quantum double Schubert polynomial in the basis $\{\sch_w^q(x;y)\}$. With this notation the theorem is the assertion that, for all $u$ and all $0\leq p\leq k$,
-$$[\sch_w^q]\big(\sch_u^q(x;y)E_{p,k}^q(x;z)\big)=\begin{cases}q_k(u,w)\,E_{p-n_k(u,w),\,k-n_k(u,w)}(y_{P_k(u,w)};z) & \text{if }u\tom{k} w,\\[2pt] 0 & \text{otherwise.}\end{cases}$$
+For a permutation $w$, write $[\qsch_w]F$ for the coefficient of $\qsch_w(x;y)$ in an expansion $F$ of a quantum double Schubert polynomial in the basis $\{\qsch_w(x;y)\}$. With this notation the theorem is the assertion that, for all $u$ and all $0\leq p\leq k$,
+$$[\qsch_w]\big(\qsch_u(x;y)E_{p,k}^q(x;z)\big)=\begin{cases}q_k(u,w)\,E_{p-n_k(u,w),\,k-n_k(u,w)}(y_{P_k(u,w)};z) & \text{if }u\tom{k} w,\\[2pt] 0 & \text{otherwise.}\end{cases}$$
 For brevity, when $u\tom{m} w$ we set
 $$c_m(a;u,w)=q_m(u,w)\,E_{a-n_m(u,w),\,m-n_m(u,w)}(y_{P_m(u,w)};z),$$
-and $c_m(a;u,w)=0$ if $u\ntom{m}w$; note that $c_m(a;u,w)=0$ whenever $a<n_m(u,w)$ or $a>m$, since then the factorial elementary factor vanishes. The claim is that $[\sch_w^q](\sch_u^qE_{p,k}^q)=c_k(p;u,w)$.
+and $c_m(a;u,w)=0$ if $u\ntom{m}w$; note that $c_m(a;u,w)=0$ whenever $a<n_m(u,w)$ or $a>m$, since then the factorial elementary factor vanishes. The claim is that $[\qsch_w](\qsch_uE_{p,k}^q)=c_k(p;u,w)$.
 
 We argue by strong induction on $k$, the statement for level $k$ being understood to include all $p$ simultaneously.
 
 \emph{Base case $k=1$.} Only $p\in\{0,1\}$ give a nonzero $E_{p,1}^q$. For $p=0$ we have $E_{0,1}^q=1$ and the claim is trivial, since $u\tom{1}w$ with $q_1=1$, $n_1=0$ only for $w=u$. For $p=1$ we have $E_{1,1}^q(x;z)=x_1-z_1$, and Lemma \ref{lemma:singlevariable} with $i=j=1$ gives
-$$(x_1-z_1)\sch_u^q(x;y)=(y_{u(1)}-z_1)\sch_u^q(x;y)+\sum_{\substack{b>1\\\ell(ut_{1b})=\ell(u)+1}}\sch_{ut_{1b}}^q(x;y)+\sum_{\substack{b>1\\\ell(ut_{1b})=\ell(u)-2(b-1)+1}}q_{1b}\sch_{ut_{1b}}^q(x;y).$$
+$$(x_1-z_1)\qsch_u(x;y)=(y_{u(1)}-z_1)\qsch_u(x;y)+\sum_{\substack{b>1\\\ell(ut_{1b})=\ell(u)+1}}\qsch_{ut_{1b}}(x;y)+\sum_{\substack{b>1\\\ell(ut_{1b})=\ell(u)-2(b-1)+1}}q_{1b}\qsch_{ut_{1b}}(x;y).$$
 The permutations $w$ with $u\tom{1}w$ are exactly $w=u$ and $w=ut_{1b}$ for $b>1$ with $u\lup ut_{1b}$, since Definition \ref{definition:pieri} permits at most one reflection when $k=1$. For $w=u$ we have $q_1=1$, $n_1=0$, $P_1(u,u)=\{u(1)\}$, and $E_{1,1}(y_{u(1)};z)=y_{u(1)}-z_1$, matching the diagonal term. For $w=ut_{1b}$ we have $n_1=1$, $P_1=\emptyset$, and $E_{0,0}(\,;z)=1$; if the step is length-increasing then $q_1(u,w)=1$, matching the second sum, and if it is length-decreasing then $q_1(u,w)=q_{1b}$, matching the third sum. All other coefficients vanish on both sides. This proves the base case.
 
 \emph{Inductive step.} Fix $k>1$ and $1\leq p\leq k$, and assume the claim at all levels $m<k$. By Lemma \ref{lemma:elemrecursion},
 \begin{equation}\label{eq:pieriexpand}
-\sch_u^qE_{p,k}^q=(x_k-z_{k-p+1})\big(\sch_u^qE_{p-1,k-1}^q\big)+\sch_u^qE_{p,k-1}^q+q_{k-1}\,\sch_u^qE_{p-2,k-2}^q.
+\qsch_uE_{p,k}^q=(x_k-z_{k-p+1})\big(\qsch_uE_{p-1,k-1}^q\big)+\qsch_uE_{p,k-1}^q+q_{k-1}\,\qsch_uE_{p-2,k-2}^q.
 \end{equation}
-By the inductive hypothesis, $\sch_u^qE_{p-1,k-1}^q=\sum_v c_{k-1}(p-1;u,v)\,\sch_v^q$. Applying Lemma \ref{lemma:singlevariable} with $i=k$, $j=k-p+1$ to each $\sch_v^q$ and extracting the coefficient of $\sch_w^q$ from \eqref{eq:pieriexpand}, we obtain
+By the inductive hypothesis, $\qsch_uE_{p-1,k-1}^q=\sum_v c_{k-1}(p-1;u,v)\,\qsch_v$. Applying Lemma \ref{lemma:singlevariable} with $i=k$, $j=k-p+1$ to each $\qsch_v$ and extracting the coefficient of $\qsch_w$ from \eqref{eq:pieriexpand}, we obtain
 \begin{align}
-[\sch_w^q]\big(\sch_u^qE_{p,k}^q\big)
+[\qsch_w]\big(\qsch_uE_{p,k}^q\big)
 &=(y_{w(k)}-z_{k-p+1})\,c_{k-1}(p-1;u,w) \label{eq:diag}\\
 &\quad+\sum_{\substack{b>k,\ w t_{kb}\lup w\\ \ell(w)=\ell(wt_{kb})+1}} c_{k-1}(p-1;u,wt_{kb})
 +\sum_{\substack{b>k,\ w t_{kb}\lup w\\ \ell(w)=\ell(wt_{kb})-2(b-k)+1}} q_{kb}\,c_{k-1}(p-1;u,wt_{kb}) \label{eq:up}\\
@@ -676,8 +906,53 @@ If $\ell(w)=\ell(v)+1$ then the reflection $t_{kb}$ is length-increasing, so by 
 
 \emph{Case 3: $u\ntom{k}w$ (with $u(k)\neq w(k)$).} Here $c_k(p;u,w)=0$, so we must show the coefficient \eqref{eq:diag}--\eqref{eq:rec} vanishes. This is exactly the assertion of Lemma \ref{lemma:vanishing}. (The subcase $u(k)=w(k)$ with $u\ntom{k}w$ was already treated at the end of Case 1.)
 
-In all cases $[\sch_w^q](\sch_u^qE_{p,k}^q)=c_k(p;u,w)$, completing the induction and the proof.
+In all cases $[\qsch_w](\qsch_uE_{p,k}^q)=c_k(p;u,w)$, completing the induction and the proof.
 \end{proof}
+
+\section{Additional formulas}
+\newcommand{\dtom}[1]{\overset{#1}{\rightrightarrows}}
+\begin{definition}
+	Consider a permutation $d_2[k]$ satisfying
+	$$\code(d_2[k]) = \overbrace{(2,2,\ldots,2)}^{k\text{ times}}.$$
+	The double Schubert polynomial $\sch_{d_2[k]}(x;y)$ is a product of two factorial elementary symmetric polynomials, specifically:
+	$$\sch_{d_2[k]}(x;y) = E_k(x;y_1)E_k(x;y_2).$$
+	Therefore, the Pieri formula in \cite{samuelmolev} easily transfers to being able to multiply by $\sch_{d_2[k]}(x;y)$.
+	
+	For quantum double Schubert polynomials, $\qsch_{d_2[k]}(x;y)$ is \emph{not} a product of factorial quantum elementary polynomials. For example:
+	$$\qsch_{d_2[1]}(x;y) = E_{1,2}^q(x;y)E_{1,1}^q(x;y) - E^q_{2,2}(x;y)$$
+	$$\qsch_{d_2[2]}(x;y) = E^q_{2,3}(x;y)E^q_{2,2}(x;y) - E^q_{3,3}(x;y)E^q_{1,2}(x;y)$$
+
+	For abbreviation purposes, we denote this polynomial by $D_k^q(x;y)$.
+
+	
+	We define a relation $\dtom{k}$ on permutations as follows. We say that $u\dtom{k} w$ if and only if there exists a $v\in S_\infty$ such that $u\tom{k} v$ and $v\tom{k} w$ satisfying the additional condition that if $u^{-1}v$ is a product of disjoint cycles $c_1,\ldots,c_m$ and $v^{-1}w$ is a product of disjoint cycles $d_1,\ldots,d_n$, then for each $d_i$ there exists a $c_j$ such that $d_i\cap c_j = \{\max(d_i)\} = \{\max(c_j)\}$. Call the set of all such $v$ $\mathrm{pivot}_k(u,w)$.
+\end{definition}
+
+Then
+\begin{theorem}
+	We have that the product $\qsch_u(x;y)D_k^q(x;z)$ is equal to
+	
+	$$\sum_{u\dtom{k} w} \sum_{v\in\mathrm{pivot}_k(u,w)}q_k(u,v)q_k(v,w)E_{k-n_k(u,v)}(y_{P_k(u,v)};z_1)E_{k-n_k(v,w)}(y_{P_k(v,w)};z_2)\qsch_w(x;y).$$
+\end{theorem}
+
+\section{Peterson-Woodward comparison formula}
+
+\begin{proposition}[{\cite[Proposition~2.10]{huang2015equivariant}}]
+Let $W_P$ be a parabolic subgroup of $W$. Then for any $\lambda_P\in Q^\vee/Q_P^\vee$, we have that
+$$c_{u,v}^{w,\lambda_P}(y;y) = c_{u,v}^{w\omega_P\omega_{P'},\lambda_B}(y;y),$$
+where $\omega_P$ is the longest element in $W_P$, $\omega_{P'}$ is the longest element in $W_{P'}$, where $P'$ is the parabolic subgroup generated by $\{s_\alpha\mid \alpha\in\Delta_P,\langle \alpha, \lambda_B\rangle=0\}$, and $\lambda_B$ is the Peterson-Woodward lift of $\lambda_P$. 
+\end{proposition}
+
+\begin{corollary}
+The Peterson-Woodward comparison formula holds for $c_{u,v}^w(y;z)$.
+\end{corollary}
+\begin{proof}
+We have that
+$$c_{u,v}^{w,\lambda_P}(y;z) = \sum_{v_1\cdot v_2=v}c_{u,v_2}^{w,\lambda_P}(y;y)\sch_{v_1}(y;z)$$
+By definition of a parabolic subgroup, $v_2\in W_P$ as well. Thus, this is equal to
+$$\sum_{v_1\cdot v_2=v}c_{u,v_2}^{w\omega_P\omega_{P'},\lambda_B}(y;y)\sch_{v_1}(y;z) = c_{u,v}^{w\omega_P\omega_{P'},\lambda_B}(y;z).$$
+\end{proof}
+
 
 \bibliographystyle{acm}
 \bibliography{formschub}
