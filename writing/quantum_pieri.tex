@@ -464,12 +464,98 @@ $$\qsch_v(x;z)=\sum_{(v_0,\ldots,v_k)}\prod_{i=1}^k (-1)^{\sigma_i(v_{i-1},v_i)}
 Where $v_{i-1}\xRightarrow{i} v_i$ for all $i$, $v_0=1$, and $v_k=v\mom(v^{-1})$.
 \end{theorem}
 
-Coupled with the Pieri formulas, these formulas give a relatively efficient method for computing products of (quantum) double Schubert polynomials. We describe the resulting algorithm precisely and record its asymptotic complexity in the classical (non-quantum) case.
+Coupled with the Pieri formulas, these formulas give a relatively efficient method for computing products of (quantum) double Schubert polynomials. We describe the resulting algorithm precisely and record its asymptotic complexity in the classical (non-quantum) case. To do so we build it up from its innermost primitive, the elementary (vertical-strip) Pieri step that generates the $u$-side covers at each layer.
+
+\begin{definition}[$k$-strip cover, admissible $k$-chain, the $(p,k)$-Pieri problem] \label{def:pieriproblem}
+Let $w\in S_n$, let $1\leq k<n$, and let $\beta\in\{1,\ldots,n\}\cup\{\infty\}$. A \emph{$k$-strip cover of $(w,\beta)$} is a transposition $t_{ab}$ of positions $a,b$ with $1\leq a\leq k<b\leq n$ such that
+\begin{enumerate}
+\item $w\lessdot wt_{ab}$ in Bruhat order; that is, $w(a)<w(b)$ and no $c$ with $a<c<b$ satisfies $w(a)<w(c)<w(b)$; and
+\item $w(b)<\beta$.
+\end{enumerate}
+Its \emph{output} is the pair $(wt_{ab},\,w(b))$. An \emph{admissible $k$-chain of length $p$} from $u$ is a sequence $u=w_0,w_1,\ldots,w_p$ carrying bounds $\infty=\beta_0>\beta_1>\cdots>\beta_p$ in which $(w_t,\beta_t)$ is the output of a $k$-strip cover of $(w_{t-1},\beta_{t-1})$ for every $t$. The \emph{$(p,k)$-Pieri problem} for $u$ asks to enumerate every admissible $k$-chain from $u$ of length at most $p$. These chains index the permutations occurring in $e_p(x_1,\ldots,x_k)\,\sch_u$, where $e_p$ is the elementary symmetric polynomial.
+\end{definition}
+
+\begin{method}[$\textbf{\textsc{pieri}}(u,p,k)$] \label{method:pieri}
+Given $u\in S_n$, $1\leq k<n$, and $0\leq p\leq k$, the algorithm returns a list $T$ of pairs $(w,t)$, one for each admissible $k$-chain from $u$ of length $t\leq p$, recording its endpoint $w$.
+\begin{enumerate}
+\item Initialize $T\gets[(u,0)]$ and a frontier $F\gets[(u,\infty)]$.
+\item For $t=1,\ldots,p$, form a new frontier $F'\gets[\,]$ and, for each $(w,\beta)\in F$:
+  \begin{enumerate}
+  \item compute $A\gets\{\,a\in\{1,\ldots,k\}\mid w(a)<\beta\,\}$;
+  \item for each $b=k+1,\ldots,n$ with $w(b)<\beta$, and each $a\in A$ for which $t_{ab}$ is a $k$-strip cover of $(w,\beta)$, append $(wt_{ab},\,w(b))$ to $F'$ and $(wt_{ab},\,t)$ to $T$.
+  \end{enumerate}
+  Then set $F\gets F'$.
+\item Return $T$.
+\end{enumerate}
+\end{method}
+
+\begin{lemma}[Multiplicity-freeness] \label{lemma:pierimultfree}
+For each $t$, distinct admissible $k$-chains from $u$ of length $t$ have distinct endpoints; equivalently, the endpoint map is a bijection from admissible $k$-chains of length $t$ onto the permutations $w$ with $w\gtrdot^{k} u$ of length $\ell(u)+t$ produced by the Pieri rule for $e_t(x_1,\ldots,x_k)$.
+\end{lemma}
+\begin{proof}
+The strictly decreasing bounds $\beta_0>\beta_1>\cdots$ force the values moved leftward across position $k$ to be strictly decreasing, which is exactly the condition making the $e_t$-Pieri expansion multiplicity-free; see \cite{bergeron2002skew}. Reconstructing the chain from its endpoint by peeling off these moves in decreasing order of value shows the map is injective, hence bijective onto the Pieri support.
+\end{proof}
+
+\begin{proposition}[Complexity of $\textbf{\textsc{pieri}}$] \label{prop:piericomplexity}
+Let $M:=|T|$ be the number of admissible $k$-chains from $u$ of length at most $p$ that $\textbf{\textsc{pieri}}(u,p,k)$ returns. The algorithm runs in
+$$O\!\left(k\,(n-k)\,n\cdot M\right)$$
+elementary operations, that is $O(n^3)$ per enumerated permutation. Moreover, by Lemma~\ref{lemma:pierimultfree},
+$$M\;\leq\;\#\{\,w\in S_n\mid w\geq u,\ \ell(w)\leq \ell(u)+p\,\}.$$
+\end{proposition}
+\begin{proof}
+Processing one frontier node $(w,\beta)$ costs $O(k)$ to build $A$, and then iterates over the $n-k$ choices of $b$ and the at most $k$ elements of $A$; for each pair the Bruhat-cover test and the transposition each scan $O(n)$ positions. Thus a node costs $O\!\big(k+(n-k)\,k\,n\big)=O\!\big(k\,(n-k)\,n\big)$. By Lemma~\ref{lemma:pierimultfree} the number of nodes ever placed on a frontier equals $\sum_{t=0}^{p-1}N_t$, where $N_t$ is the number of length-$t$ chains; since $\sum_{t=0}^{p-1}N_t\leq\sum_{t=0}^{p}N_t=M$, the total cost is $O\!\big(k\,(n-k)\,n\cdot M\big)$. The bound on $M$ holds because every endpoint satisfies $w\geq u$ and $\ell(w)\leq\ell(u)+p$.
+\end{proof}
+
+We now describe the $v$-side primitive. Its starting point is the structure of a \emph{dominant} double Schubert polynomial. If $\mu$ is dominant with $\code(\mu)=(\lambda_1,\ldots,\lambda_m)$, then $\sch_\mu(x;z)$ factors as a product of factorial elementary symmetric polynomials of maximal degree, one per column of the shape,
+$$\sch_\mu(x;z)=\prod_{i=1}^{m}E_{\lambda_i,\,\lambda_i}(x;z^{(i)}),$$
+where $z^{(i)}$ is the shifted $z$-alphabet attached to column $i$ (Definition~\ref{definition:pieri}). For a general $v$ one writes $\sch_v(x;z)$ by applying divided differences in the $z$-variables to the dominant polynomial $\sch_{\dom(v^{-1})}(x;z)$; because that polynomial factors by column, the divided-difference action decouples and may be carried out one column (one $z^{(i)}$-group) at a time. Applied to a single column this produces a \emph{signed} descending expansion. The following primitive carries it out.
+
+\begin{definition}[$k$-strip descent beneath an edge, the down-Pieri problem] \label{def:kdownproblem}
+Let $w,\mu\in S_n$ and $1\leq k<n$. Say $w'$ lies \emph{beneath the edge} $\mu$ if
+$$\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w'),$$
+that is, $\ell(w'\mu)=\ell(\mu)-\ell(w')$. A \emph{$k$-strip descent} of $w$ is a Bruhat descent $w\gtrdot wt_{ab}$ realized by a transposition $t_{ab}$ that moves the value in the pivot position $k$ either leftward (from a position $a<k$, with sign $-1$) or rightward (to a position $b>k$, with sign $+1$), touching only positions still holding their original value. Given a starting label $w$, the edge $\mu$, a degree $p$, and the column $k$, the \emph{down-Pieri problem} asks for the signed list of those length-$t$ descending $k$-strip chains from $w$ ($t\leq p$) whose endpoint lies beneath $\mu$.
+\end{definition}
+
+\begin{method}[$\textbf{\textsc{kdown}}(w,\mu,p,k)$] \label{method:kdown}
+The algorithm returns a signed list $D$ of triples $(w',t,s)$, one for each length-$t$ descending $k$-strip chain from $w$ ($t\leq p$) whose endpoint $w'$ lies beneath $\mu$, with $s\in\{+1,-1\}$ its sign.
+\begin{enumerate}
+\item Initialize $D\gets[\,]$; if $w$ is already beneath $\mu$, append $(w,0,+1)$. Set a frontier $F\gets[(w,+1)]$.
+\item For $t=1,\ldots,p$, form $F'\gets[\,]$ and, for each $(w'',s)\in F$:
+  \begin{enumerate}
+  \item (leftward) for each position $a<k$ with $w''(a)=w(a)$ such that $w''\gtrdot w''t_{a,k}$ is a Bruhat descent, set $w'''\gets w''t_{a,k}$ and append $(w''',-s)$ to $F'$; if $w'''$ is beneath $\mu$, append $(w''',t,-s)$ to $D$;
+  \item (rightward) for each position $b>k$ with $w''(b)=w(b)$ such that $w''\gtrdot w''t_{k,b}$ is a Bruhat descent, set $w'''\gets w''t_{k,b}$ and append $(w''',+s)$ to $F'$; if $w'''$ is beneath $\mu$, append $(w''',t,+s)$ to $D$.
+  \end{enumerate}
+  Then set $F\gets F'$.
+\item Return $D$.
+\end{enumerate}
+\end{method}
+
+Applied without the edge $\mu$, the signed descending expansion produces many extraneous terms that ultimately cancel. The edge is exactly the bound that discards them: only endpoints beneath $\mu$ are retained in $D$. In the assembled $v$-side (Method~\ref{method:vpaths} below) only these retained labels seed the next column, so the edge prevents the number of live paths from blowing up across columns.
+
+\begin{method}[$\textbf{\textsc{vpaths}}(v)$, the $v$-side path dictionaries] \label{method:vpaths}
+Let $\theta:=\theta(v^{-1})$ with nonzero parts in columns $1,\ldots,L$, and let $vmu:=v\,\dom(v^{-1})$. Processing columns from $i=L$ down to $i=1$, maintain for each column a set of live labels (initialized at column $L$ to the single label $vmu$). At column $i$, with $k=i$ and edge $\mu_i:=\dom$ of the shape truncated below column $i$, call $\textbf{\textsc{kdown}}(w,\mu_i,\theta_i,k)$ for each live label $w$; record its signed output triples as the transitions out of $w$, and let their endpoints be the live labels seeding column $i-1$. The collected transitions form the path dictionaries used by $\textbf{\textsc{schubmult}}$.
+\end{method}
+
+\begin{lemma}[Correctness of the edge filter] \label{lemma:edgefilter}
+A permutation $w'$ produced by a descending $k$-strip chain from $w$ is retained by $\textbf{\textsc{kdown}}(w,\mu,p,k)$ if and only if $w'$ lies beneath $\mu$, i.e. $\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w')$. In the assembly of Method~\ref{method:vpaths} the retained signed labels are exactly the terms of $\sch_v(x;z)$ contributed through column $i$, so no extraneous (cancelling) label propagates to column $i-1$.
+\end{lemma}
+\begin{proof}
+The retention test is the identity $\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w')$ checked in step (2); this is precisely the condition that $w'\leq\mu$ with $\ell(w'\mu)=\ell(\mu)-\ell(w')$. The factorization of the dominant polynomial by column, together with the column-wise decoupling of the $z$-divided differences, identifies the beneath-$\mu$ endpoints at column $i$ with the surviving monomials of $\sch_v(x;z)$ after processing that column; the extraneous chains are exactly those leaving the shape, which the edge discards before they seed column $i-1$.
+\end{proof}
+
+\begin{proposition}[Complexity of $\textbf{\textsc{kdown}}$] \label{prop:kdowncomplexity}
+Let $R:=|D|$ be the number of retained signed triples and $F^\ast$ the total number of frontier nodes generated by $\textbf{\textsc{kdown}}(w,\mu,p,k)$. The algorithm runs in
+$$O\!\left(n^2\cdot F^\ast\right)$$
+elementary operations, and $R\leq F^\ast$. Consequently $\textbf{\textsc{vpaths}}(v)$, which invokes $\textbf{\textsc{kdown}}$ once per live label across the $L\leq\min(n-1,\ell_v)$ columns and by Lemma~\ref{lemma:edgefilter} propagates only retained labels, runs in $O\!\big(n^2\cdot\Phi_v\big)$ operations, where $\Phi_v$ is the total number of frontier nodes generated over all columns.
+\end{proposition}
+\begin{proof}
+Processing one frontier node scans $O(n)$ candidate positions, each requiring an $O(n)$ Bruhat-descent test and $O(n)$ transposition, so $O(n^2)$ per node; summing over the $F^\ast$ nodes gives $O(n^2F^\ast)$. Each retained triple arises from a distinct frontier node, so $R\leq F^\ast$. In $\textbf{\textsc{vpaths}}$, by Lemma~\ref{lemma:edgefilter} the labels seeding column $i-1$ are only the retained (beneath-edge) endpoints of column $i$, so the live-label count never includes extraneous paths; summing the per-column frontier work gives $O(n^2\Phi_v)$.
+\end{proof}
 
 \begin{method}[The algorithm \textbf{\textsc{schubmult}}] \label{method:schubmult}
 Fix $n$ and let $u,v\in S_n$. The algorithm $\textbf{\textsc{schubmult}}(u,v)$ computes the expansion of $\sch_u(x;z)\,\sch_v(x;z)$ in the Schubert basis as follows. Set $\theta:=\theta(v^{-1})$ and let
 $$L:=\#\{i\mid\theta_i\neq 0\}$$
-be the number of nonzero parts. The algorithm proceeds in $L$ layers. It maintains a \emph{front}, a collection of nodes each consisting of an intermediate permutation on the $u$-side paired with a label on the $v$-side, initialized to the single node $(u,\,e)$. At layer $i$ it replaces each node by the nodes obtained by combining one $u$-side factorial-elementary Pieri cover (as in Theorem \ref{theorem:orddouble}) with one $v$-side path step $v_{i-1}\xRightarrow{i}v_i$, accumulating coefficients in the coefficient ring. After all $L$ layers the surviving coefficients at $v$-label $v\dom(v^{-1})$ give the structure constants.
+be the number of nonzero parts. The algorithm proceeds in $L$ layers. It maintains a \emph{front}, a collection of nodes each consisting of an intermediate permutation on the $u$-side paired with a label on the $v$-side, initialized to the single node $(u,\,e)$. At layer $i$ it replaces each node by the nodes obtained by combining one $u$-side cover, generated by $\textbf{\textsc{pieri}}(\,\cdot\,,\theta_i,\theta_i)$ (Method~\ref{method:pieri}), with one $v$-side transition, generated by $\textbf{\textsc{vpaths}}(v)$ (Method~\ref{method:vpaths}), accumulating coefficients in the coefficient ring. After all $L$ layers the surviving coefficients at $v$-label $v\dom(v^{-1})$ give the structure constants.
 \end{method}
 
 \begin{definition}[$\ell_u$, $\ell_v$, $P_u$]
@@ -482,18 +568,40 @@ The asymptotic complexity of $\textbf{\textsc{schubmult}}(u,v)$ is
 $$O\!\left(\,\min(n-1,\ell_v)\cdot P_u\cdot 2^{\ell_v}\cdot\mathrm{poly}(n)\,\right)$$
 operations in the coefficient ring, which is $O\!\left(2^{\,\binom{n}{2}+n\log_2 n}\right)$ in the worst case, and $O\!\left(2^{\,n\log_2 n}\right)$ when $v$ is dominant.
 \end{theorem}
-
+\begin{remark}
+Note that this does not exceed the time complexity of multiplication of two arbitrary polynomials in $n$ variables in the monomial basis of degree at most $\binom{n}{2}$, which is $O\!\left(2^{\,\binom{n}{2}}\right)$.
+\end{remark}
 \begin{proof}
-By Method~\ref{method:schubmult} the algorithm runs in $L=\#\{i\mid\theta_i(v^{-1})\neq 0\}\leq\min(n-1,\ell_v)$ layers. The distinct $u$-side permutations that ever appear all satisfy $w\geq u$ and $\ell(w)\leq \ell_u+\ell_v$, since each layer raises the length by the corresponding part of $\theta$ and the parts sum to $\ell_v$; hence there are at most $P_u$ of them. The $v$-side labels lie in the lower interval $[e,v]$, of which there are at most $2^{\ell_v}$ by the subword property. Each layer performs work bounded by the product of the front size, the number of live $v$-labels, and the two per-step branchings, each of which is $\mathrm{poly}(n)$; multiplying by $L$ layers gives the stated bound. Substituting $P_u\leq n!\leq 2^{n\log_2 n}$ and $\ell_v\leq\binom{n}{2}$ yields the worst-case form. If $v$ is dominant then $\theta(v)=\code(v)$, every path step carries a $+1$ sign, and each layer's $v$-side is a single path, so the factor $2^{\ell_v}$ is replaced by $O(\ell_v)$ and no term is produced and later canceled, giving $O(\ell_v\cdot P_u\cdot\mathrm{poly}(n))=O(2^{\,n\log_2 n})$.
+By Method~\ref{method:schubmult} the algorithm runs in $L=\#\{i\mid\theta_i(v^{-1})\neq 0\}\leq\min(n-1,\ell_v)$ layers. Write $\mu:=\dom(v^{-1})$, so that $\sum_i\theta_i(v^{-1})=\ell(\mu)$; note that $\ell(\mu)\geq\ell_v$, with equality if and only if $v$ is dominant, so the total degree processed on the shape is in general strictly larger than $\ell_v$. The key point is that the two sides are yoked: at layer $i$ a $u$-side degree $u_i$ and a $v$-side degree $v_i$ are paired with $u_i+v_i=\theta_i$, and the $v$-side descends from $v\mu$ to the identity, so $\sum_i v_i=\ell(v\mu)$. Hence the total degree added on the $u$-side is
+$$\sum_i u_i=\sum_i\theta_i-\sum_i v_i=\ell(\mu)-\ell(v\mu)=\ell_v,$$
+using $\ell(v\mu)=\ell(\mu)-\ell(v)$ (as $v^{-1}\leq\mu$ in weak order). Thus every intermediate $u$-side permutation satisfies $w\geq u$ and $\ell(w)\leq\ell_u+\ell_v$, so there are at most $P_u$ of them. The $v$-side labels lie in the lower interval $[e,v\mu]$; since $\ell(v\mu)=\ell(\mu)$ can exceed $\ell_v$, we bound their number by $2^{\ell(\mu)}$, but the edge filter of Lemma~\ref{lemma:edgefilter} retains only those beneath the running dominant edge, of which there are at most $2^{\ell_v}$ live at once. Each layer performs work bounded by the product of the front size, the number of live $v$-labels, and the two per-step branchings, each of which is $\mathrm{poly}(n)$; multiplying by $L$ layers gives the stated bound. Substituting $P_u\leq n!\leq 2^{n\log_2 n}$ and $\ell_v\leq\binom{n}{2}$ yields the worst-case form. If $v$ is dominant then $\theta(v)=\code(v)$, $\ell(\mu)=\ell_v$, every path step carries a $+1$ sign, and each layer's $v$-side is a single path, so the factor $2^{\ell_v}$ is replaced by $O(\ell_v)$ and no term is produced and later canceled, giving $O(\ell_v\cdot P_u\cdot\mathrm{poly}(n))=O(2^{\,n\log_2 n})$.
 \end{proof}
 
 \begin{remark}
-In the quantum case the $v$-side bound is unchanged: the transition formula of Theorem \ref{theorem:quandouble} uses the same increasing-path structure (via $\mom$ and $\thop$), so the number of $v$-labels is still at most $2^{\ell_v}$. What changes is the $u$-side factor $P_u$. In the quantum Bruhat order the Pieri covering moves can \emph{decrease} length, so the intermediate permutations reachable from $u$ are no longer confined to the interval $\{w\geq u\mid \ell(w)\leq\ell_u+\ell_v\}$, and a single permutation may be reached at several distinct $q$-degrees. The $u$-front is thus a \emph{multiset} of visits, indexed by $q$-degree, rather than a set. This does not reintroduce cycles: each length-decreasing move is compensated by a strictly higher power of $q$, so grading the transition graph by $q$-degree (equivalently, by the quantum Bruhat order) keeps it acyclic. A correct quantum bound therefore replaces $P_u$ by a count of these $q$-graded $u$-front visits with multiplicity, the powers of $q$ that appear limiting how far the length may descend and re-ascend. We defer the precise quantum estimate.
+The quantum algorithm has the same shape, running the transition of Theorem \ref{theorem:quandouble} in place of Theorem \ref{theorem:orddouble}, with the quantum factorial-elementary Pieri operator at each layer. Two things change relative to the classical case. First, the $v$-side is unaffected: Theorem \ref{theorem:quandouble} uses the same increasing-path structure (via $\mom$ and $\thop$), so the number of $v$-labels is still at most $2^{\ell_v}$. Second, on the $u$-side the quantum covers of Remark \ref{remark:qkbruhat} may \emph{decrease} length, so a node is now a pair $(w,d)$ of a permutation together with a $q$-degree, and the same $w$ may be reached at several $q$-degrees. This does not reintroduce cycles: each length-decreasing cover raises the $q$-degree $\sum_i d_i$ by a strictly positive amount (by $b-a$ when the transposition is $t_{ab}$), so grading nodes by $q$-degree---equivalently, by the quantum $k$-Bruhat order---keeps the transition graph acyclic.
 \end{remark}
 
-\begin{remark}
-In the quantum case the $v$-side bound is unchanged: the transition formula of Theorem \ref{theorem:quandouble} uses the same increasing-path structure (via $\mom$ and $\thop$), so the number of $v$-labels is still at most $2^{\ell_v}$. What changes is the $u$-side factor $P_u$. In the quantum Bruhat order the Pieri covering moves can \emph{decrease} length, so the intermediate permutations reachable from $u$ are no longer confined to the interval $\{w\geq u\mid \ell(w)\leq\ell_u+\ell_v\}$, and a single permutation may be reached at several distinct $q$-degrees. The $u$-front is thus a \emph{multiset} of visits, indexed by $q$-degree, rather than a set. This does not reintroduce cycles: each length-decreasing move is compensated by a strictly higher power of $q$, so grading the transition graph by $q$-degree (equivalently, by the quantum Bruhat order) keeps it acyclic. A correct quantum bound therefore replaces $P_u$ by a count of these $q$-graded $u$-front visits with multiplicity, the powers of $q$ that appear limiting how far the length may descend and re-ascend. We defer the precise quantum estimate.
-\end{remark}
+\begin{definition}[$\widehat P_u$, $Q_{u,v}$] \label{def:quantumfront}
+For $u,v\in S_n$ set
+$$\widehat P_u:=\#\{\,w\in S_n\mid \ell(w)\leq \ell_u+\ell_v\,\},\qquad Q_{u,v}:=\binom{\lfloor(\ell_u+\ell_v)/2\rfloor+n-1}{n-1}.$$
+\end{definition}
+
+\begin{theorem}[Complexity of quantum \textbf{\textsc{schubmult}}] \label{thm:quantumcomplexity}
+The asymptotic complexity of the quantum form of $\textbf{\textsc{schubmult}}(u,v)$ is
+$$O\!\left(\,\min(n-1,\ell_v)\cdot \widehat P_u\cdot Q_{u,v}\cdot 2^{\ell_v}\cdot\mathrm{poly}(n)\,\right)$$
+operations in the coefficient ring. In the worst case this is at most
+$$2^{\binom{n}{2}}\cdot n!\cdot Q_{u,v}\cdot\mathrm{poly}(n),$$
+whose leading exponent is $\binom{n}{2}$, the same as in the classical bound of Theorem \ref{thm:complexity}.
+\end{theorem}
+
+\begin{proof}
+The layer count $L\leq\min(n-1,\ell_v)$ and the $v$-side bound $2^{\ell_v}$ are as in Theorem \ref{thm:complexity}, since the $v$-side transition is unchanged. On the $u$-side, the pairing $\sum_i u_i=\ell(\mu)-\ell(v\mu)=\ell_v$ of Theorem~\ref{thm:complexity} still bounds the net length added when all covers are length-increasing; the quantum covers of Remark \ref{remark:qkbruhat} can additionally \emph{decrease} length, which only lowers $\ell(w)$, so every reachable permutation still satisfies $\ell(w)\leq\ell_u+\ell_v$ and there are at most $\widehat P_u$ of them. Each such permutation is reached with a $q$-degree $d=(d_1,\ldots,d_{n-1})$; by the grading, a nonzero contribution requires $\ell(u)+\ell(v)-\ell(w)+2\sum_i d_i\geq 0$, and specializing $y=z=0$ (equivalently, comparing with the small quantum cohomology of the flag variety \cite{fulton2004quantum}) forces $\sum_i d_i\leq\tfrac12(\ell_u+\ell_v)$ at every layer. The number of such $q$-degrees is at most $\binom{\lfloor(\ell_u+\ell_v)/2\rfloor+n-1}{n-1}=Q_{u,v}$, so the $u$-front is a multiset of at most $\widehat P_u\cdot Q_{u,v}$ visits. Multiplying the per-layer work as before gives the stated bound. For the worst case use $\widehat P_u\leq n!$ and $\ell_v\leq\binom{n}{2}$; since $\log_2\!\big(n!\,Q_{u,v}\big)=O(n\log n)=o\!\big(\binom{n}{2}\big)$, the leading exponent is $\binom{n}{2}$.
+\end{proof}
+
+
+
+
+%\begin{definition}[$\chi_{j;n}$, $\chi^{(n)}$]
 
 
 
