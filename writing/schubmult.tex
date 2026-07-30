@@ -1,0 +1,811 @@
+%%
+%% This is LaTeX2e input.
+%%
+
+%% The following tells LaTeX that we are using the 
+%% style file amsart.cls (That is the AMS article style
+%%
+\documentclass{amsart}
+\usepackage{fancyvrb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{cases}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{centernot}
+\usepackage{mathtools}
+\usepackage[margin=1in]{geometry}
+\usepackage[makeroom]{cancel}
+\usepackage{chemarrow}
+\usetikzlibrary{decorations.pathreplacing, decorations.pathmorphing, math}
+\newcommand{\tikznode}[3][inner sep=0pt]{\tikz[remember
+picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
+
+
+
+%\usepackage{ytableau}
+%\usepackage{witharrows}
+
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}[lemma]{Corollary}
+\newtheorem{conjecture}[lemma]{Conjecture} 
+\newtheorem{proposition}[lemma]{Proposition} 
+\newtheorem{theorem}[lemma]{Theorem}
+\newtheorem{question}{Question}
+%%
+%% If some other type is need, say conjectures, then it is constructed
+%% by editing and uncommenting the following.
+%%
+
+%\newtheorem{conj}[thm]{Conjecture} 
+
+
+%%% 
+%%% The following gives definition type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+\theoremstyle{definition}
+\newtheorem{definition}[lemma]{Definition}
+\newtheorem{example}[lemma]{Example}
+\newtheorem{method}[lemma]{Method}
+\allowdisplaybreaks
+%%
+%% Again more of these can be added by uncommenting and editing the
+%% following. 
+%%
+
+%\newtheorem{note}[thm]{Note}
+
+
+%%% 
+%%% The following gives remark type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+
+\theoremstyle{remark}
+
+\newtheorem{remark}[lemma]{Remark}
+
+
+%%%
+%%% The following, if uncommented, numbers equations within sections.
+%%% 
+
+\numberwithin{equation}{section}
+
+
+%%%
+%%% The following show how to make definition (also called macros or
+%%% abbreviations).  For example to use get a bold face R for use to
+%%% name the real numbers the command is \mathbf{R}.  To save typing we
+%%% can abbreviate as
+
+\newcommand{\R}{\mathbf{R}}  % The real numbers.
+
+%%
+%% The comment after the defintion is not required, but if you are
+%% working with someone they will likely thank you for explaining your
+%% definition.  
+%%
+%% Now add you own definitions:
+%%
+
+%%%
+%%% Mathematical operators (things like sin and cos which are used as
+%%% functions and have slightly different spacing when typeset than
+%%% variables are defined as follows:
+%%%
+
+\DeclareMathOperator{\dist}{dist} % The distance.
+
+
+
+%%
+%% This is the end of the preamble.
+%% 
+\title{Efficient computation of triple Schubert structure constants}
+\author{Matthew J. Samuel}
+%\ead{matthematics@gmail.com}
+
+%\affiliation[1]{addressline={31 Cherry Blossom Drive},
+%city={Monroe Township},
+%postcode={NJ 08831},
+%country={USA}}
+
+
+\DeclareMathOperator{\bpath}{BPath}
+\DeclareMathOperator{\Sym}{Sym}
+\DeclareMathOperator{\Schub}{Schub}
+\DeclareMathOperator{\ESchub}{ESchub}
+\DeclareMathOperator{\sch}{\mathfrak{S}}
+\DeclareMathOperator{\qsch}{\widetilde{\mathfrak{S}}}
+
+
+\newcommand{\xrightsquigarrow}[2][]{%
+	\mathrel{\mathop{\rightsquigarrow}\limits^{\scriptstyle #2}%
+	\ifx\hfuzz#1\hfuzz\else_{\scriptstyle #1}\fi}%
+}
+
+\newcommand{\tom}[1]{\ensuremath{\xrightsquigarrow{#1}}}
+\newcommand{\fx}{\mathrm{fix}}
+%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
+%\counterwithout{equation}{section}
+%\setcounter{section}{-1}
+
+\begin{document}
+
+\begin{abstract}
+\end{abstract}
+\maketitle
+
+{\bf Keywords}: Schubert polynomial, structure constant, Littlewood-Richardson rule, coproduct, double Schubert polynomial
+
+{\bf Mathematics classification codes}: 05E05, 05A05, 05A15, 14N10
+
+{\bf Email}: matthematics@gmail.com
+
+\newcommand{\code}{\mathfrak{c}}
+\newcommand{\ducode}{\overline{\mathfrak{c}}}
+\newcommand{\wte}{\mathbf{E}}
+\newcommand{\qelem}{\widetilde{E}}
+\newcommand{\pcomp}[1]{\widehat{#1}}
+%$$w_0(n)^{(i)}=w_0(n)w_0(n+1-i)w_0(n-i)$$
+
+%\begin{theorem}
+%Let $u\in S_n$ and $1\leq i\leq n$. Then we have
+%$$\sch_u(y)=\sum_{u'w_0(n)^{(i)}\tom{n+1-i} uw_0(n)}y_i^{\ell(u',u)}\sch_{u'}(y^{(i)})$$
+%where $u'\in S_n$ satisfies $\ell(u'w_0(n)^{(i)})+\ell(u')=\ell(w_0(n)^{(i)})$.
+%\end{theorem}
+\section{Introduction}
+
+
+
+%\section{Definitions and statement of results}
+
+% \subsection{Quantum double Schubert polynomials and triple quantum Schubert structure constants}
+% We fix $n\geq 1$ and write
+% $$x=(x_1,\ldots,x_n),\qquad y=(y_1,\ldots,y_n),\qquad q=(q_1,\ldots,q_{n-1}).$$
+% For $1\leq a<b\leq n$, set
+% $$q_{ab}:=q_aq_{a+1}\cdots q_{b-1},$$
+% and use the cohomological grading $\deg q_i=2$ (equivalently $\deg q_{ab}=2(b-a)$).
+
+% Let $s_i$ act on the $y$-variables by swapping $y_i,y_{i+1}$, and define the divided difference operators
+% $$\partial_i^{(y)}f:=\frac{f-s_i f}{y_i-y_{i+1}}\qquad(1\leq i\leq n-1).$$
+% For $w\in S_n$, if $w=s_{i_1}\cdots s_{i_r}$ is any reduced word, set
+% $$\partial_w^{(y)}:=\partial_{i_1}^{(y)}\cdots \partial_{i_r}^{(y)}.$$
+
+% Following Kirillov--Maeno \cite{kirillov2000quantum}, define the quantum elementary polynomials $e_j^{(q)}(x_1,\ldots,x_k)$ by
+% $$\Delta_k(t\mid x_1,\ldots,x_k):=\sum_{j=0}^k t^{k-j}e_j^{(q)}(x_1,\ldots,x_k),$$
+% where
+% $$\Delta_k(t\mid x_1,\ldots,x_k)=\det\!\begin{pmatrix}
+% x_1+t & q_1 & 0 & \cdots & 0\\
+% -1 & x_2+t & q_2 & \ddots & \vdots\\
+% 0 & -1 & x_3+t & \ddots & 0\\
+% \vdots & \ddots & \ddots & \ddots & q_{k-1}\\
+% 0 & \cdots & 0 & -1 & x_k+t
+% \end{pmatrix}.
+% $$
+
+% Let $w_0\in S_n$ be the longest permutation. The top quantum double Schubert polynomial is
+% $$\qsch_{w_0}(x;y):=\prod_{i=1}^{n-1}\Delta_i(-y_{n-i}\mid x_1,\ldots,x_i),$$
+% and for $w\in S_n$ we define
+% $$\qsch_w(x;y):=(-1)^{\ell(w_0) - \ell(w)}\partial_{ww_0}^{(y)}\qsch_{w_0}(x;y).$$
+% Its specialization
+% $$\qsch_w(x):=\qsch_w(x;0)$$
+% is the quantum Schubert polynomial. In particular, at $q=0$ these recover the ordinary double and single Schubert polynomials.
+
+% Given their stability property, we may let the number of variables be infinite, indexing the polynomials by $S_\infty$. As a module over $\mathbb{Z}[q][y]$, the quantum double Schubert polynomials form a basis of $\mathbb{Z}[q][x,y]$, and we may write
+% $$\qsch_u(x;y)\qsch_v(x;z)=\sum_{w,d}q^dc_{u,v}^{w,d}(y;z)\qsch_w(x;y)$$
+% where $d=(d_1,\ldots,d_{n-1})$ is a weak composition and $q^d=q_1^{d_1}\cdots q_{n-1}^{d_{n-1}}$. The coefficients $c_{u,v}^{w,d}(y;z)$ are the \emph{triple quantum Schubert structure constants}, which are polynomials in $y$ and $z$ with integer coefficients. This product respects the grading where for each $i$, $\deg y_i=\deg z_i=1$ and $\deg q_i=2$. In particular, if $c_{u,v}^{w,d}(y;z)\neq 0$, then $\deg c_{u,v}^{w,d}(y;z)=\ell(u)+\ell(v)-\ell(w)+2\sum_i d_i$. Unlike the usual triple Schubert structure constants, they do not exhibit triangularity in Bruhat order, and indeed we may have $\ell(w) < \ell(u) + \ell(v)$. There is an ordering in which the quantum double Schubert polynomials are triangular, but we will not need this in full generality.
+
+% \begin{remark}[$\tom{k}$ and the quantum $k$-Bruhat order] \label{remark:qkbruhat}
+% 	qrtere
+% % The \emph{quantum $k$-Bruhat order} was introduced by Benedetti, Bergeron, Colmenarejo, Saliola, and Sottile \cite{benedetti2025quantum} and studied further by Colmenarejo and Mayers \cite{colmenarejo2026quantum}. That order $\preceq_k^{\mathbf q}$ on $S_\infty[\mathbf q]$ is generated by cover relations
+% % $$u'\;\lessdot_k^{\mathbf q}\;\mathbf q^{\gamma}u't_{ab},\qquad a\leq k<b,$$
+% % each of exactly two kinds: a \emph{classical} cover, with $\gamma=0$ and $\ell(u't_{ab})=\ell(u')+1$, or a \emph{quantum} cover, with $\ell(u')+1=\ell(\mathbf q^{\gamma}u't_{ab})=\ell(u't_{ab})+2(b-a)$, that is $\ell(u't_{ab})=\ell(u')-2(b-a)+1$ and $\gamma=e_a+\cdots+e_{b-1}$. 
+% % These are exactly the two alternatives of condition (4) of Definition \ref{definition:pieri}. Consequently every sequence $t_{a_1b_1},\ldots,t_{a_pb_p}$ witnessing $u\tom{k}w$ is a saturated chain from $u$ to $\mathbf q^{\alpha}w$ in the quantum $k$-Bruhat order, where $\mathbf q^{\alpha}$ is the monomial recorded by $q_k(u,w)$; in particular $u\tom{k}w$ implies $u\preceq_k^{\mathbf q}\mathbf q^{\alpha}w$.
+
+% % The relation $\tom{k}$ is \emph{not} the full order $\preceq_k^{\mathbf q}$, however. Definition \ref{definition:pieri} imposes the additional requirements that the lower indices $a_1,\ldots,a_p$ be pairwise distinct, so that $\tom{k}$ admits only those saturated chains of a special form. Thus $\tom{k}$ is strictly larger than the covering relation $\lessdot_k^{\mathbf q}$ but strictly smaller than $\preceq_k^{\mathbf q}$: a general chain in the quantum $k$-Bruhat order may reuse a lower index $a_i$, and such chains do not contribute to the Pieri expansion. This is the quantum counterpart of the classical situation, where the Pieri relation of \cite{sottile,samuelmolev} is likewise the restriction of the $k$-Bruhat order to chains with distinct lower indices, and it is exactly this restriction that makes the Pieri coefficients well defined.
+
+% % What we use below is only that each individual step of a $\tom{k}$ chain is a cover, and hence is governed by the following length-free description of the covers \cite[Proposition~3.1]{benedetti2025quantum} (see also \cite[Proposition~4.2]{colmenarejo2026quantum}): with $i\leq k<j$, the step $u'\lessdot_k^{\mathbf q}\mathbf q^{\gamma}u't_{ij}$ is a classical cover exactly when $u'(i)<u'(j)$ and no $l$ with $i<l<j$ satisfies $u'(i)<u'(l)<u'(j)$, and it is a quantum cover exactly when $u'(i)>u'(j)$ and every $l$ with $i<l<j$ satisfies $u'(j)<u'(l)<u'(i)$. We use this intrinsic characterization below in place of direct length computations.
+% \end{remark}
+
+
+% For $d=(0,\ldots,0)$, this is the ordinary triple Schubert calculus structure constant, and it was proved in \cite{gao2025grahampositivitytripleschubert} that these have the positivity property that they are polynomials in the differences $y_i-z_j$ with nonnegative integer coefficients. We will refer to this as \emph{triple Schubert positivity}. We have the following conjecture:
+% \begin{conjecture}
+% For all $u,v,w$ and $d$, the structure constants $c_{u,v}^{w,d}(y;z)$ exhibit triple Schubert positivity.
+% \end{conjecture}
+
+% \begin{example} \label{example:cppfpos}
+% 	We compute the product $\qsch_{15423}(x;y)\qsch_{1432}(x;z)$:
+% \begin{align*}
+% &q_{2} q_{3} \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{124635}{\left(x; y \right)} + q_{2} q_{3} \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{13452}{\left(x; y \right)} \\
+% &+ q_{2} q_{3} \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{14253}{\left(x; y \right)} \\
+% &+ q_{2} q_{3} \qsch_{125634}{\left(x; y \right)} + q_{2} q_{3} \qsch_{126435}{\left(x; y \right)} + q_{2} q_{3} \qsch_{13542}{\left(x; y \right)} + q_{2} q_{3} \qsch_{214635}{\left(x; y \right)} \\
+% &+ q_{2} q_{3} \qsch_{23451}{\left(x; y \right)} + q_{2} q_{3} \qsch_{24153}{\left(x; y \right)} + q_{2} q_{3} \qsch_{31452}{\left(x; y \right)} + q_{2} q_{3} \qsch_{41253}{\left(x; y \right)} \\
+% &+ q_{2} \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{146235}{\left(x; y \right)} + q_{2} \left(y_{4} + y_{5} - z_{1} - z_{2}\right) \qsch_{24513}{\left(x; y \right)} \\
+% &+ q_{2} \qsch_{246135}{\left(x; y \right)} + q_{3} \qsch_{1724356}{\left(x; y \right)} + q_{3} \qsch_{261435}{\left(x; y \right)} + q_{3} \qsch_{35142}{\left(x; y \right)} \\
+% &+ \left(q_{2} q_{3} + q_{2} \left(\left(y_{1} - z_{2}\right) \left(y_{4} + y_{5} - z_{1} - z_{2}\right) + \left(y_{4} - z_{1}\right) \left(y_{5} - z_{1}\right)\right)\right) \qsch_{14523}{\left(x; y \right)} \\
+% &+ \left(\left(y_{4} - z_{1}\right) \left(y_{5} - z_{3}\right) + \left(y_{4} - z_{1}\right) \left(y_{1} + y_{2} - z_{1} - z_{2}\right) \right. \\
+% &\quad \left. + \left(y_{5} - z_{2}\right) \left(y_{5} - z_{3}\right) + \left(y_{5} - z_{2}\right) \left(y_{1} + y_{2} - z_{1} - z_{2}\right)\right) \qsch_{25413}{\left(x; y \right)} \\
+% &+ \left(\left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) \left(y_{4} - z_{2}\right) + \left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) \left(y_{5} - z_{1}\right) + \left(y_{1} - z_{2}\right) \left(y_{5} - z_{1}\right) \left(y_{5} - z_{2}\right) \right. \\
+% &\quad \left. + \left(y_{1} - z_{3}\right) \left(y_{4} - z_{1}\right) \left(y_{5} - z_{1}\right) + \left(y_{4} - z_{1}\right) \left(y_{5} - z_{1}\right) \left(y_{5} - z_{2}\right)\right) \qsch_{15423}{\left(x; y \right)} \\
+% &+ \left(q_{2} + \left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) + \left(y_{1} - z_{3}\right) \left(y_{5} - z_{1}\right) + \left(y_{5} - z_{1}\right) \left(y_{5} - z_{2}\right)\right) \qsch_{156234}{\left(x; y \right)} \\
+% &+ \left(q_{3} + \left(y_{1} - z_{1}\right) \left(y_{4} - z_{1}\right) + \left(y_{5} - z_{2}\right) \left(y_{1} + y_{4} - z_{1} - z_{2}\right)\right) \qsch_{45123}{\left(x; y \right)} \\
+% &+ \left(q_{2} q_{3} + q_{3} \left(\left(y_{1} - z_{1}\right) \left(y_{1} + y_{5} - z_{2} - z_{3}\right) + \left(y_{5} - z_{2}\right) \left(y_{5} - z_{3}\right)\right)\right) \qsch_{15243}{\left(x; y \right)} \\
+% &+ q_{3} \left(y_{1} + y_{5} + y_{6} - z_{1} - z_{2} - z_{3}\right) \qsch_{162435}{\left(x; y \right)} + q_{3} \left(y_{1} + y_{2} + y_{5} - z_{1} - z_{2} - z_{3}\right) \qsch_{25143}{\left(x; y \right)} \\
+% &+ q_{2} q_{3} \left(y_{1} + y_{2} + y_{5} - z_{1} - z_{2} - z_{3}\right) \qsch_{12543}{\left(x; y \right)} + q_{2} q_{3} \left(y_{1} + y_{2} + y_{5} - z_{1} - z_{2} - z_{3}\right) \qsch_{21453}{\left(x; y \right)} \\
+% &+ q_{2} q_{3} \left((y_{1} - z_{2}) (y_{1} - z_{3}) + (y_{1} - z_{2}) (y_{2} - z_{2}) + (y_{1} - z_{2}) (y_{4} - z_{1}) \right. \\
+% &\quad \left. + (y_{1} - z_{2}) (y_{5} - z_{1}) + (y_{2} - z_{1}) (y_{4} - z_{1}) + (y_{4} - z_{1}) (y_{5} - z_{3})\right) \qsch_{12453}{\left(x; y \right)} \\
+% &+ \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{1742356}{\left(x; y \right)} + \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{461235}{\left(x; y \right)} \\
+% &+ \left(y_{4} + y_{5} - z_{1} - z_{2}\right) \qsch_{35412}{\left(x; y \right)} + \left(y_{4} + y_{5} - z_{1} - z_{2}\right) \qsch_{45213}{\left(x; y \right)} \\
+% &+ \left(\left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) + \left(y_{1} - z_{2}\right) \left(y_{5} + y_{6} - z_{1} - z_{2}\right) \right. \\
+% &\quad \left. + \left(y_{1} - z_{3}\right) \left(y_{4} - z_{1}\right) + \left(y_{4} - z_{1}\right) \left(y_{5} + y_{6} - z_{1} - z_{2}\right)\right) \qsch_{164235}{\left(x; y \right)} \\
+% &+ \left(y_{1} + y_{2} + y_{5} - z_{1} - z_{2} - z_{3}\right) \qsch_{256134}{\left(x; y \right)} + \left(y_{1} + y_{5} + y_{6} - z_{1} - z_{2} - z_{3}\right) \qsch_{165234}{\left(x; y \right)} \\
+% &+ \left(y_{1} + y_{2} + y_{4} + y_{5} + y_{6} - 2 z_{1} - 2 z_{2} - z_{3}\right) \qsch_{264135}{\left(x; y \right)} \\
+% &+ \qsch_{1752346}{\left(x; y \right)} + \qsch_{265134}{\left(x; y \right)} + \qsch_{2741356}{\left(x; y \right)} \\
+% &+ \qsch_{356124}{\left(x; y \right)} + \qsch_{364125}{\left(x; y \right)} + \qsch_{462135}{\left(x; y \right)} \\
+% &+ \qsch_{561234}{\left(x; y \right)}
+% \end{align*}
+% By inspection, we can see that the coefficients exhibit triple Schubert poisitivity.
+% \end{example}
+
+
+% We will provide formulas below that demonstrate this in special cases. In particular, we prove
+
+% \begin{theorem}
+% Suppose $u,v,w\in S_\infty$ and $v$ is $k$-Grassmannian for some $k$. Then for any $d$, $c_{u,v}^{w;d}(y;z)$ exhibits triple Schubert positivity.
+% \end{theorem}
+
+% \subsection{The parabolic case}
+
+% Unlike ordinary cohomology or equivariant cohomology, quantum cohomology and equivariant quantum cohomology do not demonstrate simple functoriality, in the sense that a projection of the complete flag variety $G/B$ to a partial flag variety $G/P$ does not induce a homomorphism of rings $QH_T^*(G/P)\to QH_T^*(G/B)$, and indeed the quantum cohomology of $G/P$ is not isomorphic to the subring of the quantum cohomology of $G/B$ generated by the Schubert classes indexed by $W^P$. This is reflected in the fact that there are parabolic quantum double Schubert polynomials defined in a different manner that represent Schubert classes in $QH_T^*(G/P)$ \cite{lam2014quantum} and are not in general equal to the quantum double Schubert polynomials above.
+
+% \begin{definition}[Parabolic quantum double Schubert polynomials]
+% 	Following Lam and Shimozono \cite{lam2014quantum}, we define parabolic quantum double Schubert polynomials as follows. Fix an integer $n>0$. A parabolic subgroup $W_P$ of $S_{n}$, which has Coxeter generators $s_1,\ldots,s_{n-1}$, is generated by a subset $P\subseteq \{s_1,\ldots,s_{n-1}\}$. In terms of the subgroup's properties, it is most natural to identify $P$ by the reflections that it \emph{excludes}. If $P$ is generated by $S\setminus \{s_{i_1},\ldots,s_{i_k}\}$ in increasing order, we define integers $n_1,\ldots,n_{k+1}$ with
+% 	$$n_1+\cdots+n_{k+1}=n$$
+% 	by $n_1 = i_1$ and $n_p = i_{p} - i_{p-1}$ for $2\leq p\leq k+1$. Then $N_j$ for $j\geq 1$ is defined by
+% 	$$N_j = n_1+\cdots+n_j$$
+% 	for $0\leq j\leq k+1$.
+	
+% 	For such a setup, define a matrix $D^P_j$ to be the $n\times n$ matrix with $x_1,\ldots,x_n$ on the diagonal, $-1$ on the superdiagonal, and $(-1)^{n_{j+1}+1}q_j$ at $(N_{j+1},N_{j-1}+1)$ for $1\leq j\leq k$. Notice that there are precisely $k$ $q$ variables, and we set
+% 	$$\deg q_j = n_j + n_{j+1}$$  
+	
+% 	Define 
+% 	$$\Delta^P_j(t;x)=\det(D^P_j-t\mathrm{Id})$$
+% 	Then we define the parabolic quantum double Schubert polynomials $\qsch_w^P(x;y)$ for $w\in W^P$ by
+% 	$$\qsch^P_w(x;y)=(-1)^{\ell(w(w_0^P)^{-1})}\partial_{w(w_0^P)^{-1}}^{(y)}\prod_{j=1}^k \Delta^P_j(-y_{n - N_{j+1}+1},\ldots,-y_{n-N_j};x)$$
+% 	where $w_0^P$ is the longest element of $W^P$. 
+	
+% 	Taken as defined, when we vary $n$ these polynomials are not stable under inclusion and do not form a basis of $\mathbb{Z}[q][x_1,\ldots,x_n;y]$ as a module over $\mathbb{Z}[q][y]$. To obtain stability and a basis, instead we fix $n$ and choose $N>n$ as large as we would like, maintaining $N_{k+1}=n$ and setting $n_{k+2} = N-n$. From a cohomological perspective, this introduces ``extraneous'' polynomials that are indexed by elements not in $W^P$. The full indexing set is $W^{\pcomp{P}}\subset S_\infty$, where
+% 	$$\pcomp{P} = P \cup \{s_{n+1},s_{n+2},\ldots\}$$
+% \end{definition}
+
+% \begin{example}
+% As equivariant cohomology rings of finite dimensional projective varieties over $\mathbb{C}$ are finitely generated modules over the coefficient ring, it is fully expected that products of double Schubert polynomials may include terms indexed by permutations that do not lie within the indexing set of the basis of Schubert classes. For example, consider the following non-quantum double Schubert polynomial product, with $P=\{s_1,s_3\}$ and basis elements in $S_4$:
+% \begin{align*}
+% \sch_{2413}(x;y)\sch_{3412}(x;y)
+% &= - (\alpha_1+\alpha_2)(\alpha_1+\alpha_2+\alpha_3)(\alpha_2+\alpha_3)\,\sch_{3412}(x;y) \\
+% &\quad + (\alpha_1+\alpha_2)(\alpha_1+2\alpha_2+2\alpha_3+\alpha_4)\,\sch_{35124}(x;y) \\
+% &\quad - (\alpha_1+\alpha_2)\,\sch_{361245}(x;y) \\
+% &\quad - (\alpha_1+2\alpha_2+2\alpha_3+\alpha_4)\,\sch_{45123}(x;y) \\
+% &\quad + \sch_{461235}(x;y).
+% \end{align*}
+% Not only does the product $\qsch_{2413}^{P}(x;y)\qsch_{3412}^{P}(x;y)$ include extra terms indexed by permutations in $W^P$, there are also terms with nonzero coefficients that are in $W^{\pcomp{P}}\setminus W^P$:
+% \begin{align*}
+% q_1(\alpha_1\alpha_2+\alpha_1\alpha_3+\alpha_2\alpha_3+\alpha_2^2)\,\qsch_{132}^{P}(x;y)
+% &+ q_1(\alpha_1+\alpha_2)\,\qsch_{231}^{P}(x;y) \\
+% &+ q_1(\alpha_2+\alpha_3)\,\qsch_{1423}^{P}(x;y) \\
+% &+ \color{red}{q_1(\alpha_1+\alpha_2)\,\qsch_{13254}^{\pcomp{P}}(x;y)} \\
+% &+ \color{red}{q_1\,\qsch_{14253}^{\pcomp{P}}(x;y)} \\
+% &+ q_1\,\qsch_{15234}^{P}(x;y) \\
+% &+ q_1\,\qsch_{2413}^{P}(x;y)
+% \end{align*}
+% \end{example}
+
+
+% \begin{definition}[$q$-vectors and Peterson-Woodward lifts]
+% 	Define $Q^\vee$, for legacy purposes, to be the set of weak compositions. For an integer $i$ and $d\in Q^\vee$, define
+% 	$$\langle d\rangle_i = 2d_i - d_{i-1} - d_{i + 1}$$
+% 	The double indexed version will be denoted by
+% 	$$\langle d\rangle_{ij} = \sum_{k=i}^{j-1}\langle d\rangle_k$$
+
+% 	For a parabolic subgroup $W_P$, we define $Q^\vee_P$ to be the set of weak compositions $d$ such that $\langle d\rangle_i = 0$ for all $s_i\notin P$. The $q$-vectors in $W^P$ are indexed by $Q^\vee/Q^\vee_P$.
+
+% 	Let $d_P\in Q^\vee/Q^\vee_P$. A \emph{Peterson-Woodward lift} of $d_P$ is a $d\in Q^\vee$ such that $d_P\in d+ Q_P^\vee$ and $\langle d\rangle_{ij}\in \{0,-1\}$ for all $i,j$ such that $s_{i},\ldots,s_{j-1}\in P$.
+%  \end{definition}
+
+%  \begin{method}[Checking the Peterson-Woodward lift property]
+%  While backing out a Peterson-Woodward lift is difficult, going in the other direction is not. Suppose $d\in Q^\vee$ and $P$ is parabolic. If there is any $i\in P$ such that $\langle d\rangle_i\notin\{0,-1\}$, then $d$ is not a Peterson-Woodward lift. If this condition does hold, let $z_P(d)$ be the set of all indexes $i$ such that $\langle d\rangle_i = 0$. This set is naturally divided into maximal disjoint intervals $I_1,\ldots,I_m$. We must check the additional condition that for each such $I$ and each pair $i<j$ with $i,j-1\in I$, the condition $\langle d\rangle_{ij}\in\{0,-1\}$ holds. If and only if it does, then $d$ is a Peterson-Woodward lift of a unique $d_P\in Q^\vee/Q^\vee_P$. We denote this $d_P$ by $\pi_P(d)$. 
+%  \end{method}
+
+%  This algorithm is polynomial in the length of $d$, which in almost all currently feasible cases is quite small. In contrast, a naive search for $d$ with $d_P$ as the input has an exponential search space, though a more refined algorithm may exist.
+
+%  We prove the following result.
+
+%  \begin{proposition}
+% Let $W_P$ be a parabolic subgroup of $S_\infty$ with $P=\pcomp{P}$ and let $u,v,w\in W^{P}$. Then for any $d_P = \pi_P(d)\in Q^\vee/Q_P^\vee$, we have that
+% $$c_{u,v}^{w,d_P}(y;z) = c_{u,v}^{ww_Pw_{z_P(d)},d}(y;z),$$
+% \end{proposition}
+
+% Thus, though we lack a simple functoriality property, we can reduce the computation of parabolic triple quantum Schubert structure constants completely to the complete flag variety case with an efficient algorithm. We obtain a nontrivial corollary from this.
+
+% \begin{example}
+% 	The product in the example above, with $P=\pcomp{P}$ satisfying $P\cap\{s_1,s_2,s_3,s_4,s_5\} = \{s_1,s_4\}$, allows us to compute the triple structure constants for the corresponding parabolic quantum double Schubert polynomials:
+% \begin{align*}
+% &q_{1} q_{2} \left(y_{1} + y_{2} + y_{5} - z_{1} - z_{2} - z_{3}\right) \qsch_{1243}^P{\left(x; y \right)} \\
+% &+ q_{1} q_{2} \qsch_{124365}^P{\left(x; y \right)} + q_{1} q_{2} \qsch_{1342}^P{\left(x; y \right)} + q_{1} q_{2} \qsch_{1423}^P{\left(x; y \right)} \\
+% &+ q_{2} \left(\left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) + \left(y_{1} - z_{3}\right) \left(y_{5} - z_{1}\right) + \left(y_{5} - z_{1}\right) \left(y_{5} - z_{2}\right)\right) \qsch_{15234}^P{\left(x; y \right)} \\
+% &+ q_{2} \left(y_{1} + y_{5} + y_{6} - z_{1} - z_{2} - z_{3}\right) \qsch_{162345}^P{\left(x; y \right)} + q_{2} \left(y_{1} + y_{2} + y_{5} - z_{1} - z_{2} - z_{3}\right) \qsch_{25134}^P{\left(x; y \right)} \\
+% &+ \left(\left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) \left(y_{4} - z_{2}\right) + \left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) \left(y_{5} - z_{1}\right) + \left(y_{1} - z_{2}\right) \left(y_{5} - z_{1}\right) \left(y_{5} - z_{2}\right) \right. \\
+% &\quad \left. + \left(y_{1} - z_{3}\right) \left(y_{4} - z_{1}\right) \left(y_{5} - z_{1}\right) + \left(y_{4} - z_{1}\right) \left(y_{5} - z_{1}\right) \left(y_{5} - z_{2}\right)\right) \qsch_{15423}^P{\left(x; y \right)} \\
+% &+ q_{2} \qsch_{1723456}^P{\left(x; y \right)} + q_{2} \qsch_{261345}^P{\left(x; y \right)} + q_{2} \qsch_{35124}^P{\left(x; y \right)} \\
+% &+ \left(\left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) + \left(y_{1} - z_{3}\right) \left(y_{5} - z_{1}\right) + \left(y_{5} - z_{1}\right) \left(y_{5} - z_{2}\right)\right) \qsch_{156234}^P{\left(x; y \right)} \\
+% &+ \left(\left(y_{1} - z_{2}\right) \left(y_{1} - z_{3}\right) + \left(y_{1} - z_{2}\right) \left(y_{5} + y_{6} - z_{1} - z_{2}\right) \right. \\
+% &\quad \left. + \left(y_{1} - z_{3}\right) \left(y_{4} - z_{1}\right) + \left(y_{4} - z_{1}\right) \left(y_{5} + y_{6} - z_{1} - z_{2}\right)\right) \qsch_{164235}^P{\left(x; y \right)} \\
+% &+ \left(\left(y_{4} - z_{1}\right) \left(y_{5} - z_{3}\right) + \left(y_{4} - z_{1}\right) \left(y_{1} + y_{2} - z_{1} - z_{2}\right) \right. \\
+% &\quad \left. + \left(y_{5} - z_{2}\right) \left(y_{5} - z_{3}\right) + \left(y_{5} - z_{2}\right) \left(y_{1} + y_{2} - z_{1} - z_{2}\right)\right) \qsch_{25413}^P{\left(x; y \right)} \\
+% &+ \left(\left(y_{1} - z_{1}\right) \left(y_{4} - z_{1}\right) + \left(y_{5} - z_{2}\right) \left(y_{1} + y_{4} - z_{1} - z_{2}\right)\right) \qsch_{45123}^P{\left(x; y \right)} \\
+% &+ \left(y_{1} + y_{5} + y_{6} - z_{1} - z_{2} - z_{3}\right) \qsch_{165234}^P{\left(x; y \right)} + \left(y_{1} + y_{2} + y_{5} - z_{1} - z_{2} - z_{3}\right) \qsch_{256134}^P{\left(x; y \right)} \\
+% &+ \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{1742356}^P{\left(x; y \right)} + \left(y_{1} + y_{4} - z_{1} - z_{2}\right) \qsch_{461235}^P{\left(x; y \right)} \\
+% &+ \left(y_{1} + y_{2} + y_{4} + y_{5} + y_{6} - 2 z_{1} - 2 z_{2} - z_{3}\right) \qsch_{264135}^P{\left(x; y \right)} \\
+% &+ \left(y_{4} + y_{5} - z_{1} - z_{2}\right) \qsch_{35412}^P{\left(x; y \right)} + \left(y_{4} + y_{5} - z_{1} - z_{2}\right) \qsch_{45213}^P{\left(x; y \right)} \\
+% &+ \qsch_{1752346}^P{\left(x; y \right)} + \qsch_{265134}^P{\left(x; y \right)} + \qsch_{2741356}^P{\left(x; y \right)} \\
+% &+ \qsch_{356124}^P{\left(x; y \right)} + \qsch_{364125}^P{\left(x; y \right)} + \qsch_{462135}^P{\left(x; y \right)} \\
+% &+ \qsch_{561234}^P{\left(x; y \right)}
+% \end{align*}
+% For an illustration, consider $d_P = (-,0,1,-,0)$ for the coefficient of $162345$. $q^{d_P} = q_2$. The Peterson-Woodward lift of $d_P$ is $d = (0,0,1,0,0)$, and $w_P = 21354$. $z_P(d) = \{1\}$, so $w_Pw_{z_P(d)} = 12354$. Thus, $ww_Pw_{z_P(d)} = 162435$, and the $q_2$-component of the coefficient of $\qsch_{162345}^P(x;y)$ is $(y_1+y_5+y_6-z_1-z_2-z_3)$, which is the same as the $q_3$-component ($q^d$) of the coefficient of $\qsch_{162435}(x;y)$ in the complete flag variety case (Example \ref{example:cppfpos}).
+% \end{example}
+
+% \begin{corollary}[Triple quantum Schubert positivity for the Grassmannian case]
+% Suppose $u,v,w\in S_n$ are $k$-Grassmannian, where $P$ is the corresponding parabolic subroup such that $n_1 = k$ and $n_2 = n - k$. Then $c_{u,v}^{w;d}(y;z)$ exhibits triple Schubert positivity.
+% \end{corollary}
+
+
+% \section{Pieri}
+
+% \begin{definition}[$\tom{k}$, $\fx_{k}(u,w)$, $q_k(u,w)$, $E_{p,k}(y;z)$, $\wte(y_A;z)$] \label{definition:pieri}
+% We define a relation $\tom{k}$ on pairs of permutations, introduced in its non-quantum form by Sottile \cite{sottile}, which was used originally to indicate when the coefficient of a Schubert polynomial is nonzero in a suitable application of the Pieri formula. In the generalization to double Schubert polynomials in \cite{samuelmolev}, the same relation applies to all nonzero coefficients in the expansion of the generalized Pieri formula. The relation plays the same role in our case. 
+
+% Given $u,u'\in S_\infty$ and a positive integer $k$, we declare that $u\tom{k} w$ if there exists a $p$ with $0\leq p\leq k$ such that there are transpositions $t_{a_1b_1},\ldots,t_{a_pb_p}$ satisfying 
+% \begin{enumerate}
+% \item $a_i\leq k<b_i$ for all $i$
+% \item $a_i\neq a_j$ whenever $i\neq j$
+% \item $b_i\geq b_j$ whenever $i<j$
+% \item We have either
+% $$\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(ut_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})+1$$ 
+% or 
+% $$\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(ut_{a_1b_1}\cdots t_{a_{i-1}b_{i-1}})-2(b_i-a_i)+1$$
+% for all $i$
+% \item $w=ut_{a_1b_1}\cdots t_{a_pb_p}$
+% \end{enumerate}
+% In contrast to the non-quantum case, $u\tom{k} w$ does not imply that $\ell(u) \leq \ell(w)$, as the final condition can cause the length of the permutation to drop. For intuition, the condition $\ell(ut_{ab}) = \ell(u) - 2(b - a) + 1$ means that if we write the reflection $t_{ab}$ as
+% $$s_{b}s_{b-1}\cdots s_{a+1}s_as_{a+1}\cdots s_{b-1}s_b$$
+% then each simple reflection in this word cancels a corresponding simple reflection in a reduced word for $u$, as opposite to the length-increase case where there is a word for which precisely one simple reflection is inserted, regardless of the length of the reflection as a permutation.
+
+% If $u\tom{k} w$, define 
+% $$\fx_{k}(u,w)=\{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
+% Also, we define $q_k(u,w)$ recursively. If $u=w$, define $q_k(u,w)=1$. If we have defined $q_k(u,w')$ with $w'=t_{a_1b_1}\cdots t_{a_{p-1}b_{p-1}}$, suppose $\ell(w't_{a_pb_p})=\ell(w')+1$. Then define
+% $$q_k(u,w)=q_k(u,w')$$
+% If instead $\ell(w't_{a_pb_p})=\ell(w')-2(b_p-a_p)+1$, define
+% $$q_k(u,w)=q_k(u,w')q_{a_pb_p}$$
+
+% Suppose $y$ and $z$ are sets of variables and $0\leq p\leq k$ are integers. We define $E_{p,k}(y;z)$ to be the factorial elementary symmetric polynomial in $y$ and $z$. For specificity, this is the double Schubert polynomial $\sch_{c[p,k]}(y;z)$ where
+% $$c[p,k] = s_{k-p+1}\cdots s_{k-1}s_k$$
+% If $p=0$, the polynomial is identically $1$. If $p=k$, $E_{k,k}(y;z)$ can be simply written as
+% $$E_{k,k}(y;z)=\prod_{i=1}^k(y_i-z_1)$$
+% An explicit formula can be written for general $p$ without too much trouble as well, using e.g. \cite{molev1999littlewood}:
+% $$E_{p,k}(y;z)=\sum_{1\leq i_1<\cdots<i_p\leq k}\prod_{j=1}^p(y_{i_j}-z_{i_j-j+1})$$
+
+% For a set $A=\{i_1,\ldots,i_{|A|}\}$, we define
+% $$\wte(y_A;z)=\prod_{i\in A}(y_i-z_1)=E_{|A|,|A|}(y_{i_1},\ldots,y_{i_{|A|}};z),$$
+% the specialization of the factorial elementary polynomial to which the coefficients of the Pieri formula reduce. It will be used to express those coefficients.
+% \end{definition}
+
+
+% \begin{theorem}[The Pieri formula] \label{theorem:pieri}
+% Suppose $u\in S_\infty$ and $k\geq 1$. Then
+% $$\qsch_u(x;y)\qelem_{k,k}(x;z)=\sum_{u\tom{k} w}q_k(u,w)\wte(y_{\fx_{k}(u,w)};z)\qsch_w(x;y)$$
+% \end{theorem}
+
+
+
+% % \begin{theorem} \label{theorem:coeffreduce}
+% % Suppose $u,v\in S_\infty$ and let $d$ be a weak composition such that $d_i\in \{0,1\}$ for all $i$ and if $d_i=1$, then $d_{i+1}=0$. Let $i_1,\ldots,i_k$ be the integers such that $d_{i_p}=1$ for $1\leq p\leq k$. Then $c_{u,v}^{w,d}(y;z)=0$ unless $\ell(us_{i_p})<\ell(u)$ and $\ell(vs_{i_p})<\ell(v)$ for each $p$, in which case
+% % $$c_{u,v}^{w,d}(y;z)=c_{us',vs'}^w(y;z)$$
+% % where
+% % $$s'=s_{i_1}\cdots s_{i_k}$$
+% % \end{theorem}
+
+\newcommand{\lom}{\widetilde{\lambda}}
+\newcommand{\mom}{\widetilde{\mu}}
+\newcommand{\thop}{\widetilde{\theta}}
+\newcommand{\medperm}{\overline{\mu}}
+\newcommand{\medtheta}{\overline{\theta}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\dom}{\mu}
+
+\section{Foundational formulas}
+
+\subsection{Notation and definitions}
+
+\begin{definition}[$\code$, dominant permutations, $\theta$, $\dom$] \label{def:codetheta}
+We say that a permutation $\mu$ is \emph{dominant} if $\code_i(\mu)\geq \code_{i+1}(\mu)$ for all $i$. For a permutation $v\in S_\infty$, we define a dominant permutation $\dom(v)$ recursively as follows. If $v$ is already dominant, define $\dom(v)=v$. Otherwise, let $i$ be the maximal index such that $\code_i(v)<\code_{i+1}(v)$, and define
+$$\dom(v)=\dom(vs_i)$$
+Define $\theta_i(v)$ to be $\code_i(\dom(v))$.
+\end{definition}
+
+\begin{definition}[$\xRightarrow{i}$, $\sigma_i(u,v)$, $D_i(u,v)$]
+Let $u,v\in S_\infty$ and $i\geq 1$ be an integer. We define $u\Tom{i} v$ if there exist distinct integers $b_1,b_2,\ldots,b_k$ such that $b_j\neq i$ for all $j$, $\ell(ut_{i,b_1}\cdots t_{i,b_j})=\ell(u)+j$ for all $j$, and 
+$$v=ut_{i,b_1}\cdots t_{i,b_k}$$
+We define
+$$\sigma_i(u,v)=\#\{j\mid b_j<i\}$$
+and we define
+$$D_i(u,v)=\{u(i)\}\cup\{u(j)\mid u(j)\neq v(j)\}$$
+\end{definition}
+
+\subsection{The formula for double Schubert polynomials}
+
+\begin{theorem}[Formula for double Schubert polynomials] \label{theorem:orddouble}
+Suppose $v\in S_\infty$. Then
+$$\sch_v(x;z)=\sum_{(v_0,\ldots,v_k)}\prod_{i=1}^k (-1)^{\sigma_i(v_{i-1},v_i)}E_{\theta_i(v)-\ell(v_{i-1},v_i),\theta_i(v)}(x;z_{D_i(v_{i-1},v_i)})$$
+Where $v_{i-1}\xRightarrow{i} v_i$ for all $i$, $v_0=1$, and $v_k=v\dom(v^{-1})$.
+\end{theorem}
+
+\subsection{The Pieri formula}
+
+\begin{theorem}[{The Pieri formula, \cite[Theorem~7.1]{samuelmolev}}] \label{theorem:pieri}
+Suppose $u\in S_\infty$, $k\geq 1$, and $0\leq p\leq k$. Let $x,y,z$ be sets of variables. Then
+$$\sch_u(x;y)\,E_{p,k}(x;z)=\sum_{u\tom{k} w}E_{p-\ell(u,w),k-\ell(u,w)}(y;z_{P_k(u,w)})\sch_w(x;y)$$
+where $P_k(u,w)=\{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$.
+\end{theorem}
+
+\section{The \textbf{pieri} algorithm}
+
+\begin{definition}[$k$-strip cover, admissible $k$-chain, the $(p,k)$-Pieri problem] \label{def:pieriproblem}
+Let $w\in S_n$, let $1\leq k<n$, and let $\beta\in\{1,\ldots,n\}\cup\{\infty\}$. A \emph{$k$-strip cover of $(w,\beta)$} is a transposition $t_{ab}$ of positions $a,b$ with $1\leq a\leq k<b\leq n$ such that
+\begin{enumerate}
+\item $w\lessdot wt_{ab}$ in Bruhat order; that is, $w(a)<w(b)$ and no $c$ with $a<c<b$ satisfies $w(a)<w(c)<w(b)$; and
+\item $w(b)<\beta$.
+\end{enumerate}
+Its \emph{output} is the pair $(wt_{ab},\,w(b))$. An \emph{admissible $k$-chain of length $p$} from $u$ is a sequence $u=w_0,w_1,\ldots,w_p$ carrying bounds $\infty=\beta_0>\beta_1>\cdots>\beta_p$ in which $(w_t,\beta_t)$ is the output of a $k$-strip cover of $(w_{t-1},\beta_{t-1})$ for every $t$. The \emph{$(p,k)$-Pieri problem} for $u$ asks to enumerate every admissible $k$-chain from $u$ of length at most $p$. These chains index the permutations occurring in $e_p(x_1,\ldots,x_k)\,\sch_u$, where $e_p$ is the elementary symmetric polynomial.
+\end{definition}
+
+\begin{method}[$\textbf{\textsc{pieri}}(u,p,k)$] \label{method:pieri}
+Given $u\in S_n$, $1\leq k<n$, and $0\leq p\leq k$, the algorithm returns a list $T$ of pairs $(w,t)$, one for each admissible $k$-chain from $u$ of length $t\leq p$, recording its endpoint $w$.
+\begin{enumerate}
+\item Initialize $T\gets[(u,0)]$ and a frontier $F\gets[(u,\infty)]$.
+\item For $t=1,\ldots,p$, form a new frontier $F'\gets[\,]$ and, for each $(w,\beta)\in F$:
+  \begin{enumerate}
+  \item compute $A\gets\{\,a\in\{1,\ldots,k\}\mid w(a)<\beta\,\}$;
+  \item for each $b=k+1,\ldots,n$ with $w(b)<\beta$, and each $a\in A$ for which $t_{ab}$ is a $k$-strip cover of $(w,\beta)$, append $(wt_{ab},\,w(b))$ to $F'$ and $(wt_{ab},\,t)$ to $T$.
+  \end{enumerate}
+  Then set $F\gets F'$.
+\item Return $T$.
+\end{enumerate}
+\end{method}
+
+\begin{lemma}[Multiplicity-freeness] \label{lemma:pierimultfree}
+For each $t$, distinct admissible $k$-chains from $u$ of length $t$ have distinct endpoints; equivalently, the endpoint map is a bijection from admissible $k$-chains of length $t$ onto the permutations $w$ with $w\gtrdot^{k} u$ of length $\ell(u)+t$ produced by the Pieri rule for $e_t(x_1,\ldots,x_k)$.
+\end{lemma}
+\begin{proof}
+The strictly decreasing bounds $\beta_0>\beta_1>\cdots$ force the values moved leftward across position $k$ to be strictly decreasing, which is exactly the condition making the $e_t$-Pieri expansion multiplicity-free; see \cite{bergeron2002skew}. Reconstructing the chain from its endpoint by peeling off these moves in decreasing order of value shows the map is injective, hence bijective onto the Pieri support.
+\end{proof}
+
+\begin{proposition}[Complexity of $\textbf{\textsc{pieri}}$] \label{prop:piericomplexity}
+Let $M:=|T|$ be the number of admissible $k$-chains from $u$ of length at most $p$ that $\textbf{\textsc{pieri}}(u,p,k)$ returns. The algorithm runs in
+$$O\!\left(k\,(n-k)\,n\cdot M\right)$$
+elementary operations, that is $O(n^3)$ per enumerated permutation. Moreover, by Lemma~\ref{lemma:pierimultfree},
+$$M\;\leq\;\#\{\,w\in S_n\mid w\geq u,\ \ell(w)\leq \ell(u)+p\,\}.$$
+\end{proposition}
+\begin{proof}
+Processing one frontier node $(w,\beta)$ costs $O(k)$ to build $A$, and then iterates over the $n-k$ choices of $b$ and the at most $k$ elements of $A$; for each pair the Bruhat-cover test and the transposition each scan $O(n)$ positions. Thus a node costs $O\!\big(k+(n-k)\,k\,n\big)=O\!\big(k\,(n-k)\,n\big)$. By Lemma~\ref{lemma:pierimultfree} the number of nodes ever placed on a frontier equals $\sum_{t=0}^{p-1}N_t$, where $N_t$ is the number of length-$t$ chains; since $\sum_{t=0}^{p-1}N_t\leq\sum_{t=0}^{p}N_t=M$, the total cost is $O\!\big(k\,(n-k)\,n\cdot M\big)$. The bound on $M$ holds because every endpoint satisfies $w\geq u$ and $\ell(w)\leq\ell(u)+p$.
+\end{proof}
+
+\section{The \textbf{elemrepr} algorithm}
+We now describe an algorithm \textbf{elemrepr} for expressing a double Schubert polynomial as in Theorem \ref{theorem:orddouble}. Its starting point is the structure of a \emph{dominant} double Schubert polynomial. If $\mu$ is dominant with $\code(\mu)=(\lambda_1,\ldots,\lambda_m)$, then $\sch_\mu(x;z)$ factors as a product of factorial elementary symmetric polynomials of maximal degree, one per column of the shape,
+$$\sch_\mu(x;z)=\prod_{i=1}^{m}E_{\lambda_i,\,\lambda_i}(x;z^{(i)}),$$
+where $z^{(i)}$ is the shifted $z$-alphabet attached to column $i$ \cite{notes}. For a general $v$ one writes $\sch_v(x;z)$ by applying divided differences in the $z$-variables to the dominant polynomial $\sch_{\dom(v^{-1})}(x;z)$; because that polynomial factors by column, the divided-difference action decouples and may be carried out one column (one $z^{(i)}$-group) at a time. Applied to a single column this produces a \emph{signed} descending expansion. The following primitive carries it out.
+
+\begin{definition}[$k$-strip descent beneath an edge, the down-Pieri problem] \label{def:kdownproblem}
+Let $w,\mu\in S_n$ and $1\leq k<n$. Say $w'$ lies \emph{beneath the edge} $\mu$ if
+$$\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w'),$$
+that is, $\ell(w'\mu)=\ell(\mu)-\ell(w')$. A \emph{$k$-strip descent} of $w$ is a Bruhat descent $w\gtrdot wt_{ab}$ realized by a transposition $t_{ab}$ that moves the value in the pivot position $k$ either leftward (from a position $a<k$, with sign $-1$) or rightward (to a position $b>k$, with sign $+1$), touching only positions still holding their original value. Given a starting label $w$, the permutation $\mu$, a degree $p$, and the column $k$, the \emph{down-Pieri problem} asks for the signed list of those length-$t$ descending $k$-strip chains from $w$ ($t\leq p$) whose endpoint lies beneath $\mu$ in Bruhat order.
+\end{definition}
+
+\begin{method}[$\textbf{\textsc{kdown}}(w,\mu,p,k)$] \label{method:kdown}
+The algorithm returns a signed list $D$ of triples $(w',t,s)$, one for each length-$t$ descending $k$-strip chain from $w$ ($t\leq p$) whose endpoint $w'$ lies beneath $\mu$ in Bruhat order, with $s\in\{+1,-1\}$ its sign.
+\begin{enumerate}
+\item Initialize $D\gets[\,]$; if $w$ is already beneath $\mu$, append $(w,0,+1)$. Set a frontier $F\gets[(w,+1)]$.
+\item For $t=1,\ldots,p$, form $F'\gets[\,]$ and, for each $(w'',s)\in F$:
+  \begin{enumerate}
+  \item (leftward) for each position $a<k$ with $w''(a)=w(a)$ such that $w''\gtrdot w''t_{a,k}$ is a Bruhat descent, set $w'''\gets w''t_{a,k}$ and append $(w''',-s)$ to $F'$; if $w'''$ is beneath $\mu$, append $(w''',t,-s)$ to $D$;
+  \item (rightward) for each position $b>k$ with $w''(b)=w(b)$ such that $w''\gtrdot w''t_{k,b}$ is a Bruhat descent, set $w'''\gets w''t_{k,b}$ and append $(w''',+s)$ to $F'$; if $w'''$ is beneath $\mu$, append $(w''',t,+s)$ to $D$.
+  \end{enumerate}
+  Then set $F\gets F'$.
+\item Return $D$.
+\end{enumerate}
+\end{method}
+
+Applied without the edge $\mu$, the signed descending expansion produces many extraneous terms that ultimately cancel. The edge is exactly the bound that discards them: only endpoints beneath $\mu$ are retained in $D$. In the assembled $v$-side (Method~\ref{method:elemrepr} below) only these retained labels seed the next column, so the edge prevents the number of live paths from blowing up across columns.
+
+\begin{method}[$\textbf{\textsc{elemrepr}}(v)$, the $v$-side path dictionaries] \label{method:elemrepr}
+Let $\theta:=\theta(v^{-1})$ with nonzero parts in columns $1,\ldots,L$, and let $vmu:=v\,\dom(v^{-1})$. Processing columns from $i=L$ down to $i=1$, maintain for each column a set of live labels (initialized at column $L$ to the single label $vmu$). At column $i$, with $k=i$ and edge $\mu_i:=\dom$ of the shape truncated below column $i$, call $\textbf{\textsc{kdown}}(w,\mu_i,\theta_i,k)$ for each live label $w$; record its signed output triples as the transitions out of $w$, and let their endpoints be the live labels seeding column $i-1$. The collected transitions form the path dictionaries used by $\textbf{\textsc{schubmult}}$.
+\end{method}
+
+\begin{lemma}[Correctness of the edge filter] \label{lemma:edgefilter}
+A permutation $w'$ produced by a descending $k$-strip chain from $w$ is retained by $\textbf{\textsc{kdown}}(w,\mu,p,k)$ if and only if $w'$ lies beneath $\mu$, i.e. $\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w')$. In the assembly of Method~\ref{method:elemrepr} the retained signed labels are exactly the terms of $\sch_v(x;z)$ contributed through column $i$, so no extraneous (cancelling) label propagates to column $i-1$.
+\end{lemma}
+\begin{proof}
+The retention test is the identity $\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w')$ checked in step (2); this is precisely the condition that $w'\leq\mu$ with $\ell(w'\mu)=\ell(\mu)-\ell(w')$. The factorization of the dominant polynomial by column, together with the column-wise decoupling of the $z$-divided differences, identifies the beneath-$\mu$ endpoints at column $i$ with the surviving monomials of $\sch_v(x;z)$ after processing that column; the extraneous chains are exactly those leaving the shape, which the edge discards before they seed column $i-1$.
+\end{proof}
+
+\begin{proposition}[Complexity of $\textbf{\textsc{kdown}}/\textbf{elemrepr}$] \label{prop:kdowncomplexity}
+Let $R:=|D|$ be the number of retained signed triples and $F^\ast$ the total number of frontier nodes generated by $\textbf{\textsc{kdown}}(w,\mu,p,k)$. The algorithm runs in
+$$O\!\left(n^2\cdot F^\ast\right)$$
+elementary operations, and $R\leq F^\ast$. Consequently $\textbf{\textsc{elemrepr}}(v)$, which invokes $\textbf{\textsc{kdown}}$ once per live label across the $L\leq\min(n-1,\ell_v)$ columns and by Lemma~\ref{lemma:edgefilter} propagates only retained labels, runs in $O\!\big(n^2\cdot\Phi_v\big)$ operations, where $\Phi_v$ is the total number of frontier nodes generated over all columns.
+\end{proposition}
+\begin{proof}
+Processing one frontier node scans $O(n)$ candidate positions, each requiring an $O(n)$ Bruhat-descent test and $O(n)$ transposition, so $O(n^2)$ per node; summing over the $F^\ast$ nodes gives $O(n^2F^\ast)$. Each retained triple arises from a distinct frontier node, so $R\leq F^\ast$. In $\textbf{\textsc{elemrepr}}$, by Lemma~\ref{lemma:edgefilter} the labels seeding column $i-1$ are only the retained (beneath-edge) endpoints of column $i$, so the live-label count never includes extraneous paths; summing the per-column frontier work gives $O(n^2\Phi_v)$.
+\end{proof}
+
+\section{The \textbf{schubmult} algorithm}
+
+\begin{method}[The algorithm \textbf{\textsc{schubmult}}] \label{method:schubmult}
+Fix $n$ and let $u,v\in S_n$. The algorithm $\textbf{\textsc{schubmult}}(u,v)$ computes the expansion of $\sch_u(x;y)\,\sch_v(x;z)$ in the Schubert basis as follows. Set $\theta:=\theta(v^{-1})$ and let
+$$L:=\#\{i\mid\theta_i\neq 0\}$$
+be the number of nonzero parts.
+
+The arithmetic takes place in the coefficient ring $R:=\mathbb Z[y;z]$, in which the structure constants live. The algorithm proceeds in $L$ layers and maintains a hash $H$ that maps each pair $(w,\lambda)$---an intermediate $u$-side permutation $w$ together with a $v$-side label $\lambda$---to a coefficient $c(w,\lambda)\in R$. All coefficients are initialized to $0$ except for the single key $(u,\,e)$, which is initialized to $c(u,e)=1$. Write $\mu:=\dom(v^{-1})$ and $vmu:=v\mu$.
+
+Each layer transforms $H$ by one column of the shape. Fix layer $i$ and put $k:=\theta_i$. For a key $(w,\lambda)$ carrying a nonzero coefficient $c=c(w,\lambda)$:
+\begin{enumerate}
+\item Call $\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)$ (Method~\ref{method:pieri}) to enumerate the $u$-side covers $w\rightsquigarrow w'$; each such cover carries a degree $a\in\{0,1,\ldots,\theta_i\}$, the number of boxes it adds in column $i$.
+\item Read from $\textbf{\textsc{elemrepr}}(v)$ (Method~\ref{method:elemrepr}) the $v$-side transitions out of $\lambda$ in column $i$: each is a signed triple $(\lambda',\,b,\,s)$ with endpoint $\lambda'$, degree $b$, and sign $s\in\{+1,-1\}$.
+\item For every pair (cover $w\rightsquigarrow w'$ of degree $a$, triple $(\lambda',b,s)$) with $a+b\leq\theta_i$, accumulate into the new hash the single ring element
+$$c(w',\lambda')\ \mathrel{+}=\ s\cdot c\cdot E_{\theta_i-a-b,\ \theta_i-a}\bigl(y_A\,;\,z_B\bigr),$$
+where $E_{p,m}(y;z)$ denotes the factorial elementary symmetric polynomial of degree $p$ in the first $m$ variables,
+$$E_{p,m}(y;z):=\sum_{1\leq i_1<\cdots<i_p\leq m}\ \prod_{j=1}^{p}\bigl(y_{i_j}-z_{\,i_j-j+1}\bigr),$$
+evaluated on the $y$-alphabet $y_A:=\{\,y_{w'(j)}\mid j\leq\theta_i,\ w(j)=w'(j)\,\}$ of the $\theta_i-a$ values the cover leaves fixed in columns $1,\ldots,\theta_i$, and the $z$-alphabet $z_B$ recorded by the $v$-side descent $\lambda\rightsquigarrow\lambda'$. 
+\end{enumerate}
+Thus each layer performs, for every matched (cover, triple) pair, the construction of one factorial elementary symmetric polynomial $E_{p,m}(y;z)$, followed by one ring multiplication (by the sign and the running coefficient) and one ring addition into the accumulator $c(w',\lambda')$. The polynomial $E_{p,m}(y;z)$ is rebuilt on each pair by the divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}: this recursion is not memoized in the $y$-alphabet---only the $z$-index selection is cached---so its construction is a nontrivial cost, recorded as $E_n$ in Definition~\ref{def:complexityquantities}, and not a shared lookup. Every coefficient $c(w,\lambda)$ is kept in factored form---a product of the factorial elementary symmetric factors $E_{p,m}(y;z)$ accumulated along its paths---and is never multiplied out into the monomial basis, so it stays far smaller than its $\binom{n}{2}$-degree monomial expansion, whose number of terms is exponential in $n$. After all $L$ layers the coefficient $c(w,\,vmu)$ at each $u$-side endpoint $w$ is the structure constant of $\sch_w(x;y)$ in $\sch_u(x;y)\,\sch_v(x;z)$.
+\end{method}
+
+\begin{lemma}[Divide-and-conquer splitting of $E_{p,m}$] \label{lemma:elemsymsplit}
+Let $y=(y_1,\ldots,y_m)$ and let $z=(z_r)_{r\in\mathbb Z}$ be an alphabet. For an integer $c$ put
+$$E^{(c)}_{p,m}(y;z):=\sum_{1\leq i_1<\cdots<i_p\leq m}\ \prod_{j=1}^{p}\bigl(y_{i_j}-z_{\,i_j-j+1+c}\bigr),$$
+so that $E_{p,m}=E^{(0)}_{p,m}$. Set $t:=\lfloor m/2\rfloor$, $y':=(y_1,\ldots,y_t)$, and $y'':=(y_{t+1},\ldots,y_m)$. Then for $0\leq p\leq m$ and every integer $c$,
+$$E^{(c)}_{p,m}(y;z)=\sum_{a=0}^{p}E^{(c)}_{a,t}(y';z)\,E^{(c+t-a)}_{p-a,\,m-t}(y'';z),$$
+with the conventions $E^{(c)}_{0,\ell}=1$ and $E^{(c)}_{a,\ell}=0$ for $a>\ell$, and the base cases $E^{(c)}_{1,\ell}(y;z)=\sum_{i=1}^{\ell}(y_i-z_{i+c})$ and $E^{(c)}_{\ell,\ell}(y;z)=\prod_{i=1}^{\ell}(y_i-z_{1+c})$.
+\end{lemma}
+\begin{proof}
+Classify each index set $1\leq i_1<\cdots<i_p\leq m$ in the defining sum of $E^{(c)}_{p,m}$ by the number $a$ of its members lying in $\{1,\ldots,t\}$; the remaining $p-a$ lie in $\{t+1,\ldots,m\}$. The first $a$ factors $\prod_{j=1}^{a}\bigl(y_{i_j}-z_{i_j-j+1+c}\bigr)$ range over all size-$a$ subsets of $\{1,\ldots,t\}$ and sum to $E^{(c)}_{a,t}(y';z)$. For the upper part write $i_{a+r}=t+l_r$ with $1\leq l_1<\cdots<l_{p-a}\leq m-t$; the corresponding factor is
+$$y_{t+l_r}-z_{\,i_{a+r}-(a+r)+1+c}=y''_{l_r}-z_{\,l_r-r+1+(c+t-a)},$$
+which is the $r$-th factor of $E^{(c+t-a)}_{p-a,\,m-t}(y'';z)$. So the upper factors sum to $E^{(c+t-a)}_{p-a,\,m-t}(y'';z)$; the terms with $a>t$ contribute $0$, consistent with the convention. Summing over $a$ gives the identity.
+\end{proof}
+
+\begin{lemma}[Output support in $S_{2n-1}$] \label{lemma:outputsupport}
+Let $w_0=w_0(n)$ be the longest element of $S_n$, with $\code(w_0)=(n-1,n-2,\ldots,1,0)$, and let $w_1=w_1(n)$ be the permutation with
+$$\code(w_1)=\code(w_0)+\code(w_0)=(2n-2,\,2n-4,\,\ldots,\,2,\,0),$$
+a dominant element of $S_{2n-1}$ with $\ell(w_1)=2\binom{n}{2}$. For any $u,v\in S_n$, every permutation $w$ occurring in the product $\sch_u\cdot\sch_v$ satisfies $w\leq w_1$; in particular $w\in S_{2n-1}$.
+\end{lemma}
+\begin{proof}
+Both $u\leq w_0$ and $v\leq w_0$ in Bruhat order. Standard bounds for products of Schubert polynomials with dominant cofactors place the support of $\sch_u\cdot\sch_v$ weakly below the dominant permutation whose code is $\code(w_0)+\code(w_0)$, namely $w_1$. Since $\code(w_1)=(2n-2,\ldots,2,0)$ has largest part $2n-2$, we have $w_1(1)=2n-1$, so $w_1\in S_{2n-1}$; hence every $w\leq w_1$ also lies in $S_{2n-1}$.
+\end{proof}
+
+\begin{definition}[$\ell_u$, $\ell_v$, $P_u$, $B$, $\Delta$, $E_n$] \label{def:complexityquantities}
+For $u,v\in S_n$ write $\ell_u:=\ell(u)$ and $\ell_v:=\ell(v)$, and set
+$$P_u:=\#\{\,w\in S_{2n-1}\mid w\geq u \text{ and } \ell(w)\leq \ell_u+\ell_v\,\}.$$
+By Lemma~\ref{lemma:outputsupport} every intermediate and output $u$-side permutation is counted by $P_u$, and $P_u\leq(2n-1)!$.
+Write $\theta:=\theta(v^{-1})$. The two \emph{per-layer branchings} are
+$$B:=\max_{i}\ \max_{w}\ \bigl|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)\bigr|,\qquad
+\Delta:=\max_{i}\ \max_{\lambda}\ \#\{\text{kdown triples }(\lambda',c,\varepsilon)\text{ carried by }\lambda\text{ in column }i\}:$$
+$B$ is the maximum number of $u$-side covers generated by a single $\textbf{\textsc{pieri}}$ step (Proposition~\ref{prop:piericomplexity}), and $\Delta$ is the maximum number of $v$-side kdown triples generated from a single label (Proposition~\ref{prop:kdowncomplexity}). Each branching enumerates a family of $k$-strips indexed by (nonempty) subsets of at most $n$ eligible positions, so
+$$B\leq 2^{n}-1,\qquad \Delta\leq 2^{n}-1;$$
+the bound on $B$ is sharp, attained at $w=w_0$ (where $\textbf{\textsc{pieri}}(w_0,n-1,n)$ produces exactly $2^{n}-1$ covers).
+
+Finally, let $R(p,m)$ denote the number of coefficient-ring operations (additions and multiplications) performed by the unmemoized divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit} in evaluating $E^{(c)}_{p,m}(y;z)$; the count is independent of the offset $c$. With $t:=\lfloor m/2\rfloor$ it satisfies $R(p,m)=0$ for $p=0$ or $p>m$, the base values $R(1,\ell)=R(\ell,\ell)=\ell-1$, and, for $1<p<m$,
+$$R(p,m)=R(p,t)+R(p,m-t)+1+\sum_{a=\max(1,\,p-m+t)}^{\min(p,\,t)}\bigl(R(a,t)+R(p-a,\,m-t)+2\bigr).$$
+Define
+$$E_n:=\max_{0\leq p\leq m\leq n-1}R(p,m).$$
+\end{definition}
+
+\begin{proposition} \label{prop:elemcost}
+$\log_2 E_n=\Theta(\log^2 n)$; equivalently $E_n=2^{\Theta(\log^2 n)}=n^{\Theta(\log n)}$, so $E_n$ is superpolynomial in $n$ but subexponential.
+\end{proposition}
+\begin{proof}
+Write $C(m):=\max_{0\leq p\leq m}R(p,m)$, so $E_n=\max_{m\leq n-1}C(m)$. Throughout put $t:=\lfloor m/2\rfloor$, so the two child sizes $t$ and $m-t$ lie in $\{\lfloor m/2\rfloor,\lceil m/2\rceil\}$, and let $N$ be the number of admissible indices $a$ in the recurrence, so $N\leq t+1\leq m$.
+
+\emph{Upper bound.} For $1<p<m$ the recurrence has $2N+2$ summands of the form $R(\cdot,t)$ or $R(\cdot,m-t)$, each at most $C(\lceil m/2\rceil)$, together with $2N+1$ additive constants; hence, using $C(\lceil m/2\rceil)\geq 1$ for $m\geq 3$,
+$$R(p,m)\leq (2N+2)\,C(\lceil m/2\rceil)+(2N+1)\leq (4m+3)\,C(\lceil m/2\rceil).$$
+Since $C(2)=1$, induction on $m$ gives $C(m)\leq (4m+3)^{\lceil\log_2 m\rceil}$: the step uses $4\lceil m/2\rceil+3\leq 4m+3$ and $1+\lceil\log_2\lceil m/2\rceil\rceil=\lceil\log_2 m\rceil$. Therefore
+$$\log_2 C(m)\leq \lceil\log_2 m\rceil\,\log_2(4m+3)=O(\log^2 m),$$
+and so $\log_2 E_n=O(\log^2 n)$.
+
+\emph{Lower bound.} Let $I(p,m)$ count the internal nodes---calls with $1<p<m$---of the unmemoized recursion tree of $R(p,m)$. Each internal node performs at least one ring addition, so $R(p,m)\geq I(p,m)$, and $I$ satisfies, for $1<p<m$,
+$$I(p,m)=1+I(p,t)+I(p,m-t)+\sum_{a=\max(1,\,p-m+t)}^{\min(p,\,t)}\bigl(I(a,t)+I(p-a,\,m-t)\bigr).$$
+Put $J(m):=\sum_{p=0}^{m}I(p,m)$. Dropping all terms of the sum except $I(a,t)$, a fixed value $a^\ast\in\{1,\dots,t\}$ is an admissible index in the recurrence for $R(p,m)$ precisely when $a^\ast\leq p\leq a^\ast+(m-t)$, which holds for at least $\lfloor m/2\rfloor$ values of $p$ with $1<p<m$; summing the resulting contribution $I(a^\ast,t)$ over those $p$ gives
+$$J(m)\ \geq\ \Big\lfloor\tfrac m2\Big\rfloor\sum_{a^\ast=1}^{t}I(a^\ast,t)\ =\ \Big\lfloor\tfrac m2\Big\rfloor\,J(t).$$
+As $J(4)\geq 1$ (since $I(2,4)\geq 1$), unrolling this inequality down to a fixed constant size yields
+$$\log_2 J(m)\ \geq\ \sum_{i=0}^{\lfloor\log_2 m\rfloor-3}\log_2\Big\lfloor\tfrac{m}{2^{\,i+1}}\Big\rfloor\ =\ \Omega(\log^2 m).$$
+Finally $J(m)\leq (m+1)\max_p I(p,m)\leq (m+1)\,C(m)$, so $\log_2 C(m)\geq \log_2 J(m)-\log_2(m+1)=\Omega(\log^2 m)$, whence $\log_2 E_n\geq \log_2 C(n-1)=\Omega(\log^2 n)$.
+\end{proof}
+
+\begin{theorem}[Complexity of \textbf{\textsc{schubmult}}] \label{thm:complexity}
+The number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
+$$O\!\left(\,\min(n-1,\ell_v)\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta\cdot E_n\,\right),$$
+where $B$, $\Delta$, and $E_n$ are as in Definition~\ref{def:complexityquantities}. Writing this bound as $2^{f(n)}$, the worst case is
+$$f(n)=\binom{n}{2}+\log_2\big((2n-1)!\big)+2n+\Theta(\log^2 n)+O(\log n),$$
+and, when $v$ is dominant, the bound is $2^{\,\log_2((2n-1)!)+n+\Theta(\log^2 n)}$.
+\end{theorem}
+\begin{remark}
+Here $B$ and $\Delta$ are the $u$-side (Pieri) and $v$-side (kdown-triple) per-layer branchings and $E_n$ is the per-iteration elementary-symmetric construction cost. Each additive term of $f(n)$ is a multiplicative factor of the running time, so all are retained. The dominant term is $\binom{n}{2}$, whence the worst-case running time is $2^{(1+o(1))\binom{n}{2}}$; the remaining summands are of strictly lower order in the exponent, the largest being $\log_2((2n-1)!)=2n\log_2 n+O(n)$.
+\end{remark}
+\begin{proof}
+By Method~\ref{method:schubmult} the algorithm runs in $L=\#\{i\mid\theta_i(v^{-1})\neq 0\}\leq\min(n-1,\ell_v)$ layers. Write $\mu:=\dom(v^{-1})$, so that $\sum_i\theta_i(v^{-1})=\ell(\mu)$; note that $\ell(\mu)\geq\ell_v$, with equality if and only if $v$ is dominant, so the total degree processed on the shape is in general strictly larger than $\ell_v$. The key point is that the two sides are yoked: at layer $i$ a $u$-side degree $u_i$ and a $v$-side degree $v_i$ are paired with $u_i+v_i=\theta_i$, and the $v$-side descends from $v\mu$ to the identity, so $\sum_i v_i=\ell(v\mu)$. Hence the total degree added on the $u$-side is
+$$\sum_i u_i=\sum_i\theta_i-\sum_i v_i=\ell(\mu)-\ell(v\mu)=\ell_v,$$
+using $\ell(v\mu)=\ell(\mu)-\ell(v)$ (as $v^{-1}\leq\mu$ in weak order). Thus every intermediate $u$-side permutation satisfies $w\geq u$ and $\ell(w)\leq\ell_u+\ell_v$; by Lemma~\ref{lemma:outputsupport} it also satisfies $w\leq w_1(n)$, hence lies in $S_{2n-1}$, so there are at most $P_u$ of them. The $v$-side labels lie in the lower interval $[e,v\mu]$; since $\ell(v\mu)=\ell(\mu)$ can exceed $\ell_v$, we bound their number by $2^{\ell(\mu)}$, but the edge filter of Lemma~\ref{lemma:edgefilter} retains only those beneath the running dominant edge, of which there are at most $2^{\ell_v}$ live at once. Hence the hash at the start of each layer has at most $P_u\cdot 2^{\ell_v}$ keys.
+
+We now account for the work. Write $\Phi_i$ for the set of keys $(w,\lambda)$ present in $H$ at the start of layer $i$, each a $u$-side permutation $w$ paired with a $v$-side label $\lambda$. The inner-loop iteration of the algorithm matches one $\textbf{\textsc{pieri}}$ cover of $w$ against one kdown triple of $\lambda$, and is executed precisely
+$$W\;=\;\sum_{i=1}^{L}\ \sum_{(w,\lambda)\in\Phi_i}\beta_i(w)\,\delta_i(\lambda)$$
+times, where $\beta_i(w):=\bigl|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)\bigr|$ is the $u$-side Pieri branching of Proposition~\ref{prop:piericomplexity} and $\delta_i(\lambda)$ is the number of kdown triples of Proposition~\ref{prop:kdowncomplexity} carried by $\lambda$ in column $i$. This is a product: at every key the $v$-side kdown branching $\delta_i(\lambda)$ multiplies the $u$-side Pieri branching $\beta_i(w)$, so the signed kdown factor enters the running time as a multiplicative branching rather than a lower-order additive term. Bounding each factor by its maximum, $\beta_i(w)\leq B$ and $\delta_i(\lambda)\leq\Delta$, and the key count by $|\Phi_i|\leq P_u\cdot 2^{\ell_v}$, gives
+$$W\;\leq\;L\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta$$
+iterations. Each executed iteration constructs one factorial elementary symmetric polynomial $E_{p,m}(y;z)$ (with $p\leq m\leq\theta_i\leq n-1$) by the divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}. Because the recursion is not memoized in the $y$-alphabet---only the $z$-index selection is cached---this is a fresh evaluation costing $E_n$ ring operations (Definition~\ref{def:complexityquantities}), not a lookup; the ensuing multiplication by the sign and the running (factored) coefficient, the ring addition into the accumulator, and the $O(n)$ permutation bookkeeping are all lower-order. Since $E_n=\omega(n)$, the total number of ring operations is
+$$T\;=\;O(W\cdot E_n)\;=\;O\!\left(L\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta\cdot E_n\right),$$
+which is the bound of Theorem~\ref{thm:complexity}.
+
+For the worst case take base-$2$ logarithms and substitute $L\leq n$, $P_u\leq(2n-1)!$ (Lemma~\ref{lemma:outputsupport}), $\ell_v\leq\binom{n}{2}$, $B,\Delta\leq 2^{n}-1$, and $\log_2 E_n=\Theta(\log^2 n)$ (Proposition~\ref{prop:elemcost}):
+$$\log_2 T\;\leq\;\binom{n}{2}+\log_2\big((2n-1)!\big)+2n+\Theta(\log^2 n)+O(\log n).$$
+We retain every summand: an additive term in the exponent is a multiplicative factor of $T$---the two branchings alone contribute $B\Delta\leq 4^n$, i.e.\ the $+2n$, the permutation count contributes $\log_2((2n-1)!)$, and the elementary-symmetric construction contributes $E_n=2^{\Theta(\log^2 n)}$---so none may be discarded. Only at the very end do we simplify $\log_2((2n-1)!)=(2n-1)\log_2(2n-1)-O(n)=2n\log_2 n+O(n)$; as this is $o(n^2)$, the dominant term is $\binom{n}{2}=\Theta(n^2)$ and $T=2^{(1+o(1))\binom{n}{2}}$. If $v$ is dominant then $\theta(v)=\code(v)$, $\ell(\mu)=\ell_v$, every path step carries a $+1$ sign, and each layer's $v$-side is a single path, so $\Delta=1$ and only $O(\ell_v)$ labels are live in place of $2^{\ell_v}$; then $T=O(L\cdot P_u\cdot \ell_v\cdot B\cdot E_n)$ and $\log_2 T\leq \log_2((2n-1)!)+n+\Theta(\log^2 n)+O(\log n)$, i.e.\ $T=2^{\,\log_2((2n-1)!)+n+\Theta(\log^2 n)}=2^{\,2n\log_2 n+O(n)+\Theta(\log^2 n)}$.
+\end{proof}
+
+\begin{corollary}[Ordinary Schubert polynomials] \label{cor:singlecomplexity}
+For ordinary (single) Schubert polynomials, computing the structure constants of the product $\sch_u(x)\,\sch_v(x)$ by the single-variable specialization of $\textbf{\textsc{schubmult}}$ takes
+$$O\!\left(\,\min(n-1,\ell_v)\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta\,\right)$$
+integer operations. Writing this bound as $2^{g(n)}$, the worst case is
+$$g(n)=\binom{n}{2}+\log_2\big((2n-1)!\big)+2n+O(\log n),$$
+and, when $v$ is dominant, the bound is $2^{\,\log_2((2n-1)!)+n+O(\log n)}$. These are the bounds of Theorem~\ref{thm:complexity} with the term $\Theta(\log^2 n)$ deleted.
+\end{corollary}
+\begin{proof}
+The single-variable algorithm has the same combinatorial skeleton as Method~\ref{method:schubmult}: the shape $\theta:=\theta(v^{-1})$, the $u$-side Pieri covers, and the $v$-side path structure with its signed transitions $(\lambda',b,s)$ are identical, so the hash, the number of layers $L\leq\min(n-1,\ell_v)$, and the iteration count $W\leq L\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta$ are exactly as in the proof of Theorem~\ref{thm:complexity}. The single difference is the weight attached to a matched (cover, triple) pair: for double Schubert polynomials it is the factorial elementary symmetric polynomial $E_{p,m}(y;z)$, whereas for ordinary Schubert polynomials the corresponding Pieri coefficient is $1$, so the pair contributes only the integer sign $s\in\{+1,-1\}$. Each executed iteration therefore performs one integer multiplication by $s$ and one integer addition into the accumulator---$O(1)$ ring operations---so $E_n$ is replaced by $O(1)$ and $T=O(W)$. Taking base-$2$ logarithms and substituting the same bounds $L\leq n$, $P_u\leq(2n-1)!$ (Lemma~\ref{lemma:outputsupport}), $\ell_v\leq\binom{n}{2}$, $B,\Delta\leq 2^{n}-1$ (and $\Delta=1$ in the dominant case) gives $g(n)$, which is $f(n)$ of Theorem~\ref{thm:complexity} without the $\Theta(\log^2 n)$ contribution of $E_n$.
+\end{proof}
+
+\begin{remark}[Comparison with prior complexity results] \label{remark:priorcomplexity}
+The complexity of a single structure constant has been studied more than that of an entire product. For Schur polynomials the coefficients $c_{\lambda\mu}^\nu$ are the Littlewood--Richardson coefficients, and computing one of them is $\#P$-complete \cite{narayanan2006complexity}. Since these coefficients can be exponentially large, a single one has polynomial bit-length yet cannot be evaluated in time polynomial in the binary sizes of the input and output unless $\mathrm{FP}=\#P$; the same then holds for the full product $s_\lambda s_\mu=\sum_\nu c_{\lambda\mu}^\nu\,s_\nu$. The Littlewood--Richardson rule instead enumerates skew tableaux, of which there are $\sum_\nu c_{\lambda\mu}^\nu$, and its running time is polynomial in that number, namely in the coefficients written in unary. Deciding whether a given coefficient is positive is, by contrast, in $P$, through the saturation theorem \cite{knutson1999honeycomb} and the reduction to hive-polytope nonemptiness \cite{burgisser2013positivity}.
+
+For Schubert polynomials the coefficients $c_{uv}^w$ generalize the Littlewood--Richardson coefficients, recovered in the Grassmannian case, so computing one is $\#P$-hard; whether they lie in $\#P$ is open, no combinatorial rule being known. The vanishing problem $\{c_{uv}^w=0\}$ was recently placed in the polynomial hierarchy, in $coAM$ assuming the generalized Riemann hypothesis, hence in $\Sigma_2^p$ \cite{pak2024vanishing}.
+
+Since a single coefficient is already $\#P$-hard, neither the bound of Theorem~\ref{thm:complexity} nor that of Corollary~\ref{cor:singlecomplexity} is polynomial in the binary output size, and the two are compared instead per combinatorial witness. Each executed iteration of $\textbf{\textsc{schubmult}}$ processes one matched (cover, triple) pair. Corollary~\ref{cor:singlecomplexity} performs $O(1)$ integer operations at each such pair, so in the single case the number of ring operations is proportional to the number of witnesses. Theorem~\ref{thm:complexity} performs $E_n=n^{\Theta(\log n)}$ operations at each pair (Proposition~\ref{prop:elemcost}), a quasi-polynomial factor---superpolynomial but subexponential in $n$---incurred by rebuilding the factorial elementary symmetric weight; the single specialization removes it because that weight collapses to a sign.
+\end{remark}
+
+% \begin{remark}
+% The quantum algorithm has the same overall shape---$L$ layers, a front of $(u\text{-side},\,v\text{-side})$ nodes---but three features make it genuinely more involved than the classical case, all confined to the $u$-side; the $v$-side is \emph{identical}.
+
+% First, the layer sequence is the \emph{medium theta} $\medtheta(v^{-1})$ of Definition~\ref{def:codetheta}, not the sorted partition $\theta(v^{-1})$ used in the classical algorithm. Classically a repeated part of $\theta(v^{-1})$ costs nothing extra: it amounts to multiplying by a product of two elementary symmetric polynomials in the same variables, which is a single ordinary Pieri step. In the quantum setting there is no such simple description, so the algorithm instead iterates over $\medtheta(v^{-1})$, which is \emph{almost} strict: an equal consecutive pair $\medtheta_i=\medtheta_{i+1}$ is retained only when it is preceded by a strict drop of at least two, and every such pair is processed as a single \emph{paired} step by a quantum double elementary symmetric Pieri rule (the routine \texttt{double\_elem\_sym\_q}), whose $u$-side branching is the \emph{product} of two single-column Pieri branchings rather than one. The number of nonzero parts of $\medtheta(v^{-1})$ is at most $\min(n-1,\ell_v)$---forming $\medtheta$ from $\code(v^{-1})$ creates no new nonzero part---and, since a paired step consumes two parts at once, so is the number of steps.
+
+% Second, the $v$-side is unaffected: it uses the same increasing-path (kdown-triple) machinery as the classical Theorem~\ref{theorem:quandouble}, so the number of $v$-labels is still at most $2^{\ell_v}$ and the kdown-triple branching $\Delta$ is unchanged. Only the column shape it runs over changes, from $\theta(v^{-1})$ to $\medtheta(v^{-1})$, and this does not affect either bound.
+
+% Third, on the $u$-side the quantum covers of Remark~\ref{remark:qkbruhat} may \emph{decrease} length and carry a $q$-degree. Two consequences follow. (a) Because the $u$-side climbs the full over-shape $\medperm(v^{-1})$ before the $v$-side filters it back down, an intermediate $u$-permutation $w$ can have length \emph{exceeding} $\ell_u+\ell_v$; the correct bound is $\ell(w)\leq\ell_u+|\medtheta(v^{-1})|$, and we simply bound the number of reachable $w$ by $n!$. (b) A node is a pair $(w,d)$ of a permutation with a $q$-degree, and the same $w$ may in principle be reached at several $q$-degrees; grading by $q$-degree keeps the transition graph acyclic, since each length-decreasing cover $t_{ab}$ raises $\sum_i d_i$ by the strictly positive amount $b-a$. In the implementation the coefficient attached to each front node is in fact a \emph{single} $q$-monomial, because the $q$-degree there is determined by the pair (intermediate permutation, $v$-label); the number of distinct $q$-degrees a coefficient could carry is at most $Q_{u,v}$ (Definition~\ref{def:quantumfront}), which we use as a safe bound on coefficient size.
+% \end{remark}
+
+% \begin{definition}[$\widehat P_{u,v}$, $B_q$, $Q_{u,v}$] \label{def:quantumfront}
+% For $u,v\in S_n$ set
+
+% $$\widehat P_{u,v}:=\#\{\,w\in S_n\mid \ell(w)\leq \ell_u+|\medtheta(v^{-1})|\,\}\;\leq\; n!,$$
+% and let $B_q$ be the maximum number of covers produced by a single-column quantum Pieri step $\textbf{\textsc{pieri}}^q(w,\medtheta_i,\medtheta_i)$ (the quantum analogue of $B$; the routine \texttt{elem\_sym\_perms\_q}). Since each quantum cover is a quantum $k$-strip, indexed by a subset of at most $n$ eligible positions of one of two types (length-increasing or quantum length-decreasing),
+% $$B_q\leq 4^{n}=2^{O(n)},\qquad\text{and a paired step contributes at most } B_q^2=2^{O(n)}.$$
+% Finally set
+% $$Q_{u,v}:=\binom{\lfloor(\ell_u+\ell_v)/2\rfloor+n-1}{n-1},$$
+% an upper bound on the number of $q$-monomials in any coefficient (a nonzero $q^d$ requires $\sum_i d_i\leq\tfrac12(\ell_u+\ell_v)$).
+% \end{definition}
+
+% \begin{theorem}[Complexity of quantum \textbf{\textsc{schubmult}}] \label{thm:quantumcomplexity}
+% The asymptotic complexity of the quantum form of $\textbf{\textsc{schubmult}}(u,v)$ is
+% $$O\!\left(\,\min(n-1,\ell_v)\cdot \widehat P_{u,v}\cdot 2^{\ell_v}\cdot B_q^{2}\cdot\Delta\cdot Q_{u,v}\cdot n\,\right)$$
+% operations in the coefficient ring, where the $v$-side kdown-triple factor $\Delta$ is identical to the classical case, the per-layer $u$-side branching is at most $B_q$ for a single column and at most $B_q^2$ for a paired column, and $Q_{u,v}$ bounds the size of each $q$-coefficient. In the worst case this is at most
+% $$2^{\binom{n}{2}}\cdot n!\cdot Q_{u,v}\cdot 2^{O(n)},$$
+% whose leading exponent is $\binom{n}{2}$, the same as in the classical bound of Theorem \ref{thm:complexity}.
+% \end{theorem}
+
+% \begin{proof}
+% \emph{Layers.} The quantum algorithm runs over the nonzero parts of $\medtheta(v^{-1})$, processing a retained pair of equal consecutive parts as one paired step; hence the number of steps is at most the number of nonzero parts of $\medtheta(v^{-1})$, which is at most $\min(n-1,\ell_v)$ (forming $\medtheta(v^{-1})$ from $\code(v^{-1})$ creates no new nonzero part, and there are at most $\min(n-1,\ell_v)$ nonzero entries to begin with).
+
+% \emph{The $v$-side is unchanged.} As in Theorem~\ref{thm:complexity}, the number of live $v$-labels is at most $2^{\ell_v}$ and the per-label kdown-triple branching is at most $\Delta$; Theorem~\ref{theorem:quandouble} uses the same increasing-path structure, so nothing here differs from the classical case.
+
+% \emph{The $u$-side.} The $u$-side climbs the over-shape $\medperm(v^{-1})$, so every intermediate permutation $w$ satisfies $\ell(w)\leq\ell_u+|\medtheta(v^{-1})|$; length-decreasing quantum covers only lower $\ell(w)$, so this bound persists and there are at most $\widehat P_{u,v}\leq n!$ reachable permutations. At a single-column layer the $u$-branching is at most $B_q$; at a paired (equal-part) layer the routine \texttt{double\_elem\_sym\_q} composes two quantum Pieri steps, so the $u$-branching is at most $B_q^2$. Both are $2^{O(n)}$.
+
+% \emph{Coefficients.} Each front coefficient is a $\mathbb Z$-combination of monomials $q^d$ with $\sum_i d_i\leq\tfrac12(\ell_u+\ell_v)$, of which there are at most $Q_{u,v}$; hence each coefficient-ring operation costs $O(Q_{u,v}\cdot n)$. (In fact each front coefficient is a single $q$-monomial, the $q$-degree being determined by the node, so this factor is pessimistic; we retain it as a rigorous upper bound.)
+
+% \emph{Assembly.} Exactly as in Theorem~\ref{thm:complexity}, the work is the layered product $\sum_i\sum_{(w,\lambda)\in\Phi_i}\beta^q_i(w)\,\delta_i(\lambda)$ with $\beta^q_i\leq B_q^2$ and $\delta_i\leq\Delta$; bounding the node count by $\widehat P_{u,v}\cdot 2^{\ell_v}$ and multiplying by $B_q^2\cdot\Delta$, the $O(Q_{u,v}\cdot n)$ per-operation cost, and the $\min(n-1,\ell_v)$ layers gives the stated bound. For the worst case use $\widehat P_{u,v}\leq n!$, $\ell_v\leq\binom{n}{2}$, and $B_q,\Delta=2^{O(n)}$; since $\log_2\!\big(n!\,B_q^2\,\Delta\,Q_{u,v}\big)=O(n\log n)=o\!\big(\binom{n}{2}\big)$, the leading exponent is $\binom{n}{2}$, exactly as in the classical bound.
+% \end{proof}
+
+
+
+
+% %\begin{definition}[$\chi_{j;n}$, $\chi^{(n)}$]
+
+
+
+
+% \begin{definition}[$\chi_{j;n}$, $\chi^{(n)}$]
+% Recall the definition of the commuting difference operators $\chi_{j;n}$, with $j\leq n$, defined by Fomin, Gelfand, and Postnikov, as follows:
+% $$\chi_{j,n}=x_j-\sum_{1\leq i<j}q_{ij}\partial^{t_{ij}}+\sum_{j<k\leq n} q_{jk}\partial^{t_{jk}}$$
+% We denote the sequence $(\chi_{1;n},\ldots,\chi_{n;n})$ with $n$ fixed by $\chi^{(n)}$. Recall (CITATION) that if $\sch_v(x)$ has at most $n$ variables, then
+% $$\qsch_v(\chi^{(n)})(1) = \sch_v(x)$$
+% and hence
+% $$\qsch_v(\chi^{(n)};z)(1) = \sch_v(x;z)$$
+% We specify a more precise formula, as follows.
+% \end{definition}
+
+% \begin{theorem}
+% Suppose $v\in S_n$. Then
+% $$\qsch_v(\chi^{(n)};z)=\sum_{u\in S_{n},d} q^dc_{u,v}^{1,d}(x;z)\partial^u$$
+% \end{theorem}
+% \begin{proof}
+% Note that if $\sch_u(x)$ has at most $n$ variables, then
+% $$\qsch_u(\chi^{(n)};y)\qsch_v(\chi^{(n)};z)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\qsch_w(\chi^{(n)};y)$$
+% We thus have that
+% $$(\qsch_u(\chi^{(n)};y)\qsch_v(\chi^{(n)};z))(1)=\sum_{w,d} q^dc_{u,v}^{w,d}(y;z)\sch_w(x;y)$$
+% This is also equal to
+% $$\qsch_v(\chi^{(n)};z)(\sch_u(x;y))$$
+% due to the fact that $(\qsch_u(\chi^{(n)};y))(1)=\sch_u(x;y)$. To obtain the coefficient of $\partial^u$ in $\qsch_v(\chi^{(n)};z)$, we set $y=x$ after applying this operator. Since $\sch_w(x;x)=0$ unless $w=1$, we have that
+% $$\qsch_v(\chi^{(n)};z)(\sch_u(x;y))|_{y=x}=\sum_d q^dc_{u,v}^{1,d}(x;z)$$
+% and the result follows.
+% \end{proof}
+
+% %\begin{lemma}
+% %Let $k$ be an integer and let $v\in S_\infty$. Then
+% %$$\sum_d q^dc_{s_k,v}^{1,d}(x;z) = \sum_{i\leq k < j} q_{ij}\sch_{vt_{ij}}(x;z)$$
+% %\end{lemma}
+% %\begin{proof}
+% %This value is equal to
+% %$$\qsch_{s_k}(\chi^{(n)};y)(\sch_v(x;z))$$
+% %then setting $y=x$ for sufficiently large $n$. We also have
+% %$$\qsch_{s_k}(\chi^{(n)};y) = \sch_{s_k}(x;y)+\sum_{1\leq i\leq k<j\leq n}q_{ij}\partial^{t_{ij}}$$
+% %Thus
+% %$$\qsch_{s_k}(\chi^{(n)};y)(\sch_v(x;z))=\sum_w c_{s_k,v}^w(y;z)\sch_w(x;y)+\sum_{1\leq i\leq k<j\leq n}q_{ij}\sch_{vt_{ij}}(x;z)$$
+% %Setting $y=z$, the terms involving $\sch_w(x;y)$ disappear, and we are left with the desired result.
+% %\end{proof}
+
+% \begin{theorem}
+% Let $k$ be an integer and let $v,w\in S_\infty$. Then
+% $$\sum_d q^dc_{s_k,v}^{w,d}(y;z)=c_{s_k,v}^{w}(y;z)+\sum_{i\leq k < j} q_{ij}\sch_{vt_{ij}w^{-1}}(y;z)$$
+% \end{theorem}
+% \begin{proof}
+% We have that the desired value is equal to the coefficient of $\sch_w(x;y)$ in
+% $$\qsch_{s_k}(\chi^{(n)};y)(\sch_{v}(x;z))$$
+% We have that
+% $$\qsch_{s_k}(\chi^{(n)};y)=\sch_{s_k}(x;y)+\sum_{i\leq k<j\leq n}q_{ij}\partial^{t_{ij}}$$
+% Applying this operator, we obtain
+% $$\sum_{i\leq k<j\leq n} q_{ij}\sch_{vt_{ij}}(x;z)+\sum_w c_{s_k,v}^w(y;z)\sch_w(x;y)$$
+% Applying the Cauchy formula, this is equal to
+% $$\sum_{i\leq k<j,u} q_{ij}\sch_{vt_{ij}u^{-1}}(y;z)\sch_u(x;y)+\sum_w c_{s_k,v}^w(y;z)\sch_w(x;y)$$
+% Setting $u=w$ and allowing $n$ to be sufficiently large, we obtain the result.
+% \end{proof}
+
+% % \begin{proof}[Proof of Theorem \ref{theorem:coeffreduce}]
+% % It suffices to prove this for $v=w_0(n)$. We have
+% % $$\qsch_{w_0(n)}(\chi;z)=\sum_{u,d} q^dc_{u,w_0(n)}^{1,d}(x;z)\partial^u$$
+% % Fixing the particular $d$ in the statement of the theorem, we must have that $u=s'$. By the Pieri formula,
+% % $$c_{s',w_0(n)}^{1,d}(x;z)=\sch_{w_0(n)s'}(x;z)$$
+% % Thus if we compute the coefficient of $q^d\sch_w(x;y)$ in 
+% % $$(\qsch_{w_0(n)}(\chi;z))(\sch_u(x;y))$$
+% % we obtain
+% % $$c_{us',w_0(n)s'}^w(y;z)$$
+% % and the result follows.
+% % \end{proof}
+
+
+
+
+\bibliographystyle{acm}
+\bibliography{formschub}
+\end{document}
+
