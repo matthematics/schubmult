@@ -133,7 +133,8 @@ picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 	\ifx\hfuzz#1\hfuzz\else_{\scriptstyle #1}\fi}%
 }
 
-\newcommand{\tom}[1]{\ensuremath{\xrightsquigarrow{#1}}}
+%\newcommand{\tom}[1]{\ensuremath{\xrightsquigarrow{#1}}}
+\newcommand{\tom}[1]{\ensuremath{\xrightarrow{#1}}}
 \newcommand{\fx}{\mathrm{fix}}
 %\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
 %\counterwithout{equation}{section}
@@ -511,17 +512,17 @@ Processing one frontier node $(w,\beta)$ costs $O(k)$ to build $A$, and then ite
 
 \section{The \textbf{elemrepr} algorithm}
 We now describe an algorithm \textbf{elemrepr} for expressing a double Schubert polynomial as in Theorem \ref{theorem:orddouble}. Its starting point is the structure of a \emph{dominant} double Schubert polynomial. If $\mu$ is dominant with $\code(\mu)=(\lambda_1,\ldots,\lambda_m)$, then $\sch_\mu(x;z)$ factors as a product of factorial elementary symmetric polynomials of maximal degree, one per column of the shape,
-$$\sch_\mu(x;z)=\prod_{i=1}^{m}E_{\lambda_i,\,\lambda_i}(x;z^{(i)}),$$
-where $z^{(i)}$ is the shifted $z$-alphabet attached to column $i$ \cite{notes}. For a general $v$ one writes $\sch_v(x;z)$ by applying divided differences in the $z$-variables to the dominant polynomial $\sch_{\dom(v^{-1})}(x;z)$; because that polynomial factors by column, the divided-difference action decouples and may be carried out one column (one $z^{(i)}$-group) at a time. Applied to a single column this produces a \emph{signed} descending expansion. The following primitive carries it out.
+$$\sch_\mu(x;z)=\prod_{i=1}^{m}E_{\lambda_i,\,\lambda_i}(x;z_i),$$
+where $z_i$ is the indicated single indeterminate \cite{notes}. For a general $v$ one writes $\sch_v(x;z)$ by applying divided differences in the $z$-variables to the dominant polynomial $\sch_{\dom(v^{-1})}(x;z)$. By the Leibniz formula, this operation may be carried out one column  at a time. Applied to a single column this produces a signed descending expansion.
 
-\begin{definition}[$k$-strip descent beneath an edge, the down-Pieri problem] \label{def:kdownproblem}
-Let $w,\mu\in S_n$ and $1\leq k<n$. Say $w'$ lies \emph{beneath the edge} $\mu$ if
+\begin{definition}[$k$-strip descent beneath a bound, the down-Pieri problem] \label{def:kdownproblem}
+Let $w,\mu\in S_n$ and $1\leq k<n$. Say $w'$ lies \emph{beneath the bound} $\mu$ if
 $$\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w'),$$
-that is, $\ell(w'\mu)=\ell(\mu)-\ell(w')$. A \emph{$k$-strip descent} of $w$ is a Bruhat descent $w\gtrdot wt_{ab}$ realized by a transposition $t_{ab}$ that moves the value in the pivot position $k$ either leftward (from a position $a<k$, with sign $-1$) or rightward (to a position $b>k$, with sign $+1$), touching only positions still holding their original value. Given a starting label $w$, the permutation $\mu$, a degree $p$, and the column $k$, the \emph{down-Pieri problem} asks for the signed list of those length-$t$ descending $k$-strip chains from $w$ ($t\leq p$) whose endpoint lies beneath $\mu$ in Bruhat order.
+that is, $\ell(w'\mu)=\ell(\mu)-\ell(w')$. A \emph{$k$-strip descent} of $w$ is a Bruhat descent $w\gtrdot wt_{ab}$ realized by a transposition $t_{ab}$, with $a<b$ and $k\in \{a,b\}$, that moves the value in the pivot position $k$ either leftward (if $b=k$, with sign $-1$) or rightward (if $a=k$, with sign $+1$), touching only positions still holding their original value. Given a starting label $w$, the permutation $\mu$, a degree $p$, and the column $k$, the \emph{down-Pieri problem} asks for the signed list of those length-$t$ descending $k$-strip chains from $w$ ($t\leq p$) whose endpoint lies beneath $\mu$ in weak order.
 \end{definition}
 
 \begin{method}[$\textbf{\textsc{kdown}}(w,\mu,p,k)$] \label{method:kdown}
-The algorithm returns a signed list $D$ of triples $(w',t,s)$, one for each length-$t$ descending $k$-strip chain from $w$ ($t\leq p$) whose endpoint $w'$ lies beneath $\mu$ in Bruhat order, with $s\in\{+1,-1\}$ its sign.
+The algorithm returns a list $D$ of triples $(w',t,s)$, one for each length-$t$ descending $k$-strip chain from $w$ ($t\leq p$) whose endpoint $w'$ lies beneath $\mu$ in weak order, with $s\in\{+1,-1\}$ its sign.
 \begin{enumerate}
 \item Initialize $D\gets[\,]$; if $w$ is already beneath $\mu$, append $(w,0,+1)$. Set a frontier $F\gets[(w,+1)]$.
 \item For $t=1,\ldots,p$, form $F'\gets[\,]$ and, for each $(w'',s)\in F$:
@@ -534,17 +535,17 @@ The algorithm returns a signed list $D$ of triples $(w',t,s)$, one for each leng
 \end{enumerate}
 \end{method}
 
-Applied without the edge $\mu$, the signed descending expansion produces many extraneous terms that ultimately cancel. The edge is exactly the bound that discards them: only endpoints beneath $\mu$ are retained in $D$. In the assembled $v$-side (Method~\ref{method:elemrepr} below) only these retained labels seed the next column, so the edge prevents the number of live paths from blowing up across columns.
+Applied without the bound $\mu$, the signed descending expansion produces many extraneous terms that ultimately cancel. The dominant permutation $\mu$ is exactly the bound that discards them: only endpoints beneath $\mu$ are retained in $D$. In the assembled $v$-side (Method~\ref{method:elemrepr} below) only these retained labels seed the next column, so the bound prevents the number of live paths from blowing up across columns.
 
 \begin{method}[$\textbf{\textsc{elemrepr}}(v)$, the $v$-side path dictionaries] \label{method:elemrepr}
-Let $\theta:=\theta(v^{-1})$ with nonzero parts in columns $1,\ldots,L$, and let $vmu:=v\,\dom(v^{-1})$. Processing columns from $i=L$ down to $i=1$, maintain for each column a set of live labels (initialized at column $L$ to the single label $vmu$). At column $i$, with $k=i$ and edge $\mu_i:=\dom$ of the shape truncated below column $i$, call $\textbf{\textsc{kdown}}(w,\mu_i,\theta_i,k)$ for each live label $w$; record its signed output triples as the transitions out of $w$, and let their endpoints be the live labels seeding column $i-1$. The collected transitions form the path dictionaries used by $\textbf{\textsc{schubmult}}$.
+Let $\theta:=\theta(v^{-1})$ with nonzero parts in columns $1,\ldots,L$, and let $vmu:=v\,\dom(v^{-1})$. Processing columns from $i=L$ down to $i=1$, maintain for each column a set of live labels (initialized at column $L$ to the single label $vmu$). At column $i$, with $k=i$ and bound $\mu_i:=\dom$ of the shape truncated below column $i$, call $\textbf{\textsc{kdown}}(w,\mu_i,\theta_i,k)$ for each live label $w$; record its signed output triples as the transitions out of $w$, and let their endpoints be the live labels seeding column $i-1$. The collected transitions form the path dictionaries used by $\textbf{\textsc{schubmult}}$.
 \end{method}
 
-\begin{lemma}[Correctness of the edge filter] \label{lemma:edgefilter}
+\begin{lemma}[Correctness of the bound filter] \label{lemma:edgefilter}
 A permutation $w'$ produced by a descending $k$-strip chain from $w$ is retained by $\textbf{\textsc{kdown}}(w,\mu,p,k)$ if and only if $w'$ lies beneath $\mu$, i.e. $\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w')$. In the assembly of Method~\ref{method:elemrepr} the retained signed labels are exactly the terms of $\sch_v(x;z)$ contributed through column $i$, so no extraneous (cancelling) label propagates to column $i-1$.
 \end{lemma}
 \begin{proof}
-The retention test is the identity $\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w')$ checked in step (2); this is precisely the condition that $w'\leq\mu$ with $\ell(w'\mu)=\ell(\mu)-\ell(w')$. The factorization of the dominant polynomial by column, together with the column-wise decoupling of the $z$-divided differences, identifies the beneath-$\mu$ endpoints at column $i$ with the surviving monomials of $\sch_v(x;z)$ after processing that column; the extraneous chains are exactly those leaving the shape, which the edge discards before they seed column $i-1$.
+The retention test is the identity $\mathrm{inv}(w'\mu)=\mathrm{inv}(\mu)-\mathrm{inv}(w')$ checked in step (2); this is precisely the condition that $w'\leq\mu$ in weak order, i.e.\ $\ell(w'\mu)=\ell(\mu)-\ell(w')$. The factorization of the dominant polynomial by column, together with the column-wise decoupling of the $z$-divided differences, identifies the beneath-$\mu$ endpoints at column $i$ with the surviving monomials of $\sch_v(x;z)$ after processing that column; the extraneous chains are exactly those leaving the shape, which the bound discards before they seed column $i-1$.
 \end{proof}
 
 \begin{proposition}[Complexity of $\textbf{\textsc{kdown}}/\textbf{elemrepr}$] \label{prop:kdowncomplexity}
@@ -553,7 +554,7 @@ $$O\!\left(n^2\cdot F^\ast\right)$$
 elementary operations, and $R\leq F^\ast$. Consequently $\textbf{\textsc{elemrepr}}(v)$, which invokes $\textbf{\textsc{kdown}}$ once per live label across the $L\leq\min(n-1,\ell_v)$ columns and by Lemma~\ref{lemma:edgefilter} propagates only retained labels, runs in $O\!\big(n^2\cdot\Phi_v\big)$ operations, where $\Phi_v$ is the total number of frontier nodes generated over all columns.
 \end{proposition}
 \begin{proof}
-Processing one frontier node scans $O(n)$ candidate positions, each requiring an $O(n)$ Bruhat-descent test and $O(n)$ transposition, so $O(n^2)$ per node; summing over the $F^\ast$ nodes gives $O(n^2F^\ast)$. Each retained triple arises from a distinct frontier node, so $R\leq F^\ast$. In $\textbf{\textsc{elemrepr}}$, by Lemma~\ref{lemma:edgefilter} the labels seeding column $i-1$ are only the retained (beneath-edge) endpoints of column $i$, so the live-label count never includes extraneous paths; summing the per-column frontier work gives $O(n^2\Phi_v)$.
+Processing one frontier node scans $O(n)$ candidate positions, each requiring an $O(n)$ Bruhat-descent test and $O(n)$ transposition, so $O(n^2)$ per node; summing over the $F^\ast$ nodes gives $O(n^2F^\ast)$. Each retained triple arises from a distinct frontier node, so $R\leq F^\ast$. In $\textbf{\textsc{elemrepr}}$, by Lemma~\ref{lemma:edgefilter} the labels seeding column $i-1$ are only the retained (beneath-bound) endpoints of column $i$, so the live-label count never includes extraneous paths; summing the per-column frontier work gives $O(n^2\Phi_v)$.
 \end{proof}
 
 \section{The \textbf{schubmult} algorithm}
@@ -565,17 +566,20 @@ be the number of nonzero parts.
 
 The arithmetic takes place in the coefficient ring $R:=\mathbb Z[y;z]$, in which the structure constants live. The algorithm proceeds in $L$ layers and maintains a hash $H$ that maps each pair $(w,\lambda)$---an intermediate $u$-side permutation $w$ together with a $v$-side label $\lambda$---to a coefficient $c(w,\lambda)\in R$. All coefficients are initialized to $0$ except for the single key $(u,\,e)$, which is initialized to $c(u,e)=1$. Write $\mu:=\dom(v^{-1})$ and $vmu:=v\mu$.
 
-Each layer transforms $H$ by one column of the shape. Fix layer $i$ and put $k:=\theta_i$. For a key $(w,\lambda)$ carrying a nonzero coefficient $c=c(w,\lambda)$:
+Each layer transforms $H$ by one column of the shape. Fix layer $i$ and put $k:=\theta_i$, and group the keys of $H$ by their $u$-side permutation. For each distinct $u$-side permutation $w$ appearing in some key:
 \begin{enumerate}
-\item Call $\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)$ (Method~\ref{method:pieri}) to enumerate the $u$-side covers $w\rightsquigarrow w'$; each such cover carries a degree $a\in\{0,1,\ldots,\theta_i\}$, the number of boxes it adds in column $i$.
-\item Read from $\textbf{\textsc{elemrepr}}(v)$ (Method~\ref{method:elemrepr}) the $v$-side transitions out of $\lambda$ in column $i$: each is a signed triple $(\lambda',\,b,\,s)$ with endpoint $\lambda'$, degree $b$, and sign $s\in\{+1,-1\}$.
-\item For every pair (cover $w\rightsquigarrow w'$ of degree $a$, triple $(\lambda',b,s)$) with $a+b\leq\theta_i$, accumulate into the new hash the single ring element
+\item Call $\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)$ (Method~\ref{method:pieri}) \emph{once} to enumerate the $u$-side covers $w\tom{\theta_i} w'$; each such cover carries a degree $a\in\{0,1,\ldots,\theta_i\}$, which is number of inversions it adds. The resulting cover list is reused for every label paired with $w$ and is not recomputed per label.
+\item For each label $\lambda$ with $c=c(w,\lambda)\neq 0$, read from $\textbf{\textsc{elemrepr}}(v)$ (Method~\ref{method:elemrepr}) the $v$-side transitions out of $\lambda$ in column $i$: each is a signed triple $(\lambda',\,b,\,s)$ with endpoint $\lambda'$, degree $b$, and sign $s\in\{+1,-1\}$.
+\item For every pair with $w\tom{\theta_i} w'$ of degree $a$, triple $(\lambda',b,s)$) with $a+b\leq\theta_i$, accumulate into the new hash the single ring element
 $$c(w',\lambda')\ \mathrel{+}=\ s\cdot c\cdot E_{\theta_i-a-b,\ \theta_i-a}\bigl(y_A\,;\,z_B\bigr),$$
 where $E_{p,m}(y;z)$ denotes the factorial elementary symmetric polynomial of degree $p$ in the first $m$ variables,
 $$E_{p,m}(y;z):=\sum_{1\leq i_1<\cdots<i_p\leq m}\ \prod_{j=1}^{p}\bigl(y_{i_j}-z_{\,i_j-j+1}\bigr),$$
-evaluated on the $y$-alphabet $y_A:=\{\,y_{w'(j)}\mid j\leq\theta_i,\ w(j)=w'(j)\,\}$ of the $\theta_i-a$ values the cover leaves fixed in columns $1,\ldots,\theta_i$, and the $z$-alphabet $z_B$ recorded by the $v$-side descent $\lambda\rightsquigarrow\lambda'$. 
+evaluated on the $y$-alphabet $y_A:=\{\,y_{w'(j)}\mid j\leq\theta_i,\ w(j)=w'(j)\,\}$ of the $\theta_i-a$ values the cover leaves fixed in columns $1,\ldots,\theta_i$, and the $z$-alphabet $z_B$ where
+$$B=\{i\}\cup \{\lambda(j)\mid j\neq i\text{ and }\lambda(j)=\lambda'(j)\}$$
+
+\item After all $L$ layers the coefficient $c(w,\,vmu)$ at each $u$-side endpoint $w$ is the structure constant of $\sch_w(x;y)$ in $\sch_u(x;y)\,\sch_v(x;z)$.
 \end{enumerate}
-Thus each layer performs, for every matched (cover, triple) pair, the construction of one factorial elementary symmetric polynomial $E_{p,m}(y;z)$, followed by one ring multiplication (by the sign and the running coefficient) and one ring addition into the accumulator $c(w',\lambda')$. The polynomial $E_{p,m}(y;z)$ is rebuilt on each pair by the divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}: this recursion is not memoized in the $y$-alphabet---only the $z$-index selection is cached---so its construction is a nontrivial cost, recorded as $E_n$ in Definition~\ref{def:complexityquantities}, and not a shared lookup. Every coefficient $c(w,\lambda)$ is kept in factored form---a product of the factorial elementary symmetric factors $E_{p,m}(y;z)$ accumulated along its paths---and is never multiplied out into the monomial basis, so it stays far smaller than its $\binom{n}{2}$-degree monomial expansion, whose number of terms is exponential in $n$. After all $L$ layers the coefficient $c(w,\,vmu)$ at each $u$-side endpoint $w$ is the structure constant of $\sch_w(x;y)$ in $\sch_u(x;y)\,\sch_v(x;z)$.
+Thus each layer performs, for every matched (cover, triple) pair, the construction of one factorial elementary symmetric polynomial $E_{p,m}(y;z)$, followed by one ring multiplication (by the sign and the running coefficient) and one ring addition into the accumulator $c(w',\lambda')$. The polynomial $E_{p,m}(y;z)$ is rebuilt on each pair by the divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}: this recursion is not memoized in the $y$-alphabet---only the $z$-index selection is cached---so its construction is a nontrivial cost, recorded as $E_n$ in Definition~\ref{def:complexityquantities}, and not a shared lookup. Every coefficient $c(w,\lambda)$ is kept in factored form---a product of the factorial elementary symmetric factors $E_{p,m}(y;z)$ accumulated along its paths---and is never multiplied out into the monomial basis, so it asymptotically stays far smaller than its monomial expansion, whose number of terms is exponential in $n$. 
 \end{method}
 
 \begin{lemma}[Divide-and-conquer splitting of $E_{p,m}$] \label{lemma:elemsymsplit}
@@ -591,19 +595,27 @@ $$y_{t+l_r}-z_{\,i_{a+r}-(a+r)+1+c}=y''_{l_r}-z_{\,l_r-r+1+(c+t-a)},$$
 which is the $r$-th factor of $E^{(c+t-a)}_{p-a,\,m-t}(y'';z)$. So the upper factors sum to $E^{(c+t-a)}_{p-a,\,m-t}(y'';z)$; the terms with $a>t$ contribute $0$, consistent with the convention. Summing over $a$ gives the identity.
 \end{proof}
 
-\begin{lemma}[Output support in $S_{2n-1}$] \label{lemma:outputsupport}
+\begin{lemma}[Output support bound of $(2n-1)!!$] \label{lemma:outputsupport}
 Let $w_0=w_0(n)$ be the longest element of $S_n$, with $\code(w_0)=(n-1,n-2,\ldots,1,0)$, and let $w_1=w_1(n)$ be the permutation with
 $$\code(w_1)=\code(w_0)+\code(w_0)=(2n-2,\,2n-4,\,\ldots,\,2,\,0),$$
-a dominant element of $S_{2n-1}$ with $\ell(w_1)=2\binom{n}{2}$. For any $u,v\in S_n$, every permutation $w$ occurring in the product $\sch_u\cdot\sch_v$ satisfies $w\leq w_1$; in particular $w\in S_{2n-1}$.
+a dominant element of $S_{2n-1}$ with $\ell(w_1)=2\binom{n}{2}$. For any $u,v\in S_n$, every permutation $w$ occurring in the product $\sch_u\cdot\sch_v$, or in any intermediate product formed during its computation, satisfies $w\leq_L w_1$. The number of such permutations is at most $(2n - 1)!!$.
 \end{lemma}
 \begin{proof}
-Both $u\leq w_0$ and $v\leq w_0$ in Bruhat order. Standard bounds for products of Schubert polynomials with dominant cofactors place the support of $\sch_u\cdot\sch_v$ weakly below the dominant permutation whose code is $\code(w_0)+\code(w_0)$, namely $w_1$. Since $\code(w_1)=(2n-2,\ldots,2,0)$ has largest part $2n-2$, we have $w_1(1)=2n-1$, so $w_1\in S_{2n-1}$; hence every $w\leq w_1$ also lies in $S_{2n-1}$.
+  Consider that
+  $$\sch_{w_1(n)}(x;y_1,z_1,\ldots,y_{n-1},z_{n-1})=\sch_{w_0(n)}(x;y_1,\ldots,y_{n-1})\sch_{w_0(n)}(x;z_1,\ldots,z_{n-1}).$$
+  Expanding via the Cauchy formula, we obtain
+  $$\sum_{w\leq_L w_1(n)}\sch_w(x)\sch_{ww_1(n)^{-1}}(-y_1,-z_1,\ldots,-y_{n-1},-z_{n-1})=\sum_{u,v}\sch_u(x)\sch_v(x)\sch_{uw_0(n)}(-y)\sch_{vw_0(n)}(-z)$$
+
+  By linear independence of the Schubert basis, every $w$ occurring in the product $\sch_u(x)\sch_v(x)$ with nonzero coefficient must satisfy $w\leq_L w_1(n)$. The number of permutations $w$ with $w\leq_L w_1(n)$ is the size of the left weak order interval $[e,w_1(n)]_L$, the double factorial
+  $$(2n-1)!!=1\cdot 3\cdot 5\cdots(2n-1)=\frac{(2n-1)!}{2^{\,n-1}\,(n-1)!}.$$
+  This counts all outputs, intermediate ones included.
+% Both $u\leq w_0$ and $v\leq w_0$ in Bruhat order. Standard bounds for products of Schubert polynomials with dominant cofactors place the support of $\sch_u\cdot\sch_v$ weakly below the dominant permutation whose code is $\code(w_0)+\code(w_0)$, namely $w_1$. Since $\code(w_1)=(2n-2,\ldots,2,0)$ has largest part $2n-2$, we have $w_1(1)=2n-1$, so $w_1\in S_{2n-1}$; hence every $w\leq w_1$ also lies in $S_{2n-1}$. That at most $(n!)^2$ permutations occur among all outputs, intermediate ones included, is a separate property of the doubled staircase, which we take as given.
 \end{proof}
 
-\begin{definition}[$\ell_u$, $\ell_v$, $P_u$, $B$, $\Delta$, $E_n$] \label{def:complexityquantities}
+\begin{definition}[$\ell_u$, $\ell_v$, $P_u$, $V$, $B$, $\Delta$, $E_n$] \label{def:complexityquantities}
 For $u,v\in S_n$ write $\ell_u:=\ell(u)$ and $\ell_v:=\ell(v)$, and set
-$$P_u:=\#\{\,w\in S_{2n-1}\mid w\geq u \text{ and } \ell(w)\leq \ell_u+\ell_v\,\}.$$
-By Lemma~\ref{lemma:outputsupport} every intermediate and output $u$-side permutation is counted by $P_u$, and $P_u\leq(2n-1)!$.
+$$P_u:=\#\{\,w\mid u\leq w\leq w_1 \text{ and } \ell(w)\leq \ell_u+\ell_v\,\},$$
+with $w_1=w_1(n)$ as in Lemma~\ref{lemma:outputsupport}. By that lemma every intermediate and output $u$-side permutation is counted by $P_u$, and the number of permutations occurring, intermediates included, is at most $(2n-1)!!$; we write $P_u\leq(2n-1)!!$. Let $V$ be the number of distinct $v$-side labels produced by $\textbf{\textsc{elemrepr}}(v)$ across all columns; these are permutations, and, as in Lemma~\ref{lemma:outputsupport}, we take as given that at most $n!$ of them occur, so $V\leq n!$.
 Write $\theta:=\theta(v^{-1})$. The two \emph{per-layer branchings} are
 $$B:=\max_{i}\ \max_{w}\ \bigl|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)\bigr|,\qquad
 \Delta:=\max_{i}\ \max_{\lambda}\ \#\{\text{kdown triples }(\lambda',c,\varepsilon)\text{ carried by }\lambda\text{ in column }i\}:$$
@@ -639,42 +651,54 @@ Finally $J(m)\leq (m+1)\max_p I(p,m)\leq (m+1)\,C(m)$, so $\log_2 C(m)\geq \log_
 \end{proof}
 
 \begin{theorem}[Complexity of \textbf{\textsc{schubmult}}] \label{thm:complexity}
-The number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
-$$O\!\left(\,\min(n-1,\ell_v)\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta\cdot E_n\,\right),$$
-where $B$, $\Delta$, and $E_n$ are as in Definition~\ref{def:complexityquantities}. Writing this bound as $2^{f(n)}$, the worst case is
-$$f(n)=\binom{n}{2}+\log_2\big((2n-1)!\big)+2n+\Theta(\log^2 n)+O(\log n),$$
-and, when $v$ is dominant, the bound is $2^{\,\log_2((2n-1)!)+n+\Theta(\log^2 n)}$.
+Write $L:=\min(n-1,\ell_v)$. The number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
+$$O\!\left(\,n^2\,\Phi_v\;+\;L\cdot P_u\cdot B\cdot n^3\;+\;L\cdot P_u\cdot V\cdot B\cdot\Delta\cdot E_n\,\right),$$
+where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. The three summands are, respectively, the one-time $v$-side precomputation, the live $\textbf{\textsc{pieri}}$ enumeration (run once per distinct $u$-side permutation per layer), and the matched-pair ring work; the third dominates in the worst case. Writing that bound as $2^{\,f(n)+O(\log n)}$,
+$$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
+and, when $v$ is dominant, $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$, where $\log_2 e=1/\ln 2\approx 1.4427$.
 \end{theorem}
 \begin{remark}
-Here $B$ and $\Delta$ are the $u$-side (Pieri) and $v$-side (kdown-triple) per-layer branchings and $E_n$ is the per-iteration elementary-symmetric construction cost. Each additive term of $f(n)$ is a multiplicative factor of the running time, so all are retained. The dominant term is $\binom{n}{2}$, whence the worst-case running time is $2^{(1+o(1))\binom{n}{2}}$; the remaining summands are of strictly lower order in the exponent, the largest being $\log_2((2n-1)!)=2n\log_2 n+O(n)$.
+Here $B$ and $\Delta$ are the $u$-side (Pieri) and $v$-side (kdown-triple) per-layer branchings and $E_n$ is the per-iteration elementary-symmetric construction cost. Each term of $f(n)$ is a multiplicative factor of the running time, so all are retained. The dominant contribution is the product of the two support counts: the at most
+$$P_u\leq(2n - 1)!!=\frac{(2n-1)!}{2^{\,n-1}\,(n-1)!}$$
+distinct $u$-side permutations and the at most $V\leq n!$ distinct $v$-side labels, whose product telescopes,
+$$P_uV\ \leq\ (2n-1)!!\;n!\ =\ \frac{(2n)!}{2^{\,n}},$$
+so together with the branching factor $B\Delta\leq 4^n$ the two counts and branchings contribute $\log_2(P_uV)+2n=\log_2((2n)!)+n$; the elementary-symmetric construction adds $\log_2 E_n=\Theta(\log^2 n)$. Applying Stirling in the form $\log_2(m!)=m\log_2 m-m\log_2 e+O(\log m)$ gives $\log_2((2n)!)=2n\log_2 n+2n-2n\log_2 e+O(\log n)$, so
+$$f(n)=\log_2((2n)!)+n+\Theta(\log^2 n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
+and the worst-case running time is $2^{\,f(n)+O(\log n)}=n^{\Theta(n)}=2^{\Theta(n\log n)}$. The live $\textbf{\textsc{pieri}}$ enumeration contributes only $n^3$ per distinct $u$-permutation and so lands in the $O(\log n)$ term; it is decoupled from the $v$-label count $V$ because $\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)$ is run once per permutation $w$ present in a layer, independent of $\lambda$.
 \end{remark}
 \begin{proof}
-By Method~\ref{method:schubmult} the algorithm runs in $L=\#\{i\mid\theta_i(v^{-1})\neq 0\}\leq\min(n-1,\ell_v)$ layers. Write $\mu:=\dom(v^{-1})$, so that $\sum_i\theta_i(v^{-1})=\ell(\mu)$; note that $\ell(\mu)\geq\ell_v$, with equality if and only if $v$ is dominant, so the total degree processed on the shape is in general strictly larger than $\ell_v$. The key point is that the two sides are yoked: at layer $i$ a $u$-side degree $u_i$ and a $v$-side degree $v_i$ are paired with $u_i+v_i=\theta_i$, and the $v$-side descends from $v\mu$ to the identity, so $\sum_i v_i=\ell(v\mu)$. Hence the total degree added on the $u$-side is
+By Method~\ref{method:schubmult} the algorithm runs in $L=\#\{i\mid\theta_i(v^{-1})\neq 0\}\leq\min(n-1,\ell_v)$ layers. Write $\mu:=\dom(v^{-1})$, so that $\sum_i\theta_i(v^{-1})=\ell(\mu)$; note that $\ell(\mu)\geq\ell_v$, with equality if and only if $v$ is dominant. The two sides are yoked: at layer $i$ a $u$-side degree $u_i$ and a $v$-side degree $v_i$ are paired with $u_i+v_i=\theta_i$, and the $v$-side descends from $v\mu$ to the identity, so $\sum_i v_i=\ell(v\mu)$. Hence the total degree added on the $u$-side is
 $$\sum_i u_i=\sum_i\theta_i-\sum_i v_i=\ell(\mu)-\ell(v\mu)=\ell_v,$$
-using $\ell(v\mu)=\ell(\mu)-\ell(v)$ (as $v^{-1}\leq\mu$ in weak order). Thus every intermediate $u$-side permutation satisfies $w\geq u$ and $\ell(w)\leq\ell_u+\ell_v$; by Lemma~\ref{lemma:outputsupport} it also satisfies $w\leq w_1(n)$, hence lies in $S_{2n-1}$, so there are at most $P_u$ of them. The $v$-side labels lie in the lower interval $[e,v\mu]$; since $\ell(v\mu)=\ell(\mu)$ can exceed $\ell_v$, we bound their number by $2^{\ell(\mu)}$, but the edge filter of Lemma~\ref{lemma:edgefilter} retains only those beneath the running dominant edge, of which there are at most $2^{\ell_v}$ live at once. Hence the hash at the start of each layer has at most $P_u\cdot 2^{\ell_v}$ keys.
+using $\ell(v\mu)=\ell(\mu)-\ell(v)$ (as $v^{-1}\leq\mu$ in weak order). Thus every intermediate $u$-side permutation satisfies $w\geq u$ and $\ell(w)\leq\ell_u+\ell_v$; by Lemma~\ref{lemma:outputsupport} it also satisfies $w\leq w_1(n)$, hence lies in $S_{2n-1}$, so there are at most $P_u$ of them. The $v$-side labels are permutations obtained from $v\mu$ by descending $k$-strip transpositions; by Definition~\ref{def:complexityquantities} there are at most $V\leq n!$ distinct ones. The hash at the start of each layer therefore has at most $P_u\cdot V$ keys.
 
-We now account for the work. Write $\Phi_i$ for the set of keys $(w,\lambda)$ present in $H$ at the start of layer $i$, each a $u$-side permutation $w$ paired with a $v$-side label $\lambda$. The inner-loop iteration of the algorithm matches one $\textbf{\textsc{pieri}}$ cover of $w$ against one kdown triple of $\lambda$, and is executed precisely
+We account for the work in three parts. First, the entire $v$-side is precomputed once by $\textbf{\textsc{elemrepr}}(v)$ (Method~\ref{method:elemrepr}) at cost $O(n^2\Phi_v)$ ring operations (Proposition~\ref{prop:kdowncomplexity}); thereafter each $v$-side transition is a table lookup carrying no combinatorial work.
+
+Second, the live $\textbf{\textsc{pieri}}$ enumeration. Because every $u$-side cover strictly raises length, the $u$-side transitions form a graded acyclic graph, so within a fixed layer no permutation recurs; hence $\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)$ is invoked at most once per distinct $u$-side permutation present in that layer (Method~\ref{method:schubmult}, step~1). The number of such invocations is
+$$\sum_{i=1}^{L}\bigl|\Phi_i^{u}\bigr|\;\leq\;L\cdot P_u,$$
+where $\Phi_i^u$ is the set of distinct $u$-side permutations live at layer $i$; when consecutive layers share a degree, $\theta_i=\theta_{i+1}$, caching $\textbf{\textsc{pieri}}$ on $(w,\theta_i)$ collapses this to at most $P_u$ invocations, and the safe bound $L\cdot P_u$ costs only the extra factor $L\leq n$. Each invocation costs $O(n^3)$ per enumerated cover (Proposition~\ref{prop:piericomplexity}) and returns at most $B$ covers, so the total $\textbf{\textsc{pieri}}$ cost is $O(L\cdot P_u\cdot B\cdot n^3)$. This enumeration is run once per permutation, not once per key, so it is independent of the $v$-label count $V$.
+
+Third, the matched-pair ring work. Write $\Phi_i$ for the keys $(w,\lambda)$ present at layer $i$. The inner loop matches one $\textbf{\textsc{pieri}}$ cover of $w$ against one kdown triple of $\lambda$, executed
 $$W\;=\;\sum_{i=1}^{L}\ \sum_{(w,\lambda)\in\Phi_i}\beta_i(w)\,\delta_i(\lambda)$$
-times, where $\beta_i(w):=\bigl|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)\bigr|$ is the $u$-side Pieri branching of Proposition~\ref{prop:piericomplexity} and $\delta_i(\lambda)$ is the number of kdown triples of Proposition~\ref{prop:kdowncomplexity} carried by $\lambda$ in column $i$. This is a product: at every key the $v$-side kdown branching $\delta_i(\lambda)$ multiplies the $u$-side Pieri branching $\beta_i(w)$, so the signed kdown factor enters the running time as a multiplicative branching rather than a lower-order additive term. Bounding each factor by its maximum, $\beta_i(w)\leq B$ and $\delta_i(\lambda)\leq\Delta$, and the key count by $|\Phi_i|\leq P_u\cdot 2^{\ell_v}$, gives
-$$W\;\leq\;L\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta$$
-iterations. Each executed iteration constructs one factorial elementary symmetric polynomial $E_{p,m}(y;z)$ (with $p\leq m\leq\theta_i\leq n-1$) by the divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}. Because the recursion is not memoized in the $y$-alphabet---only the $z$-index selection is cached---this is a fresh evaluation costing $E_n$ ring operations (Definition~\ref{def:complexityquantities}), not a lookup; the ensuing multiplication by the sign and the running (factored) coefficient, the ring addition into the accumulator, and the $O(n)$ permutation bookkeeping are all lower-order. Since $E_n=\omega(n)$, the total number of ring operations is
-$$T\;=\;O(W\cdot E_n)\;=\;O\!\left(L\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta\cdot E_n\right),$$
-which is the bound of Theorem~\ref{thm:complexity}.
+times, where $\beta_i(w):=|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)|$ and $\delta_i(\lambda)$ is the number of kdown triples carried by $\lambda$ in column $i$. Bounding $\beta_i(w)\leq B$, $\delta_i(\lambda)\leq\Delta$, and $|\Phi_i|\leq P_u\cdot V$ gives $W\leq L\cdot P_u\cdot V\cdot B\cdot\Delta$. Each executed iteration constructs one factorial elementary symmetric polynomial $E_{p,m}(y;z)$ (with $p\leq m\leq\theta_i\leq n-1$) by the unmemoized divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}, a fresh evaluation costing $E_n$ ring operations (Definition~\ref{def:complexityquantities}); the ensuing sign multiplication, ring addition, and $O(n)$ bookkeeping are lower-order. Hence the matched-pair cost is $O(W\cdot E_n)=O(L\cdot P_u\cdot V\cdot B\cdot\Delta\cdot E_n)$.
 
-For the worst case take base-$2$ logarithms and substitute $L\leq n$, $P_u\leq(2n-1)!$ (Lemma~\ref{lemma:outputsupport}), $\ell_v\leq\binom{n}{2}$, $B,\Delta\leq 2^{n}-1$, and $\log_2 E_n=\Theta(\log^2 n)$ (Proposition~\ref{prop:elemcost}):
-$$\log_2 T\;\leq\;\binom{n}{2}+\log_2\big((2n-1)!\big)+2n+\Theta(\log^2 n)+O(\log n).$$
-We retain every summand: an additive term in the exponent is a multiplicative factor of $T$---the two branchings alone contribute $B\Delta\leq 4^n$, i.e.\ the $+2n$, the permutation count contributes $\log_2((2n-1)!)$, and the elementary-symmetric construction contributes $E_n=2^{\Theta(\log^2 n)}$---so none may be discarded. Only at the very end do we simplify $\log_2((2n-1)!)=(2n-1)\log_2(2n-1)-O(n)=2n\log_2 n+O(n)$; as this is $o(n^2)$, the dominant term is $\binom{n}{2}=\Theta(n^2)$ and $T=2^{(1+o(1))\binom{n}{2}}$. If $v$ is dominant then $\theta(v)=\code(v)$, $\ell(\mu)=\ell_v$, every path step carries a $+1$ sign, and each layer's $v$-side is a single path, so $\Delta=1$ and only $O(\ell_v)$ labels are live in place of $2^{\ell_v}$; then $T=O(L\cdot P_u\cdot \ell_v\cdot B\cdot E_n)$ and $\log_2 T\leq \log_2((2n-1)!)+n+\Theta(\log^2 n)+O(\log n)$, i.e.\ $T=2^{\,\log_2((2n-1)!)+n+\Theta(\log^2 n)}=2^{\,2n\log_2 n+O(n)+\Theta(\log^2 n)}$.
+Summing the three parts gives
+$$T=O\!\left(n^2\Phi_v+L\cdot P_u\cdot B\cdot n^3+L\cdot P_u\cdot V\cdot B\cdot\Delta\cdot E_n\right),$$
+the bound of Theorem~\ref{thm:complexity}. Since $\Phi_v\leq L\cdot V\cdot(2^n-1)$---each of the at most $L\cdot V$ kdown calls generates at most $2^{\theta_i}-1\leq 2^n-1$ frontier nodes---and $V\cdot\Delta\cdot E_n\geq n^3$ in the worst case, the third summand dominates there.
+
+For the worst case take base-$2$ logarithms of the third summand and substitute $L\leq n$, $P_u\leq(2n-1)!!$ (Lemma~\ref{lemma:outputsupport}), $V\leq n!$, $B,\Delta\leq 2^{n}-1$, and $\log_2 E_n=\Theta(\log^2 n)$ (Proposition~\ref{prop:elemcost}), using $(2n-1)!!\;n!=(2n)!/2^{\,n}$ to combine the two support counts with the $+2n$ from $B\Delta$:
+$$\log_2 T\;\leq\;\log_2\!\big((2n)!\big)+n+\Theta(\log^2 n)+O(\log n),$$
+which is $f(n)+O(\log n)$. We retain every summand: the two support counts and the branchings contribute $\log_2((2n)!)+n$, and the elementary-symmetric construction contributes $\log_2 E_n=\Theta(\log^2 n)$; only the live $\textbf{\textsc{pieri}}$ cost, at $3\log_2 n$, falls into the $O(\log n)$ slack. By Stirling $\log_2((2n)!)=2n\log_2 n+2n-2n\log_2 e+O(\log n)$, so $f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n)$, giving $T=n^{\Theta(n)}=2^{\Theta(n\log n)}$. If $v$ is dominant then $\theta(v)=\code(v)$, $\ell(\mu)=\ell_v$, every path step carries a $+1$ sign, and each layer's $v$-side is a single path, so $\Delta=1$ and only $O(\ell_v)$ labels are live in place of $V=n!$; then $T=O(L\cdot P_u\cdot \ell_v\cdot B\cdot E_n)$ and $\log_2 T\leq \log_2((2n-1)!!)+n+\Theta(\log^2 n)+O(\log n)$. Since $(2n-1)!!=(2n)!/(2^n n!)$, Stirling gives $\log_2((2n-1)!!)=n\log_2 n+(1-\log_2 e)\,n+O(\log n)$, so in this case $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$.
 \end{proof}
 
 \begin{corollary}[Ordinary Schubert polynomials] \label{cor:singlecomplexity}
 For ordinary (single) Schubert polynomials, computing the structure constants of the product $\sch_u(x)\,\sch_v(x)$ by the single-variable specialization of $\textbf{\textsc{schubmult}}$ takes
-$$O\!\left(\,\min(n-1,\ell_v)\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta\,\right)$$
-integer operations. Writing this bound as $2^{g(n)}$, the worst case is
-$$g(n)=\binom{n}{2}+\log_2\big((2n-1)!\big)+2n+O(\log n),$$
-and, when $v$ is dominant, the bound is $2^{\,\log_2((2n-1)!)+n+O(\log n)}$. These are the bounds of Theorem~\ref{thm:complexity} with the term $\Theta(\log^2 n)$ deleted.
+$$O\!\left(\,n^2\,\Phi_v\;+\;L\cdot P_u\cdot B\cdot n^3\;+\;L\cdot P_u\cdot V\cdot B\cdot\Delta\,\right)$$
+integer operations, with $L=\min(n-1,\ell_v)$. Writing the bound as $2^{\,g(n)+O(\log n)}$, the worst case is
+$$g(n)=2n\log_2 n+(3-2\log_2 e)\,n,$$
+and, when $v$ is dominant, $g(n)=n\log_2 n+(2-\log_2 e)\,n$. These are the bounds of Theorem~\ref{thm:complexity} with the term $\Theta(\log^2 n)$ deleted.
 \end{corollary}
 \begin{proof}
-The single-variable algorithm has the same combinatorial skeleton as Method~\ref{method:schubmult}: the shape $\theta:=\theta(v^{-1})$, the $u$-side Pieri covers, and the $v$-side path structure with its signed transitions $(\lambda',b,s)$ are identical, so the hash, the number of layers $L\leq\min(n-1,\ell_v)$, and the iteration count $W\leq L\cdot P_u\cdot 2^{\ell_v}\cdot B\cdot\Delta$ are exactly as in the proof of Theorem~\ref{thm:complexity}. The single difference is the weight attached to a matched (cover, triple) pair: for double Schubert polynomials it is the factorial elementary symmetric polynomial $E_{p,m}(y;z)$, whereas for ordinary Schubert polynomials the corresponding Pieri coefficient is $1$, so the pair contributes only the integer sign $s\in\{+1,-1\}$. Each executed iteration therefore performs one integer multiplication by $s$ and one integer addition into the accumulator---$O(1)$ ring operations---so $E_n$ is replaced by $O(1)$ and $T=O(W)$. Taking base-$2$ logarithms and substituting the same bounds $L\leq n$, $P_u\leq(2n-1)!$ (Lemma~\ref{lemma:outputsupport}), $\ell_v\leq\binom{n}{2}$, $B,\Delta\leq 2^{n}-1$ (and $\Delta=1$ in the dominant case) gives $g(n)$, which is $f(n)$ of Theorem~\ref{thm:complexity} without the $\Theta(\log^2 n)$ contribution of $E_n$.
+The single-variable algorithm has the same combinatorial skeleton as Method~\ref{method:schubmult}: the shape $\theta:=\theta(v^{-1})$, the $u$-side Pieri covers, and the $v$-side path structure with its signed transitions $(\lambda',b,s)$ are identical, so the three-part accounting of the proof of Theorem~\ref{thm:complexity}---the one-time $v$-side precomputation $O(n^2\Phi_v)$, the live $\textbf{\textsc{pieri}}$ enumeration $O(L\cdot P_u\cdot B\cdot n^3)$ run once per distinct $u$-side permutation, and the matched-pair work over $W\leq L\cdot P_u\cdot V\cdot B\cdot\Delta$ pairs---carries over verbatim. The single difference is the weight attached to a matched (cover, triple) pair: for double Schubert polynomials it is the factorial elementary symmetric polynomial $E_{p,m}(y;z)$, whereas for ordinary Schubert polynomials the corresponding Pieri coefficient is $1$, so the pair contributes only the integer sign $s\in\{+1,-1\}$. Each executed iteration therefore performs one integer multiplication by $s$ and one integer addition---$O(1)$ ring operations---so $E_n$ is replaced by $O(1)$ in the third summand. Taking base-$2$ logarithms of the dominant (third) summand and substituting $L\leq n$, $P_u\leq(2n-1)!!$ (Lemma~\ref{lemma:outputsupport}), $V\leq n!$, $B,\Delta\leq 2^{n}-1$ (and $\Delta=1$ in the dominant case), and combining $(2n-1)!!\,n!=(2n)!/2^{\,n}$ with the $+2n$ from $B\Delta$, gives $g(n)$, which is $f(n)$ of Theorem~\ref{thm:complexity} without the $\Theta(\log^2 n)$ contribution of $E_n$.
 \end{proof}
 
 \begin{remark}[Comparison with prior complexity results] \label{remark:priorcomplexity}
@@ -684,6 +708,65 @@ For Schubert polynomials the coefficients $c_{uv}^w$ generalize the Littlewood--
 
 Since a single coefficient is already $\#P$-hard, neither the bound of Theorem~\ref{thm:complexity} nor that of Corollary~\ref{cor:singlecomplexity} is polynomial in the binary output size, and the two are compared instead per combinatorial witness. Each executed iteration of $\textbf{\textsc{schubmult}}$ processes one matched (cover, triple) pair. Corollary~\ref{cor:singlecomplexity} performs $O(1)$ integer operations at each such pair, so in the single case the number of ring operations is proportional to the number of witnesses. Theorem~\ref{thm:complexity} performs $E_n=n^{\Theta(\log n)}$ operations at each pair (Proposition~\ref{prop:elemcost}), a quasi-polynomial factor---superpolynomial but subexponential in $n$---incurred by rebuilding the factorial elementary symmetric weight; the single specialization removes it because that weight collapses to a sign.
 \end{remark}
+
+\section{The Grassmannian case: Schur and factorial Schur multiplication}
+
+When both factors are Grassmannian the product specializes to Schur, respectively factorial Schur, multiplication, and the doubled-staircase support of Lemma~\ref{lemma:outputsupport} collapses onto a single box. This tightens the counts of Definition~\ref{def:complexityquantities} and, more consequentially, lowers the leading exponent of the running time from $\Theta(n\log n)$ to $O\!\big(\min(k,n-k)\log n\big)$, a genuine function of the two box dimensions $k$ and $n-k$ that vanishes as $k\to 0$ or $k\to n$.
+
+\begin{definition}[$k$-Grassmannian permutation] \label{def:grassmannian}
+A permutation $w\in S_n$ is \emph{$k$-Grassmannian} if its unique descent lies at position $k$, that is $w(1)<\cdots<w(k)$ and $w(k+1)<\cdots<w(n)$ with $w(k)>w(k+1)$. To such a $w$ we associate the partition $\lambda(w)$ with parts
+$$\lambda(w)_i=w(k-i+1)-(k-i+1),\qquad 1\leq i\leq k,$$
+which has at most $k$ parts, each at most $n-k$; that is, $\lambda(w)$ is contained in the $k\times(n-k)$ box. This assignment is a bijection between $k$-Grassmannian permutations in $S_n$ and partitions in that box.
+\end{definition}
+
+For a $k$-Grassmannian $u$ the single Schubert polynomial $\sch_u(x)$ equals the Schur polynomial $s_{\lambda(u)}(x_1,\ldots,x_k)$, and the double Schubert polynomial $\sch_u(x;z)$ equals the factorial Schur polynomial $s_{\lambda(u)}(x;z)$. When $u$ and $v$ are both $k$-Grassmannian the structure constants of $\sch_u\cdot\sch_v$ are therefore the Littlewood--Richardson coefficients $c_{\lambda(u)\lambda(v)}^{\nu}$ in the single case \cite{buch2002LRgrass} and the factorial (Littlewood--Richardson) polynomials in the double case \cite{molev1999littlewood,samuelmolev}.
+
+\begin{lemma}[Grassmannian output support] \label{lemma:grassoutput}
+Let $u,v\in S_n$ be $k$-Grassmannian. Then $\dom(v^{-1})$ is $k$-Grassmannian, and every permutation occurring in the product $\sch_u\cdot\sch_v$, or in any intermediate product formed during its computation by $\textbf{\textsc{schubmult}}$, is $k$-Grassmannian with associated partition contained in the $k\times 2(n-k)$ box. Both the $u$-side permutations and the $v$-side labels are of this form. The number of such permutations is at most
+$$G_k:=\binom{2n-k}{k},$$
+the number of partitions in the $k\times 2(n-k)$ box.
+\end{lemma}
+\begin{proof}
+That $\dom(v^{-1})$ is $k$-Grassmannian, and that every intermediate $u$-side permutation and $v$-side label stays $k$-Grassmannian, is the structural property of the Grassmannian shape, which we take as given, exactly as the doubled-staircase support was taken as given in Lemma~\ref{lemma:outputsupport}. It remains to bound the associated partitions. Write $\lambda:=\lambda(u)$ and $\mu:=\lambda(\dom(v^{-1}))$, both contained in the $k\times(n-k)$ box, so $\lambda_1,\mu_1\leq n-k$. Any partition $\nu$ arising in the product or a partial product satisfies $\nu\supseteq\lambda$, has at most $k$ parts, and obeys $\nu_1\leq\lambda_1+\mu_1\leq 2(n-k)$; hence $\nu$ is contained in the $k\times 2(n-k)$ box. The number of partitions in a $k\times 2(n-k)$ box is $\binom{k+2(n-k)}{k}=\binom{2n-k}{k}=G_k$. For fixed $k$ this is $\binom{2n-k}{k}=\Theta(n^k)$, a polynomial of degree $k$ in $n$; uniformly in $k$ it obeys
+$$G_k\;\leq\;\sum_{j\geq 0}\binom{2n-j}{j}\;=\;F_{2n+1}\;=\;\Theta(\varphi^{2n}),$$
+the $(2n{+}1)$-st Fibonacci number, with $\varphi=(1+\sqrt5)/2$ and $\varphi^2=(3+\sqrt5)/2<2.619$; hence $G_k=O(\varphi^{2n})=O(2.619^{\,n})$. Jointly in $n$ and $k$, Stirling's approximation for binomial coefficients gives the closed form
+$$\log_2 G_k=(2n-k)\,H_2\!\left(\frac{k}{2n-k}\right)+O(\log n),\qquad H_2(x):=-x\log_2 x-(1-x)\log_2(1-x),$$
+with $H_2$ the binary entropy function; since $0\leq H_2\leq 1$ this recovers $\log_2 G_k\leq 2n-k$. Symmetric bounds on the binomial, $\binom{2n-k}{k}\leq(2(n-k)+1)^{k}$ and $\binom{2n-k}{k}\leq(k+1)^{2(n-k)}$, give the sharper reading
+$$\log_2 G_k=O\!\big(\min(k,\,n-k)\,\log n\big),$$
+which vanishes to $O(\log n)$ as $k\to 0$ or $k\to n$ and peaks at $\Theta(n)$ near $k=n/2$: the running time is governed by the two box dimensions $k$ and $n-k$, never by $n$ alone. Finally, every intermediate shape lies in the same $k\times 2(n-k)$ box, so a single Pieri step produces at most $G_k$ distinct covers; hence the per-step branchings obey $B,\Delta\leq G_k$, and the number of layers is at most $n-k$ (the code of $v^{-1}$ has at most $n-k$ nonzero parts).
+\end{proof}
+
+\begin{theorem}[Complexity in the Grassmannian case] \label{thm:grasscomplexity}
+Let $u,v\in S_n$ be $k$-Grassmannian and set $G_k=\binom{2n-k}{k}$. With $L\leq n-k$ layers and per-step branchings $B,\Delta\leq G_k$ (Lemma~\ref{lemma:grassoutput}), the number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
+$$O\!\left(\,n^2\,\Phi_v\;+\;L\cdot G_k\cdot B\cdot n^3\;+\;L\cdot G_k^{\,2}\cdot B\cdot\Delta\cdot E_n\,\right),$$
+with $E_n$ as in Definition~\ref{def:complexityquantities}. Writing this bound as $2^{f_{\mathrm{Gr}}(n,k)+O(\log n)}$, the worst case is the explicit function of $n$ and $k$
+$$f_{\mathrm{Gr}}(n,k)=4(2n-k)\,H_2\!\left(\frac{k}{2n-k}\right)+\Theta(\log^2 n),\qquad H_2(x)=-x\log_2 x-(1-x)\log_2(1-x),$$
+with $H_2$ the binary entropy function (Lemma~\ref{lemma:grassoutput}). This exponent is $O\!\big(\min(k,n-k)\log n\big)$: it depends genuinely on both box dimensions $k$ and $n-k$, vanishes to $\Theta(\log^2 n)$ as $k\to 0$ or $k\to n$, and is largest, $\Theta(n)$, near $k=n/2$. For fixed $k$ it is $O(k\log n)$, so the $G_k$-dependent factors are polynomial in $n$ of degree $O(k)$; the leading exponent $\Theta(n\log n)$ of the general Theorem~\ref{thm:complexity} never appears.
+\end{theorem}
+\begin{proof}
+The three-part accounting of the proof of Theorem~\ref{thm:complexity} applies verbatim; only the two counts and the branchings change. By Lemma~\ref{lemma:grassoutput} both the $u$-side permutations and the $v$-side labels are $k$-Grassmannian with partition in the $k\times 2(n-k)$ box, so the $u$-side count $P_u$ and the $v$-side label count $V$ are each replaced by $G_k$: the $u$-side count $G_k$ confines the distinct $u$-permutations, and the $v$-side count $G_k$ replaces the general bound $V\leq n!$, because the labels are now $k$-Grassmannian rather than ranging over all of $S_n$. The hash therefore holds at most $G_k^{\,2}$ keys at once. The live $\textbf{\textsc{pieri}}$ enumeration runs once per distinct $u$-permutation per layer, at most $L\cdot G_k$ times, each $O(n^3\cdot B)$; the matched-pair work is over $W\leq L\cdot G_k^{\,2}\cdot B\cdot\Delta$ pairs, each building one factorial elementary symmetric polynomial at cost $E_n$; and the $v$-side precomputation is $O(n^2\Phi_v)$. Summing gives the stated bound, whose worst-case term is the third.
+
+For the worst case take base-$2$ logarithms of the third summand. Every shape lies in the $k\times 2(n-k)$ box, so a single Pieri step produces at most $G_k$ covers and $B,\Delta\leq G_k$; the number of layers $L$ equals the number of nonzero parts of the code of $v^{-1}$, at most $n-k$; and $\log_2 E_n=\Theta(\log^2 n)$ (Proposition~\ref{prop:elemcost}). Substituting,
+$$\log_2 T\leq \log_2(n-k)+4\log_2 G_k+\Theta(\log^2 n)=4\log_2 G_k+\Theta(\log^2 n)+O(\log n).$$
+By Lemma~\ref{lemma:grassoutput}, $\log_2 G_k=(2n-k)\,H_2\!\left(\frac{k}{2n-k}\right)+O(\log n)$ with $H_2$ the binary entropy function, so
+$$f_{\mathrm{Gr}}(n,k)=4(2n-k)\,H_2\!\left(\frac{k}{2n-k}\right)+\Theta(\log^2 n)=O\!\big(\min(k,n-k)\log n\big).$$
+The exponent is controlled by the box dimensions $k$ and $n-k$; it collapses to $\Theta(\log^2 n)$ at the extremes $k\to 0$ and $k\to n$ and reaches $\Theta(n)$ only near $k=n/2$.
+\end{proof}
+
+\begin{remark}
+The general bound of Theorem~\ref{thm:complexity} has dominant exponent $\log_2((2n)!)-n=\Theta(n\log n)$, contributed by the $P_u\leq(2n-1)!!$ distinct $u$-side permutations and the $V\leq n!$ distinct $v$-side labels. In the Grassmannian case both counts, and every per-step branching, are confined to the $k\times 2(n-k)$ box and hence bounded by $G_k=\binom{2n-k}{k}$ (Lemma~\ref{lemma:grassoutput}), so the whole exponent collapses to $4\log_2 G_k=4(2n-k)H_2\!\left(\frac{k}{2n-k}\right)+O(\log n)$. This is $O\!\big(\min(k,n-k)\log n\big)$, a genuine function of both box dimensions: it is largest, $\Theta(n)$, at the balanced point $k=n/2$, and shrinks to $\Theta(\log n)$ as $k\to 0$ or $k\to n$, mirroring the shrinking of $\mathrm{Gr}(k,n)$ at the extremes. The improvement over the general algorithm is a factor $n^{\Theta(n)}=2^{\Theta(n\log n)}$ in the worst case, and for fixed $k$ the collapse is total: the count is polynomial in $n$ of degree $O(k)$.
+\end{remark}
+
+\begin{corollary}[Schur multiplication and Littlewood--Richardson coefficients] \label{cor:schurcomplexity}
+Let $u,v\in S_n$ be $k$-Grassmannian. Computing the structure constants of $\sch_u(x)\,\sch_v(x)$---the Littlewood--Richardson coefficients $c_{\lambda(u)\lambda(v)}^{\nu}$---by the single-variable specialization of $\textbf{\textsc{schubmult}}$ takes
+$$O\!\left(\,\min(n-1,\ell_v)\cdot G_k^{\,2}\cdot B\cdot\Delta\,\right)$$
+integer operations, with $L\leq n-k$ layers and $B,\Delta\leq G_k$. Writing this as $2^{g_{\mathrm{Gr}}(n,k)+O(\log n)}$, the worst case is the explicit function of $n$ and $k$
+$$g_{\mathrm{Gr}}(n,k)=4(2n-k)\,H_2\!\left(\frac{k}{2n-k}\right),\qquad H_2(x)=-x\log_2 x-(1-x)\log_2(1-x),$$
+with $H_2$ the binary entropy function; this is $O\!\big(\min(k,n-k)\log n\big)$, vanishing to $O(\log n)$ at $k\to 0$ and $k\to n$. It is the bound of Theorem~\ref{thm:grasscomplexity} with the term $\Theta(\log^2 n)$ deleted.
+\end{corollary}
+\begin{proof}
+As in Corollary~\ref{cor:singlecomplexity}, the single-variable weight attached to a matched (cover, triple) pair is the integer sign $s\in\{+1,-1\}$ rather than a factorial elementary symmetric polynomial, so each executed iteration performs $O(1)$ integer operations and $E_n$ is replaced by $O(1)$ in the third summand. The three-part bound of Theorem~\ref{thm:grasscomplexity} then reads $O(n^2\Phi_v+L\cdot G_k\cdot B\cdot n^3+L\cdot G_k^{\,2}\cdot B\cdot\Delta)$, and the substitutions $L\leq n-k$, $B,\Delta\leq G_k$ (Lemma~\ref{lemma:grassoutput}), $\log_2 G_k=(2n-k)\,H_2\!\left(\frac{k}{2n-k}\right)+O(\log n)$ give $g_{\mathrm{Gr}}(n,k)=4(2n-k)\,H_2\!\left(\frac{k}{2n-k}\right)=O\!\big(\min(k,n-k)\log n\big)$. In particular the operation count is polynomial in the number $G_k$ of Grassmannian outputs, of degree at most four, consistent with Remark~\ref{remark:priorcomplexity}: an individual coefficient $c_{\lambda(u)\lambda(v)}^{\nu}$ may be exponentially large in binary, but the algorithm's arithmetic is counted per output rather than per bit.
+\end{proof}
 
 % \begin{remark}
 % The quantum algorithm has the same overall shape---$L$ layers, a front of $(u\text{-side},\,v\text{-side})$ nodes---but three features make it genuinely more involved than the classical case, all confined to the $u$-side; the $v$-side is \emph{identical}.
