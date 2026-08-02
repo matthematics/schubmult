@@ -893,19 +893,14 @@ equivalently
 $$\operatorname{supp}\bigl(\sch_u(x;y)\,\sch_v(x;z)\bigr)\;=\;\bigcup_{v''\leq_L v}\operatorname{supp}\bigl(\sch_u(x)\,\sch_{v''}(x)\bigr).$$
 \end{theorem}
 \begin{proof}
-Note that, by the Cauchy formula,
-$$c_{u,v}^w(y;z) = \sum_{v'v''=v}c_{u,v''}^w(y;0)\sch_{v'}(-z).$$
-Set $y=0$. Then the result is a linear combination of ordinary Schubert polynomials
-$$\sum_{v'v''=v}c_{u,v''}^w(0;0)\sch_{v'}(-z) = \sum_{v'v''=v}c_{u,v''}^w\sch_{v'}(-z).$$
-By linear independence, the direction $\Leftarrow$ is immediate.
-
-We prove the converse for $v$ dominant. By the positive formula for $c_{u,v}^w(y;z)$ in \cite[Theorem~8.1]{samuelmolev}, we obtain the fact that $c_{u,v}^w(0;z)\neq 0$ if $c_{u,v}^w(y;z)\neq 0$. Then, by the Cauchy formula, we have
-$$c_{u,v}^w(0;z) = \sum_{v'v''=v}c_{u,v''}^w(0;0)\sch_{(v')^{-1}}(-z).$$
-For this to be nonzero, there must exist some $v''\leq v$ with $c_{u,v''}^w(0;0)\neq 0$, as desired.
-
-For general $v$, if $c_{u,v}^w(y;z)\neq 0$ then we also have $c_{u,\mu}^w(y;z)\neq 0$ for $\mu=\dom(v^{-1})^{-1}$, whence there is a $v''\leq_L \mu$ with $c_{u,v''}^w(0;0)\neq 0$. By \cite[Theorem~1.1]{reading2007sortable}, it follows that 
-$$v''\leq_L \dom((v'')^{-1})^{-1}\leq_L v\leq_L \mu$$ 
-as well, so the result follows.
+  Fix $u$ and $w$. We may write
+  $$c_{u,w_0(n)}^w(x;z)=\sum_{v}\partial_u^w(\sch_v(x))\sch_{vw_0}(-z).$$
+  If $\ell(u)+\ell(v') = \ell(w)$, then we have the term $c_{u,v'}^w(0;0)\sch_{v'w_0(n)}(-z)$ in the sum. We also have that for all $v$ with $vw_0(n)\leq_L v'w_0(n)$, or equivalently $v'\leq_L v$, that
+  $$\partial_{(z)}^{vw_0(n)}(c_{u,w_0(n)}^w(x;z)) = c_{u,v}^w(y;z).$$
+  It follows that if $c_{u,v'}^w(0;0)\neq 0$, then $c_{u,v}^w(y;z)\neq 0$ for all $v\geq_L v'$. This proves the direction $\Leftarrow$. 
+  
+  For the converse, suppose for some $v$ that $c_{u,v'}^w(y;z)\neq 0$ for all $v'\geq_L v$. It follows that not only do we have that $c_{u,v}^w(0;z)\neq 0$, but also that $\deg_z(c_{u,v}^w(0;z)) = \ell(v)$. In particular, since some Schubert polynomial $\sch_{\widetilde{v}}(-z)$ with $\ell(\widetilde{v})=\ell(v)$ has a nonzero coefficient, there exists an $i$ such that 
+  $$\partial^i_{(z)}(c_{u,v}^w(0;z))=-c_{u,s_iv}^w(0;z)\neq 0$$ whence $c_{u,s_iv}^w(y;z)\neq 0$ and $\deg_z(c_{u,s_iv}^w(0;z)) = \ell(v) - 1$. Continuing inductively, it follows that there exists some $v''\leq_L v$ with $\ell(u)+\ell(v'')=\ell(w)$ such that $c_{u,v''}^w(y;z)=c_{u,v''}^w(0;0)\neq 0$. This proves the direction $\Rightarrow$, and we are done.
 \end{proof}
 
 \begin{remark}[Reduction of the double vanishing problem] \label{remark:doublevanishing}
