@@ -871,11 +871,14 @@ Finally $J(m)\leq (m+1)\max_p I(p,m)\leq (m+1)\,C(m)$, so $\log_2 C(m)\geq \log_
 
 \begin{theorem}[Complexity of \textbf{\textsc{schubmult}}] \label{thm:complexity}
 The number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
-$$O\!\left(n\cdot 4^nn!\Lambda(\dom(u,v))E_n\,\right),$$
+$$O\!\left(n^3N(u,\dom(v^{-1})^{-1})^4E_n\,\right),$$
 % where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. 
-Writing that bound as $2^{\,f(n)+O(\log n)}$,
-$$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
-and, when $v$ is dominant, $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$, where $\log_2 e=1/\ln 2\approx 1.4427$.
+% Writing that bound as $2^{\,f(n)+O(\log n)}$,
+% $$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
+% and, when $v$ is dominant, $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$, where $\log_2 e=1/\ln 2\approx 1.4427$.
+When $v$ is dominant, this simplifies to
+$$O\!\left(n^3N(u,v)^2E_n\,\right),$$
+
 \end{theorem}
 % \begin{remark}
 % The three summands of Theorem~\ref{thm:complexity} are, respectively, the one-time $v$-side precomputation, the live $\textbf{\textsc{pieri}}$ enumeration (run once per distinct $u$-side permutation per layer), and the matched-pair ring work; the third dominates in the worst case. Here $B$ and $\Delta$ are the $u$-side (Pieri) and $v$-side (kdown-triple) per-layer branchings and $E_n$ is the per-iteration elementary-symmetric construction cost, superpolynomial in $n$ but subexponential. Each term of $f(n)$ is a multiplicative factor of the running time, so all are retained. The dominant contribution is the product of the two support counts: the at most
@@ -913,10 +916,13 @@ which is $f(n)+O(\log n)$. We retain every summand: the two support counts and t
 
 \begin{corollary}[Ordinary Schubert polynomials] \label{cor:singlecomplexity}
 For ordinary (single) Schubert polynomials, computing the structure constants of the product $\sch_u(x)\,\sch_v(x)$ by the single-variable specialization of $\textbf{\textsc{schubmult}}$ takes
-$$O\!\left(n\cdot 4^nn!\Lambda(\dom(u,v))\right)$$
-Writing the bound as $2^{\,g(n)+O(\log n)}$, the worst case is bounded by
-$$g(n)=2n\log_2 n+(3-2\log_2 e)\,n,$$
-and, when $v$ is dominant, $g(n)=n\log_2 n+(2-\log_2 e)\,n$.
+$$O\!\left(n^3N(u,\dom(v^{-1})^{-1})^4\,\right),$$
+% where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. 
+% Writing that bound as $2^{\,f(n)+O(\log n)}$,
+% $$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
+% and, when $v$ is dominant, $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$, where $\log_2 e=1/\ln 2\approx 1.4427$.
+When $v$ is dominant, this simplifies to
+$$O\!\left(n^3N(u,v)^2\,\right),$$
 \end{corollary}
 \begin{proof}
 The single-variable algorithm has the same combinatorial skeleton as Method~\ref{method:schubmult}: the shape $\theta:=\theta(v^{-1})$, the $u$-side Pieri covers, and the $v$-side path structure with its signed transitions $(\lambda',b,s)$ are identical, so the three-part accounting of the proof of Theorem~\ref{thm:complexity}---the one-time $v$-side precomputation $O(n^2\Phi_v)$, the live $\textbf{\textsc{pieri}}$ enumeration $O(L\cdot P_u\cdot B\cdot n^3)$ run once per distinct $u$-side permutation, and the matched-pair work over $W\leq L\cdot P_u\cdot V\cdot B\cdot\Delta$ pairs---carries over verbatim. The single difference is the weight attached to a matched (cover, triple) pair: for double Schubert polynomials it is the factorial elementary symmetric polynomial $E_{p,m}(y;z)$, whereas for ordinary Schubert polynomials the corresponding Pieri coefficient is $1$, so the pair contributes only the integer sign $s\in\{+1,-1\}$. Each executed iteration therefore performs one integer multiplication by $s$ and one integer addition---$O(1)$ ring operations---so $E_n$ is replaced by $O(1)$ in the third summand. Taking base-$2$ logarithms of the dominant (third) summand and substituting $L\leq n$, $P_u\leq(2n-1)!!$ (Lemma~\ref{lemma:outputsupport}), $V\leq n!$, $B,\Delta\leq 2^{n}-1$ (and $\Delta=1$ in the dominant case), and combining $(2n-1)!!\,n!=(2n)!/2^{\,n}$ with the $+2n$ from $B\Delta$, gives $g(n)$, which is $f(n)$ of Theorem~\ref{thm:complexity} without the $\Theta(\log^2 n)$ contribution of $E_n$.
@@ -935,6 +941,18 @@ The single-variable algorithm has the same combinatorial skeleton as Method~\ref
 % \begin{remark}[Which term collapses]
 % Both of the first two terms of $f(u,v)$ are instance quantities: the first counts the $u$-side permutations, the second the $v$-side labels. The first alone ranges over an interval of width $\log_2\bigl((2n-1)!!/n!\bigr)=n\log_2 n+O(n)$ as $\mu_v$ runs from $e$ to $w_0$, but the bottom of that range is vacuous: $\mu_v=e$ forces $v=e$, and there is nothing to compute. The only genuine collapse is in the second term, which vanishes exactly when $v$ is dominant. Then $\mu_v=v$, the initial label $v\mu_v^{-1}$ is the identity, so $V=1$ and $\textbf{\textsc{elemrepr}}$ returns the column factorization of $\sch_v(x;z)$ with no descending expansion at all. A dominant $v$ may be as long as $w_0$, leaving the first term at its maximum, so this is a real saving of $\log_2(n!)=n\log_2 n+O(n)$ from the worst-case exponent rather than a degenerate one.
 % \end{remark}
+
+\begin{corollary}[Output-polynomiality, dominant case]
+Let $u,v\in S_n$ and suppose $v$ is dominant. Let
+$$N(u,v) = \{w\in S_\infty\mid [\sch_w(x;y)](\sch_u(x;y)\sch_v(x;z))\neq 0\}$$
+Then there is a polynomial $P(n,N)$ such that the runtime of schubmult is
+$$O(E_nP(n,N(u,v)))$$
+and in the ordinary case this simplifies to
+$$O(P(n,N(u,v)))$$
+\end{corollary}
+\begin{proof}
+Take $P(n,N) = n^3N^2$.
+\end{proof}
 
 
 \begin{theorem}[Double support as a union of ordinary supports] \label{prop:doublesupport}
@@ -956,6 +974,18 @@ $$\operatorname{supp}\bigl(\sch_u(x;y)\,\sch_v(x;z)\bigr)\;=\;\bigcup_{v''\leq_L
   $$\partial^i_z(c_{u,v}^w(y;z)) = -c_{u,s_iv}^w(y;z)\neq 0$$
   and conclude that $c_{u,s_iv}^w(0;z)$ is a nonzero homogeneous polynomial of degree $\ell(u)+\ell(v)-\ell(w) - 1 = \ell(u)+\ell(s_iv)-\ell(w)$ by properties of divided difference operators. We then conclude that $c_{u,s_iv}^w(y;z)\neq 0$ since the $y$ variables cannot cancel the homogeneous $z$ component, and hence by the previous paragraph that $c_{u,v'}^w(y;z)\neq 0$ for all $v'\geq_L s_iv$, completing the inductive step. This process must eventually terminate at some $v''\leq_L v$ with $\ell(u)+\ell(v'')=\ell(w)$, and we have $c_{u,v''}^w(y;z)=c_{u,v''}^w(0;0)\neq 0$. This proves the direction $\Rightarrow$, and we are done. 
 \end{proof}
+
+$$N(u,\dom(v^{-1})^{-1})\leq |[v,\dom(v^{-1})^{-1}]|N(u,v)$$
+
+% \begin{lemma}
+% Suppose $v,v'\in S_\infty$ both satisfy $v\leq_L \dom(v)$ and $v'\leq_L \dom(v)$. If $v'\nleq_L v$, then $\dom(v)=\dom(v')$.
+% \end{lemma}
+% \begin{proof}
+% % Note that if $\dom(v')\neq \dom(v)$, then $\dom(v') <_L \dom(v)$. Consider the element $v'' = v\wedge \dom(v')$. Then $\dom(v'') = \dom(v')$ since $\dom:S_n\to S_n$ is a lattice homomorphism, and $v''\leq_L v$, so there exists a $v''\leq_L v$ with $\dom(v'')=\dom(v')<_L\dom(v)$. 
+% Consider the element $v'' = v\vee v'$. If $v'\nleq_L v$, then $v <_L v''\leq_L \dom(v)$, hence $\dom(v'')=\dom(v)$. Since $v'\cap v'' = v'
+
+% % Suppose that $v'\nleq_L v$. Consider $v''=v\wedge v'$. We then have that $v'' <_L v'$ and $v'' <_L v$. Also, $\dom(v'') = \dom(v)\wedge \dom(v')=\dom(v')$. If $\dom(v')\neq \dom(v)$, then $\dom(v') <_L \dom(v)$, hence $\dom(v')\leq_L v$ since $v''\leq_L\dom(v'')\leq_L v$, contradicting the assumption that $v'\nleq_L v$. Thus, we may conclude that $\dom(v)=\dom(v')$, as desired.
+% \end{proof}
 
 % \begin{lemma} \label{lemma:equivvanish}
 % The following are equivalent.
@@ -991,16 +1021,16 @@ $$\operatorname{supp}\bigl(\sch_u(x;y)\,\sch_v(x;z)\bigr)\;=\;\bigcup_{v''\leq_L
 % % In the case that $\ell(s_iv) > \ell(v)$, we have that $\partial^{s_i}(c_{v,u}^{s_iw}(y;z))\neq 0$, and by the inductive hypothesis we have that $c_{v,u}^{s_iw}(y;y)\neq 0$. Assume on the contrary that $c_{u,v}^w(y;y)=0$. 
 % \end{proof}
 
-\begin{proposition}[Output lower bound, uniform in $u$] \label{prop:outputlower}
-For all $u,v\in S_n$,
-$$\bigl|\operatorname{supp}\bigl(\sch_u(x;y)\,\sch_v(x;z)\bigr)\bigr|\ \geq\ \bigl|[e,v]_L\bigr|\ \geq \Lambda(v^{-1})$$
-with equality at $u=e$. In particular, taking $v=w_0(n)$, the product $\sch_u(x;y)\,\sch_{w_0}(x;z)$ has at least $n!$ terms for every $u\in S_n$.
-\end{proposition}
-\begin{proof}
-Work in $\mathbb{Q}(y,z)[x]$. The ordinary Schubert polynomials $\sch_{v''}(x)$ form a $\mathbb{Q}$-basis of $\mathbb{Q}[x]$, hence a $\mathbb{Q}(y,z)$-basis after extension of scalars, so they are linearly independent over $\mathbb{Q}(y,z)$. Since $\mathbb{Q}(y,z)[x]$ is an integral domain and $\sch_u\neq 0$, multiplication by $\sch_u$ is an injective $\mathbb{Q}(y,z)$-linear map, and therefore the $\bigl|[e,v]_L\bigr|$ polynomials
-$$\bigl\{\,\sch_u(x)\,\sch_{v''}(x)\ :\ v''\leq_L v\,\bigr\}$$
-are linearly independent. By Theorem~\ref{prop:doublesupport} every one of them is supported, in the Schubert basis, inside $\operatorname{supp}(\sch_u(x;y)\sch_v(x;z))$; so that set indexes a spanning family for a space of dimension at least $\bigl|[e,v]_L\bigr|$, and being itself linearly independent it has at least that many elements. Equality at $u=e$ is the case $\sch_u\sch_{v''}=\sch_{v''}$ of Theorem~\ref{prop:doublesupport}. For $v=w_0$ the ideal $[e,w_0]_L$ is all of $S_n$.
-\end{proof}
+% \begin{proposition}[Output lower bound, uniform in $u$] \label{prop:outputlower}
+% For all $u,v\in S_n$,
+% $$\bigl|\operatorname{supp}\bigl(\sch_u(x;y)\,\sch_v(x;z)\bigr)\bigr|\ \geq\ \bigl|[e,v]_L\bigr|\ \geq \Lambda(v^{-1})$$
+% with equality at $u=e$. In particular, taking $v=w_0(n)$, the product $\sch_u(x;y)\,\sch_{w_0}(x;z)$ has at least $n!$ terms for every $u\in S_n$.
+% \end{proposition}
+% \begin{proof}
+% Work in $\mathbb{Q}(y,z)[x]$. The ordinary Schubert polynomials $\sch_{v''}(x)$ form a $\mathbb{Q}$-basis of $\mathbb{Q}[x]$, hence a $\mathbb{Q}(y,z)$-basis after extension of scalars, so they are linearly independent over $\mathbb{Q}(y,z)$. Since $\mathbb{Q}(y,z)[x]$ is an integral domain and $\sch_u\neq 0$, multiplication by $\sch_u$ is an injective $\mathbb{Q}(y,z)$-linear map, and therefore the $\bigl|[e,v]_L\bigr|$ polynomials
+% $$\bigl\{\,\sch_u(x)\,\sch_{v''}(x)\ :\ v''\leq_L v\,\bigr\}$$
+% are linearly independent. By Theorem~\ref{prop:doublesupport} every one of them is supported, in the Schubert basis, inside $\operatorname{supp}(\sch_u(x;y)\sch_v(x;z))$; so that set indexes a spanning family for a space of dimension at least $\bigl|[e,v]_L\bigr|$, and being itself linearly independent it has at least that many elements. Equality at $u=e$ is the case $\sch_u\sch_{v''}=\sch_{v''}$ of Theorem~\ref{prop:doublesupport}. For $v=w_0$ the ideal $[e,w_0]_L$ is all of $S_n$.
+% \end{proof}
 
 % \begin{remark}[What the lower bound needs from degree $0$] \label{remark:lowerboundmechanism}
 % In a paper introducing a similar algorithm for multiplying ordinary Schur functions, Remmel and Whitney \cite{remmel1984multiplying} end with a complexity discussion that arrives at an output-sensitive bound and halts there. Their algorithm traverses a tree whose leaves are the tableaux $C(\lambda*\mu)$ enumerating the product, at a cost of $K|\mu|\,\bigl|C(\lambda*\mu)\bigr|$ steps; having noted that the constant might be improved, they add that this ``is not the main problem to determine the complexity of this algorithm,'' since
@@ -1026,14 +1056,15 @@ $$\Lambda(\alpha)\Lambda(\beta) = \frac{(n!)^2}{(\alpha(i) - \code_i(\alpha)(\be
 
 $$(2n-1)!\sqrt{\Lambda(\alpha)\Lambda(\beta)} \geq 2^{n-1}n!\Lambda(\alpha + \beta)$$
 
+
 \begin{corollary}[Output-polynomiality] \label{cor:outputpoly}
-Fix $n$ and regard $\textbf{\textsc{schubmult}}$ as an algorithm $\textbf{\textsc{schubmult}}_n$ on inputs $(u,v)\in S_n\times S_n$. For $u\in S_n$ let
-$$W(u,n):=\max_{v\in S_n}T(u,v),\qquad N^{*}(u,n):=\max_{v\in S_n}N(u,v),$$
-where $T(u,v)$ is the bound of Theorem~\ref{thm:complexity} and $N(u,v)$ is the number of terms of $\sch_u(x;y)\,\sch_v(x;z)$ in the Schubert basis. Then for all  $u,v\in S_n$,
-$$\Lambda(v)\leq N(u,v)\leq \Lambda(\dom(u,v))\leq \frac{(2n-1)!}{2^{n-1}n!}\sqrt{\frac{\Lambda(\dom(u^{-1}))}{\Lambda(\dom(v^{-1}))}}\Lambda(\dom(v^{-1}))$$
-$$N(u,v)\ \leq\ T(u,v)\leq\ n 2^{n+1}(2n-1)!\sqrt{\Lambda(\dom(u^{-1}))\Lambda(\dom(v^{-1}))}$$
-and consequently
-$$W(u,n)\ \leq\ N^{*}(u,n)^{3}\qquad\text{for all }u\in S_n.$$
+% Fix $n$ and regard $\textbf{\textsc{schubmult}}$ as an algorithm $\textbf{\textsc{schubmult}}_n$ on inputs $(u,v)\in S_n\times S_n$. For $u\in S_n$ let
+% $$W(u,n):=\max_{v\in S_n}T(u,v),\qquad N^{*}(u,n):=\max_{v\in S_n}N(u,v),$$
+% where $T(u,v)$ is the bound of Theorem~\ref{thm:complexity} and $N(u,v)$ is the number of terms of $\sch_u(x;y)\,\sch_v(x;z)$ in the Schubert basis. Then for all  $u,v\in S_n$,
+% % $$\Lambda(v)\leq N(u,v)\leq \Lambda(\dom(u,v))\leq \frac{(2n-1)!}{2^{n-1}n!}\sqrt{\frac{\Lambda(\dom(u^{-1}))}{\Lambda(\dom(v^{-1}))}}\Lambda(\dom(v^{-1}))$$
+% $$N(u,v)\ \leq\ T(u,v)\leq\ n 2^{n+1}(2n-1)!N(u,v)$$
+% and consequently
+% $$W(u,n)\ \leq\ N^{*}(u,n)^{3}\qquad\text{for all }u\in S_n.$$
 \end{corollary}
 \begin{proof}
 The bound $N^{*}(u,n)\geq n!$ is Proposition~\ref{prop:outputlower} at $v=w_0(n)$, where $[e,w_0]_L=S_n$; that proposition is uniform in $u$, so the single input $(u,w_0)$ witnesses it for whichever $u$ is fixed. The inequality $N^{*}(u,n)\leq W(u,n)$ is that the algorithm must emit each of the $N(u,v)$ coefficients.

@@ -99,14 +99,18 @@ def dom_interval_increasing_test(n):
         print("Farting stinkbat")
 
 def dom_interval_bound_test(n):
-    perms = Permutation.all_permutations(n)
+    perms = [popo for popo in Permutation.all_permutations(n) if not popo.has_pattern([3,1,2])]
     pigeon = {}
+    w0 = Permutation.w0(n)
     for perm in perms:
+        assert (w0 * perm).is_dominant
         size1 = dominant_interval_size(perm)
         size2 = actual_interval_size(perm)
-        size3 = dominant_interval_size(~((~perm).minimal_dominant_above()))
-        assert size1 <= size2, f"failed {perm.trimcode=} {size1=} > {size2=}"
-        assert size2 <= size3, f"finkas {perm.trimcode=} {size2=} > {size3=}"
+        # size3 = dominant_interval_size(perm * w0)
+        # size4 = dominant_interval_size(perm.minimal_dominant_above()*w0)
+        # assert size1 <= size2, f"failed {perm.trimcode=} {size1=} > {size2=}"
+        # assert size3 >= size4, f"finkas {perm.trimcode=} {size4=} > {size3=}"
+        assert size1 == size2
         # dom1 = ~((~perm).minimal_dominant_above())
         # pigeon[dom1] = pigeon.get(dom1, 0) + 1
         # assert all(perm.code[i] <= dom1.code[i] for i in range(min(perm.inv + 1,len(perm)) - 1))
@@ -130,11 +134,33 @@ def puke(n):
         assert n1 <= n2
         print(f"{math.log(n2/n1)}")
 
+# def bruhat_interval(w):
+#     ret = {w}
+
+#     stack = [w]
+#     while len(stack) > 0:
+#         w2 = stack.pop()
+#         if w2 in ret:
+#             continue
+#         ret.add(w2)
+#         for i in range(len(w2) - 1):
+#             for j in range(i + 1,len(w2)):
+#                 if has_bruhat_descent(w2, i, j):
+#                     stack.append(w2.swap(i,j))
+#     return ret
+
+def one32231(n):
+    perms = set([(porn,porn*((~porn).minimal_dominant_above())) for porn in Permutation.all_permutations(n) if not porn.has_pattern([3,1,2])])
+    print(f"{len(perms)=}")
+    print(f"{sorted(set([(bruh_size(pp), actual_interval_size(ppp)) for (ppp,pp) in perms]))}")
+    # 312 132 AVOIDANT INTERVAL SIZE
+    #for perm in perms:
 
 if __name__ == "__main__":
     import sys
     n = int(sys.argv[1])
     #dom_interval_increasing_test(n)
-    puke(n)
+    #puke(n)
+    #one32231(n)
     #potato_sum(n)
-    #dom_interval_bound_test(n)
+    dom_interval_bound_test(n)

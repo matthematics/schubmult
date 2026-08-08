@@ -436,7 +436,8 @@ def compute_vpathdicts_cached(th, vmu):
     top = (~Permutation(uncode(th))).code
     for i in range(thL - 1, -1, -1):
         top2 = (~Permutation(uncode(top))).trimcode
-        top2.pop()
+        if len(top2) > 0:
+            top2.pop()
         top = (~Permutation(uncode(top2))).code
         # print(f"{top=}")
         monoperm = Permutation(uncode(top))
