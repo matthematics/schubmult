@@ -121,18 +121,64 @@ def dom_interval_bound_test(n):
     # for dp, ct in pigeon.items():
     #     assert ct == actual_interval_size(dp)
 
+def bad_ones(v):
+    """ <= dom(v) but not <= v """
+    dom = v.mul_dominant()
+    if v == dom:
+        return set()
+    stack = [dom]
+    seen = set()
+    while len(stack) > 0:
+        new_perm = stack.pop()
+        if new_perm in seen or new_perm.inversion_set.issubset(v.inversion_set):
+            continue
+        seen.add(new_perm)
+        for i in (~new_perm).descents():
+            perm2 = ~((~new_perm).swap(i, i + 1))
+            stack.append(perm2)
+    return seen
+
 def puke(n):
     import itertools
+    from schubmult.symbolic import expand
+    import math
 
     perms = Permutation.all_permutations(n)
     mxlgdiff = {}
     for perm1, perm2 in itertools.product(perms, repeat=2):
-        md1 = perm1.mul_dominant()
+        if dominant_interval_size(perm2) == 1:
+            continue
         md2 = perm2.mul_dominant()
-        spain_pain = uncode([a + b for a,b in itertools.zip_longest(md1.trimcode, md2.trimcode, fillvalue=0)])
-        n1, n2 = dominant_interval_size(spain_pain), 2**(n-1) * math.sqrt(dominant_interval_size(md1) * dominant_interval_size(md2))
-        assert n1 <= n2
-        print(f"{math.log(n2/n1)}")
+        if perm2 == md2:
+            continue
+        #spinach
+        # spain_pain = uncode([a + b for a,b in itertools.zip_longest(md1.trimcode, md2.trimcode, fillvalue=0)])
+        # n1, n2 = dominant_interval_size(spain_pain), 2**(n-1) * math.sqrt(dominant_interval_size(md1) * dominant_interval_size(md2))
+        # assert n1 <= n2
+        # print(f"{math.log(n2/n1)}")
+        purple1 = len({k for k,v in (DSx(perm1)*DSx(perm2, "z")).items() if expand(v) != 0})
+        purple2 = len({k for k,v in (DSx(perm1)*DSx(md2, "z")).items() if expand(v) != 0})
+        assert purple2 <= purple1 * dominant_interval_size(md2)/dominant_interval_size(perm2), f"failed {perm1.trimcode=} {perm2.trimcode=} {purple1=} {purple2=} {dominant_interval_size(md2)=}"
+        logbat = math.log(dominant_interval_size(md2)/dominant_interval_size(perm2))/math.log(n)
+        # prt = logbat if logbat > 1 else None
+        # # length of code(perm2) is precisely length of code(md2)
+        # # code_m(md2) = code_m(perm2)
+        # # if code_{m-1}(perm2) >= code_m(perm2), code_{m-1}(md2) = code_{m-1}(perm2)
+        # # if code_{i-1}(perm2) <= code_i(perm2), code_{i-1}(md2) = code_i(md2)
+        # # if code_{i-1}(perm2) > code_i(perm2), code_{i-1}(md2) = max(code_{i}(md2) + 1, code_{i-1}(perm2))
+        # dev_m = 0
+        # dev_{i-1} = dev_{i} + c_i - c_{i-1}
+        # dev_{i-1} = max(dev_i + c_i - c_{i-1}, 0)
+        # max jump at i <= n - i
+        # (n - i)^{i - 1}
+        # (i - 1)log ( n - i)
+        # log(n - i) - (i - 1)/(n - i) = 0
+        # # dom is (height)^length
+        # # grass >= (height)^(length - 1) 
+        # if prt is not None:
+        #     print(f"Batbat {prt}")
+        assert logbat < 2, f"failed {perm1.trimcode=} {perm2.trimcode=} {purple1=} {purple2=} {dominant_interval_size(md2)=} {dominant_interval_size(perm2)=} {logbat=}"
+        print("Pinto")
 
 # def bruhat_interval(w):
 #     ret = {w}
@@ -160,7 +206,7 @@ if __name__ == "__main__":
     import sys
     n = int(sys.argv[1])
     #dom_interval_increasing_test(n)
-    #puke(n)
+    puke(n)
     #one32231(n)
     #potato_sum(n)
-    dom_interval_bound_test(n)
+    #dom_interval_bound_test(n)
