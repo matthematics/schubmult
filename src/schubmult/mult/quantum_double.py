@@ -169,102 +169,66 @@ def schubmult_q_generic_partial_posify(u2, v2):
     return {w2: q_partial_posify_generic(val, u2, v2, w2) for w2, val in schubmult_q_double_pair_generic(u2, v2).items()}
 
 
-def q_posify(u, v, w, val, var2, var3, q_var, msg, verify_only=False):
-    val2 = 0
-    q_dict = factor_out_q(val)
-    for q_part in q_dict:
-        try:
-            val2 += q_part * int(q_dict[q_part])
-        except Exception:
+def q_posify(u, v, w, val, var2, var3, q_var, msg):
+    # logger.debug(f"Line number {val=} {u=} {v=} {w=}")
+    # if not v.has_pattern([1, 4, 3, 2]) and not v.has_pattern([3, 1, 2]):
+    #     return schubmult_q_double_fast(u, v, var2, var3, q_var).get(w, S.Zero)
+    try:
+        val2 = int(expand(val))
+    except Exception:
+        # logger.debug("Line number")
+        val2 = 0
+        q_dict = factor_out_q(val)
+        # logger.debug(f"{q_dict=}")
+        # logger.debug("Line number")
+        for q_part in q_dict:
             try:
-                # logger.debug("Line number")
-                if (~v).code == (~v).medium_theta():
-                    val2 += q_part * q_dict[q_part]
-                else:
-                    q_part2 = q_part
-                    qv = q_vector(q_part)
-                    u2, v2, w2 = u, v, w
-                    u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                    while did_one:
-                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                    q_part2 = np.prod(
-                        [q_var[i + 1] ** qv[i] for i in range(len(qv))],
-                    )
-                    if q_part2 == 1:
-                        if verify_only:
-                            val2 += q_part * q_dict[q_part]
-                            continue
-                        # reduced to classical coefficient
-                        # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
-                        val2 += q_part * pos.posify(
-                            q_dict[q_part],
-                            u2,
-                            v2,
-                            w2,
-                            var2,
-                            var3,
-                            msg,
-                            False,
-                        )
+                val2 += q_part * int(q_dict[q_part])
+            except Exception:
+                try:
+                    # logger.debug("Line number")
+                    if (~v).code == (~v).medium_theta():
+                        val2 += q_part * q_dict[q_part]
                     else:
-                        val2 += q_part * pos.compute_positive_rep(
-                            q_dict[q_part],
-                            var2,
-                            var3,
-                            msg,
+                        q_part2 = q_part
+                        qv = q_vector(q_part)
+                        u2, v2, w2 = u, v, w
+                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                        while did_one:
+                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                        q_part2 = np.prod(
+                            [q_var[i + 1] ** qv[i] for i in range(len(qv))],
                         )
-                        if val2 is None:
-                            if verify_only:
-                                return False
-                            raise ValueError("Could not compute positive representation")
-            except ValueError as e:
-                logger.exception(e)
-                if verify_only:
-                    return False
-                raise
-    if expand(val - val2) != 0:
-        # logger.debug("Different")
-        logger.exception(f"Different {val=} {val2=} {u=} {v=} {w=}")
-    if verify_only:
-        return True
-    return val2
+                        if q_part2 == 1:
+                            # reduced to classical coefficient
+                            # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
+                            val2 += q_part * pos.posify(
+                                q_dict[q_part],
+                                u2,
+                                v2,
+                                w2,
+                                var2,
+                                var3,
+                                msg,
+                                False,
+                            )
+                        else:
+                            val2 += q_part * pos.compute_positive_rep(
+                                q_dict[q_part],
+                                var2,
+                                var3,
+                                msg,
+                            )
+                            if val2 is None:
+                                raise Exception
+                except Exception:
+                    import traceback
 
-def can_classically_reduce(u, v, w, val, q_var=_vars.q_var, filter_dominant=False):
-    from schubmult.utils.perm_utils import omega, sg
-    # val2 = 0
-    if filter_dominant:
-        if (~v) == uncode((~v).medium_theta()):
-            return True
-    q_dict = factor_out_q(val, q_var=q_var)
-    for q_part in q_dict:
-        qv = q_vector(q_part)
-        stack = [(u, v, w, qv)]
-        result = None
-        while len(stack) > 0:
-            u0, v0, w0, qv0 = stack.pop()
-            if sum(qv0) == 0:
-                result = (u0, v0, w0, qv0)
-                break
-            for i in range(len(qv0)):
-                if sg(i, v0) == 1 and sg(i, u0) == 0 and sg(i, w0) + omega(i + 1, qv0) == 1:
-                    ret_v = v0.swap(i, i + 1)
-                    ret_w = w0.swap(i, i + 1)
-                    qv_ret = [*qv0]
-                    if sg(i, w0) == 0:
-                        qv_ret[i] -= 1
-                    #return u, ret_v, ret_w, qv_ret, True
-                    stack.append((u0, ret_v, ret_w, qv_ret))
-                if (sg(i, u0) == 1 and sg(i, v0) == 0 and sg(i, w0) + omega(i + 1, qv0) == 1) or (sg(i, u0) == 1 and sg(i, v0) == 1 and sg(i, w0) + omega(i + 1, qv0) == 2):
-                    ret_u = u0.swap(i, i + 1)
-                    ret_w = w0.swap(i, i + 1)
-                    qv_ret = [*qv0]
-                    if sg(i, w0) == 0:
-                        qv_ret[i] -= 1
-                    #return ret_u, v0, ret_w, qv_ret, True
-                    stack.append((ret_u, v0, ret_w, qv_ret))
-        if result is None:
-            return False
-    return True
+                    traceback.print_exc()
+        if expand(val - val2) != 0:
+            # logger.debug("Different")
+            raise Exception
+    return val2
 
 
 def q_partial_posify_generic(val, u, v, w):
@@ -356,47 +320,6 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
             q_val_part = q_dict[q_part]
             coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
     return coeff_dict_update
-
-def peterson_woodward_mapping(coeff_dict, parabolic_index, q_var=_vars.q_var):
-    max_len = parabolic_index[-1] + 1
-    w_P = Permutation.longest_element(*parabolic_index)
-    w_P_prime = Permutation([1, 2])
-    mapping_dict = {}
-    for w_1 in coeff_dict.keys():
-        val = coeff_dict[w_1]
-        q_dict = factor_out_q(val)
-        for q_part in q_dict:
-            qv = q_vector(q_part)
-            w = w_1
-            good = True
-            parabolic_index2 = []
-            for i in range(len(parabolic_index)):
-                if omega(parabolic_index[i], qv) == 0:
-                    parabolic_index2 += [parabolic_index[i]]
-                elif omega(parabolic_index[i], qv) != -1:
-                    good = False
-                    break
-            if not good:
-                continue
-            w_P_prime = Permutation.longest_element(*parabolic_index2)
-            if not check_blocks(qv, parabolic_index):
-                continue
-            w = (w * w_P_prime) * w_P
-            if not is_parabolic(w, parabolic_index):
-                continue
-
-            if len(w) > max_len:
-                continue
-            new_q_part = np.prod(
-                [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],
-            )
-            try:
-                new_q_part = int(new_q_part)
-            except Exception:
-                pass
-            #q_val_part = q_dict[q_part]
-            mapping_dict[(w, new_q_part)] = (w_1, q_part)
-    return mapping_dict
 
 
 def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_vars.q_var):

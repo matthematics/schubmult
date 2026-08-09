@@ -159,7 +159,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
             val2 += int(x) * k
     if expand(val - val2, func=True) != 0:
         # print(f"{vec=}")
-        raise ValueError(f"Could not find positive representation of {val}!")
+        raise Exception
     # print(f"{val2=}")
     return val2
 
