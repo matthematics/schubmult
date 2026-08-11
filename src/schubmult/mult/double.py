@@ -252,7 +252,7 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
                                 index + 1,
                                 up,
                                 up2,
-                                v,
+                                v_iter,
                                 v2,
                                 udiff,
                                 vdiff,
