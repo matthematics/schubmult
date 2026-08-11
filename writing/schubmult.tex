@@ -958,8 +958,8 @@ Limiting the length therefore, by the inductive hypothesis, reduces the count by
 For general $v$, suppose the result holds for $L-1$. We can strip off the last part of $\theta(v^{-1})$ to get a permutation $v'$ with $\ell(\theta(v'^{-1}))=L-1$. Then, by the inductive hypothesis, we have
 $$N(u,\mdom{v'})\leq n^{L-1}N(u,v').$$
 Let $m$ be the smallest part of $\theta(v^{-1})$ and let $\widehat{v}$ have $\code_i(\widehat{v}) = \code_i(v') + 1$ for $1\leq i\leq L$. Then $\widehat{v}\geq_L v$ and $\mdom{v}=\mdom{\widehat{v}}$. By a bijective argument, we can conclude that
-$$\frac{N(u,\mdom{v})}{N(u,\mdom{v'})}\leq \frac{N(u,\widehat{v})}{N(u,v')}$$
-Multiplying both sides of the original inequality by this positive inequality, we obtain
+$$N(u,\mdom{v}) - N(u,\mdom{v'})\leq n^{L-1}(N(u,\widehat{v}) - N(u,v'))$$
+whence, adding $N(u,\mdom{v'})\leq n^{L-1}N(u,v')$ to both sides, we have
 $$N(u,\mdom{v})\leq n^{L-1}N(u,\widehat{v})$$
 Applying a left divided difference on $z_L$ results in precisely $\sch_v(x;z)$, and the result follows by the $L=1$ case.
 \end{proof}
