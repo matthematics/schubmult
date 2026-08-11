@@ -203,7 +203,7 @@ def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
 
 
 def schubmult_double(perm_dict, v, var2=None, var3=None):
-    perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
+    perm_dict = {Permutation(k): vv for k, vv in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
     th = vn1.theta()
@@ -239,11 +239,11 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
                 for up2, udiff in newperms:
                     if up2 not in newpathsums:
                         newpathsums[up2] = {}
-                    for v in vpathdicts[index]:
-                        sumval = vpathsums[up].get(v, zero)
+                    for v_iter in vpathdicts[index]:
+                        sumval = vpathsums[up].get(v_iter, zero)
                         if sumval == 0:
                             continue
-                        for v2, vdiff, s in vpathdicts[index][v]:
+                        for v2, vdiff, s in vpathdicts[index][v_iter]:
                             newpathsums[up2][v2] = newpathsums[up2].get(
                                 v2,
                                 zero,

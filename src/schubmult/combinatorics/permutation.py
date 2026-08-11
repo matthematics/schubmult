@@ -692,6 +692,25 @@ class Permutation(Printable):
     def strict_theta(self):
         return [*self._cached_strict_theta()]
 
+    def maximal_sortable_below(self):
+        return self._cached_maximal_sortable_below()
+
+    def mul_sortable(self):
+        return ~((~self).maximal_sortable_below())
+
+    @cache
+    def _cached_maximal_sortable_below(self):
+        working_perm = self
+        while True:
+            L = len(working_perm.trimcode)
+            cd = [*working_perm.trimcode, 0]
+            loc = max([i for i in range(L) if cd[i] - cd[i + 1] > 1], default=-1)
+            if loc == -1:
+                return working_perm
+            working_perm = working_perm.swap(loc, loc + 1)
+        raise ValueError("Should not reach here")
+
+
     @cache
     def _cached_theta(self):
         cd = list(self.code)

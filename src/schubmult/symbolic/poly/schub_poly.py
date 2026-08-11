@@ -175,9 +175,8 @@ def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
 
 
 @cache
-def call_zvars(v1, v2, k, i):  # noqa: ARG001
-    return [v2[i - 1]] + [v2[j] for j in range(len(v1), len(v2) + max(0, i - len(v2))) if v2[j] != j + 1 and j != i - 1] + [v2[j] for j in range(len(v1)) if v1[j] != v2[j] and j != i - 1]
-
+def call_zvars(v1, v2, k, i, min_size=10): # noqa: ARG001
+    return [v2[i - 1]] + [v2[j] for j in range(i - 1) if v1[j] != v2[j]] + [v2[j] for j in range(i, max(len(v1), len(v2))) if v1[j] != v2[j]] + [v2[j] for j in range(max(len(v1), len(v2)), min_size)]
 
 def efficient_subs(expr, subs_dict):
     subs_dict_new = {}
@@ -462,11 +461,13 @@ def div_diff(poly, v1, v2):
 def _groth_plus(x1, y1, beta):
     return x1 + y1 + beta * x1 * y1
 
+
 def _groth_minus(x1, y1, beta, keep_as_schub=False):
     from schubmult import Sx
+
     if keep_as_schub:
-        return (Sx.from_expr(x1 - y1 - beta * x1 * y1))
-    return (x1  - y1 - beta * x1 * y1)
+        return Sx.from_expr(x1 - y1 - beta * x1 * y1)
+    return x1 - y1 - beta * x1 * y1
 
 
 def _groth_div_diff(val, index, x, beta):
@@ -498,6 +499,7 @@ def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
         return result
     return result.as_polynomial()
 
+
 @cache
 def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False):
     from schubmult.combinatorics.permutation import Permutation
@@ -513,7 +515,6 @@ def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False):
     if keep_as_schub:
         return result
     return result.as_polynomial()
-
 
 
 def to_groth(val, x, y, beta):
@@ -545,16 +546,19 @@ def groth_dict_to_poly(groth_dict, x, zz, beta):
         ret += coeff * grothendieck_poly(perm, x, zz, beta)
     return ret
 
+
 @cache
 def schub_elem_to_groth_elem_dict(the_perm, beta):
     from schubmult import RCGraph
     from schubmult.combinatorics.pipe_dream import PipeDream
+
     w0 = pl.Permutation.w0(len(the_perm))
     dct = {}
     for bpd in RCGraph.all_rc_graphs(the_perm, len(the_perm)):
         permo = PipeDream.from_rc_graph(bpd).co_pipe_dream().perm * w0
         dct[(permo.inv, permo.max_descent)] = dct.get((permo.inv, permo.max_descent), S.Zero) + (-beta) ** (permo.inv - the_perm.inv)
     return dct
+
 
 @cache
 def schub_elem_sym_to_groth_elem_sym_dict(p, k, beta):
@@ -588,10 +592,12 @@ def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
     # schub = ring.from_expr(poly)
     return operator.apply(schub)
 
+
 def isobar_it(i, genset, elem):
     from schubmult import Permutation
     from schubmult.rings.schubert.nil_hecke import NilHeckeRing
     from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
+
     ring = SingleSchubertRing(genset)
     nh = NilHeckeRing(genset)
 
@@ -599,9 +605,12 @@ def isobar_it(i, genset, elem):
     schub = ring.from_expr((1 + genset[i + 1]) * genset[i]) * elem
     return operator.apply(schub)
 
+
 def lascoux_poly(composition, genset):
     from .. import expand
+
     return expand(_lascoux_poly(tuple(composition), genset))
+
 
 @cache
 def _lascoux_poly(composition, genset):
@@ -611,6 +620,7 @@ def _lascoux_poly(composition, genset):
         if composition[i] < composition[i + 1]:
             return isobar_it(i + 1, genset, lascoux_poly(composition[:i] + (composition[i + 1], composition[i]) + composition[i + 2 :], genset))
     raise ValueError(f"Unexpected composition: {composition}")
+
 
 @cache
 def groth_elem_as_schub_dict(perm, beta):
@@ -642,7 +652,7 @@ def groth_elem_as_schub_dict(perm, beta):
 
 
 def groth_mul_full(perm_dict, p2, _x, _zz, beta):
-    #from schubmult import Gx, Sx
+    # from schubmult import Gx, Sx
     p2 = pl.Permutation(p2)
     # schub_elem2 = Sx.from_dict(groth_elem_as_schub_dict(p2, beta))
     # schub_elem1 = sum([v * Sx.from_dict(groth_elem_as_schub_dict(k, beta)) for k, v in perm_dict.items()])
@@ -652,6 +662,7 @@ def groth_mul_full(perm_dict, p2, _x, _zz, beta):
     return schub_dict_to_groth_dict(perm_dict, groth_elem_as_schub_dict(p2, beta), beta)
     # result = schub_elem1 * schub_elem2
     # return sum([v * Gx.from_dict(schub_elem_to_groth_elem_dict(k, beta)) for k, v in result.items()])
+
 
 def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
     # schub_elem_sym_as_groth_elem_sym_dict

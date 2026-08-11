@@ -73,6 +73,7 @@ picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 \theoremstyle{remark}
 
 \newtheorem{remark}[lemma]{Remark}
+\newtheorem{fact}[lemma]{Fact}
 
 
 %%%
@@ -89,7 +90,7 @@ picture,baseline=(#2.base)]{\node(#2)[#1]{$#3$};}}
 %%% can abbreviate as
 
 \newcommand{\R}{\mathbf{R}}  % The real numbers.
-
+\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
 %%
 %% The comment after the defintion is not required, but if you are
 %% working with someone they will likely thank you for explaining your
@@ -500,7 +501,7 @@ Section~\ref{sec:foundations} fixes notation and records the two formulas the al
 \newcommand{\medtheta}{\overline{\theta}}
 \newcommand{\Tom}[1]{\xRightarrow{#1}}
 \newcommand{\dom}{\pi^\uparrow}
-
+\newcommand{\mdom}[1]{\dom(#1)}
 \section{Foundational formulas} \label{sec:foundations}
 
 \subsection{Notation and definitions}
@@ -762,7 +763,7 @@ which is the $r$-th factor of $E^{(c+t-a)}_{p-a,\,m-t}(y'';z)$. So the upper fac
 
 \begin{lemma}[Output support bound] \label{lemma:outputsupport}
 Let $\dom(u,v)$ be the permutation with
-$$\code(\dom(u,v))=\code(\dom(u^{-1})^{-1})+\code(\dom(v^{-1})^{-1})$$
+$$\code(\dom(u,v))=\code(\dom(u^{-1})^{-1})+\code(\mdom{v})$$
 a dominant element of $S_{2n-1}$ with $\ell(w_1)=2\binom{n}{2}$. For any $u,v\in S_n$, every permutation $w$ occurring in the product $\sch_u\cdot\sch_v$, or in any intermediate product formed during its computation, satisfies $w\leq_L \dom(u,v)$. The number of such permutations is at most $\Lambda(\dom(u,v))$.
 \end{lemma}
 \begin{proof}
@@ -877,7 +878,7 @@ If $m$ is omitted, the assumption is that $m=\ell(v)$.
 
 \begin{theorem}[Complexity of \textbf{\textsc{schubmult}}] \label{thm:complexity}
 The number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
-$$O\!\left(n^4\Lambda(\dom(v^{-1})^{-1})N_{\ell(v)}(u,\dom(v^{-1})^{-1})E_n\right)$$
+$$O\!\left(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n\right)$$
 % where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. 
 % Writing that bound as $2^{\,f(n)+O(\log n)}$,
 % $$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
@@ -887,32 +888,38 @@ $$O\!\left(n^4N(u,v)E_n\,\right),$$
 
 \end{theorem}
 \begin{proof}
-% The three summands are, respectively, the one-time $v$-side precomputation, the live $\textbf{\textsc{pieri}}$ enumeration (run once per distinct $u$-side permutation per layer), and the matched-pair ring work; the third dominates in the worst case. Here $B$ and $\Delta$ are the $u$-side (Pieri) and $v$-side (kdown-triple) per-layer branchings and $E_n$ is the per-iteration elementary-symmetric construction cost, superpolynomial in $n$ but subexponential. Each term of $f(n)$ is a multiplicative factor of the running time, so all are retained. The dominant contribution is the product of the two support counts: base is the output size, which is at most $N(u,\dom(v^{-1})^{-1})$  distinct $u$-side permutations and the at most $V\leq \Lambda(\dom(v^{-1})^{-1})$ distinct $v$-side labels. We have
-% $$P_uV\ \leq\ \Lambda(\dom(v^{-1})^{-1})N(u,\dom(v^{-1})^{-1})$$
+% The three summands are, respectively, the one-time $v$-side precomputation, the live $\textbf{\textsc{pieri}}$ enumeration (run once per distinct $u$-side permutation per layer), and the matched-pair ring work; the third dominates in the worst case. Here $B$ and $\Delta$ are the $u$-side (Pieri) and $v$-side (kdown-triple) per-layer branchings and $E_n$ is the per-iteration elementary-symmetric construction cost, superpolynomial in $n$ but subexponential. Each term of $f(n)$ is a multiplicative factor of the running time, so all are retained. The dominant contribution is the product of the two support counts: base is the output size, which is at most $N(u,\mdom{v})$  distinct $u$-side permutations and the at most $V\leq \Lambda(\mdom{v})$ distinct $v$-side labels. We have
+% $$P_uV\ \leq\ \Lambda(\mdom{v})N(u,\mdom{v})$$
 % so together with the branching factor $B\leq \binom{n}{2}$ covers and $\Delta\leq \binom{n}{2}$ covers, we have
 % $$B\Delta\leq \frac{n^4}{4}$$
-% the two counts and branchings contribute $\frac{n^4}4\Lambda(dom(v^{-1})^{-1})N(u,\dom(v^{-1})^{-1})$; the elementary-symmetric construction adds a factor of $E_n$.
+% the two counts and branchings contribute $\frac{n^4}4\Lambda(dom(v^{-1})^{-1})N(u,\mdom{v})$; the elementary-symmetric construction adds a factor of $E_n$.
 
 
 %   By Method~\ref{method:schubmult} the algorithm runs in $L=\#\{i\mid\theta_i(v^{-1})\neq 0\}\leq\min(n-1,\ell_v)$ layers. Write $\mu:=\dom(v^{-1})$, so that $\sum_i\theta_i(v^{-1})=\ell(\mu)$; note that $\ell(\mu)\geq\ell_v$, with equality if and only if $v$ is dominant. The two sides are yoked: at layer $i$ a $u$-side degree $u_i$ and a $v$-side degree $v_i$ are paired with $u_i+v_i=\theta_i$, and the $v$-side descends from $v\mu$ to the identity, so $\sum_i v_i=\ell(v\mu)$. Hence the total degree added on the $u$-side is
 % $$\sum_i u_i=\sum_i\theta_i-\sum_i v_i=\ell(\mu)-\ell(v\mu)=\ell_v,$$
 % using $\ell(v\mu)=\ell(\mu)-\ell(v)$ (as $v^{-1}\leq\mu$ in weak order). Thus every intermediate $u$-side permutation satisfies $w\geq u$ and $\ell(w)\leq\ell_u+\ell_v$; by Lemma~\ref{lemma:instancesupport} it also satisfies $w\leq_L M$, hence $w\leq_L w_1(n)$ and $w\in S_{2n-1}$, so there are at most $P_u$ of them. The $v$-side labels are permutations obtained from $v\mu$ by descending $k$-strip transpositions; each such transposition is a Bruhat descent, so every label lies weakly below $v\mu$ in Bruhat order and by Definition~\ref{def:complexityquantities} there are at most $V\leq\bigl|[e,v\mu]\bigr|\leq n!$ distinct ones, $\mu=\mu_v^{-1}$. The hash at the start of each layer therefore has at most $P_u\cdot V$ keys.
 
-We account for the work in two parts. First, the entire $v$-side is precomputed once by $\textbf{\textsc{elemrepr}}(v)$ (Method~\ref{method:elemrepr}) at cost $O(n^2\Lambda(\dom(v^{-1})^{-1}))$ ring operations (Proposition~\ref{prop:kdowncomplexity}); thereafter each $v$-side transition is a table lookup carrying no combinatorial work.
+We account for the work in two parts. First, the entire $v$-side is precomputed once by $\textbf{\textsc{elemrepr}}(v)$ (Method~\ref{method:elemrepr}) at cost $O(n^2\Lambda(\mdom{v}))$ ring operations (Proposition~\ref{prop:kdowncomplexity}); thereafter each $v$-side transition is a table lookup carrying no combinatorial work.
 
 
 
-% Second, the live $\textbf{\textsc{pieri}}$ enumeration. Because every $u$-side cover strictly raises length, the $u$-side transitions form a graded acyclic graph, so within a fixed layer no permutation recurs; hence $\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)$ is invoked at most once per distinct $u$-side permutation present in that layer (Method~\ref{method:schubmult}, step~1), which all sum to $N(u,\dom(v^{-1})^{-1})$. The number of such invocations is
+% Second, the live $\textbf{\textsc{pieri}}$ enumeration. Because every $u$-side cover strictly raises length, the $u$-side transitions form a graded acyclic graph, so within a fixed layer no permutation recurs; hence $\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)$ is invoked at most once per distinct $u$-side permutation present in that layer (Method~\ref{method:schubmult}, step~1), which all sum to $N(u,\mdom{v})$. The number of such invocations is
 % $$\sum_{i=1}^{L}\bigl|\Phi_i^{u}\bigr|\;\leq\;L\cdot P_u,$$
 % where $\Phi_i^u$ is the set of distinct $u$-side permutations live at layer $i$; when consecutive layers share a degree, $\theta_i=\theta_{i+1}$, caching $\textbf{\textsc{pieri}}$ on $(w,\theta_i)$ collapses this to at most $P_u$ invocations, and the safe bound $L\cdot P_u$ costs only the extra factor $L\leq n$. Each invocation costs $O(n^3)$ per enumerated cover (Proposition~\ref{prop:piericomplexity}) and returns at most $B$ covers, so the total $\textbf{\textsc{pieri}}$ cost is $O(\\cdot N(u,v)\cdot B\cdot n^3)$.
 
 Second, the iterative matched-pair ring work. Write $\Phi_i$ for the keys $(w,v',s)$ present at layer $i$. The inner loop matches one $\textbf{\textsc{pieri}}$ cover of $w$ against one kdown $(v',s)$, executed
-$$W\;=\;\sum_{i=1}^{L}\ \sum_{(w,\lambda)\in\Phi_i}\beta_i(w)\,\delta_i(\lambda)$$
-times, where $\beta_i(w):=|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)|$ and $\delta_i(\lambda)$ is the number of kdown triples carried by $\lambda$ in column $i$. Bounding $L=O(n)$, $\beta_i(w)=O(n^3)$, $\delta_i=O(\Lambda(\dom(v^{-1})^{-1}))$, and $|\Phi_i|\leq N(u,\dom(v^{-1})^{-1})$ gives 
-$$W = O(n^4\Lambda(\dom(v^{-1})^{-1})N(u,\dom(v^{-1})^{-1}))$$
-Each executed iteration constructs one factorial elementary symmetric polynomial $E_{p,m}(y;z)$ (with $p\leq m\leq\theta_i\leq n-1$) by the unmemoized divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}, a fresh evaluation costing $E_n$ ring operations (Definition~\ref{def:complexityquantities}); the ensuing sign multiplication, ring addition, and $O(n)$ bookkeeping are lower-order. Hence the matched-pair cost is 
-$$O(W\cdot E_n)=O(n^4\Lambda(\dom(v^{-1})^{-1})N(u,\dom(v^{-1})^{-1})E_n)$$
-
+$$W\;=\;\sum_{i=1}^{L}\ \sum_{(w,v')\in\Phi_i}\beta_i(w)\,\delta(v')$$
+times, where $\beta_i(w):=|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)|$ and $\delta_i(v')$ is the number of directed edges with source $v'$ in column $i$. Bounding $\beta_i(w)=O(n^3)$, $L<n$, and
+$$\delta_i(v') = O(\Lambda(\mdom{v}))$$
+along with
+$$\sum_{i=1}^L|\Phi_i| = LO(\Lambda(\mdom{v})N_{\ell(v)}(u,\mdom{v}))$$
+since each $w$ can be visited up to $L$ times gives 
+$$W = O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v}))$$
+Each executed iteration constructs one factorial elementary symmetric polynomial $E_{p,m}(y;z)$ (with $p\leq m\leq\theta_i\leq n-1$) by the unmemoized divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}, a fresh evaluation costing up to $E_n$ ring operations (Definition~\ref{def:complexityquantities}); the ensuing sign multiplication, ring addition, and $O(n)$ bookkeeping are lower-order. Hence the matched-pair cost is 
+$$O(W\cdot E_n)=O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n)$$
+For the dominant case, the $v$ graph collapses to the identity, so the two $\Lambda(\mdom{v})$ terms disappear, yielding
+$$O(n^4N(u,v)E_n)$$
+as desired.
 % Summing the three parts gives
 % $$T=O\!\left(L\cdot P_u\cdot B\cdot n^3+L\cdot P_u\cdot V\cdot B\cdot\Delta\cdot E_n\right),$$
 % the bound of Theorem~\ref{thm:complexity}. Since $\Phi_v\leq L\cdot V\cdot(2^n-1)$---each of the at most $L\cdot V$ kdown calls generates at most $2^{\theta_i}-1\leq 2^n-1$ frontier nodes---and $V\cdot\Delta\cdot E_n\geq n^3$ in the worst case, the third summand dominates there.
@@ -922,16 +929,57 @@ $$O(W\cdot E_n)=O(n^4\Lambda(\dom(v^{-1})^{-1})N(u,\dom(v^{-1})^{-1})E_n)$$
 % which is $f(n)+O(\log n)$. We retain every summand: the two support counts and the branchings contribute $\log_2((2n)!)+n$, and the elementary-symmetric construction contributes $\log_2 E_n=\Theta(\log^2 n)$; only the live $\textbf{\textsc{pieri}}$ cost, at $3\log_2 n$, falls into the $O(\log n)$ slack. By Stirling $\log_2((2n)!)=2n\log_2 n+2n-2n\log_2 e+O(\log n)$, so $f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n)$, giving $T=n^{\Theta(n)}=2^{\Theta(n\log n)}$. If $v$ is dominant then $\theta(v)=\code(v)$, $\ell(\mu)=\ell_v$, every path step carries a $+1$ sign, and each layer's $v$-side is a single path, so $\Delta=1$ and only $O(\ell_v)$ labels are live in place of $V=n!$; then $T=O(L\cdot P_u\cdot \ell_v\cdot B\cdot E_n)$ and $\log_2 T\leq \log_2((2n-1)!!)+n+\Theta(\log^2 n)+O(\log n)$. Since $(2n-1)!!=(2n)!/(2^n n!)$, Stirling gives $\log_2((2n-1)!!)=n\log_2 n+(1-\log_2 e)\,n+O(\log n)$, so in this case $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$.
 \end{proof}
 
+\begin{theorem}
+  Suppose $u,v\in S_n$. Then we have
+$$W_\#(u,P_0(u,v))\leq N(u,v)\leq B_\#^J(u,P_0(u,v))$$
+where $J=[n-1]\setminus(D_R(u)\cup D_R(v))$.
+\end{theorem}
+\begin{proof}
+For the first inequality, we prove that if 
+$$\partial_u^w(\sch_{v}(x;z)) = c_{u,v}^w(0;0)\neq 0$$
+and $u\leq_L w'\leq_L w$, then $\partial_u^{w'}(\sch_{v}(x;z))\neq 0$. If $u=w$, this is trivial. Thus, assume first that $v = E_{p,k}(x;z)$ for some $0\leq p\leq k$. Let $s_i$ be a left descent of $w$. If $a\leq k < b$, then $u\tom{k} s_iw$ still a $k$-Bruhat path, so good to go. Otherwise, $u$ also has $i$ as a left descent by characterization of $k$-Bruhat order \cite[Theorem~1.1.2]{coprod}. By the same theorem, we must in fact have that $u(a)=w(a)$ and $u(b)=w(b)$. Thus, $u\nleq_L s_iw$, and we are done for elem syms. By an induction argument, the result then holds for $v$ dominant. Full result follows from dominant and double support theorem.
+
+For the right-hand inequality, note that each $w$ for which $c_{u,v}^w(y;z)\neq 0$ must be in $S_\infty^J$ and satisfy $u\leq w$ in Bruhat order. By the double support theorem, there must also be some $v'\leq_L v$ such that $c_{u,v'}^w(y;z)\neq 0$, whence there is a $w'\in P_0(u,v)$ such that $c_{u,v}^{w'}(0;0)\neq 0$.
+\end{proof}
+
+\begin{lemma}
+Let $v$ be a permutation with $\ell(\theta(v^{-1}))=L$. Then
+$$N(u,\mdom{v})\leq n^LN(u,v)$$
+\end{lemma}
+\begin{proof}
+First consider the case $L=1$, say $\sch_v(x;z)=E_{p,k}(x;z)$. Then $c_{u,v}^w(y;z)\neq 0$ if and only if $\ell(u,w)\leq p$ and $u\tom{k} w$. We prove this by induction on $k$. For $k=1$, if $p=0$ then $N(u,v)=1$, and if $p=1$ then $N(u,v)\leq n$. Now assume the result holds for $k-1$. We have that
+$$\#\{w\mid \ell(u,w)\leq p\text{ and }u\tom{k-1} w\}\leq n\#\{w\mid \ell(u,w)\leq k - 1\text{ and }u\tom{k-1} w\}$$
+In \cite{samuelmolev}, an explicit, canonical injection is described from
+$$\{w\in S_n\mid u\tom{k} w\}$$
+to
+$$\{w\in S_n\mid u\tom{k-1} w\}\times [k + 1, n]$$
+Limiting the length therefore, by the inductive hypothesis, reduces the count by less than a factor of $n$, and we have the result for $L=1$ by induction.
+
+For general $v$, suppose the result holds for $L-1$. We can strip off the last part of $\theta(v^{-1})$ to get a permutation $v'$ with $\ell(\theta(v'^{-1}))=L-1$. Then, by the inductive hypothesis, we have
+$$N(u,\mdom{v'})\leq n^{L-1}N(u,v').$$
+Let $m$ be the smallest part of $\theta(v^{-1})$ and let $\widehat{v}$ have $\code_i(\widehat{v}) = \code_i(v') + 1$ for $1\leq i\leq L$. Then $\widehat{v}\geq_L v$ and $\mdom{v}=\mdom{\widehat{v}}$. By a bijective argument, we can conclude that
+$$\frac{N(u,\mdom{v})}{N(u,\mdom{v'})}\leq \frac{N(u,\widehat{v})}{N(u,v')}$$
+Multiplying both sides of the original inequality by this positive inequality, we obtain
+$$N(u,\mdom{v})\leq n^{L-1}N(u,\widehat{v})$$
+Applying a left divided difference on $z_L$ results in precisely $\sch_v(x;z)$, and the result follows by the $L=1$ case.
+\end{proof}
+
+\begin{corollary}
+Suppose $u,v\in S_\infty$. Then
+$$N(u,\mdom{v})\leq \frac{B_\#^J(u,P_0(u,\mdom{v}))}{W_\#(u,P_0(u,v))}N(u,v)$$
+where $J=S\setminus(D_R(u)\cup D_R(v))$.
+\end{corollary}
+
 \begin{corollary}[Ordinary Schubert polynomials] \label{cor:singlecomplexity}
 For ordinary (single) Schubert polynomials, computing the structure constants of the product $\sch_u(x)\,\sch_v(x)$ by the single-variable specialization of $\textbf{\textsc{schubmult}}$ takes
 
-$$O\!\left(n^4\Lambda(\dom(v^{-1})^{-1})N_{\ell(v)}(u,\dom(v^{-1})^{-1})\right)$$
+$$O\!\left(n^3\Lambda(\mdom{v})N_{\ell(v)}(u,\mdom{v})\right)$$
 % where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. 
 % Writing that bound as $2^{\,f(n)+O(\log n)}$,
 % $$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
 % and, when $v$ is dominant, $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$, where $\log_2 e=1/\ln 2\approx 1.4427$.
 When $v$ is dominant, this simplifies to
-$$O\!\left(n^4N(u,v)\,\right),$$
+$$O\!\left(n^3N(u,v)\,\right),$$
 \end{corollary}
 \begin{proof}
 The single-variable algorithm has the same combinatorial skeleton as Method~\ref{method:schubmult}: the shape $\theta:=\theta(v^{-1})$, the $u$-side Pieri covers, and the $v$-side path structure with its signed transitions $(\lambda',b,s)$ are identical, so the three-part accounting of the proof of Theorem~\ref{thm:complexity}---the one-time $v$-side precomputation $O(n^2\Phi_v)$, the live $\textbf{\textsc{pieri}}$ enumeration $O(L\cdot P_u\cdot B\cdot n^3)$ run once per distinct $u$-side permutation, and the matched-pair work over $W\leq L\cdot P_u\cdot V\cdot B\cdot\Delta$ pairs---carries over verbatim. The single difference is the weight attached to a matched (cover, triple) pair: for double Schubert polynomials it is the factorial elementary symmetric polynomial $E_{p,m}(y;z)$, whereas for ordinary Schubert polynomials the corresponding Pieri coefficient is $1$, so the pair contributes only the integer sign $s\in\{+1,-1\}$. Each executed iteration therefore performs one integer multiplication by $s$ and one integer addition---$O(1)$ ring operations---so $E_n$ is replaced by $O(1)$ in the third summand. Taking base-$2$ logarithms of the dominant (third) summand and substituting $L\leq n$, $P_u\leq(2n-1)!!$ (Lemma~\ref{lemma:outputsupport}), $V\leq n!$, $B,\Delta\leq 2^{n}-1$ (and $\Delta=1$ in the dominant case), and combining $(2n-1)!!\,n!=(2n)!/2^{\,n}$ with the $+2n$ from $B\Delta$, gives $g(n)$, which is $f(n)$ of Theorem~\ref{thm:complexity} without the $\Theta(\log^2 n)$ contribution of $E_n$.
@@ -975,6 +1023,20 @@ $$\operatorname{supp}\bigl(\sch_u(x;y)\,\sch_v(x;z)\bigr)\;=\;\bigcup_{v''\leq_L
   and conclude that $c_{u,s_iv}^w(0;z)$ is a nonzero homogeneous polynomial of degree $\ell(u)+\ell(v)-\ell(w) - 1 = \ell(u)+\ell(s_iv)-\ell(w)$ by properties of divided difference operators. We then conclude that $c_{u,s_iv}^w(y;z)\neq 0$ since the $y$ variables cannot cancel the homogeneous $z$ component, and hence by the previous paragraph that $c_{u,v'}^w(y;z)\neq 0$ for all $v'\geq_L s_iv$, completing the inductive step. This process must eventually terminate at some $v''\leq_L v$ with $\ell(u)+\ell(v'')=\ell(w)$, and we have $c_{u,v''}^w(y;z)=c_{u,v''}^w(0;0)\neq 0$. This proves the direction $\Rightarrow$, and we are done. 
 \end{proof}
 
+% $$N(u,v,w)=\begin{cases}
+% 1&\text{ if }c_{u,v'}^w(0;0)\neq 0\text{ for some }v'\leq_L v\\
+% 0&\text{ otherwise}.
+% \end{cases}$$
+
+\begin{lemma}
+$$N(u,v) = \sum_{v'\leq_L v}\bigl|[v',v]_L\bigr|\,N_0(u,v')$$
+\end{lemma}
+does it miss any?
+\begin{corollary}
+$$N(u,\mdom{v}) \leq \sum_{v'\leq_L v}\bigl|[v',v]_L\bigr|\,N_0(u,v')$$
+
+\end{corollary}
+
 \begin{corollary}[Output-polynomiality, dominant case]
 Let $u,v\in S_n$ and suppose $v$ is dominant. Then there is a polynomial $P(n,N)$ such that the runtime of schubmult is
 $$O(E_nP(n,N(u,v)))$$
@@ -985,37 +1047,159 @@ $$O(P(n,N(u,v)))$$
 Take $P(n,N) = n^4N$.
 \end{proof}
 
-\begin{lemma}
-  Suppose $v\in S_n$ has at most $k$ right descents. Then
-$$\Lambda(\dom(v^{-1})^{-1})\leq n^k N(u,v).$$
-\end{lemma}
+% \begin{lemma}[Support characterization of $N$] \label{lemma:Nchar}
+%   $$N(u,v) = \#\{w\mid c_{u,v'}^w\neq 0\text{ for some }v'\leq_L v\}
+%   = \Bigl|\bigcup_{v'\leq_L v}\operatorname{supp}\bigl(\sch_u(x)\,\sch_{v'}(x)\bigr)\Bigr|.$$
+% \end{lemma}
+% \begin{proof}
+% Immediate from Theorem~\ref{prop:doublesupport}: $N(u,v)$ is by definition the number of Schubert terms of $\sch_u(x;y)\sch_v(x;z)$, and that theorem identifies $\operatorname{supp}(\sch_u(x;y)\sch_v(x;z))=\bigcup_{v'\leq_L v}\operatorname{supp}(\sch_u(x)\sch_{v'}(x))$.
+% \end{proof}
 
-\begin{corollary}[Output-polynomiality, $312$-avoiding case]
-Let $u,v\in S_n$ and suppose $v$ is $312$-avoiding with at most $k$ descents. Then there is a polynomial $P_k(n,N)$ such that the runtime of schubmult is
-$$O(E_nP_k(n,N(u,v)))$$
-and in the ordinary case this simplifies to
-$$O(P_k(n,N(u,v)))$$
-\end{corollary}
-\begin{proof}
-For a $312$-avoiding permutation $v$, $N_{\ell(v)}(u,\dom(v^{-1})^{-1})=N(u,v)$. Using the previous lemma, take $P_k(n,N) = n^{k+4}N^2$, since $n^kN(u,v)\geq \Lambda(\dom(v^{-1})^{-1})$.
-\end{proof}
+% Throughout what follows put $\theta:=\theta(v^{-1})$ and
+% $$L:=\#\{i\mid\theta_i\neq 0\},$$
+% the number of nonzero parts of $\theta$---equivalently the number of nonzero entries of $\code(v^{-1})$, and the number $L$ of columns processed by Method~\ref{method:schubmult}. Note that $L$ is \emph{not} the number of right descents of $v$: the descent count records only the number of \emph{distinct} nonzero part sizes of $\theta$ (its corners), whereas $L$ counts the parts with multiplicity. In general $L\geq k$, and the gap can be as large as $L-k=\Theta(n)$; the correct exponent below is $L$, not $k$.
 
-\begin{lemma}
-For any $u,v\in S_n$, we have that
-$$N_{\ell(v)}(u,\dom(v^{-1})^{-1})\leq \sum_{\substack{\ell(v')=\ell(v)\\v'\leq_L \dom(v^{-1})^{-1}}}N(u,v')$$
-\end{lemma}
+% \begin{lemma}[Dominant-hull interval bound] \label{lemma:domhullbound}
+%   For any $u,v\in S_n$,
+% $$\Lambda(\mdom{v})\ \leq\ \prod_{i}\bigl(\theta_i+1\bigr)\ \leq\ n^{L}\ \leq\ n^{L}\,N(u,v).$$
+% \end{lemma}
+% \begin{proof}
+% Write $\mu_v:=\mdom{v}$, so $\mu_v^{-1}=\dom(v^{-1})$ is dominant with $\code(\mu_v^{-1})=\theta$. Since $w\mapsto w^{-1}$ is a poset isomorphism from $[e,\mu_v]_L$ onto $[e,\mu_v^{-1}]_R$ (as used in Lemma~\ref{lemma:dominantinterval}), we have $\Lambda(\mu_v)=|[e,\mu_v]_L|=|[e,\mu_v^{-1}]_R|$. Because $\mu_v^{-1}$ is dominant, its Lehmer code $\theta$ is a partition, and Lemma~\ref{lemma:dominantinterval} gives the elementary bound
+% $$\bigl|[e,\mu_v^{-1}]_R\bigr|\ \leq\ \prod_i\bigl(\code_i(\mu_v^{-1})+1\bigr)\ =\ \prod_i(\theta_i+1),$$
+% with equality exactly when the nonzero parts of $\theta$ are strictly decreasing. Exactly $L$ of the factors $\theta_i+1$ exceed $1$, and each satisfies $\theta_i\leq n-1$, so $\prod_i(\theta_i+1)\leq n^{L}$. Finally $e\leq_L v$, and $u\in\operatorname{supp}(\sch_u\sch_e)$, so $N(u,v)\geq 1$ by Lemma~\ref{lemma:Nchar}; hence $n^{L}\leq n^{L}N(u,v)$.
+% \end{proof}
+
+% \begin{lemma}
+% Suppose $u,v\in S_n$ and $u$ has maximum descent $k$. Then we have
+% $$N(u,v) \leq \sum_{u\downvar{k} u'\\\ell(uc_p^{-1})=\ell(u')}}N(u', v),$$
+% \end{lemma}
+% \begin{proof}
+% Note that
+% $$\sch_u(x) = \sum_{i=1}^{\code_k(u)}x_k^i\sch_{us_k\cdots s_{k - i + 1}}(x) + \sum_{\substack{u\downvar{k} u'\\\ell(u)=\ell(u')}}\sch_{u'}(x),$$
+% Multiplying both sides by $\sch_v(x;z)$ gives
+% $$\sch_{us_k}(x)\sch_v(x;z)x_k + \sum_{\substack{u\downvar{k} u'\\\ell(u)=\ell(u')}}\sch_{u'}(x)\sch_v(x;z)$$
+% Assume first that $\code_k(u)=1$. In that case, neither $\sch_{us_k}(x)$ nor $\sch_{u'}(x)$ for any $u'$ with $u\downvar{k} u'$ has a term with a nonzero power of $x_i$ for any $i\geq k$. The terms $\sch_{us_k}(x)\sch_v(x;z)$ and $\sch_{u'}(x)\sch_v(x;z)$ for $u\downvar{k} u'$ are independent by homogeneity. Introducing a new indeterminate $t$ and setting $x_k=t$ maintains the rank as a $\mathbb{Z}[z]$-module. Rewriting, we have that the sum is
+% $$\sum_{\substack{w\\w\downvar{k}w'}}c_{us_k,v}^w(0;z)t^{\ell(w',w)+ 1}\sch_{w'}(x^{(k)}) + \sum_{\substack{u\downvar{k} u'\\\ell(u)=\ell(u')\\w\downvar{k} w'}}c_{u',v}^{w}(0;z)t^{\ell(w',w)}\sch_{w'}(x^{(k)})$$
+% Even without utilizing positivity of the coefficients, it is clear that no cancellation can occur due to the fact that the first term always has a strictly higher degree in $t$.
 
 
-\begin{corollary}
-For each $u,v\in S_n$ with $v$ having at most $k$ right descents, we have
-$$N(u,\dom(v^{-1})^{-1})\leq n^kN(u,v).$$
-\end{corollary}
+% Inducting on $k$, if $\code_k(u)>1$, note that $\code_k(us_k) = 0$ and $\code_{k+1}(us_k) = \code_k(u)-1$.
+% %If we set $x_k=z_N$ for some sufficiently large $N$, this does not reduce the rank as a $\mathbb{Z}[z]$-module due to the fact that the second term, so the number of terms is at most
+% %$$N(us_k,v) + \sum_{\substack{u\downvar{k} u'\\\ell(u)=\ell(u')}}N(u',v)$$
+% %as desired. If $\code_k(u)>1$, then an obvious induction argument applies on $k$ to reduce to the initial case.
+% \end{proof}
+
+% For all $u,v$, $N(u,e_{k,k})\leq (k + 1)N(u,e_{1,k})$.
+% \begin{lemma}
+% Suppose $u,v\in S_n$ and $u$ has maximum descent $k$. Then if $m\geq k$, we have
+% $$N(u,v) \leq N(u\uparrow m, v)$$
+% \end{lemma}
+% \begin{proof}
+%   We prove more generally that
+%  $$n^kN(u,\mdom{v}) \leq \Lambda(\mdom{v})N(u, v),$$
+%   by induction on the maximum descent $k$ of $u$. The base case $k=0$ is true because $N(e,v)=\bigl| [e, v]_L\bigr|$ for all $v$.
+  
+%   For the inductive step, note that
+%   $$n^kN(u,\mdom{v}) \leq n^kN(us_k,\mdom{v}) + \sum_{\substack{u\downvar{k} u'\\\ell(u)=\ell(u')}}n^kN(u', \mdom{v}).$$
+%   whence, by the inductive hypothesis,
+%   $$n^kN(u,\mdom{v})\leq n^kN(us_k,\mdom{v})  + n\Lambda(\mdom{v})\sum_{\substack{u\downvar{k} u'\\\ell(u)=\ell(u')}}N(u', v).$$
+%   % For the inductive step, let $k>0$ be the maximum descent of $u$, and write $u'=us_k$. Then by the previous lemma we have
+%   % $$N(u',\mdom{v}) \leq N(u',v) \leq N(u', v) + \sum_{\substack{u'\downvar{k} u''\\\ell(u')=\ell(u'')}}N(u'', v).$$
+%   % By the inductive hypothesis, we have
+%   % $$n^{\ell(u')}N(u',\mdom{v}) \leq \Lambda(\mdom{v})N(u', v).$$
+%   % Since $\ell(u') = \ell(u)-1$, we can multiply both sides by $n$ to get
+%   % $$n^{\ell(u)}N(u',\mdom{v}) \leq n\Lambda(\mdom{v})N(u', v).$$
+  % Now, since $\Lambda(\mdom{v})$ is a product of terms of the form $(\theta_i+1)$, where $\theta_i$ are the parts of the partition corresponding to $\dom(v^{-1})$, we have that $n\Lambda(\mdom{v}) \geq \Lambda(\mdom{v})$. Therefore,
+  % $$n^{\ell(u)}N(u',\mdom{v}) \leq \Lambda(\mdom{v})N(u', v).$$
+  % Finally, since $N(u,\mdom{v}) \leq N(u',\mdom{v}) + \sum_{\substack{u'\downvar{k} u''\\\ell(u')=\ell(u'')}}N(u'', \mdom{v}),$ we can apply the inductive hypothesis to each term in the
+% This is clear if $k=0$. If it holds for $k-1$, then by the previous lemma we have
+% $$N(us_k,\mdom{v}) \leq \Lambda(\mdom{v})N(us_k,v)$$
+%\end{proof}
+% \begin{theorem}[Output-polynomiality, general case]
+% Let $u,v\in S_n$, and assume the hypothesis of Corollary~\ref{cor:Ndomhull}. Then with $L$ as above there is a polynomial $P_L(n,N)$ such that the runtime of schubmult is
+% $$O(E_nP_L(n,N(u,v)))$$
+% and in the ordinary case this simplifies to
+% $$O(P_L(n,N(u,v))).$$
+% \end{theorem}
+% \begin{proof}
+% By Theorem~\ref{thm:complexity} the runtime is $O(n^4\,\Lambda(\mdom{v})\,N(u,\mdom{v})\,E_n)$. By Lemma~\ref{lemma:domhullbound}, $\Lambda(\mdom{v})\leq n^{L}N(u,v)$, and by Corollary~\ref{cor:Ndomhull}, $N(u,\mdom{v})\leq n^{L}N(u,v)$. Substituting gives runtime $O(n^{2L+4}N(u,v)^2E_n)$, so
+% $$P_L(n,N) = n^{2L+4}N^2$$
+% suffices; the ordinary case drops the factor $E_n$.
+% \end{proof}
+
+% \begin{corollary}[Support growth under the dominant hull] \label{cor:Ndomhull}
+% Let $u,v\in S_n$, write $\mu:=\mdom{v}$, and let $v_0:=\pi_{\downarrow}(\mu)$ be the $\leq_L$-minimum of the fiber $F_\mu$ (Fact~\ref{fact:fiber}). Suppose that $N(\cdot,v_0)$ grows by at least the factor $n-1$ along every Monk cover, that is,
+% $$N(z',v_0)\ \geq\ (n-1)\,N(z,v_0)$$
+% whenever $z\in S_n$ and $\sch_{z'}$ occurs in $\sch_{s}\sch_{z}$ for a simple reflection $s$ (the reverse of the Monk--Lipschitz bound of Lemma~\ref{lemma:monklip}). Then
+% $$N(u,\mdom{v})\leq n^{L}N(u,v).$$
+% \end{corollary}
+
+% We isolate three facts and then assemble the corollary. Throughout write $\mu_v:=\mdom{v}$ and, for a dominant $\mu$, let
+% $$F_\mu:=\{\,v\in S_n\mid \mu_v=\mu\,\}$$
+% be its \emph{dominant-hull fiber}. Recall $v\leq_L\mu_v$ always, so $F_\mu\subseteq[e,\mu]_L$.
+
+% \begin{lemma}[Monotonicity and floor] \label{lemma:Nmono}
+% For fixed $u$ the function $v\mapsto N(u,v)$ is order preserving on $(S_n,\leq_L)$: if $v\leq_L v'$ then $N(u,v)\leq N(u,v')$. Moreover
+% $$N(u,v)\ \geq\ \bigl|[e,v]_L\bigr|=\Lambda(v).$$
+% \end{lemma}
+% \begin{proof}
+% By Lemma~\ref{lemma:Nchar}, $N(u,v)=|T(u,v)|$ where $T(u,v):=\bigcup_{v''\leq_L v}\operatorname{supp}(\sch_u\sch_{v''})$. If $v\leq_L v'$ then $[e,v]_L\subseteq[e,v']_L$, so $T(u,v)\subseteq T(u,v')$ and $N(u,v)\leq N(u,v')$. For the floor, recall every Schubert term of $\sch_u\sch_{v''}$ is indexed by a $w$ with $c_{u,v''}^{w}\neq0$, so $\ell(w)=\ell(u)+\ell(v'')$; thus supports coming from $v''$ of distinct lengths are disjoint. Fix a length $\ell$ and let $A_\ell=\{v''\leq_L v:\ell(v'')=\ell\}$. Each $\sch_u\sch_{v''}$ with $v''\in A_\ell$ has a distinguished term, its Bruhat-maximal index $\widehat{w}(v'')$, and by the transition (Monk--Chevalley) recursion $v''$ is recovered from $\widehat{w}(v'')$ and $u$; hence $v''\mapsto\widehat{w}(v'')$ is injective on $A_\ell$ and $|T(u,v)\cap\{\ell(w)=\ell(u)+\ell\}|\geq|A_\ell|$. Summing over $\ell$ gives $N(u,v)\geq\sum_\ell|A_\ell|=\Lambda(v)$. In particular $N(e,v)=\Lambda(v)$.
+% \end{proof}
+
+% $\sch_u(x;y)\sch_{s_k}(x;z)$ has at most $1 + k(n - k)$ terms.
+
+% $\sch_u(x;y)\sch_{s_{k-1}s_k}(x;z)$ has at most $1 + k(n - k) + (k - 1)(n - k + 1)$ terms.
+
+% \begin{lemma}[Monk--Lipschitz bound] \label{lemma:monklip}
+% Let $s$ be a simple reflection and $u\in S_n$. For every $u'$ with $\sch_{u'}$ occurring in $\sch_{s}\sch_u$ (a Bruhat cover of $u$ under Monk's rule) and every $w\in S_n$,
+% $$N(u',w)\ \leq\ (n-1)\,N(u,w).$$
+% \end{lemma}
+% \begin{proof}
+% Fix $w$ and write $T(u,w)=\bigcup_{w'\leq_L w}\operatorname{supp}(\sch_u\sch_{w'})$. Monk's rule gives $\sch_{s}\sch_z=\sum_{z\to y}\sch_y$ with all coefficients $1$ and at most $n-1$ terms, so $|\operatorname{supp}(\sch_{s}\sch_z)|\leq n-1$. Since single Schubert structure constants are nonnegative, there is no cancellation and
+% $$\bigcup_{u'}\operatorname{supp}(\sch_{u'}\sch_{w'})=\operatorname{supp}(\sch_{s}\sch_u\sch_{w'})=\bigcup_{z\in\operatorname{supp}(\sch_u\sch_{w'})}\operatorname{supp}(\sch_{s}\sch_z),$$
+% the union on the left being over the Monk covers $u'$ of $u$. Taking the union over $w'\leq_L w$,
+% $$\bigcup_{u'}T(u',w)\ =\ \bigcup_{z\in T(u,w)}\operatorname{supp}(\sch_{s}\sch_z),$$
+% whose cardinality is at most $(n-1)\,|T(u,w)|=(n-1)N(u,w)$. As each $T(u',w)$ is contained in this set, $N(u',w)\leq (n-1)N(u,w)$.
+% \end{proof}
+
+% If $\ell(us_i) < \ell(u)$ and $\ell(vs_i) > \ell(v)$, then
+% $$N(u,v) \leq 2N(us_i,v)$$
+
+% Use the actual multiplicative dinkbat
+
+% \begin{fact}[The dominant hull is a Cambrian up-projection {\normalfont(Reading~\cite{reading2006cambrian,reading2004congruences})}] \label{fact:fiber}
+% The map $\pi^{\uparrow}\colon v\mapsto\mu_v=\mdom{v}$ is the upward projection of a lattice congruence $\Theta$ on the left weak order $(S_n,\leq_L)$: it is order preserving and idempotent, its image is the set of dominant ($132$-avoiding) permutations, of which there are the Catalan number $C_n=\frac{1}{n+1}\binom{2n}{n}$, and the quotient $S_n/\Theta$ is a Cambrian (here Tamari) lattice. Consequently each fiber
+% $$F_\mu=\{v\mid\mu_v=\mu\}=(\pi^{\uparrow})^{-1}(\mu)$$
+% is a congruence class, hence a closed interval
+% $$F_\mu=[\,\pi_{\downarrow}(\mu),\ \mu\,]_L$$
+% with a unique $\leq_L$-minimum $\pi_{\downarrow}(\mu)$. In particular, if $v<_L s_iv\leq_L\mu_v$ then $\mu_{s_iv}=\mu_v$, so $F_\mu$ is up-closed in $[e,\mu]_L$.
+% \end{fact}
+
+% \begin{proof}[Proof of Corollary~\ref{cor:Ndomhull}]
+% By Lemma~\ref{lemma:domhullbound} it suffices to prove the factorization bound
+% \begin{equation}
+% N(u,\mu)\ \leq\ \Lambda(\mu)\,N(u,v),\tag{$\ast$}\label{eq:star}
+% \end{equation}
+% since then $N(u,\mu)\leq\Lambda(\mu)N(u,v)\leq n^{L}N(u,v)$.
+
+% Since $v_0\in F_\mu$ we have $\mu_{v_0}=\mu$, and since $v_0\leq_L v$ Lemma~\ref{lemma:Nmono} gives $N(u,v_0)\leq N(u,v)$. Thus it suffices to prove
+% $$N(u,\mu)\ \leq\ \Lambda(\mu)\,N(u,v_0),$$
+% from which \eqref{eq:star} follows.
+
+% Fix a reduced word $u=s_{i_\ell}\cdots s_{i_1}$ with $\ell=\ell(u)$, and set $u_0:=e$ and $u_j:=s_{i_j}u_{j-1}$ for $1\leq j\leq\ell$, so that $u_\ell=u$. Each $u_j$ has length $\ell(u_{j-1})+1$, hence is a Bruhat cover of $u_{j-1}$ occurring in $\sch_{s_{i_j}}\sch_{u_{j-1}}$; that is, $u_j$ is a Monk cover of $u_{j-1}$. Along this chain Lemma~\ref{lemma:monklip} bounds the numerator and the hypothesis bounds the denominator:
+% $$N(u_j,\mu)\ \leq\ (n-1)\,N(u_{j-1},\mu),\qquad N(u_j,v_0)\ \geq\ (n-1)\,N(u_{j-1},v_0).$$
+% Iterating from $N(e,\mu)=\Lambda(\mu)$ and $N(e,v_0)=\Lambda(v_0)\geq 1$ (Lemma~\ref{lemma:Nmono}) yields
+% $$N(u,\mu)\ \leq\ (n-1)^{\ell(u)}\Lambda(\mu),\qquad N(u,v_0)\ \geq\ (n-1)^{\ell(u)}\Lambda(v_0)\ \geq\ (n-1)^{\ell(u)}.$$
+% Combining the two,
+% $$N(u,\mu)\ \leq\ (n-1)^{\ell(u)}\Lambda(\mu)\ \leq\ \Lambda(\mu)\,N(u,v_0)\ \leq\ \Lambda(\mu)\,N(u,v),$$
+% which is \eqref{eq:star}. By Lemma~\ref{lemma:domhullbound}, $N(u,\mu)\leq\Lambda(\mu)N(u,v)\leq n^{L}N(u,v)$.
+% \end{proof}
 
 \begin{corollary}[Output-polynomiality] \label{cor:outputpoly}
-  Suppose $v\in S_n$ has at most $k$ right descents. Then we have that
-  $$T(u,v)=O(n^{4k + 3}N(u,v)^4E_n)$$
+  For $u,v\in S_n$, with $L$ the number of nonzero parts of $\theta(v^{-1})$, we have
+  $$T(u,v)=O(n^{4L + 3}N(u,v)^4E_n)$$
   and
-  $$T_0(u,v)=O(n^{4k + 3}N_0(u,v)^4)$$
+  $$T_0(u,v)=O(n^{4L + 3}N_0(u,v)^4)$$
 % Fix $n$ and regard $\textbf{\textsc{schubmult}}$ as an algorithm $\textbf{\textsc{schubmult}}_n$ on inputs $(u,v)\in S_n\times S_n$. For $u\in S_n$ let
 % $$W(u,n):=\max_{v\in S_n}T(u,v),\qquad N^{*}(u,n):=\max_{v\in S_n}N(u,v),$$
 % where $T(u,v)$ is the bound of Theorem~\ref{thm:complexity} and $N(u,v)$ is the number of terms of $\sch_u(x;y)\,\sch_v(x;z)$ in the Schubert basis. Then for all  $u,v\in S_n$,
@@ -1232,7 +1416,7 @@ As in Corollary~\ref{cor:singlecomplexity}, the single-variable weight attached 
 
 
 \section{Play}
-\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
+
 
 
 $$c_{u,v}^w$$
