@@ -502,6 +502,7 @@ Section~\ref{sec:foundations} fixes notation and records the two formulas the al
 \newcommand{\Tom}[1]{\xRightarrow{#1}}
 \newcommand{\dom}{\pi^\uparrow}
 \newcommand{\mdom}[1]{\dom(#1)}
+\newcommand{\ddom}[1]{\pi_{\downarrow}(#1)}
 \section{Foundational formulas} \label{sec:foundations}
 
 \subsection{Notation and definitions}
@@ -878,7 +879,7 @@ If $m$ is omitted, the assumption is that $m=\ell(v)$.
 
 \begin{theorem}[Complexity of \textbf{\textsc{schubmult}}] \label{thm:complexity}
 The number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
-$$O\!\left(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n\right)$$
+$$O\!\left(n^4\Lambda(\mdom{v})^2N(u,v)E_n\right)$$
 % where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. 
 % Writing that bound as $2^{\,f(n)+O(\log n)}$,
 % $$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
@@ -917,6 +918,8 @@ since each $w$ can be visited up to $L$ times gives
 $$W = O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v}))$$
 Each executed iteration constructs one factorial elementary symmetric polynomial $E_{p,m}(y;z)$ (with $p\leq m\leq\theta_i\leq n-1$) by the unmemoized divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}, a fresh evaluation costing up to $E_n$ ring operations (Definition~\ref{def:complexityquantities}); the ensuing sign multiplication, ring addition, and $O(n)$ bookkeeping are lower-order. Hence the matched-pair cost is 
 $$O(W\cdot E_n)=O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n)$$
+The corollary above shows that
+$$N_{\ell(v)}(u,\mdom{v}) = O(N(u,v))$$
 For the dominant case, the $v$ graph collapses to the identity, so the two $\Lambda(\mdom{v})$ terms disappear, yielding
 $$O(n^4N(u,v)E_n)$$
 as desired.
@@ -1023,28 +1026,46 @@ $$\operatorname{supp}\bigl(\sch_u(x;y)\,\sch_v(x;z)\bigr)\;=\;\bigcup_{v''\leq_L
   and conclude that $c_{u,s_iv}^w(0;z)$ is a nonzero homogeneous polynomial of degree $\ell(u)+\ell(v)-\ell(w) - 1 = \ell(u)+\ell(s_iv)-\ell(w)$ by properties of divided difference operators. We then conclude that $c_{u,s_iv}^w(y;z)\neq 0$ since the $y$ variables cannot cancel the homogeneous $z$ component, and hence by the previous paragraph that $c_{u,v'}^w(y;z)\neq 0$ for all $v'\geq_L s_iv$, completing the inductive step. This process must eventually terminate at some $v''\leq_L v$ with $\ell(u)+\ell(v'')=\ell(w)$, and we have $c_{u,v''}^w(y;z)=c_{u,v''}^w(0;0)\neq 0$. This proves the direction $\Rightarrow$, and we are done. 
 \end{proof}
 
-% $$N(u,v,w)=\begin{cases}
-% 1&\text{ if }c_{u,v'}^w(0;0)\neq 0\text{ for some }v'\leq_L v\\
-% 0&\text{ otherwise}.
-% \end{cases}$$
 
-\begin{lemma}
-$$N(u,v) = \sum_{v'\leq_L v}\bigl|[v',v]_L\bigr|\,N_0(u,v')$$
-\end{lemma}
-does it miss any?
 \begin{corollary}
-$$N(u,\mdom{v}) \leq \sum_{v'\leq_L v}\bigl|[v',v]_L\bigr|\,N_0(u,v')$$
-
+Fix permutations $u,w\in S_\infty$, with $u\in S_n$. Then the set
+$$\{v\in S_n\mid c_{u,v}^w(y;z)\neq 0\}$$
+is a upper order ideal of weak order on $S_n$.
 \end{corollary}
 
-\begin{corollary}[Output-polynomiality, dominant case]
-Let $u,v\in S_n$ and suppose $v$ is dominant. Then there is a polynomial $P(n,N)$ such that the runtime of schubmult is
-$$O(E_nP(n,N(u,v)))$$
+\begin{corollary}
+Fix permutations $u,w\in S_\infty$, with $u\in S_n$. Then the set
+$$\{v\in S_n\mid c_{u,v}^w(y;z)= 0\}$$
+is an ideal of weak order on $S_n$.
+\end{corollary}
+
+\begin{definition}
+Define
+$$N^\uparrow(u,v) = N(u,\mdom{v})$$
+and
+$$N_\downarrow(u,v) = N(u,\ddom{v}).$$
+%$$\widetilde{N}(u,v) = \frac{1}{\bigl|[\ddom{v},\mdom{v}]_L\bigr|}\sum_{\ddom{v}\leq v'\leq_L \mdom{v}}N(u,v').$$
+\end{definition}
+
+\begin{theorem}
+For each $u\in S_n$, the functions
+$$N^\uparrow(u,-):S_n\to\mathbb{Z}_{\geq 0}$$
+and
+$$N_\downarrow(u,-):S_n\to\mathbb{Z}_{\geq 0}$$
+are weakly increasing with respect to left weak order on $S_n$, satisfying 
+$$N_\downarrow(u,v)\leq N(u,v)\leq N^\uparrow(u,v)$$
+and constant on Tamari classes, with equality on the left for $v$ $312$-avoiding and on the right for $v$ dominant.
+\end{theorem}
+
+
+\begin{corollary}[Output-polynomiality]
+Let $u,v\in S_n$. Then there is a polynomial $P(n,N)$ such that the runtime of schubmult is
+$$O(E_nP(n,\widetilde{N}(u,v)))$$
 and in the ordinary case this simplifies to
-$$O(P(n,N(u,v)))$$
+$$O(P(n,\widetilde{N}(u,v)))$$
 \end{corollary}
 \begin{proof}
-Take $P(n,N) = n^4N$.
+Take $P(n,N) = n^4N^4$, noting that $\Lambda(\mdom{v})\leq N(u,\mdom{v}) = O(\widetilde{N}(u,v))$.
 \end{proof}
 
 % \begin{lemma}[Support characterization of $N$] \label{lemma:Nchar}

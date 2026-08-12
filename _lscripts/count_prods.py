@@ -3,6 +3,17 @@ from schubmult.symbolic import expand
 from sympy import prod
 import math
 
+def _nonzero_filter(u, v1, perms):
+    dom = v1.mul_dominant()
+    return {k for k, v in (DSx(u) * DSx(dom, "z")).items() if expand(v) != 0 and k.inv - u.inv <= v1.inv}
+
+def check_with_filter(u, v, perms):
+    prd = DSx(u) * DSx(v, "z")
+    actual_nonzero =  {k for k, v in prd.items() if expand(v) != 0}
+    if actual_nonzero != _nonzero_filter(u, v, perms):
+        return False
+    return True
+
 def dominant_interval_size(dom_perm):
     if dom_perm.inv == 0:
         return 1
@@ -124,23 +135,32 @@ if __name__ == "__main__":
         #     continue
         #d = perm1.max_descent
         for perm2 in perms:
-            
-            prd = DSx(perm1)*DSx(perm2.mul_dominant(),"z")
-            count_total = count_nonzero(prd)
-            #print(f"{perm1,perm2}")
-            count_total2 = count_nonzero(DSx(perm1)*DSx(perm2,"z"))
-            perm_stinkbat = perm2#Permutation.w0(n)
-            ups = [k for k,v in (Sx(perm1) * Sx(perm_stinkbat.mul_dominant())).items() if v != 0]
-            ups2 = [k for k,v in (Sx(perm1) * Sx(perm_stinkbat)).items() if v != 0 and perm1.inversion_set.issubset(k.inversion_set)]
-            count_weak = actual_interval_size(perm1, *ups2)
-            count_bruh = actual_bruhat_interval_size(perm1, *ups)#, descents=perm2.descents() | perm1.descents())
-            #factor = dominant_interval_size(perm2.mul_dominant())
-            #assert count_bruh >= count_total
-            factor = count_bruh/count_weak
-            #assert count_weak <= count_total2
-            assert  factor * count_total2 - count_total > -1e-9, f"n={n} p1={perm1.trimcode} p2={perm2.trimcode} count_total={count_total} count_total2={count_total2} {factor=}"
-            mx_factor = max(mx_factor, factor)
-            print(f"{mx_factor=}")# {count_weak=} {count_bruh=}")
+            # if perm2.inv == 0:
+            #     continue
+            # v = uncode([a + 1 for a in perm2.trimcode[:-1]] + [1])
+            # prd = DSx(perm1)*DSx(perm2.mul_dominant(),"z")
+            # prd2 = DSx(perm1)*DSx(v,"z")
+            # count_total = count_nonzero(prd)
+            # count_total2 = (n**len((~(perm2.mul_dominant())).trimcode)-1)*count_nonzero(prd2)
+            # assert count_total <= count_total2, f"n={n} p1={perm1.trimcode} p2={perm2.trimcode} count_total={count_total} count_total2={count_total2}"
+
+            assert check_with_filter(perm1, perm2, perms)
+            print("Stinkbat")
+
+            # #print(f"{perm1,perm2}")
+            # count_total2 = count_nonzero(DSx(perm1)*DSx(perm2,"z"))
+            # perm_stinkbat = perm2#Permutation.w0(n)
+            # ups = [k for k,v in (Sx(perm1) * Sx(perm_stinkbat.mul_dominant())).items() if v != 0]
+            # ups2 = [k for k,v in (Sx(perm1) * Sx(perm_stinkbat)).items() if v != 0 and perm1.inversion_set.issubset(k.inversion_set)]
+            # count_weak = actual_interval_size(perm1, *ups2)
+            # count_bruh = actual_bruhat_interval_size(perm1, *ups)#, descents=perm2.descents() | perm1.descents())
+            # #factor = dominant_interval_size(perm2.mul_dominant())
+            # #assert count_bruh >= count_total
+            # factor = count_bruh/count_weak
+            # #assert count_weak <= count_total2
+            # assert  factor * count_total2 - count_total > -1e-9, f"n={n} p1={perm1.trimcode} p2={perm2.trimcode} count_total={count_total} count_total2={count_total2} {factor=}"
+            # mx_factor = max(mx_factor, factor)
+            # print(f"{mx_factor=}")# {count_weak=} {count_bruh=}")
             # mu = perm2.mul_dominant()
             # mu0 = perm2.mul_sortable()
             # c = count_nonzero(DSx(perm1) * DSx(mu, "z"))/count_nonzero(DSx(perm1) * DSx(mu0, "z"))
