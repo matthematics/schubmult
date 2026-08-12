@@ -31,8 +31,7 @@ class Permutation(Printable):
                     return True
         return False
 
-
-    def reduce(self, start_spot = 1, strict=False):
+    def reduce(self, start_spot=1, strict=False):
         if self.inv == 0:
             return None
         for i in range(start_spot - 1, len(self)):
@@ -40,7 +39,7 @@ class Permutation(Printable):
                 parabolic_list = list(range(1, i)) + list(range(i + 1, len(self) + 1))
                 coset_rep, residue = self.coset_decomp(*parabolic_list)
                 if coset_rep.inv == 0:
-                    perm1 = Permutation(self[:i - 1])
+                    perm1 = Permutation(self[: i - 1])
                     perm2 = Permutation([a - i for a in self[i:]])
                     return perm1, perm2
             if strict:
@@ -391,7 +390,7 @@ class Permutation(Printable):
     def shape(self):
         return tuple(sorted(self.code, reverse=True))
 
-    @property
+    @cached_property
     def inversion_set(self):
         inv_set = set()
         for i in range(len(self._perm)):
@@ -399,6 +398,29 @@ class Permutation(Printable):
                 if self[i] > self[j]:
                     inv_set.add((i + 1, j + 1))
         return inv_set
+
+    # left weak order
+    def weak_order_leq(self, other):
+        return self.inversion_set.issubset(other.inversion_set)
+
+    def weak_order_meet(self, other):
+        if self.weak_order_leq(other):
+            return self
+        if other.weak_order_leq(self):
+            return other
+        invset = self.inversion_set.intersection(other.inversion_set)
+        descents = {a for (a, b) in invset if b + 1 == a}
+        if len(descents) == 0:
+            return Permutation([])
+        a = max(descents)
+        downself = self.swap(a - 1, a)
+        downother = other.swap(a - 1, a)
+        return downself.weak_order_meet(downother).swap(a - 1, a)
+
+    def weak_order_join(self, other):
+        max_len = max(len(self), len(other))
+        w0 = Permutation.w0(max_len)
+        return (self * w0).weak_order_meet(other * w0) * w0
 
     @property
     def diagram(self):
@@ -442,7 +464,7 @@ class Permutation(Printable):
         return cls(perm)
 
     @cache
-    def pivots(self, a = None, b = None):
+    def pivots(self, a=None, b=None):
         """Return the set of pivot positions for a maximal corner (a,b)."""
         if a is None or b is None:
             a, b = self.maximal_corner
@@ -456,7 +478,7 @@ class Permutation(Printable):
                 if not good:
                     break
                 for j_prime in range(j, b + 1):
-                    if (i,j) == (i_prime, j_prime) or (i_prime, j_prime) == (a, b):
+                    if (i, j) == (i_prime, j_prime) or (i_prime, j_prime) == (a, b):
                         continue
                     if self[i_prime - 1] == j_prime:
                         good = False
@@ -502,7 +524,7 @@ class Permutation(Printable):
     def strict_mul_dominant(self, size=None):
         if size is None:
             return uncode((~(uncode((~self).theta()))).strict_theta())
-        the_perm = uncode([self.trimcode[a] + 1 if a<len(self.trimcode) else 1 for a in range(size)])
+        the_perm = uncode([self.trimcode[a] + 1 if a < len(self.trimcode) else 1 for a in range(size)])
         return uncode((~(uncode((~the_perm).theta()))).strict_theta())
 
     def shiftup(self, k):
@@ -566,7 +588,6 @@ class Permutation(Printable):
             if ret[letter - 1] < ret[letter]:
                 ret = ret.swap(letter - 1, letter)
         return ret
-
 
     def __mul__(self, other):
         max_len = max(len(self._perm), len(other._perm))
@@ -710,7 +731,6 @@ class Permutation(Printable):
             working_perm = working_perm.swap(loc, loc + 1)
         raise ValueError("Should not reach here")
 
-
     @cache
     def _cached_theta(self):
         cd = list(self.code)
@@ -839,4 +859,3 @@ ID_PERM = Permutation([])
 @cache
 def s(i):
     return Permutation([*list(range(1, i)), i + 1, i])
-
