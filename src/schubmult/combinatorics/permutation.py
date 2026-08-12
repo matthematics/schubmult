@@ -292,7 +292,7 @@ class Permutation(Printable):
             arr2 = list(full_perm2[:i])
             arr1.sort()
             arr2.sort()
-            if not (arr1 <= arr2):
+            if any(a1 > a2 for a1, a2 in zip(arr1, arr2)):
                 return False
         return True
 
@@ -409,7 +409,7 @@ class Permutation(Printable):
         if other.weak_order_leq(self):
             return other
         invset = self.inversion_set.intersection(other.inversion_set)
-        descents = {a for (a, b) in invset if b + 1 == a}
+        descents = {a for (a, b) in invset if a + 1 == b}
         if len(descents) == 0:
             return Permutation([])
         a = max(descents)
