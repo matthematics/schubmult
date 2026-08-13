@@ -980,6 +980,9 @@ $$N_\downarrow(u,v)\leq N(u,v)\leq N^\uparrow(u,v)$$
 and constant on Tamari classes, with equality on the left for $v$ $312$-avoiding and on the right for $v$ dominant.
 \end{theorem}
 
+The upper parameter $N^\uparrow(u,v)$ is itself an output size. By definition $N^\uparrow(u,v)=N(u,\mdom{v})$ is the number of terms of the product $\sch_u(x;y)\,\sch_{\mdom{v}}(x;z)$ computed for the dominant permutation $\mdom{v}$ at the top of the Tamari class of $v$. The cost bounds below are thus output-polynomial in the honest sense, being polynomial in the size of an actual instance of the problem, differing from the instance $(u,v)$ only in that $v$ is advanced to the top of its class.
+
+Theorem~\ref{thm:Nupdown} fixes the role this parameter plays. Since $N^\uparrow(u,-)$ is weakly increasing in left weak order and constant on Tamari classes, it is the maximum of $N(u,v')$ over the class of $v$, attained at the dominant element $\mdom{v}$, and it dominates the counts $N(u,v')$ for every $v'$ in every class lying below that of $v$ in the Tamari order. The Tamari class of $v$ is the locus over which the count varies: $N(u,v)$ grows as $v$ ascends toward $\mdom{v}$, reaching $N^\uparrow(u,v)$ at the top, and the runtime is bounded polynomially by that top value throughout.
 
 It is possible to bound $N^\uparrow(u,v)$ above nontrivially.
 
@@ -992,156 +995,6 @@ It is possible to bound $N^\uparrow(u,v)$ above nontrivially.
   For $u,v\in S_n$ we have
   $$N^\uparrow(u,v)\leq \Lambda(\mdom{u,v}).$$
 \end{lemma}
-
-The right side splits into a contribution from each factor. Write $\alpha:=\code(\mdom{u})$ and $\beta:=\code(\mdom{v})$; both are partitions, since $\mdom{u}$ and $\mdom{v}$ are dominant.
-
-\begin{lemma}[Splitting the dominant hull] \label{lemma:domsplit}
-With $\alpha$ and $\beta$ as above,
-$$\Lambda(\mdom{u,v})\ \leq\ \prod_i\bigl(\alpha_i+\beta_i+1\bigr)\ \leq\ \prod_i\bigl(\alpha_i+1\bigr)\prod_i\bigl(\beta_i+1\bigr)$$
-and consequently
-$$N^\uparrow(u,v)\ \leq\ \prod_i\bigl(\alpha_i+1\bigr)\prod_i\bigl(\beta_i+1\bigr)$$
-\end{lemma}
-\begin{proof}
-Put $\mu:=\mdom{u,v}$, so that $\code(\mu)=\alpha+\beta$. As $\mu$ is dominant, Lemma~\ref{lemma:dominantinterval} gives $\Lambda(\mu)\leq\bigl|[e,\mu]_R\bigr|$. If $w\leq_R\mu$ then $\mathrm{Inv}(w)\subseteq\mathrm{Inv}(\mu)$, and $\code_i(w)$ counts the elements of $\mathrm{Inv}(w)$ with first coordinate $i$, so $\code_i(w)\leq\alpha_i+\beta_i$ for every $i$. A permutation is determined by its Lehmer code, so $w\mapsto\code(w)$ embeds $[e,\mu]_R$ into $\prod_i\{0,1,\ldots,\alpha_i+\beta_i\}$, which gives the first inequality. The second is the observation that $(a+1)(b+1)=ab+a+b+1\geq a+b+1$ for nonnegative integers $a,b$, applied in each factor. The last display is this combined with Lemma~\ref{lemma:Nupdomjoin}.
-\end{proof}
-
-Each of the two products depends on one factor alone, so the estimate separates the two inputs completely. The same argument applied to $\mdom{u}$ and to $\mdom{v}$ separately gives $\Lambda(\mdom{u})\leq\prod_i(\alpha_i+1)$ and $\Lambda(\mdom{v})\leq\prod_i(\beta_i+1)$, so Lemma~\ref{lemma:domsplit} is weaker than the bound $\Lambda(\mdom{u})\Lambda(\mdom{v})$ one might hope for; we do not know whether the latter holds.
-
-\begin{theorem}
-  Suppose $u,v\in S_n$. Then we have
-$$W_\#(u,P_0(u,v))\leq N(u,v)\leq B_\#^J(u,P_0(u,v))$$
-where $J=[n-1]\setminus(D_R(u)\cup D_R(v))$.
-\end{theorem}
-\begin{proof}
-For the first inequality, we prove that if 
-$$\partial_u^w(\sch_{v}(x;z)) = c_{u,v}^w(0;0)\neq 0$$
-and $u\leq_L w'\leq_L w$, then $\partial_u^{w'}(\sch_{v}(x;z))\neq 0$. If $u=w$, this is trivial. Thus, assume first that $v = E_{p,k}(x;z)$ for some $0\leq p\leq k$. Let $s_i$ be a left descent of $w$. If $a\leq k < b$, then $u\tom{k} s_iw$ still a $k$-Bruhat path, so good to go. Otherwise, $u$ also has $i$ as a left descent by characterization of $k$-Bruhat order \cite[Theorem~1.1.2]{coprod}. By the same theorem, we must in fact have that $u(a)=w(a)$ and $u(b)=w(b)$. Thus, $u\nleq_L s_iw$, and we are done for elem syms. By an induction argument, the result then holds for $v$ dominant. Full result follows from dominant and double support theorem.
-
-For the right-hand inequality, note that each $w$ for which $c_{u,v}^w(y;z)\neq 0$ must be in $S_\infty^J$ and satisfy $u\leq w$ in Bruhat order. By the double support theorem, there must also be some $v'\leq_L v$ such that $c_{u,v'}^w(y;z)\neq 0$, whence there is a $w'\in P_0(u,v)$ such that $c_{u,v}^{w'}(0;0)\neq 0$.
-\end{proof}
-
-\begin{lemma}
-Let $u,v\in S_n$ and $w\in S_\infty$. Let $s_i$ be any left descent of $w$. 
-
-\begin{enumerate}
-\item If $c_{u,v}^w(y;z)\neq 0$ and $\ell(s_iu)>\ell(u)$, then $c_{u,v}^{s_iw}(y;z)\neq 0$.
-
-\item If $c_{u,v}^w(y;z)\neq 0$ and $\ell(s_iu)<\ell(u)$, then at least one of $c_{s_iu,v}^{s_iw}(y;z)\neq 0$ or $c_{u,v}^{s_iw}(y;z)\neq 0$.
-
-\item If $\ell(s_iu) > \ell(u)$, then $c_{u,v}^w(y;z)\neq 0$ if and only if $\partial^{s_i}(c_{s_iu,v}^{s_iw}(x;z))\neq 0$.
-
-\item If $\ell(s_iu) < \ell(u)$, then $c_{u,v}^w(y;z)\neq 0$ if and only if 
-$$s_i(c_{s_iu,v}^{s_iw}(y;z))\neq -\partial^{s_i}(c_{u,v}^{s_iw}(y;z)).$$
-\end{enumerate}
-\end{lemma}
-
-A $k$-Pieri cycle for $u\in S_n$ is a cycle $c = (a_p,\ldots,a_1,b)$ where $a_i\leq k<b$ for all $i$, $\ell(uc) = \ell(u) + p$, and
-$$u(a_1)<\cdots<u(a_p)<u(b)$$
-
-If $v$ is elem sym with descent $k$,
-%$$N_k(u,v)\leq 2^{kH\bigl(\frac{\ell(v)}{k}\bigr)}(n-k)$$
-
-%$$\sum_{i=1}^p \binom{k}{i - 1}(n - k + 1 - i)$$
-
-
-$$N_p(u,v)\leq k^{p-1}(n - k)\left(\frac{e}{p-1}\right)^{p-1}$$
-
-$$N_p(u, v)\leq N_{p-1}(u, v)ada$$
-
-%$$N_k(u,v)\leq 2^{kH\bigl(\frac{\ell(v)}{k}\bigr)}\sqrt{\frac{(n-k)(n-k-1)(2n - 2k - 1)}{6}}$$
-
-% 1. The Probabilistic Bound (Hypergeometric Tails)If you divide your sum by the full closed-form total $\binom{n+k}{k}$, the result is exactly the Cumulative Distribution Function (CDF) of a Hypergeometric distribution. Combinatorially, it represents the probability of drawing at most $q$ successes in $n$ draws from a population of $n+k$ containing $k$ successes.The expected value (the peak of the distribution) is $\mu = \frac{nk}{n+k}$.Because hypergeometric distributions exhibit strong concentration around their mean, Chernoff-Hoeffding bounds apply. If $q$ is strictly less than the mean $\mu$, you can tightly bound the tail:
-
-%$$\sum_{p=0}^{q} \binom{k}{p}\binom{n}{p} \le \binom{n+k}{k} \exp\left( - \frac{\bigl(1 - \frac{q}{\sqrt{\mu}}\bigr)^2}{2} \right)$$
-
-%$$\sum_{j=1}^{p} \binom{k}{j - 1}(n - k)$$
-%This provides a powerful, exponentially decaying upper bound when dealing with large parameters.
-
-% \begin{lemma}[Pieri step] \label{lemma:pieristep}
-% Let $u\in S_n$ and let $1\leq p\leq k\leq n-1$. Then
-% $$N(u,E_{p,k})\leq\bigl(k(n-k)+1\bigr)N(u,E_{p-1,k})$$
-% \end{lemma}
-% \begin{proof}
-% By Theorem~\ref{theorem:pieri} we have $c_{u,E_{p,k}}^w(y;z)\neq 0$ if and only if $u\tom{k}w$ and $\ell(u,w)\leq p$, so writing
-% $$M_m:=\#\{w\mid u\tom{k}w\text{ and }\ell(u,w)=m\}$$
-% we have $N(u,E_{p,k})=\sum_{m=0}^{p}M_m$.
-
-% We claim that $M_m\leq k(n-k)M_{m-1}$ for every $m\geq 1$. Let $w$ be counted by $M_m$, so that $w=uc$ for a $k$-Pieri cycle $c=(a_m,\ldots,a_1,b)$. Deleting $a_m$ leaves $(a_{m-1},\ldots,a_1,b)$, which is again a $k$-Pieri cycle, so the permutation $w'$ it produces is counted by $M_{m-1}$; and $c$ differs from it by a single transposition $t_{ab'}$ with $a\leq k<b'$, so $w=w't_{ab'}$. The assignment $w\mapsto(w',t_{ab'})$ is injective, since $w'$ and $t_{ab'}$ determine $w$, and there are at most $k(n-k)$ such transpositions. This proves the claim.
-
-% Since $M_{p-1}\leq N(u,E_{p-1,k})$, we conclude
-% $$N(u,E_{p,k})=N(u,E_{p-1,k})+M_p\leq N(u,E_{p-1,k})+k(n-k)M_{p-1}\leq\bigl(k(n-k)+1\bigr)N(u,E_{p-1,k})$$
-% \end{proof}
-
-% \begin{lemma} \label{lemma:domhullN}
-% Let $v$ be a permutation with $\ell(\theta(v^{-1}))=L$, and write $\theta:=\theta(v^{-1})$. Then
-% $$N(u,\mdom{v})\leq\prod_{i=1}^{L}\bigl(\theta_i(n-\theta_i)+1\bigr)N(u,v)\leq\Bigl(\frac{n^2}{4}+1\Bigr)^{L}N(u,v)$$
-% \end{lemma}
-% \begin{proof}
-% First consider the case $L=1$, say $\sch_v(x;z)=E_{p,k}(x;z)$. Then $c_{u,v}^w(y;z)\neq 0$ if and only if $\ell(u,w)\leq p$ and $u\tom{k} w$. We prove this by induction on $k$. For $k=1$, if $p=0$ then $N(u,v)=1$, and if $p=1$ then $N(u,v)\leq \frac{n^2}4 + 1$. Now assume the result holds for $k-1$. We have that
-% $$\#\{w\mid \ell(u,w)\leq p\text{ and }u\tom{k-1} w\}\leq n\#\{w\mid \ell(u,w)\leq k - 1\text{ and }u\tom{k-1} w\}$$
-% In \cite{samuelmolev}, an explicit, canonical injection is described from
-% $$\{w\in S_n\mid u\tom{k} w\text{ and }\ell(u,w)\leq p\}$$
-% to
-% $$\{w\in S_n\mid u\tom{k-1} w\text{ and }\ell(u,w)\leq p\}\cup \{w\in S_n\mid u\tom{k-1} w\text{ and }\ell(u,w) = p - 1\}\times [k + 1, n]$$
-% Thus, we know that for $p \leq k - 1$, 
-% $$N(u,E_{p,k})\leq N(u,E_{p,k-1}) + (n - k)N(u,E_{p - 1,k-1})$$
-% so
-% $$N(u,E_{p,k})\leq (n - k)N(u,E_{p,k-1})\leq (n - k)(k(n - k - 1) + 1)N(u,E_{p-1,k-1})\leq (k(n - k) + 1)N(u,E_{p-1,k-1})$$
-% %Limiting the length therefore, by the inductive hypothesis, reduces the count by less than a factor of $n$, and we have the result for $L=1$ by induction.
-
-% $L=1$ is Lemma \ref{lemma:pieristep}. For general $v$, suppose the result holds for $L-1$. Let $i$ be the last index such that $\code_i(v^{-1})=0$. Let $m=\code_i(v^{-1})$. If $\tau = s_{i + m - 1}s_{i+m - 2}\cdots s_{i}$, then $\tau v$ has $\ell(\theta(\tau v^{-1}))=L-1$. Furthermore, $v$ occurs with a coefficient of $1$ in $\sch_{\tau v}(x;z)E_{m,i + m - 1}(x;z)$, and
-% $$\sch_{\mdom{v}}(x;z) = \sch_{\mdom{\tau v}}(x;z^{(j)})E_{i + m - 1,i + m - 1}(x;z_j)$$
-% for a suitable choice of $j$. Thus,
-% $$N(u,v)\leq \left(\frac{n^4}4 + 1\right)N(u,\tau v)$$
-% $$N(u,\mdom{\tau v})\leq (m(n-m)+1)N(u,\mdom{\tau v})\leq (m(n-m)+1)\prod_{i=1}^{L-1}\bigl(\theta_i(n-\theta_i)+1\bigr)N(u,v)$$
-% %and $\mdom{v}=\mdom{\tau v}$. By the inductive hypothesis, we have 
-
-% %We can strip off the last part of $\theta(v^{-1})$ to get a permutation $v'$ with $\ell(\theta(v'^{-1}))=L-1$. Then, by the inductive hypothesis, we have
-% % $$N(u,\mdom{v'})\leq n^{L-1}N(u,v').$$
-% % Let $m$ be the smallest part of $\theta(v^{-1})$ and let $\widehat{v}$ have $\code_i(\widehat{v}) = \code_i(v') + 1$ for $1\leq i\leq L$. Then $\widehat{v}\geq_L v$ and $\mdom{v}=\mdom{\widehat{v}}$. By a bijective argument, we can conclude that
-% % $$N(u,\mdom{v}) - N(u,\mdom{v'})\leq n^{L-1}(N(u,\widehat{v}) - N(u,v'))$$
-% % whence, adding $N(u,\mdom{v'})\leq n^{L-1}N(u,v')$ to both sides, we have
-% % $$N(u,\mdom{v})\leq n^{L-1}N(u,\widehat{v})$$
-% % Applying a left divided difference on $z_L$ results in precisely $\sch_v(x;z)$, and the result follows by the $L=1$ case.
-% \end{proof}
-
-\begin{corollary}
-Suppose $u,v\in S_\infty$. Then
-$$N(u,\mdom{v})\leq \frac{B_\#^J(u,P_0(u,\mdom{v}))}{W_\#(u,P_0(u,v))}N(u,v)$$
-where $J=S\setminus(D_R(u)\cup D_R(v))$.
-\end{corollary}
-
-% \begin{corollary}[Ordinary Schubert polynomials] \label{cor:singlecomplexity}
-% For ordinary (single) Schubert polynomials, computing the structure constants of the product $\sch_u(x)\,\sch_v(x)$ by the single-variable specialization of $\textbf{\textsc{schubmult}}$ takes
-
-% $$O\!\left(n^3\Lambda(\mdom{v})N_{\ell(v)}(u,\mdom{v})\right)$$
-% % where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. 
-% % Writing that bound as $2^{\,f(n)+O(\log n)}$,
-% % $$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
-% % and, when $v$ is dominant, $f(n)=n\log_2 n+(2-\log_2 e)\,n+\Theta(\log^2 n)$, where $\log_2 e=1/\ln 2\approx 1.4427$.
-% When $v$ is dominant, this simplifies to
-% $$O\!\left(n^3N(u,v)\,\right),$$
-% \end{corollary}
-% \begin{proof}
-% The single-variable algorithm has the same combinatorial skeleton as Method~\ref{method:schubmult}: the shape $\theta:=\theta(v^{-1})$, the $u$-side Pieri covers, and the $v$-side path structure with its signed transitions $(\lambda',b,s)$ are identical, so the three-part accounting of the proof of Theorem~\ref{thm:complexity}---the one-time $v$-side precomputation $O(n^2\Phi_v)$, the live $\textbf{\textsc{pieri}}$ enumeration $O(L\cdot P_u\cdot B\cdot n^3)$ run once per distinct $u$-side permutation, and the matched-pair work over $W\leq L\cdot P_u\cdot V\cdot B\cdot\Delta$ pairs---carries over verbatim. The single difference is the weight attached to a matched (cover, triple) pair: for double Schubert polynomials it is the factorial elementary symmetric polynomial $E_{p,m}(y;z)$, whereas for ordinary Schubert polynomials the corresponding Pieri coefficient is $1$, so the pair contributes only the integer sign $s\in\{+1,-1\}$. Each executed iteration therefore performs one integer multiplication by $s$ and one integer addition---$O(1)$ ring operations---so $E_n$ is replaced by $O(1)$ in the third summand. Taking base-$2$ logarithms of the dominant (third) summand and substituting $L\leq n$, $P_u\leq(2n-1)!!$ (Lemma~\ref{lemma:outputsupport}), $V\leq n!$, $B,\Delta\leq 2^{n}-1$ (and $\Delta=1$ in the dominant case), and combining $(2n-1)!!\,n!=(2n)!/2^{\,n}$ with the $+2n$ from $B\Delta$, gives $g(n)$, which is $f(n)$ of Theorem~\ref{thm:complexity} without the $\Theta(\log^2 n)$ contribution of $E_n$.
-% \end{proof}
-
-% The factors of $\Lambda(\mdom{v})$ are reduced in Theorem~\ref{thm:outputpoly} below to a power of $n$ depending on the number of columns.
-% \begin{corollary}[Instance-adaptive exponent] \label{cor:instancecomplexity}
-% For any $u,v\in S_n$ the bound of Theorem~\ref{thm:complexity} may be written $2^{\,f(u,v)+O(\log n)}$ with
-% $$f(u,v)=\log_2\Lambda(u,v)+\log_2\bigl|[e,v\mu_v^{-1}]\bigr|+2n+\Theta(\log^2 n),$$
-% where $\Lambda(u,v)$ is the closed form of Corollary~\ref{cor:instanceclosed} and the second interval is taken in Bruhat order. Taking $u=v=w_0$ gives $\log_2\Lambda=\log_2((2n-1)!!)$ and $\bigl|[e,v\mu_v^{-1}]\bigr|\leq n!$, recovering $f(n)$ of Theorem~\ref{thm:complexity}, since $(2n-1)!!\,n!=(2n)!/2^{\,n}$. Taking $u=w_0$ and $v$ arbitrary gives the $v$-adaptive exponent
-% $$f(w_0,v)=\sum_{i=1}^{n}\log_2\bigl(n-i+1+\code_i(\mu_v)\bigr)+\log_2\bigl|[e,v\mu_v^{-1}]\bigr|+2n+\Theta(\log^2 n).$$
-% \end{corollary}
-% \begin{proof}
-% In the proof of Theorem~\ref{thm:complexity} the dominant summand contributes $\log_2 T\leq\log_2 L+\log_2 P_u+\log_2 V+\log_2 B+\log_2\Delta+\log_2 E_n+O(1)$. Substitute $P_u\leq\Lambda(u,v)$ and $V\leq\bigl|[e,v\mu_v^{-1}]\bigr|$ (Definition~\ref{def:complexityquantities}), $B,\Delta\leq 2^n-1$, $L\leq n$, and $\log_2 E_n=\Theta(\log^2 n)$ (Proposition~\ref{prop:elemcost}); the branchings contribute $2n$ and $L$ falls into the $O(\log n)$ term. The specializations are those of Corollary~\ref{cor:instanceclosed} together with $v\mu_v^{-1}\in S_n$, and $\log_2((2n-1)!!)-\log_2(n!)=n\log_2 n+O(n)$ by Stirling.
-% \end{proof}
-
-% \begin{remark}[Which term collapses]
-% Both of the first two terms of $f(u,v)$ are instance quantities: the first counts the $u$-side permutations, the second the $v$-side labels. The first alone ranges over an interval of width $\log_2\bigl((2n-1)!!/n!\bigr)=n\log_2 n+O(n)$ as $\mu_v$ runs from $e$ to $w_0$, but the bottom of that range is vacuous: $\mu_v=e$ forces $v=e$, and there is nothing to compute. The only genuine collapse is in the second term, which vanishes exactly when $v$ is dominant. Then $\mu_v=v$, the initial label $v\mu_v^{-1}$ is the identity, so $V=1$ and $\textbf{\textsc{elemrepr}}$ returns the column factorization of $\sch_v(x;z)$ with no descending expansion at all. A dominant $v$ may be as long as $w_0$, leaving the first term at its maximum, so this is a real saving of $\log_2(n!)=n\log_2 n+O(n)$ from the worst-case exponent rather than a degenerate one.
-% \end{remark}
-
-
 
 
 
@@ -1159,159 +1012,180 @@ is an ideal of weak order on $S_n$.
 
 
 
-\begin{lemma}[Deviation from the class average] \label{lemma:spread}
-Fix $u\in S_n$ and a Tamari class $\mathcal{C}=[\ddom{v},\mdom{v}]_L$, of size $m:=|\mathcal{C}|$, and put
-$$D(u,\mathcal{C}):=N(u,\mdom{v})-N(u,\ddom{v})$$
-Then for every $v\in\mathcal{C}$,
-$$\bigl|N(u,v)-\widetilde{N}(u,\mathcal{C})\bigr|\leq\frac{m-1}{m}D(u,\mathcal{C})$$
-and both bounds are attained.
-\end{lemma}
-\begin{proof}
-Let $A_1\leq\cdots\leq A_m$ be the values $N(u,v')$ for $v'$ ranging over $\mathcal{C}$, arranged in weakly increasing order. Every member of the class has the same two projections, so Theorem~\ref{thm:Nupdown} gives $A_1=N(u,\ddom{v})$ and $A_m=N(u,\mdom{v})$, and $D:=D(u,\mathcal{C})=A_m-A_1$.
+% \begin{lemma}[Deviation from the class average] \label{lemma:spread}
+% Fix $u\in S_n$ and a Tamari class $\mathcal{C}=[\ddom{v},\mdom{v}]_L$, of size $m:=|\mathcal{C}|$, and put
+% $$D(u,\mathcal{C}):=N(u,\mdom{v})-N(u,\ddom{v})$$
+% Then for every $v\in\mathcal{C}$,
+% $$\bigl|N(u,v)-\widetilde{N}(u,\mathcal{C})\bigr|\leq\frac{m-1}{m}D(u,\mathcal{C})$$
+% and both bounds are attained.
+% \end{lemma}
+% \begin{proof}
+% Let $A_1\leq\cdots\leq A_m$ be the values $N(u,v')$ for $v'$ ranging over $\mathcal{C}$, arranged in weakly increasing order. Every member of the class has the same two projections, so Theorem~\ref{thm:Nupdown} gives $A_1=N(u,\ddom{v})$ and $A_m=N(u,\mdom{v})$, and $D:=D(u,\mathcal{C})=A_m-A_1$.
 
-Discarding the largest of the $A_i$ and replacing the rest by $A_1$ bounds the mean below, and discarding the smallest and replacing the rest by $A_m$ bounds it above:
-$$A_1+\frac{D}{m}\leq\widetilde{N}(u,\mathcal{C})=\frac1m\sum_{i=1}^mA_i\leq A_1+\frac{m-1}{m}D$$
-Now $N(u,v)=A_i$ for some $i$, and $A_1\leq A_i\leq A_m=A_1+D$. Subtracting the left inequality from the upper bound on $A_i$ gives $A_i-\widetilde{N}(u,\mathcal{C})\leq\frac{m-1}{m}D$, and subtracting the lower bound on $A_i$ from the right inequality gives $\widetilde{N}(u,\mathcal{C})-A_i\leq\frac{m-1}{m}D$. Equality holds in the first for the sequence $(A_1,A_1,\ldots,A_1,A_m)$ at $i=m$, and in the second for $(A_1,A_m,\ldots,A_m)$ at $i=1$.
-\end{proof}
+% Discarding the largest of the $A_i$ and replacing the rest by $A_1$ bounds the mean below, and discarding the smallest and replacing the rest by $A_m$ bounds it above:
+% $$A_1+\frac{D}{m}\leq\widetilde{N}(u,\mathcal{C})=\frac1m\sum_{i=1}^mA_i\leq A_1+\frac{m-1}{m}D$$
+% Now $N(u,v)=A_i$ for some $i$, and $A_1\leq A_i\leq A_m=A_1+D$. Subtracting the left inequality from the upper bound on $A_i$ gives $A_i-\widetilde{N}(u,\mathcal{C})\leq\frac{m-1}{m}D$, and subtracting the lower bound on $A_i$ from the right inequality gives $\widetilde{N}(u,\mathcal{C})-A_i\leq\frac{m-1}{m}D$. Equality holds in the first for the sequence $(A_1,A_1,\ldots,A_1,A_m)$ at $i=m$, and in the second for $(A_1,A_m,\ldots,A_m)$ at $i=1$.
+% \end{proof}
 
-\begin{corollary} \label{cor:spread}
-With $u$ and $\mathcal{C}$ as above, write $R(u,\mathcal{C}):=D(u,\mathcal{C})/\widetilde{N}(u,\mathcal{C})$ for the relative spread of $N(u,-)$ over $\mathcal{C}$, and $C(u,\mathcal{C}):=N(u,\ddom{v})/N(u,\mdom{v})$. Then for every $v\in\mathcal{C}$,
-$$\max\Bigl\{N_\downarrow(u,v),\ \Bigl(1-\tfrac{m-1}{m}R(u,\mathcal{C})\Bigr)\widetilde{N}(u,\mathcal{C})\Bigr\}\leq N(u,v)\leq\Bigl(1+\tfrac{m-1}{m}R(u,\mathcal{C})\Bigr)\widetilde{N}(u,\mathcal{C})$$
-and
-$$1-C(u,\mathcal{C})\leq R(u,\mathcal{C})\leq\frac{1}{C(u,\mathcal{C})}-1$$
-The second term of the maximum exceeds the first precisely when $R(u,\mathcal{C})<\dfrac{m\bigl(1-C(u,\mathcal{C})\bigr)}{m-1+C(u,\mathcal{C})}$, and is positive whenever $C(u,\mathcal{C})>\frac{m-1}{2m-1}$; in particular $C(u,\mathcal{C})>\frac12$ suffices, uniformly in $m$.
-\end{corollary}
-\begin{proof}
-The two outer inequalities are Lemma~\ref{lemma:spread} divided by $\widetilde{N}(u,\mathcal{C})$, which is positive because $N(u,v')\geq 1$ for every $v'$, together with $N_\downarrow(u,v)\leq N(u,v)$ from Theorem~\ref{thm:Nupdown}. For the middle display, $\widetilde{N}(u,\mathcal{C})$ is an average of numbers lying in $[N(u,\ddom{v}),N(u,\mdom{v})]$ and so lies in that interval itself; dividing $D(u,\mathcal{C})$ by the larger endpoint gives $1-C(u,\mathcal{C})$ and by the smaller gives $C(u,\mathcal{C})^{-1}-1$.
+% \begin{corollary} \label{cor:spread}
+% With $u$ and $\mathcal{C}$ as above, write $R(u,\mathcal{C}):=D(u,\mathcal{C})/\widetilde{N}(u,\mathcal{C})$ for the relative spread of $N(u,-)$ over $\mathcal{C}$, and $C(u,\mathcal{C}):=N(u,\ddom{v})/N(u,\mdom{v})$. Then for every $v\in\mathcal{C}$,
+% $$\max\Bigl\{N_\downarrow(u,v),\ \Bigl(1-\tfrac{m-1}{m}R(u,\mathcal{C})\Bigr)\widetilde{N}(u,\mathcal{C})\Bigr\}\leq N(u,v)\leq\Bigl(1+\tfrac{m-1}{m}R(u,\mathcal{C})\Bigr)\widetilde{N}(u,\mathcal{C})$$
+% and
+% $$1-C(u,\mathcal{C})\leq R(u,\mathcal{C})\leq\frac{1}{C(u,\mathcal{C})}-1$$
+% The second term of the maximum exceeds the first precisely when $R(u,\mathcal{C})<\dfrac{m\bigl(1-C(u,\mathcal{C})\bigr)}{m-1+C(u,\mathcal{C})}$, and is positive whenever $C(u,\mathcal{C})>\frac{m-1}{2m-1}$; in particular $C(u,\mathcal{C})>\frac12$ suffices, uniformly in $m$.
+% \end{corollary}
+% \begin{proof}
+% The two outer inequalities are Lemma~\ref{lemma:spread} divided by $\widetilde{N}(u,\mathcal{C})$, which is positive because $N(u,v')\geq 1$ for every $v'$, together with $N_\downarrow(u,v)\leq N(u,v)$ from Theorem~\ref{thm:Nupdown}. For the middle display, $\widetilde{N}(u,\mathcal{C})$ is an average of numbers lying in $[N(u,\ddom{v}),N(u,\mdom{v})]$ and so lies in that interval itself; dividing $D(u,\mathcal{C})$ by the larger endpoint gives $1-C(u,\mathcal{C})$ and by the smaller gives $C(u,\mathcal{C})^{-1}-1$.
 
-For the last sentence, write $A_1=N(u,\ddom{v})$ and $A_m=N(u,\mdom{v})$, so that $\widetilde{N}(u,\mathcal{C})=D(u,\mathcal{C})/R(u,\mathcal{C})$. The second term exceeds the first when $D/R-\frac{m-1}{m}D>A_1$, and dividing through by $A_m$ and clearing denominators turns this into $R<m(1-C)/(m-1+C)$. Positivity is the case $A_1=0$ of the same computation, that is $\frac{m-1}{m}R(u,\mathcal{C})<1$; since $R(u,\mathcal{C})\leq C(u,\mathcal{C})^{-1}-1$ it suffices that $C(u,\mathcal{C})^{-1}-1<\frac{m}{m-1}$, which rearranges to $C(u,\mathcal{C})>\frac{m-1}{2m-1}$. This last quantity is smaller than $\frac12$ for every $m$, giving the final claim.
-\end{proof}
+% For the last sentence, write $A_1=N(u,\ddom{v})$ and $A_m=N(u,\mdom{v})$, so that $\widetilde{N}(u,\mathcal{C})=D(u,\mathcal{C})/R(u,\mathcal{C})$. The second term exceeds the first when $D/R-\frac{m-1}{m}D>A_1$, and dividing through by $A_m$ and clearing denominators turns this into $R<m(1-C)/(m-1+C)$. Positivity is the case $A_1=0$ of the same computation, that is $\frac{m-1}{m}R(u,\mathcal{C})<1$; since $R(u,\mathcal{C})\leq C(u,\mathcal{C})^{-1}-1$ it suffices that $C(u,\mathcal{C})^{-1}-1<\frac{m}{m-1}$, which rearranges to $C(u,\mathcal{C})>\frac{m-1}{2m-1}$. This last quantity is smaller than $\frac12$ for every $m$, giving the final claim.
+% \end{proof}
 
-\begin{remark}
-The average $\widetilde{N}$ is the natural quantity to measure against, being the mean number of terms produced over the fibre of the projection $v\mapsto\mdom{v}$, and Corollary~\ref{cor:spread} says that $N(u,v)$ departs from it by at most the relative spread of $N(u,-)$ across the class. The window is the same for every $v$ in the class: all of $m$, $D$, $R$, $C$ and $\widetilde{N}$ are determined by the class alone, and the corollary confines the one quantity that does vary. The two endpoints $1-C$ and $C^{-1}-1$ are the same difference normalized by the top and the bottom of the class, so the spread is squeezed between them, and the bound degrades only when the class is genuinely inhomogeneous. It is worth noting what the estimate does not require: no property of the class beyond its being an interval is used, and the count $m$ enters only through the harmless factor $(m-1)/m<1$.
-\end{remark}
+% \begin{remark}
+% The average $\widetilde{N}$ is the natural quantity to measure against, being the mean number of terms produced over the fibre of the projection $v\mapsto\mdom{v}$, and Corollary~\ref{cor:spread} says that $N(u,v)$ departs from it by at most the relative spread of $N(u,-)$ across the class. The window is the same for every $v$ in the class: all of $m$, $D$, $R$, $C$ and $\widetilde{N}$ are determined by the class alone, and the corollary confines the one quantity that does vary. The two endpoints $1-C$ and $C^{-1}-1$ are the same difference normalized by the top and the bottom of the class, so the spread is squeezed between them, and the bound degrades only when the class is genuinely inhomogeneous. It is worth noting what the estimate does not require: no property of the class beyond its being an interval is used, and the count $m$ enters only through the harmless factor $(m-1)/m<1$.
+% \end{remark}
 
-The class size $m$ admits a bound of its own, which we record because it is what limits the crude estimate $N(u,v)\leq m\widetilde{N}(u,\mathcal{C})$ obtained by retaining a single term of the sum. The fibres of the projection $v\mapsto\mdom{v}$ are the classes of the sylvester congruence, and the class of $v$ consists of the linear extensions of the binary search tree $T_v$ obtained by inserting $v^{-1}(n),\ldots,v^{-1}(1)$ in that order. Writing $e(T)$ for the number of linear extensions of $T$, we therefore need an upper bound on $e(T)$ over binary trees on $n$ nodes.
+% The class size $m$ admits a bound of its own, which we record because it is what limits the crude estimate $N(u,v)\leq m\widetilde{N}(u,\mathcal{C})$ obtained by retaining a single term of the sum. The fibres of the projection $v\mapsto\mdom{v}$ are the classes of the sylvester congruence, and the class of $v$ consists of the linear extensions of the binary search tree $T_v$ obtained by inserting $v^{-1}(n),\ldots,v^{-1}(1)$ in that order. Writing $e(T)$ for the number of linear extensions of $T$, we therefore need an upper bound on $e(T)$ over binary trees on $n$ nodes.
 
-\begin{lemma}[Linear extensions of a binary tree] \label{lemma:treeext}
-Let $T$ be a binary tree on $n$ nodes and let $h_T(x)$ denote the number of nodes of the subtree rooted at $x$. Then
-$$e(T)=\frac{n!}{\prod_{x\in T}h_T(x)}\leq\frac{(n+1)!}{2^n}$$
-\end{lemma}
-\begin{proof}
-A binary tree, regarded as a poset with the root on top, is a rooted forest, so the equality is Knuth's hook length formula, as in the proof of Lemma~\ref{lemma:dominantinterval}. Put
-$$F(n):=\min_{|T|=n}\ \prod_{x\in T}h_T(x)$$
-Removing the root of $T$ leaves subtrees of sizes $i$ and $j$ with $i+j=n-1$, and the root contributes the factor $n$, so
-$$F(n)=n\min_{i+j=n-1}F(i)F(j),\qquad F(0)=1$$
-We claim $F(n)\geq 2^n/(n+1)$. This holds at $n=0$, with equality. Assuming it for all smaller values and choosing $i+j=n-1$ attaining the minimum, we have $(i+1)+(j+1)=n+1$, so $(i+1)(j+1)\leq\bigl(\tfrac{n+1}{2}\bigr)^2$ by the arithmetic mean--geometric mean inequality, and
-$$F(n)\geq n\cdot\frac{2^i}{i+1}\cdot\frac{2^j}{j+1}=\frac{n\,2^{n-1}}{(i+1)(j+1)}\geq\frac{4n\,2^{n-1}}{(n+1)^2}=\frac{2^n}{n+1}\cdot\frac{2n}{n+1}$$
-and $2n\geq n+1$ for $n\geq 1$. The stated bound is $e(T)\leq n!/F(n)$.
-\end{proof}
+% \begin{lemma}[Linear extensions of a binary tree] \label{lemma:treeext}
+% Let $T$ be a binary tree on $n$ nodes and let $h_T(x)$ denote the number of nodes of the subtree rooted at $x$. Then
+% $$e(T)=\frac{n!}{\prod_{x\in T}h_T(x)}\leq\frac{(n+1)!}{2^n}$$
+% \end{lemma}
+% \begin{proof}
+% A binary tree, regarded as a poset with the root on top, is a rooted forest, so the equality is Knuth's hook length formula, as in the proof of Lemma~\ref{lemma:dominantinterval}. Put
+% $$F(n):=\min_{|T|=n}\ \prod_{x\in T}h_T(x)$$
+% Removing the root of $T$ leaves subtrees of sizes $i$ and $j$ with $i+j=n-1$, and the root contributes the factor $n$, so
+% $$F(n)=n\min_{i+j=n-1}F(i)F(j),\qquad F(0)=1$$
+% We claim $F(n)\geq 2^n/(n+1)$. This holds at $n=0$, with equality. Assuming it for all smaller values and choosing $i+j=n-1$ attaining the minimum, we have $(i+1)+(j+1)=n+1$, so $(i+1)(j+1)\leq\bigl(\tfrac{n+1}{2}\bigr)^2$ by the arithmetic mean--geometric mean inequality, and
+% $$F(n)\geq n\cdot\frac{2^i}{i+1}\cdot\frac{2^j}{j+1}=\frac{n\,2^{n-1}}{(i+1)(j+1)}\geq\frac{4n\,2^{n-1}}{(n+1)^2}=\frac{2^n}{n+1}\cdot\frac{2n}{n+1}$$
+% and $2n\geq n+1$ for $n\geq 1$. The stated bound is $e(T)\leq n!/F(n)$.
+% \end{proof}
 
-\begin{remark} \label{remark:gammarate}
-The base $2$ in Lemma~\ref{lemma:treeext} is not the true one, and it is worth recording how far it is from the truth, since the gap is a fixed exponential and not something that can be absorbed. The minimum $F(n)$ is attained at perfect trees when $n=2^h-1$: a node at depth $d$ then has $h_T(x)=2^{h-d}-1$, with $2^d$ nodes at that depth, so
-$$F(2^h-1)=\prod_{m=1}^{h}\bigl(2^m-1\bigr)^{2^{h-m}}$$
-and consequently $F(n)^{1/n}\to\gamma$ along this subsequence, where
-$$\gamma:=\prod_{m\geq 1}\bigl(2^m-1\bigr)^{2^{-m}}=4\prod_{m\geq 1}\bigl(1-2^{-m}\bigr)^{2^{-m}}=2.5747573641\ldots$$
-The first values of $F$ are $1,1,2,3,8,15,36,63,192,405,1080$, and the corresponding maxima $n!/F(n)$ of $e(T)$ are $1,1,2,3,8,20,80,210,896,3360$.
+% \begin{remark} \label{remark:gammarate}
+% The base $2$ in Lemma~\ref{lemma:treeext} is not the true one, and it is worth recording how far it is from the truth, since the gap is a fixed exponential and not something that can be absorbed. The minimum $F(n)$ is attained at perfect trees when $n=2^h-1$: a node at depth $d$ then has $h_T(x)=2^{h-d}-1$, with $2^d$ nodes at that depth, so
+% $$F(2^h-1)=\prod_{m=1}^{h}\bigl(2^m-1\bigr)^{2^{h-m}}$$
+% and consequently $F(n)^{1/n}\to\gamma$ along this subsequence, where
+% $$\gamma:=\prod_{m\geq 1}\bigl(2^m-1\bigr)^{2^{-m}}=4\prod_{m\geq 1}\bigl(1-2^{-m}\bigr)^{2^{-m}}=2.5747573641\ldots$$
+% The first values of $F$ are $1,1,2,3,8,15,36,63,192,405,1080$, and the corresponding maxima $n!/F(n)$ of $e(T)$ are $1,1,2,3,8,20,80,210,896,3360$.
 
-The comparison worth drawing is with the mean class size rather than with $n!$. There are $C_n=\frac{1}{n+1}\binom{2n}{n}$ classes partitioning $S_n$, so the mean class size is $n!/C_n$, and the largest class exceeds the mean by the factor $C_n/F(n)$. Lemma~\ref{lemma:treeext} bounds this by $(n+1)C_n2^{-n}\leq(n+1)2^n$, while the rate above gives $(4/\gamma)^n$ up to polynomial factors, with
-$$\frac{4}{\gamma}=1.5535\ldots$$
-So the worst class is larger than the typical one by a fixed exponential with base below $2$, and no better: since $\gamma<4$, the factor $C_n$ cannot absorb the class size, and passing from $\widetilde{N}$ to $N$ by way of $m$ costs an exponential no matter how the classes are arranged. This is the reason for preferring Corollary~\ref{cor:spread}, in which $m$ appears only as $(m-1)/m$.
-\end{remark}
+% The comparison worth drawing is with the mean class size rather than with $n!$. There are $C_n=\frac{1}{n+1}\binom{2n}{n}$ classes partitioning $S_n$, so the mean class size is $n!/C_n$, and the largest class exceeds the mean by the factor $C_n/F(n)$. Lemma~\ref{lemma:treeext} bounds this by $(n+1)C_n2^{-n}\leq(n+1)2^n$, while the rate above gives $(4/\gamma)^n$ up to polynomial factors, with
+% $$\frac{4}{\gamma}=1.5535\ldots$$
+% So the worst class is larger than the typical one by a fixed exponential with base below $2$, and no better: since $\gamma<4$, the factor $C_n$ cannot absorb the class size, and passing from $\widetilde{N}$ to $N$ by way of $m$ costs an exponential no matter how the classes are arranged. This is the reason for preferring Corollary~\ref{cor:spread}, in which $m$ appears only as $(m-1)/m$.
+% \end{remark}
 
-The same tree count controls $\Lambda(\mdom{v})$ itself, by way of a decomposition of the interval $[e,\mdom{v}]_L$ into whole classes. Since $\ddom{v}\leq_L v\leq_L\mdom{v}$, this interval contains both $[e,\ddom{v}]_L$ and the class $[\ddom{v},\mdom{v}]_L$, and the classes account for all of it.
+% The same tree count controls $\Lambda(\mdom{v})$ itself, by way of a decomposition of the interval $[e,\mdom{v}]_L$ into whole classes. Since $\ddom{v}\leq_L v\leq_L\mdom{v}$, this interval contains both $[e,\ddom{v}]_L$ and the class $[\ddom{v},\mdom{v}]_L$, and the classes account for all of it.
 
-\begin{lemma}[Class decomposition of the dominant interval] \label{lemma:classdecomp}
-Let $v\in S_n$. Then $[e,\mdom{v}]_L$ is a disjoint union of Tamari classes, namely of those whose top lies weakly below $\mdom{v}$. Writing $\mathcal{D}(v):=\{\sigma\text{ dominant}\mid\sigma\leq_L\mdom{v}\}$ and $\mathcal{C}_\sigma$ for the class with top $\sigma$,
-$$\Lambda(\mdom{v})=\sum_{\sigma\in\mathcal{D}(v)}\bigl|\mathcal{C}_\sigma\bigr|\ \leq\ \bigl|\mathcal{D}(v)\bigr|\cdot\max_{\sigma\in\mathcal{D}(v)}\bigl|\mathcal{C}_\sigma\bigr|\ \leq\ \bigl|\mathcal{D}(v)\bigr|\cdot\frac{(n+1)!}{2^n}$$
-\end{lemma}
-\begin{proof}
-Suppose $x\leq_L\mdom{v}$. The map $w\mapsto\mdom{w}$ is the upward projection of a lattice congruence on the left weak order, so it is order preserving and idempotent; hence $\mdom{x}\leq_L\mdom{\mdom{v}}=\mdom{v}$. Every $y$ in the class of $x$ satisfies $y\leq_L\mdom{y}=\mdom{x}\leq_L\mdom{v}$, so the whole class of $x$ lies in $[e,\mdom{v}]_L$. The interval is therefore a union of classes, disjointly because the classes partition $S_n$, and the classes occurring are exactly those whose top is weakly below $\mdom{v}$: the top of a class contained in the interval lies in the interval, and conversely if $\sigma\leq_L\mdom{v}$ then the argument just given places all of $\mathcal{C}_\sigma$ in the interval. Summing sizes gives the equality, and the two estimates are the trivial bound on a sum followed by Lemma~\ref{lemma:treeext}.
-\end{proof}
+% \begin{lemma}[Class decomposition of the dominant interval] \label{lemma:classdecomp}
+% Let $v\in S_n$. Then $[e,\mdom{v}]_L$ is a disjoint union of Tamari classes, namely of those whose top lies weakly below $\mdom{v}$. Writing $\mathcal{D}(v):=\{\sigma\text{ dominant}\mid\sigma\leq_L\mdom{v}\}$ and $\mathcal{C}_\sigma$ for the class with top $\sigma$,
+% $$\Lambda(\mdom{v})=\sum_{\sigma\in\mathcal{D}(v)}\bigl|\mathcal{C}_\sigma\bigr|\ \leq\ \bigl|\mathcal{D}(v)\bigr|\cdot\max_{\sigma\in\mathcal{D}(v)}\bigl|\mathcal{C}_\sigma\bigr|\ \leq\ \bigl|\mathcal{D}(v)\bigr|\cdot\frac{(n+1)!}{2^n}$$
+% \end{lemma}
+% \begin{proof}
+% Suppose $x\leq_L\mdom{v}$. The map $w\mapsto\mdom{w}$ is the upward projection of a lattice congruence on the left weak order, so it is order preserving and idempotent; hence $\mdom{x}\leq_L\mdom{\mdom{v}}=\mdom{v}$. Every $y$ in the class of $x$ satisfies $y\leq_L\mdom{y}=\mdom{x}\leq_L\mdom{v}$, so the whole class of $x$ lies in $[e,\mdom{v}]_L$. The interval is therefore a union of classes, disjointly because the classes partition $S_n$, and the classes occurring are exactly those whose top is weakly below $\mdom{v}$: the top of a class contained in the interval lies in the interval, and conversely if $\sigma\leq_L\mdom{v}$ then the argument just given places all of $\mathcal{C}_\sigma$ in the interval. Summing sizes gives the equality, and the two estimates are the trivial bound on a sum followed by Lemma~\ref{lemma:treeext}.
+% \end{proof}
 
-\begin{remark}
-The decomposition separates the two sources of growth. The number of classes below $\mdom{v}$ is a count of dominant permutations, hence at most the Catalan number $C_n$, while the size of each class is at most $(n+1)!/2^n$ by Lemma~\ref{lemma:treeext}, or $n!/F(n)$ exactly. The product overstates $\Lambda(\mdom{v})$, since the classes below $\mdom{v}$ are not all of maximum size, but the accounting is the useful one: the class of $v$ enters once, through its size, and the remainder of the interval enters through a count of dominant permutations.
-\end{remark}
+% \begin{remark}
+% The decomposition separates the two sources of growth. The number of classes below $\mdom{v}$ is a count of dominant permutations, hence at most the Catalan number $C_n$, while the size of each class is at most $(n+1)!/2^n$ by Lemma~\ref{lemma:treeext}, or $n!/F(n)$ exactly. The product overstates $\Lambda(\mdom{v})$, since the classes below $\mdom{v}$ are not all of maximum size, but the accounting is the useful one: the class of $v$ enters once, through its size, and the remainder of the interval enters through a count of dominant permutations.
+% \end{remark}
 
 
-\begin{lemma} \label{lemma:lambdainverse}
-For every $w\in S_n$ we have
-$$\Lambda(w)=\Lambda(w^{-1})$$
-\end{lemma}
-\begin{proof}
-Let $P_w$ be the partial order on $\{1,\ldots,n\}$ in which $i\prec j$ when $i<j$ and $w(i)<w(j)$, and write ${\downarrow}i$ for the down-set of $i$ in $P_w$, as in the proof of Lemma~\ref{lemma:dominantinterval}. It is shown there that $|{\downarrow}i|=w(i)-\code_i(w)$, so that
-$$\Lambda(w)=\frac{n!}{\prod_{i=1}^n|{\downarrow}i|}$$
-Now $P_w$ is the componentwise order on the set of points $\{(i,w(i))\mid 1\leq i\leq n\}$, and $P_{w^{-1}}$ is the componentwise order on $\{(w(i),i)\mid 1\leq i\leq n\}$. The second point set is obtained from the first by interchanging the two coordinates, and the componentwise order is unchanged by this, so $i\mapsto w(i)$ is an isomorphism from $P_w$ to $P_{w^{-1}}$. An isomorphism carries down-sets to down-sets, so the two products agree, and we are done.
-\end{proof}
+% \begin{lemma} \label{lemma:lambdainverse}
+% For every $w\in S_n$ we have
+% $$\Lambda(w)=\Lambda(w^{-1})$$
+% \end{lemma}
+% \begin{proof}
+% Let $P_w$ be the partial order on $\{1,\ldots,n\}$ in which $i\prec j$ when $i<j$ and $w(i)<w(j)$, and write ${\downarrow}i$ for the down-set of $i$ in $P_w$, as in the proof of Lemma~\ref{lemma:dominantinterval}. It is shown there that $|{\downarrow}i|=w(i)-\code_i(w)$, so that
+% $$\Lambda(w)=\frac{n!}{\prod_{i=1}^n|{\downarrow}i|}$$
+% Now $P_w$ is the componentwise order on the set of points $\{(i,w(i))\mid 1\leq i\leq n\}$, and $P_{w^{-1}}$ is the componentwise order on $\{(w(i),i)\mid 1\leq i\leq n\}$. The second point set is obtained from the first by interchanging the two coordinates, and the componentwise order is unchanged by this, so $i\mapsto w(i)$ is an isomorphism from $P_w$ to $P_{w^{-1}}$. An isomorphism carries down-sets to down-sets, so the two products agree, and we are done.
+% \end{proof}
 
-\begin{lemma}[Dominant hull bound] \label{lemma:domhullbound}
-Let $v\in S_n$, write $\theta:=\theta(v^{-1})$, and let $L$ be the number of nonzero parts of $\theta$. Then
-$$\Lambda(\mdom{v})\leq\prod_i\bigl(\theta_i+1\bigr)\leq n^L$$
-\end{lemma}
-\begin{proof}
-Write $\mu:=\dom(v^{-1})$, so that $\mu=\mdom{v}^{-1}$ and $\code(\mu)=\theta$. By Lemma~\ref{lemma:lambdainverse} we have $\Lambda(\mdom{v})=\Lambda(\mu)$, and by Lemma~\ref{lemma:dominantinterval} we have $\Lambda(\mu)\leq\bigl|[e,\mu]_R\bigr|$.
+% \begin{lemma}[Dominant hull bound] \label{lemma:domhullbound}
+% Let $v\in S_n$, write $\theta:=\theta(v^{-1})$, and let $L$ be the number of nonzero parts of $\theta$. Then
+% $$\Lambda(\mdom{v})\leq\prod_i\bigl(\theta_i+1\bigr)\leq n^L$$
+% \end{lemma}
+% \begin{proof}
+% Write $\mu:=\dom(v^{-1})$, so that $\mu=\mdom{v}^{-1}$ and $\code(\mu)=\theta$. By Lemma~\ref{lemma:lambdainverse} we have $\Lambda(\mdom{v})=\Lambda(\mu)$, and by Lemma~\ref{lemma:dominantinterval} we have $\Lambda(\mu)\leq\bigl|[e,\mu]_R\bigr|$.
 
-Suppose $w\leq_R\mu$, so that $\mathrm{Inv}(w)\subseteq\mathrm{Inv}(\mu)$. Since $\code_i(w)$ is the number of elements of $\mathrm{Inv}(w)$ with first coordinate $i$, this gives $\code_i(w)\leq\code_i(\mu)=\theta_i$ for every $i$. A permutation is determined by its Lehmer code, so $w\mapsto\code(w)$ is an injection from $[e,\mu]_R$ into $\prod_i\{0,1,\ldots,\theta_i\}$, whence
-$$\bigl|[e,\mu]_R\bigr|\leq\prod_i\bigl(\theta_i+1\bigr)$$
-Exactly $L$ of these factors exceed $1$, and each satisfies $\theta_i+1\leq n$, so the product is at most $n^L$.
-\end{proof}
+% Suppose $w\leq_R\mu$, so that $\mathrm{Inv}(w)\subseteq\mathrm{Inv}(\mu)$. Since $\code_i(w)$ is the number of elements of $\mathrm{Inv}(w)$ with first coordinate $i$, this gives $\code_i(w)\leq\code_i(\mu)=\theta_i$ for every $i$. A permutation is determined by its Lehmer code, so $w\mapsto\code(w)$ is an injection from $[e,\mu]_R$ into $\prod_i\{0,1,\ldots,\theta_i\}$, whence
+% $$\bigl|[e,\mu]_R\bigr|\leq\prod_i\bigl(\theta_i+1\bigr)$$
+% Exactly $L$ of these factors exceed $1$, and each satisfies $\theta_i+1\leq n$, so the product is at most $n^L$.
+% \end{proof}
 
-\begin{theorem}[Output-polynomiality] \label{thm:outputpoly}
-Let $u,v\in S_n$. Then the number of coefficient ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
-$$O\!\left(n^{4}\Lambda(\mdom{v})^2N^\uparrow(u,v)E_n\right)$$
-and in the ordinary case
-$$O\!\left(n^{4}\Lambda(\mdom{v})^2N^\uparrow(u,v)\right)$$
-\end{theorem}
-\begin{proof}
-By Theorem~\ref{thm:complexity} the cost is $O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n)$. Since $v\leq_L\mdom{v}$ we have $\ell(v)\leq\ell(\mdom{v})$, and $N_m(u,w)$ is weakly increasing in $m$, so
-$$N_{\ell(v)}(u,\mdom{v})\leq N_{\ell(\mdom{v})}(u,\mdom{v})=N(u,\mdom{v})=N^\uparrow(u,v)$$
-Substituting gives the first bound. The ordinary case traverses the same witnesses with the same signs, the weight attached to each being $1$ rather than a factorial elementary symmetric polynomial, so its cost is the same with the factor $E_n$ deleted, and the second bound follows by the same substitution.
-\end{proof}
+% \begin{theorem}[Output-polynomiality] \label{thm:outputpoly}
+% Let $u,v\in S_n$. Then the number of coefficient ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
+% $$O\!\left(n^{4}\Lambda(\mdom{v})^2N^\uparrow(u,v)E_n\right)$$
+% and in the ordinary case
+% $$O\!\left(n^{4}\Lambda(\mdom{v})^2N^\uparrow(u,v)\right)$$
+% \end{theorem}
+% \begin{proof}
+% By Theorem~\ref{thm:complexity} the cost is $O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n)$. Since $v\leq_L\mdom{v}$ we have $\ell(v)\leq\ell(\mdom{v})$, and $N_m(u,w)$ is weakly increasing in $m$, so
+% $$N_{\ell(v)}(u,\mdom{v})\leq N_{\ell(\mdom{v})}(u,\mdom{v})=N(u,\mdom{v})=N^\uparrow(u,v)$$
+% Substituting gives the first bound. The ordinary case traverses the same witnesses with the same signs, the weight attached to each being $1$ rather than a factorial elementary symmetric polynomial, so its cost is the same with the factor $E_n$ deleted, and the second bound follows by the same substitution.
+% \end{proof}
 
-\begin{remark}
-Both factors are attached to the inputs and not to the run: $\Lambda(\mdom{v})$ depends on $v$ alone, and $N^\uparrow(u,v)$ is bounded by Lemma~\ref{lemma:domsplit} by a product of two terms, one for each factor. Writing $\theta:=\theta(v^{-1})$ and $L$ for its number of nonzero parts, Lemma~\ref{lemma:domhullbound} gives $\Lambda(\mdom{v})\leq\prod_i(\theta_i+1)$; the cruder consequence $\Lambda(\mdom{v})\leq n^L$ is what turns the theorem into a statement of polynomial degree $2L+4$ when $L$ is bounded, and returns $n^{O(n)}$ in the worst case $L=n-1$, in agreement with Theorem~\ref{thm:complexity}.
+% \begin{remark}
+% Both factors are attached to the inputs and not to the run: $\Lambda(\mdom{v})$ depends on $v$ alone, and $N^\uparrow(u,v)$ is bounded by Lemma~\ref{lemma:domsplit} by a product of two terms, one for each factor. Writing $\theta:=\theta(v^{-1})$ and $L$ for its number of nonzero parts, Lemma~\ref{lemma:domhullbound} gives $\Lambda(\mdom{v})\leq\prod_i(\theta_i+1)$; the cruder consequence $\Lambda(\mdom{v})\leq n^L$ is what turns the theorem into a statement of polynomial degree $2L+4$ when $L$ is bounded, and returns $n^{O(n)}$ in the worst case $L=n-1$, in agreement with Theorem~\ref{thm:complexity}.
 
-The first of these two inequalities is an equality exactly when the nonzero parts of $\theta$ are strictly decreasing, and is otherwise loose by an exponential factor. The mechanism is visible in the proof: the injection into $\prod_i\{0,\ldots,\theta_i\}$ treats the entries of the code as free coordinates, whereas equal parts $\theta_i=\theta_{i+1}$ force the corresponding elements of the forest $P_\mu$ into a chain, and a chain of $k$ elements has $k+1$ down-sets rather than $2^k$. For the rectangular code $\theta=(c^k)$ in $S_{k+c}$ one has $\Lambda=\binom{k+c}{c}$ against a product $(c+1)^k$, and at $c=1$ this is $k+1$ against $2^k$. Since the strictly decreasing codes number $2^{n-2}$ among the $C_n$ dominant permutations of $S_n$, the equality case is a vanishing fraction of the whole. The bound is nonetheless the one to use here, since $L$ enters the final estimate only through the number of factors and not through their sizes.
+% The first of these two inequalities is an equality exactly when the nonzero parts of $\theta$ are strictly decreasing, and is otherwise loose by an exponential factor. The mechanism is visible in the proof: the injection into $\prod_i\{0,\ldots,\theta_i\}$ treats the entries of the code as free coordinates, whereas equal parts $\theta_i=\theta_{i+1}$ force the corresponding elements of the forest $P_\mu$ into a chain, and a chain of $k$ elements has $k+1$ down-sets rather than $2^k$. For the rectangular code $\theta=(c^k)$ in $S_{k+c}$ one has $\Lambda=\binom{k+c}{c}$ against a product $(c+1)^k$, and at $c=1$ this is $k+1$ against $2^k$. Since the strictly decreasing codes number $2^{n-2}$ among the $C_n$ dominant permutations of $S_n$, the equality case is a vanishing fraction of the whole. The bound is nonetheless the one to use here, since $L$ enters the final estimate only through the number of factors and not through their sizes.
 
-The size measured here is $N^\uparrow(u,v)=N(u,\mdom{v})$, the count at the top of the Tamari class of $v$, rather than $N(u,v)$ itself. By Theorem~\ref{thm:Nupdown} the two agree when $v$ is dominant, and by Corollary~\ref{cor:spread} they differ in general by no more than the relative spread of $N(u,-)$ across the class of $v$.
-\end{remark}
+% The size measured here is $N^\uparrow(u,v)=N(u,\mdom{v})$, the count at the top of the Tamari class of $v$, rather than $N(u,v)$ itself. By Theorem~\ref{thm:Nupdown} the two agree when $v$ is dominant, and by Corollary~\ref{cor:spread} they differ in general by no more than the relative spread of $N(u,-)$ across the class of $v$.
+% \end{remark}
 
-Theorem~\ref{thm:outputpoly} is output-sensitive in $N^\uparrow$, which is not the number of terms the algorithm actually emits. The pointwise count $N(u,v)$ can be substituted for it directly, through the following comparison.
+% Theorem~\ref{thm:outputpoly} is output-sensitive in $N^\uparrow$, which is not the number of terms the algorithm actually emits. The pointwise count $N(u,v)$ can be substituted for it directly, through the following comparison.
 
-\begin{lemma}[Output count against the pointwise count] \label{lemma:Nupfrac}
-For $u,v\in S_n$,
-$$N^\uparrow(u,v)\,\Lambda(v)\ \leq\ N(u,v)\,\Lambda(\mdom{u,v}),$$
-equivalently
-$$N^\uparrow(u,v)\ \leq\ N(u,v)\,\frac{\Lambda(\mdom{u,v})}{\Lambda(v)}.$$
-\end{lemma}
-\begin{proof}
-Note first that $N(u,v)\geq \Lambda(v)$. Also, we claim that $N^\uparrow(u,v)\leq \Lambda(\mdom{u,v})$. To see this, note that if $c_{u,v}^w(y;z)\neq 0$ then
-$$c_{u,v}^w(y;z) = c_{(u\mdom{u}^{-1})\mdom{u},(v\mdom{v}^{-1})\mdom{v}}^{(w\mdom{u,v}^{-1})\mdom{u,v}}(y;z)$$
-is the coefficient of
-$$\sch_{u\mdom{u}^{-1}}(x_A;y)\,\sch_{v\mdom{v}^{-1}}(x_B;z)$$
-in the expansion of the double Schubert polynomial $\sch_{w\mdom{u,v}^{-1}}(x;y)$. For fixed $u$ and $v$, the number of such coefficients is bounded by the number of choices of $w$, which is at most the number of permutations in the interval $[e,\mdom{u,v}]_L$, which is $\Lambda(\mdom{u,v})$. This gives the desired inequality.
-\end{proof}
+% \begin{lemma}[Output count against the pointwise count] \label{lemma:Nupfrac}
+% For $u,v\in S_n$,
+% $$N^\uparrow(u,v)\,\Lambda(v)\ \leq\ N(u,v)\,\Lambda(\mdom{u,v}),$$
+% equivalently
+% $$N^\uparrow(u,v)\ \leq\ N(u,v)\,\frac{\Lambda(\mdom{u,v})}{\Lambda(v)}.$$
+% \end{lemma}
+% \begin{proof}
+% Note first that $N(u,v)\geq \Lambda(v)$. Also, we claim that $N^\uparrow(u,v)\leq \Lambda(\mdom{u,v})$. To see this, note that if $c_{u,v}^w(y;z)\neq 0$ then
+% $$c_{u,v}^w(y;z) = c_{(u\mdom{u}^{-1})\mdom{u},(v\mdom{v}^{-1})\mdom{v}}^{(w\mdom{u,v}^{-1})\mdom{u,v}}(y;z)$$
+% is the coefficient of
+% $$\sch_{u\mdom{u}^{-1}}(x_A;y)\,\sch_{v\mdom{v}^{-1}}(x_B;z)$$
+% in the expansion of the double Schubert polynomial $\sch_{w\mdom{u,v}^{-1}}(x;y)$. For fixed $u$ and $v$, the number of such coefficients is bounded by the number of choices of $w$, which is at most the number of permutations in the interval $[e,\mdom{u,v}]_L$, which is $\Lambda(\mdom{u,v})$. This gives the desired inequality.
+% \end{proof}
 
-$$\rho(u,v)\ \le\ \frac{\prod_i(\alpha_i+1)\prod_i(\beta_i+1)}{\Lambda(\mdom u)\,\Lambda(\mdom v)}.$$
+% The numerator $\Lambda(\mdom{u,v})$ separates completely across the two inputs: it is at most the product of the two single-input interval sizes.
 
-The numerator $\Lambda(\mdom{u,v})$ separates across the two inputs up to a factor that is small relative to the interval sizes.
+% \begin{lemma}[Submultiplicativity of the interval size] \label{lemma:rho}
+% Let $\alpha=\code(\mdom u)$ and $\beta=\code(\mdom v)$, and regard $\mdom u$, $\mdom v$, and $\mdom{u,v}$ in a common $S_M$ by padding with fixed points, which leaves each $\Lambda$ unchanged. Then
+% $$\Lambda(\mdom{u,v})\ \leq\ \Lambda(\mdom u)\,\Lambda(\mdom v).$$
+% Equivalently, the factor $\rho(u,v):=\Lambda(\mdom{u,v})/\bigl(\Lambda(\mdom u)\Lambda(\mdom v)\bigr)$ satisfies $\rho(u,v)\leq 1$.
+% \end{lemma}
+% \begin{proof}
+% Consider the double Schubert polynomial 
+% $$\sch_{\mdom{u,v}}(x;y|z) =\sch_{\mdom{u}}(x;y)\sch_{\mdom{v}}(x;z)$$ 
+% Suppose that $w\leq_L \mdom{u,v}$. Apply $\partial^w$:
+% $$\partial^w(\sch_{\mdom{u}}(x;y)\sch_{\mdom{v}}(x;z)) = \sum_{a,b} c_{a,b}^w(x;x)\sch_{\mdom{u}a^{-1}}(x;y)\sch_{\mdom{v}b^{-1}}(x;z)$$
+% This is in fact equal to
+% $$\sch_{\mdom{u,v}w^{-1}}(x;y|z)$$
+% Note that $\mathbb{Z}[x,y,z]$ is a free $\mathbb{Z}[x]$-module. We may extend scalars into the ring $\mathbb{Q}(x)[y,z]$. By basic linear algebra, it follows that the polynomials
+% $$\sch_{\mdom{u}a^{-1}}(x;y)\sch_{\mdom{v}b^{-1}}(x;z)$$
+% for $a\leq_L \mdom{u}$ and $b\leq_L \mdom{v}$ number at least as many as the $\Lambda(\mdom{u,v})$ independent polynomials $\sch_{\mdom{u,v}w^{-1}}(x;y|z)$, or in other words
+% $$\Lambda(\mdom{u,v})\leq\Lambda(\mdom{u})\Lambda(\mdom{v})$$
+% % TODO (inversion-set formula): construct the injection Phi by splitting Inv(w).
+% \end{proof}
 
-\begin{corollary}[Output-polynomiality in $n$, $N(u,v)$, and $\Lambda(v)$] \label{cor:outputpoly3}
-Let $u,v\in S_n$, and write
-$$\rho(u,v)\ :=\ \frac{\Lambda(\mdom{u,v})}{\Lambda(\mdom{u})\,\Lambda(\mdom{v})}.$$
-Then
-$$N^\uparrow(u,v)\ \leq\ N(u,v)\,\frac{\Lambda(\mdom{u,v})}{\Lambda(v)}\ \leq\ \rho(u,v)\,\Lambda(\mdom{u})\,\frac{\Lambda(\mdom{v})}{\Lambda(v)}\,N(u,v),$$
-and consequently
-$$T(u,v)\ =\ O\!\left(n^{4}\,\Lambda(\mdom{v})^2\,N(u,v)\,\frac{\Lambda(\mdom{u,v})}{\Lambda(v)}\,E_n\right),$$
-with $E_n$ deleted in the ordinary case.
-\end{corollary}
-\begin{proof}
-The first inequality is Lemma~\ref{lemma:Nupfrac}. The second substitutes the definition of $\rho(u,v)$, which rearranges to $\Lambda(\mdom{u,v})=\rho(u,v)\,\Lambda(\mdom{u})\,\Lambda(\mdom{v})$. Substituting the first bound into Theorem~\ref{thm:outputpoly} in place of $N^\uparrow(u,v)$ gives the cost estimate.
-\end{proof}
+% \begin{corollary}[Output-polynomiality in $n$, $N(u,v)$, and $\Lambda(v)$] \label{cor:outputpoly3}
+% Let $u,v\in S_n$, and write
+% $$\rho(u,v)\ :=\ \frac{\Lambda(\mdom{u,v})}{\Lambda(\mdom{u})\,\Lambda(\mdom{v})}.$$
+% Then
+% $$N^\uparrow(u,v)\ \leq\ N(u,v)\,\frac{\Lambda(\mdom{u,v})}{\Lambda(v)}\ \leq\ \rho(u,v)\,\Lambda(\mdom{u})\,\frac{\Lambda(\mdom{v})}{\Lambda(v)}\,N(u,v),$$
 
-\begin{remark}
-The factor $\rho(u,v)$ is the amount by which the dominant hull $\mdom{u,v}$ fails to split as a product across the two inputs. Lemma~\ref{lemma:domsplit} controls it without reference to the individual hulls: $\Lambda(\mdom{u,v})\leq\prod_i(\alpha_i+1)\prod_i(\beta_i+1)$ with $\alpha=\code(\mdom{u})$, $\beta=\code(\mdom{v})$, so the numerator is bounded by a product of two single-input terms. The remaining input-dependence is carried by the ratio $\Lambda(\mdom{v})/\Lambda(v)$, which measures how far $v$ sits below the top of its Tamari class; it is $1$ exactly when $v$ is dominant.
-\end{remark}
+% $$N^\uparrow(u,v)\ \leq\ N(u,v)\,\frac{\Lambda(\mdom{u,v})}{\Lambda(v)}$$
+% % and consequently, since $\rho(u,v)\leq 1$ by Lemma~\ref{lemma:rho},
+% % $$N^\uparrow(u,v)\ \leq\ \Lambda(\mdom{u})\,\frac{\Lambda(\mdom{v})}{\Lambda(v)}\,N(u,v),$$
+% % and
+% % $$T(u,v)\ =\ O\!\left(n^{4}\,\Lambda(\mdom{u})\,\Lambda(\mdom{v})^3\,\frac{N(u,v)}{\Lambda(v)}\,E_n\right),$$
+% % with $E_n$ deleted in the ordinary case.
+% \end{corollary}
+% \begin{proof}
+% The first inequality is Lemma~\ref{lemma:Nupfrac}. The second substitutes the definition of $\rho(u,v)$, which rearranges to $\Lambda(\mdom{u,v})=\rho(u,v)\,\Lambda(\mdom{u})\,\Lambda(\mdom{v})$. Lemma~\ref{lemma:rho} gives $\rho(u,v)\leq 1$, which removes that factor and yields the displayed bound on $N^\uparrow(u,v)$. Substituting into Theorem~\ref{thm:outputpoly} in place of $N^\uparrow(u,v)$ gives the cost estimate.
+% \end{proof}
+
+% \begin{remark}
+% Lemma~\ref{lemma:rho} says that the interval size $\Lambda$ is submultiplicative under addition of dominant codes, so the loss factor $\rho(u,v)$ never exceeds $1$ and the dominant hull $\mdom{u,v}$ costs no more than the product of the two single-input hulls. The only input-dependence left in the corollary beyond $N(u,v)$ is then the ratio $\Lambda(\mdom{v})/\Lambda(v)$, which measures how far $v$ sits below the top of its Tamari class and equals $1$ exactly when $v$ is dominant, together with the single-input size $\Lambda(\mdom{u})$. A cruder unconditional form of the numerator bound, not needing Lemma~\ref{lemma:rho}, is available from Lemma~\ref{lemma:domsplit}: $\Lambda(\mdom{u,v})\leq\prod_i(\alpha_i+1)\prod_i(\beta_i+1)$.
+% \end{remark}
 
 % \begin{lemma}[Support characterization of $N$] \label{lemma:Nchar}
 %   $$N(u,v) = \#\{w\mid c_{u,v'}^w\neq 0\text{ for some }v'\leq_L v\}
