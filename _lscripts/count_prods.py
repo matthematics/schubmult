@@ -14,6 +14,90 @@ def check_with_filter(u, v, perms):
         return False
     return True
 
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        
+    def __repr__(self):
+        return f"TreeNode({self.val},{self.left},{self.right})"
+    
+    def __eq__(self, other):
+        if not isinstance(other, TreeNode):
+            return False
+        def _valeq(val1, val2):
+            return (val1 is None and val2 is None) or val1 == val2
+        return _valeq(self.val, other.val) and _valeq(self.left, other.left) and _valeq(self.right, other.right)
+    
+    def total_size(self):
+        if self.left is None and self.right is None:
+            return 1
+        left_size = self.left.total_size() if self.left else 0
+        right_size = self.right.total_size() if self.right else 0
+        return 1 + left_size + right_size
+    
+    def extension_count(self):
+        import math
+        if self.left is None and self.right is None:
+            return 1
+        result = 1
+        if self.left:
+            result *= self.left.extension_count()
+        if self.right:
+            result *= self.right.extension_count()
+        result *= math.comb(self.total_size() - 1, self.left.total_size() if self.left else 0)
+        return result
+
+    def __hash__(self):
+        return hash((self.val, self.left, self.right))
+
+def construct_tree_from_perm(iperm, n):
+    """
+    Constructs a binary tree from a 132-avoiding permutation.
+    """
+    # if len(perm) == 0:
+    #     return None  # Base case: empty permutation corresponds to an empty tree
+    
+    # # Find the maximum element and its index
+    # if isinstance(perm, Permutation) and n is None:
+    #     n = len(perm)
+    # if n is not None and isinstance(perm, Permutation):
+    #     max_idx = perm[n - 1]
+    # else:
+    #     #max_val = max(perm)
+    #     max_idx = perm[-1]
+    # #max_idx = perm.index(max_val)
+    
+    # # The maximum element becomes the root
+    # root = TreeNode(perm[max_idx])
+    
+    # # Elements to the left of the max form the left subtree
+    # root.left = construct_tree_from_perm(perm[:max_idx])
+    
+    # # Elements to the right of the max form the right subtree
+    # root.right = construct_tree_from_perm(perm[max_idx + 1:])
+    
+    # return root
+    perm = ~iperm
+    root = TreeNode(perm[n-1])
+    for i in range(n - 2, -1, -1):
+        current = root
+        while True:
+            if perm[i] < current.val:
+                if current.left is None:
+                    current.left = TreeNode(perm[i])
+                    break
+                else:
+                    current = current.left
+            else:
+                if current.right is None:
+                    current.right = TreeNode(perm[i])
+                    break
+                else:
+                    current = current.right
+    return root
+
 def dominant_interval_size(dom_perm):
     if dom_perm.inv == 0:
         return 1
