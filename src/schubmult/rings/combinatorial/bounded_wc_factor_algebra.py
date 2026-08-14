@@ -359,7 +359,7 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         schub_elem = GrothendieckPoly(perm, length).change_basis(SchubertPolyBasis)
         res = 0
         for (perm2, length), coeff in schub_elem.items():
-            res += beta ** (perm2.inv - perm.inv) * coeff * self.full_schub_elem(perm2, length)
+            res += beta ** (perm2.inv - perm.inv) * coeff * self.full_schub_elem(perm2, length, beta)
         return res
 
 
@@ -403,7 +403,7 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         res = 0
         schub_elem = Schub(uncode([0] * (k - p) + [1] * p), k).change_basis(GrothendieckPolyBasis)
         for (perm, length), coeff in schub_elem.items():
-            res += beta ** (perm.inv - p) * self.from_dict({self.make_key((rc,), size): coeff for rc in WCGraph.all_wc_graphs(uncode([0] * (perm.max_descent - perm.inv) + [1] * perm.inv), perm.max_descent, weight=tuple(reversed([perm.max_descent - j - w for j, w in enumerate((perm * perm.w0(perm.max_descent)).pad_code(perm.max_descent))])))})
+            res += self.from_dict({self.make_key((rc,), size): coeff*beta**(len(rc.perm_word) - p) for rc in WCGraph.all_wc_graphs(uncode([0] * (perm.max_descent - perm.inv) + [1] * perm.inv), perm.max_descent)})
         return res
 
 
@@ -443,7 +443,7 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
                 raise ValueError(f"Key factors must be full Grassmannian WC graphs, got {rc} for {key=}")
         return key
 
-    def full_schub_elem(self, perm, size):
+    def full_schub_elem(self, perm, size, beta=1):
         from schubmult.rings.polynomial_algebra import ElemSymPolyBasis, Schub
 
         schub_elem = Schub(perm, size).change_basis(ElemSymPolyBasis)
@@ -453,9 +453,9 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
             # grass_part = self.make_key((), size)
             for index, part in enumerate(comp, start=1):
                 if index < size:
-                    term *= self.elem_sym(part, index, size=size)
+                    term *= self.elem_sym(part, index, size=size, beta=beta)
                 else:
-                    term *= self.elem_sym(part, size, size=size)
+                    term *= self.elem_sym(part, size, size=size, beta=beta)
             schub += coeff * term
         return schub
 
