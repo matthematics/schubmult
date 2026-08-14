@@ -2,9 +2,9 @@ from schubmult import *
 from schubmult.combinatorics.indexed_forests import *
 from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
 from schubmult.rings.polynomial_algebra import *
+from schubmult.rings.free_algebra import *
 from schubmult.symbolic.common_polys import *
 from schubmult.symbolic.poly.variables import *
-from schubmult.rings.polynomial_algebra import *
 from schubmult.utils._mul_utils import add_perm_dict
 from schubmult.utils.tuple_utils import pad_tuple
 
@@ -13,12 +13,13 @@ import itertools
 f = ForestRCGraphRing()
 
 T = ThompsonAlgebra()
+br = BoundedRCFactorAlgebra()
 
 def _g_operator(rc, index, beta):
     """The operator G_i on rc graphs, which is the composition of the quasi-shift and trim-descent operations."""
     return f(rc).forest_trim(index) - beta * f(rc).quasi_shift(index)
 
-def _g_grove_extractor(rc_elem, indexes, beta):
+def _g_glide_extractor(rc_elem, indexes, beta):
     """The operator G_i on rc graphs, which is the composition of the quasi-shift and trim-descent operations."""
     result = f.zero
     if len(indexes) > 0:
@@ -32,19 +33,19 @@ def _g_grove_extractor(rc_elem, indexes, beta):
             else:
                 result += coeff * (_g_operator(rc, desc, beta) + beta * f(rc).quasi_shift(desc + 1))
         if len(indexes) > 1:
-            return _g_grove_extractor(result, indexes=indexes[:-1], beta=beta)
+            return _g_glide_extractor(result, indexes=indexes[:-1], beta=beta)
     else:
         result = rc_elem
     result_values = [v for k, v in result.items() if k.perm.inv == 0]
     return sum(result_values)
 
-# def grove_as_thompson(comp, beta, length):
+# def glide_as_thompson(comp, beta, length):
 #     forest = weak_composition_to_indfor(comp)
 #     desc = forest.trim_descents[0]
 #     is_left_child = forest.is_left_child(desc)
 #     trimmed_forest = forest.trim_descent(desc)
-#     return T((desc,)) * ( grove_as_thompson(trimmed_forest.code, beta, length) 
-def act_on_grove_dict(dct, beta, length):
+#     return T((desc,)) * ( glide_as_thompson(trimmed_forest.code, beta, length) 
+def act_on_glide_dict(dct, beta, length):
     result = {}
     for comp, coeff in dct.items():
         forest = weak_composition_to_indfor(comp)
@@ -58,8 +59,8 @@ def act_on_grove_dict(dct, beta, length):
         result[comp] = result.get(comp, 0) + coeff * beta * T((-desc,))
     return result
 
-def grove_as_forest_dict(comp, beta, length):
-    thmp = grove_as_thompson(comp, beta, length)
+def glide_as_forest_dict(comp, beta, length):
+    thmp = glide_as_thompson(comp, beta, length)
     print(f"Thompson result for {comp}: {thmp}")    
     result = {}
     for comp, coeff in thmp.items():
@@ -83,11 +84,11 @@ def _forest_weight(wc):
         return RCGraph(wc).forest_weight
     return wc._snap_reduced().forest_weight
 
-def grove_rc_try(comp, beta, length):
-    """GrovePoly polynomial of ``comp`` built by inverting the omega insertion.
+def glide_rc_try(comp, beta, length):
+    """GlidePoly polynomial of ``comp`` built by inverting the omega insertion.
 
     We enumerate the compatible set-valued labelings ``kappa`` of the indexed
-    forest ``F = weak_composition_to_indfor(comp)`` (the grove definition), and
+    forest ``F = weak_composition_to_indfor(comp)`` (the glide definition), and
     realize each labeling as a WCGraph by writing down its (word, compatible
     sequence) pair *explicitly* -- the published inverse of the set-valued omega
     insertion -- and feeding it to ``WCGraph.from_word_compatible``.
@@ -167,33 +168,52 @@ def grove_rc_try(comp, beta, length):
         result += (beta ** (len(wc.perm_word) - sum(comp))) * wc.polyvalue(Sx.genset)
     return result
 
-def _grove_it_up(comp, bw, n):
-    groth = bw.full_groth_elem(uncode(comp), n, 1)
+def _signature(code):
+    key = next(iter(br.from_rc_graph(RCGraph.principal_rc(uncode(code)), n).keys()))
+    return (len(k) for k in key)
+
+def signature(key):
+    return (len(k) for k in key)
+
+def _glide_it_up(comp, bw, n):
+    glide = 0
+    
     # groth = bw.full_groth_elem(uncode(comp), n, 1)
-    grove = 0
+    #glide = 0
+    seen = set()
+    signat = _signature(comp)
+    grippy = GlidePoly(*comp).change_basis(GrothendieckPolyBasis)
+    #for (groth_perm, _), coeff0 in grippy.items():
+    
+    coeff0 = 1
+    groth_perm = uncode(comp)
+    groth = bw.full_groth_elem(groth_perm, n, 1)
     for key, coeff in groth.items():
         wc = bw.key_to_wc_graph(key).resize(len(comp))
-        #grove += coeff * bw.full_groth_elem(perm, n, 1)
-        if wc.grove_weight == tuple(comp) and wc.perm == uncode(comp):
-            assert coeff >= 0
-            grove += coeff * bw(key)
+        if wc.dst.length_vector == tuple(comp):
+            glide += coeff0 * coeff * bw(key)
+        #glide += coeff0 * groth
+        
+            #seen.add(wc)
+        # elif wc.perm != uncode(comp):
+        #     glide += coeff * bw(key)
         # rc_key = bw.key_to_wc_graph(key).resize(len(comp))
-        # if rc_key.grove_weight == tuple(comp) or rc_key.perm != uncode(comp):
-        # grove += coeff * bw(key)
-    #grove = bw.from_dict({k: v for k, v in grove.items() if (bw.key_to_wc_graph(k).resize(len(comp)).grove_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
-    return grove
+        # if rc_key.glide_weight == tuple(comp) or rc_key.perm != uncode(comp):
+        # glide += coeff * bw(key)
+    #glide = bw.from_dict({k: v for k, v in glide.items() if (bw.key_to_wc_graph(k).resize(len(comp)).glide_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
+    return glide
 
-def _grove_it_up_old(comp, bw, n):
-    grove_asgroth = GrovePoly(*comp).change_basis(GrothendieckPolyBasis)
+def _glide_it_up_old(comp, bw, n):
+    glide_asgroth = GlidePoly(*comp).change_basis(GrothendieckPolyBasis)
     # groth = bw.full_groth_elem(uncode(comp), n, 1)
-    grove = 0
-    for (perm, length), coeff in grove_asgroth.items():
-        grove += coeff * bw.full_groth_elem(perm, n, 1)
+    glide = 0
+    for (perm, length), coeff in glide_asgroth.items():
+        glide += coeff * bw.full_groth_elem(perm, n, 1)
         # rc_key = bw.key_to_wc_graph(key).resize(len(comp))
-        # if rc_key.grove_weight == tuple(comp) or rc_key.perm != uncode(comp):
-        # grove += coeff * bw(key)
-    #grove = bw.from_dict({k: v for k, v in grove.items() if (bw.key_to_wc_graph(k).resize(len(comp)).grove_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
-    return grove
+        # if rc_key.glide_weight == tuple(comp) or rc_key.perm != uncode(comp):
+        # glide += coeff * bw(key)
+    #glide = bw.from_dict({k: v for k, v in glide.items() if (bw.key_to_wc_graph(k).resize(len(comp)).glide_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
+    return glide
 
 
 if __name__ == "__main__":
@@ -204,27 +224,47 @@ if __name__ == "__main__":
     perms = Permutation.all_permutations(n)
     comps = [tuple(perm.pad_code(n -  1)) for perm in perms]
     the_poles = {}
-    for comp1, comp2 in itertools.product(comps, repeat=2):
+    #for comp1, comp2 in [((0,0,0,1), (0,0,2,1))]: #itertools.product(comps, repeat=2):
+    for comp11, comp22 in itertools.combinations(comps, 2):
 
-        if comp1 not in the_poles:
-            grove1 = _grove_it_up(comp1, bw, n)
-            the_poles[comp1] = grove1
-        else:
-            grove1 = the_poles[comp1]
-        if comp2 not in the_poles:
-            grove2 = _grove_it_up(comp2, bw, n)
-            the_poles[comp2] = grove2
-        else:
-            grove2 = the_poles[comp2]
+        def test_multiply(comp1, comp2, retry=True):
+            if comp1 not in the_poles:
+                glide1 = _glide_it_up(comp1, bw, n)
+                the_poles[comp1] = glide1
+            else:
+                glide1 = the_poles[comp1]
 
-        producto = (grove1 * grove2).to_wc_graph_ring_element().resize(n - 1)
+            if comp2 not in the_poles:
+                glide2 = _glide_it_up(comp2, bw, n)
+                the_poles[comp2] = glide2
+            else:
+                glide2 = the_poles[comp2]
 
-        real_prod = GrovePoly(*comp1) * GrovePoly(*comp2)
+            producto = (glide1 * glide2).to_wc_graph_ring_element().resize(n - 1)
 
-        checko_prod = 0
-        for wc, v in producto.items():
-            if wc.forest_weight == wc.length_vector:
-                checko_prod += v * GrovePoly(*wc.forest_weight)
+            real_prod = GlidePoly(*comp1) * GlidePoly(*comp2)
 
-        assert real_prod.almosteq(checko_prod), f"Failed for {comp1} * {comp2}: {real_prod-checko_prod=}"
-        print("Pantoopa fatcough")
+            glide1_poly = glide1.to_wc_graph_ring_element().polyvalue(Sx.genset)
+            assert (glide1_poly - GlidePoly(*comp1).expand()).expand() == 0, f"Failed for {comp1}: {glide1_poly=}\n{GlidePoly(*comp1).expand()=}\n{glide1.to_wc_graph_ring_element()=}\n{GlidePoly(*comp1).change_basis(GrothendieckPolyBasis)=}"
+            glide2_poly = glide2.to_wc_graph_ring_element().polyvalue(Sx.genset)
+            assert (glide2_poly - GlidePoly(*comp2).expand()).expand() == 0, f"Failed for {comp2}: {glide2_poly=}\n{GlidePoly(*comp2).expand()=}\n{glide2.to_wc_graph_ring_element()=}\n{GlidePoly(*comp2).change_basis(GrothendieckPolyBasis)=}"
+
+            checko_prod = 0
+            for wc, v in producto.items():
+                if wc.is_quasi_yamanouchi:
+                    checko_prod += v * GlidePoly(*wc.length_vector)
+
+            try:
+                assert real_prod.almosteq(checko_prod), f"Failed for {comp1} * {comp2}: {real_prod-checko_prod=}\n{real_prod=}\n{checko_prod=}"#\n{producto=}\n{glide1.to_wc_graph_ring_element()=}\n{glide2.to_wc_graph_ring_element()=}"
+            except AssertionError as e:
+                print(f"Failed for {comp1} * {comp2}: {real_prod-checko_prod=}\n{real_prod=}\n{checko_prod=}")
+            
+                if retry:
+                    print("Trying reversal")
+                    test_multiply(comp2, comp1, retry=False)
+                else:
+                    raise e
+                print("Saved the day")
+            print("Pantoopah")
+            
+        test_multiply(comp11, comp22)

@@ -352,6 +352,7 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         return elem
 
 
+    @cache
     def full_groth_elem(self, perm, length, beta=1):
         from ..polynomial_algebra import GrothendieckPoly, SchubertPolyBasis
         # if beta != 1:

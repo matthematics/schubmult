@@ -2,9 +2,9 @@ from schubmult import *
 from schubmult.combinatorics.indexed_forests import *
 from schubmult.rings.combinatorial.forest_rc_ring import ForestRCGraphRing
 from schubmult.rings.polynomial_algebra import *
+from schubmult.rings.free_algebra import *
 from schubmult.symbolic.common_polys import *
 from schubmult.symbolic.poly.variables import *
-from schubmult.rings.polynomial_algebra import *
 from schubmult.utils._mul_utils import add_perm_dict
 from schubmult.utils.tuple_utils import pad_tuple
 
@@ -13,6 +13,7 @@ import itertools
 f = ForestRCGraphRing()
 
 T = ThompsonAlgebra()
+br = BoundedRCFactorAlgebra()
 
 def _g_operator(rc, index, beta):
     """The operator G_i on rc graphs, which is the composition of the quasi-shift and trim-descent operations."""
@@ -167,16 +168,32 @@ def grove_rc_try(comp, beta, length):
         result += (beta ** (len(wc.perm_word) - sum(comp))) * wc.polyvalue(Sx.genset)
     return result
 
+def _signature(code):
+    key = next(iter(br.from_rc_graph(RCGraph.principal_rc(uncode(code)), n).keys()))
+    return (len(k) for k in key)
+
+def signature(key):
+    return (len(k) for k in key)
+
 def _grove_it_up(comp, bw, n):
-    groth = bw.full_groth_elem(uncode(comp), n, 1)
-    # groth = bw.full_groth_elem(uncode(comp), n, 1)
     grove = 0
-    for key, coeff in groth.items():
-        wc = bw.key_to_wc_graph(key).resize(len(comp))
-        #grove += coeff * bw.full_groth_elem(perm, n, 1)
-        if wc.grove_weight == tuple(comp) and wc.perm == uncode(comp):
-            assert coeff >= 0
-            grove += coeff * bw(key)
+    
+    # groth = bw.full_groth_elem(uncode(comp), n, 1)
+    #grove = 0
+    seen = set()
+    signat = _signature(comp)
+    grippy = GrovePoly(*comp).change_basis(GrothendieckPolyBasis)
+    for (groth_perm, _), coeff0 in grippy.items():
+        groth = bw.full_groth_elem(groth_perm, n, GrovePoly._basis.beta)
+        for key, coeff in groth.items():
+            # wc = bw.key_to_wc_graph(key).resize(len(comp))
+            # #grove += coeff * bw.full_groth_elem(perm, n, 1)
+            # if wc.grove_weight == tuple(comp):# and wc not in seen:
+                #assert coeff >= 0
+            grove += coeff * coeff0 * bw(key)
+            #seen.add(wc)
+        # elif wc.perm != uncode(comp):
+        #     grove += coeff * bw(key)
         # rc_key = bw.key_to_wc_graph(key).resize(len(comp))
         # if rc_key.grove_weight == tuple(comp) or rc_key.perm != uncode(comp):
         # grove += coeff * bw(key)
@@ -204,6 +221,7 @@ if __name__ == "__main__":
     perms = Permutation.all_permutations(n)
     comps = [tuple(perm.pad_code(n -  1)) for perm in perms]
     the_poles = {}
+    #for comp1, comp2 in [((0,0,0,1), (0,0,2,1))]: #itertools.product(comps, repeat=2):
     for comp1, comp2 in itertools.product(comps, repeat=2):
 
         if comp1 not in the_poles:
@@ -211,6 +229,7 @@ if __name__ == "__main__":
             the_poles[comp1] = grove1
         else:
             grove1 = the_poles[comp1]
+
         if comp2 not in the_poles:
             grove2 = _grove_it_up(comp2, bw, n)
             the_poles[comp2] = grove2
@@ -221,10 +240,15 @@ if __name__ == "__main__":
 
         real_prod = GrovePoly(*comp1) * GrovePoly(*comp2)
 
+        grove1_poly = grove1.to_wc_graph_ring_element().polyvalue(Sx.genset)
+        assert (grove1_poly - GrovePoly(*comp1).expand()).expand() == 0, f"Failed for {comp1}: {grove1_poly=}\n{GrovePoly(*comp1).expand()=}\n{grove1.to_wc_graph_ring_element()=}\n{GrovePoly(*comp1).change_basis(GrothendieckPolyBasis)=}"
+        grove2_poly = grove2.to_wc_graph_ring_element().polyvalue(Sx.genset)
+        assert (grove2_poly - GrovePoly(*comp2).expand()).expand() == 0, f"Failed for {comp2}: {grove2_poly=}\n{GrovePoly(*comp2).expand()=}\n{grove2.to_wc_graph_ring_element()=}\n{GrovePoly(*comp2).change_basis(GrothendieckPolyBasis)=}"
+
         checko_prod = 0
         for wc, v in producto.items():
-            if wc.forest_weight == wc.length_vector:
-                checko_prod += v * GrovePoly(*wc.forest_weight)
+            if wc.grove_weight == wc.length_vector:
+                checko_prod += v * GrovePoly(*wc.grove_weight)
 
-        assert real_prod.almosteq(checko_prod), f"Failed for {comp1} * {comp2}: {real_prod-checko_prod=}"
+        assert real_prod.almosteq(checko_prod), f"Failed for {comp1} * {comp2}: {real_prod-checko_prod=}\n{real_prod=}\n{checko_prod=}"#\n{producto=}\n{grove1.to_wc_graph_ring_element()=}\n{grove2.to_wc_graph_ring_element()=}"
         print("Pantoopa fatcough")
