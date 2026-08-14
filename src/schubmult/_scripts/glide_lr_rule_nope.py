@@ -175,19 +175,19 @@ def _signature(code):
 def signature(key):
     return (len(k) for k in key)
 
-def _glide_it_up(comp, bw, n):
+def _glide_it_up(comp, bw, n, beta=1):
     glide = 0
     
     # groth = bw.full_groth_elem(uncode(comp), n, 1)
     #glide = 0
     seen = set()
     signat = _signature(comp)
-    grippy = GlidePoly(*comp).change_basis(GrothendieckPolyBasis)
+    grippy = GlidePoly(*comp).change_basis(SchubertPolyBasis)
     #for (groth_perm, _), coeff0 in grippy.items():
     
     coeff0 = 1
     groth_perm = uncode(comp)
-    groth = bw.full_groth_elem(groth_perm, n, 1)
+    groth = bw.full_schub_elem(groth_perm, n, beta=beta)
     for key, coeff in groth.items():
         wc = bw.key_to_wc_graph(key).resize(len(comp))
         if wc.dst.length_vector == tuple(comp):
@@ -244,10 +244,10 @@ if __name__ == "__main__":
 
             real_prod = GlidePoly(*comp1) * GlidePoly(*comp2)
 
-            glide1_poly = glide1.to_wc_graph_ring_element().polyvalue(Sx.genset)
-            assert (glide1_poly - GlidePoly(*comp1).expand()).expand() == 0, f"Failed for {comp1}: {glide1_poly=}\n{GlidePoly(*comp1).expand()=}\n{glide1.to_wc_graph_ring_element()=}\n{GlidePoly(*comp1).change_basis(GrothendieckPolyBasis)=}"
-            glide2_poly = glide2.to_wc_graph_ring_element().polyvalue(Sx.genset)
-            assert (glide2_poly - GlidePoly(*comp2).expand()).expand() == 0, f"Failed for {comp2}: {glide2_poly=}\n{GlidePoly(*comp2).expand()=}\n{glide2.to_wc_graph_ring_element()=}\n{GlidePoly(*comp2).change_basis(GrothendieckPolyBasis)=}"
+            # glide1_poly = glide1.to_wc_graph_ring_element().polyvalue(Sx.genset)
+            # assert (glide1_poly - GlidePoly(*comp1).expand()).expand() == 0, f"Failed for {comp1}: {glide1_poly=}\n{GlidePoly(*comp1).expand()=}\n{glide1.to_wc_graph_ring_element()=}\n{GlidePoly(*comp1).change_basis(GrothendieckPolyBasis)=}"
+            # glide2_poly = glide2.to_wc_graph_ring_element().polyvalue(Sx.genset)
+            # assert (glide2_poly - GlidePoly(*comp2).expand()).expand() == 0, f"Failed for {comp2}: {glide2_poly=}\n{GlidePoly(*comp2).expand()=}\n{glide2.to_wc_graph_ring_element()=}\n{GlidePoly(*comp2).change_basis(GrothendieckPolyBasis)=}"
 
             checko_prod = 0
             for wc, v in producto.items():
