@@ -878,15 +878,15 @@ $$\log_2 J(m)\ \geq\ \sum_{i=0}^{\lfloor\log_2 m\rfloor-3}\log_2\Big\lfloor\tfra
 Finally $J(m)\leq (m+1)\max_p I(p,m)\leq (m+1)\,C(m)$, so $\log_2 C(m)\geq \log_2 J(m)-\log_2(m+1)=\Omega(\log^2 m)$, whence $\log_2 E_n\geq \log_2 C(n-1)=\Omega(\log^2 n)$.
 \end{proof}
 
-\begin{definition}
-Define 
-$$N_m(u,v)=\#\{w\mid \ell(u,w)\leq m\text{ and }[\sch_w(x;y)](\sch_u(x;y)\sch_v(x;z))\neq 0\}.$$
-If $m$ is omitted, the assumption is that $m=\ell(v)$.
-\end{definition}
+% \begin{definition}
+% Define 
+% $$N_m(u,v)=\#\{w\mid \ell(u,w)\leq m\text{ and }[\sch_w(x;y)](\sch_u(x;y)\sch_v(x;z))\neq 0\}.$$
+% If $m$ is omitted, the assumption is that $m=\ell(v)$.
+% \end{definition}
 
 \begin{theorem}[Complexity of \textbf{\textsc{schubmult}}] \label{thm:complexity}
 The number of coefficient-ring operations performed by $\textbf{\textsc{schubmult}}(u,v)$ is
-$$O\!\left(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n\right)$$
+$$O\!\left(n^4\Lambda(\mdom{v})^2N(u,\mdom{v})E_n\right)$$
 % where $P_u$, $V$, $B$, $\Delta$, $E_n$ are as in Definition~\ref{def:complexityquantities} and $\Phi_v$ is the $v$-side precomputation cost of Proposition~\ref{prop:kdowncomplexity}. 
 % Writing that bound as $2^{\,f(n)+O(\log n)}$,
 % $$f(n)=2n\log_2 n+(3-2\log_2 e)\,n+\Theta(\log^2 n),$$
@@ -920,12 +920,12 @@ $$W\;=\;\sum_{i=1}^{L}\ \sum_{(w,v')\in\Phi_i}\beta_i(w)\,\delta(v')$$
 times, where $\beta_i(w):=|\textbf{\textsc{pieri}}(w,\theta_i,\theta_i)|$ and $\delta_i(v')$ is the number of directed edges with source $v'$ in column $i$. Bounding $\beta_i(w)=O(n^3)$, $L<n$, and
 $$\delta_i(v') = O(\Lambda(\mdom{v}))$$
 along with
-$$\sum_{i=1}^L|\Phi_i| = LO(\Lambda(\mdom{v})N_{\ell(v)}(u,\mdom{v}))$$
+$$\sum_{i=1}^L|\Phi_i| = LO(\Lambda(\mdom{v})N(u,\mdom{v}))$$
 since each $w$ can be visited up to $L$ times gives 
-$$W = O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v}))$$
+$$W = O(n^4\Lambda(\mdom{v})^2N(u,\mdom{v}))$$
 Each executed iteration constructs one factorial elementary symmetric polynomial $E_{p,m}(y;z)$ (with $p\leq m\leq\theta_i\leq n-1$) by the unmemoized divide-and-conquer recursion of Lemma~\ref{lemma:elemsymsplit}, a fresh evaluation costing up to $E_n$ ring operations (Definition~\ref{def:complexityquantities}); the ensuing sign multiplication, ring addition, and $O(n)$ bookkeeping are lower-order. Hence the matched-pair cost is 
-$$O(W\cdot E_n)=O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n)$$
-For the dominant case, $\mdom{v}=v$ and the $v$ graph collapses to the identity, so the two $\Lambda(\mdom{v})$ terms disappear and $N_{\ell(v)}(u,\mdom{v})=N(u,v)$, yielding
+$$O(W\cdot E_n)=O(n^4\Lambda(\mdom{v})^2N(u,\mdom{v})E_n)$$
+For the dominant case, $\mdom{v}=v$ and the $v$ graph collapses to the identity, so the two $\Lambda(\mdom{v})$ terms disappear and $N(u,\mdom{v})=N(u,v)$, yielding
 $$O(n^4N(u,v)E_n)$$
 as desired.
 % Summing the three parts gives
@@ -983,6 +983,8 @@ and constant on Tamari classes, with equality on the left for $v$ $312$-avoiding
 The upper parameter $N^\uparrow(u,v)$ is itself an output size. By definition $N^\uparrow(u,v)=N(u,\mdom{v})$ is the number of terms of the product $\sch_u(x;y)\,\sch_{\mdom{v}}(x;z)$ computed for the dominant permutation $\mdom{v}$ at the top of the Tamari class of $v$. The cost bounds below are thus output-polynomial in the honest sense, being polynomial in the size of an actual instance of the problem, differing from the instance $(u,v)$ only in that $v$ is advanced to the top of its class.
 
 Theorem~\ref{thm:Nupdown} fixes the role this parameter plays. Since $N^\uparrow(u,-)$ is weakly increasing in left weak order and constant on Tamari classes, it is the maximum of $N(u,v')$ over the class of $v$, attained at the dominant element $\mdom{v}$, and it dominates the counts $N(u,v')$ for every $v'$ in every class lying below that of $v$ in the Tamari order. The Tamari class of $v$ is the locus over which the count varies: $N(u,v)$ grows as $v$ ascends toward $\mdom{v}$, reaching $N^\uparrow(u,v)$ at the top, and the runtime is bounded polynomially by that top value throughout.
+
+At the two extremes of the class the $v$-side Schubert polynomial takes an especially simple closed form, from which the term count is read off directly. The top $\mdom{v}$ is dominant, equivalently $132$-avoiding, and $\sch_{\mdom{v}}(x;z)$ is a single product of \emph{top-degree} factorial elementary symmetric polynomials, one full factor $E_{m_i,m_i}$ per column of its diagram. The bottom $\ddom{v}$ is $312$-avoiding, so by Theorem~\ref{thm:Nupdown} it realizes the lower count, $N(u,\ddom{v})=N_\downarrow(u,v)$; when it avoids $1432$ as well it is \emph{single-SEM} in the sense of Woodruff~\cite{woodruff2025single}, meaning $\sch_{\ddom{v}}(x;z)$ is again a single product of factorial elementary symmetric polynomials, now with at least one factor $E_{p_i,m_i}$ of degree $p_i<m_i$ below top degree, but with the same variable counts $m_i$ as the dominant top of the class. Woodruff proves this for the ordinary polynomial; the double form follows from it together with $\textbf{\textsc{elemrepr}}$. A single SEM is one path through the layered product of $\textbf{\textsc{elemrepr}}$, carrying no signs and admitting no cancellation, so at both ends of the class the count is controlled by the common shape data $\{(p_i,m_i)\}$ and is estimated directly from it.
 
 It is possible to bound $N^\uparrow(u,v)$ above nontrivially.
 
@@ -1116,8 +1118,8 @@ is an ideal of weak order on $S_n$.
 % $$O\!\left(n^{4}\Lambda(\mdom{v})^2N^\uparrow(u,v)\right)$$
 % \end{theorem}
 % \begin{proof}
-% By Theorem~\ref{thm:complexity} the cost is $O(n^4\Lambda(\mdom{v})^2N_{\ell(v)}(u,\mdom{v})E_n)$. Since $v\leq_L\mdom{v}$ we have $\ell(v)\leq\ell(\mdom{v})$, and $N_m(u,w)$ is weakly increasing in $m$, so
-% $$N_{\ell(v)}(u,\mdom{v})\leq N_{\ell(\mdom{v})}(u,\mdom{v})=N(u,\mdom{v})=N^\uparrow(u,v)$$
+% By Theorem~\ref{thm:complexity} the cost is $O(n^4\Lambda(\mdom{v})^2N(u,\mdom{v})E_n)$. Since $v\leq_L\mdom{v}$ we have $\ell(v)\leq\ell(\mdom{v})$, and $N_m(u,w)$ is weakly increasing in $m$, so
+% $$N(u,\mdom{v})\leq N)}(u,\mdom{v})=N(u,\mdom{v})=N^\uparrow(u,v)$$
 % Substituting gives the first bound. The ordinary case traverses the same witnesses with the same signs, the weight attached to each being $1$ rather than a factorial elementary symmetric polynomial, so its cost is the same with the factor $E_n$ deleted, and the second bound follows by the same substitution.
 % \end{proof}
 
