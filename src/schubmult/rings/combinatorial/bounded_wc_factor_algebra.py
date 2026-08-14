@@ -396,16 +396,51 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
     def __hash__(self):
         return hash(("BoundedWCFactorAlgebra", self._ID))
 
-    def elem_sym(self, p, k, size, beta=1):
+    # def elem_sym(self, p, k, size, beta=1):
+    #     from schubmult import uncode
+
+    #     from ..polynomial_algebra import GrothendieckPolyBasis, Schub
+    #     res = 0
+    #     schub_elem = Schub(uncode([0] * (k - p) + [1] * p), k).change_basis(GrothendieckPolyBasis)
+    #     for (perm, length), coeff in schub_elem.items():
+    #         res += self.from_dict({self.make_key((rc,), size): coeff*beta**(len(rc.perm_word) - p) for rc in WCGraph.all_wc_graphs(uncode([0] * (perm.max_descent - perm.inv) + [1] * perm.inv), perm.max_descent)})
+    #     return res
+
+    def elem_sym(self, p, k, size, beta=1, weight=None):
         from schubmult import uncode
 
         from ..polynomial_algebra import GrothendieckPolyBasis, Schub
         res = 0
         schub_elem = Schub(uncode([0] * (k - p) + [1] * p), k).change_basis(GrothendieckPolyBasis)
         for (perm, length), coeff in schub_elem.items():
-            res += self.from_dict({self.make_key((rc,), size): coeff*beta**(len(rc.perm_word) - p) for rc in WCGraph.all_wc_graphs(uncode([0] * (perm.max_descent - perm.inv) + [1] * perm.inv), perm.max_descent)})
+            res += self.from_dict({self.make_key((rc,), size): coeff*beta**(len(rc.perm_word) - p) for rc in WCGraph.all_wc_graphs(uncode([0] * (perm.max_descent - perm.inv) + [1] * perm.inv), perm.max_descent, weight=weight)})
         return res
 
+    def from_brc_elem(self, brc_elem, beta=1):
+        from ..polynomial_algebra import GrothendieckPolyBasis, Schub
+        res = 0
+        for key, coeff in brc_elem.items():
+            key_elem = 1
+            for rc in key:
+                if rc.perm.inv > 0:
+                    muller = 0
+                    groth_elem = Schub(rc.perm, len(rc)).change_basis(GrothendieckPolyBasis)
+                    for (permperm, _), coeff2 in groth_elem.items():
+                        muller += coeff2 * self.elem_sym(permperm.inv, len(rc), key.size, beta=beta, weight=rc.length_vector)
+                    key_elem *= muller
+            res += coeff * key_elem
+        return res
+
+    def to_brc_elem(self, elem):
+        from .bounded_rc_factor_algebra import BoundedRCFactorAlgebra
+        res = 0
+        br = BoundedRCFactorAlgebra()
+        for key, coeff in elem.items():
+            key_elem = 1
+            for rc in key:
+                key_elem *= br.elem_sym(len(rc.perm_word), rc.perm.max_descent, key.size, weight=rc.length_vector)
+            res += coeff * key_elem
+        return res
 
     def printing_term(self, key):
         return BoundedWCFactorPrintingTerm(key)

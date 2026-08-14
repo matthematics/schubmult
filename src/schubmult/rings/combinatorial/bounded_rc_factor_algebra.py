@@ -458,11 +458,11 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
     def __hash__(self):
         return hash(("BoundedRCFactorAlgebra", self._ID))
 
-    def elem_sym(self, p, k, size):
+    def elem_sym(self, p, k, size, weight=None):
         from schubmult import uncode
 
         # size = k if size is None else size
-        set_of_keys = [self.make_key((rc,), size) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k)]
+        set_of_keys = [self.make_key((rc,), size) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k, weight=weight)]
         # result = self.zero
         # if coeffvars is not None:
         #     for key in set_of_keys:
