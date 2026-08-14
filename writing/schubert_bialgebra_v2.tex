@@ -2329,23 +2329,23 @@ $\Omega$ is a two-sided ideal of $\BRC$.
   and $\trm^{k}(W_1') = W_1$, $\trm^{k}(W_2') = W_2$. Assume also that the first $k$ rows of $W_1'$ and $W_2'$ are identical. Let this set of rows be denoted $A'$. Then 
 $$\wof{W_1'}=\wof{A'}\wof{W_1}=\wof{A'}\wof{W_2}=\wof{W_2'}$$ 
 For each such $A'$ that is the unaltered first $k$ rows of a RC graph $W'$ with $\hr(W')=m+k$, $\clp^k(W')=A$, with empty last $m$ rows, we obtain exactly one pair of $W_1'$ and $W_2'$ satisfying the above conditions. Therefore, 
-$$A\sqcupplus(W_1-W_2) = \sum_{\substack{\clp^{\hr(A)}(W_1')=\clp^{\hr(A)}(W_2')=A\\\trm^{\hr(A)}(W_1')=W_1\\\trm^{\hr(A)}(W_2')=W_2}} (W_1' - W_2') \in \Omega.$$
+$$A\sqcupplus(W_1-W_2) = \sum_{\substack{\clp^k(W_1')=\clp^k(W_2')=A\\\trm^k(W_1')=W_1\\\trm^k(W_2')=W_2}} (W_1' - W_2') \in \Omega.$$
 For the right ideal property, let $W_1$, $W_2$, and $A$ be as above. Then
-$$(W_1-W_2)\sqcupplus A = \sum_{\substack{\clp^{\hr(W_1)}(W_1')=W_1\\\clp^{\hr(W_2)}(W_2')=W_2\\\trm^{\hr(W_1)}(W_1')=\trm^{\hr(W_2)}(W_2')=A}} (W_1' - W_2')$$
-Assume first that $A$ is a single empty row. Then we know that for each $w'\in S_\infty$ there is at most one $W_1'$ with $\wof{W_1'}=w'$, $\clp^{m}(W_1')=W_1$, and $\trm^{m}(W_1')=A$, and similarly there is at most one $W_2'$ with $\wof{W_2'}=w'$, $\clp^m(W_2')=W_2$, and $\trm^m(W_2)=A$. We know that
+$$(W_1-W_2)\sqcupplus A = \sum_{\substack{\clp^m(W_1')=W_1\\\clp^m(W_2')=W_2\\\trm^m(W_1')=\trm^m(W_2')=A}} (W_1' - W_2')$$
+Assume first that $A$ is a single empty row.  We know that
 $$\zeromap:\RC_{m+1}(w')\to \bigcup_{w'\downvar{m + 1} w}\RC_{m}^0(w)$$
-is a bijection, so for each $w'$ there is exactly one such $W_1'$ and exactly one such $W_2'$ if and only if either $W_1'$ or $W_2'$ exists. In either case, we have $\wof{W_1'}=\wof{W_2'}$, so $W_1'-W_2'\in\Omega$. Therefore, the sum is of differences of pairs of WC graphs, both with the same permutation, each with coefficient $1$, so that $(W_1-W_2)\sqcupplus A\in\Omega$. 
+is a bijection, so that for each $w'\in S_\infty$ there is at most one $W_1'\in \RC_{m+1}(w')$  satisfying $\clp^{m}(W_1')=W_1$ and $\trm^{m}(W_1')=A$, and this is true if and only if there is a (unique) $W_2'\in \RC_{m+1}(w')$ with $\clp^m(W_2')=W_2$ and $\trm^m(W_2')=A$. For each such pair, we have $\wof{W_1'}=\wof{W_2'}$, so $W_1'-W_2'\in\Omega$. Therefore, the sum is of differences of pairs of WC graphs, both with the same permutation, each with coefficient $1$, so that $(W_1-W_2)\sqcupplus A\in\Omega$. 
 
-Though we have proved this only for a single empty row, the result follows if we can show it is still true for $A$ consisting of $k>1$ empty rows for any $k$, which is easily seen by associativity and an inductive argument. For arbitrary $A$ the product is identical to that of $A$ empty, except for the last $k$ rows being replaced with $\shup^{m}A$. Thus, $\Omega$ is a two-sided ideal of $\BRC$.
+Though we have proved this only for a single empty row, the result follows if we can show it is still true for $A$ consisting of $k>1$ empty rows for any $k$, which is easily seen by associativity and an inductive argument. For arbitrary $A$ the product is identical to that of $A$ empty, except for the last $k$ rows being replaced with $\shup^{m}A$, with the stipulation that the RC graph must remain reduced, which depends only on the permutation of the first $m$ rows. Thus, $\Omega$ is a two-sided ideal of $\BRC$.
 \end{proof}
 
 \begin{theorem} \label{theorem:semidirect}
   We have that $\alpha:\BRC\to \dcoma$ is a surjective homomorphism of rings with kernel $\Omega$, and the homomorphism $\iota:\dcoma\to\BRC$ sending $[i]\mapsto \mathtt{row}(i)$ is a right inverse to $\alpha$. In particular, $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{theorem}
 \begin{proof}
-  For RC graphs $R_1,R_2$, we have that $\alpha(R_1)=\alpha(R_2)$ if and only if $\wof{R_1}=\wof{R_2}$ and $\hr(R_1)=\hr(R_2)$. Therefore the kernel of $\alpha$ is precisely $\Omega$. We thus have an exact sequence
+  For RC graphs $R_1,R_2$, we have that $\alpha(R_1)=\alpha(R_2)$ if and only if $\wof{R_1}=\wof{R_2}$ and $\hr(R_1)=\hr(R_2)$. Therefore the kernel of $\alpha$ is precisely $\Omega$. Since $\Omega$ is a two-sided ideal, we can conclude that $\alpha$ is in fact a homomorphism of rings. We thus have an exact sequence of ring homomorphisms
 $$0\to \Omega\to \BRC\to \dcoma\to 0$$
-where the map $\BRC\to \dcoma$ is $\alpha$. We have a homomorphism $\iota:\dcoma\to \BRC$ sending $[i]\mapsto \mathtt{row}(i)$ inducing an isomorphism on $\mathcal{R}$ by Lemma \ref{lemma:schubertrow}, and the composition $\dcoma\to \BRC\to \dcoma$ is the identity since $\alpha(\mathtt{row}(i)) = [i]$. Since $\Omega$ is a two-sided ideal, we can conclude that $\alpha$ is in fact a homomorphism of rings. Since $\BRC = \mathcal{R}\oplus \Omega$ by virtue of the fact that the sequence is split (which is due to the evident section $\iota$), and $\mathcal{R}\cong \dcoma$, we have $\BRC\cong \dcoma\ltimes \Omega$ as rings.
+where the map $\BRC\to \dcoma$ is $\alpha$. We have a homomorphism $\iota:\dcoma\to \BRC$ sending $[i]\mapsto \mathtt{row}(i)$ inducing an isomorphism on $\mathcal{R}$ by Lemma \ref{lemma:schubertrow}, and the composition $\dcoma\to \BRC\to \dcoma$ is the identity since $\alpha(\mathtt{row}(i)) = [i]$.  By virtue of the existence of the section $\iota$, we have that $\BRC = \mathcal{R}\oplus \Omega$, and $\mathcal{R}\cong \dcoma$, we have $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{proof}
 
 % \begin{proposition}
