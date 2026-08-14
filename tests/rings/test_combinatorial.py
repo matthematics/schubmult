@@ -339,4 +339,4 @@ def test_bounded_wc_factor_algebra_multiplies_grothendiecks():
             elem2 = ring.full_groth_elem(perm2, n + 2, Gx._beta)
             prod = (elem1 * elem2).to_wc_graph_ring_element()
             expected_prod = Gx(perm1) * Gx(perm2)
-            assert all(expected_prod.get(wc_result.perm, 0) == c * Gx._beta**(wc_result.perm.inv - perm1.inv - perm2.inv) for wc_result, c in prod.items() if wc_result.is_reduced), f"Error: Bounded WC factor algebra multiplication mismatch for permutations {perm1} and {perm2}, {prod=} {expected_prod=}"
+            assert all(expected_prod.get(wc_result.perm, 0) == c * Gx._beta**(len(wc_result.perm_word) - wc_result.perm.inv) for wc_result, c in prod.items() if wc_result.is_reduced), f"Error: Bounded WC factor algebra multiplication mismatch for permutations {perm1} and {perm2}, {prod=} {expected_prod=}"
