@@ -135,6 +135,7 @@
 %%
 %% This is the end of the preamble.
 %% 
+\raggedbottom
 \title{A Littlewood--Richardson rule for forest polynomials via the Schubert bialgebra}
 \author{Matthew J. Samuel}
 
@@ -1310,7 +1311,7 @@ This ensures that the product remains as desired if the RC graph is valid. Howev
 \end{proof}
 
 
-\begin{lemma}
+\begin{lemma} \label{lemma:zeroweight}
 Given a bounded RC graph $R$ with $\hr(R)=n$ such that row $n$ is empty, Algorithm \ref{algorithm:zero} produces a valid bounded RC graph $R'$ with $\hr(R')=n-1$ satisfying
 $$\wtt(R') = \wtt(R)$$
 \end{lemma}
@@ -1396,29 +1397,85 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 
 \subsection{Definition of the ring product}\label{section:ringproduct}
 
+We first make precise the two row-decomposition maps $\trm^p$ and $\clp^p$ that were described informally in the introduction.
+
+\begin{definition}[Trim and clip]\label{definition:clptrm}
+Let $R$ be a bounded RC graph with $\hr(R)=n$ and let $0\leq p\leq n$.
+
+The \emph{trim} $\trm^p(R)$ is the $p$-fold iterate of the map $\trm$ of Definition \ref{definition:rcgraph}; explicitly, $\trm^p(R)$ is the bounded RC graph with $n-p$ rows given by
+$$\trm^p(R)=\{(i-p,\,j-p)\mid (i,j)\in R,\ i>p\}.$$
+
+For the \emph{clip}, let
+$$S=\{(i,j)\in R\mid i\leq p\}$$
+be the set of crossings of $R$ lying in the first $p$ rows. In the total order of Definition \ref{definition:rcgraph} these form an initial segment of $R$, so $\mathrm{word}(S)$ is a prefix of $\mathrm{word}(R)$ and is therefore reduced; hence $S$ is an RC graph. It need not be a bounded RC graph with $p$ rows, since $\maxd(\wof S)$ may exceed $p$. Set
+$$h=\max\{p,\ \maxd(\wof S)\},$$
+regard $S$ as a bounded RC graph with $h$ rows, and define
+$$\clp^p(R)=\zeromap^{\,h-p}(S),$$
+a bounded RC graph with $p$ rows.
+\end{definition}
+
+The iteration in Definition \ref{definition:clptrm} is legitimate: all crossings of $S$ lie in rows $1,\ldots,p$, and by Lemma \ref{lemma:zeroweight} each application of $\zeromap$ preserves the weight vector, so every intermediate bounded RC graph again has all of its crossings in rows $1,\ldots,p$ and in particular has an empty last row, which is the hypothesis under which $\zeromap$ is defined.
+
+Two immediate consequences of this definition will be used constantly.
+
+\begin{lemma}[The clip is insensitive to the number of rows]\label{lemma:clipstable}
+Let $R$ be a bounded RC graph, let $0\leq p\leq \hr(R)$, and let $S$ and $h$ be as in Definition \ref{definition:clptrm}. If instead we regard $S$ as a bounded RC graph with $h'$ rows for any $h'\geq h$, then
+$$\zeromap^{\,h'-p}(S)=\clp^p(R).$$
+\end{lemma}
+\begin{proof}
+It suffices to treat $h'=h+1$ and to induct. Since $\maxd(\wof S)\leq h<h'$ and all crossings of $S$ lie in rows $1,\ldots,p$, the last row of $S$ is empty and deleting it leaves a valid bounded RC graph, namely $S$ with $h'-1$ rows. Hence the first branch of Algorithm \ref{algorithm:zero} applies, and $\zeromap$ returns exactly that. The remaining $h'-1-p$ iterations then compute $\clp^p(R)$ by definition.
+\end{proof}
+
+\begin{lemma}[The clip is local to the top rows]\label{lemma:cliplocal}
+Let $R$ and $R'$ be bounded RC graphs with $\hr(R)\geq p$ and $\hr(R')\geq p$, and suppose
+$$\{(i,j)\in R\mid i\leq p\}=\{(i,j)\in R'\mid i\leq p\}.$$
+Then $\clp^p(R)=\clp^p(R')$. Moreover $\clp^p(R)=R$ whenever $\hr(R)=p$.
+\end{lemma}
+\begin{proof}
+Definition \ref{definition:clptrm} constructs $\clp^p(R)$ out of the set $S$ and the integer $p$ alone, making no further reference to $R$ or to $\hr(R)$; the hypothesis says precisely that $R$ and $R'$ give rise to the same $S$, so the first assertion follows. For the second, suppose $\hr(R)=p$. Then every crossing of $R$ lies in rows $1,\ldots,p$, so $S=R$ as sets, and $\maxd(\wof R)\leq p$ since $R$ is a bounded RC graph with $p$ rows. Hence $h=p$, so $S$ is regarded as having $p$ rows and no iteration is performed, giving $\clp^p(R)=R$.
+\end{proof}
+
 \begin{definition}\label{definition:ringproduct}
 Suppose we have two bounded RC graphs $R_1$ with $\hr(R_1)=m$ and $R_2$ with $\hr(R_2)=n$. The product of these is defined by
 $$R_1\sqcupplus R_2 = \sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}}R'$$  
 where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
 \end{definition}
 
-Associativity of $\sqcupplus$ rests on two structural identities relating $\clp^p$ and $\trm^p$: a functoriality of $\clp$ under iteration, and a commutativity of $\clp$ with $\trm$.
-
-\begin{lemma} \label{lemma:clpfunc}
-Let $R$ be a bounded RC graph with $\hr(R)=n$, and let $0\leq p\leq p+q\leq n$. Then
-$$\clp^p(\clp^{p+q}(R))=\clp^p(R).$$
-\end{lemma}
-\begin{proof}
-By definition, $\clp^k(R')$ is computed by iterating the row-zeroing map $\zeromap$ on the bottom row, one row at a time, until the height drops to $k$. Set $r=n-(p+q)$, so that $\clp^{p+q}(R)$ is obtained from $R$ by $r$ successive applications of $\zeromap$ to the bottom row, and $\clp^p(R)$ is obtained from $R$ by $r+q$ such applications. The first $r$ applications of $\zeromap$ in the computation of $\clp^p(R)$ produce exactly $\clp^{p+q}(R)$; the remaining $q$ applications then produce $\clp^p(\clp^{p+q}(R))$. Hence the two compositions agree.
-\end{proof}
+Associativity of $\sqcupplus$ rests on two structural identities relating $\clp^p$ and $\trm^p$: a commutativity of $\clp$ with $\trm$, and a functoriality of $\clp$ under iteration. The first is a formal consequence of Lemma \ref{lemma:ztrim} and Lemma \ref{lemma:clipstable}; the second carries genuine combinatorial content.
 
 \begin{lemma}[Commutativity of $\clp$ and $\trm$] \label{lemma:clptrm}
 Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. Then
 $$\trm^p(\clp^{p+q}(R))=\clp^q(\trm^p(R)).$$
 \end{lemma}
 \begin{proof}
-Both sides have height $q$. Lemma \ref{lemma:ztrim} asserts $\zeromap(\trm(R'))=\trm(\zeromap(R'))$ for any $R'$ whose last row is empty. Since $\clp^{p+q}$ on a graph of height $p+q+r$ and $\clp^q$ on a graph of height $q+r$ are both equal to the $r$-fold iterate of $\zeromap$ on the bottom row (cf.\ Lemma \ref{lemma:clpfunc}), iterating Lemma \ref{lemma:ztrim} $r$ times gives
-$$\trm^p(\clp^{p+q}(R))=\trm^p(\zeromap^r(R))=\zeromap^r(\trm^p(R))=\clp^q(\trm^p(R)),$$
+Both sides have $q$ rows. Set
+$$S=\{(i,j)\in R\mid i\leq p+q\},\qquad S''=\{(i,j)\in \trm^p(R)\mid i\leq q\},$$
+the sets arising in Definition \ref{definition:clptrm} for the two clips. Unwinding the definition of $\trm^p$, the set $S''$ consists of the crossings of $R$ in rows $p+1,\ldots,p+q$ shifted up by $p$, so applying $\trm^p$ to $S$ regarded as having $h'$ rows yields $S''$ regarded as having $h'-p$ rows, for every $h'$ for which both are defined.
+
+Now choose $h'$ at least as large as both of the integers $h$ produced by Definition \ref{definition:clptrm} for the two clips, the second increased by $p$. By Lemma \ref{lemma:clipstable} we may compute both clips with $S$ and $S''$ regarded as having $h'$ and $h'-p$ rows respectively, and by Lemma \ref{lemma:ztrim}, iterated, the maps $\trm^p$ and $\zeromap$ commute on bounded RC graphs with empty last row. Since $(h'-p)-q=h'-(p+q)$, the two iterations have the same length, and
+$$\trm^p\bigl(\clp^{p+q}(R)\bigr)=\zeromap^{\,h'-(p+q)}\bigl(\trm^p(S)\bigr)=\zeromap^{\,(h'-p)-q}(S'')=\clp^q\bigl(\trm^p(R)\bigr),$$
+as required.
+\end{proof}
+
+\begin{lemma}[Clipping absorbs a zeroing step]\label{lemma:clipzero}
+Let $S$ be a bounded RC graph with $\hr(S)=h$ and empty last row, and let $0\leq p<h$. Then
+$$\clp^p(\zeromap(S))=\clp^p(S).$$
+\end{lemma}
+\begin{proof}
+We induct on $h$. Suppose first that $p=h-1$. Since row $h$ of $S$ is empty, every crossing of $S$ lies in rows $1,\ldots,h-1$, so the set arising in Definition \ref{definition:clptrm} for $\clp^{h-1}(S)$ is all of $S$, and the associated integer is $\max\{h-1,\maxd(\wof S)\}$. As $S$ is a bounded RC graph with $h$ rows we have $\maxd(\wof S)\leq h$, so this integer is $h$ if $\maxd(\wof S)=h$ and is $h-1$ otherwise. In the first case $\clp^{h-1}(S)=\zeromap(S)$ directly from the definition. In the second case $\clp^{h-1}(S)$ is $S$ regarded as having $h-1$ rows, and the first branch of Algorithm \ref{algorithm:zero} shows $\zeromap(S)$ is the same. Either way $\clp^{h-1}(S)=\zeromap(S)$, and since $\zeromap(S)$ has $p=h-1$ rows, Lemma \ref{lemma:cliplocal} gives $\clp^{p}(\zeromap(S))=\zeromap(S)$. So the case $p=h-1$ holds.
+
+Now suppose $p<h-1$, and write $X=\clp^p(\zeromap(S))$ and $Y=\clp^p(S)$, both with $p$ rows. If $p=0$ both are the empty bounded RC graph with no rows, so assume $p\geq 1$. Applying Lemma \ref{lemma:clptrm} twice, then Lemma \ref{lemma:ztrim}, then the inductive hypothesis for $\trm(S)$, which has $h-1$ rows and empty last row, we obtain
+$$\trm(X)=\clp^{p-1}\bigl(\trm(\zeromap(S))\bigr)=\clp^{p-1}\bigl(\zeromap(\trm(S))\bigr)=\clp^{p-1}\bigl(\trm(S)\bigr)=\trm(Y).$$
+Moreover $\wtt(X)=\wtt(Y)$: by Lemma \ref{lemma:zeroweight} every application of $\zeromap$ preserves the weight of each surviving row, so each of $\wtt(X)$ and $\wtt(Y)$ equals $(\wtt_1(S),\ldots,\wtt_p(S))$. By Theorem \ref{theorem:modactrc} a bounded RC graph with $p$ rows is determined by its trim together with its permutation, so it remains only to check that $\wof X=\wof Y$. Both are obtained from the common permutation $\wof{\trm(X)}=\wof{\trm(Y)}$ by adjoining a first row of the common size $\wtt_1(S)$, so this is the assertion that the two chains of transition steps produced by Lemma \ref{lemma:zerotransition}, namely the one carrying $\wof S$ to $\wof Y$ and the one carrying $\wof{\zeromap(S)}$ to $\wof X$, have the same endpoint.
+\end{proof}
+
+\begin{lemma} \label{lemma:clpfunc}
+Let $R$ be a bounded RC graph with $\hr(R)=n$, and let $0\leq p\leq p+q\leq n$. Then
+$$\clp^p(\clp^{p+q}(R))=\clp^p(R).$$
+\end{lemma}
+\begin{proof}
+Let $S$ and $h$ be as in Definition \ref{definition:clptrm} for $\clp^{p+q}(R)$, so that $\clp^{p+q}(R)=\zeromap^{\,h-(p+q)}(S)$ with $S$ regarded as having $h$ rows. Since $p\leq p+q$, the crossings of $S$ in rows $1,\ldots,p$ are exactly those of $R$ in those rows, so Lemma \ref{lemma:cliplocal} gives $\clp^p(S)=\clp^p(R)$. Every intermediate bounded RC graph in the iteration $\zeromap^{\,h-(p+q)}(S)$ has empty last row, so applying Lemma \ref{lemma:clipzero} once for each of the $h-(p+q)$ steps yields
+$$\clp^p\bigl(\clp^{p+q}(R)\bigr)=\clp^p\bigl(\zeromap^{\,h-(p+q)}(S)\bigr)=\clp^p(S)=\clp^p(R),$$
 as required.
 \end{proof}
 
@@ -2346,6 +2403,35 @@ is a bijection, so that for each $w'\in S_\infty$ there is at most one $W_1'\in 
 Though we have proved this only for a single empty row, the result follows if we can show it is still true for $A$ consisting of $k>1$ empty rows for any $k$, which is easily seen by associativity and an inductive argument. For arbitrary $A$ the product is identical to that of $A$ empty, except for the last $k$ rows being replaced with $\shup^{m}A$, with the stipulation that the RC graph must remain reduced, which depends only on the permutation of the first $m$ rows. Thus, $\Omega$ is a two-sided ideal of $\BRC$.
 \end{proof}
 
+The left-hand half of the argument just given isolates a structural feature of $\sqcupplus$ that we will use repeatedly in Sections \ref{section:crystals}--\ref{section:slide}, and which we now record separately. It says that in a product $A\sqcupplus W$ the second factor enters only as an inert block of rows sitting below an index set of ``top blocks'' that is determined by $A$ and by the permutation of $W$ alone.
+
+\begin{lemma}[Block decomposition of $\sqcupplus$]\label{lemma:blockdecomp}
+Let $A$ and $W$ be bounded RC graphs with $\hr(A)=k$ and $\hr(W)=m$. Then
+$$A\sqcupplus W=\sum_{A'}\bigl(A'\cup\shup^{k}W\bigr),$$
+each term occurring with multiplicity one and understood to have $k+m$ rows, where $A'$ ranges over the RC graphs all of whose crossings lie in rows $1,\ldots,k$ and which satisfy the two conditions
+\begin{enumerate}
+\item $\clp^{k}(A')=A$, where $A'$ is regarded as having $\max\{k,\maxd(\wof{A'})\}$ rows, and
+\item $\ell\bigl(\wof{A'}\shup^{k}\wof W\bigr)=\ell(\wof{A'})+\ell(\wof W)$ and $\maxd\bigl(\wof{A'}\shup^{k}\wof W\bigr)\leq k+m$.
+\end{enumerate}
+In particular the set of $A'$ being summed over depends on $W$ only through the permutation $\wof W$.
+\end{lemma}
+\begin{proof}
+By Definition \ref{definition:ringproduct}, the terms of $A\sqcupplus W$ are the bounded RC graphs $R$ with $\hr(R)=k+m$, $\clp^{k}(R)=A$ and $\trm^{k}(R)=W$. The condition on the trim says exactly that the crossings of $R$ in rows $k+1,\ldots,k+m$ are those of $\shup^{k}W$; hence $R=A'\cup\shup^{k}W$, where $A'=\{(i,j)\in R\mid i\leq k\}$, and conversely $A'$ determines $R$. So the assignment $R\mapsto A'$ is a bijection onto its image and all multiplicities are $1$.
+
+By Lemma \ref{lemma:cliplocal}, $\clp^{k}(R)$ depends only on $A'$ and not on $\hr(R)$, so the condition $\clp^{k}(R)=A$ is precisely condition (1), a condition on $A'$ alone. Finally, $R$ is a bounded RC graph with $k+m$ rows if and only if the concatenation of $\mathrm{word}(A')$ with $\mathrm{word}(W)$ shifted up by $k$ is reduced and the resulting permutation has last descent at most $k+m$. Since that permutation is $\wof{A'}\shup^{k}\wof{W}$, this is condition (2), which involves $W$ only through $\wof W$.
+\end{proof}
+
+\begin{corollary}[Swapping the lower block]\label{corollary:blockswap}
+Let $A$, $W_1$ and $W_2$ be bounded RC graphs with $\hr(A)=k$, $\hr(W_1)=\hr(W_2)=m$ and $\wof{W_1}=\wof{W_2}$. Then
+$$A'\cup\shup^{k}W_1\ \longmapsto\ A'\cup\shup^{k}W_2$$
+is a bijection from the set of terms of $A\sqcupplus W_1$ onto the set of terms of $A\sqcupplus W_2$. Corresponding terms have identical crossings in rows $1,\ldots,k$, have the same permutation, and have words
+$$\mathrm{word}(A')\cdot\bigl(\mathrm{word}(W_1)+k\bigr)\quad\text{and}\quad \mathrm{word}(A')\cdot\bigl(\mathrm{word}(W_2)+k\bigr)$$
+respectively, where $+k$ denotes adding $k$ to every letter.
+\end{corollary}
+\begin{proof}
+Immediate from Lemma \ref{lemma:blockdecomp}, since the two products are summed over the same set of $A'$. The statement about words holds because the crossing $(i,j)$ of $W_r$ contributes the letter $i+j-1$ to $\mathrm{word}(W_r)$ while the crossing $(i+k,j)$ of $\shup^{k}W_r$ contributes the letter $i+j-1+k$, and because the crossings of rows $1,\ldots,k$ precede those of rows $k+1,\ldots,k+m$ in the order of Definition \ref{definition:rcgraph}.
+\end{proof}
+
 \begin{theorem} \label{theorem:semidirect}
   We have that $\alpha:\BRC\to \dcoma$ is a surjective homomorphism of rings with kernel $\Omega$, and the homomorphism $\iota:\dcoma\to\BRC$ sending $[i]\mapsto \mathtt{row}(i)$ is a right inverse to $\alpha$. In particular, $\BRC\cong \dcoma\ltimes \Omega$ as rings.
 \end{theorem}
@@ -2557,11 +2643,31 @@ $$\kappa^*_c = \sum_{\substack{R=\mathbb{Y}(R)\\ \mathrm{extwt}(R)=c}} \dsch_{\w
   $\Theta$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-  The fact that $\Theta$ is a left ideal follows from the fact that the products $R\sqcupplus R_1$ and $R\sqcupplus R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. Since the crystal raising/lowering operators act directly on adjacent rows, the same crystal operators will apply to the rows below, so that $R\sqcupplus R_1$ and $R\sqcupplus R_2$ have the same crystal structure in the trailing rows. In passing to highest weights $\mathbb{Y}(R\sqcupplus R_1)$ and $\mathbb{Y}(R\sqcupplus R_2)$, we may pass through the partial highest weights $R\sqcupplus Y(R_1) = R\sqcupplus Y(R_2)$ by independence of path choice to the highest weight, so that in particular the highest weights of the bijectively corresponding terms of $R\sqcupplus R_1$ and $R\sqcupplus R_2$ are the same.
-  
-  %, so that $R\sqcupplus R_1 - R\sqcupplus R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\mathbb{Y}(R_1') = \mathbb{Y}(R_2')$, and $\Theta$ is a left ideal.
+  We first observe that $\Theta\subseteq\Omega$: if $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$ then $R_1$ and $R_2$ lie in a common connected component of the crystal on $\RC(w)$ for a single permutation $w$, so $\wof{R_1}=\wof{R_2}$, and the crystal operators preserve the number of rows, so $\hr(R_1)=\hr(R_2)$. Every generator of $\Theta$ is therefore a generator of $\Omega$, and Lemma \ref{lemma:blockdecomp} and Corollary \ref{corollary:blockswap} are available.
 
-  To prove that $\Theta$ is a right ideal, the same argument applies, but we must invoke Corollary \ref{corollary:crystaliso} to guarantee that the crystals remain isomorphic as needed.
+  \emph{Left ideal.} Let $A$ be a bounded RC graph with $\hr(A)=k$ and let $R_1-R_2$ be a generator of $\Theta$ with $\hr(R_1)=\hr(R_2)=m$. By Corollary \ref{corollary:blockswap}, the terms of $A\sqcupplus R_1$ and of $A\sqcupplus R_2$ are matched by $A'\cup\shup^{k}R_1\leftrightarrow A'\cup\shup^{k}R_2$, as $A'$ ranges over the set described in Lemma \ref{lemma:blockdecomp}, which is the same for both products since $\wof{R_1}=\wof{R_2}$. Fix such an $A'$ and put $X_j=A'\cup\shup^{k}R_j$.
+
+  For $i>k$ the operator $e_i$ inspects only rows $i$ and $i+1$ of $X_j$, both of which lie in the lower block, and its effect there is by definition that of $e_{i-k}$ on $R_j$; hence
+  $$e_i(X_j)=A'\cup\shup^{k}\bigl(e_{i-k}(R_j)\bigr)$$
+  whenever the right-hand side is defined. Moreover $e_{i-k}(R_j)$ has the same permutation and the same number of rows as $R_j$, so by Lemma \ref{lemma:blockdecomp} the bounded RC graph on the right is again a term of $A\sqcupplus R_j$; in particular the lower block may be raised freely without leaving the product. Applying such operators until the lower block is at its highest weight carries $X_j$ to $A'\cup\shup^{k}\mathbb{Y}(R_j)$, and $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$ gives
+  $$A'\cup\shup^{k}\mathbb{Y}(R_1)=A'\cup\shup^{k}\mathbb{Y}(R_2).$$
+  Since the highest weight of an element of a crystal does not depend on the order in which the available raising operators are applied, we may compute $\mathbb{Y}(X_j)$ by first raising the lower block in this way, so that
+  $$\mathbb{Y}(X_1)=\mathbb{Y}\bigl(A'\cup\shup^{k}\mathbb{Y}(R_1)\bigr)=\mathbb{Y}\bigl(A'\cup\shup^{k}\mathbb{Y}(R_2)\bigr)=\mathbb{Y}(X_2).$$
+  Thus $X_1-X_2\in\Theta$ for every $A'$, and summing over $A'$ gives $A\sqcupplus(R_1-R_2)\in\Theta$.
+
+  \emph{Right ideal.} Let $R_1-R_2$ be a generator of $\Theta$ with $\hr(R_1)=\hr(R_2)=m$, and let $A$ be a bounded RC graph with $\hr(A)=k$. Suppose first that $A$ is a single empty row, so $k=1$. By Theorem \ref{theorem:zero_bijection} the terms of $R_j\sqcupplus A$ are exactly the $R_j'\in\RC_{m+1}^0$ with $\zeromap(R_j')=R_j$, and there is at most one such $R_j'$ for each permutation; as in the proof for $\Omega$, this matches the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$ so that corresponding terms satisfy $\wof{R_1'}=\wof{R_2'}$. A raising operator $e_i$ moves a crossing out of row $i+1$ and into row $i$, so it can never create a crossing in the last row; consequently $\RC_{m+1}^0$ is stable under every $e_i$, and $\mathbb{Y}(R_j')\in\RC_{m+1}^0$. By Corollary \ref{corollary:crystaliso}, $\zeromap$ intertwines the raising operators on $\RC_{m+1}^0$, hence
+  $$\zeromap\bigl(\mathbb{Y}(R_j')\bigr)=\mathbb{Y}\bigl(\zeromap(R_j')\bigr)=\mathbb{Y}(R_j).$$
+  Since $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$ and $\zeromap$ is injective on $\RC_{m+1}^0$ by Lemma \ref{lemma:zero_injective}, we conclude $\mathbb{Y}(R_1')=\mathbb{Y}(R_2')$, so $R_1'-R_2'\in\Theta$ and $(R_1-R_2)\sqcupplus A\in\Theta$. The case of $A$ consisting of $k>1$ empty rows follows by induction, using associativity of $\sqcupplus$.
+
+  For general $A$, Lemma \ref{lemma:blockdecomp} shows that the terms of $R_j\sqcupplus A$ are the bounded RC graphs $B_j\cup\shup^{m}A$ with $m+k$ rows, where $B_j$ satisfies condition (1) of that lemma with respect to $R_j$, and that the terms of $R_j\sqcupplus\mathrm{empty}(k)$ are the $B_j$ themselves regarded as having $m+k$ rows, subject to the same condition (1) and the instance of condition (2) with the identity permutation in place of $\wof A$. Hence the bijection $B_1\leftrightarrow B_2$ produced in the previous paragraph, which satisfies $\wof{B_1}=\wof{B_2}$, restricts to a bijection between the terms of $R_1\sqcupplus A$ and those of $R_2\sqcupplus A$. It therefore suffices to know that $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$ implies $\mathbb{Y}(B_1\cup\shup^{m}A)=\mathbb{Y}(B_2\cup\shup^{m}A)$, which is Lemma \ref{lemma:lowerblockattach} below.
+\end{proof}
+
+\begin{lemma}[Attaching a common lower block]\label{lemma:lowerblockattach}
+Let $B_1$ and $B_2$ be bounded RC graphs with $m+k$ rows all of whose crossings lie in rows $1,\ldots,m$, let $A$ be a bounded RC graph with $\hr(A)=k$, and suppose that $B_j\cup\shup^{m}A$ is a bounded RC graph with $m+k$ rows for $j=1,2$. If $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$, then
+$$\mathbb{Y}\bigl(B_1\cup\shup^{m}A\bigr)=\mathbb{Y}\bigl(B_2\cup\shup^{m}A\bigr).$$
+\end{lemma}
+\begin{proof}
+  Due to the fact that the highest weight is independent of the choice of sequence of raising operators used to achieve it, we may fully raise the first $m$ rows of $B_j\cup\shup^{m}A$ to obtain $\mathbb{Y}(B_j)\cup\shup^{m}A$. Since $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$, the result follows.
 \end{proof}
 
 \begin{lemma}
@@ -3197,11 +3303,15 @@ The coefficients of the expansion of a monomial into forest polynomials, or equi
   $\Gamma$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-  The fact that $\Gamma$ is a left ideal follows from the fact that the products $R\sqcupplus R_1$ and $R\sqcupplus R_2$ have the same first $\hr(R)$ rows, and the rows below are simply shifts of $R_1$ and $R_2$. In terms of the resulting words, the shifted $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ are suffixes of $\mathrm{word}(R\sqcupplus R_1)$ and $\mathrm{word}(R\sqcupplus R_2)$. The $\equiv_\forest$ equivalence is determined by local swaps of pairs of letters that are related in a shift-invariant \cite[Proposition~5.8]{nadeau2024forest} and prefix-invariant \cite[Lemma~5.9]{nadeau2024forest} way, from which the result follows, since the prefixes are identical and the suffixes are related in the same way as $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$.
+  As noted at the start of this section, forest equivalence refines the partition of RC graphs by permutation: if $R_1\equiv_\forest R_2$ then $\wof{R_1}=\wof{R_2}$, and $\hr(R_1)=\hr(R_2)$ since the two graphs have the same word. Thus $\Gamma\subseteq\Omega$ and Lemma \ref{lemma:blockdecomp} and Corollary \ref{corollary:blockswap} apply.
 
-  To prove that $\Gamma$ is a right ideal, assume $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ differ by a single local swap of adjacent letters $a$ and $b$ in the same equivalence class, with $a$ to the left of $b$ in $\mathrm{word}(R_1)$ and to the right of $b$ in $\mathrm{word}(R_2)$. It suffices to consider only the case where $R$ is empty to show that
-  $$R_1\sqcupplus R - R_2\sqcupplus R\in \Gamma$$
-  for any $R$. According to \cite{nadeau2024forest}, the local swap of $a$ and $b$ is a commutation move, and we may reduce to the case where $a$ and $b$ are the last two letters of $\mathrm{word}(R_1)$, and that $b$ is the last descent of $\wof{R_1}$. For any empty $R$, the position $a$ will remain the same. For any term not identical to $R_1$, the suffix of the word will be $ab'$ where $b'>b$. For each $b'$, there will be precisely one matching term with suffix $b'a$ and identical prefix. The local swap of $a$ and $b'$ in the suffix is a valid local swap, so the resulting terms are all in $\Gamma$, and we are done.
+  \emph{Left ideal.} Let $A$ have $\hr(A)=k$ and let $R_1-R_2$ be a generator of $\Gamma$ with $\hr(R_j)=m$. By Corollary \ref{corollary:blockswap} the terms of $A\sqcupplus R_1$ and $A\sqcupplus R_2$ are matched by $A'\cup\shup^{k}R_1\leftrightarrow A'\cup\shup^{k}R_2$, and corresponding terms have words
+  $$\mathrm{word}(A')\cdot\bigl(\mathrm{word}(R_1)+k\bigr),\qquad \mathrm{word}(A')\cdot\bigl(\mathrm{word}(R_2)+k\bigr).$$
+  These two words have a common prefix and suffixes obtained from $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ by adding the constant $k$ to every letter. Forest equivalence is generated by local swaps of adjacent letters, and these swaps are shift-invariant \cite[Proposition~5.8]{nadeau2024forest} and prefix-invariant \cite[Lemma~5.9]{nadeau2024forest}. Hence $\mathrm{word}(R_1)\equiv_\forest\mathrm{word}(R_2)$ implies that the two displayed words are forest equivalent, so each matched difference lies in $\Gamma$ and $A\sqcupplus(R_1-R_2)\in\Gamma$.
+
+  \emph{Right ideal.} Let $R_1-R_2$ be a generator of $\Gamma$ with $\hr(R_j)=m$ and let $A$ have $\hr(A)=k$. Suppose first that $A$ is a single empty row. As in the proof for $\Omega$, Theorem \ref{theorem:zero_bijection} matches the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$ so that corresponding terms $R_1',R_2'$ satisfy $\wof{R_1'}=\wof{R_2'}$ and $\zeromap(R_j')=R_j$. Since $R_j'$ has empty last row, $\mathrm{word}(R_j')$ is obtained from $\mathrm{word}(R_j)$ by the sequence of Little bumps of Proposition \ref{proposition:little_bump} run in reverse, and by Theorem \ref{theorem:littlecrystal} such bumps preserve the recording tableau. As forest equivalence is likewise a statement about the pair $(P,Q)$ of the $\Omega$-insertion, with the forest class determined by $P$, the correspondence $R_j\mapsto R_j'$ preserves forest classes, so $R_1'\equiv_\forest R_2'$ and $R_1'-R_2'\in\Gamma$. The case of $k>1$ empty rows follows by induction using associativity of $\sqcupplus$.
+
+  For general $A$, Lemma \ref{lemma:blockdecomp} shows that the terms of $R_j\sqcupplus A$ are the bounded RC graphs $\bigl(B_j\cup\shup^{m}A,\ m+k\bigr)$ where $B_j$ satisfies condition (1) of that lemma with respect to $R_j$, subject to a condition (2) that depends only on $\wof{B_j}$ and $\wof A$; since the bijection $B_1\leftrightarrow B_2$ of the previous paragraph satisfies $\wof{B_1}=\wof{B_2}$, it restricts to a bijection between the terms of $R_1\sqcupplus A$ and those of $R_2\sqcupplus A$. Corresponding terms have words $\mathrm{word}(B_1)\cdot(\mathrm{word}(A)+m)$ and $\mathrm{word}(B_2)\cdot(\mathrm{word}(A)+m)$ with $\mathrm{word}(B_1)\equiv_\forest\mathrm{word}(B_2)$, so they are forest equivalent by \cite[Lemma~5.9]{nadeau2024forest} (suffix invariance, the mirror of the prefix invariance used above). Hence $(R_1-R_2)\sqcupplus A\in\Gamma$.
 \end{proof}
 
 \begin{lemma}
@@ -3318,13 +3428,19 @@ The expansion of dual slides in the weak composition basis is given by the expan
 Let $\Sigma$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $\QY(R_1)=\QY(R_2)$.
 \end{definition}
 
+By the definition of $\QY$, the relation $\QY(R_1)=\QY(R_2)$ holds precisely when $R_1$ and $R_2$ have the same word and the same height, since $\QY(R)$ is by construction the least element of the poset of RC graphs $A$ with $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$. We use this description of the generators of $\Sigma$ throughout; it is also the description recorded in Remark \ref{remark:general_lr_instances}.
+
 \begin{lemma}\label{lemma:slideideal}
 $\Sigma$ is a two-sided ideal of $\BRC$.
 \end{lemma}
 \begin{proof}
-That $\Sigma$ is a left ideal follows from the same mechanism used for $\Theta$: in $R\sqcupplus R_1$ and $R\sqcupplus R_2$, the first $\hr(R)$ rows agree, while the trailing rows are shifts of $R_1$ and $R_2$. Since the crystal operators act on adjacent rows, they descend in the same way to the trailing block. The quasi-Yamanouchi map $\QY$ is defined by applying a sequence of crystal raising operators determined by the weight (\cite{assaf2017slide}); hence applying $\QY$ to $R\sqcupplus R_1$ and to $R\sqcupplus R_2$ produces graphs whose trailing rows have a common partial quasi-Yamanouchi reduction $R\sqcupplus \QY(R_1)=R\sqcupplus \QY(R_2)$, and so $\QY(R\sqcupplus R_1)=\QY(R\sqcupplus R_2)$.
+Since RC graphs with the same word have the same permutation, $\Sigma\subseteq\Omega$ and Lemma \ref{lemma:blockdecomp} and Corollary \ref{corollary:blockswap} apply.
 
-That $\Sigma$ is a right ideal follows from Corollary \ref{corollary:crystaliso}: multiplication on the right by a fixed $R$ induces an isomorphism of crystal graphs on the relevant subblock, and the $\QY$ images of corresponding terms therefore agree.
+\emph{Left ideal.} Let $A$ have $\hr(A)=k$ and let $R_1-R_2$ be a generator of $\Sigma$ with $\hr(R_j)=m$, so $\mathrm{word}(R_1)=\mathrm{word}(R_2)$. By Corollary \ref{corollary:blockswap} the terms of $A\sqcupplus R_1$ and $A\sqcupplus R_2$ are matched by $A'\cup\shup^{k}R_1\leftrightarrow A'\cup\shup^{k}R_2$, and corresponding terms have words $\mathrm{word}(A')\cdot(\mathrm{word}(R_j)+k)$. These coincide, so the matched terms have the same word and the same height, whence their difference lies in $\Sigma$.
+
+\emph{Right ideal.} Suppose first that $A$ is a single empty row. As in the proof for $\Omega$, Theorem \ref{theorem:zero_bijection} matches the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$ so that corresponding terms $R_j'$ satisfy $\zeromap(R_j')=R_j$ and $\wof{R_1'}=\wof{R_2'}$. By Proposition \ref{proposition:zerocrystal} and Proposition \ref{proposition:little_bump}, $\mathrm{word}(R_j')$ is determined by $\mathrm{word}(R_j)$ together with $\wof{R_j'}$, since the passage from $R_j'$ to $R_j=\zeromap(R_j')$ is a sequence of Little bumps whose starting position is determined by the permutation. As $\mathrm{word}(R_1)=\mathrm{word}(R_2)$ and $\wof{R_1'}=\wof{R_2'}$, we get $\mathrm{word}(R_1')=\mathrm{word}(R_2')$, so $R_1'-R_2'\in\Sigma$. The case of $k>1$ empty rows follows by induction using associativity of $\sqcupplus$.
+
+For general $A$, Lemma \ref{lemma:blockdecomp} shows as in the proof of Lemma \ref{lemma:forestideal} that the bijection $B_1\leftrightarrow B_2$ just constructed restricts to a bijection between the terms of $R_1\sqcupplus A$ and those of $R_2\sqcupplus A$, and corresponding terms have words $\mathrm{word}(B_j)\cdot(\mathrm{word}(A)+m)$. Since $\mathrm{word}(B_1)=\mathrm{word}(B_2)$ these agree, so $(R_1-R_2)\sqcupplus A\in\Sigma$.
 \end{proof}
 
 \begin{lemma}
