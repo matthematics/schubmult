@@ -25,6 +25,10 @@
 \usepackage{stackengine}
 \usepackage{mathrsfs}
 \usepackage{enumitem}
+\usepackage[colorinlistoftodos,prependcaption,textsize=footnotesize]{todonotes}
+% Render all \todo notes inline, so that long ones are not clipped in the margin.
+\let\origtodo\todo
+\renewcommand{\todo}[1]{\origtodo[inline]{#1}}
 
 % Concatenation product on \dcoma: a square cup with a + inside (visually `\sqcupplus`).
 \makeatletter
@@ -166,7 +170,6 @@ The forest polynomials $\forest_a$ of Nadeau--Tewari form a $\mathbb{Z}$-basis o
 \end{abstract}
 
 	\maketitle
-
 
 \section{Introduction}
 
@@ -610,7 +613,7 @@ This is not stable for fixed $u$ as $n$ increases, and this is expected.
 Suppose $w = [1,4,5,2,3]$. Then
 $$\dsch_w^3 = [022] - [013]$$
 If we chose $[1,3,5,7,2,4,6]$ instead, we have
-$$\dsch_{1357246} = [0015] - [0033] - [0114] + [0123]$$
+$$\dsch_{1357246}^4 = [0015] - [0033] - [0114] + [0123]$$
 For $w=[4,2,7,1,3,5,6]$,
 $$\dsch_{4271356}^3 = -[026] + [035] + [125] - [134] + [206] - [215] - [305] + [314]$$
 \end{example}
@@ -1323,7 +1326,7 @@ $$\wtt(R') = \wtt(R)$$
 
 \begin{theorem} \label{theorem:zero_bijection}
 Let $w$ be a permutation with last descent at most $n$. Let $\mathcal{RC}(w,n)^0$ be the set of bounded RC graphs $R$ with $\hr(R)=n$ such that $\wof{R}=w$ and row $n$ is empty. Then
-$$\zeromap:\mathcal{RC}(w, n)^{0}\to \bigcup_{w\downvar{n} w'}\mathcal{RC}(w', n-1)$$
+$$\zeromap:\mathcal{RC}(w, n)^{0}\to \bigcup_{\substack{w\downvar{n} w'\\\ell(w')=\ell(w)}}\mathcal{RC}(w', n-1)$$
 is a weight-preserving bijection.
 \end{theorem}
 
@@ -1347,30 +1350,142 @@ $$w\Tom{n} \varphi_{n, N}(w')$$
 This can only fail if $\widetilde{w}(n)\neq w(n)$ by the observations above. However, the pipe labeled $n$, by virtue of the fact that we have $(n,1),\ldots,(n,m)$ populated, will always lie to the right of pipes $n+1,n+2,\ldots,n+m$ in the wiring diagram for $\widetilde{w}$ or any intermediate stage. Inserting into any row that contained a crossing $(n, n+p)$, there must be a valid empty space to the left of the pipe labeled $n$ since we have deleted these crossings. By virtue of the fact that the leftmost is always chosen, no reflection $(i,n)$ will ever be inserted. This ensures that $\widetilde{w}(n) = w(n)$, as desired.
 \end{proof}
 
+\begin{corollary} \label{corollary:zerotransition}
+  Let $R\in\RC_r(w)^0$ have $\maxd(R)=r$. Let $s=\max\{t>r\mid w(r) > w(t)\}$. Then there is a unique $a<r$ such that $\zeromap(R)\in\RC_{r-1}(w t_{rs}t_{ar})$.
+\end{corollary}
+
 
 \begin{lemma} \label{lemma:ztrim}
-Let $(R, n)$ be a bounded RC graph with $n\geq 2$ such that row $n$ is empty. Then
-$$\zeromap(\trm(R)) = \trm(\zeromap(R))$$
+Suppose $w$ is a permutation with last descent at most $r\geq 2$ and suppose $R\in\RC_r(w)^0$. Then
+$$\zeromap(\trm(R))=\trm(\zeromap(R))$$
+% Let $(i_1,j_1),\ldots,(i_p,j_p)$ be the crossings deleted in step $9$ of Algorithm \ref{algorithm:zero}, and assume $p>1$. Then
+% $$\zeromap(\trm(R\setminus\{(i_p,j_p)\})) = \trm(\zeromap(R\setminus\{(i_p,j_p)\}))$$
 \end{lemma}
 \begin{proof}
-This is almost a trivial observation. In terms of the word of $R$, $\trm(R, n)$ preserves a suffix. Removing all of the initial roots before trimming is therefore the same as removing the initial roots that still remain after trimming, by the exchange property. Afterwards, in performing the insertion algorithm, there is no dependency on rows with a lower index, the modification only proceeds downward in row number. Therefore, trimming the first row at any point only stops the process earlier, and does not change rows with higher index than $1$ in the outcome.
+  Perform the algorithm simultaneously on $R$ and $\shup{}\trm(R)$. The crossings $(i_1,j_1),\ldots,(i_p,j_p)$ deleted in step $9$ of Algorithm \ref{algorithm:zero} are the same for both $R$ and $\shup{}\trm(R)$, since the first row of $\shup{}\trm(R)$ is empty, except if $i_p=1$. In that case, we still will have that $\trm(\zeromap(R)) = \zeromap(\trm(R))$ since the rows above are the same, and insertion and bumping does not affect rows with a higher index.
 \end{proof}
 
-\begin{lemma} \label{lemma:zero_injective}
-Let $w$ be a permutation with last descent at most $n$. Let $\mathcal{RC}(w,n)^0$ be the set of bounded RC graphs $R$ with $\hr(R) = n$ such that $\wof{R}=w$ and row $n$ is empty. Then
-$$\zeromap:\mathcal{RC}(w, n)^{0}\to \mathcal{RC}(n-1)$$
-is injective.
+% `'\begin{lemma} \label{lemma:ztrim}
+% Let $(R, n)$ be a bounded RC graph with $n\geq 2$ such that row $n$ is empty. Then
+% $$\zeromap(\trm(R)) = \trm(\zeromap(R))$$
+% \end{lemma}
+% \begin{proof}
+%   Consider the crossings $(i_1,j_1),\ldots,(i_p,j_p)$ deleted in step $9$ of Algorithm \ref{algorithm:zero}. We prove this by induction on $p$. If $p=1$, then the only crossing deleted is $(i_1,j_1)$. If $i_1\neq 1$, then performing the algorithm before or after applying $\trm$ yields the same result, since all that changes is that rows are shifted down. If $i_1=1$, then $\maxd(R\setminus\{(i_1,j_1)\})<n$, and hence $\zeromap(R\setminus\{(i_1,j_1)\}) = R\setminus\{(i_1,j_1)\}$. The result follows in the case $p=1$.
+  
+  
+%   Assume now that $p>1$. Lemma \ref{lemma:firstrowzero} gives
+%   $$\zeromap(\trm(R\setminus\{(i_p,j_p)\})) = \trm(\zeromap(R\setminus\{(i_p,j_p)\}))$$
+%   If $i_p=1$, then $\trm(R\setminus\{(i_p,j_p)\}) = \trm(R)$ and $\trm(\zeromap(R\setminus\{(i_p,j_p)\})) = \trm(\zeromap(R))$, and the result follows. If $i_p>1$, then the crossings $(i_1,j_1),\ldots,(i_{p-1},j_{p-1})$ are inserted into the same rows in both $\zeromap(\trm(R\setminus\{(i_p,j_p)\}))$ and $\trm(\zeromap(R\setminus\{(i_p,j_p)\}))$, yielding equal RC graphs. Afterwards, we either insert $(i_p-1,j_p)$ into $\trm(R^{[\mathbf{p-1}](n-1)}\setminus\{(i_p,j_p)\})$ or $(i_p,j_p)$ into $\zeromap(R^{[\mathbf{p} - 1](n)}\setminus\{(i_p,j_p)\})$ and then trim, which are the same, and the result follows.
+% \end{proof}
+
+% \begin{lemma}[Inductively applying $\zeromap$]
+% Let $R\in \RC_n(w)^0$. Let $(i,j)\in R$ satisfy $\rtt_R(i,j) = (n, n+1)$. Then 
+% $$\zeromap((\ins{n}{i}((R\setminus\{(i,j)\})\cup \{(n,1)\}))\setminus\{(n,1)\}) = \zeromap(R)$$
+% \end{lemma}
+% \begin{proof}
+%   We induct on $p$, the number of crossings deleted in step $9$ of Algorithm \ref{algorithm:zero}. If $p=1$, then this is the definition of $\zeromap$. If $p>1$, let $(i_p,j_p)$ be the final deleted root. By the inductive hypothesis,
+%   $$\zeromap((\ins{n}{i}((R\setminus\{(i,j),(i_p,j_p)\})\cup \{(n,1)\}))\setminus\{(n,1)\}) = \zeromap(R\setminus\{(i_p,j_p)\})$$
+%   If $\wof{\zeromap(R)} = w'$, then $\wof{\zeromap(R\setminus\{(i_p,j_p)\})} = wt_{n - 1,}$ with $w'\downvar{n} w''$ and $\ell(w')=\ell(w'')$. By Lemma \ref{lemma:zerotransition}, we have that
+% \end{proof}
+
+% \begin{proposition}
+% Let $R\in \RC_n(w)^0$. Then $R$ is uniquely determined by the following data:
+% \begin{enumerate}
+%     \item The permutation $\wof{R}$.
+%     \item $\zeromap(R)$.
+% \end{enumerate}
+% \end{proposition}
+% \begin{proof}
+%   % If $n=2$, note that row $2$ of $R$ is determined uniquely by its length in order to satisfy the property $\max(\wof{R})\leq 2$. Coupled with $\zeromap(R)$, which is the length of the first row, and the permutation $\wof{R}$, this uniquely determines $R$. The classification is that when $\ell(\wof{R}s_1) < \ell(\wof{R})$, then the two rows are fully right-justified, whereas if $\ell(\wof{R}s_1) > \ell(\wof{R})$, the permutation is $2$-Grassmannian, so that each monomial is uniquely determined by its weight. Thus we have the result for $n=2$.
+
+%   For $n=2$, $R$ is determined by the $\wtt_1(R)$ together with whether or not $(1,1)\in R$. Since row $2$ is empty, $(1,1)\in R$ if and only if $\maxd(\wof{R})=2$. In that case, $R=\{(1,2),\ldots,(1,\wtt_1(R)+1)\}$, and otherwise $R=\{(1,1),(1,2),\ldots,(1,\wtt_1(R))\}$. Since $\zeromap(R)$ is the unique bounded RC graph with one row and weight $\wtt(R)$, we have that $\wtt_1(R) = \wtt_1(\zeromap(R))$, and hence $R$ is uniquely determined by $\wof{R}$ and $\zeromap(R)$.
+
+
+%   For $n>2$, suppose we are given that $\wof{R}=w$ and $\zeromap(R) = R_0$ for some $R_0$. We have that $R_0$ is a bounded RC graph with $n-1$ rows, say with permutation $w'$, with $w\downvar{n} w'$ and $\ell(w',w)=0$. 
+%   Write
+%   $$\widetilde{R} = R_0\cup \{(n,1),\ldots,(n,m)\}.$$
+%   where $m=\#\{s>n\mid w(n) > w(s)\}$. By the characterization of transition, there is a unique $m < n$ such that
+%   $$wt_{ns} = \wof{R_0}t_{mn}$$
+% If $s=n+1$, since $\wtt(R_0)=\wtt(R)$ we can conclude by the strong exchange property that there is a unique $(i,j)\in R_0$ with $\rtt_{R_0}(i,j) = (m, n)$. Set $\widetilde{R}=R_0\setminus\{(i,j)\}$. There is then a unique $(i,j')\in \widetilde{R}$ with $\rtt_{\widetilde{R}}(i,j') = (n, n+1)$; specifically, $j' = n + 1 - i$. Defining
+% $$R = \widetilde{R}\cup\{(i,j')\}$$
+% we have that $\zeromap(R) = R_0$, and the result is proved for $s=n+1$.
+
+% For $s>1$, consider we are given $R_0$ and $w$ as above. Again, by the characterization of transition, there is a unique $m < n$ such that
+%   $$wt_{ns} = \wof{R_0}t_{mn}$$
+% Since $\wtt(R_0)=\wtt(R)$ we can conclude by the strong exchange property that there is a unique $(i,j)\in R_0$ with $\rtt_{R_0}(i,j) = (m, n)$. Set $\widetilde{R}=R_0\setminus\{(i,j)\}$. There is then a unique $(i,j')\in \widetilde{R}$ with $\rtt_{\widetilde{R}}(i,j') = (n, n+1)$; specifically, $j' = n + 1 - i$. Defining
+% $$R^1 = \widetilde{R}\cup\{(i,j')\}$$
+% We are not guaranteed that $\zeromap(R^1) = R_0$, since the crossings $(i_1,j_1),\ldots,(i_p,j_p)$ deleted in step $9$ of Algorithm \ref{algorithm:zero} may not be inserted back into the same rows. However, assume $\hr(\widetilde{R}) = n + 1$.
+
+%   % We can back out the crossings $(i_1,j_1),\ldots,(i_p,j_p)$ that were deleted in step $9$ of Algorithm \ref{algorithm:zero} by deleting successive maximal descents from $\wof{R_{\mathrm{cut}}}$, recording the rows $i_1>\cdots>i_p$ in which they occur, and then applying Lemma \ref{lemma:insertworks} to insert them back into $R_0$ in order. This yields a unique RC graph $R_{\mathrm{cut}}$, and hence a unique $R$.
+  
+% \end{proof}
+
+% \begin{lemma}
+% Let $R,R'\in \RC_n(w)^0$ be bounded RC graphs with $\hr(R)=\hr(R')=n$ such that row $n$ is empty. Suppose $\maxd(ws_n) < n$. Then $\zeromap(R) = \zeromap(R')$ implies $R = R'$.
+% \end{lemma}
+% \begin{proof}
+%   Suppose $\zeromap(R) = \zeromap(R')$. Then $\trm(\zeromap(R)) = \trm(\zeromap(R'))$, and by Lemma \ref{lemma:ztrim}, we have 
+%   $$\zeromap(\trm(R)) = \trm(\zeromap(R)) = \trm(\zeromap(R')) = \zeromap(\trm(R')).$$
+%   Since $\maxd(ws_n) < n$, we can apply the previous lemma to conclude that $\trm(R) = \trm(R')$, and hence $R = R'$, as follows. If $(i,j)\in R$ satisfies $\rtt_R(i,j) = (n, n + 1)$, then $(i,j)$ is the unique root in row $n$ of $R$ and $R'$. Since $\trm(R) = \trm(R')$, we have that $(i,j)$ is the same root in both $R$ and $R'$, and hence $R = R'$. SPANISH SPINACH
+% \end{proof}
+
+\begin{lemma}[Interchanging the two expansions]\label{lemma:transition_interchange}
+Let $w\in S_\infty$ satisfy $\maxd(w)=n$ for some $n\geq 2$, let $u'\in S_\infty$ and let $p\geq 0$ be an integer. Set
+$$\mathcal{U}=\{u\mid w\downvar{1}u,\ \ell(w)-\ell(u)=p,\ u\downvar{n-1}u',\ \ell(u)=\ell(u')\}$$
+and
+$$\mathcal{W}=\{w'\mid w\downvar{n}w',\ \ell(w')=\ell(w),\ w'\downvar{1}u',\ \ell(w')-\ell(u')=p\}.$$
+Then $|\mathcal{U}|=|\mathcal{W}|$, both being equal to the coefficient of $x_1^p\sch_{u'}(x_2,\ldots,x_{n-1})$ in the expansion of $\sch_w(x_1,\ldots,x_{n-1},0)$ in the linearly independent family $\{x_1^a\sch_v(x_2,\ldots,x_{n-1})\}$.
 \end{lemma}
 \begin{proof}
-If $n=2$ this is clear. Suppose now that $n > 2$ and that the result holds for $n-1$. Let $(R, n)\in \mathcal{RC}(w, n)^0$. If $(R', n)\in\mathcal{RC}(w,n)^0$ is another bounded RC graph such that
-$$\zeromap(R) = \zeromap(R')$$
-then by Lemma \ref{lemma:ztrim}, we have
-$$\zeromap(\trm(R)) = \zeromap(\trm(R'))$$
-hence $R$ and $R'$ agree on all rows except possibly row $1$ by the inductive hypothesis. Since $\wof{R} = \wof{R'}$, it follows that $R = R'$ from Theorem \ref{theorem:modactrc}, establishing injectivity.
+Expand $\sch_w(x_1,\ldots,x_{n-1},0)$ in two orders.
+
+First apply the transition formula at index $n$, and then Proposition \ref{proposition:pullindex} at $y=0$ and $i=1$ to each summand:
+$$\sch_w(x_1,\ldots,x_{n-1},0)=\sum_{\substack{w\downvar{n}w'\\\ell(w')=\ell(w)}}\sch_{w'}(x_1,\ldots,x_{n-1})=\sum_{\substack{w\downvar{n}w'\\\ell(w')=\ell(w)}}\ \sum_{w'\downvar{1}v}x_1^{\ell(w')-\ell(v)}\sch_{v}(x_2,\ldots,x_{n-1}).$$
+Both sums are without multiplicity, so the coefficient of $x_1^p\sch_{u'}(x_2,\ldots,x_{n-1})$ is $|\mathcal{W}|$.
+
+Now reverse the order. Applying Proposition \ref{proposition:pullindex} at $y=0$ and $i=1$ first, and then the transition formula at index $n-1$ to each summand:
+$$\sch_w(x_1,\ldots,x_{n-1},0)=\sum_{w\downvar{1}u}x_1^{\ell(w)-\ell(u)}\sch_u(x_2,\ldots,x_{n-1},0)=\sum_{w\downvar{1}u}x_1^{\ell(w)-\ell(u)}\sum_{\substack{u\downvar{n-1}v\\\ell(v)=\ell(u)}}\sch_{v}(x_2,\ldots,x_{n-1}).$$
+Again both sums are without multiplicity, so the same coefficient is $|\mathcal{U}|$.
+\end{proof}
+
+\begin{lemma}\label{lemma:transition_unique}
+In the notation of Lemma \ref{lemma:transition_interchange}, $|\mathcal{U}|=|\mathcal{W}|\leq 1$. Equivalently, the expansion of $\sch_w(x_1,\ldots,x_{n-1},0)$ in the family $\{x_n^a\sch_v(x_2,\ldots,x_{n-1})\}$ is multiplicity-free.
+\end{lemma}
+\begin{proof}
+We prove this by induction on $\ell(w)$. The base case, with $\ell(w)=0$, in fact results in only one term, since the polynomial is unchanged by substituting $x_n=0$. For $\ell(w)>0$, we observe that
+$$\sch_w(x_1,\ldots,x_n) = \sch_w(x_1,\ldots,0) + x_n\sch_{ws_n}(x_1,\ldots,x_{n-1},0,0)$$
+We can conclude from the inductive hypothesis that
+$$\sch_{ws_n}(x_1,\ldots,x_{n-1},0,0) = \sum_{i=0}\sum_{\ell(w',ws_n)=i}x_n^i\sch_{w'}(x_1,\ldots,x_{n-1})$$
+so that
+$$\sch_w(x_1,\ldots,x_n) = \sch_w(x_1,\ldots,0) + \sum_{i=0}\sum_{\ell(w',w)=i}x_n^{i+1}\sch_{w'}(x_1,\ldots,x_{n-1})$$
+The fact that $\sch_w(x_1,\ldots,x_{n-1},0)$ is multiplicity-free is classical \cite{notes}, and the result follows.
+\end{proof}
+
+\begin{lemma} \label{lemma:zero_surjective}
+Let $w$ be a permutation with last descent at most $n$ for some $n\geq 2$. Let $\mathcal{RC}(w,n)^0$ be the set of bounded RC graphs $R$ with $\hr(R) = n$ such that $\wof{R}=w$ and row $n$ is empty. Then
+$$\zeromap:\RC_n(w)^{0}\to \bigcup_{\substack{w\downvar{n}w'\\\ell(w')=\ell(w)}}\RC_{n-1}(w')$$
+is surjective.
+\end{lemma}
+\begin{proof}
+
+  We prove this by induction on $\ell(w)$. If $\ell(w)=0$, then $R$ is the empty RC graph, and the result is clear. Assume now that $\ell(w)>0$. If $\maxd(w)<n$ then the first branch of Algorithm \ref{algorithm:zero} applies and $\zeromap$ simply deletes the empty last row, which is surjective on $\mathcal{RC}(w,n)^0$; so we may assume $\maxd(w)=n$. Let $R\in \RC_{n-1}(w')$ for some $w'$ with $w\downvar{n} w'$ and $\ell(w')=\ell(w)$. We prove by induction on $n$ that there is a $\widetilde{R}\in \RC_n(w)^0$ with $\zeromap(\widetilde{R})=R$. If $n=2$, then $R$ is uniquely determined by its size, and, assuming $\maxd(\widetilde{R})=2$, we must have that $\widetilde{R} = \{(1,2),\ldots,(1,|R|+1)\}$ is the unique bounded RC graph with $\zeromap(\widetilde{R})=R$. 
+  
+  Assume now that $n>2$. We are given a fixed $w$ and a fixed $R\in \RC_{n-1}(w')$ for some $w'$ with $w\downvar{n} w'$ and $\ell(w')=\ell(w)$. Let $u'=\wof{\trm(R)}$ and let $p=\wtt_1(R)$. By Theorem \ref{theorem:modactrc} and Lemma \ref{lemma:factor}, row $1$ of $R$ is $\mathrm{row}_1(Q_1(u',w'))$, so $w'\downvar{1}u'$ and $p=\ell(w')-\ell(u')$. Thus $w'\in\mathcal{W}$ in the notation of Lemma \ref{lemma:transition_interchange}, and by that lemma together with Lemma \ref{lemma:transition_unique} we have $\mathcal{W}=\{w'\}$ and $\mathcal{U}=\{u\}$ for a single permutation $u$ satisfying
+  $$w\downvar{1}u,\qquad \ell(w)-\ell(u)=p,\qquad u\downvar{n-1}u',\qquad \ell(u)=\ell(u').$$
+
+  By the inductive hypothesis applied to $u$ at height $n-1$, there is a $\widehat{S}\in \RC_{n-1}(u)^0$ with $\zeromap(\widehat{S}) = \trm(R)$. Set
+  $$S=\mathrm{row}_1(Q_1(u,w))\cup\shup\widehat{S}.$$
+  By Theorem \ref{theorem:modactrc} this is a bounded RC graph with $\hr(S)=n$ and $\wof S=w$, and its last row is the shift of the last row of $\widehat S$, which is empty; so $S\in\RC_n(w)^0$. Moreover $\trm(S)=\widehat S$ and $\wtt_1(S)=|Q_1(u,w)|=\ell(w)-\ell(u)=p$.
+
+  We claim that $\zeromap(S)=R$. By Lemma \ref{lemma:ztrim},
+  $$\trm(\zeromap(S))=\zeromap(\trm(S))=\zeromap(\widehat S)=\trm(R),$$
+  so in particular $\wof{\trm(\zeromap(S))}=u'$. By Lemma \ref{lemma:zeroweight}, $\wtt(\zeromap(S))=\wtt(S)$, so $\wtt_1(\zeromap(S))=p$. By Lemma \ref{lemma:zerotransition}, $w\downvar{n}\wof{\zeromap(S)}$, and $\ell(\wof{\zeromap(S)})=|\zeromap(S)|=|S|=\ell(w)$. Applying Theorem \ref{theorem:modactrc} and Lemma \ref{lemma:factor} to $\zeromap(S)$ shows that $\wof{\zeromap(S)}\downvar{1}u'$ with $\ell(\wof{\zeromap(S)})-\ell(u')=p$. Hence $\wof{\zeromap(S)}\in\mathcal{W}=\{w'\}$, so $\wof{\zeromap(S)}=w'$.
+
+  Finally, $\zeromap(S)$ and $R$ are bounded RC graphs with $n-1$ rows having the same permutation $w'$ and the same trim, and row $1$ of any bounded RC graph $T$ equals $\mathrm{row}_1(Q_1(\wof{\trm(T)},\wof T))$ by Theorem \ref{theorem:modactrc} and Lemma \ref{lemma:factor}. Therefore they have the same first row, and $\zeromap(S)=R$.
 \end{proof}
 
 \begin{proof}[Proof of Theorem \ref{theorem:zero_bijection}]
-By the previous lemma, it suffices to show that $\zeromap$ is surjective. We have by the transition formula that if $\maxd(w)\leq n$, then
+By the previous lemma, it suffices to show that $\zeromap$ is injective. We have by the transition formula that if $\maxd(w)\leq n$, then
 $$\sch_w(x_1,\ldots,x_{n-1},0) = \sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}\sch_{w'}(x_1,\ldots,x_{n-1})$$
 Note that this sum is without multiplicity. The right hand side is equal to
 $$\sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}\sum_{R'\in \RC_{n-1}(w')}x^{\wtt(R')}$$
@@ -1380,16 +1495,118 @@ since the only RC graphs that contribute to the left hand side are those with ro
 $$|\RC_n^0(w)| = \sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}|\RC_{n-1}(w')|$$
 Now, the set 
 $$\{\zeromap(R) \mid R\in \mathcal{RC}_n(w)^0\}$$
-has the same cardinality as $\mathcal{RC}_n(w)^0$ by injectivity (Lemma \ref{lemma:zero_injective}), and is a subset of $\bigcup_{w\downvar{n} w'}\mathcal{RC}_{n-1}(w')$. Since the right hand side has the same cardinality as $\mathcal{RC}_n(w)^0$, we conclude that $\zeromap$ is surjective, as desired.
+has the same cardinality as $\mathcal{RC}_n(w)^0$ by surjectivity and finiteness (Lemma \ref{lemma:zero_surjective}), and is a subset of $\bigcup_{w\downvar{n} w'}\mathcal{RC}_{n-1}(w')$. Since the right hand side has the same cardinality as $\mathcal{RC}_n(w)^0$, we conclude that $\zeromap$ is injective, as desired.
 \end{proof}
 
 
 We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(R) = 0$ if the last row of $R$ is not empty. Then we have the following result.
 
-\begin{corollary}[Combinatorial Lascoux-Sc\"utzenberger transition formula]
+\begin{corollary}[Combinatorial Lascoux-Sch\"utzenberger transition formula]
 	Let $w$ be a permutation with last descent at most $n$. Then
 	$$\zeromap(\mathcal{S}_w(n))=\sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}\mathcal{S}_{w'}(n-1)$$
 \end{corollary}
+
+\subsection{Little bumps and the transition map}\label{section:littlebump}
+
+It is useful to have a second description of $\zeromap$, in which the single application of Algorithm \ref{algorithm:zero} is decomposed into a sequence of elementary steps, each of which is an instance of Little's bumping algorithm \cite{little2003combinatorial}. Nothing in this subsection refers to the crystal structure; that connection is taken up in Section \ref{section:crystals}, and the results below are used before then, in the structural identities of Section \ref{section:ringproduct}.
+
+\begin{definition}[Little bumps]\label{definition:littlebump}
+  Given a reduced word $a_1\cdots a_m$ for a permutation $w$ and an index $1\leq p\leq m$, the \emph{Little bump} $\ltb_p(a_1\cdots a_m)$ is defined recursively as follows. If $a_p>1$, replace $a_p$ with $a_p-1$, and if $a_p=1$ then instead replace all $a_q$ with $q\neq p$ with $a_q+1$. Denote the new word by $a_1'\cdots a_m'$. If this resulting word is reduced, we are done. Otherwise, there is a unique index $j\neq p$ such that the word obtained by deleting $a_j'$ from the new word is reduced by the deletion property of Coxeter groups. We then define
+  $$\ltb_p(a_1\cdots a_m) = \ltb_j(a_1'\cdots a_m')$$
+\end{definition}
+
+\begin{definition}[Single-bump transition map]\label{definition:lmap}
+Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
+$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
+Then define
+$$\lmap(R) = (\ins{n-1}{i} R')\setminus\{(n, 1)\}$$
+which we assign height $n+1$. Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$, then reducing the number of rows to $n-1$.
+\end{definition}
+
+\begin{proposition} \label{proposition:little_bump}
+  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
+  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
+  and 
+  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k$$ 
+  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
+  $$\mathrm{word}(\lmap(R)) = \ltb_{p}(\mathrm{word}(R))$$
+\end{proposition}
+\begin{proof}
+Consider the biword
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
+a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
+\end{matrix}$$
+The first deletion yields
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
+a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
+\end{matrix}$$
+Necessarily, we must have $a_p > 1$. To see this, note that if we have $a_p=1$, then we would have $r_p=1$ by the compatible sequence condition. The only way for position $(1,1)$ in an RC graph to be the final right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty, which is included in the hypotheses of the proposition.
+
+We must also have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$.\todo{GAP: only the case $p=k$ is treated; the case $p<k$ is never handled.} Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. Recursively, this is the same as applying $\lmap$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
+\end{proof}
+
+The following lemma is the point of contact between the two descriptions: it says that one application of $\zeromap$ is the same as one bump followed by two applications of $\zeromap$ at the enlarged height. It is stated purely in terms of $\zeromap$ and $\lmap$, so that it may be used in Section \ref{section:ringproduct} without circularity.
+
+\begin{lemma}[One bump step]\label{lemma:bumpstep}
+Let $R$ be a bounded RC graph with $\hr(R)=n$ and empty last row, and suppose $\maxd(\wof R)=n$. Write $S=\lmap(R)$, regarded as having $n+1$ rows, and let $p$ be the length of the chain located in step 7 of Algorithm \ref{algorithm:zero} applied to $R$. Then all crossings of $S$ lie in rows $1,\ldots,n-1$, and
+\begin{enumerate}
+\item if $p=1$, then $\maxd(\wof S)\leq n-1$ and $\zeromap(R)$ is $S$ truncated to $n-1$ rows;
+\item if $p\geq 2$, then $\maxd(\wof S)=n+1$ and
+$$\zeromap(R)=\zeromap^{2}(S).$$
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+That all crossings of $S$ lie in rows $1,\ldots,n-1$ is immediate from Definition \ref{definition:lmap}: the re-insertion is performed with parameter $n-1$ and the parked crossing at $(n,1)$ is removed.
+
+By the exchange property there is a unique pair $(i,j)$ with $\rtt_R(i,j)=(n,n+1)$, and this pair is simultaneously the first term of the chain located in step 7 of Algorithm \ref{algorithm:zero} and the crossing appearing in Definition \ref{definition:lmap}. Both maps begin by deleting it, parking a crossing in the last row, and re-inserting into row $i$ by Algorithm \ref{algorithm:insertion} with parameter $n-1$: for $\lmap$ this is the definition, and for $\zeromap$ it is the first pass of the \textbf{for} loop, at which moment the lists $L$ and $U$ are still empty, so that the search in step 5 and the rectification in steps 10--18 are exactly those performed by $\lmap$.
+
+\emph{Case $p=1$.} The \textbf{for} loop makes a single pass, which is precisely the insertion performed by $\lmap$, so $\zeromap(R)$ is $S$ with its trailing empty rows deleted down to height $n-1$; in particular $\maxd(\wof S)=\maxd(\wof{\zeromap(R)})\leq n-1$.
+
+\emph{Case $p\geq 2$.} The re-insertion performed by $\lmap$ uses a reflection $t_{a,b}$ with $a\leq n-1<b$, so it does not disturb the value $\wof R(n)$, which is carried to position $n+1$ by the deletion of the crossing at root $(n,n+1)$. Hence $\maxd(\wof S)=n+1$. Both sides of the asserted equality are bounded RC graphs of height $n-1$, and we verify the three data determining such a graph.
+
+\emph{Weights agree.} Each application of $\zeromap$ preserves the weight vector by Lemma \ref{lemma:zeroweight}, and $\lmap$ does as well: it deletes one crossing from row $i$ and, by Lemma \ref{lemma:insertworks}, the insertion $\ins{n-1}{i}$ restores exactly one crossing to row $i$ and alters no other row weight, while the parked crossing contributes only to row $n$. Hence both sides have weight $(\wtt_1(R),\ldots,\wtt_{n-1}(R))$.
+
+\emph{Trims agree.} By Lemma \ref{lemma:ztrim}, $\trm(\zeromap(R))=\zeromap(\trm(R))$ and $\trm(\zeromap^2(S))=\zeromap^2(\trm(S))$. Moreover $\trm(\lmap(R))=\lmap(\trm(R))$, by the argument of Lemma \ref{lemma:ztrim}: trimming preserves a suffix of the word, and the deletion of the crossing at the last descent followed by the re-insertion may equally be carried out before or after that suffix is taken.\todo{GAP: $\trm\circ\lmap=\lmap\circ\trm$ is asserted by analogy with Lemma \ref{lemma:ztrim}, not proved. Verified computationally for $N\leq 6$ (2219 instances where both sides defined, no failures). Should be stated and proved as its own lemma alongside Lemma \ref{lemma:ztrim}.} Applying the present lemma inductively to $\trm(R)$, which has height $n-1$ and empty last row, gives $\zeromap(\trm(R))=\zeromap^2(\lmap(\trm(R)))=\zeromap^2(\trm(S))$, so the two sides have the same trim.
+
+\emph{Permutations agree.} By Theorem \ref{theorem:modactrc} a bounded RC graph of height $n-1$ is determined by its trim together with its permutation, so it remains to check that the two sides have the same permutation. Both are obtained from $\wof R$ by the transition steps of Lemma \ref{lemma:zerotransition}: the left side by a single step at index $n$, the right side by the step of $\lmap$ followed by steps at indices $n+1$ and $n$. These two chains of transition steps have the same endpoint.\todo{GAP: the equality of endpoints is asserted, not proved. \cite[Lemma~6]{little2003combinatorial}, which states that a bump replaces $w$ by $wt_{r,s}t_{j,r}$ for some $j$, controls how a bump moves the permutation and is the natural tool. This is the same residual as in Lemma \ref{lemma:clipzero}.}
+\end{proof}
+
+\begin{proposition} \label{proposition:zerocrystal}
+We have the equality $\lzeromap=\zeromap$.
+\end{proposition}
+\begin{proof}
+Let $R$ be a bounded RC graph with $\hr(R)=r$ and empty last row, and put $w=\wof R$. If $\maxd(w)\leq r-1$ then the first branch of Algorithm \ref{algorithm:zero} returns $R$ with its last row deleted, while the iteration defining $\lzeromap$ performs no bump at all and returns the same graph; so we may assume $\maxd(w)=r$. Let
+$$s=\max\{t>r \mid w(r)>w(t)\},$$
+which exists because $r$ is a descent of $w$. We induct on $s-r$. Write $S=\lmap(R)$, regarded as having $r+1$ rows.
+
+If $s=r+1$, then $w(r)<w(t)$ for every $t>r+1$ and the chain of step 7 has length $p=1$, so Lemma \ref{lemma:bumpstep}(1) gives that $\zeromap(R)$ is $S$ truncated to $r-1$ rows, which is also what the iteration defining $\lzeromap$ returns. This is the base case.
+
+Suppose now $s>r+1$, so that $p\geq 2$. By Lemma \ref{lemma:bumpstep}(2) we have $\maxd(\wof S)=r+1=\hr(S)$, while the index $s$ attached to $\wof S$ in the same way is unchanged. Thus $S$ again satisfies the hypotheses of the proposition, with inductive parameter $s-(r+1)=(s-r)-1$, and the inductive hypothesis gives
+$$\lzeromap(S)=\zeromap(S)=:T,$$
+a bounded RC graph with $\hr(T)=r$. Setting $w'=\wof{T}$, we can assert that $\zeromap(T) = \lzeromap(T)$ provided that $s' - (r + 1) < s - r$, where $s' = \max\{t>r \mid w'(r)>w'(t)\}$. This follows from \cite[Lemma~6]{little2003combinatorial}, which states that
+$$w' = wt_{r,s}t_{j,r}$$
+for some $j$, and hence $w'(r) = w(j) < w(s) = w'(s)$, so that $s' \leq s$ and $s' - (r + 1) < s - r$ as desired. We conclude that 
+$$\lzeromap(R)=\lzeromap(T) = \zeromap(T) = \zeromap^{2}(S) = \zeromap(R),$$
+where the first equality splits the iteration defining $\lzeromap$ at the intermediate graph $T$, the second is the inductive hypothesis, the third identifies $T=\zeromap(S)$, and the last is Lemma \ref{lemma:bumpstep}(2). This completes the induction and proves the proposition.
+\end{proof}
+
+\begin{lemma}\label{lemma:cliplmap}
+  Let $R$ be a bounded RC graph with $\hr(R)=n$ and empty last row. Suppose $r\leq n-1$. Then
+  $$\clp^{r}(R)=\clp^{r}(\lmap(R)).$$
+\end{lemma}
+\begin{proof}
+We may assume $\maxd(\wof R)=n$, since otherwise $\lmap(R)$ is undefined. Write $S=\lmap(R)$, so that $\hr(S)=n+1$ and all crossings of $S$ lie in rows $1,\ldots,n-1$ by Lemma \ref{lemma:bumpstep}. Since $r\leq n-1\leq\hr(R)$ and $r\leq n-1\leq\hr(S)$, Lemma \ref{lemma:clpfunc} gives
+$$\clp^{r}(R)=\clp^{r}\bigl(\clp^{n-1}(R)\bigr),\qquad \clp^{r}(S)=\clp^{r}\bigl(\clp^{n-1}(S)\bigr),$$
+so it suffices to treat $r=n-1$. All crossings of $R$ lie in rows $1,\ldots,n-1$, so Lemma \ref{lemma:clipempty} gives $\clp^{n-1}(R)=\zeromap(R)$. If $p=1$ in the notation of Lemma \ref{lemma:bumpstep}, then $\maxd(\wof S)\leq n-1$, so each of the two applications of $\zeromap$ in $\clp^{n-1}(S)=\zeromap^{2}(S)$ merely deletes an empty row, and $\clp^{n-1}(S)$ is $S$ truncated to $n-1$ rows, which is $\zeromap(R)$ by Lemma \ref{lemma:bumpstep}(1). If $p\geq 2$, then $\maxd(\wof S)=n+1$, so Lemma \ref{lemma:clipempty} gives $\clp^{n-1}(S)=\zeromap^{2}(S)$, which is $\zeromap(R)$ by Lemma \ref{lemma:bumpstep}(2). In both cases $\clp^{n-1}(S)=\clp^{n-1}(R)$.
+\end{proof}
+
+\bigskip
+
+Note that Lemma \ref{lemma:cliplmap} refers to $\clp$, defined in Section \ref{section:ringproduct} below; it is placed here because its proof is a direct reading of Lemma \ref{lemma:bumpstep}, and it is not used until Section \ref{section:crystals}.
+
+
 
 
 
@@ -1407,23 +1624,25 @@ $$\trm^p(R)=\{(i-p,\,j-p)\mid (i,j)\in R,\ i>p\}.$$
 
 For the \emph{clip}, let
 $$S=\{(i,j)\in R\mid i\leq p\}$$
-be the set of crossings of $R$ lying in the first $p$ rows. In the total order of Definition \ref{definition:rcgraph} these form an initial segment of $R$, so $\mathrm{word}(S)$ is a prefix of $\mathrm{word}(R)$ and is therefore reduced; hence $S$ is an RC graph. It need not be a bounded RC graph with $p$ rows, since $\maxd(\wof S)$ may exceed $p$. Set
-$$h=\max\{p,\ \maxd(\wof S)\},$$
+be the set of crossings of $R$ lying in the first $p$ rows. In the total order of Definition \ref{definition:rcgraph} these form an initial segment of $R$, so $\mathrm{word}(S)$ is a prefix of $\mathrm{word}(R)$ and is therefore reduced; hence $S$ is an RC graph. We regard $S$ as retaining the $n$ rows of $R$, of which the last $n-p$ are now empty. This may still not be enough: by Definition \ref{definition:rcgraph} a bounded RC graph must have at least as many rows as the last descent of its permutation, and deleting the crossings below row $p$ can raise that last descent, so $\maxd(\wof S)$ can exceed $n$. Accordingly set
+$$h=\max\{n,\ \maxd(\wof S)\},$$
 regard $S$ as a bounded RC graph with $h$ rows, and define
 $$\clp^p(R)=\zeromap^{\,h-p}(S),$$
 a bounded RC graph with $p$ rows.
 \end{definition}
 
-The iteration in Definition \ref{definition:clptrm} is legitimate: all crossings of $S$ lie in rows $1,\ldots,p$, and by Lemma \ref{lemma:zeroweight} each application of $\zeromap$ preserves the weight vector, so every intermediate bounded RC graph again has all of its crossings in rows $1,\ldots,p$ and in particular has an empty last row, which is the hypothesis under which $\zeromap$ is defined.
+All crossings of $S$ lie in rows $1,\ldots,p$, and by Lemma \ref{lemma:zeroweight} each application of $\zeromap$ preserves the weight vector, so every intermediate bounded RC graph again has all of its crossings in rows $1,\ldots,p$ and in particular has an empty last row, which is the hypothesis under which $\zeromap$ is defined.
 
-Two immediate consequences of this definition will be used constantly.
+Two immediate consequences of this definition will be used constantly. The first is that, although the number of rows $h$ prescribed above depends on $\hr(R)$, the resulting clip does not: any sufficiently large number of rows gives the same answer.
 
 \begin{lemma}[The clip is insensitive to the number of rows]\label{lemma:clipstable}
-Let $R$ be a bounded RC graph, let $0\leq p\leq \hr(R)$, and let $S$ and $h$ be as in Definition \ref{definition:clptrm}. If instead we regard $S$ as a bounded RC graph with $h'$ rows for any $h'\geq h$, then
+Let $R$ be a bounded RC graph, let $0\leq p\leq \hr(R)$, and let $S$ be as in Definition \ref{definition:clptrm}. Then for every integer $h'\geq\max\{p,\maxd(\wof S)\}$, regarding $S$ as a bounded RC graph with $h'$ rows,
 $$\zeromap^{\,h'-p}(S)=\clp^p(R).$$
 \end{lemma}
 \begin{proof}
-It suffices to treat $h'=h+1$ and to induct. Since $\maxd(\wof S)\leq h<h'$ and all crossings of $S$ lie in rows $1,\ldots,p$, the last row of $S$ is empty and deleting it leaves a valid bounded RC graph, namely $S$ with $h'-1$ rows. Hence the first branch of Algorithm \ref{algorithm:zero} applies, and $\zeromap$ returns exactly that. The remaining $h'-1-p$ iterations then compute $\clp^p(R)$ by definition.
+Write $h_0=\max\{p,\maxd(\wof S)\}$, the least number of rows for which $S$ is a bounded RC graph accommodating all of its crossings; since $\hr(R)\geq p$ we have $h\geq h_0$ for the integer $h$ of Definition \ref{definition:clptrm}. It therefore suffices to show that the displayed value agrees for $h'$ and $h'+1$ whenever $h'\geq h_0$, and to induct. Since $\maxd(\wof S)\leq h_0\leq h'$ and all crossings of $S$ lie in rows $1,\ldots,p$, the bounded RC graph $S$ with $h'+1$ rows has an empty last row, and deleting that row leaves a bounded RC graph, namely $S$ with $h'$ rows, which is valid precisely because $h'\geq\maxd(\wof S)$. Hence the first branch of Algorithm \ref{algorithm:zero} applies and returns exactly that, so
+$$\zeromap^{\,(h'+1)-p}(S)=\zeromap^{\,h'-p}(S),$$
+where on the left $S$ carries $h'+1$ rows and on the right $h'$ rows.
 \end{proof}
 
 \begin{lemma}[The clip is local to the top rows]\label{lemma:cliplocal}
@@ -1432,7 +1651,7 @@ $$\{(i,j)\in R\mid i\leq p\}=\{(i,j)\in R'\mid i\leq p\}.$$
 Then $\clp^p(R)=\clp^p(R')$. Moreover $\clp^p(R)=R$ whenever $\hr(R)=p$.
 \end{lemma}
 \begin{proof}
-Definition \ref{definition:clptrm} constructs $\clp^p(R)$ out of the set $S$ and the integer $p$ alone, making no further reference to $R$ or to $\hr(R)$; the hypothesis says precisely that $R$ and $R'$ give rise to the same $S$, so the first assertion follows. For the second, suppose $\hr(R)=p$. Then every crossing of $R$ lies in rows $1,\ldots,p$, so $S=R$ as sets, and $\maxd(\wof R)\leq p$ since $R$ is a bounded RC graph with $p$ rows. Hence $h=p$, so $S$ is regarded as having $p$ rows and no iteration is performed, giving $\clp^p(R)=R$.
+By hypothesis $R$ and $R'$ give rise to the same set $S$ in Definition \ref{definition:clptrm}, hence to the same integer $\max\{p,\maxd(\wof S)\}$, although the two prescribed numbers of rows $\max\{\hr(R),\maxd(\wof S)\}$ and $\max\{\hr(R'),\maxd(\wof S)\}$ may differ. Choosing any $h'$ at least as large as both, Lemma \ref{lemma:clipstable} computes both clips as $\zeromap^{\,h'-p}(S)$, so they agree. For the second assertion, suppose $\hr(R)=p$. Then every crossing of $R$ lies in rows $1,\ldots,p$, so $S=R$ as sets, and $\maxd(\wof R)\leq p$ since $R$ is a bounded RC graph with $p$ rows. Hence $h=p$, so $S$ is regarded as having $p$ rows and no iteration is performed, giving $\clp^p(R)=R$.
 \end{proof}
 
 \begin{definition}\label{definition:ringproduct}
@@ -1441,7 +1660,7 @@ $$R_1\sqcupplus R_2 = \sum_{\substack{\clp^m(R')=R_1\\\trm^m(R')=R_2}}R'$$
 where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
 \end{definition}
 
-Associativity of $\sqcupplus$ rests on two structural identities relating $\clp^p$ and $\trm^p$: a commutativity of $\clp$ with $\trm$, and a functoriality of $\clp$ under iteration. The first is a formal consequence of Lemma \ref{lemma:ztrim} and Lemma \ref{lemma:clipstable}; the second carries genuine combinatorial content.
+Associativity of $\sqcupplus$ rests on two structural identities relating $\clp^p$ and $\trm^p$: a commutativity of $\clp$ with $\trm$, and a functoriality of $\clp$ under iteration. The first follows from Lemma \ref{lemma:ztrim} and Lemma \ref{lemma:clipstable}.
 
 \begin{lemma}[Commutativity of $\clp$ and $\trm$] \label{lemma:clptrm}
 Let $R$ be a bounded RC graph with $\hr(R)=p+q+r$. Then
@@ -1452,9 +1671,17 @@ Both sides have $q$ rows. Set
 $$S=\{(i,j)\in R\mid i\leq p+q\},\qquad S''=\{(i,j)\in \trm^p(R)\mid i\leq q\},$$
 the sets arising in Definition \ref{definition:clptrm} for the two clips. Unwinding the definition of $\trm^p$, the set $S''$ consists of the crossings of $R$ in rows $p+1,\ldots,p+q$ shifted up by $p$, so applying $\trm^p$ to $S$ regarded as having $h'$ rows yields $S''$ regarded as having $h'-p$ rows, for every $h'$ for which both are defined.
 
-Now choose $h'$ at least as large as both of the integers $h$ produced by Definition \ref{definition:clptrm} for the two clips, the second increased by $p$. By Lemma \ref{lemma:clipstable} we may compute both clips with $S$ and $S''$ regarded as having $h'$ and $h'-p$ rows respectively, and by Lemma \ref{lemma:ztrim}, iterated, the maps $\trm^p$ and $\zeromap$ commute on bounded RC graphs with empty last row. Since $(h'-p)-q=h'-(p+q)$, the two iterations have the same length, and
+Now choose $h'$ at least as large as both of the integers $\max\{p+q,\maxd(\wof S)\}$ and $\max\{q,\maxd(\wof{S''})\}+p$. By Lemma \ref{lemma:clipstable} we may compute both clips with $S$ and $S''$ regarded as having $h'$ and $h'-p$ rows respectively, and by Lemma \ref{lemma:ztrim}, iterated, the maps $\trm^p$ and $\zeromap$ commute on bounded RC graphs with empty last row. Since $(h'-p)-q=h'-(p+q)$, the two iterations have the same length, and
 $$\trm^p\bigl(\clp^{p+q}(R)\bigr)=\zeromap^{\,h'-(p+q)}\bigl(\trm^p(S)\bigr)=\zeromap^{\,(h'-p)-q}(S'')=\clp^q\bigl(\trm^p(R)\bigr),$$
 as required.
+\end{proof}
+
+\begin{lemma}[Clipping below empty rows]\label{lemma:clipempty}
+Let $R$ be a bounded RC graph with $\hr(R)=h$, let $0\leq p\leq h$, and suppose that rows $p+1,\ldots,h$ of $R$ are empty. Then
+$$\clp^p(R)=\zeromap^{\,h-p}(R).$$
+\end{lemma}
+\begin{proof}
+Every crossing of $R$ lies in rows $1,\ldots,p$, so the set $S$ of Definition \ref{definition:clptrm} is all of $R$. Since $R$ is a bounded RC graph with $h$ rows we have $\maxd(\wof R)\leq h$, so the number of rows prescribed by that definition is $\max\{h,\maxd(\wof R)\}=h$, and $S$ carries exactly the $h$ rows of $R$. The definition then reads $\clp^p(R)=\zeromap^{\,h-p}(R)$, as asserted.
 \end{proof}
 
 \begin{lemma}[Clipping absorbs a zeroing step]\label{lemma:clipzero}
@@ -1462,11 +1689,14 @@ Let $S$ be a bounded RC graph with $\hr(S)=h$ and empty last row, and let $0\leq
 $$\clp^p(\zeromap(S))=\clp^p(S).$$
 \end{lemma}
 \begin{proof}
-We induct on $h$. Suppose first that $p=h-1$. Since row $h$ of $S$ is empty, every crossing of $S$ lies in rows $1,\ldots,h-1$, so the set arising in Definition \ref{definition:clptrm} for $\clp^{h-1}(S)$ is all of $S$, and the associated integer is $\max\{h-1,\maxd(\wof S)\}$. As $S$ is a bounded RC graph with $h$ rows we have $\maxd(\wof S)\leq h$, so this integer is $h$ if $\maxd(\wof S)=h$ and is $h-1$ otherwise. In the first case $\clp^{h-1}(S)=\zeromap(S)$ directly from the definition. In the second case $\clp^{h-1}(S)$ is $S$ regarded as having $h-1$ rows, and the first branch of Algorithm \ref{algorithm:zero} shows $\zeromap(S)$ is the same. Either way $\clp^{h-1}(S)=\zeromap(S)$, and since $\zeromap(S)$ has $p=h-1$ rows, Lemma \ref{lemma:cliplocal} gives $\clp^{p}(\zeromap(S))=\zeromap(S)$. So the case $p=h-1$ holds.
+If rows $p+1,\ldots,h$ of $S$ are empty, the result is immediate from Lemma \ref{lemma:clipempty}: the same hypothesis holds for $\zeromap(S)$, which has $h-1$ rows, so
+$$\clp^p(\zeromap(S))=\zeromap^{\,h-1-p}(\zeromap(S))=\zeromap^{\,h-p}(S)=\clp^p(S).$$
+We may therefore assume that $S$ has a crossing in some row of index strictly between $p$ and $h$, so that $\clp^p$ discards the crossings below row $p$ while $\zeromap$ may first move crossings out of the last row into rows of index at most $p$, where they survive the restriction.
 
+We induct on $h$. Suppose first that $p=h-1$. Since row $h$ of $S$ is empty, every crossing of $S$ lies in rows $1,\ldots,h-1$, so Lemma \ref{lemma:clipempty} gives $\clp^{h-1}(S)=\zeromap(S)$; and since $\zeromap(S)$ has $p=h-1$ rows, Lemma \ref{lemma:cliplocal} gives $\clp^{p}(\zeromap(S))=\zeromap(S)$. So the case $p=h-1$ holds.
 Now suppose $p<h-1$, and write $X=\clp^p(\zeromap(S))$ and $Y=\clp^p(S)$, both with $p$ rows. If $p=0$ both are the empty bounded RC graph with no rows, so assume $p\geq 1$. Applying Lemma \ref{lemma:clptrm} twice, then Lemma \ref{lemma:ztrim}, then the inductive hypothesis for $\trm(S)$, which has $h-1$ rows and empty last row, we obtain
 $$\trm(X)=\clp^{p-1}\bigl(\trm(\zeromap(S))\bigr)=\clp^{p-1}\bigl(\zeromap(\trm(S))\bigr)=\clp^{p-1}\bigl(\trm(S)\bigr)=\trm(Y).$$
-Moreover $\wtt(X)=\wtt(Y)$: by Lemma \ref{lemma:zeroweight} every application of $\zeromap$ preserves the weight of each surviving row, so each of $\wtt(X)$ and $\wtt(Y)$ equals $(\wtt_1(S),\ldots,\wtt_p(S))$. By Theorem \ref{theorem:modactrc} a bounded RC graph with $p$ rows is determined by its trim together with its permutation, so it remains only to check that $\wof X=\wof Y$. Both are obtained from the common permutation $\wof{\trm(X)}=\wof{\trm(Y)}$ by adjoining a first row of the common size $\wtt_1(S)$, so this is the assertion that the two chains of transition steps produced by Lemma \ref{lemma:zerotransition}, namely the one carrying $\wof S$ to $\wof Y$ and the one carrying $\wof{\zeromap(S)}$ to $\wof X$, have the same endpoint.
+Moreover $\wtt(X)=\wtt(Y)$: by Lemma \ref{lemma:zeroweight} every application of $\zeromap$ preserves the weight of each surviving row, so each of $\wtt(X)$ and $\wtt(Y)$ equals $(\wtt_1(S),\ldots,\wtt_p(S))$. By Theorem \ref{theorem:modactrc} a bounded RC graph with $p$ rows is determined by its trim together with its permutation, so it remains to check that $\wof X=\wof Y$.\todo{GAP: $\wof X=\wof Y$ is not proved. The statement of the lemma is verified computationally for $N\leq 6$ ($90113$ instances, no failures). Reformulation: by Lemma \ref{lemma:cliplocal} the lemma says exactly that $\zeromap^{\,H-p}(A)=\zeromap^{\,H-p}(B)$ for $H$ large, where $A$ and $B$ are the restrictions of $S$ and $\zeromap(S)$ to rows $1,\ldots,p$; these have equal row weights by Lemma \ref{lemma:zeroweight}. Two routes are ruled out by counterexample. (i) $\zeromap$ does not commute with restriction to rows $1,\ldots,p$: $\zeromap(A)\neq B$ in $4756$ of $90113$ instances, the smallest being $\wof S=(1,3,2)$ with $h=2$, $p=1$, where $A=\{(1,2)\}$ and $B=\{(1,1)\}$. (ii) $\clp^p(A)$ is not determined by $\wof A$ together with $\wtt(A)$: e.g. $\wof A=(1,2,5,4,3)$, $\wtt(A)=(1,1,1,0)$, $p=3$ admits two distinct clips. So the collapse is genuine and needs an argument about Algorithm \ref{algorithm:zero} itself; the Little bump description of Proposition \ref{proposition:little_bump} is the natural tool. Note also that by Lemma \ref{lemma:clipempty} one has $\clp^{h-1}(S)=\zeromap(S)$, so this lemma is \emph{equivalent} to the case $p+q=h-1$ of Lemma \ref{lemma:clpfunc}; there is nothing to be gained by attacking that one instead. Same residual as in Lemma \ref{lemma:cliplmap}.}
 \end{proof}
 
 \begin{lemma} \label{lemma:clpfunc}
@@ -2345,13 +2575,10 @@ Let $a$ be a weak composition of length $n$. Then in $\dcoma$ we have
 $$[a] = \sum_{\wtt(W)=a}\dsch_{\wof{W}}^{\hr(W)}.$$
 \end{lemma}
 \begin{proof}
-Collecting coefficients, the coefficient of $\dsch_w^n$ on the right-hand side is the number of WC graphs $W$ with $\wof{W}=w$, $\hr(W)=n$, and $\wtt(W)=a$. By definition, this coefficient is the coefficient of the monomial $x^a$ in $\dsch_w^n$, which is equal to $\langle \sch_w^n, [a]\rangle$.
+Collecting coefficients, the coefficient of $\dsch_w^n$ on the right-hand side is the number of RC graphs $W$ with $\wof{W}=w$, $\hr(W)=n$, and $\wtt(W)=a$. By definition, this coefficient is the coefficient of the monomial $x^a$ in $\dsch_w^n$, which is equal to $\langle \sch_w^n, [a]\rangle$.
 \end{proof}
 
 \begin{definition}
-Define a map $\Xi:\BRC\to \dcoma$ by
-$$\Xi(R) = \dsch_{\wof{R}}^{\hr(R)}.$$
-
 Let $\mathcal{R}$  be the subring of $\BRC$ generated by the single-row RC graphs $\mathtt{row}(i)$ for $i\geq 0$. Let $a$ be a sequence of elements of a ring indexed by the nonnegative integers. For a permutation $w$ and an integer $n\geq \maxd(w)$, define a function $\dsch_w^n(a)$ by
 $$\dsch_w^n(a) = \sum_{\alpha} d_{\alpha, w}^n a_{\alpha_1} \cdots a_{\alpha_n}$$
 where the sum is over all weak compositions $\alpha$ of length $n$, and $d_{\alpha, w}^n$ is the coefficient of $\alpha$ in $\dsch_w^n\in\dcoma$.
@@ -2376,41 +2603,14 @@ $$
 Applying the inverse isomorphism $\iota$ shows that $\{\dsch_w^n(\mathtt{row})\}$ is a $\mathbb{Z}$-basis of $\mathcal{R}$.
 \end{proof}
 
-\begin{definition}\label{definition:omega}
-Let $\Omega$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the RC graphs $R_1-R_2$ such that $\wof{R_1}=\wof{R_2}$ and $\hr(R_1)=\hr(R_2)$.
-\end{definition}
-
-\begin{lemma}
-$\Omega$ is a two-sided ideal of $\BRC$.
-\end{lemma}
-\begin{proof}
-  % The fact that $\Omega$ is a left ideal follows from the fact that a product $R\sqcupplus R_1$ is uniquely determined by $R\sqcupplus \mathrm{empty}(\hr(R_1))$ and $R_1$, and the contribution of $R_1$ is precisely that it replaces the last $\hr(R_1)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R_1$ is added as the last $\hr(R_1)$ rows. It follows that $R\sqcupplus R_1 - R\sqcupplus R_2$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a left ideal.
-
-  % The fact that $\Omega$ is a right ideal follows from the fact that a product $R_1\sqcupplus R$ is uniquely determined by $R_1\sqcupplus \mathrm{empty}(\hr(R))$ and $R$, and the contribution of $R$ is precisely that it replaces the last $\hr(R)$ rows of each term. In particular, precisely the same $\hr(R)$ occur in precisely the same number of terms, to which $\shup^{\hr(R)}R$ is added as the last $\hr(R)$ rows. It follows that $R_1\sqcupplus R - R_2\sqcupplus R$ is a linear combination of terms of the form $R_1' - R_2'$ such that $\hr(R_1') = \hr(R_2')$ and $\wof{R_1'} = \wof{R_2'}$, and $\Omega$ is a right ideal.
-
-  Suppose $A$ is an RC graph with $k$ rows, and let $W_1 - W_2$ be a generator of $\Omega$, so that $\wof{W_1}=\wof{W_2}$, with $\hr(W_1)=\hr(W_2)=m$. Suppose $W_1'$ and $W_2'$ satisfy 
-  $$\clp^{k}(W_1') = A = \clp^{k}(W_2')$$ 
-  and $\trm^{k}(W_1') = W_1$, $\trm^{k}(W_2') = W_2$. Assume also that the first $k$ rows of $W_1'$ and $W_2'$ are identical. Let this set of rows be denoted $A'$. Then 
-$$\wof{W_1'}=\wof{A'}\wof{W_1}=\wof{A'}\wof{W_2}=\wof{W_2'}$$ 
-For each such $A'$ that is the unaltered first $k$ rows of a RC graph $W'$ with $\hr(W')=m+k$, $\clp^k(W')=A$, with empty last $m$ rows, we obtain exactly one pair of $W_1'$ and $W_2'$ satisfying the above conditions. Therefore, 
-$$A\sqcupplus(W_1-W_2) = \sum_{\substack{\clp^k(W_1')=\clp^k(W_2')=A\\\trm^k(W_1')=W_1\\\trm^k(W_2')=W_2}} (W_1' - W_2') \in \Omega.$$
-For the right ideal property, let $W_1$, $W_2$, and $A$ be as above. Then
-$$(W_1-W_2)\sqcupplus A = \sum_{\substack{\clp^m(W_1')=W_1\\\clp^m(W_2')=W_2\\\trm^m(W_1')=\trm^m(W_2')=A}} (W_1' - W_2')$$
-Assume first that $A$ is a single empty row.  We know that
-$$\zeromap:\RC_{m+1}(w')\to \bigcup_{w'\downvar{m + 1} w}\RC_{m}^0(w)$$
-is a bijection, so that for each $w'\in S_\infty$ there is at most one $W_1'\in \RC_{m+1}(w')$  satisfying $\clp^{m}(W_1')=W_1$ and $\trm^{m}(W_1')=A$, and this is true if and only if there is a (unique) $W_2'\in \RC_{m+1}(w')$ with $\clp^m(W_2')=W_2$ and $\trm^m(W_2')=A$. For each such pair, we have $\wof{W_1'}=\wof{W_2'}$, so $W_1'-W_2'\in\Omega$. Therefore, the sum is of differences of pairs of WC graphs, both with the same permutation, each with coefficient $1$, so that $(W_1-W_2)\sqcupplus A\in\Omega$. 
-
-Though we have proved this only for a single empty row, the result follows if we can show it is still true for $A$ consisting of $k>1$ empty rows for any $k$, which is easily seen by associativity and an inductive argument. For arbitrary $A$ the product is identical to that of $A$ empty, except for the last $k$ rows being replaced with $\shup^{m}A$, with the stipulation that the RC graph must remain reduced, which depends only on the permutation of the first $m$ rows. Thus, $\Omega$ is a two-sided ideal of $\BRC$.
-\end{proof}
-
-The left-hand half of the argument just given isolates a structural feature of $\sqcupplus$ that we will use repeatedly in Sections \ref{section:crystals}--\ref{section:slide}, and which we now record separately. It says that in a product $A\sqcupplus W$ the second factor enters only as an inert block of rows sitting below an index set of ``top blocks'' that is determined by $A$ and by the permutation of $W$ alone.
+We isolate first a structural feature of $\sqcupplus$ that will be used repeatedly here and in Sections \ref{section:crystals}--\ref{section:slide}. It says that in a product $A\sqcupplus W$ the second factor enters only as an inert block of rows sitting below a collection of top blocks determined by $A$ and by the permutation of $W$ alone.
 
 \begin{lemma}[Block decomposition of $\sqcupplus$]\label{lemma:blockdecomp}
 Let $A$ and $W$ be bounded RC graphs with $\hr(A)=k$ and $\hr(W)=m$. Then
 $$A\sqcupplus W=\sum_{A'}\bigl(A'\cup\shup^{k}W\bigr),$$
 each term occurring with multiplicity one and understood to have $k+m$ rows, where $A'$ ranges over the RC graphs all of whose crossings lie in rows $1,\ldots,k$ and which satisfy the two conditions
 \begin{enumerate}
-\item $\clp^{k}(A')=A$, where $A'$ is regarded as having $\max\{k,\maxd(\wof{A'})\}$ rows, and
+\item $\clp^{k}(A')=A$, where $A'$ is regarded as having $\max\{k+m,\maxd(\wof{A'})\}$ rows, and
 \item $\ell\bigl(\wof{A'}\shup^{k}\wof W\bigr)=\ell(\wof{A'})+\ell(\wof W)$ and $\maxd\bigl(\wof{A'}\shup^{k}\wof W\bigr)\leq k+m$.
 \end{enumerate}
 In particular the set of $A'$ being summed over depends on $W$ only through the permutation $\wof W$.
@@ -2430,6 +2630,40 @@ respectively, where $+k$ denotes adding $k$ to every letter.
 \end{corollary}
 \begin{proof}
 Immediate from Lemma \ref{lemma:blockdecomp}, since the two products are summed over the same set of $A'$. The statement about words holds because the crossing $(i,j)$ of $W_r$ contributes the letter $i+j-1$ to $\mathrm{word}(W_r)$ while the crossing $(i+k,j)$ of $\shup^{k}W_r$ contributes the letter $i+j-1+k$, and because the crossings of rows $1,\ldots,k$ precede those of rows $k+1,\ldots,k+m$ in the order of Definition \ref{definition:rcgraph}.
+\end{proof}
+
+Applying Lemma \ref{lemma:blockdecomp} with the roles of the two factors interchanged decomposes a product $W\sqcupplus A$ over the RC graphs $B$ occupying its top $m$ rows, subject to $\clp^{m}(B)=W$ together with a validity condition depending on $B$ only through $\wof B$. This is what lets one vary the top factor, and the following lemma packages it together with the bijection that does the varying.
+
+\begin{lemma}[Matching the top blocks]\label{lemma:topmatch}
+Let $W_1$ and $W_2$ be bounded RC graphs with $\hr(W_1)=\hr(W_2)=m$ and $\wof{W_1}=\wof{W_2}$. For $r=1,2$, call an RC graph $B$ \emph{admissible for $W_r$} if all of its crossings lie in rows $1,\ldots,m$ and $\clp^{m}(B)=W_r$, where $B$ is regarded as having $\max\{m,\maxd(\wof B)\}$ rows. Then for each permutation $w'$ there is at most one $B$ admissible for $W_1$ with $\wof B=w'$, and such a $B$ exists if and only if there is a (necessarily unique) $B'$ admissible for $W_2$ with $\wof{B'}=w'$. Writing $\beta(B)=B'$ for the resulting bijection, we have:
+\begin{enumerate}
+\item $\wof{\beta(B)}=\wof B$ for every $B$ admissible for $W_1$;
+\item for every bounded RC graph $A$ with $\hr(A)=k$, the assignment
+$$B\cup\shup^{m}A\ \longmapsto\ \beta(B)\cup\shup^{m}A$$
+is a bijection from the set of terms of $W_1\sqcupplus A$ onto the set of terms of $W_2\sqcupplus A$, and corresponding terms have the same permutation and have words
+$$\mathrm{word}(B)\cdot\bigl(\mathrm{word}(A)+m\bigr)\quad\text{and}\quad\mathrm{word}(\beta(B))\cdot\bigl(\mathrm{word}(A)+m\bigr);$$
+\item $\beta$ is the composite of the $\max\{m,\maxd(w')\}-m$ single-row bijections supplied by Theorem \ref{theorem:zero_bijection}, in the sense that $\clp^{m}$ carries $B$ to $W_1$ and $\beta(B)$ to $W_2$ through the same number of applications of $\zeromap$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+Fix a permutation $w'$ and set $h=\max\{m,\maxd(w')\}$. An RC graph $B$ admissible for $W_r$ with $\wof B=w'$ is precisely an element of $\RC_h(w')$ whose rows $m+1,\ldots,h$ are empty and which satisfies $\zeromap^{\,h-m}(B)=W_r$, by Definition \ref{definition:clptrm}. Each application of $\zeromap$ is injective on the graphs of a fixed permutation with empty last row by Lemma \ref{lemma:zero_surjective}, and distinct graphs with distinct permutations remain distinct; hence $\zeromap^{\,h-m}$ is injective on this set, giving the asserted uniqueness. By Theorem \ref{theorem:zero_bijection} each application of $\zeromap$ is moreover a bijection onto $\bigcup_{w\downvar{}w''}\RC(w'')$, so such a $B$ exists if and only if $W_r$ is reachable from $w'$ by $h-m$ transition steps, a condition depending only on $\wof{W_r}$. As $\wof{W_1}=\wof{W_2}$, the two existence conditions agree, which gives the bijection $\beta$ and assertions (1) and (3).
+
+For (2), apply Lemma \ref{lemma:blockdecomp} with $W_r$ in the role of the first factor and $A$ in the role of the second. Its condition (1) says exactly that $B$ is admissible for $W_r$, and its condition (2) constrains $B$ only through $\wof B$ and $\wof A$. Since $\wof{\beta(B)}=\wof B$, the bijection $\beta$ therefore restricts to a bijection between the two sets of terms. The claims about permutations and words are those of Corollary \ref{corollary:blockswap}, read with the factors interchanged.
+\end{proof}
+
+\begin{definition}\label{definition:omega}
+Let $\Omega$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the RC graphs $R_1-R_2$ such that $\wof{R_1}=\wof{R_2}$ and $\hr(R_1)=\hr(R_2)$.
+\end{definition}
+
+\begin{lemma}
+$\Omega$ is a two-sided ideal of $\BRC$.
+\end{lemma}
+\begin{proof}
+Let $W_1-W_2$ be a generator of $\Omega$, so that $\wof{W_1}=\wof{W_2}$ and $\hr(W_1)=\hr(W_2)=m$, and let $A$ be a bounded RC graph with $\hr(A)=k$.
+
+For the left ideal property, Corollary \ref{corollary:blockswap} matches the terms of $A\sqcupplus W_1$ with those of $A\sqcupplus W_2$ so that corresponding terms have the same permutation, and both have $k+m$ rows. Hence $A\sqcupplus(W_1-W_2)$ is a sum of differences of pairs of bounded RC graphs each agreeing in permutation and number of rows, each with coefficient $1$, so it lies in $\Omega$.
+
+For the right ideal property, Lemma \ref{lemma:topmatch}(2) matches the terms of $W_1\sqcupplus A$ with those of $W_2\sqcupplus A$, and by Lemma \ref{lemma:topmatch}(1) corresponding terms again have the same permutation and the same number of rows. Hence $(W_1-W_2)\sqcupplus A\in\Omega$, and $\Omega$ is a two-sided ideal of $\BRC$.
 \end{proof}
 
 \begin{theorem} \label{theorem:semidirect}
@@ -2509,14 +2743,16 @@ The action is governed by a bracketing procedure on the column indices appearing
 
 If $R_i(R)$ is nonempty, $f_i(R)$ is obtained by removing the smallest unpaired entry $b\in R_i(R)$ from row $i$ and inserting an entry into row $i+1$ at the largest column $b' < b$ such that $b'$ does not already appear in row $i+1$; if $R_i(R) = \emptyset$ or no such $b'$ exists, $f_i(R) = \emptyset$. Dually, if $L_i(R)$ is nonempty, $e_i(R)$ is obtained by removing the largest unpaired entry $a\in L_i(R)$ from row $i+1$ and inserting an entry into row $i$ at the smallest column $a' > a$ such that $a'$ does not already appear in row $i$; if $L_i(R) = \emptyset$ or no such $a'$ exists, $e_i(R) = \emptyset$.
 
-The \emph{weight} of $R$ as an element of the crystal is simply $\wtt(R)$, the row weight itself. A \emph{highest weight} element is an RC graph $R$ with $e_i(R) = \emptyset$ for all $i\geq 1$. Every $R\in \RC(w)$ corresponds to a unique highest weight element $\mathbb{Y}(R)$, which can always be obtained by greedily applying available $e_i$ until none apply.The \emph{Demazure crystal} $\mathrm{Dem}(R)$ generated by a highest weight $\mathbb{Y}(R)$ is the closure of $\{\mathbb{Y}(R)\}$ under the operators $\{f_i^k : i\geq 1, k\geq 0\}$ subject to the Demazure truncation rule of \cite{assaf2018demazure}. The \emph{extremal weight} $\mathrm{extwt}(R)$ of $R$ is the weak composition that is the lexicographically smallest weight of any element of $\mathrm{Dem}(R)$.
+The \emph{weight} of $R$ as an element of the crystal is simply $\wtt(R)$, the row weight itself. A \emph{highest weight} element is an RC graph $R$ with $e_i(R) = \emptyset$ for all $i\geq 1$. Every $R\in \RC(w)$ corresponds to a unique highest weight element $\mathbb{Y}(R)$, which can always be obtained by greedily applying available $e_i$ until none apply. The \emph{Demazure crystal} $\mathrm{Dem}(R)$ generated by a highest weight $\mathbb{Y}(R)$ is the closure of $\{\mathbb{Y}(R)\}$ under the operators $\{f_i^k : i\geq 1, k\geq 0\}$ subject to the Demazure truncation rule of \cite{assaf2018demazure}.\todo{GAP: the ``Demazure truncation rule'' is never stated, so $\mathrm{Dem}(R)$ and hence $\mathrm{extwt}(R)$ are not defined here. Theorem \ref{theorem:keykey} takes $\mathrm{extwt}(A)=a$ as hypothesis, so this must be pinned down. Also needed: that the lex-smallest weight of $B_w(\lambda)$ is the composition $a$ with $w\cdot a=\lambda$, which is what identifies $\mathrm{extwt}$ with the Assaf--Schilling indexing.} The \emph{extremal weight} $\mathrm{extwt}(R)$ of $R$ is the weak composition that is the lexicographically smallest weight of any element of $\mathrm{Dem}(R)$.
 \end{definition}
 
 The significance of this elaborate structure is the following.
-\begin{theorem} \label{theorem:keykey}
+\begin{theorem}[{\cite[Theorem~5.11]{assaf2018demazure}, together with \cite{kashiwara1993crystal,littelmann1995crystal}}] \label{theorem:keykey}
 If $A\in\BRC$ is such that $\mathrm{extwt}(A) = a$, then
 $$\kappa_a = \sum_{R\in\mathrm{Dem}(A)} x^{\wtt(R)}$$
 \end{theorem}
+
+% Two ingredients combine here. That the character of a Demazure crystal $B_w(\lambda)$ is the Demazure character $\kappa_a$, where $w\cdot a=\lambda$, was conjectured by Littelmann \cite{littelmann1995crystal} and proved by Kashiwara \cite{kashiwara1993crystal}. That the RC graphs of a permutation carry a Demazure crystal structure, decomposing $\RC(w)$ into a disjoint union of Demazure crystals indexed by its highest weight elements, is \cite[Theorem~5.11]{assaf2018demazure}; the resulting expansion of a Schubert polynomial into key polynomials is \cite[Corollary~5.12]{assaf2018demazure}.
 
 It will be advantageous to have an alternative, crystal-friendly definition of the map $\zeromap$ for the purposes of proving results about key polynomials.
 
@@ -2554,7 +2790,7 @@ a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
 \end{matrix}$$
 Necessarily, we must have $a_p > 1$. To see this, note that if we have $a_p=1$, then we would have $r_p=1$ by the compatible sequence condition. The only way for position $(1,1)$ in an RC graph to be the final right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty, which is included in the hypotheses of the proposition.
 
-We must also have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. Recursively, this is the same as applying $\lmap$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
+We must also have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$.\todo{GAP: only the case $p=k$ is treated; the case $p<k$ is never handled.} Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. Recursively, this is the same as applying $\lmap$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
 \end{proof}
 
 
@@ -2574,23 +2810,64 @@ $$\lzeromap:\RC_n(w)^0\to \bigcup_{w\downvar{n} w'}\RC_{n-1}(w')$$
 	is an isomorphism of crystal graphs.
 \end{proposition}
 \begin{proof}
-The fact that this is a weight-preserving bijection follows directly from repeated application of \cite[Lemma~7]{little2003combinatorial}, which states that the Little bump on the last descent realizes the Lascoux-Sch\"utzenberger transition formula. The crystal isomorphism follows from Theorem \ref{theorem:littlecrystal}.
+The fact that this is a weight-preserving bijection follows directly from repeated application of \cite[Lemma~7]{little2003combinatorial}, which states that the Little bump on the last descent realizes the Lascoux-Sch\"utzenberger transition formula. The crystal isomorphism follows from Theorem \ref{theorem:littlecrystal}.\todo{GAP: Theorem \ref{theorem:littlecrystal} says Little bumps preserve the Edelman--Greene recording tableau $Q$. To conclude a crystal isomorphism one needs that connected components of the crystal on $\RC(w)$ are indexed by $Q$, which is nowhere stated. Corollary \ref{corollary:crystaliso} rests entirely on this.}
+\end{proof}
+
+\begin{lemma}\label{lemma:cliplmap}
+  Let $R$ be a bounded RC graph with $\hr(R)=n$ and empty last row. Suppose $r\leq n-1$. Then
+  $$\clp^{r}(R)=\clp^{r}(\lmap(R)).$$
+\end{lemma}
+\begin{proof}
+We may assume $\maxd(\wof R)=n$, since otherwise $\lmap(R)$ is undefined. Write $S=\lmap(R)$, so that $\hr(S)=n+1$, and recall that all crossings of $S$ lie in rows $1,\ldots,n-1$: the re-insertion is performed with parameter $n-1$ and the parked crossing at $(n,1)$ is removed.
+
+\emph{Reduction to $r=n-1$.} Since $r\leq n-1\leq \hr(R)$ and $r\leq n-1\leq\hr(S)$, Lemma \ref{lemma:clpfunc} gives
+$$\clp^{r}(R)=\clp^{r}\bigl(\clp^{n-1}(R)\bigr),\qquad \clp^{r}(S)=\clp^{r}\bigl(\clp^{n-1}(S)\bigr),$$
+so it suffices to treat $r=n-1$.
+
+\emph{Identification of the two sides.} All crossings of $R$ lie in rows $1,\ldots,n-1$, so the set $S$ of Definition \ref{definition:clptrm} for $\clp^{n-1}(R)$ is all of $R$; since $R$ is a bounded RC graph with $n$ rows, the prescribed number of rows is $\max\{n,\maxd(\wof R)\}=n$, and hence
+$$\clp^{n-1}(R)=\zeromap(R).$$
+Let $p$ be the length of the chain located in step 7 of Algorithm \ref{algorithm:zero} for $R$.
+
+\emph{Case $p=1$.} Here the \textbf{for} loop of Algorithm \ref{algorithm:insertion} makes a single pass, which is precisely the insertion performed by $\lmap$, so $\zeromap(R)$ is $S$ with its trailing empty rows deleted down to height $n-1$. In particular $\maxd(\wof S)=\maxd(\wof{\zeromap(R)})\leq n-1$. Since $S$ has $n+1$ rows, all of its crossings lying in rows $1,\ldots,n-1$, Lemma \ref{lemma:clipempty} gives $\clp^{n-1}(S)=\zeromap^{2}(S)$; and as $\maxd(\wof S)\leq n-1$, each of these two applications falls into the first branch of Algorithm \ref{algorithm:zero} and merely deletes an empty row. Hence $\clp^{n-1}(S)$ is $S$ truncated to $n-1$ rows, and $\clp^{n-1}(S)=\zeromap(R)=\clp^{n-1}(R)$.
+
+\emph{Case $p\geq 2$.} The re-insertion performed by $\lmap$ uses a reflection $t_{a,b}$ with $a\leq n-1<b$, so it does not disturb the value $\wof R(n)$, which is carried to position $n+1$ by the deletion of the crossing at root $(n,n+1)$. Hence $\maxd(\wof S)=n+1$, and since $S$ has $n+1$ rows with all crossings in rows $1,\ldots,n-1$, Lemma \ref{lemma:clipempty} gives
+$$\clp^{n-1}(S)=\zeromap^{2}(S).$$
+So the assertion to be proved is
+\begin{equation}\label{eq:onetwo}
+\zeromap(R)=\zeromap^{2}\bigl(\lmap(R)\bigr),
+\end{equation}
+an equality of bounded RC graphs of height $n-1$. We verify the three data determining such a graph.
+
+\emph{Weights agree.} Each application of $\zeromap$ preserves the weight vector by Lemma \ref{lemma:zeroweight}, and $\lmap$ does as well: it deletes one crossing from row $i$ and, by Lemma \ref{lemma:insertworks}, the insertion $\ins{n-1}{(i)}$ restores exactly one crossing to row $i$ and alters no other row weight, while the parked crossing contributes only to row $n$. Hence both sides of \eqref{eq:onetwo} have weight $(\wtt_1(R),\ldots,\wtt_{n-1}(R))$.
+
+\emph{Trims agree.} By Lemma \ref{lemma:clptrm},
+$$\trm\bigl(\clp^{n-1}(R)\bigr)=\clp^{n-2}\bigl(\trm(R)\bigr),\qquad \trm\bigl(\clp^{n-1}(S)\bigr)=\clp^{n-2}\bigl(\trm(S)\bigr).$$
+Moreover $\trm(\lmap(R))=\lmap(\trm(R))$, by the argument of Lemma \ref{lemma:ztrim}: trimming preserves a suffix of the word, and the deletion of the crossing at the last descent followed by the re-insertion may equally be carried out before or after that suffix is taken.\todo{GAP: $\trm\circ\lmap=\lmap\circ\trm$ is asserted by analogy with Lemma \ref{lemma:ztrim}, not proved. Verified computationally for $N\leq 6$ (2219 instances where both sides defined, no failures). Should be stated and proved as its own lemma alongside Lemma \ref{lemma:ztrim}.} Applying the present lemma inductively to $\trm(R)$, which has height $n-1$, with $n-2\leq (n-1)-1$, gives $\clp^{n-2}(\trm(R))=\clp^{n-2}(\lmap(\trm(R)))=\clp^{n-2}(\trm(S))$, so the two sides of \eqref{eq:onetwo} have the same trim.
+
+\emph{Permutations agree.} By Theorem \ref{theorem:modactrc} a bounded RC graph of height $n-1$ is determined by its trim together with its permutation, so it remains to check that the two sides of \eqref{eq:onetwo} have the same permutation. Both are obtained from $\wof R$ by the transition steps of Lemma \ref{lemma:zerotransition}: the left side by a single step at index $n$, the right side by the step of $\lmap$ followed by steps at indices $n+1$ and $n$. These two chains of transition steps have the same endpoint.\todo{GAP: the equality of endpoints is asserted, not proved. Same residual as in Lemma \ref{lemma:clipzero}. Little's Lemma~6 \cite{little2003combinatorial}, already cited in Proposition \ref{proposition:zerocrystal}, controls how a bump moves the permutation and is the natural tool.}
 \end{proof}
 
 \begin{proposition} \label{proposition:zerocrystal}
 We have the equality $\lzeromap=\zeromap$.
 \end{proposition}
 \begin{proof}
-Let $R$ be a bounded RC graph, say with permutation $w$, with $r$ rows and last descent $r$ such that row $r$ is empty. We prove this by induction on $\ell(w)$ as well as on $s - r$, where $s>r$ is the maximal index such that $w(r)>w(s)$. If $s=r+1$, then the definitions of the two maps are identical. 
+Let $R$ be a bounded RC graph with $\hr(R)=r$ and empty last row, and put $w=\wof R$. If $\maxd(w)\leq r-1$ then the first branch of Algorithm \ref{algorithm:zero} returns $R$ with its last row deleted, while the iteration defining $\lzeromap$ performs no bump at all and returns the same graph; so we may assume $\maxd(w)=r$. Let
+$$s=\max\{t>r \mid w(r)>w(t)\},$$
+which exists because $r$ is a descent of $w$. We induct on $s-r$.
 
-% Otherwise, we quote the following formula:
-% $$\sch_w(x) = \sch_w(x_1, \ldots, x_{r-1}, 0) + x_r\partial^r(\sch_w(x))(x_1,\ldots,x_r,0)$$
-% We model the second term as follows. 
-By the exchange property of Coxeter groups, there is a unique pair $(i,j)$ such that $\rtt_R(i, j) = (r, r+1)$. Set
-$$R' = R\setminus\{(i,j)\}$$
-and assume that $\hr(R') = r+1$. By the inductive hypothesis, we have $\lzeromap(R') = \zeromap(R')$. We have thus established that $\lzeromap$ and $\zeromap$ induce the same bijection between $\RC(ws_r)^0$ and 
-$$\bigcup_{ws_r\downvar{r+1} w'}\RC(w')$$
-Inspection of both algorithms reveals that the removal of this crossing and the subsequent reinsertion in the first step of both algorithms is precisely the same, and holding this fixed then applying the inductive hypothesis yields the result.
+By the exchange property of Coxeter groups there is a unique pair $(i,j)$ with $\rtt_R(i,j)=(r,r+1)$, and this pair is simultaneously the first term $(i_1,j_1)$ of the chain located in step 7 of Algorithm \ref{algorithm:zero} and the crossing appearing in the definition of $\lmap$. Both maps begin by deleting it, parking a crossing in the last row, and re-inserting into row $i$ by Algorithm \ref{algorithm:insertion} with parameter $r-1$: for $\lmap$ this is the definition, and for $\zeromap$ it is the first pass of the \textbf{for} loop of Algorithm \ref{algorithm:insertion} on the sequence $I=(i_1,\ldots,i_p)$, at which moment $L$ and $U$ are still empty, so that the search in step 5 and the rectification in steps 10--18 are exactly those performed by $\lmap$. Write $S=\lmap(R)$ for the common result of this first step. Note that all crossings of $S$ lie in rows $1,\ldots,r-1$, since the re-insertion is carried out with parameter $r-1$ and the parked crossing is removed, while $S$ is assigned $r+1$ rows.
+
+If $s=r+1$, then $w(r)<w(t)$ for every $t>r+1$, the chain of step 7 has length $p=1$, and the \textbf{for} loop makes a single pass; both maps return $S$ with its trailing empty rows deleted down to height $r-1$, and we are done. This is the base case.
+
+Suppose now $s>r+1$. The re-insertion performed by $\lmap$ uses a reflection $t_{a,b}$ with $a\leq r-1<b$, so it does not disturb the value $w(r)$, which is carried to position $r+1$ by the deletion of the crossing at root $(r,r+1)$. Consequently
+$$\maxd(\wof S)=r+1=\hr(S),$$
+while the index $s$ attached to $\wof S$ in the same way is unchanged. Thus $S$ again satisfies the hypotheses of the proposition, with inductive parameter $s-(r+1)=(s-r)-1$, and the inductive hypothesis gives
+$$\lzeromap(S)=\zeromap(S)=:T,$$
+a bounded RC graph with $\hr(T)=r$. Setting $w'=\wof{T}$, we can assert that $\zeromap(T) = \lzeromap(T)$ provided that $s' - (r + 1) < s - r$, where $s' = \max\{t>r \mid w'(r)>w'(t)\}$. This follows from \cite[Lemma~6]{little2003combinatorial}, which states that
+$$w' = wt_{r,s}t_{j,r}$$
+for some $j$, and hence $w'(r) = w(j) < w(s) = w'(s)$, so that $s' \leq s$ and $s' - (r + 1) < s - r$ as desired. We conclude that 
+$$\lzeromap(R)=\lzeromap(T) = \zeromap(T) = \clp^{r-1}(S) = \clp^{r-1}(\lmap(R)) = \clp^{r-1}(R) = \zeromap(R),$$
+where the first equality is by definition, the second is the inductive hypothesis, the third equality follows by definition of $\clp$, the fourth identifies $S=\lmap(R)$, and the last two equalities are Lemma \ref{lemma:cliplmap} and the definition of $\clp$. This completes the induction and proves the proposition.
 \end{proof}
 
 \begin{corollary}[$\zeromap$ intertwines with crystal operators] \label{corollary:crystaliso}
@@ -2626,7 +2903,7 @@ This follows from Proposition \ref{proposition:zerocrystal} and the fact that $\
 $$\kappa^*_c = \sum_{\substack{R=\mathbb{Y}(R)\\ \mathrm{extwt}(R)=c}} \dsch_{\wof{R}}^{\hr(R)}$$
 \end{theorem}
 \begin{proof}
-  The statement of the theorem is equivalent to Lascoux and Sch\"utzenberger's formula for Schubert polynomials in terms of key polynomials through Theorem \ref{theorem:keykey}.
+  The statement of the theorem is equivalent to Lascoux and Sch\"utzenberger's formula for Schubert polynomials in terms of key polynomials through Theorem \ref{theorem:keykey}.\todo{GAP: the equivalence is asserted in one sentence and not carried out. Depends on the definition of $\mathrm{extwt}$ flagged at Definition \ref{definition:crystal}.}
 \end{proof}
 
 % \begin{proposition}
@@ -2638,6 +2915,15 @@ $$\kappa^*_c = \sum_{\substack{R=\mathbb{Y}(R)\\ \mathrm{extwt}(R)=c}} \dsch_{\w
   Let $\Theta$ be the $\mathbb{Z}$-submodule of $\BRC$ generated by the elements $R_1-R_2$ such that $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$.
 
 \end{definition}
+
+\begin{lemma}[Attaching a common lower block]\label{lemma:lowerblockattach}
+Let $B_1$ and $B_2$ be bounded RC graphs with $m+k$ rows all of whose crossings lie in rows $1,\ldots,m$, let $A$ be a bounded RC graph with $\hr(A)=k$, and suppose that $B_j\cup\shup^{m}A$ is a bounded RC graph with $m+k$ rows for $j=1,2$. If $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$, then
+$$\mathbb{Y}\bigl(B_1\cup\shup^{m}A\bigr)=\mathbb{Y}\bigl(B_2\cup\shup^{m}A\bigr).$$
+\end{lemma}
+\begin{proof}
+  Due to the fact that the highest weight is independent of the choice of sequence of raising operators used to achieve it, we may fully raise the first $m$ rows of $B_j\cup\shup^{m}A$ to obtain $\mathbb{Y}(B_j)\cup\shup^{m}A$. Since $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$, the result follows.
+\end{proof}
+
 
 \begin{lemma}
   $\Theta$ is a two-sided ideal of $\BRC$.
@@ -2655,20 +2941,13 @@ $$\kappa^*_c = \sum_{\substack{R=\mathbb{Y}(R)\\ \mathrm{extwt}(R)=c}} \dsch_{\w
   $$\mathbb{Y}(X_1)=\mathbb{Y}\bigl(A'\cup\shup^{k}\mathbb{Y}(R_1)\bigr)=\mathbb{Y}\bigl(A'\cup\shup^{k}\mathbb{Y}(R_2)\bigr)=\mathbb{Y}(X_2).$$
   Thus $X_1-X_2\in\Theta$ for every $A'$, and summing over $A'$ gives $A\sqcupplus(R_1-R_2)\in\Theta$.
 
-  \emph{Right ideal.} Let $R_1-R_2$ be a generator of $\Theta$ with $\hr(R_1)=\hr(R_2)=m$, and let $A$ be a bounded RC graph with $\hr(A)=k$. Suppose first that $A$ is a single empty row, so $k=1$. By Theorem \ref{theorem:zero_bijection} the terms of $R_j\sqcupplus A$ are exactly the $R_j'\in\RC_{m+1}^0$ with $\zeromap(R_j')=R_j$, and there is at most one such $R_j'$ for each permutation; as in the proof for $\Omega$, this matches the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$ so that corresponding terms satisfy $\wof{R_1'}=\wof{R_2'}$. A raising operator $e_i$ moves a crossing out of row $i+1$ and into row $i$, so it can never create a crossing in the last row; consequently $\RC_{m+1}^0$ is stable under every $e_i$, and $\mathbb{Y}(R_j')\in\RC_{m+1}^0$. By Corollary \ref{corollary:crystaliso}, $\zeromap$ intertwines the raising operators on $\RC_{m+1}^0$, hence
-  $$\zeromap\bigl(\mathbb{Y}(R_j')\bigr)=\mathbb{Y}\bigl(\zeromap(R_j')\bigr)=\mathbb{Y}(R_j).$$
-  Since $\mathbb{Y}(R_1)=\mathbb{Y}(R_2)$ and $\zeromap$ is injective on $\RC_{m+1}^0$ by Lemma \ref{lemma:zero_injective}, we conclude $\mathbb{Y}(R_1')=\mathbb{Y}(R_2')$, so $R_1'-R_2'\in\Theta$ and $(R_1-R_2)\sqcupplus A\in\Theta$. The case of $A$ consisting of $k>1$ empty rows follows by induction, using associativity of $\sqcupplus$.
+  \emph{Right ideal.} Let $R_1-R_2$ be a generator of $\Theta$ with $\hr(R_1)=\hr(R_2)=m$, and let $A$ be a bounded RC graph with $\hr(A)=k$. Since $\wof{R_1}=\wof{R_2}$, Lemma \ref{lemma:topmatch} supplies the bijection $\beta$ matching the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$, corresponding terms being $B\cup\shup^{m}A$ and $\beta(B)\cup\shup^{m}A$. It suffices to show that $\mathbb{Y}(B)=\mathbb{Y}(\beta(B))$ and that this survives the attachment of the common lower block.
 
-  For general $A$, Lemma \ref{lemma:blockdecomp} shows that the terms of $R_j\sqcupplus A$ are the bounded RC graphs $B_j\cup\shup^{m}A$ with $m+k$ rows, where $B_j$ satisfies condition (1) of that lemma with respect to $R_j$, and that the terms of $R_j\sqcupplus\mathrm{empty}(k)$ are the $B_j$ themselves regarded as having $m+k$ rows, subject to the same condition (1) and the instance of condition (2) with the identity permutation in place of $\wof A$. Hence the bijection $B_1\leftrightarrow B_2$ produced in the previous paragraph, which satisfies $\wof{B_1}=\wof{B_2}$, restricts to a bijection between the terms of $R_1\sqcupplus A$ and those of $R_2\sqcupplus A$. It therefore suffices to know that $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$ implies $\mathbb{Y}(B_1\cup\shup^{m}A)=\mathbb{Y}(B_2\cup\shup^{m}A)$, which is Lemma \ref{lemma:lowerblockattach} below.
+  By Lemma \ref{lemma:topmatch}(3), $B$ and $\beta(B)$ are carried to $R_1$ and $R_2$ by the same number of applications of $\zeromap$, so it is enough to treat a single such step, the general case following by iteration. A raising operator $e_i$ moves a crossing out of row $i+1$ and into row $i$, so it can never create a crossing in the last row; consequently $\RC_{m+1}^0$ is stable under every $e_i$, and the highest weight of a graph in $\RC_{m+1}^0$ again lies in $\RC_{m+1}^0$. By Corollary \ref{corollary:crystaliso}, $\zeromap$ intertwines the raising operators on $\RC_{m+1}^0$, hence
+  $$\zeromap\bigl(\mathbb{Y}(B)\bigr)=\mathbb{Y}\bigl(\zeromap(B)\bigr)=\mathbb{Y}(R_1)=\mathbb{Y}(R_2)=\mathbb{Y}\bigl(\zeromap(\beta(B))\bigr)=\zeromap\bigl(\mathbb{Y}(\beta(B))\bigr).$$
+  Since $\zeromap$ is injective on $\RC_{m+1}^0$ by Lemma \ref{lemma:zero_surjective}, we conclude $\mathbb{Y}(B)=\mathbb{Y}(\beta(B))$. Lemma \ref{lemma:lowerblockattach} above then gives $\mathbb{Y}(B\cup\shup^{m}A)=\mathbb{Y}(\beta(B)\cup\shup^{m}A)$, so each matched difference lies in $\Theta$ and $(R_1-R_2)\sqcupplus A\in\Theta$.
 \end{proof}
 
-\begin{lemma}[Attaching a common lower block]\label{lemma:lowerblockattach}
-Let $B_1$ and $B_2$ be bounded RC graphs with $m+k$ rows all of whose crossings lie in rows $1,\ldots,m$, let $A$ be a bounded RC graph with $\hr(A)=k$, and suppose that $B_j\cup\shup^{m}A$ is a bounded RC graph with $m+k$ rows for $j=1,2$. If $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$, then
-$$\mathbb{Y}\bigl(B_1\cup\shup^{m}A\bigr)=\mathbb{Y}\bigl(B_2\cup\shup^{m}A\bigr).$$
-\end{lemma}
-\begin{proof}
-  Due to the fact that the highest weight is independent of the choice of sequence of raising operators used to achieve it, we may fully raise the first $m$ rows of $B_j\cup\shup^{m}A$ to obtain $\mathbb{Y}(B_j)\cup\shup^{m}A$. Since $\mathbb{Y}(B_1)=\mathbb{Y}(B_2)$, the result follows.
-\end{proof}
 
 \begin{lemma}
   The homomorphism $\alpha:\BRC\to\dcoma$ factors through the quotient $\BRC/\Theta$.
@@ -2679,7 +2958,8 @@ This is because the generators of $\Theta$ are all in $\Omega$.
 
 \begin{definition}
 For a composition $a$, define  an element $K_a\in\BRC/\Theta$ by
-$$K_a =\sum_{\substack{R\in\mathrm{Dem}_a\\ R=\mathbb{Y}(R)}} R$$
+$$K_a =\sum_{\substack{\wtt(R)=a\\ R=\mathbb{Y}(R)}} R$$
+That is to say, $K_a$ is the sum of all highest-weight RC graphs of weight $a$, considered as an element of the quotient $\BRC/\Theta$.
 \end{definition}
 
 \begin{proposition}
@@ -2701,7 +2981,7 @@ in particular $k_{a,b}^c\in\mathbb{Z}_{\geq 0}$.
 \end{theorem}
 
 \begin{proof}[Proof of Theorem \ref{theorem:LRkey}]
-  The coefficient of $K_c$ in $K_a\sqcupplus K_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\sqcupplus\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ that are Demazure crystals of RC graphs are distinct from the summands of any other key element and each other, we need only consider one of the summands to read off the coefficient. The result follows.
+  The coefficient of $K_c$ in $K_a\sqcupplus K_b$ is the same as the coefficient of $\kappa_c^*$ in $\kappa_a^*\sqcupplus\kappa_b^*$, which is $k_{a,b}^c$ by definition. Since each of the summands of $K_c$ in the RC graph basis are distinct from the summands of any other $K_b$ with $b\neq c$ and are multiplicity free, we need only consider one of the summands of $K_c$ to read off the coefficient. The result follows.
 \end{proof}
 
 \begin{example}[Computing $\kappa_a^*\sqcupplus\kappa_b^*$ for $a=(0,1,2)$, $b=(0,1,0,2)$]\label{example:LRkey}
@@ -2709,7 +2989,7 @@ Let $a=(0,1,2)$ (a $3$-row composition) and $b=(0,1,0,2)$ (a $4$-row composition
 
 The permutation $w_c$ whose principal RC graph has Demazure crystal highest weight $c$ is
 $$w_c = (1,2,3,5,7,4,10,6,8,9).$$
-The key element $K_c$ is the sum of all $7$-row RC graphs whose Demazure crystal highest weight equals $c$. Among these, exactly two satisfy $\clp^3(R)\in\mathrm{Dem}_a$ and $\trm^3(R)\in\mathrm{Dem}_b$:
+The key element $K_c$ is the sum of all $7$-row highest weight RC graphs of weight $c$. Among these, exactly two satisfy $\clp^3(R)\in\mathrm{Dem}_a$ and $\trm^3(R)\in\mathrm{Dem}_b$:
 
 \begin{figure}[h]
 \centering
@@ -3286,7 +3566,7 @@ Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph for
 
 
 \begin{proposition}
-Let $c$ be a weak composition of length $p$. Let $\RC_\forest(c)$ be the set of RC graphs with $\wtt(R) = c$ such that $\mathrm{word}(\mathbb{Y}_\forest(R))$ is minimal in lexicographical order among all RC graphs $R'$ such that $\code_\forest(R)=\code_\forest(R')$.
+Let $c$ be a weak composition of length $p$. Let $\RC_\forest(c)$ be the set of RC graphs with $\wtt(R) = c$ such that $\mathrm{word}(\mathbb{Y}_\forest(R))$ is minimal in lexicographical order among all RC graphs $R'$ such that $\code_\forest(R)=\code_\forest(R')$.\todo{GAP: this proposition has no proof. Also $\mathbb{Y}_\forest$ is defined only in the notation appendix, and the minimality condition appears garbled: it should presumably compare $\mathrm{word}(\mathbb{Y}_\forest(R'))$, not $\mathrm{word}(\mathbb{Y}_\forest(R))$.}
 $$[c] = \sum_{R\in\RC_\forest(c)} \forest_{\code_\forest(R)}^*$$
 \end{proposition}
 
@@ -3309,9 +3589,9 @@ The coefficients of the expansion of a monomial into forest polynomials, or equi
   $$\mathrm{word}(A')\cdot\bigl(\mathrm{word}(R_1)+k\bigr),\qquad \mathrm{word}(A')\cdot\bigl(\mathrm{word}(R_2)+k\bigr).$$
   These two words have a common prefix and suffixes obtained from $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ by adding the constant $k$ to every letter. Forest equivalence is generated by local swaps of adjacent letters, and these swaps are shift-invariant \cite[Proposition~5.8]{nadeau2024forest} and prefix-invariant \cite[Lemma~5.9]{nadeau2024forest}. Hence $\mathrm{word}(R_1)\equiv_\forest\mathrm{word}(R_2)$ implies that the two displayed words are forest equivalent, so each matched difference lies in $\Gamma$ and $A\sqcupplus(R_1-R_2)\in\Gamma$.
 
-  \emph{Right ideal.} Let $R_1-R_2$ be a generator of $\Gamma$ with $\hr(R_j)=m$ and let $A$ have $\hr(A)=k$. Suppose first that $A$ is a single empty row. As in the proof for $\Omega$, Theorem \ref{theorem:zero_bijection} matches the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$ so that corresponding terms $R_1',R_2'$ satisfy $\wof{R_1'}=\wof{R_2'}$ and $\zeromap(R_j')=R_j$. Since $R_j'$ has empty last row, $\mathrm{word}(R_j')$ is obtained from $\mathrm{word}(R_j)$ by the sequence of Little bumps of Proposition \ref{proposition:little_bump} run in reverse, and by Theorem \ref{theorem:littlecrystal} such bumps preserve the recording tableau. As forest equivalence is likewise a statement about the pair $(P,Q)$ of the $\Omega$-insertion, with the forest class determined by $P$, the correspondence $R_j\mapsto R_j'$ preserves forest classes, so $R_1'\equiv_\forest R_2'$ and $R_1'-R_2'\in\Gamma$. The case of $k>1$ empty rows follows by induction using associativity of $\sqcupplus$.
+  \emph{Right ideal.} Let $R_1-R_2$ be a generator of $\Gamma$ with $\hr(R_j)=m$ and let $A$ have $\hr(A)=k$. Since $\wof{R_1}=\wof{R_2}$, Lemma \ref{lemma:topmatch} supplies the bijection $\beta$ matching the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$, corresponding terms having words $\mathrm{word}(B)\cdot(\mathrm{word}(A)+m)$ and $\mathrm{word}(\beta(B))\cdot(\mathrm{word}(A)+m)$. By \cite[Lemma~5.9]{nadeau2024forest} (suffix invariance, the mirror of the prefix invariance used above), it therefore suffices to show $\mathrm{word}(B)\equiv_\forest\mathrm{word}(\beta(B))$.
 
-  For general $A$, Lemma \ref{lemma:blockdecomp} shows that the terms of $R_j\sqcupplus A$ are the bounded RC graphs $\bigl(B_j\cup\shup^{m}A,\ m+k\bigr)$ where $B_j$ satisfies condition (1) of that lemma with respect to $R_j$, subject to a condition (2) that depends only on $\wof{B_j}$ and $\wof A$; since the bijection $B_1\leftrightarrow B_2$ of the previous paragraph satisfies $\wof{B_1}=\wof{B_2}$, it restricts to a bijection between the terms of $R_1\sqcupplus A$ and those of $R_2\sqcupplus A$. Corresponding terms have words $\mathrm{word}(B_1)\cdot(\mathrm{word}(A)+m)$ and $\mathrm{word}(B_2)\cdot(\mathrm{word}(A)+m)$ with $\mathrm{word}(B_1)\equiv_\forest\mathrm{word}(B_2)$, so they are forest equivalent by \cite[Lemma~5.9]{nadeau2024forest} (suffix invariance, the mirror of the prefix invariance used above). Hence $(R_1-R_2)\sqcupplus A\in\Gamma$.
+  By Lemma \ref{lemma:topmatch}(3) it is enough to treat a single application of $\zeromap$, the general case following by iteration. So suppose $\zeromap(B)=R_1$ and $\zeromap(\beta(B))=R_2$ with $\wof B=\wof{\beta(B)}$. Since $B$ has empty last row, $\mathrm{word}(B)$ is obtained from $\mathrm{word}(R_1)$ by the sequence of Little bumps of Proposition \ref{proposition:little_bump} run in reverse, and by Theorem \ref{theorem:littlecrystal} such bumps preserve the recording tableau; the same applies to $\beta(B)$ and $R_2$. As forest equivalence is a statement about the pair $(P,Q)$ of the $\Omega$-insertion, with the forest class determined by $P$, and as $R_1\equiv_\forest R_2$, we obtain $\mathrm{word}(B)\equiv_\forest\mathrm{word}(\beta(B))$. Hence $(R_1-R_2)\sqcupplus A\in\Gamma$.
 \end{proof}
 
 \begin{lemma}
@@ -3438,9 +3718,7 @@ Since RC graphs with the same word have the same permutation, $\Sigma\subseteq\O
 
 \emph{Left ideal.} Let $A$ have $\hr(A)=k$ and let $R_1-R_2$ be a generator of $\Sigma$ with $\hr(R_j)=m$, so $\mathrm{word}(R_1)=\mathrm{word}(R_2)$. By Corollary \ref{corollary:blockswap} the terms of $A\sqcupplus R_1$ and $A\sqcupplus R_2$ are matched by $A'\cup\shup^{k}R_1\leftrightarrow A'\cup\shup^{k}R_2$, and corresponding terms have words $\mathrm{word}(A')\cdot(\mathrm{word}(R_j)+k)$. These coincide, so the matched terms have the same word and the same height, whence their difference lies in $\Sigma$.
 
-\emph{Right ideal.} Suppose first that $A$ is a single empty row. As in the proof for $\Omega$, Theorem \ref{theorem:zero_bijection} matches the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$ so that corresponding terms $R_j'$ satisfy $\zeromap(R_j')=R_j$ and $\wof{R_1'}=\wof{R_2'}$. By Proposition \ref{proposition:zerocrystal} and Proposition \ref{proposition:little_bump}, $\mathrm{word}(R_j')$ is determined by $\mathrm{word}(R_j)$ together with $\wof{R_j'}$, since the passage from $R_j'$ to $R_j=\zeromap(R_j')$ is a sequence of Little bumps whose starting position is determined by the permutation. As $\mathrm{word}(R_1)=\mathrm{word}(R_2)$ and $\wof{R_1'}=\wof{R_2'}$, we get $\mathrm{word}(R_1')=\mathrm{word}(R_2')$, so $R_1'-R_2'\in\Sigma$. The case of $k>1$ empty rows follows by induction using associativity of $\sqcupplus$.
-
-For general $A$, Lemma \ref{lemma:blockdecomp} shows as in the proof of Lemma \ref{lemma:forestideal} that the bijection $B_1\leftrightarrow B_2$ just constructed restricts to a bijection between the terms of $R_1\sqcupplus A$ and those of $R_2\sqcupplus A$, and corresponding terms have words $\mathrm{word}(B_j)\cdot(\mathrm{word}(A)+m)$. Since $\mathrm{word}(B_1)=\mathrm{word}(B_2)$ these agree, so $(R_1-R_2)\sqcupplus A\in\Sigma$.
+\emph{Right ideal.} Let $A$ have $\hr(A)=k$. Since $\wof{R_1}=\wof{R_2}$, Lemma \ref{lemma:topmatch} supplies the bijection $\beta$ matching the terms of $R_1\sqcupplus A$ with those of $R_2\sqcupplus A$, corresponding terms having words $\mathrm{word}(B)\cdot(\mathrm{word}(A)+m)$ and $\mathrm{word}(\beta(B))\cdot(\mathrm{word}(A)+m)$. It therefore suffices to show $\mathrm{word}(B)=\mathrm{word}(\beta(B))$, and by Lemma \ref{lemma:topmatch}(3) it is enough to treat a single application of $\zeromap$. So suppose $\zeromap(B)=R_1$ and $\zeromap(\beta(B))=R_2$ with $\wof B=\wof{\beta(B)}$. By Proposition \ref{proposition:zerocrystal} and Proposition \ref{proposition:little_bump}, $\mathrm{word}(B)$ is determined by $\mathrm{word}(R_1)$ together with $\wof B$, since the passage from $B$ to $\zeromap(B)$ is a sequence of Little bumps whose starting position is determined by the permutation. As $\mathrm{word}(R_1)=\mathrm{word}(R_2)$ and $\wof B=\wof{\beta(B)}$, we get $\mathrm{word}(B)=\mathrm{word}(\beta(B))$, so $(R_1-R_2)\sqcupplus A\in\Sigma$.
 \end{proof}
 
 \begin{lemma}
@@ -3567,7 +3845,7 @@ $$R_1\boxtimes R_2 = \clp^{\hr(R_1)}(R_1\sqcup R_2)$$
   is an isomorphism of crystal graphs. 
 \end{proposition}
 \begin{proof}
-Clearly the map is weight preserving. We defer the assertion that the image is precisely correct by allowing us to expand the codomain to the set $\RC_n$. 
+Clearly the map is weight preserving. We defer the assertion that the image is precisely correct by allowing us to expand the codomain to the set $\RC_n$. \todo{GAP: this sentence is unparseable as written and the deferral is never discharged. Moreover the multiplicity claim, that the decomposition is into $c_{uv}^w$ copies, is supported only by a bare citation to \cite{kouno2020decomposition}; the specific statement being invoked should be quoted.}
 %The fact that it is a bijection is  for this, we must invoke \cite{tuono2020decomposition}. 
 Let us show that the function commutes with the crystal operators. Let $R_1\in \RC_n(u)$ and $R_2\in \RC_n(v)$, and let $R=R_1\sqcup R_2$. Consider $f_i(R_1\otimes R_2)$. If $\varphi_i(R_1)>\varepsilon_i(R_2)$, then the unpaired elements in row $i$ in $R_1$ exhaust the unpaired elements in row $i+1$ in $R_2$. Therefore, only elements of $R_1$ are affected by $f_i$, as in the definition of the tensor product. If instead $\varphi_i(R_1)\leq \varepsilon_i(R_2)$, then all unpaired elements of $R_1$ in row $i$ are paired with elements of $R_2$ in row $i+1$, and so only elements of $R_2$ are affected by $f_i$. The same reasoning applies to $e_i$. The fact that the isomorphism induces the specific decomposition follows from \cite{kouno2020decomposition}.
 \end{proof}
@@ -3605,14 +3883,14 @@ defined on basis elements by
 $$\tau_n(T_1\otimes T_2) = P_n(T_1)\sqcup P_n(T_2)$$
 Proposition \ref{proposition:boxproduct} shows that
 $$\clp^n(\tau_n(T_1\otimes T_2)) = P_n(T_1)\boxtimes P_n(T_2) = P_n(T_1T_2)$$
-due to the rigidity of crystal graph isomorphisms. Since $P_n$ is therefore a homomorphism of (potentially nonassociative) algebras as well as bijective, it is an isomorphism, from which it follows that $\boxtimes$ itself is associative.
+due to the rigidity of crystal graph isomorphisms.\todo{GAP: matching weights and components does not by itself pin down the isomorphism; one must anchor highest weight elements. As written this does not establish $P_n(T_1)\boxtimes P_n(T_2)=P_n(T_1T_2)$, on which associativity of $\boxtimes$ then depends.} Since $P_n$ is therefore a homomorphism of (potentially nonassociative) algebras as well as bijective, it is an isomorphism, from which it follows that $\boxtimes$ itself is associative.
 \end{proof}
 
 \begin{theorem} \label{theorem:schubmoduleiso}
   The module $\BRC_n$ is a right $\grass_n$-module under the product $\boxtimes$. Considering $\BRC_n$ as a right module over $\Lambda_n$ via the injective homomorphism $\Lambda_n\hookrightarrow \plac_n\simeq \grass_n$, the $\Lambda_n$-submodule generated by $\mathcal{S}_w(n)$ for $w\in S_n$ is isomorphic to the polynomial ring $\mathbb{Z}[x_1,\ldots,x_n]$ as a $\Lambda_n$-module via the homomorphism $\mathcal{S}_w(n)\mapsto\sch_w(x)$, and in particular is a free right $\Lambda_n$-module with basis $\{\mathcal{S}_w(n)\mid w\in S_n\}$.
 \end{theorem}
 \begin{proof}
-The fact that $\BRC_n$ is a right $\grass_n$ module follows from Proposition \ref{proposition:boxproduct} and the statement that the tensor product of crystal graphs is associative. The injective homomorphism of rings $\Lambda_n\hookrightarrow \plac_n\simeq \grass_n$ is given by sending a Schur polynomial $s_\lambda$ to the sum of all words of semistandard tableaux of shape $\lambda$ is realized through $P_n$. The map $\BRC_n\to \mathbb{Z}[x_1,\ldots,x_n]$ sending $R$ to $x^{\wtt(R)}$ is clearly a surjective homomorphism of abelian groups. Restricting to the submodule $\mathrm{Schub}_n$, since $\mathcal{S}_w(n)\mapsto \sch_w^n(x)$ for all $w$ with $\maxd(w)\leq n$, we obtain an isomorphism of $\mathbb{Z}$-modules at the very least. Proposition \ref{proposition:boxproduct} ensures that the restriction to this submodule is in fact a $\Lambda_n$-isomorphism. Thus, the $\Lambda_n$-submodule generated by the $\mathcal{S}_w(n)$ is free with basis $\{\mathcal{S}_w(n)\mid w\in S_n\}$.
+The fact that $\BRC_n$ is a right $\grass_n$ module follows from Proposition \ref{proposition:boxproduct} and the statement that the tensor product of crystal graphs is associative. The injective homomorphism of rings $\Lambda_n\hookrightarrow \plac_n\simeq \grass_n$ is given by sending a Schur polynomial $s_\lambda$ to the sum of all words of semistandard tableaux of shape $\lambda$ is realized through $P_n$. The map $\BRC_n\to \mathbb{Z}[x_1,\ldots,x_n]$ sending $R$ to $x^{\wtt(R)}$ is clearly a surjective homomorphism of abelian groups. Restricting to the submodule $\mathrm{Schub}_n$,\todo{$\mathrm{Schub}_n$ is never defined, and is used three times in this subsection.} since $\mathcal{S}_w(n)\mapsto \sch_w^n(x)$ for all $w$ with $\maxd(w)\leq n$, we obtain an isomorphism of $\mathbb{Z}$-modules at the very least. Proposition \ref{proposition:boxproduct} ensures that the restriction to this submodule is in fact a $\Lambda_n$-isomorphism. Thus, the $\Lambda_n$-submodule generated by the $\mathcal{S}_w(n)$ is free with basis $\{\mathcal{S}_w(n)\mid w\in S_n\}$.
 \end{proof}
 
 \begin{definition}[The multiplactic algebra]
@@ -3666,7 +3944,7 @@ where $c_{uv}^w$ are the Schubert structure constants.
 \begin{proof}
   Explicitly, write
   $$\mathbf{S}_u(n)\mathbf{S}_v(n) = \sum_{\alpha,\beta} E_u^{\alpha;n}E_v^{\beta;n} \mathbf{E}_{\alpha_1,1}^1 \cdots  \mathbf{E}_{\alpha_N,n}^n \mathbf{E}_{\beta_1,1}^1 \cdots  \mathbf{E}_{\beta_N,n}^n$$
-  The relations of the ring allow us to slide smaller terms in $\mathbf{S}_v(n)$ past strictly larger terms in $\mathbf{S}_u(n)$, so we may rearrange the product in increasing order of height. The result then follows from Proposition \ref{proposition:eproductworks} and the fact that the image of the element under $\RC_n$ lies in $\mathrm{Schub}_n$, so that we may invoke Theorem \ref{theorem:schubmoduleiso}.
+  The relations of the ring allow us to slide smaller terms in $\mathbf{S}_v(n)$ past strictly larger terms in $\mathbf{S}_u(n)$, so we may rearrange the product in increasing order of height.\todo{GAP: the multiplication on $\mathcal{M}_n$ is never written down, so ``the relations of the ring'' is undefined. Relatedly, the padding convention in $\RC_n(A_1\otimes\cdots\otimes A_k)$ (``increase the size of the left factor to match the right factor as needed'') is informal, while $\boxtimes$ is defined only for factors of equal height.} The result then follows from Proposition \ref{proposition:eproductworks} and the fact that the image of the element under $\RC_n$ lies in $\mathrm{Schub}_n$, so that we may invoke Theorem \ref{theorem:schubmoduleiso}.
 \end{proof}
 
 \begin{remark}
@@ -3683,7 +3961,7 @@ We now define a canonical representative of an RC graph in $\mathcal{M}_n$, an e
 \begin{proposition} \label{proposition:elemfactor}
   Let $u\in S_\infty$ be a permutation and suppose $R\in \RC_n(u)$. Let $\lambda$ be a partition and let $w$ be the corresponding dominant permutation with $\code^*(w)=\lambda$. Assume that $\ell(uw^{-1}) = \ell(w)-\ell(u)$. Let $c$ be a weak composition such that $c_i\leq \lambda_{N + 1 - i}$ for all $i$, where $N=\ell(\lambda)$. Then the number of sequences of binary vectors $\beta_1,\ldots,\beta_N$ such that $\beta_i\in\{0,1\}^{\lambda_{N + 1 - i}}$ with $|\beta_i|=c_i$ satisfying
   $$\mathbf{E}^{\lambda_N;\beta_1}\boxtimes\cdots\boxtimes \mathbf{E}^{\lambda_1;\beta_N} = R$$
-is equal to the coefficient of $x^c$ in $\sch_{uw^{-1}}(x)$.
+is equal to the coefficient of $x^c$ in $\sch_{uw^{-1}}(x)$.\todo{GAP: two issues. (1) Index/complementation mismatch: this proposition requires $|\beta_i|=c_i$, but the definition of $\mathrm{lift}_n$ immediately below sets $|E_i|=\lambda_{N+1-i}-c_{N+1-i}$. Tracing the Cauchy argument suggests the proposition is the one to correct; check against \texttt{schubmult}. (2) The proof does not establish the \emph{uniqueness} that $\mathrm{lift}_n$ requires, namely that the relevant coefficient is exactly $1$.}
 \end{proposition}
 \begin{proof}
   Recall the Cauchy formula for $\sch_w(x;-y)$:
@@ -3791,7 +4069,7 @@ Thus both bracketings are consistently written as
 $$
 (R_1^{\mathrm{left}}*R_2^{\mathrm{left}})*R_3*(R_1^{\mathrm{right}}*R_2^{\mathrm{right}}),
 $$
-so they are equal. The key point is that the corresponding lift factors commute, so this regrouping is canonical.
+so they are equal. The key point is that the corresponding lift factors commute, so this regrouping is canonical.\todo{GAP: the displayed expression $(R_1^{\mathrm{left}}*R_2^{\mathrm{left}})*R_3*(R_1^{\mathrm{right}}*R_2^{\mathrm{right}})$ is written without brackets, i.e. it already presumes the associativity being proved. Note also that Step~1 of Proposition \ref{proposition:quasiprod} gives a \emph{different} justification for the same fact; the two should be reconciled and only one kept.}
 
 An arbitrary RC graph is itself a product of elementary symmetric RC graphs of weakly increasing heights according to Proposition \ref{proposition:elemfactor}, so an induction argument proves the result for arbitrary $R_3$.
 \end{proof}
@@ -3878,7 +4156,7 @@ $$\sum_{R\in\mathcal{C}}x^{\wtt(R)} = \mathfrak{F}_{\wtt(R_0)}(x);$$
 that is, the character of $\mathcal{C}$ is the slide polynomial indexed by $\wtt(R_0)$.
 \end{theorem}
 \begin{proof}
-By construction $\ddot{e}_i$ and $\ddot{f}_i$ preserve $\mathrm{word}(R)$, so all elements of $\mathcal{C}$ share a common word $\mathbf{r}=\mathrm{word}(R_0)$. Conversely, an arbitrary $R\in\RC_n(w)$ with $\mathrm{word}(R)=\mathbf{r}$ is reached from $R_0$ by a sequence of crystal operators $e_i,f_i$ that fix the word: each such step changes $\wtt$ by moving a single crossing between rows $i$ and $i{+}1$ without altering inversions, hence is realized by the corresponding $\ddot{e}_i$ or $\ddot{f}_i$. Thus $\mathcal{C}=\{R\in\RC_n(w):\mathrm{word}(R)=\mathbf{r}\}$.
+By construction $\ddot{e}_i$ and $\ddot{f}_i$ preserve $\mathrm{word}(R)$, so all elements of $\mathcal{C}$ share a common word $\mathbf{r}=\mathrm{word}(R_0)$. Conversely, an arbitrary $R\in\RC_n(w)$ with $\mathrm{word}(R)=\mathbf{r}$ is reached from $R_0$ by a sequence of crystal operators $e_i,f_i$ that fix the word: each such step changes $\wtt$ by moving a single crossing between rows $i$ and $i{+}1$ without altering inversions, hence is realized by the corresponding $\ddot{e}_i$ or $\ddot{f}_i$. Thus $\mathcal{C}=\{R\in\RC_n(w):\mathrm{word}(R)=\mathbf{r}\}$.\todo{GAP: the inclusion $\supseteq$ assumes that any two RC graphs with the same word are joined by a sequence of \emph{word-preserving} single crystal operators, which is what is being proved.}
 
 The map $R\mapsto\wtt(R)$ identifies $\mathcal{C}$ with the set of weight vectors realized by such RC graphs. By the BJS compatible-sequence formulation \cite{bjs}, this set is exactly the set of sequences $a$ compatible with $\mathbf{r}$, with $\wtt(R_0)$ corresponding to the unique compatible sequence whose flat composition is coarsest. Summing $x^{\wtt(R)}$ over $\mathcal{C}$ therefore gives $\sum_{a\text{ compatible with }\mathbf{r}}x^{a} = \mathfrak{F}(\mathbf{r}) = \mathfrak{F}_{\wtt(R_0)}(x)$.
 \end{proof}
@@ -3887,7 +4165,7 @@ The map $R\mapsto\wtt(R)$ identifies $\mathcal{C}$ with the set of weight vector
 Let $X,Y$ be seminormal quasi-crystals of type $A_{\infty}$ whose connected components have characters that are slide polynomials (in the sense of Theorem~\ref{theorem:quasicharacter}). Then $X\,\ddot\otimes\, Y$ and $Y\,\ddot\otimes\, X$ are isomorphic as quasi-crystals; the isomorphism is in general not natural at the level of the underlying sets, but the multisets of connected components agree.
 \end{lemma}
 \begin{proof}
-By \cite[Theorem~5.1]{cain2023quasicrystals} both $X\,\ddot\otimes\, Y$ and $Y\,\ddot\otimes\, X$ are seminormal quasi-crystals, and by \cite[Proposition~4.6]{cain2023quasicrystals} each decomposes uniquely (as a quasi-crystal, hence on the level of underlying sets up to choice of isomorphism on each component) into a disjoint union of its connected components. The character of either side is the formal sum, over components, of the slide polynomial of each component (Theorem~\ref{theorem:quasicharacter}); since the weight map is additive under the quasi-tensor product, this character coincides for $X\,\ddot\otimes\, Y$ and $Y\,\ddot\otimes\, X$. Slide polynomials $\{\mathfrak{F}_a:a\text{ a weak composition}\}$ are linearly independent in $\mathbb{Z}[[x_1,x_2,\ldots]]$ (\cite{assaf2017slide}), so the multiset of slide polynomials appearing in either decomposition is the same, hence the multiset of connected components is the same. Each component is itself a quasi-crystal determined up to isomorphism by its slide polynomial (Theorem~\ref{theorem:quasicharacter} together with the fact that a connected seminormal type-$A_{\infty}$ quasi-crystal is determined by its character), so a (non-canonical) component-by-component choice of isomorphism furnishes the asserted quasi-crystal isomorphism $X\,\ddot\otimes\, Y\cong Y\,\ddot\otimes\, X$.
+By \cite[Theorem~5.1]{cain2023quasicrystals} both $X\,\ddot\otimes\, Y$ and $Y\,\ddot\otimes\, X$ are seminormal quasi-crystals, and by \cite[Proposition~4.6]{cain2023quasicrystals} each decomposes uniquely (as a quasi-crystal, hence on the level of underlying sets up to choice of isomorphism on each component) into a disjoint union of its connected components. The character of either side is the formal sum, over components, of the slide polynomial of each component (Theorem~\ref{theorem:quasicharacter}); since the weight map is additive under the quasi-tensor product, this character coincides for $X\,\ddot\otimes\, Y$ and $Y\,\ddot\otimes\, X$. Slide polynomials $\{\mathfrak{F}_a:a\text{ a weak composition}\}$ are linearly independent in $\mathbb{Z}[[x_1,x_2,\ldots]]$ (\cite{assaf2017slide}), so the multiset of slide polynomials appearing in either decomposition is the same, hence the multiset of connected components is the same. Each component is itself a quasi-crystal determined up to isomorphism by its slide polynomial (Theorem~\ref{theorem:quasicharacter} together with the fact that a connected seminormal type-$A_{\infty}$ quasi-crystal is determined by its character),\todo{GAP: ``a connected seminormal type-$A_\infty$ quasi-crystal is determined by its character'' is asserted without citation and is load-bearing here. Needs a reference in \cite{cain2023quasicrystals} or a proof.} so a (non-canonical) component-by-component choice of isomorphism furnishes the asserted quasi-crystal isomorphism $X\,\ddot\otimes\, Y\cong Y\,\ddot\otimes\, X$.
 \end{proof}
 
 \begin{lemma}[Plactic case of the lift product]\label{lemma:quasiprod_plactic}
@@ -3927,7 +4205,7 @@ extends to an isomorphism of quasi-crystals from the quasi-tensor product of the
 We proceed in three steps: a reduction to a single elementary symmetric right factor, the Kashiwara argument via disjoint union under a height restriction, and the removal of that restriction.
 
 \smallskip\noindent\emph{Step 1: Reduction to $B$ a single elementary symmetric RC graph.}
-Write $\mathrm{lift}_n(B) = E_1\otimes\cdots\otimes E_k$ in weakly increasing-height order (Proposition~\ref{proposition:elemfactor}). The lift product $*$ on $\BRC$ is associative, since it is the projection under $\RC_n$ of the associative multiplication on $\mathcal{M}_n$ and Proposition~\ref{proposition:elemfactor} guarantees that $\RC_n$ respects this multiplication on lift factorizations. Likewise the quasi-tensor product $\ddot\otimes$ is associative on seminormal quasi-crystals by \cite[Theorem~5.1]{cain2023quasicrystals}. Hence
+Write $\mathrm{lift}_n(B) = E_1\otimes\cdots\otimes E_k$ in weakly increasing-height order (Proposition~\ref{proposition:elemfactor}). The lift product $*$ on $\BRC$ is associative, since it is the projection under $\RC_n$ of the associative multiplication on $\mathcal{M}_n$ and Proposition~\ref{proposition:elemfactor} guarantees that $\RC_n$ respects this multiplication on lift factorizations.\todo{GAP: this reads as ``$\RC_n$ is multiplicative'', which sits badly with the Remark stating that $\ker\RC_n$ is not an ideal. Note $\mathrm{lift}_n(R_1)\mathrm{lift}_n(R_2)$ is generally not in canonical weakly-increasing-height order, so $\mathrm{lift}_n(R_1*R_2)\neq\mathrm{lift}_n(R_1)\mathrm{lift}_n(R_2)$ --- which is exactly what makes associativity non-trivial. Duplicates the separate argument given for the associativity theorem above.} Likewise the quasi-tensor product $\ddot\otimes$ is associative on seminormal quasi-crystals by \cite[Theorem~5.1]{cain2023quasicrystals}. Hence
 $$A*B = ((A*E_1)*E_2)*\cdots*E_k,\qquad A\,\ddot\otimes\, B = ((A\,\ddot\otimes\, E_1)\,\ddot\otimes\, E_2)\,\ddot\otimes\,\cdots\,\ddot\otimes\, E_k,$$
 where on the right, the quasi-crystal of $B$ is identified with $E_1\,\ddot\otimes\,\cdots\,\ddot\otimes\, E_k$ via Lemma~\ref{lemma:liftequivariant}. By induction on $k$, it suffices to prove the proposition when $B = E$ is a single full Grassmannian elementary symmetric RC graph.
 
@@ -4005,7 +4283,7 @@ The injectified-word map $R\mapsto\overline{\mathrm{word}(R)}$ is a morphism of 
 \[
 \mathfrak{F}(W_A)\,\mathfrak{F}(W_B)\;=\;\sum_{X\in\mathsf{Sh}(W_A,W_B)}\mathfrak{F}(X),
 \]
-so the multiset of slide classes appearing in $\mathsf{Sh}(W_A,W_B)$ is determined by the slide-polynomial product $\mathfrak{F}(W_A)\,\mathfrak{F}(W_B)$.
+so the multiset of slide classes appearing in $\mathsf{Sh}(W_A,W_B)$ is determined by the slide-polynomial product $\mathfrak{F}(W_A)\,\mathfrak{F}(W_B)$.\todo{GAP: distinct slide classes can carry the same slide polynomial, since $\mathfrak{F}_a$ depends only on the quasi-Yamanouchi weight. A character identity therefore recovers only the multiset of $\mathfrak{F}_a$, not the multiset of classes. Same conflation in Lemma \ref{lemma:quasitensorswap}.}
 
 By Theorem~\ref{theorem:slideproduct}, the slide-polynomial identity
 \[
@@ -4034,7 +4312,7 @@ Now suppose $R=A_0*B_0\in S$ with $A_0\equiv_\forest A$ and $B_0\equiv_\forest B
 \[
 X_0\in\mathsf{Sh}(\overline{\mathrm{word}(A_0)},\overline{\mathrm{word}(B_0)})\subseteq\mathsf{Sh}(\Phi_A,\Phi_B)
 \]
-slide-equivalent to $\overline{\mathrm{word}(R)}$, where $\Phi_A,\Phi_B$ denote the forest classes of $\overline{\mathrm{word}(A)},\overline{\mathrm{word}(B)}$. Slide equivalence is finer than forest equivalence (slide-equivalent words have identical slide polynomial and hence belong to the same forest class), so $X_0\equiv_\forest\overline{\mathrm{word}(R)}\equiv_\forest\overline{\mathrm{word}(R')}$. The shuffle-stability statement of Nadeau--Tewari applied to $X_0\in\mathsf{Sh}(\Phi_A,\Phi_B)$ then gives
+slide-equivalent to $\overline{\mathrm{word}(R)}$, where $\Phi_A,\Phi_B$ denote the forest classes of $\overline{\mathrm{word}(A)},\overline{\mathrm{word}(B)}$. Slide equivalence is finer than forest equivalence (slide-equivalent words have identical slide polynomial and hence belong to the same forest class),\todo{GAP: this parenthetical is a non sequitur. Equal slide polynomial does not imply same forest class. The conclusion may still hold, but needs a different argument.} so $X_0\equiv_\forest\overline{\mathrm{word}(R)}\equiv_\forest\overline{\mathrm{word}(R')}$. The shuffle-stability statement of Nadeau--Tewari applied to $X_0\in\mathsf{Sh}(\Phi_A,\Phi_B)$ then gives
 \[
 \overline{\mathrm{word}(R')}\;\in\;\mathsf{Sh}(\Phi_A,\Phi_B),
 \]
@@ -4069,7 +4347,7 @@ $$\forest_a(x)\,\forest_b(x) \;=\; \sum_{\substack{A'\equiv_\forest A\\ B'\equiv
 
 Let $T = \{\,A'*B' : A'\equiv_\forest A,\ B'\equiv_\forest B\,\}$ (as a multiset). By Lemma~\ref{lemma:foreststable}, $T$ is closed under forest equivalence: every $R\in T$ has its full forest class $[R]_{\equiv_\forest}$ contained in $T$. Group the sum by forest class to obtain
 $$\forest_a(x)\,\forest_b(x) \;=\; \sum_{[R]} m_{[R]}\sum_{R''\in[R]} x^{\wtt(R'')},$$
-where $m_{[R]}$ is the (constant) number of pairs $(A',B')$ with $A'\equiv_\forest A$, $B'\equiv_\forest B$, and $A'*B'$ landing in the class $[R]$ at any specified representative; this multiplicity is independent of the choice of representative by the quasi-crystal isomorphism of Proposition \ref{proposition:quasiprod}, which in particular ensures that isomorphic classes have equal cardinality.
+where $m_{[R]}$ is the (constant) number of pairs $(A',B')$ with $A'\equiv_\forest A$, $B'\equiv_\forest B$, and $A'*B'$ landing in the class $[R]$ at any specified representative; this multiplicity is independent of the choice of representative by the quasi-crystal isomorphism of Proposition \ref{proposition:quasiprod}, which in particular ensures that isomorphic classes have equal cardinality.\todo{GAP, and the most load-bearing one in the paper: constancy of $m_{[R]}$ across a forest class. Proposition \ref{proposition:quasiprod} controls \emph{slide} classes, but a forest class is a union of slide classes, and Lemma \ref{lemma:foreststable} gives only set-stability, not equality of fibre cardinalities across the slide classes inside a forest class. Alternative route worth trying: extract $\beta_{ab}^c$ from the coefficient of $x^c$ using triangularity of $\{\forest_c\}$, avoiding the constancy claim entirely.}
 
 Applying Theorem~\ref{theorem:forestformula}(I) once more, the inner sum $\sum_{R''\in[R]}x^{\wtt(R'')}$ is exactly $\forest_{\fcode(R)}(x)$, so
 $$\forest_a(x)\,\forest_b(x) \;=\; \sum_{[R]} m_{[R]}\,\forest_{\fcode(R)}(x).$$
