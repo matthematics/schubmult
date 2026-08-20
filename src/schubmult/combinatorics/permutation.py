@@ -539,6 +539,10 @@ class Permutation(Printable):
         return self.minimal_dominant_above() == self
 
     @property
+    def is_strict_dominant(self):
+        return self.is_dominant and all(self.trimcode[i] > self.trimcode[i + 1] for i in range(self.max_descent - 1))
+
+    @property
     def is_vexillary(self):
         return not self.has_pattern([2, 1, 4, 3])
 
