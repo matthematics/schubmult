@@ -494,69 +494,60 @@ $$S^{-1}\bigl(\alpha_{\ell-1}\bigr)\qquad\text{and}\qquad S^{-1}s_{\ell-1}M^{-1}
 so they agree precisely when $M^{-1}(\alpha_{a_j})=s_{\ell-1}(\alpha_{\ell-1})=-\alpha_{\ell-1}$; the factor $S$ cancels, and the condition involves only the segment between the two positions. Taking $j=p$ makes $M$ empty, and the condition becomes $a_p=\ell-1=a_{p+1}-1$, which is excluded by $|a_p-a_{p+1}|\geq 2$. So the bump does not continue from position $p+1$ to position $p$, and since it proceeds strictly leftward it cannot reach position $p$ later either.
 \end{proof}
 
-\begin{lemma}[Bumping in lockstep]\label{lemma:lockstep}
-Let $\mathbf{w}_1$ and $\mathbf{w}_2$ be reduced words for a common permutation, and for $j=1,2$ let
-$$\mathbf{w}_j=\mathbf{w}_j^{(0)},\ \mathbf{w}_j^{(i+1)=\mathbf{w}_j^{(i)}}\uparrow_{p_i}$$
-be the successive words produced by the iteration of Definition \ref{definition:zeromap}, each obtained from the previous one by the Little bump at the letter whose corresponding root is the last descent. Suppose either
-\begin{enumerate}
-\item $\mathbf{w}_1$ and $\mathbf{w}_2$ are Coxeter--Knuth equivalent; or
-\item $\mathbf{w}_1$ and $\mathbf{w}_2$ are commutation equivalent and $\mathbf{w}_1^{(a_1)}$ and $\mathbf{w}_2^{(a_2)}$ are reduced words for a common permutation.
-\end{enumerate}
-Then $a_1=a_2$ and, for every $k$, the words $\mathbf{w}_1^{(k)}$ and $\mathbf{w}_2^{(k)}$ are reduced words for a common permutation.
+\begin{lemma} \label{lemma:littlebumprecurse}
+  Let $a_1\cdots a_n$ be a reduced word for a permutation $w$ and suppose $r$ is an index such that $\rtt_r(a_1\cdots a_n)=(m, m+1)$ (that is, the right root of the word $a_1\cdots a_n$ at position $r$ is the simple root $\alpha_m$). If the initial step of a Little bump at position $r$ does not result in a reduced word, then there is a unique index $p<r$ such that
+  $$\ltb{(a_1\cdots a_n)}{r} = \ltb{(a_1\cdots a_{r-1})}{p}(a_r - 1)a_{r+1}\cdots a_n$$
 \end{lemma}
 \begin{proof}
-  To prove the result for {\rm(1)}], it suffices to treat a single Coxeter--Knuth move $\alpha$, the general case following by composing along a chain, and then to treat a single bump, the general case following by induction. Suppose first that the Coxeter-Knuth move does not involve the position of the last descent. By \cite[Lemma~3.3]{hamaker2014relating} it follows that the bump commutes with $\alpha$, so the two bumped words again differ by a Coxeter--Knuth move and in particular are reduced words for a common permutation. The stopping criterion of Definition \ref{definition:zeromap} depends only on the permutation, so the two iterations terminate together.
+Assume the hypotheses of the lemma, which implies that the word $a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n$ is not reduced. Thus, there is some unique index $p$, not necessarily less than $r$, such that the root at position $p$ is equal to the root at position $r$ after decrementing $a_r$. Consider the word of length $n+2$
+$$a' = a_1\cdots a_{r-1}a_r(a_{r}-1)a_ra_{r+1}\cdots a_n$$
+We claim that
+$$\rtt_{r}(a') = \rtt_r(a_1\cdots a_{r-1}(a_r -1)a_{r+1}\cdots a_n)$$
+This is because
+$$s_{a_r}s_{a_r - 1}(\alpha_{a_r}) = \alpha_{a_r - 1}$$ so that
+$$\rtt_{r}(a') = s_{a_n}\cdots s_{a_{r+1}}s_{a_r}s_{a_r - 1}(\alpha_{a_r}) = s_{a_n}\cdots s_{a_{r+1}}(\alpha_{a_r - 1}) = \rtt_r(a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n)$$
+However, the word
+$$a_1\cdots a_{r-1}a_r(a_{r}-1)a_{r+1}\cdots a_nm$$
+has the same right root at $r$, since the exchange property allows us to delete the rightmost $a_r$ and place the descent $m$ at the end of the word, leaving roots at indices to the left unchanged. This root is equal to 
+$$s_m\rtt_r(a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n)$$
+which is still $\rtt_r(a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n)$ by assumption. However,
+$$\langle\rtt_r(a_1\cdots a_{r-1}a_r(a_{r}-1)a_ra_{r+1}\cdots a_n)\mid \alpha_m\rangle < 0$$
+due to the fact that $\alpha_m$ is the root at position $r+2$ in this word, which is a contradiction. Thus, $p<r$.
 
-  For {\rm(2)}], the same argument applies until the bump reaches a position $p$ where the two words differ by a commutation move, say with letters $a$ and $b$ in positions $p$ and $p+1$. By Lemma \ref{lemma:bumpadjacent}, at most one of these letters is decremented, so the two bumped words again differ by a commutation move and in particular are reduced words for a common permutation. The stopping criterion of Definition \ref{definition:zeromap} depends only on the permutation, so the two iterations terminate together.
+Now, consider the reduced word $a_1\cdots a_{r-1}$. Since adding $a_r - 1$ is no longer reduced, we have that the root at position $p$ is equal to $\alpha_{a_r - 1}$, and the next Little bump is at position $p$. We may repeat the argument, yielding a recursive process that ensures each additional bump is to the left by induction on the length of the word.
 \end{proof}
 
-\todo{GAP: part (2) of Lemma \ref{lemma:lockstep} is stated but not proved; part (1) is proved above. By \cite[Lemma~3.3]{hamaker2014relating} the only commutations not covered by part (1) are those forming no part of a Coxeter--Knuth move, that is, those for which neither letter adjacent to the interchanged pair lies strictly between them in value, and these are exactly the ones for which the terminal permutations can differ.
+\begin{lemma}[Bumping in lockstep]\label{lemma:lockstep}
+Let $\mathbf{w}_1$ and $\mathbf{w}_2$ be reduced words for a common permutation that differ by a commutation move at positions $p$ and $p+1$. Let $\mathbf{w}_1=\ltb{\mathbf{w}'_1}{t_1}$ and $\mathbf{w}_2=\ltb{\mathbf{w}'_2}{t_2}$, where $t_1$ and $t_2$ are the positions of the last descent. If 
+$$\mathrm{perm}(\mathbf{w}'_1)=\mathrm{perm}(\mathbf{w}'_2),$$
+then $\mathbf{w}'_1$ and $\mathbf{w}'_2$ differ by a commutation move at position $p$.
+\end{lemma}
+\begin{proof}
+  If $t_1\neq t_2$, then we may assume without loss of generality that $t_1 = p$ and $t_2 = p+1$, since the only two roots that change position are at $p$ and $p+1$. Let $a,b$ be the letters at positions $p$ and $p+1$ in $\mathbf{w}_1'$ and assume $a>b$. Then
+  $$\mathbf{w}_1 = \ltb{U}{r}(a-1)bV$$
+  and
+  $$\mathbf{w}_2 = \ltb{U}{r}b(a-1)V$$
+  for some $r$, because in the first display bumping occurs only to the left, and the hypothesis is that the difference is a commutation move in $\mathbf{w}_1$ and $\mathbf{w}_2$. Then necessarily $a - 1 > b + 1$, so that $a>b+2$. It follows that $a$ and $b$ themselves commute, and the result follows.
 
-Verified computationally for $N\leq 6$ over pairs of bounded RC graphs of a common height. For a single braid move the conclusion holds in all $260$ instances in the nontrivial case $\maxd(\wof{B})=\hr(B)$ and all $385$ in the trivial case, and the terminal permutations agree in every one of them, as part (1) predicts. Of the $654$ single commutation moves in the nontrivial case, $442$ carry a Coxeter--Knuth witness, and for these the terminal permutations again agree without exception; for the remaining $212$, which carry none, the terminal permutations agree in $49$ cases and differ in $163$, so the hypothesis in part (2) is necessary. For commutation equivalence in the general, multi-step form, the conclusion holds in all $5435$ instances in the nontrivial case and all $45162$ in the trivial case.}
+  Thus, we must prove the result in the case where $t_1=t_2$. Assume
+  $$\mathbf{w}_1 = \ltb{(UabV)}{t}$$
+  If $t$ is within the $V$ portion, Lemma \ref{lemma:bumprecurse} allows us to rewrite this as
+  $$\mathbf{w}_1 = \ltb{(Uab)}{t'}\ltb{V}{r}$$
+
+  %ny additional bumping occurs within $U$ beginning at a common position $r$. If $a - b > 2$, then we are done. Otherwise, $\mathrm{perm}(\ltb{U}{r}(a-1)b) \neq \mathrm{perm}(\ltb{U}{r}b(a-1))$ since the two letters no longer commute, so the hypothesis that the end results are words for a common permutation does not hold, and we are done.
+\end{proof}
+
+% \todo{GAP: part (2) of Lemma \ref{lemma:lockstep} is stated but not proved; part (1) is proved above. By \cite[Lemma~3.3]{hamaker2014relating} the only commutations not covered by part (1) are those forming no part of a Coxeter--Knuth move, that is, those for which neither letter adjacent to the interchanged pair lies strictly between them in value, and these are exactly the ones for which the terminal permutations can differ.
+
+% Verified computationally for $N\leq 6$ over pairs of bounded RC graphs of a common height. For a single braid move the conclusion holds in all $260$ instances in the nontrivial case $\maxd(\wof{B})=\hr(B)$ and all $385$ in the trivial case, and the terminal permutations agree in every one of them, as part (1) predicts. Of the $654$ single commutation moves in the nontrivial case, $442$ carry a Coxeter--Knuth witness, and for these the terminal permutations again agree without exception; for the remaining $212$, which carry none, the terminal permutations agree in $49$ cases and differ in $163$, so the hypothesis in part (2) is necessary. For commutation equivalence in the general, multi-step form, the conclusion holds in all $5435$ instances in the nontrivial case and all $45162$ in the trivial case.}
 
 
 
 \begin{lemma}[Lifting a single swap]\label{lemma:forestsimple}
-Let $U_1,U_2$ be reduced words for a common permutation $u$ with $\maxd(u)\leq m$, and suppose $U_2$ is obtained from $U_1$ by a single one of the local swaps of \cite[Proposition~5.8]{nadeau2024forest}, so that $U_1\equiv_\forest U_2$. Let $w$ satisfy $w\downvar{m+1}u$ and $\ell(w)=\ell(u)$, and let $V_1,V_2$ be the reduced words for $w$ carried to $U_1$ and $U_2$ by the iteration of Definition \ref{definition:zeromap}, which exist and are unique by the word-level bijection of Theorem \ref{theorem:zero_bijection}. Then $V_1\equiv_\forest V_2$.
+Let $U_1,U_2$ be reduced words for a common permutation $u$ with $\maxd(u)\leq m$, and suppose $U_2$ is obtained from $U_1$ by a single one of the local swaps of \cite[Proposition~5.8]{nadeau2024forest}, so that $U_1\equiv_\forest U_2$ and $U_1$ and $U_2$ differ by a single commutation move. Suppose there exist words $V_1,V_2$ for a common permutation $w$ such that such that $\ltb{V_1}{p} = U_1$ and $\ltb{V_2}{q} = U_2$, where $p$ and $q$ are the positions of the last descent of $V_1$ and $V_2$, respectively. Then $V_1\equiv_\forest V_2$.
 \end{lemma}
 \begin{proof}
-If $\maxd(w)\leq m$, then by Definition \ref{definition:zeromap} $\zeromap$ merely deletes the empty last row, so $V_j=U_j$ and the conclusion is the hypothesis. So assume $\maxd(w)=m+1$.
-
-Write $U_2$ as $U_1$ with the entries $a,b$ in positions $p$ and $p+1$ interchanged, and let $a',b'$ be the entries of $V_1$ in those same positions. Since $U_1$ and $U_2$ are reduced words for the common permutation $u$ differing only in the order of the adjacent letters $a,b$, we have $s_as_b=s_bs_a$, and $a\neq b$ because interchanging equal letters would give $U_1=U_2$; hence
-\begin{equation}\label{eq:forestsimple_down}
-|a-b|\geq 2.
-\end{equation}
-Everything rests on the corresponding statement upstairs.
-\begin{equation}\label{eq:forestsimple_positions}
-|a'-b'|\geq 2 .
-\end{equation}
-
-We first record what \eqref{eq:forestsimple_down} already yields. It suffices to treat a single Little bump, the general case following by induction along the iteration of Definition \ref{definition:zeromap}. A bump decrements each letter of a word at most once \cite[Lemma~5]{little2003combinatorial}, so
-$$a\leq a'\leq a+1,\qquad b\leq b'\leq b+1,$$
-whence $|a'-b'|\geq|a-b|-1$. If $|a-b|\geq 3$, then \eqref{eq:forestsimple_positions} follows at once. So assume $|a-b|=2$, and, interchanging the roles of $R_1$ and $R_2$ if necessary, that $a=b+2$. Then $a'\in\{b+2,b+3\}$ and $b'\in\{b,b+1\}$, so $a'-b'\in\{1,2,3\}$, and $|a'-b'|=1$ occurs only for
-\begin{equation}\label{eq:forestsimple_bad}
-a'=a=b+2,\qquad b'=b+1,
-\end{equation}
-that is, only when the bump decrements the letter in position $p+1$ and fixes the one in position $p$, the two forming a braid pair upstairs. Hence, we have
-$$ab'a\quad\text{and}\quad b'ab'$$
-By \cite[Lemma~3.3]{hamaker2014relating}, a bump applied to these three letters commutes with a Coxeter-Knuth move (perhaps resulting in a Coxeter-Knuth move of a different type), so that these three letters should differ by a Coxeter-Knuth move in the end result. In the case where $V_1$ contains the $b'ab'$, by assumption the right $b'$ becomes $b$, so that the result is $b'ab$, which is indeed Coxeter-Knuth equivalent to $b'ba$. However, in that case we have that the $ab'a$ in $V_2$ is bumped to $aba$, which is not Coxeter-Knuth equivalent to $b'ba$. Hence, the configuration \eqref{eq:forestsimple_bad} is impossible, since it is implied by Lemma \ref{lemma:lockstep}(1) that the ending permutations must not be the same, which contradicts the hypothesis that $U_1\equiv_\forest U_2$.
-
-
-Since we have established \eqref{eq:forestsimple_positions}, and since the argument just given applies verbatim at each stage of the iteration of Definition \ref{definition:zeromap}, the letters in positions $p$ and $p+1$ commute at every stage of the run beginning at $V_1$. Let $\widetilde{V}$ be $V_1$ with the entries in positions $p,p+1$ interchanged; since $s_{a'}$ and $s_{b'}$ commute, $\widetilde{V}$ is again a reduced word for $w$.
-
-We claim that a Little bump carries a pair of reduced words differing by the interchange of two adjacent commuting letters to a pair again differing by the interchange of the letters in those same two positions, provided the interchanged letters still commute afterwards. Write $W=UabV$ and $W'=UbaV$ with $|a-b|\geq 2$, let $v$ denote the product of the letters of $V$, and let $\phi$ be the bijection from the letters of $W$ to those of $W'$ that is the identity outside the interchanged pair and matches the two interchanged letters.
-
-First, $\phi$ preserves roots. By Definition \ref{definition:rcgraph} the root attached to a letter depends only on the product of the letters following it. For a letter of $U$ that product is $s_as_bv=s_bs_av$ in either word, and for a letter of $V$ it is $v$ in either word. For the letter $a$ it is $s_bv$ in $W$ against $v$ in $W'$; but $|a-b|\geq 2$ makes $\{a,a+1\}$ and $\{b,b+1\}$ disjoint, so $s_b$ fixes both $a$ and $a+1$, and
-$$(s_bv)^{-1}(a)=v^{-1}s_b(a)=v^{-1}(a),\qquad (s_bv)^{-1}(a+1)=v^{-1}(a+1).$$
-The root attached to $a$ is therefore the same in both words, and symmetrically for $b$. In particular the letter effecting the last inversion of the common permutation, at which the bump is begun, is matched by $\phi$.
-
-Second, $\phi$ preserves the deletion step. Deleting a letter of $W$ and its image under $\phi$ yields either literally the same word, when the deleted letter is $a$ or $b$, or two words again differing by the interchange of the same adjacent commuting pair. In either case the two results have a common permutation and a common length, so one is reduced if and only if the other is; hence the unique letter whose deletion leaves the current word reduced, which governs each subsequent step of Definition \ref{definition:littlebump}, is matched by $\phi$ as well.
-
-A bump therefore decrements matched letters throughout. A decrement alters the value of a letter and not its position, so $\phi$ remains a correspondence of positions afterwards: the letter occupying a given position of the second bumped word is the one occupying the $\phi$-corresponding position of the first. As $\phi$ interchanges the positions $p$ and $p+1$ and fixes every other position, the two resulting words differ exactly in the order of the letters in positions $p$ and $p+1$. Those letters commute by the first paragraph, so the claim applies again at the next stage.
-
-Each bump in the iteration of Definition \ref{definition:zeromap} is begun at the letter effecting the last inversion of the current permutation, so the sequence of bumps performed depends only on the word it is applied to. Iterating the claim along that run, the run beginning at $\widetilde{V}$ terminates at the word at which the run beginning at $V_1$ terminates, namely $U_1$, with the entries in positions $p,p+1$ interchanged; that word is $U_2$. The run beginning at $V_2$ also terminates at $U_2$, and by Theorem \ref{theorem:zero_bijection} distinct words cannot terminate at the same one, so $V_2=\widetilde{V}$. Thus $V_2$ is $V_1$ with the entries in positions $p,p+1$ interchanged.
-
-It remains to see that these two words are forest equivalent. The $\Omega$-insertion of \cite{nadeau2024forest} processes a word from left to right, whereas the reading order of Definition \ref{definition:rcgraph} produces the word of an RC graph in the opposite order; the criterion of \cite[Proposition~5.8]{nadeau2024forest} must therefore be applied to the reversal of $U_1$, and the segment inserted before the interchanged pair is the reversal of the segment of $U_1$ lying to the \emph{right} of that pair. Accordingly write $U_1=XabY$ and $U_2=XbaY$, and let $\overleftarrow{Y}$ denote the reversal of $Y$, so that by hypothesis and \cite[Proposition~5.8]{nadeau2024forest} the letters $a,b$ are separated by at least two elements of the rootlist $\mathrm{rl}(\overleftarrow{Y})$. By the previous paragraph $V_1=X'a'b'Y'$ and $V_2=X'b'a'Y'$, with $Y'$ the corresponding segment of $V_1$, and again by \cite[Proposition~5.8]{nadeau2024forest} it suffices to know that $a'$ and $b'$ are separated by at least two elements of $\mathrm{rl}(\overleftarrow{Y'})$. Writing
+Lemma \ref{lemma:lockstep} gives us that $V_1$ and $V_2$ differ by a single commutation move, since they bump at the last descent to reduced words for a common permutation that differ by a single commutation move. It remains to be seen that these two words are forest equivalent. The $\Omega$-insertion of \cite{nadeau2024forest} processes a word from left to right, whereas the reading order of Definition \ref{definition:rcgraph} produces the word of an RC graph in the opposite order; the criterion of \cite[Proposition~5.8]{nadeau2024forest} must therefore be applied to the reversal of $U_1$, and the segment inserted before the interchanged pair is the reversal of the segment of $U_1$ lying to the \emph{right} of that pair. Accordingly write $U_1=XabY$ and $U_2=XbaY$, and let $\overleftarrow{Y}$ denote the reversal of $Y$, so that by hypothesis and \cite[Proposition~5.8]{nadeau2024forest} the letters $a,b$ are separated by at least two elements of the rootlist $\mathrm{rl}(\overleftarrow{Y})$. By the previous paragraph $V_1=X'a'b'Y'$ and $V_2=X'b'a'Y'$, with $Y'$ the corresponding segment of $V_1$, and again by \cite[Proposition~5.8]{nadeau2024forest} it suffices to know that $a'$ and $b'$ are separated by at least two elements of $\mathrm{rl}(\overleftarrow{Y'})$. Writing
 $$\mathrm{sep}(a,b;Y)=\#\{r\in\mathrm{rl}(\overleftarrow{Y})\ :\ r\ \text{lies strictly between}\ a\ \text{and}\ b\},$$
 this follows from the monotonicity of the separator count along a bump,
 \begin{equation}\label{eq:sepmono}
