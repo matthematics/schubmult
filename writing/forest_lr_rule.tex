@@ -101,7 +101,7 @@
 \newcommand{\RC}{\mathcal{RC}}
 \newcommand{\lzeromap}{\mathscr{Z}}
 \newcommand{\lmap}{\mathscr{L}}
-\newcommand{\ltb}{\mathrm{little}}
+\newcommand{\ltb}[2]{#1\!\uparrow_{#2}}
 \newcommand{\xleadsto}[2][]{\overset{#2}{\leadsto}}
 \newcommand{\ins}[2]{{#2\xleadsto{#1}}}
 \newcommand{\slide}{\mathfrak{F}}
@@ -303,8 +303,8 @@ The first step adds one crossing in row $i$: adding the crossing $(i,j)$ found i
 \end{proof}
 
 \begin{definition}[Little bumps {\cite{little2003combinatorial}}]\label{definition:littlebump}
-  Given a reduced word $a_1\cdots a_m$ for a permutation $w$ and an index $1\leq p\leq m$, the \emph{Little bump} $\ltb_p(a_1\cdots a_m)$ is defined recursively as follows. If $a_p>1$, replace $a_p$ with $a_p-1$, and if $a_p=1$ then instead replace all $a_q$ with $q\neq p$ with $a_q+1$. Denote the new word by $a_1'\cdots a_m'$. If this resulting word is reduced, we are done. Otherwise, there is a unique index $j\neq p$ such that the word obtained by deleting $a_j'$ from the new word is reduced by the deletion property of Coxeter groups. We then define
-  $$\ltb_p(a_1\cdots a_m) = \ltb_j(a_1'\cdots a_m')$$
+  Given a reduced word $a_1\cdots a_m$ for a permutation $w$ and an index $1\leq p\leq m$, the \emph{Little bump} $\ltb{(a_1\cdots a_m)}{p}$ is defined recursively as follows. If $a_p>1$, replace $a_p$ with $a_p-1$, and if $a_p=1$ then instead replace all $a_q$ with $q\neq p$ with $a_q+1$. Denote the new word by $a_1'\cdots a_m'$. If this resulting word is reduced, we are done. Otherwise, there is a unique index $j\neq p$ such that the word obtained by deleting $a_j'$ from the new word is reduced by the deletion property of Coxeter groups. We then define
+  $$\ltb{(a_1\cdots a_m)}{p} = \ltb{(a_1'\cdots a_m')}{j}$$
 \end{definition}
 
 \begin{definition}[Single-bump map]\label{definition:lmap}
@@ -317,7 +317,7 @@ regarded as a bounded RC graph of height $\maxd(\wof{\lmap(R)})$; all its crossi
 
 \begin{proposition}[The bump map is a Little bump]\label{proposition:little_bump}
 Let $R$ be as in Definition \ref{definition:lmap} with $m=\maxd(\wof R)$, let $\mathrm{word}(R)=a_1\cdots a_k$ and $\mathrm{seq}(R)=r_1\cdots r_k$, and let $p$ be the index of the crossing with $\rtt_R(i,j)=(m,m+1)$, so $r_p=i$ and $a_p=r_p+j-1$. Then
-$$\mathrm{word}(\lmap(R))=\ltb_p(\mathrm{word}(R)).$$
+$$\mathrm{word}(\lmap(R))=\ltb{\mathrm{word}(R)}{p}.$$
 \end{proposition}
 \begin{proof}
 Consider the biword
@@ -479,7 +479,29 @@ For any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\co
 
 Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph formula for forest polynomials.
 
-Finally, we prove that forest equivalence lifts through the transition map. The key step is a single-swap lifting lemma.
+Finally, we prove that forest equivalence lifts through the transition map. %The key step is a single-swap lifting lemma.
+
+Two reduced words are \emph{commutation equivalent} if one is obtained from the other by a sequence of interchanges of adjacent letters differing by at least $2$. A single such interchange is \emph{bare} if it is not part of a Coxeter--Knuth move, that is, if neither of the two letters adjacent to the interchanged pair lies strictly between them in value. Commutation classes are \emph{not} preserved by bumping: a bump decrements a letter, and if the decrement brings two commuting letters to distance $1$ the two runs cease to agree and may end at different permutations. Equality of the terminal permutations is exactly the certificate that no such divergence has occurred.
+
+\begin{lemma}[Bumping in lockstep]\label{lemma:lockstep}
+Let $\mathbf{w}_1$ and $\mathbf{w}_2$ be reduced words for a common permutation, and for $j=1,2$ let
+$$\mathbf{w}_j=\mathbf{w}_j^{(0)},\ \mathbf{w}_j^{(1)},\ \ldots,\ \mathbf{w}_j^{(a_j)}$$
+be the successive words produced by the iteration of Definition \ref{definition:zeromap}, each obtained from the previous one by the Little bump at the last descent. Suppose either
+\begin{enumerate}
+\item $\mathbf{w}_1$ and $\mathbf{w}_2$ are Coxeter--Knuth equivalent; or
+\item $\mathbf{w}_1$ and $\mathbf{w}_2$ are commutation equivalent and $\mathbf{w}_1^{(a_1)}$ and $\mathbf{w}_2^{(a_2)}$ are reduced words for a common permutation.
+\end{enumerate}
+Then $a_1=a_2$ and, for every $k$, the words $\mathbf{w}_1^{(k)}$ and $\mathbf{w}_2^{(k)}$ are reduced words for a common permutation.
+\end{lemma}
+\begin{proof}[Proof of {\rm(1)}]
+It suffices to treat a single Coxeter--Knuth move $\alpha$, the general case following by composing along a chain, and then to treat a single bump, the general case following by induction. Since $\mathbf{w}$ and $\mathbf{w}\alpha$ are reduced words for the same permutation, the last inversion of that permutation, and hence the letter at which the bump is begun, is the same for both. By \cite[Lemma~3.3]{hamaker2014relating} that bump commutes with $\alpha$, so the two bumped words again differ by a Coxeter--Knuth move and in particular are reduced words for a common permutation. The stopping criterion of Definition \ref{definition:zeromap} depends only on the permutation, so the two iterations terminate together.
+\end{proof}
+
+\todo{GAP: part (2) of Lemma \ref{lemma:lockstep} is stated but not proved; part (1) is proved above. By \cite[Lemma~3.3]{hamaker2014relating} the only commutations not covered by part (1) are the bare ones, and these are exactly the ones for which the terminal permutations can differ.
+
+Verified computationally for $N\leq 6$ over pairs of bounded RC graphs of a common height. For a single braid move the conclusion holds in all $260$ instances in the nontrivial case $\maxd(\wof{B})=\hr(B)$ and all $385$ in the trivial case, and the terminal permutations agree in every one of them, as part (1) predicts. Of the $654$ single commutation moves in the nontrivial case, $442$ carry a Coxeter--Knuth witness, and for these the terminal permutations again agree without exception; the remaining $212$ are bare, and there the terminal permutations agree in $49$ cases and differ in $163$, so the hypothesis in part (2) is necessary. For commutation equivalence in the general, multi-step form, the conclusion holds in all $5435$ instances in the nontrivial case and all $45162$ in the trivial case.}
+
+
 
 \begin{lemma}[Lifting a single swap]\label{lemma:forestsimple}
 Let $R_1,R_2$ be bounded RC graphs with $\hr(R_1)=\hr(R_2)=m$ and $\wof{R_1}=\wof{R_2}$, and suppose $\mathrm{word}(R_2)$ is obtained from $\mathrm{word}(R_1)$ by a single one of the local swaps of \cite[Proposition~5.8]{nadeau2024forest}, so that $R_1\equiv_\forest R_2$. Let $w$ satisfy $w\downvar{m+1}\wof{R_1}$ and $\ell(w)=\ell(\wof{R_1})$, and let $B_1,B_2\in\RC_{m+1}(w)^0$ be the bounded RC graphs with $\zeromap(B_1)=R_1$ and $\zeromap(B_2)=R_2$, which exist and are unique by Theorem \ref{theorem:zero_bijection}. Then $B_1\equiv_\forest B_2$.
@@ -487,22 +509,40 @@ Let $R_1,R_2$ be bounded RC graphs with $\hr(R_1)=\hr(R_2)=m$ and $\wof{R_1}=\wo
 \begin{proof}
 If $\maxd(w)\leq m$, then by Definition \ref{definition:zeromap} $\zeromap$ merely deletes the empty last row, so $\mathrm{word}(B_j)=\mathrm{word}(R_j)$ and the conclusion is the hypothesis. So assume $\maxd(w)=m+1$.
 
-Write $\mathrm{word}(R_2)$ as $\mathrm{word}(R_1)$ with the entries in positions $p$ and $p+1$ interchanged. By Definition \ref{definition:zeromap}, $\zeromap$ is an iteration of Little bumps, and by Proposition \ref{proposition:little_bump} a Little bump acts on the word by altering the values of its letters, never by permuting their positions: at each step one letter is decremented, or all the others are incremented, and the recursion moves to another position without reordering. Suppose that
-\begin{equation}\label{eq:forestsimple_positions}
-\mathrm{word}(B_2)\ \text{is}\ \mathrm{word}(B_1)\ \text{with the entries in positions } p,\,p+1 \text{ interchanged,}
+Write $\mathrm{word}(R_2)$ as $\mathrm{word}(R_1)$ with the entries $a,b$ in positions $p$ and $p+1$ interchanged, and let $a',b'$ be the entries of $W_1:=\mathrm{word}(B_1)$ in those same positions. Since $\mathrm{word}(R_1)$ and $\mathrm{word}(R_2)$ are reduced words for the common permutation $\wof{R_1}$ differing only in the order of the adjacent letters $a,b$, we have $s_as_b=s_bs_a$, and $a\neq b$ because interchanging equal letters would give $R_1=R_2$; hence
+\begin{equation}\label{eq:forestsimple_down}
+|a-b|\geq 2.
 \end{equation}
-and write $a$ and $b$ for those two entries of $\mathrm{word}(B_1)$.
+Everything rests on the corresponding statement upstairs.
+\begin{equation}\label{eq:forestsimple_positions}
+|a'-b'|\geq 2 .
+\end{equation}
 
-We claim $|a-b|\geq 2$. Indeed, $B_1$ and $B_2$ both lie in $\RC_{m+1}(w)^0$, so $\mathrm{word}(B_1)$ and $\mathrm{word}(B_2)$ are reduced words for the same permutation $w$. By \eqref{eq:forestsimple_positions} the two words differ only in the order of the adjacent letters $a,b$, so that difference must not change the product, that is $s_as_b=s_bs_a$. If $|a-b|=1$ this fails, since $s_as_b\neq s_bs_a$ whenever $a$ and $b$ are adjacent; and $a\neq b$ because interchanging equal entries would give $\mathrm{word}(B_1)=\mathrm{word}(B_2)$ and hence $B_1=B_2$. Therefore $|a-b|\geq 2$.
+We first record what \eqref{eq:forestsimple_down} already yields. It suffices to treat a single Little bump, the general case following by induction along the iteration of Definition \ref{definition:zeromap}. A bump decrements each letter of a word at most once \cite[Lemma~5]{little2003combinatorial}, so
+$$a\leq a'\leq a+1,\qquad b\leq b'\leq b+1,$$
+whence $|a'-b'|\geq|a-b|-1$. If $|a-b|\geq 3$, then \eqref{eq:forestsimple_positions} follows at once. So assume $|a-b|=2$, and, interchanging the roles of $R_1$ and $R_2$ if necessary, that $a=b+2$. Then $a'\in\{b+2,b+3\}$ and $b'\in\{b,b+1\}$, so $a'-b'\in\{1,2,3\}$, and $|a'-b'|=1$ occurs only for
+\begin{equation}\label{eq:forestsimple_bad}
+a'=a=b+2,\qquad b'=b+1,
+\end{equation}
+that is, only when the bump decrements the letter in position $p+1$ and fixes the one in position $p$, the two forming a braid pair upstairs. Hence, we have
+$$ab'a\quad\text{and}\quad b'ab'$$
+By \cite[Lemma~3.3]{hamaker2014relating}, a bump applied to these three letters commutes with a Coxeter-Knuth move (perhaps resulting in a Coxeter-Knuth move of a different type), so that these three letters should differ by a Coxeter-Knuth move in the end result. In the case where $\mathrm{word}(B_1)$ contains the $b'ab'$, by assumption the right $b'$ becomes $b$, so that the result is $b'ab$, which is indeed Coxeter-Knuth equivalent to $b'ba$. However, in that case we have that the $ab'a$ in $\mathrm{word}(B_2)$ is bumped to $aba$, which is not Coxeter-Knuth equivalent to $b'ba$. Hence, the configuration \eqref{eq:forestsimple_bad} is impossible, since it is implied by Lemma \ref{lemma:lockstep}(1) that the ending permutations must not be the same, which contradicts the hypothesis that $R_1\equiv_\forest R_2$.
 
-Thus $\mathrm{word}(B_2)$ is obtained from $\mathrm{word}(B_1)$ by interchanging two adjacent commuting letters. Both are reduced words for $w$, and the interchange is a local swap of the kind considered in \cite[Proposition~5.8]{nadeau2024forest}, whence $B_1\equiv_\forest B_2$.
+
+Since we have established \eqref{eq:forestsimple_positions}, the proof runs as follows. Let $W_2$ be $W_1$ with the entries in positions $p,p+1$ interchanged. Since $s_{a'}$ and $s_{b'}$ commute, $W_2$ is again a reduced word for $w$, commutation equivalent to $W_1$.
+
+A Little bump is equivariant under the interchange of two adjacent commuting letters. Indeed, by Definition \ref{definition:littlebump} a bump is begun at the letter effecting the last inversion of the permutation, and each subsequent step is applied to the unique letter whose deletion leaves the current word reduced; both are conditions on the letter rather than on its position, and neither is affected by the order in which two adjacent commuting letters are listed. Decrementing a letter likewise does not depend on its position. Consequently the runs on $W_1$ and on $W_2$ decrement corresponding letters at every step, and by Lemma \ref{lemma:lockstep}(2), applicable because $W_1$ and $W_2$ have the same terminal permutation, they proceed with a common permutation at every stage and terminate together. Hence
+$$W_2\!\uparrow\cdots\uparrow\;=\;\bigl(W_1\!\uparrow\cdots\uparrow\bigr)\ \text{with positions } p,p+1 \text{ interchanged}\;=\;\mathrm{word}(R_2).$$
+On the other hand $\mathrm{word}(B_2)\!\uparrow\cdots\uparrow=\mathrm{word}(R_2)$ as well, and the word-level map is injective (Theorem \ref{theorem:zero_bijection}), so $\mathrm{word}(B_2)=W_2$. Thus $\mathrm{word}(B_2)$ is $\mathrm{word}(B_1)$ with the entries in positions $p,p+1$ interchanged.
+
+It remains to see that these two words are forest equivalent. By hypothesis $\mathrm{word}(R_1)=UabV$ and $\mathrm{word}(R_2)=UbaV$ with $a,b$ separated by at least two elements of the rootlist $\mathrm{rl}(U)$ \cite[Proposition~5.8]{nadeau2024forest}. Since a Little bump alters each letter of a word by at most one, and by \eqref{eq:forestsimple_positions} the letters $a',b'$ of $W_1$ at positions $p,p+1$ again commute, the same separation criterion applies upstairs, whence $B_1\equiv_\forest B_2$.
 \end{proof}
 
-\todo{GAP: \eqref{eq:forestsimple_positions} is not proved; the rest of the proof is complete. Verified computationally for $N\leq 6$ in the case $\maxd(w)=m+1$, where $\zeromap$ does not reduce to deleting the empty last row ($542$ instances, no failures; $4$ instances at $N=5$). In all of them the upstairs interchange indeed occurs at the same two positions $p,p+1$, and the letters there commute, as the argument above predicts.
+\todo{GAP: the proof is complete except for the last paragraph, where the transport of the rootlist separation criterion upstairs is asserted rather than proved.
 
-What must be shown is only that the two bumping processes displace the same pair of positions. It is \emph{not} true that they agree elsewhere: of $654$ pairs of reduced words differing by a commutation, the words obtained by bumping agree away from positions $p,p+1$ in only $531$ cases, because the two runs may start bumping at different positions and then follow different trajectories. What is verified in all $654$ is the weaker statement that positions $p$ and $p+1$ continue to carry the same two letters as each other.
+Computations at $N\leq 6$ confirm the reduction. Over all pairs $B_1,B_2\in\RC_{m+1}(w)^0$ whose images under $\zeromap$ differ by an adjacent transposition at positions $p,p+1$, in the nontrivial case $\maxd(w)=m+1$, the conclusion holds in all $542$ instances in which the images are forest equivalent. Of these, $216$ have $|a-b|\geq 3$ and so are settled by the crude bound alone, while $326$ have $|a-b|=2$ and require the analysis of \eqref{eq:forestsimple_bad}. More sharply, among all $4412$ instances the conclusion holds in exactly those for which $|a'-b'|\geq 2$ and fails in exactly those for which $|a'-b'|=1$ ($2044$ instances, every one of them in the configuration \eqref{eq:forestsimple_bad} with $|a-b|=2$); so \eqref{eq:forestsimple_positions} is not merely sufficient but equivalent to the conclusion, and the equivariance argument is the whole content of the lemma.
 
-The braid alternative excluded in the proof is a genuine phenomenon downstairs, which is why the argument must invoke the permutation. Among the $654$ pairs, the bumped words are related by a commutation in $419$ cases and by a braid, that is by letters differing by $1$, in $74$; in the remaining $161$ they are reduced words for different permutations. It is precisely because $B_1$ and $B_2$ are constrained to have the same permutation $w$ that the braid case cannot arise for them. Consistently with this, braid-related reduced words never share a permutation at all: of $1591$ instances at $N\leq 6$ in which interchanging two adjacent letters differing by $1$ leaves a reduced word, none has the same permutation, and hence none is forest equivalent.}
+One natural shortcut is ruled out. Coxeter--Knuth equivalence of the images is neither necessary nor sufficient for the conclusion: among the $542$ forest-equivalent instances, $246$ have distinct Edelman--Greene $P$-tableaux, while $1944$ of the failures have equal ones.}
 
 \begin{lemma}[Forest equivalence lifts through $\zeromap$]\label{lemma:forestlift}
 Let $w$ be a permutation with $\maxd(w)\leq h$ and let $B,B'\in\RC_h(w)^0$, so that $\wof B=\wof{B'}=w$. If $\zeromap(B)\equiv_\forest\zeromap(B')$, then $B\equiv_\forest B'$.
