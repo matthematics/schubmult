@@ -1160,14 +1160,48 @@ class LBS(LabeledForest):
 
     @property
     def rootlist(self):
+        """The finite part of the rootlist: the root labels together with the bare
+        letters in the gaps of the support.
+
+        The genuine rootlist of Nadeau--Tewari Definition 5.6 also contains every
+        bare letter below and above the support, so it is infinite in both
+        directions; use :meth:`rootlist_window` to see those tails.
+        """
+        return self.rootlist_window()
+
+    def rootlist_window(self, lo=None, hi=None):
+        """Rootlist of Nadeau--Tewari Definition 5.6, truncated to a window.
+
+        Consists of the labels of the roots of the trees -- one for each maximal
+        interval of the support, not one for each node -- together with the bare
+        letters ``i[0]`` for which neither ``i`` nor ``i-1`` lies in the support.
+        The bare part is cofinite, so the genuine rootlist is infinite in both
+        directions; ``lo`` and ``hi`` bound the range of bare letters reported,
+        defaulting to one step beyond the support on either side.
+        """
         base_list = {node.label for node in self.forest._roots}
-        min_elem = min(self.forest.support)
-        max_elem = max(self.forest.support)
-        full_set = set(range(min_elem - 1, max_elem + 2))
-        for i in full_set:
-            if i not in self.forest.support and i - 1 not in self.forest.support:
+        support = set(self.forest.support)
+        if lo is None:
+            lo = (min(support) - 1) if support else 0
+        if hi is None:
+            hi = (max(support) + 2) if support else 1
+        for i in range(lo, hi):
+            if i not in support and i - 1 not in support:
                 base_list.add(letterpair(i, 0))
         return tuple(sorted(base_list))
+
+    def separators(self, a, b, lo=None, hi=None):
+        """Rootlist elements lying strictly between the letters ``a`` and ``b``."""
+        lo_letter, hi_letter = (a, b) if a < b else (b, a)
+        if lo is None:
+            lo = min(lo_letter.primary, hi_letter.primary) - 1
+        if hi is None:
+            hi = max(lo_letter.primary, hi_letter.primary) + 2
+        return tuple(r for r in self.rootlist_window(lo, hi) if lo_letter < r < hi_letter)
+
+    def is_separated(self, a, b):
+        """The criterion of Nadeau--Tewari Proposition 5.8 for ``ab <-> ba``."""
+        return len(self.separators(a, b)) >= 2
 
     def hw_rc(self, length=None):
         from schubmult import NilPlactic, Permutation
