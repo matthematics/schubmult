@@ -23,8 +23,8 @@ def test_descent_bump(word):
         return
     if index2 >= index:
         raise ValueError(f"find_reduced_fail returned index {index2} which is greater than the original index {index} {word=} {modified_word=}")
-    if word[index2] == 1 or Permutation._right_root_at(index2, word) == (1,2):
-        return
+    # if word[index2] == 1:# or Permutation._right_root_at(index2, word) == (1,2):
+    #     return
     bumped_word = little_bump_pos(word, index)
     bumped_word2 = [*little_bump_pos(word[:index], index2), word[index] - 1, *word[index + 1:]]
     if bumped_word != tuple(bumped_word2):

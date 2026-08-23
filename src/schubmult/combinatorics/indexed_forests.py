@@ -1187,7 +1187,7 @@ class LBS(LabeledForest):
             hi = (max(support) + 2) if support else 1
         for i in range(lo, hi):
             if i not in support and i - 1 not in support:
-                base_list.add(letterpair(i, 0))
+                base_list.add(ParallelInjLetter(i, 0))
         return tuple(sorted(base_list))
 
     def separators(self, a, b, lo=None, hi=None):
@@ -1219,6 +1219,24 @@ class LBS(LabeledForest):
 
     def __hash__(self):
         return hash((self.forest, tuple(self(node) for node in self.forest.inorder_traversal)))
+
+def word_to_pair_labeled(word):
+    counts = {}
+    out = []
+    for a in word:
+        aa = int(a)
+        counts[aa] = counts.get(aa, 0) + 1
+        out.append(letterpair(aa, counts[aa]))
+    return tuple(out)
+
+def word_to_pairinj_labeled(word):
+    counts = {}
+    out = []
+    for a in word:
+        aa = int(a)
+        counts[aa] = counts.get(aa, 0) + 1
+        out.append(ParallelInjLetter(aa, counts[aa]))
+    return tuple(out)
 
 
 def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabeling] | None:

@@ -233,6 +233,39 @@ class Permutation(Printable):
                 out.add((*w, d + 1))
         return out
 
+    @staticmethod
+    def commutation_class_of(word):
+        stack = [tuple(word)]
+        ret = set()
+        while len(stack) > 0:
+            u = stack.pop()
+            ret.add(u)
+            for i in range(len(u) - 1):
+                if abs(u[i] - u[i + 1]) >= 2:
+                    v = u[:i] + (u[i + 1], u[i]) + u[i + 2 :]
+                    if v not in ret:
+                        stack.append(v)
+        return ret
+
+    @staticmethod
+    def forest_class_of(word):
+        from .indexed_forests import omega_insertion, word_to_pairinj_labeled
+
+        stack = [tuple(word)]
+        ret = set()
+        while len(stack) > 0:
+            u = stack.pop()
+            ret.add(u)
+            for i in range(len(u) - 1):
+                if abs(u[i] - u[i + 1]) >= 2:
+                    da_word = word_to_pairinj_labeled(tuple(reversed(u[i:])))
+                    P_right = omega_insertion(da_word[:-2])[0]
+                    if len(P_right.separators(da_word[-2], da_word[-1])) > 1:
+                        v = u[:i] + (u[i + 1], u[i]) + u[i + 2 :]
+                        if v not in ret:
+                            stack.append(v)
+        return ret
+
     def code_index_of_index(self, index):
         running_sum = 0
         running_code_index = 0

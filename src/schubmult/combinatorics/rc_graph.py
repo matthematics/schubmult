@@ -617,18 +617,9 @@ class RCGraph(WCGraph, CrystalGraph):
     @property
     @cache
     def omega_invariant(self):
-        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+        from schubmult.combinatorics.indexed_forests import omega_insertion, word_to_pair_labeled
 
         word = list(reversed(self.perm_word))
-
-        def word_to_pair_labeled(word):
-            counts = {}
-            out = []
-            for a in word:
-                aa = int(a)
-                counts[aa] = counts.get(aa, 0) + 1
-                out.append(letterpair(aa, counts[aa]))
-            return tuple(out)
 
         return omega_insertion(word_to_pair_labeled(word))
 

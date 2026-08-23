@@ -315,29 +315,49 @@ $$\lmap(R)=(\ins{m-1}{i}R')\setminus\{(m,1)\},$$
 regarded as a bounded RC graph of height $\maxd(\wof{\lmap(R)})$; all its crossings lie in rows $1,\ldots,m-1$.
 \end{definition}
 
+\begin{lemma} \label{lemma:notsimple}
+Let $R$ be an RC graph with $\hr(R) = m$ and suppose $(i,j),(i,j-1)\in R$. Then $\rtt_R(i,j)\neq \alpha_m$.
+\end{lemma}
+\begin{proof}
+We prove this by induction on $\hr(R)$. If $\hr(R)=1$, then 
+$$\rtt_R(i,j) = \alpha_{i+j-1} + \alpha_{i+j-2}$$
+which is not simple. Now suppose $\hr(R)>1$, and assume in order to obtain a contradiction that $\rtt_R(1,j)=\alpha_m$. By \cite[Corollary~3.8]{bbrc}, since $\alpha_m$ is the bottom-rightmost root in the bottom RC graph for $\wof{R}$, there should be some sequence of rightmost ladder moves after which $(i,j)$ is the rightmost crossing in row $i$ and there is another rightmost ladder move that moves $(i,j)$ downwards. Since these are all rightmost ladder moves, none of them move $(i,j-1)$, so $(i,j-1)$ is still present after the sequence of moves, hence there is no such rightmost ladder move, and the result follows.
+\end{proof}
+
+\begin{lemma} \label{lemma:descentchop}
+Let $R$ be an RC graph with $\hr(R)=m$ and suppose $(i,j)\in R$ with $\rtt_R(i,j)=\alpha_m$. Then, assigning $\hr(R^{\leq (i,j)}) = i + j - 1$, $R^{\leq (i,j)}$ is an RC graph.
+\end{lemma}
+\begin{proof}
+We prove this by induction on $\hr(R)$. For $\hr(R)=1$, $i=j=1$ and we have the result. Otherwise, we argue by induction on $m - i$. If $i = m$, then $j=1$ and assigning $\hr(R^{\leq (i,j)}) = m = i + j - 1$ makes $R^{\leq(i,j)}$ an RC graph. If $1<i<m$, we may consider $\trm(R)$, which has height $m-1$ and contains $(i-1,j)$ with $\rtt_{\trm(R)}(i-1,j)=\alpha_{m-1}$. By induction on $m-i$, we have $\hr(\trm(R)^{\leq (i-1,j)}) = i + j - 2$, hence $\hr(R^{\leq (i,j)}) = i + j - 1$ as desired. If $i=1$, we must have that $j>1$ since $\hr(R)=j$ otherwise, so assume $j>1$. By Lemma \ref{lemma:notsimple} we have that $(1,j-1)\notin R$. Note that
+$$R^{\leq (i,j)} = \{(1,j)\}\cup \{(1,j')\in R : j'\leq j\}.$$
+Since $(1, j-1)\notin R$, $j$ is a right descent of $\wof{R^{\leq (i,j)}}$, hence the maximal descent, and the result follows.
+\end{proof}
+
 \begin{proposition}[The bump map is a Little bump]\label{proposition:little_bump}
 Let $R$ be as in Definition \ref{definition:lmap} with $m=\maxd(\wof R)$, let $\mathrm{word}(R)=a_1\cdots a_k$ and $\mathrm{seq}(R)=r_1\cdots r_k$, and let $p$ be the index of the crossing with $\rtt_R(i,j)=(m,m+1)$, so $r_p=i$ and $a_p=r_p+j-1$. Then
 $$\mathrm{word}(\lmap(R))=\ltb{\mathrm{word}(R)}{p}.$$
 \end{proposition}
 \begin{proof}
-Consider the biword
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
-a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
-\end{matrix}$$
-The first deletion yields
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& m\\
-a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& m
-\end{matrix}$$
-Necessarily, we must have $a_p > 1$. To see this, note that if we have $a_p=1$, then we would have $r_p=1$ by the compatible sequence condition. The only way for position $(1,1)$ in an RC graph to be the final right descent is if it is the unique right descent. By assumption, that descent would have to be $m$, so that $m=1$. In that case, however, it would not be possible for the last row to be empty, which is included in the hypotheses of the proposition.
+  By Lemma \ref{lemma:notsimple}, since $\rtt_R(i,j) = \alpha_m$, we must have that $(i,j-1)\notin R$. Since $\rtt_R(i,j)=(m,m+1)$, we have that
+  $$\rtt_R(i,j-1)=s_m(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i + j - 2}) = s_m(R\setminus \{(i,j)\})[i,j]^{-1}s_{i+j-1}s_{i+j-2}(\alpha_{i + j - 1})$$
+  Further simplifying,
+  $$\rtt_R(i,j-1)=(R\setminus \{(i,j)\})[i,j]^{-1}s_{i+j-2}(\alpha_{i + j - 1})=(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i+j-2}+\alpha_{i + j - 1})$$
+  $$=(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i+j-2}) + \alpha_m$$
+  If $(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i+j-2}) < 0$, then this root was already present in $R\setminus \{(i,j)\}$ at some $(i',j')>(i,j)$. This implies that
+  $$R' = (R\setminus \{(i',j')\}))\cup \{(i,j - 1)\}$$
+  is an RC graph for $\wof{R}$ by the strong exchange property, and $R'[i,j]^{-1}(\alpha_{i+j-1}) = \alpha_m$. However, by Lemma \ref{lemma:notsimple}, in that case $\rtt_R(i,j)\neq \alpha_m$, which is a contradiction. Thus, $(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i+j-2})$ is a positive root, hence so is $\rtt_R(i,j-1)$. It also follows that $\rtt_R(i,j-1)=(a,b)$ with $a\leq m<b$ since applying $s_m$ to this root adds $\alpha_m$ rather than subtracting it. Thus, the first step of $\lmap(R)$ is to replace $a_p$ with $a_p-1$, which is exactly what the Little bump on position $p$ does. If the resulting word is reduced, then we have the result. Otherwise, define
+  $$R'' = ((R\setminus \{(i,j)\})\cup \{(i, j - 1)\})^{<=(i, j - 1)}$$
+  By Lemma \ref{lemma:descentchop}, $\maxd(R'') = i + j - 2 < m$. We then note that
+  $$\lmap(R) = ((R\setminus\{(i,j)\})\cup \{(i, j - 1)\})^{\geq i}\cup \{(a,b)\in R\setminus\{(i,j)\}\mid a<i\text{ and }b> j - 1\}\cup \lmap(R'')$$
+  By induction on the height of $R$, we have that 
+  $$\mathrm{word}(\lmap(R''))=\ltb{\mathrm{word}(R'')}{p'}$$ 
+  for some $p'$. We further argue that
+  $$\ltb{\mathrm{word}(R^{<i})}{q} = \mathrm{word}(\{(a,b)\in R\setminus\{(i,j)\}\mid a<i\text{ and }b> j - 1\}\cup \lmap(R''))$$
+  for some $q$. Adding on this right-hand border past column $j-1$, we see that the root at $p'$ in $R''$ expands to a root at the same position in $R^{<i}$ which therefore is at some position $q$ in $R^{<i}$, and the Little bump on position $q$ in $R^{<i}$ is exactly the same as the Little bump on position $p'$ in $R''$, which by induction can be embedded as an RC graph to the left of column $j$, and the claim follows by taking the resulting word.
 
-We must also have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(m, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=m-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $m-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. Recursively, this is the same as applying $\lmap$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction in the case $p=k$. If $p<k$, we apply the Little bump to
- $$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& r_p\\
-a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& m
-\end{matrix}$$
-We then apply the Little bump at position $k$ as above. Since this form can be achieved with chute moves, and Coxeter-Knuth moves \cite{hamaker2014relating} commute with Little bumps, the resulting word and compatible sequence will be the same after undoing the letter moves, which gives us the result as in the $p=k$ case.
+  Thus,
+  $$\mathrm{word}(\lmap(R)) = \ltb{\mathrm{word}(R^{<i})}{q}a_{\left|R^{<i}\right| + 1}\cdots a_{p-1}(a_p - 1)a_{p+1}\cdots a_{|R|} = \ltb{\mathrm{word}(R)}{p}$$
+  as desired.
 \end{proof}
 
 \begin{definition}[The transition map]\label{definition:zeromap}
@@ -359,15 +379,15 @@ $$\wof{R}\downvar{n}\wof{R'},\qquad \ell(\wof{R'})=\ell(\wof R).$$
 By Proposition \ref{proposition:little_bump}, the iteration defining $\zeromap$ realizes, on the underlying word, Algorithm~2 of \cite{little2003combinatorial} within the RC graph framework, and Little proves that this algorithm carries a reduced word of $w$ to a reduced word of a permutation $w'$ with $w\downvar{n}w'$ and $\ell(w')=\ell(w)$.
 \end{proof}
 
-\begin{theorem}[Bijectivity]\label{theorem:zero_bijection}
+\begin{theorem}[Bijectivity of transition]\label{theorem:zero_bijection}
 Let $w$ be a permutation with last descent at most $n$. Then
 $$\zeromap:\RC_n(w)^{0}\to \bigcup_{\substack{w\downvar{n} w'\\\ell(w')=\ell(w)}}\RC_{n-1}(w')$$
 is a weight-preserving bijection.
 \end{theorem}
 \begin{proof}
-Weight preservation is Lemma \ref{lemma:zeroweight}. On words, $\zeromap$ realizes Algorithm~2 of \cite{little2003combinatorial}, which is injective, hence bijective, from the reduced words of $w$ onto the reduced words of the permutations $w'$ with $w\downvar{n}w'$ and $\ell(w')=\ell(w)$.
+Weight preservation is Lemma \ref{lemma:zeroweight}. On words, $\zeromap$ realizes Algorithm~2 of \cite{little2003combinatorial}, which is bijective from the set of reduced words of $w$ onto the union of the sets of reduced words of the permutations $w'$ with $w\downvar{n}w'$ and $\ell(w')=\ell(w)$.  Restricting to the words of RC graphs, which may be a smaller set of words on both ends, the map at least remains injective.
 
-It remains to pass from words to RC graphs. An RC graph of a fixed height is determined by its word together with its weight, a compatible sequence being weakly increasing and hence determined by the multiset of its values; since $\zeromap$ is injective on words and preserves weights, it is injective on $\RC_n(w)^0$. For surjectivity, the identity of Bergeron--Sottile \cite{bsskew} recalled with the definition of $\downvar{n}$ gives
+It remains to upgrade the map to a bijection of sets of RC graphs. An RC graph of a fixed height is determined by its word together with its weight, since given a word we can recursively back out the pairs $(i,j)\in R$ from the weight; since $\zeromap$ is injective on words and preserves weights, it is injective on $\RC_n(w)^0$. For surjectivity, the identity of Bergeron--Sottile \cite{bsskew} recalled with the definition of $\downvar{n}$ gives
 $$\sum_{R\in\RC_n(w)^0}x^{\wtt(R)}\;=\;\sch_w(x_1,\ldots,x_{n-1},0)\;=\;\sum_{\substack{w\downvar{n}w'\\ \ell(w')=\ell(w)}}\sch_{w'}(x_1,\ldots,x_{n-1})\;=\;\sum_{w'}\sum_{R'\in\RC_{n-1}(w')}x^{\wtt(R')},$$
 so domain and codomain have the same weight generating function; an injective weight-preserving map between finite sets with equal weight generating functions is bijective.
 \end{proof}
@@ -378,15 +398,15 @@ $$\zeromap(e_i(R)) = e_i(\zeromap(R)),\qquad \zeromap(f_i(R)) = f_i(\zeromap(R))
 whenever the left-hand sides are defined.
 \end{proposition}
 \begin{proof}
-Under the Edelman--Greene correspondence, an RC graph $R$ corresponds to a pair $(P(R),Q(R))$, where $P(R)$ is the insertion tableau of $\mathrm{word}(R)$ and $Q(R)$ is the recording tableau, semistandardized by the compatible sequence. Morse and Schilling \cite{morse2016crystal} prove that the raising and lowering operators preserve $P(R)$ and act on $Q(R)$ as the ordinary crystal operators on semistandard tableaux; thus the recording tableau parameterizes each connected component of $\RC_n(w)$, the components being indexed by the insertion tableaux.
+Under the Edelman--Greene correspondence \cite{edelman1987balanced}, an RC graph $R$ corresponds to a pair $(P(R),Q(R))$, where $P(R)$ is the insertion tableau of $\overleftarrow{\mathrm{word}(R)}$ and $Q(R)$ is the recording tableau, a standard tableau characterizing the (reversed) word. Morse and Schilling \cite{morse2016crystal} prove that the raising and lowering operators preserve $P(R)$ and act on $Q(R)$ as the ordinary crystal operators on semistandard tableaux; thus the recording tableau parameterizes each connected component of $\RC_n(w)$, the components being indexed by the insertion tableaux.
 
-By Proposition \ref{proposition:little_bump}, $\zeromap$ acts on the underlying word by a composite of Little bumps. By the theorem of Hamaker and Young \cite{hamaker2014relating}, Little bumps preserve the recording tableau and commute with Coxeter--Knuth moves; the latter means the induced effect on the insertion tableau depends on $P(R)$ alone. In the coordinates $(P,Q)$, therefore, $\zeromap$ acts only on the first coordinate while $e_i$ and $f_i$ act only on the second, and the two commute.
+By Proposition \ref{proposition:little_bump}, $\zeromap$ acts on the underlying word by a composite of Little bumps. By the theorem of Hamaker and Young \cite[Theorem~4.4]{hamaker2014relating}, Little bumps preserve the recording tableau and commute with Coxeter--Knuth moves; the latter means the induced effect on the insertion tableau depends on $P(R)$ alone. In the coordinates $(P,Q)$, therefore, $\zeromap$ acts only on the first coordinate while $e_i$ and $f_i$ act only on the second, and the two commute.
 \end{proof}
 
 \begin{definition}[Clip]\label{definition:clptrm}
 Let $R$ be a bounded RC graph with $\hr(R)=h$, let $0\leq p\leq h$, and suppose that rows $p+1,\ldots,h$ of $R$ are empty. Then we define
 $$\clp^p(R)=\zeromap^{\,h-p}(R),$$
-a bounded RC graph with $p$ rows. Since each application of $\zeromap$ preserves the weight vector (Lemma~\ref{lemma:zeroweight}), every intermediate graph again has all of its crossings in rows $1,\ldots,p$, so the iteration is well-defined. Moreover the result depends only on the crossing set of $R$ and not on the height $h$: by Definition \ref{definition:zeromap}, an application of $\zeromap$ to a graph $S$ at a height exceeding $\maxd(\wof S)$ deletes an empty row and does nothing else, so assigning $R$ a larger admissible height only inserts pure truncation steps into the iteration.
+a bounded RC graph with $p$ rows. Since each application of $\zeromap$ preserves the weight vector (Lemma~\ref{lemma:zeroweight}), every intermediate graph again has all of its crossings in rows $1,\ldots,p$, so the iteration is well-defined. Moreover the result depends only on the crossing set of $R$ together with $\maxd(\wof{R})$: by Definition \ref{definition:zeromap}, an application of $\zeromap$ to a graph $S$ at a height exceeding $\maxd(\wof{S})$ deletes an empty row and does nothing else, so assigning $R$ a larger admissible height only inserts pure truncation steps into the iteration.
 \end{definition}
 
 In \cite{companionbialgebra} the clip $\clp^p$ is defined for arbitrary bounded RC graphs and paired with a trimming map $\trm^p$ to produce a ring structure on $\BRC$; only the special case above is needed here.
@@ -394,13 +414,20 @@ In \cite{companionbialgebra} the clip $\clp^p$ is defined for arbitrary bounded 
 \subsection{Slide polynomials and quasi-Yamanouchi RC graphs}
 
 \begin{definition}
-For a word $\mathbf{r}=\mathbf{r}_1\mathbf{r}_2\cdots \mathbf{r}_k$, a sequence of positive integers $a_1a_2\cdots a_k$ is \emph{compatible} with $\mathbf{r}$ if $a_i\leq \mathbf{r}_i$ for all $i$, $a_i\leq a_{i+1}$ for all $i$, and $a_i<a_{i+1}$ if $\mathbf{r}_i<\mathbf{r}_{i+1}$.
+For a word $\mathbf{r}=\mathbf{r}_1\mathbf{r}_2\cdots \mathbf{r}_k$, a sequence of positive integers $a_1a_2\cdots a_k$ is \emph{compatible} with $\mathbf{r}$ if $a_i\leq \mathbf{r}_i$ for all $i$, $a_i\leq a_{i+1}$ for all $i$, and $a_i<a_{i+1}$ if $\mathbf{r}_i<\mathbf{r}_{i+1}$. For a word $\mathbf{r}$, define $\mathrm{comp}(\mathbf{r})$ to be the set of all sequences compatible with $\mathbf{r}$.
 
-Slide polynomials $\mathfrak{F}(\mathbf{r})$ for a word $\mathbf{r}$ are defined by summing the monomials $x^a$ over all compatible sequences $a$ of $\mathbf{r}$ \cite{assaf2017slide}. For a weak composition $c$ we write $\mathfrak{F}_c$ for the slide polynomial of any word whose compatible sequence of coarsest flat composition has weight $c$; the slide polynomials $\{\mathfrak{F}_c\}$ over weak compositions $c$ are linearly independent.
+Slide polynomials $\mathfrak{F}(\mathbf{r})$ for a word $\mathbf{r}$ are defined as 
+$$\mathfrak{F}(\mathbf{r}) = \sum_{a\in \mathrm{comp}(\mathbf{r})} x^a$$
+For an alternative indexing, for a weak composition $a$ we associate a word $\mathbf{r}(a)$ by writing $i$ exactly $a_i$ times for each $i$ in increasing order, and define 
+$$\mathfrak{F}_a = \mathfrak{F}(\mathbf{r}(a)).$$
 
-A \emph{quasi-Yamanouchi} RC graph is an RC graph $R$ such that if $R'$ is another RC graph with $\mathrm{word}(R)=\mathrm{word}(R')$ and $\hr(R)=\hr(R')$, then $\wtt(R)\leq \wtt(R')$ in dominance order and $\mathrm{flat}(\wtt(R'))$ refines $\mathrm{flat}(\wtt(R))$. The set of RC graphs $A$ such that $\mathrm{word}(A)=\mathrm{word}(R)$ and $\hr(A)=\hr(R)$ is a partially ordered set with $R$ as its smallest element. We then define
-$$\QY(A)=R.$$
+A \emph{quasi-Yamanouchi} RC graph with word $\mathbf{r}$ is the unique RC graph $R$ such that $\mathrm{word}(R)=\mathbf{r}$ and no simple chute move preserves the word of $R$. For any RC graph $A$, we define the \emph{quasi-Yamanouchi map} $A\mapsto\QY(A)$ to map $A$ to the unique quasi-Yamanouchi RC graph with the same word as $A$.
 \end{definition}
+
+\begin{proposition} \label{proposition:sliderc}
+Let $\mathbf{r}$ be a reduced word for a permutation $w$. Then $\mathfrak{F}(\mathbf{r})\neq 0$ if and only if there exists an RC graph $R\in \RC(w)$ with $\mathrm{word}(R)=\mathbf{r}$. In that case, for any such $R$ we have the formula
+$$\mathfrak{F}(\mathbf{r}) = \mathfrak{F}_{\wtt(\QY(R))} = \sum_{\substack{A\in\RC(w)\\\mathrm{word}(A)=\mathbf{r}}}x^{\wtt(A)}.$$
+\end{proposition}
 
 \begin{theorem}[{\cite[Theorem~3.13]{assaf2017slide}}]\label{theorem:assafsearles}
   For a permutation $w\in S_\infty$, we have the formula
@@ -474,7 +501,7 @@ $$\forest_{\fcode(R)}(x)=\sum_{R'\equiv_{\forest} R} x^{\wtt(R')}$$
 where the sum is over bounded RC graphs $R'$ of height $\hr(R)$.
 \end{theorem}
 \begin{proof}
-For any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$ (\cite[Proposition~5.10]{nadeau2024forest}), which are simply the RC graphs in the corresponding equivalence class of RC graphs.
+For any equivalence class of words $W$ that have the same $P$-LBS, $\forest_{\code_\forest(W)}(x)$ is the sum of the compatible sequences on the words in $W$ (\cite[Proposition~5.10]{nadeau2024forest}), which are simply the RC graphs in the corresponding equivalence class of RC graphs by Proposition \ref{proposition:sliderc}.
 \end{proof}
 
 Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph formula for forest polynomials.
@@ -494,8 +521,12 @@ $$S^{-1}\bigl(\alpha_{\ell-1}\bigr)\qquad\text{and}\qquad S^{-1}s_{\ell-1}M^{-1}
 so they agree precisely when $M^{-1}(\alpha_{a_j})=s_{\ell-1}(\alpha_{\ell-1})=-\alpha_{\ell-1}$; the factor $S$ cancels, and the condition involves only the segment between the two positions. Taking $j=p$ makes $M$ empty, and the condition becomes $a_p=\ell-1=a_{p+1}-1$, which is excluded by $|a_p-a_{p+1}|\geq 2$. So the bump does not continue from position $p+1$ to position $p$, and since it proceeds strictly leftward it cannot reach position $p$ later either.
 \end{proof}
 
+\begin{definition}[Admissible words]
+  A reduced word $a_1\cdots a_N$ for a permutation $w$ with $\maxd(w)=n$ is said to be \emph{admissible} if it admits a compatible sequence $r_1\cdots r_N$ such that $r_i<n$ for all $i$. Equivalently, the corresponding RC graph has height $n$ with row $n$ empty.
+\end{definition}
+
 \begin{lemma}
-Let $w\in S_\infty$ satisfy $\maxd(w)=n$. Then $w$ admits an RC graph of height $n$ with row $n$ empty if and only if there is an $i<n$ such that $\code_i(w)=0$.
+Let $w\in S_\infty$ satisfy $\maxd(w)=n$. Then $w$ has an admissible reduced word if and only if there is an $i<n$ such that $\code_i(w)=0$.
 \end{lemma}
 \begin{proof}
 This is vacuous for $n=1$. For $n=2$, we must have that $w$ has $2$ as a descent, meaning that $\code_2(w)>0$. If $\code_1(w)=0$, then the unique reduced word for $w$ is
@@ -516,26 +547,11 @@ Now assume $\code_i(w)>0$ for all $i\leq n$. Given that we have shown that any r
 \end{proof}
 
 \begin{lemma} \label{lemma:littlebumprecurse}
-  Let $a_1\cdots a_n$ be a reduced word for a permutation $w$ and suppose $r$ is an index such that $\rtt_r(a_1\cdots a_n)=(m, m+1)$ (that is, the right root of the word $a_1\cdots a_n$ at position $r$ is the simple root $\alpha_m$). If the initial step of a Little bump at position $r$ does not result in a reduced word, then there is a unique index $p<r$ such that
+  Let $a_1\cdots a_n$ be an admissible reduced word for a permutation $w$ with $\maxd(w)=m$ and suppose $r$ is an index such that $\rtt_r(a_1\cdots a_n)=(m, m+1)$ (that is, the right root of the word $a_1\cdots a_n$ at position $r$ is the simple root $\alpha_m$). If the initial step of a Little bump at position $r$ does not result in a reduced word, then there is a unique index $p<r$ such that
   $$\ltb{(a_1\cdots a_n)}{r} = \ltb{(a_1\cdots a_{r-1})}{p}(a_r - 1)a_{r+1}\cdots a_n$$
 \end{lemma}
 \begin{proof}
-Assume the hypotheses of the lemma, which implies that the word $a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n$ is not reduced. Thus, there is some unique index $p$, not necessarily less than $r$, such that the root at position $p$ is equal to the root at position $r$ after decrementing $a_r$. Consider the word of length $n+2$
-$$a' = a_1\cdots a_{r-1}a_r(a_{r}-1)a_ra_{r+1}\cdots a_n$$
-We claim that
-$$\rtt_{r}(a') = \rtt_r(a_1\cdots a_{r-1}(a_r -1)a_{r+1}\cdots a_n)$$
-This is because
-$$s_{a_r}s_{a_r - 1}(\alpha_{a_r}) = \alpha_{a_r - 1}$$ so that
-$$\rtt_{r}(a') = s_{a_n}\cdots s_{a_{r+1}}s_{a_r}s_{a_r - 1}(\alpha_{a_r}) = s_{a_n}\cdots s_{a_{r+1}}(\alpha_{a_r - 1}) = \rtt_r(a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n)$$
-However, the word
-$$a_1\cdots a_{r-1}a_r(a_{r}-1)a_{r+1}\cdots a_nm$$
-has the same right root at $r$, since the exchange property allows us to delete the rightmost $a_r$ and place the descent $m$ at the end of the word, leaving roots at indices to the left unchanged. This root is equal to 
-$$s_m\rtt_r(a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n)$$
-which is still $\rtt_r(a_1\cdots a_{r-1}(a_r - 1)a_{r+1}\cdots a_n)$ by assumption. However,
-$$\langle\rtt_r(a_1\cdots a_{r-1}a_r(a_{r}-1)a_ra_{r+1}\cdots a_n)\mid \alpha_m\rangle < 0$$
-due to the fact that $\alpha_m$ is the root at position $r+2$ in this word, which is a contradiction. Thus, $p<r$.
-
-Now, consider the reduced word $a_1\cdots a_{r-1}$. Since adding $a_r - 1$ is no longer reduced, we have that the root at position $p$ is equal to $\alpha_{a_r - 1}$, and the next Little bump is at position $p$. We may repeat the argument, yielding a recursive process that ensures each additional bump is to the left by induction on the length of the word.
+  By Proposition \ref{proposition:little_bump}, the Little bump at position $r$ decrements $a_r$ to $a_r - 1$ and any subsequent bumps (rectification in the insertion algorithm) occur strictly to the left.
 \end{proof}
 
 \begin{lemma}[Bumping in lockstep]\label{lemma:lockstep}
@@ -552,7 +568,7 @@ then $\mathbf{w}'_1$ and $\mathbf{w}'_2$ differ by a commutation move at positio
 
   Thus, we must prove the result in the case where $t_1=t_2$. Assume
   $$\mathbf{w}_1 = \ltb{(UabV)}{t}$$
-  If $t$ is within the $V$ portion, Lemma \ref{lemma:bumprecurse} allows us to rewrite this as
+  If $t$ is within the $V$ portion, Lemma \ref{lemma:littlebumprecurse} allows us to rewrite this as
   $$\mathbf{w}_1 = \ltb{(Uab)}{t'}\ltb{V}{r}$$
 
   %ny additional bumping occurs within $U$ beginning at a common position $r$. If $a - b > 2$, then we are done. Otherwise, $\mathrm{perm}(\ltb{U}{r}(a-1)b) \neq \mathrm{perm}(\ltb{U}{r}b(a-1))$ since the two letters no longer commute, so the hypothesis that the end results are words for a common permutation does not hold, and we are done.
