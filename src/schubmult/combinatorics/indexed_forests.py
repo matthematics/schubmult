@@ -1054,35 +1054,35 @@ class letterpair:
         return f"{self.primary}[{self.secondary}]"
 
     def __lt__(self, other):
-        if not isinstance(other, letterpair | int):
+        if not isinstance(other, letterpair | int | ParallelInjLetter):
             return NotImplemented
         if isinstance(other, int):
             return (self.primary, self.secondary) < (other, 0)  # TODO: check!
         return (self.primary, self.secondary) < (other.primary, other.secondary)
 
     def __le__(self, other):
-        if not isinstance(other, letterpair | int):
+        if not isinstance(other, letterpair | int | ParallelInjLetter):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) < (other, 0)  # TODO: check!
+            return (self.primary, self.secondary) <= (other, 0)  # TODO: check!
         return (self.primary, self.secondary) <= (other.primary, other.secondary)
 
     def __gt__(self, other):
-        if not isinstance(other, letterpair | int):
+        if not isinstance(other, letterpair | int | ParallelInjLetter):
             return NotImplemented
         if isinstance(other, int):
             return (self.primary, self.secondary) > (other, 0)  # TODO: check!
         return (self.primary, self.secondary) > (other.primary, other.secondary)
 
     def __ge__(self, other):
-        if not isinstance(other, letterpair | int):
+        if not isinstance(other, letterpair | int | ParallelInjLetter):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) > (other, 0)  # TODO: check!
+            return (self.primary, self.secondary) >= (other, 0)  # TODO: check!
         return (self.primary, self.secondary) >= (other.primary, other.secondary)
 
     def __eq__(self, other):
-        if not isinstance(other, letterpair):
+        if not isinstance(other, letterpair | ParallelInjLetter):
             return NotImplemented
         return (self.primary, self.secondary) == (other.primary, other.secondary)
 

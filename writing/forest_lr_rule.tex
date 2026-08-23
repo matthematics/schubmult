@@ -480,14 +480,16 @@ Following \cite{nadeau2024forest}, given any injective word $w = w_1\cdots w_m$ 
 The remaining roots of $F'$ become roots of $F(w)$ unchanged. We then extend $P'$ to $P(w)$ by setting $P(w)(u) := a$, and extend $Q'$ to $Q(w)$ by setting $Q(w)(u) := m$. The pair $(P(w), Q(w))$ is the \emph{$\Omega$-insertion} of $w$. For a set $\Phi$ of injective words we write $\mathsf{P}(\Phi)$ for the multiset $\{P(w)\mid w\in\Phi\}$, and for an LBS-labeled forest $P$ we write $\code_\forest(P)$ for the code of the underlying indexed forest.
 \end{definition}
 
-\begin{definition}[Injectification, $\equiv_\forest$]
+\begin{definition}[Injectification, $\equiv_\forest$] \label{definition:forestequivrc}
   For a word $\mathbf{r}$ in the alphabet $\mathbb{Z}$, we may canonically turn $\mathbf{r}$ into an injective word $\overline{\mathbf{r}}$ in the alphabet $\overline{\mathbb{Z}}$ by assigning superscripts consecutively starting at $1$ to break ties between equal letters.
 
-Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathbf{r}_1\equiv_\forest\mathbf{r}_2$ if $P(\overline{\mathbf{r}_1}) = P(\overline{\mathbf{r}_2})$. Naturally, we may apply this to RC graphs as well: for RC graphs $R_1$ and $R_2$, we say that $R_1\equiv_\forest R_2$ if $\overline{\mathrm{word}(R_1)}\equiv_\forest \overline{\mathrm{word}(R_2)}$. For a permutation $w$, we denote by $\mathcal{C}_\forest(w)$ the set of equivalence classes of reduced words for $w$ under $\equiv_\forest$. For an RC graph $R$ we write $\code_\forest(R)$ (also written $\fcode(R)$) for the code of the indexed forest $F(\overline{\mathrm{word}(R)})$.
+Let $\mathbf{r}_1$ and $\mathbf{r}_2$ be reduced words. Then we say that $\mathbf{r}_1\equiv_\forest\mathbf{r}_2$ if $P(\overline{\mathbf{r}_1}) = P(\overline{\mathbf{r}_2})$. Naturally, we may apply this to RC graphs as well: for RC graphs $R_1$ and $R_2$, we say that $R_1\equiv_\forest R_2$ if 
+$$\overline{\mathrm{revword}(R_1)}\equiv_\forest \overline{\mathrm{revword}(R_2)},$$ 
+where $\mathrm{revword}(R)$ is the reverse of $\mathrm{word}(R)$. For a permutation $w$, we denote by $\mathcal{C}_\forest(w)$ the set of equivalence classes of reduced words for $w$ under $\equiv_\forest$. For an RC graph $R$ we write $\code_\forest(R)$ (also written $\fcode(R)$) for the code of the indexed forest $F(\overline{\mathrm{revword}(R)})$.
 \end{definition}
 
 \begin{remark}\label{remark:forestperm}
-Forest equivalence refines the partition of RC graphs by permutation: if $R_1\equiv_\forest R_2$ then $\wof{R_1}=\wof{R_2}$, since the equivalence classes of reduced words under $\equiv_\forest$ consist of words for a common permutation \cite{nadeau2024forest}; and two forest equivalent bounded RC graphs of a common height have the same word length and weight total.
+The reversal of the word in Definition \ref{definition:forestequivrc} is necessary to maintain correctness, as several other conventions would need to be changed to match if we simply used $\overline{\mathrm{word}}$. Note that forest equivalence refines the partition of RC graphs by permutation: if $R_1\equiv_\forest R_2$ then $\wof{R_1}=\wof{R_2}$.
 \end{remark}
 
 \begin{theorem}[{\cite[Theorem~1.4]{nadeau2024forest}}] \label{theorem:forestforest}
@@ -508,7 +510,27 @@ Guo and Woodruff \cite{guo2026forest} also published an alternative RC graph for
 
 Finally, we prove that forest equivalence lifts through the transition map. %The key step is a single-swap lifting lemma.
 
-Two reduced words are \emph{commutation equivalent} if one is obtained from the other by a sequence of interchanges of adjacent letters differing by at least $2$. Commutation classes are \emph{not} preserved by bumping: a bump decrements a letter, and if the decrement brings two commuting letters to distance $1$ the two runs cease to agree and may end at different permutations. Equality of the terminal permutations is exactly the certificate that no such divergence has occurred.
+\begin{definition}[Forest commutation]
+For an LBS $P$, assume the labels of $P$ are of the form $i^[j]$ with $i,j\geq 1$. Define $\mathrm{rl}(P)$ to be the set of labels of the roots of $P$ (that is, roots of trees in the disjoint union) in $\overline{\mathbb{Z}}$ together with $i^[0]$ if $i, i-1\notin \mathrm{Supp}(P)$.
+
+Let $\mathbf{r}=r_1\cdots r_n$ be a reduced word of some permutation $w$. Let $1\leq p<n$ be an index. Let 
+$$\overline{r}=\overline{r_1}\cdots \overline{r_n}$$
+Define 
+$$\mathrm{rl}(\mathbf{r},p) = \mathrm{rl}(P(\overline{r_{n}}\ \overline{r_{n-1}}\ \cdots \ \overline{r_{p+2}}))$$
+
+Two reduced words $\mathbf{r}$, $\mathbf{s}$ are \emph{forest commutation equivalent} if one is obtained from the other by a sequence of interchanges of adjacent letters at an index $p$ such that 
+$$\#\{\overline{a}\in\mathrm{rl}(\mathbf{r},p)\mid \overline{r_p}<\overline{a}<\overline{r_{p+1}}\}\geq 2.$$
+In that case we write 
+$$\mathbf{r}\sim_\forest\mathbf{s}$$
+and extend this relation reflexively and transitively to an equivalence relation. While apparently asymmetric, symmetry is obtained by swapping $\mathbf{r}$ and $\mathbf{s}$ if necessary.
+\end{definition}
+
+\begin{proposition} \label{proposition:forestcommute}
+Let $R,S\in \RC_n(w)$ be bounded RC graphs of the same height. Then $R\equiv_\forest S$ if and only if $\mathrm{word}(R)\sim_\forest \mathrm{word}(S)$.
+\end{proposition}
+\begin{proof}
+At the word level, this is \cite[Proposition~5.8]{nadeau2023permutahedral}, which transfers directly to $\equiv_\forest$ since the equivalence relation is defined entirely at the word level without regard to the weight.
+\end{proof}
 
 \begin{lemma}[A bump does not decrement both letters of a commuting adjacent pair]\label{lemma:bumpadjacent}
 Let $\mathbf{a}=a_1\cdots a_k$ be a reduced word and suppose $|a_p-a_{p+1}|\geq 2$ for some $p$. Then a single Little bump decrements at most one of the letters in positions $p$ and $p+1$.
