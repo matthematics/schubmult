@@ -334,11 +334,11 @@ Since $(1, j-1)\notin R$, $j$ is a right descent of $\wof{R^{\leq (i,j)}}$, henc
 \end{proof}
 
 \begin{proposition}[The bump map is a Little bump]\label{proposition:little_bump}
-Let $R$ be as in Definition \ref{definition:lmap} with $m=\maxd(\wof R)$, let $\mathrm{word}(R)=a_1\cdots a_k$ and $\mathrm{seq}(R)=r_1\cdots r_k$, and let $p$ be the index of the crossing with $\rtt_R(i,j)=(m,m+1)$, so $r_p=i$ and $a_p=r_p+j-1$. Then
+Let $R$ be as in Definition \ref{definition:lmap} with $m=\maxd(\wof R)$, and let $p$ be the index of the root $\alpha_m$ in $\mathrm{word}(R)$. Then
 $$\mathrm{word}(\lmap(R))=\ltb{\mathrm{word}(R)}{p}.$$
 \end{proposition}
 \begin{proof}
-  By Lemma \ref{lemma:notsimple}, since $\rtt_R(i,j) = \alpha_m$, we must have that $(i,j-1)\notin R$. Since $\rtt_R(i,j)=(m,m+1)$, we have that
+  By Lemma \ref{lemma:notsimple}, since $\rtt_R(i,j) = \alpha_m$, we must have that $(i,j-1)\notin R$. We have that
   $$\rtt_R(i,j-1)=s_m(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i + j - 2}) = s_m(R\setminus \{(i,j)\})[i,j]^{-1}s_{i+j-1}s_{i+j-2}(\alpha_{i + j - 1})$$
   Further simplifying,
   $$\rtt_R(i,j-1)=(R\setminus \{(i,j)\})[i,j]^{-1}s_{i+j-2}(\alpha_{i + j - 1})=(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i+j-2}+\alpha_{i + j - 1})$$
@@ -353,7 +353,7 @@ $$\mathrm{word}(\lmap(R))=\ltb{\mathrm{word}(R)}{p}.$$
   $$\mathrm{word}(\lmap(R''))=\ltb{\mathrm{word}(R'')}{p'}$$ 
   for some $p'$. We further argue that
   $$\ltb{\mathrm{word}(R^{<i})}{q} = \mathrm{word}(\{(a,b)\in R\setminus\{(i,j)\}\mid a<i\text{ and }b> j - 1\}\cup \lmap(R''))$$
-  for some $q$. Adding on this right-hand border past column $j-1$, we see that the root at $p'$ in $R''$ expands to a root at the same position in $R^{<i}$ which therefore is at some position $q$ in $R^{<i}$, and the Little bump on position $q$ in $R^{<i}$ is exactly the same as the Little bump on position $p'$ in $R''$, which by induction can be embedded as an RC graph to the left of column $j$, and the claim follows by taking the resulting word.
+  for some $q$. Adding on this right-hand border past column $j-1$, we see that the root at $p'$ in $R''$ corresponds to a root at the same grid position in $R^{<i}$. We can identify the same root at some position $q$ in $R^{<i}$, and the Little bump on position $q$ in $R^{<i}$ is exactly the same as the Little bump on position $p'$ in $R''$, which by induction can be embedded as an RC graph to the left of column $j$, and the claim follows by taking the resulting word.
 
   Thus,
   $$\mathrm{word}(\lmap(R)) = \ltb{\mathrm{word}(R^{<i})}{q}a_{\left|R^{<i}\right| + 1}\cdots a_{p-1}(a_p - 1)a_{p+1}\cdots a_{|R|} = \ltb{\mathrm{word}(R)}{p}$$
