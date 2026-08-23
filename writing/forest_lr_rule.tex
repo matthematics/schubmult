@@ -346,7 +346,7 @@ $$\mathrm{word}(\lmap(R))=\ltb{\mathrm{word}(R)}{p}.$$
   If $(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i+j-2}) < 0$, then this root was already present in $R\setminus \{(i,j)\}$ at some $(i',j')>(i,j)$. This implies that
   $$R' = (R\setminus \{(i',j')\}))\cup \{(i,j - 1)\}$$
   is an RC graph for $\wof{R}$ by the strong exchange property, and $R'[i,j]^{-1}(\alpha_{i+j-1}) = \alpha_m$. However, by Lemma \ref{lemma:notsimple}, in that case $\rtt_R(i,j)\neq \alpha_m$, which is a contradiction. Thus, $(R\setminus \{(i,j)\})[i,j]^{-1}(\alpha_{i+j-2})$ is a positive root, hence so is $\rtt_R(i,j-1)$. It also follows that $\rtt_R(i,j-1)=(a,b)$ with $a\leq m<b$ since applying $s_m$ to this root adds $\alpha_m$ rather than subtracting it. Thus, the first step of $\lmap(R)$ is to replace $a_p$ with $a_p-1$, which is exactly what the Little bump on position $p$ does. If the resulting word is reduced, then we have the result. Otherwise, define
-  $$R'' = ((R\setminus \{(i,j)\})\cup \{(i, j - 1)\})^{<=(i, j - 1)}$$
+  $$R'' = ((R\setminus \{(i,j)\})\cup \{(i, j - 1)\})^{\leq(i, j - 1)}$$
   By Lemma \ref{lemma:descentchop}, $\maxd(R'') = i + j - 2 < m$. We then note that
   $$\lmap(R) = ((R\setminus\{(i,j)\})\cup \{(i, j - 1)\})^{\geq i}\cup \{(a,b)\in R\setminus\{(i,j)\}\mid a<i\text{ and }b> j - 1\}\cup \lmap(R'')$$
   By induction on the height of $R$, we have that 
@@ -532,41 +532,6 @@ Let $R,S\in \RC_n(w)$ be bounded RC graphs of the same height. Then $R\equiv_\fo
 At the word level, this is \cite[Proposition~5.8]{nadeau2023permutahedral}, which transfers directly to $\equiv_\forest$ since the equivalence relation is defined entirely at the word level without regard to the weight.
 \end{proof}
 
-\begin{lemma}[A bump does not decrement both letters of a commuting adjacent pair]\label{lemma:bumpadjacent}
-Let $\mathbf{a}=a_1\cdots a_k$ be a reduced word and suppose $|a_p-a_{p+1}|\geq 2$ for some $p$. Then a single Little bump decrements at most one of the letters in positions $p$ and $p+1$.
-\end{lemma}
-\begin{proof}
-By Definition \ref{definition:rcgraph} the root attached to a letter is $\mathbf{a}_{>i}^{-1}(\alpha_{a_i})$, where $\mathbf{a}_{>i}$ denotes the product of the letters following position $i$ and $\alpha_\ell$ the simple root indexed by $\ell$. Decrementing the letter in position $i$ leaves $\mathbf{a}_{>j}$ unchanged for every $j>i$, so the roots to the right of the decremented letter are unchanged and cannot newly collide; the failure of reducedness, and hence the position at which the bump continues, therefore always lies strictly to the left.
-
-Suppose the bump decrements the letter in position $p+1$, of value $\ell$, and write $S=\mathbf{a}_{>p+1}$. For a position $j\leq p$ let $M$ denote the product of the letters strictly between $j$ and $p+1$. After the decrement the two roots in question are
-$$S^{-1}\bigl(\alpha_{\ell-1}\bigr)\qquad\text{and}\qquad S^{-1}s_{\ell-1}M^{-1}\bigl(\alpha_{a_j}\bigr),$$
-so they agree precisely when $M^{-1}(\alpha_{a_j})=s_{\ell-1}(\alpha_{\ell-1})=-\alpha_{\ell-1}$; the factor $S$ cancels, and the condition involves only the segment between the two positions. Taking $j=p$ makes $M$ empty, and the condition becomes $a_p=\ell-1=a_{p+1}-1$, which is excluded by $|a_p-a_{p+1}|\geq 2$. So the bump does not continue from position $p+1$ to position $p$, and since it proceeds strictly leftward it cannot reach position $p$ later either.
-\end{proof}
-
-\begin{definition}[Admissible words]
-  A reduced word $a_1\cdots a_N$ for a permutation $w$ with $\maxd(w)=n$ is said to be \emph{admissible} if it admits a compatible sequence $r_1\cdots r_N$ such that $r_i<n$ for all $i$. Equivalently, the corresponding RC graph has height $n$ with row $n$ empty.
-\end{definition}
-
-\begin{lemma}
-Let $w\in S_\infty$ satisfy $\maxd(w)=n$. Then $w$ has an admissible reduced word if and only if there is an $i<n$ such that $\code_i(w)=0$.
-\end{lemma}
-\begin{proof}
-This is vacuous for $n=1$. For $n=2$, we must have that $w$ has $2$ as a descent, meaning that $\code_2(w)>0$. If $\code_1(w)=0$, then the unique reduced word for $w$ is
-$$m\ m-1\ \cdots\ 2$$
-where $m\geq 2$. Since this is a decreasing reduced word, it admits $111\cdots 1$ as a compatible sequence.
-
-We address the case $n>2$. If $\code_1(w) = 0$, then we may take an RC graph for $\downarrow{}\!w$ and extend the height by $1$, shifting all crossings one column to the right to obtain an element of $\RC_n(w)$ with row $n$ empty. If $\code_i(w)=0$ for some $1<i<n$, consider the permutation $v$ with
-$$\code_j(v) = \code_{i + j}(w)$$
-This nontrivial permutation admits some RC graph $R_v$. Likewise, the permutation $u$ with $\code_j(u)=\code_j(w)$ for $j<i$ and $\code_j(w)=0$ for $j\geq i$ admits some RC graph $R_u$. Construct $R_v'$ by shifting all crossings of $R_v$ one column to the right and extending the height by $1$, and we have that
-$$R_u\cup \shup^{i} R_v'\in \RC_n(w)^0$$
-which we can see from the fact that $u\shup^{i+1}v = w$ and the fact that the last row of $R_v'$ is empty. We have therefore shown, by induction, that if such an $i$ exists, then there is an RC graph of height $n$ with row $n$ empty. 
-
-Coversely, we claim that if there is a $p$ such that $\code_i(w)>0$ for all $p\leq i\leq n$, then any reduced word for $w$ that admits a compatible sequence contains the subword $(p,p+1,\ldots,n)$. If $n=p$ this is visibly true. We proceed by descending induction on $p$, with a co-induction on $n$. Note that the result for all $p$ for $n-1$ yields the result for $p=2$ for $n$, so we may reduce the argument to the case $p=1$. We can deduce that if $\code_1(w)=k$, by properties of compatible sequences it is required that for each reduced word $a_1\cdots a_N$ that admits a compatible sequence there is an $m\geq k$ such that $a_1>a_2>\cdots>a_m=1$. By the exchange property, $s_kw$ has
-$$a_1\cdots \widehat{a_{m+1-k}}\cdots a_N$$
-as a reduced word, which admits the same compatible sequence with one of the $1$s removed. By induction, this reduced word contains $(2,3,\ldots,n)$ as a subword, and so the original reduced word contains $(1,2,\ldots,n)$ as a subword. This concludes the descending induction on $p$, as well as the induction on $n$.
-
-Now assume $\code_i(w)>0$ for all $i\leq n$. Given that we have shown that any reduced word for $w$ contains the increasing subword $1,2,\ldots,n$, it follows that any compatible sequence for a reduced word for $w$ contains an $n$, hence there are no RC graphs for $w$ of height $n$ with row $n$ empty.
-\end{proof}
 
 \begin{lemma} \label{lemma:littlebumprecurse}
   Let $a_1\cdots a_n$ be an admissible reduced word for a permutation $w$ with $\maxd(w)=m$ and suppose $r$ is an index such that $\rtt_r(a_1\cdots a_n)=(m, m+1)$ (that is, the right root of the word $a_1\cdots a_n$ at position $r$ is the simple root $\alpha_m$). If the initial step of a Little bump at position $r$ does not result in a reduced word, then there is a unique index $p<r$ such that
@@ -576,43 +541,44 @@ Now assume $\code_i(w)>0$ for all $i\leq n$. Given that we have shown that any r
   By Proposition \ref{proposition:little_bump}, the Little bump at position $r$ decrements $a_r$ to $a_r - 1$ and any subsequent bumps (rectification in the insertion algorithm) occur strictly to the left.
 \end{proof}
 
-\begin{lemma}[Bumping in lockstep]\label{lemma:lockstep}
-Let $\mathbf{w}_1$ and $\mathbf{w}_2$ be reduced words for a common permutation that differ by a commutation move at positions $p$ and $p+1$. Let $\mathbf{w}_1=\ltb{\mathbf{w}'_1}{t_1}$ and $\mathbf{w}_2=\ltb{\mathbf{w}'_2}{t_2}$, where $t_1$ and $t_2$ are the positions of the last descent. If 
-$$\mathrm{perm}(\mathbf{w}'_1)=\mathrm{perm}(\mathbf{w}'_2),$$
-then $\mathbf{w}'_1$ and $\mathbf{w}'_2$ differ by a commutation move at position $p$.
-\end{lemma}
-\begin{proof}
-  If $t_1\neq t_2$, then we may assume without loss of generality that $t_1 = p$ and $t_2 = p+1$, since the only two roots that change position are at $p$ and $p+1$. Let $a,b$ be the letters at positions $p$ and $p+1$ in $\mathbf{w}_1'$ and assume $a>b$. Then
-  $$\mathbf{w}_1 = \ltb{U}{r}(a-1)bV$$
-  and
-  $$\mathbf{w}_2 = \ltb{U}{r}b(a-1)V$$
-  for some $r$, because in the first display bumping occurs only to the left, and the hypothesis is that the difference is a commutation move in $\mathbf{w}_1$ and $\mathbf{w}_2$. Then necessarily $a - 1 > b + 1$, so that $a>b+2$. It follows that $a$ and $b$ themselves commute, and the result follows.
-
-  Thus, we must prove the result in the case where $t_1=t_2$. Assume
-  $$\mathbf{w}_1 = \ltb{(UabV)}{t}$$
-  If $t$ is within the $V$ portion, Lemma \ref{lemma:littlebumprecurse} allows us to rewrite this as
-  $$\mathbf{w}_1 = \ltb{(Uab)}{t'}\ltb{V}{r}$$
-
-  %ny additional bumping occurs within $U$ beginning at a common position $r$. If $a - b > 2$, then we are done. Otherwise, $\mathrm{perm}(\ltb{U}{r}(a-1)b) \neq \mathrm{perm}(\ltb{U}{r}b(a-1))$ since the two letters no longer commute, so the hypothesis that the end results are words for a common permutation does not hold, and we are done.
-\end{proof}
-
-% \todo{GAP: part (2) of Lemma \ref{lemma:lockstep} is stated but not proved; part (1) is proved above. By \cite[Lemma~3.3]{hamaker2014relating} the only commutations not covered by part (1) are those forming no part of a Coxeter--Knuth move, that is, those for which neither letter adjacent to the interchanged pair lies strictly between them in value, and these are exactly the ones for which the terminal permutations can differ.
-
-% Verified computationally for $N\leq 6$ over pairs of bounded RC graphs of a common height. For a single braid move the conclusion holds in all $260$ instances in the nontrivial case $\maxd(\wof{B})=\hr(B)$ and all $385$ in the trivial case, and the terminal permutations agree in every one of them, as part (1) predicts. Of the $654$ single commutation moves in the nontrivial case, $442$ carry a Coxeter--Knuth witness, and for these the terminal permutations again agree without exception; for the remaining $212$, which carry none, the terminal permutations agree in $49$ cases and differ in $163$, so the hypothesis in part (2) is necessary. For commutation equivalence in the general, multi-step form, the conclusion holds in all $5435$ instances in the nontrivial case and all $45162$ in the trivial case.}
-
-
 
 \begin{lemma}[Lifting a single swap]\label{lemma:forestsimple}
-Let $U_1,U_2$ be reduced words for a common permutation $u$ with $\maxd(u)\leq m$, and suppose $U_2$ is obtained from $U_1$ by a single one of the local swaps of \cite[Proposition~5.8]{nadeau2024forest}, so that $U_1\equiv_\forest U_2$ and $U_1$ and $U_2$ differ by a single commutation move. Suppose there exist words $V_1,V_2$ for a common permutation $w$ such that such that $\ltb{V_1}{p} = U_1$ and $\ltb{V_2}{q} = U_2$, where $p$ and $q$ are the positions of the last descent of $V_1$ and $V_2$, respectively. Then $V_1\equiv_\forest V_2$.
+% Suppose $R,S\in \RC_n(w)^0$ for some permutation $w$ with $\maxd(w)=n$. Suppose also that $\mathrm{word}(R)\sim_\forest \mathrm{swap}_q(\mathrm{word}(R))$ for some $1\leq q<n$. If 
+% $$\mathrm{word}(\lmap(R)) = \ltb{\mathrm{word}(R)}{r}$$
+% and $q\notin \{r,r-1\}$, then
+% $$\ltb{\mathrm{word}(R)}{r}\sim_\forest \ltb{\mathrm{swap}_q(\mathrm{word}(R))}{r}$$
+Suppose $R,S\in \RC_n(w)^0$ are two distinct RC graphs for some permutation $w$ with $\maxd(w)=n$. Suppose also that $R\equiv_\forest S$. If there is a permutation $w'$ such that
+$$\lmap(R),\lmap(S)\in \RC_{n+1}(w')$$
+% $$\mathrm{word}(\lmap(R)) = \ltb{\mathrm{word}(R)}{r}$$
+% and $q\notin \{r,r-1\}$, then
+% $$\ltb{\mathrm{word}(R)}{r}\sim_\forest \ltb{\mathrm{swap}_q(\mathrm{word}(R))}{r}$$
+then $\lmap(R)\equiv_\forest \lmap(S)$.
 \end{lemma}
 \begin{proof}
-Lemma \ref{lemma:lockstep} gives us that $V_1$ and $V_2$ differ by a single commutation move, since they bump at the last descent to reduced words for a common permutation that differ by a single commutation move. It remains to be seen that these two words are forest equivalent. The $\Omega$-insertion of \cite{nadeau2024forest} processes a word from left to right, whereas the reading order of Definition \ref{definition:rcgraph} produces the word of an RC graph in the opposite order; the criterion of \cite[Proposition~5.8]{nadeau2024forest} must therefore be applied to the reversal of $U_1$, and the segment inserted before the interchanged pair is the reversal of the segment of $U_1$ lying to the \emph{right} of that pair. Accordingly write $U_1=XabY$ and $U_2=XbaY$, and let $\overleftarrow{Y}$ denote the reversal of $Y$, so that by hypothesis and \cite[Proposition~5.8]{nadeau2024forest} the letters $a,b$ are separated by at least two elements of the rootlist $\mathrm{rl}(\overleftarrow{Y})$. By the previous paragraph $V_1=X'a'b'Y'$ and $V_2=X'b'a'Y'$, with $Y'$ the corresponding segment of $V_1$, and again by \cite[Proposition~5.8]{nadeau2024forest} it suffices to know that $a'$ and $b'$ are separated by at least two elements of $\mathrm{rl}(\overleftarrow{Y'})$. Writing
-$$\mathrm{sep}(a,b;Y)=\#\{r\in\mathrm{rl}(\overleftarrow{Y})\ :\ r\ \text{lies strictly between}\ a\ \text{and}\ b\},$$
-this follows from the monotonicity of the separator count along a bump,
-\begin{equation}\label{eq:sepmono}
-\mathrm{sep}(a',b';U')\;\geq\;\mathrm{sep}(a,b;U),
-\end{equation}
-since a pair separated below then remains separated above. With it, $V_1\equiv_\forest V_2$.
+  % By Proposition \ref{proposition:forestcommute}, we have that $\mathrm{word}(R)\sim_\forest \mathrm{word}(S)$. We prove that
+  % $$\mathrm{word}(\lmap(R))\sim_\forest \mathrm{word}(\lmap(S))$$
+We first address the special case where $\mathrm{word}(R)$ and $\mathrm{word}(S)$ differ by a single swap. Suppose $\mathrm{word}(R) = a_1\cdots a_N$ and $\rtt_r(a_1\cdots a_N) = \alpha_n$ for some $r$. Let $q$ be an index such that there are distinct $\overline{a},\overline{b}\in\mathrm{rl}(\mathrm{word}(R),q)$ satisfying $\overline{a_q}<a^{[b]}<c^{[d]}<\overline{a_{q+1}}$. Without loss of generality, we may assume that $q=1$ by \cite[Lemma~5.9]{nadeau2023permutahedral}. Necessarily, $|a_1 - a_2|\geq 2$, since otherwise no such commutation move would exist.  Assume without loss of generality that $a_1 < a_2$ and that $a^{[b]}$ is the minimal element of the rootlist. If $r>2$, the only way the Little bump at position $r$ could potentially invalidate the swap is if $a_1 = a - 1$ and $a^{[b]}$ is bumped. After the bump, we obtain $\mathrm{word}(S)$, and when we injectify the bumped word, if $(a-1)^{[j]}$ occurs in the right portion then $\overline{a_1}\mapsto (a-1)^{[j+i]}$ for some $i>0$. This would indeed reduce the count of the rootlist; however, we may assume without loss of generality that $a$ occurs at position $3$, since stripping out this middle portion would remain reduced aosibgsaoibsogiabsIABGSIGBS. In that case, $a_1a_2a_1$ fails to be reduced, so the bumping sequence would continue and subtract $1$ from the first index, resolving the loss.
+
+% The Little bump at position $r$ decrements $a_r$ to $a_r - 1$, and by Lemma \ref{lemma:littlebumprecurse} any subsequent bumps occur strictly to the left. Thus, the open interval between $\overline{a_q}$ and $\overline{a_{q+1}}$ still contains at least two elements of $\mathrm{rl}(\mathrm{word}(\lmap(R)),q)$, so that the swap is still valid. By symmetry, the argument for $S$ is identical.
+%If $q\geq r - 1$, then by Lemma \ref{lemma:littlebumprecurse} the letters weakly to the right of index $q$ are not affected, so that in particular 
+%$$\mathrm{rl}(\mathrm{word}(\lmap(R)),q) = \mathrm{rl}(\mathrm{word}(R),q)$$
+%It follows in the case where $q>r$ that 
+%$$\ltb{\mathrm{word}(R)}{r} \sim_\forest \ltb{(a_1\cdots a_{r-1})}{p}(a_r - 1)a_{r+1}\cdots a_{q-1}a_{q+1}a_qa_{q+2}\cdots a_n$$
+%so that
+%$$\lmap(R)\equiv_\forest \lmap(S)$$
+% If $q=r$, assume that $|a_q - a_{q+1}|>2$. Assume first also that $a_{q} < a_{q+1}$. Then the distance between $\overline{a_q}$ and $\overline{a_{q+1}}$ increases, so the open interval between them still contains at least two elements of $\mathrm{rl}(\mathrm{word}(\lmap(R)),q)$. If on the contrary $a_q > a_{q+1}$, any element of $\mathrm{rl}(\mathrm{word}(R),q)$ of the form $i^{[0]}$ remains less than $\overline{a_q-1}$. We therefore need to address the case where $(a_q-1)^{[j]}\in \mathrm{rl}(\mathrm{word}(R),q)$ for some $j\geq 1$. With the reindexing obtained by re-injectifying the bumped word, we obtain that 
+% $$\overline{a_q - 1} = (a_q-1)^{[j+1]}$$
+% and the count of the rootlist is maintained. By symmetry, the argument for $q=r-1$ is identical. The cases where $q\in \{r-1,r\}$ and $|a_q - a_{q+1}|> 2$ are therefore closed.
+
+% Assume now that $q = r$ and $|a_q - a_{q+1}|=2$. If $a_q > a_{q+1}$, the hypotheses of the lemma do not hold, since there is no $w'$ satisfying $\lmap(R),\lmap(S)\in \RC_{n+1}(w')$. If $a_q < a_{q+1}$, then the Little bump at position $r$ decrements $a_q$ to $a_q - 1$, and the letter $a_{q+1}$ is unaffected. The open interval between them still contains at least two elements of $\mathrm{rl}(\mathrm{word}(\lmap(R)),q)$, so that the swap is still valid. For $q=r-1$ and $|a_q - a_{q+1}|=2$, the argument is symmetrical.
+
+% Now we address the case where $q<r-1$. Observe by Lemma \ref{lemma:littlebumprecurse} that
+% $$\mathrm{word}(\lmap(R)) = \ltb{(a_1\cdots a_{q-1}a_q a_{q+1} \cdots a_{r-1})}{p}(a_r - 1)a_{r+1}\cdots a_n$$
+% By \cite[Lemma~5.9]{nadeau2024forest}, stripping off a suffix does not affect the validity of a swap. Thus,
+% $$a_1\cdots a_{q-1}a_q a_{q+1} \cdots a_{r-1}\sim_\forest a_1\cdots a_{q-1}a_{q+1} a_{q} \cdots a_{r-1}$$
+% There are RC graphs $R',S'$ that have these respective words, and $R'\equiv_\forest S'$ by Proposition \ref{proposition:forestcommute}. It is possible, however, that the Little bump at position $p$ is not on the correct letter to achieve $\lmap(R')$ and $\lmap(S')$, thwarting a direct induction. If that is the case, we use the reduction technique of Lemma \ref{lemma:descentchop}; that is, let $(i,j)$ be the coordinates corresponding to the index $p$ in the word. Then
+%   $$\ltb{\mathrm{word}(R^{\leq i})}{p'} = \mathrm{word}(\{(a,b)\in R\mid a\leq i\text{ and }b> j\}\cup \lmap(R^{\leq(i, j)}))$$
+% for some corresponding $p'$. If the remapped swap occurs within one of the two sets in the union, since they are strictly smaller than the original word, the special case where the swap is achieved by a chute move ensures that the indexes remain adjacent in the larger word, and we may apply induction. If the remapped swap occurs between the two sets, then it is still valid since the open interval between the swapped letters contains at least two elements of $\mathrm{rl}(\mathrm{word}(\lmap(R)),q)$, and we may apply induction to the two sets separately. In all cases, we conclude that
 \end{proof}
 
 \todo{GAP: the monotonicity \eqref{eq:sepmono} is asserted, not proved. It does \emph{not} follow from the prefix-invariance of \cite[Lemma~5.9]{nadeau2024forest}, which passes from $U$ to a subword of $U$ and so runs in the direction that weakens the hypothesis; here $U'$ is not a subword of $U$ but its pre-image under a bump, of the same length with letters raised by $0$ or $1$.
