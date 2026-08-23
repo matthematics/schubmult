@@ -97,6 +97,7 @@ def artin_sequences(n):
             ret.add((i, *seq))
     return ret
 
+
 def weak_compositions(length, max_degree):
     if length == 0:
         return {()}
@@ -122,11 +123,13 @@ def add_perm_dict(d1, d2):
         d_ret[k] = d_ret.get(k, 0) + v
     return d_ret
 
+
 def add_perm_dict_with_coeff(d1, d2, coeff):
     d_ret = {**d1}
     for k, v in d2.items():
         d_ret[k] = d_ret.get(k, 0) + v * coeff
     return d_ret
+
 
 def p_trans(part):
     newpart = []
@@ -278,24 +281,44 @@ def find_reduced_fail(word, inserted):
 
     perm = Permutation.ref_product(*word)
     a_start, b_start = perm.right_root_at(inserted, word=word)
-    positive = False
-    if a_start > b_start:
-        positive = True
-    for i in range(len(word)):
-        if i == inserted:
-            continue
-        a, b = perm.right_root_at(i, word=word)
-        if not positive and a > b:
-            return i
-        if positive and a == b_start and b == a_start:
-            return i
-    return None
+    # positive = False
+    # if a_start > b_start:
+    #     positive = True
+    # for i in range(len(word)):
+    #     if i == inserted:
+    #         continue
+    #     a, b = perm.right_root_at(i, word=word)
+    #     if not positive and a > b:
+    #         return i
+    #     if positive and a == b_start and b == a_start:
+    #         return i
+    # return None
+    return next(iter([i for i in range(len(word)) if set(perm.right_root_at(i, word=word)) == {a_start, b_start} and i != inserted]), None)
 
 
 def is_reduced(word):
     from schubmult.combinatorics.permutation import Permutation
 
     return Permutation.ref_product(*word).inv == len(word)
+
+
+def little_bump_pos(word, index):
+    """Perform a Little bump on a reduced word at the inversion (i, j)."""
+
+    if not is_reduced(word):
+        raise ValueError(f"Word {word} is not reduced, cannot perform Little bump.")
+    if index < 0 or index >= len(word):
+        raise ValueError(f"Index {index} is out of bounds for word of length {len(word)}.")
+    word = [*word]
+    while True:
+        if word[index] == 1:
+            word[index] = word[index] + 1
+        else:
+            word[index] = word[index] - 1
+        if is_reduced(word):
+            break
+        index = find_reduced_fail(word, index)
+    return tuple(word)
 
 
 def little_bump(word, i, j):
@@ -309,15 +332,8 @@ def little_bump(word, i, j):
     index = roots.get((i, j), None)
     if index is None:
         raise ValueError(f"Word {word} does not have an inversion at ({i}, {j})")
-    while True:
-        if word[index] == 1:
-            word[index] = word[index] + 1
-        else:
-            word[index] = word[index] - 1
-        if is_reduced(word):
-            break
-        index = find_reduced_fail(word, index)
-    return tuple(word)
+    return little_bump_pos(word, index)
+
 
 def little_zero(word, length):
     from schubmult import Permutation

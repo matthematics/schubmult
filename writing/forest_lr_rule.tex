@@ -494,6 +494,27 @@ $$S^{-1}\bigl(\alpha_{\ell-1}\bigr)\qquad\text{and}\qquad S^{-1}s_{\ell-1}M^{-1}
 so they agree precisely when $M^{-1}(\alpha_{a_j})=s_{\ell-1}(\alpha_{\ell-1})=-\alpha_{\ell-1}$; the factor $S$ cancels, and the condition involves only the segment between the two positions. Taking $j=p$ makes $M$ empty, and the condition becomes $a_p=\ell-1=a_{p+1}-1$, which is excluded by $|a_p-a_{p+1}|\geq 2$. So the bump does not continue from position $p+1$ to position $p$, and since it proceeds strictly leftward it cannot reach position $p$ later either.
 \end{proof}
 
+\begin{lemma}
+Let $w\in S_\infty$ satisfy $\maxd(w)=n$. Then $w$ admits an RC graph of height $n$ with row $n$ empty if and only if there is an $i<n$ such that $\code_i(w)=0$.
+\end{lemma}
+\begin{proof}
+This is vacuous for $n=1$. For $n=2$, we must have that $w$ has $2$ as a descent, meaning that $\code_2(w)>0$. If $\code_1(w)=0$, then the unique reduced word for $w$ is
+$$m\ m-1\ \cdots\ 2$$
+where $m\geq 2$. Since this is a decreasing reduced word, it admits $111\cdots 1$ as a compatible sequence.
+
+We address the case $n>2$. If $\code_1(w) = 0$, then we may take an RC graph for $\downarrow{}\!w$ and extend the height by $1$, shifting all crossings one column to the right to obtain an element of $\RC_n(w)$ with row $n$ empty. If $\code_i(w)=0$ for some $1<i<n$, consider the permutation $v$ with
+$$\code_j(v) = \code_{i + j}(w)$$
+This nontrivial permutation admits some RC graph $R_v$. Likewise, the permutation $u$ with $\code_j(u)=\code_j(w)$ for $j<i$ and $\code_j(w)=0$ for $j\geq i$ admits some RC graph $R_u$. Construct $R_v'$ by shifting all crossings of $R_v$ one column to the right and extending the height by $1$, and we have that
+$$R_u\cup \shup^{i} R_v'\in \RC_n(w)^0$$
+which we can see from the fact that $u\shup^{i+1}v = w$ and the fact that the last row of $R_v'$ is empty. We have therefore shown, by induction, that if such an $i$ exists, then there is an RC graph of height $n$ with row $n$ empty. 
+
+Coversely, we claim that if there is a $p$ such that $\code_i(w)>0$ for all $p\leq i\leq n$, then any reduced word for $w$ that admits a compatible sequence contains the subword $(p,p+1,\ldots,n)$. If $n=p$ this is visibly true. We proceed by descending induction on $p$, with a co-induction on $n$. Note that the result for all $p$ for $n-1$ yields the result for $p=2$ for $n$, so we may reduce the argument to the case $p=1$. We can deduce that if $\code_1(w)=k$, by properties of compatible sequences it is required that for each reduced word $a_1\cdots a_N$ that admits a compatible sequence there is an $m\geq k$ such that $a_1>a_2>\cdots>a_m=1$. By the exchange property, $s_kw$ has
+$$a_1\cdots \widehat{a_{m+1-k}}\cdots a_N$$
+as a reduced word, which admits the same compatible sequence with one of the $1$s removed. By induction, this reduced word contains $(2,3,\ldots,n)$ as a subword, and so the original reduced word contains $(1,2,\ldots,n)$ as a subword. This concludes the descending induction on $p$, as well as the induction on $n$.
+
+Now assume $\code_i(w)>0$ for all $i\leq n$. Given that we have shown that any reduced word for $w$ contains the increasing subword $1,2,\ldots,n$, it follows that any compatible sequence for a reduced word for $w$ contains an $n$, hence there are no RC graphs for $w$ of height $n$ with row $n$ empty.
+\end{proof}
+
 \begin{lemma} \label{lemma:littlebumprecurse}
   Let $a_1\cdots a_n$ be a reduced word for a permutation $w$ and suppose $r$ is an index such that $\rtt_r(a_1\cdots a_n)=(m, m+1)$ (that is, the right root of the word $a_1\cdots a_n$ at position $r$ is the simple root $\alpha_m$). If the initial step of a Little bump at position $r$ does not result in a reduced word, then there is a unique index $p<r$ such that
   $$\ltb{(a_1\cdots a_n)}{r} = \ltb{(a_1\cdots a_{r-1})}{p}(a_r - 1)a_{r+1}\cdots a_n$$

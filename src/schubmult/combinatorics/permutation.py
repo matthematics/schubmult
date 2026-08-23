@@ -221,6 +221,18 @@ class Permutation(Printable):
         root = apply.act_root(word[index], word[index] + 1)
         return root
 
+    @cache
+    def all_reduced_words(self):
+        """All reduced words of `self`, by peeling descents."""
+        if self.inv == 0:
+            return {()}
+        out = set()
+        for d in self.descents():
+            sub = self.swap(d, d + 1)
+            for w in sub.all_reduced_words():
+                out.add((*w, d + 1))
+        return out
+
     def code_index_of_index(self, index):
         running_sum = 0
         running_code_index = 0
