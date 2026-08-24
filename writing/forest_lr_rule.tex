@@ -401,6 +401,31 @@ $$R^{\leq (i,j)} = \{(i',j')\in R :i'\leq i\text{ and }j'\geq j\}.$$
 % % Since $(1, j-1)\notin R$, $j$ is a right descent of $\wof{R^{\leq (i,j)}}$, hence the maximal descent, and the result follows.
 % \end{proof}
 
+\begin{lemma} \label{lemma:mroot}
+Let $a=a_1\cdots a_n$ be a reduced word for a permutation $w$ with $\maxd(w) = m$. Let $i$ be the index with $\rtt_a(i) = \alpha_m$. Let
+$$a' = a_1\cdots a_{i-1}(a_i - 1)a_{i+1}\cdots a_n$$
+If $(a_{i} - 1)a_{i+1}\cdots a_n$ is reduced, then $\rtt_i(a') = (p,m)$ with $p\leq m - 1$.
+\end{lemma}
+\begin{proof}
+Write
+$$u = s_{a_n}\cdots s_{a_{i+1}}$$
+Note that
+$$s_{a_i - 1}s_{a_i}(\alpha_{a_i - 1}) = \alpha_{a_i}.$$
+We have that
+$$\rtt_a(i) = u(\alpha_{a_i}) = \alpha_m$$
+which is also
+$$\rtt_a(i) = us_{a_i - 1}s_{a_i}(\alpha_{a_i - 1})=us_{a_i - 1}(\alpha_{a_i - 1}+\alpha_{a_i}) = us_{a_i - 1}(\alpha_{a_i}) -u(\alpha_{a_i - 1})$$
+By assumption $s_{a_i - 1}u^{-1}$ is reduced, so $u(\alpha_{a_i - 1})$ is a positive root. Hence
+$$us_{a_i - 1}(\alpha_{a_i}) = u(\alpha_{a_i - 1}) + \alpha_m$$
+Thus, either there is a $p < m$ such that
+$$u(\alpha_{a_i - 1}) = \alpha_p+\cdots+\alpha_{m-1}$$
+or there is a $q>m$ such that
+$$u(\alpha_{a_i - 1}) = \alpha_{m + 1}+\cdots+\alpha_q$$
+However, since $\maxd(u^{-1})<m$, the latter case is impossible, and we have that
+$$\rtt_{a'}(i) = (p, m)$$
+as desired.
+\end{proof}
+
 \begin{lemma} \label{lemma:bumptwine}
 Let $a = a_1\cdots a_n$ be a reduced word for $w\in S_\infty$ such that $\maxd(w)=m$. Let $i_1>\cdots >i_k$ be the indexes such that, defining $w^0 = w$, we have that
 $$w^j = w^{j-1}s_{m - 1 + j}$$
@@ -408,12 +433,24 @@ and
 $$a_1\cdots \widehat{a_{i_j}}\cdots\widehat{a_{i_1}}\cdots a_n$$
 is a reduced word for $w^j$. If $k>1$, let $t_{pq}$ be the right reflection at index $i_k$ in $a$ and let 
 $$\widehat{a} = a_1\cdots \widehat{a_{i_k}}\cdots a_n.$$
-That is, only index $i_k$ is deleted. Then if 
-$$\mathrm{perm}\left(\ltb{a}{i_1}\right)=w'$$
-we have that
+That is, only index $i_k$ is deleted. Then under the hypothesis that every step in Little's bumping algorithm moves left in the word,
+and
+$$\mathrm{perm}\left(\ltb{a}{i_1}\right)=w',$$
+then we have that
 $$\mathrm{perm}\left(\ltb{\widehat{a}}{i_1}\right)=w't_{pq}$$
 and $\ell(w't_{pq}) = \ell(w') - 1$.
 \end{lemma}
+\begin{proof}
+  We prove this by induction on $k$. For $k=2$, under the hypotheses of the lemma and defining
+  $$b = a_1\cdots a_{i_1-1}(a_{i_1} - 1)a_{i_1+1}\cdots a_n$$
+we have that $\rtt_b(i_1) = (p,m)$ with $p\leq m-1$ by Lemma \ref{lemma:mroot}. We also have that 
+$$\rtt_a(i_2) = (m, m + 2)$$
+Hence,
+$$\rtt_b(i_2) = (m+1,m+2)$$
+from which we can conclude that $i_2$ is not the next bumping index. Of course, if the bumping algorithm terminates at this point, we are done. Otherwise, call this bumping index $t_1$. If $t_1<i_2$, the base case immediately follows by the condition that the algorithm moves to the left. Suppose then that $i_2<t_1<i_1$. Assuming without loss of generality that $n=i_1$, we must have that $a_r < a_{i_1}$ for all $i_2<r<i_1$. In particular, $\rtt_b(t)=(p,q)$ with $q<m$, hence the algorithm again does not proceed to index $i_2$. Perhaps after multiple further iterations, the algorithm will either stop or pass $i_2$, never bumping it, and we have the base case.
+
+INDUCTIVE CASE BUMPY EVEN HIGHEREE
+\end{proof}
 
 \begin{proposition}[The bump map is a Little bump]\label{proposition:little_bump}
 Let $R$ be as in Definition \ref{definition:lmap} with $m=\maxd(\wof R)$, and let $p$ be the index of the root $\alpha_m$ in $\mathrm{word}(R)$. Then
