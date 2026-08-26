@@ -1,6 +1,6 @@
 from schubmult import *
 from schubmult.symbolic.common_polys import grothendieck_poly
-from schubmult.symbolic import S, sympify, prod, expand_func
+from schubmult.symbolic import S, sympify, prod, expand_func, expand, Integer, Mul, Add, Pow, Symbol
 from schubmult.abc import E, y, z, H
 from schubmult.symbolic.common_polys import efficient_subs
 from functools import cache
@@ -67,55 +67,20 @@ def dom_groth(dom_perm, ring, beta):
         start_elem = new_start_elem
     return start_elem
 
-# def groth_poly(perm, beta):
-    
-#     ring = DSx([]).ring
-#     # start_elem = ring.one
-#     start_dict = {Permutation([]): S.One}
-#     n = len(perm)
-#     # if perm == Permutation.w0(n):
-#     #     return groth_w0(n, beta)
-#     for i in range(1, n):
-#         new_start_dict = {}
-#         for permo, coeff in start_dict.items():
-#             new_start_dict = add_perm_dict_with_coeff(grothmult_double_plus({uncode([1] * (n - i)): 1}, permo, ring.genset, ring.coeff_genset[i:], beta=beta), new_start_dict, coeff=coeff)
-#         start_dict = new_start_dict
-#     return start_dict[(~perm) * Permutation.w0(n)]
-
 def groth_poly(perm, beta, return_dict=False):
     
     ring = DSx([]).ring
-    # print("Pantacka fart ")
     ringt = DSx([], "t").ring
-    # subs_dict = {t[i]: -ring.genset[i]/(1 + beta * ring.genset[i]) for i in range(20)}
-    # #return grothmult_double_plus({Permutation.w0(len(perm)): 1}, Permutation([]), [-yy / (1 + beta * yy) for yy in t[:20]], ring.coeff_genset, beta=beta)[perm].subs(subs_dict).expand().simplify().expand()
-    # if perm.inv == 0:
-    #     return S.One
     n = len(perm)
-    #d = min([i for i in range(1, n) if i not in perm.descents()])
-    # perm2 = perm.swap(d, d + 1)
-    # swp = Permutation.ref_product(d + 1)
-    # perm2 = Permutation.w0(n)
     swp = (~perm) * Permutation.w0(n)
-    # # ret = grothmult_double_plus({perm: 1}, Permutation([]), ring.genset, ring.coeff_genset, beta=beta)
-    # ret = grothmult_double_plus({perm2: 1}, Permutation([]), [0, *[ring.genset[swp[i]] for i in range(20)]], ring.coeff_genset, beta=beta)
-    # #print({k: v.expand() for k, v in ret.items()})
-    # if return_dict:
-    #     return {k: v.expand() for k, v in ret.items()}
-    # return ret[swp]
-    # # start_elem = ring.one
     start_dict = {Permutation([]): S.One}
     n = len(perm)
-    # if perm == Permutation.w0(n):
-    #     return groth_w0(n, beta)
     for i in range(1, n):
         new_start_dict = {}
         for permo, coeff in start_dict.items():
             #new_start_dict = add_perm_dict_with_coeff(grothmult_double_plus({uncode([1] * (n - i)): coeff}, permo, ringt.genset, ring.coeff_genset[i - 1:], beta=beta), new_start_dict, coeff=1)
             new_start_dict = add_perm_dict_with_coeff(grothmult_double_plus({uncode([1] * (n - i)): coeff}, permo, ringt.genset, ring.coeff_genset[i - 1:], beta=beta), new_start_dict, coeff=1)
         start_dict = new_start_dict
-    #return start_dict[perm]
-    #subs_dict = {ringt.genset[i]: ring.genset[(swp)[i - 1]] for i in range(1, 20)}
     start_dict = {k: v.subs({ringt.genset[i]: ring.genset[(~k)[i - 1]] for i in range(1, 20)}).expand() for k, v in start_dict.items()}
     if return_dict:
         return {k: v.expand() for k, v in start_dict.items()}
@@ -136,33 +101,6 @@ def groth_poly_pull(perm, beta, varnum):
     new_dct = {k * low_dom_elem: v for k, v in dct.items() if (k * low_dom_elem).inv == k.inv + low_dom_elem.inv}
     new_new_dict = {~(k * (~perm)): v for k, v in new_dct.items() if (k * (~perm)).inv == k.inv - (~perm).inv}
     return new_new_dict
-    # for i in range(1, n):
-    #     the_var = ring.coeff_genset[i:]
-    #     if met:
-    #          the_var = ring.coeff_genset[i - 1:]
-    #     if i == varnum:
-    #         met = True
-    #         the_var = z
-    #     new_start_dict = {}
-    #     for permo, coeff in start_dict.items():
-    #         new_start_dict = add_perm_dict_with_coeff(grothmult_double_plus({uncode([1] * (n - i)): 1}, permo, ring.genset, , beta=beta), new_start_dict, coeff=coeff)
-    #     start_dict = new_start_dict
-    # return start_dict[(~perm) * Permutation.w0(n)]
-
-    #     new_start_elem = 0
-    #     yvar = ring.coeff_genset[n - i]
-    #     bvar = (1 + beta * yvar)
-    #     var2 = [ring.coeff_genset[j] * bvar for j in range(1, 25)]
-        
-    #     for permo, coeff in start_elem.items():
-    #         #new_elem = ringa(permo) * E(i, i, ring.genset[1:], ringb.coeff_genset[1:])
-    #         for elem_perm, diff in _elem_sym_perms(permo, i):
-    #             new_start_elem += coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(i) if permo[p] == elem_perm[p]]) * ring(elem_perm)
-    #         #new_start_elem += coeff * ring.from_dict({k: (1 + beta*ring.coeff_genset[n - i])**((k.inv - permo.inv)) * v for k, v in new_elem.items()})
-    #     # a_j to y_j(1 + y_{n - i})
-    #     start_elem = new_start_elem
-    #     #start_elem = new_start_elem
-    # return start_elem
 
 
 def isobaric_strip_on_dschub(start, length, schub_perm, beta):
@@ -195,15 +133,6 @@ def apply_isobaric_to_schub(diff_perm, schub_perm, beta):
             new_elem += coeff * isobaric_strip_on_dschub(strip[0], strip[1], perm, beta=beta)
         elem = new_elem
     return elem
-
-# def dom_groth_factor(dom, ring):
-#     from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
-#     from schubmult.symbolic.poly.variables import CustomGeneratingSet
-#     one_set = CustomGeneratingSet([1 for _ in range(50)])
-#     ybeta_set = CustomGeneratingSet([-beta*ring.coeff_genset[i] for i in range(50)])
-#     pants_ring = DoubleSchubertRing(one_set, ybeta_set)
-    
-#     return pants_ring(dom).as_polynomial()
 
 def alt_grothendieck_poly(perm, beta):
     from schubmult.abc import z
@@ -272,75 +201,72 @@ def pull_out_groth_var(perm, beta, varnum):
     diff_perm = (~work_perm) * dom_perm
     print(f"{start_dict=}")
     new_dict = {~((k*chopdom)*(~diff_perm)): v for k, v in start_dict.items() if ((k*chopdom)*(~diff_perm)).inv == k.inv + chopdom.inv - diff_perm.inv}
-    # ring = DSx([]).ring
-    # #first_potato = groth_w0(len(perm), ring, beta=beta)
-    # first_potato = dom_groth(dom_perm, ring, beta=beta)
-    # schub_elem = ring.zero
-    # for perm2, coeff in first_potato.items():
-    #     schub_elem += coeff * apply_isobaric_to_schub(diff_perm, perm2, beta=beta)
-    # return ring.from_dict({k: v.expand() for k, v in schub_elem.items()})
+    
     print(f"{new_dict=}")
     return new_dict
 
 
+def _check_perm(perm_list):
+    import time
+    start = time.monotonic()
+    perm = Permutation(perm_list)
+    ring = DSx([]).ring
+    _beta = Gx._beta
+    groth1 = alt_grothendieck_poly(perm, beta=_beta)
+    # groth2 = grothendieck_poly(perm, ring.genset, ring.coeff_genset, beta=_beta).expand()
+    # diff = (groth1.as_polynomial().expand() - groth2).expand()
+    
+    # if diff != 0:
+    #     return (perm_list, f"Grothendieck polynomial for {perm} does not match: {diff=}, \n{groth1=}\n {groth2=}", elapsed)
+    # check positivity
+    for coeff in groth1.values():
+        #coeff = expand(coeff)
+        if isinstance(coeff, int):
+            if coeff < 0:
+                return (perm_list, f"Grothendieck polynomial for {perm} has negative coefficient: {coeff=}, \n{groth1=}", elapsed)
+        else:
+            result = True
+            def walk_expr(args):
+                nonlocal result
+                for arg in args:
+                    if isinstance(arg, int | Integer):
+                        if arg < 0:
+                            result = False
+                            return
+                    elif isinstance(arg, Mul | Add | Pow):
+                        walk_expr(arg.args)
+                    elif isinstance(arg, Symbol):
+                        return
+                    else:
+                        raise ValueError(f"Unexpected type {type(arg)} in expression {arg}")
+            walk_expr(coeff.args)
+            if not result:
+                return (perm_list, f"Grothendieck polynomial for {perm} has negative coefficient", elapsed)
+    elapsed = time.monotonic() - start
+    return (perm_list, None, elapsed)
+
+
 if __name__ == "__main__":
     import sys
-    from sympy import latex
-    n = int(sys.argv[1])
-    perms = Permutation.all_permutations(n)
-    ring = DSx([]).ring
-    # for perm in perms:
-    #     poly1 = alt_grothendieck_poly(perm)
-            
-    #     print(f"Grothendieck polynomial for {perm} verified.")
-    #     print(poly1)
+    from multiprocessing import Pool, cpu_count
 
-    ## BINGO
-    for perm in perms:
-        mx = 2
-        if perm.inv == 0:
-            continue
-        #print(latex(alt_grothendieck_poly(perm).expand(deep=False)))
-        _beta = Gx._beta
-        groth1 = alt_grothendieck_poly(perm, beta=_beta)
-        groth2 = grothendieck_poly(perm, ring.genset, ring.coeff_genset, beta=_beta).expand()
-        diff = (groth1.as_polynomial().expand() - groth2).expand()
-        try:
-            assert diff == 0, f"Grothendieck polynomial for {perm} does not match: {diff=}, \n{groth1=}\n {groth2=}"
-        except AssertionError as e:
-            print(e)
-            continue
-        #print(f"Happy pants {perm}")
-        print(f"\\begin{{dmath*}}\n\\mathfrak G_{{{perm}}}(x;y) = {latex(groth1)}\n\\end{{dmath*}}")
-    # for perm in perms:
-    #     mx = perm.max_descent + 1
-    #     groth2 = alt_grothendieck_poly(perm, beta=Gx._beta).as_polynomial()
-    #     for varnum in  range(1, mx):
-    #         print(f"Trying {perm} {varnum}")
-    #         #groth1 = groth_poly(perm, 1)
-    #         genset = MaskedGeneratingSet(ring.genset, index_mask = [varnum])
-    #         groth1_dct = pull_out_groth_var(perm, beta=Gx._beta, varnum=varnum)
-            
-    #         groth1 = 0
-    #         print(f"Fat computer")
-    #         # good = False
-    #         # for perm2, coeff in groth1_dct.items():
-    #         #     groth1 = coeff
-    #         #     groth2 = grothendieck_poly(perm, ring.genset, ring.coeff_genset, beta=Gx._beta).expand()
-    #         #     diff = (groth1 - groth2).expand()
-    #         for perm2, coeff in groth1_dct.items():
-    #             groth1 += coeff * grothendieck_poly(perm2, genset, ring.coeff_genset, beta=Gx._beta)#.as_polynomial()
-    #         try:
-    #             diff = (groth1 - groth2).expand()
-    #             assert diff == 0, f"Grothendieck polynomial for {perm} does not match: {diff=}, \n{groth1=}\n {groth2=}"
-    #         except AssertionError as e:
-    #             #good = False
-    #             print("Sad")
-    #             print(f"{groth1.expand()=}")
-    #             print(f"{groth2.expand()=}")
-    #             continue
-    #         good = True
-    #         if good:
-    #             print("Happy pants")
-    #         else:
-    #             print("Sad pants")
+    n = int(sys.argv[1])
+    num_procs = int(sys.argv[2]) if len(sys.argv) > 2 else cpu_count()
+    perms = [perm for perm in Permutation.all_permutations(n) if perm.inv != 0]
+    # hardest (highest-inversion) permutations first so a few slow stragglers
+    # don't get scheduled last and stall the whole pool at the end
+    perms.sort(key=lambda p: p.inv, reverse=True)
+    perm_lists = [list(perm) for perm in perms]
+
+    failures = []
+    with Pool(num_procs) as pool:
+        for i, (perm_list, error, elapsed) in enumerate(pool.imap_unordered(_check_perm, perm_lists), 1):
+            if error is not None:
+                failures.append(error)
+                print(f"FAIL {perm_list}", file=sys.stderr, flush=True)
+            print(f"[{i}/{len(perm_lists)}] {perm_list} {'ok' if error is None else 'FAILED'} ({elapsed:.2f}s)", flush=True)
+
+    if failures:
+        raise AssertionError("\n".join(failures))
+    print(f"All {len(perm_lists)} permutations verified.", flush=True)
+    

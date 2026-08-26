@@ -1,0 +1,250 @@
+\documentclass{amsart}
+%\usepackage[backend=bibtex8,style=numeric,giveninits=true]{biblatex}
+%\addbibresource{formschub.bib}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{cases}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{mathtools}
+\usetikzlibrary{calc}
+\usepackage{centernot}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage[makeroom]{cancel}
+\usepackage{stackengine}
+\usepackage{mathrsfs}
+\usepackage{enumitem}
+\usepackage[colorinlistoftodos,prependcaption,textsize=footnotesize]{todonotes}
+% Render all \todo notes inline, so that long ones are not clipped in the margin.
+\let\origtodo\todo
+\renewcommand{\todo}[1]{\origtodo[inline]{#1}}
+
+% Concatenation product on \dcoma: a square cup with a + inside (visually `\sqcupplus`).
+\makeatletter
+\newcommand{\sqcupplus@inner}[2]{%
+  \vcenter{\hbox{\ooalign{%
+    \hfil$\m@th#1\sqcup$\hfil\cr
+    \hfil\raisebox{0.15ex}{$\m@th#1\scriptscriptstyle+$}\hfil\cr
+  }}}%
+}
+\newcommand{\sqcupplus}{\mathbin{\mathpalette\sqcupplus@inner\relax}}
+\makeatother
+
+
+\newtheorem{lemma}{Lemma}[subsection]
+\newtheorem{corollary}[lemma]{Corollary}
+
+\newtheorem{proposition}[lemma]{Proposition} 
+\newtheorem{proposition2}{Proposition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{conjecture}[theorem]{Conjecture} 
+\newtheorem{observation}{Observation}[section]
+\newtheorem{question}{Question}
+
+
+
+
+\theoremstyle{definition}
+\newtheorem{definition}[lemma]{Definition}
+\newtheorem{example}[lemma]{Example}
+\newtheorem*{note}{Note}
+\newtheorem*{method}{Method}
+
+\theoremstyle{remark}
+
+\newtheorem*{remark}{Remark}
+
+
+
+\numberwithin{equation}{subsection}
+
+
+\newcommand{\R}{\mathbf{R}}  % The real numbers.
+
+
+\DeclareMathOperator{\sch}{\mathfrak{S}}
+\newcommand{\shup}{{\uparrow}}
+\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
+\newcommand{\wof}[1]{w_{#1}}
+\newcommand{\slel}{\mathcal{F}}
+\newcommand{\wtt}{\mathtt{wt}}
+\newcommand{\QY}{\ensuremath{\mathbb{QY}}}
+\newcommand{\tom}[1]{\xrightarrow{#1}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\mot}[1]{\xleftarrow{#1}}
+\newcommand{\grass}{\mathcal{G}}
+\newcommand{\plac}{\mathrm{Plac}}
+
+\newcommand{\cperm}[1]{\left[\!\left[ #1 \right]\!\right]}
+\newcommand{\cpcf}[5]{d^{#1,#2}_{#3}\left(#4\mid #5\right)}
+\newcommand{\smpfu}{\mathsf{\Pi}}
+\newcommand{\smpr}[3]{\ensuremath{}\smpfu\left( #1 \mid #2_{[#3]}\right)}
+\newcommand{\smpre}[2]{\ensuremath{}\prod_{b\in #2}(#1-b)}
+
+\newcommand{\rtt}{\mathtt{rt}}
+\newcommand{\trm}{\mathtt{trim}}
+\newcommand{\zeromap}{\mathcal{Z}}
+\newcommand{\hr}{\mathtt{ht}}
+\newcommand{\clp}{\mathtt{clip}}
+\newcommand{\BRC}{\mathcal{BRC}}
+\newcommand{\RC}{\mathcal{RC}}
+\newcommand{\lzeromap}{\mathscr{Z}}
+\newcommand{\lmap}{\mathscr{L}}
+\newcommand{\ltb}[2]{#1\!\uparrow_{#2}}
+\newcommand{\xleadsto}[2][]{\overset{#2}{\leadsto}}
+\newcommand{\ins}[2]{{#2\xleadsto{#1}}}
+\newcommand{\slide}{\mathfrak{F}}
+
+\newcommand{\shifthom}{\operatornamewithlimits{\triangleright}\limits}
+
+
+
+\newcommand{\shiftvby}[1]{\shifthom_{#1}}
+
+\newcommand*\circled[1]{%
+	\tikz[baseline=(char.base)]{
+		\node[shape=circle,draw,inner sep=0.1pt] (char) {#1};
+	}%
+}
+\newcommand\mycircled[1]{\makebox[0pt]{\circled{#1}}}
+\newcommand{\tb}{\textbullet}
+\newcommand{\xr}[1]{\ensuremath{{}\xrightarrow{[#1]}{}}}
+\newcommand{\rd}[1]{\ensuremath{\mathcolor{red}{\mathbf{#1}}}}
+\newcommand{\mc}[1]{\ensuremath{\mycircled{#1}}}
+\newcommand{\desc}{\mathrm{Desc}}%
+\newcommand{\SSYT}{\mathrm{SSYT}}
+
+\newcommand{\schv}[2]{\shiftvby{#1}\!\sch_{#2}}
+
+
+
+
+
+
+\newcommand{\dsch}{\ensuremath{\Xi}}
+\newcommand{\coma}{\mathcal{A}}
+\newcommand{\dcoma}{\mathcal{D}}
+
+
+
+%%
+%% This is the end of the preamble.
+%% 
+\raggedbottom
+\title{Transition algorithm specification}
+\author{Matthew J. Samuel}
+
+%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
+%\counterwithout{equation}{section}
+%\setcounter{section}{-1}
+\newcommand{\shuff}[2]{\mathcal{S}\mathcal{H}_{#1}^{#2}}
+\newcommand{\dom}{\mathfrak{d}}
+\newcommand{\ldom}{\dom^*}
+\newcommand{\code}{\mathfrak{c}}
+\newcommand{\ducode}{\overline{\mathfrak{c}}}
+\newcommand{\forest}{\mathfrak{P}}
+\newcommand{\fcode}{\mathfrak{c}_\forest}
+\newcommand{\finv}{P_{\forest}}
+
+\newcommand{\maxd}{\mathfrak{m}}
+\newcommand{\ddv}[1]{\delta}
+
+
+
+
+
+
+\begin{document}
+
+
+	\maketitle
+
+\subsection{Bounded RC graphs}
+
+\begin{definition}\label{definition:rcgraph}
+	Let $R\subseteq \mathbb{P}\times \mathbb{P}$ be a finite set. To each such set we associate an element $\wof{R}$ of $S_\infty$ as follows. Given a pair $(i, j)$ where $i,j>0$ are integers, define $s(i,j) = s_{i+j - 1}$. Totally order the grid such that $(i, j) \prec (a, b)$ if and only if $i < a$ or $i = a$ and $j > b$ (in other words, lexicographical order, except that the order on the second coordinate is reversed). By this ordering, index $R$ as $r_1, r_2,\ldots, r_m$ in increasing order. Then
+	$$\wof{R} = s_{r_1}\cdots s_{r_m}$$
+	If $\ell(\wof{R}) = m$, then we say that $R$ is an \emph{RC-graph}.
+
+	Define $\maxd(w)$ to be the index of the largest descent of a permutation $w$. A \emph{bounded RC-graph} is an RC-graph $R$ together with a specified number of rows $n\geq \max\{i: (i,j)\in R\text{ for some }j\}$, with the added condition that $\maxd(\wof{R})\leq n$. The definition is as an ordered pair $(R, n)$, but it will be far more convenient to abuse notation and consider the number of rows a property of $R$ itself. To denote the number of rows, we define the \emph{height} of $R$ to be $\hr(R)=n$. A bounded RC graph has an associated weight vector $\wtt(R)$ where $\wtt_i(R)$ is the number of elements in row $i$.
+
+	The \emph{word} of $R$, denoted $\mathrm{word}(R)$, is the sequence of indices $i+j-1$ of the simple reflections $s_{r_1},\ldots,s_{r_m}$ read in the order above; it is a reduced word for $\wof{R}$. For a pair of positive integers $(i,j)$ we define the \emph{root}
+	$$\rtt_R(i,j)=(\wof{R[i, j]}^{-1}(i + j - 1), \wof{R[i,j]}^{-1}(i+j)),\qquad R[i, j]=\{(a, b)\in R\mid (a, b) \succ (i, j)\}.$$
+  (this is the right root of the letter at the same position in the word).
+
+  We write $\RC_n$ for the set of bounded RC graphs of height $n$, $\RC_n(w)$ for those with permutation $w$, and $\RC_n(w)^0$ (or $\RC_n^0$) for those whose last row is empty.
+\end{definition}
+
+
+
+
+\subsection{The transition map and clipping}
+
+
+We now construct a map
+$$\zeromap:\RC_n^0\to\RC_{n-1}$$
+on bounded RC graphs with empty last row, realizing on the level of RC graphs the Lascoux--Sch\"utzenberger transition formula for Schubert polynomials (see \cite{notes}). The map is an iteration of Little bumps \cite{little2003combinatorial}, realized on RC graphs by an explicit insertion algorithm; working with the insertion description keeps the compatible-sequence structure in view at every step, so that the output is manifestly again a bounded RC graph.
+
+\begin{algorithm}
+\caption{Basic monk insertion $\ins{k}{i} R$}
+\label{algorithm:monk}
+\begin{algorithmic}[1]
+		\State \textbf{Input:} An RC graph $R$, parameter $k$, and an integer $i$ with $1\leq i\leq k$.
+		\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_j(R')=\wtt_j(R)$ for $j\neq i$ and $\wtt_i(R')=\wtt_i(R)+1$ such that $\wof{R}\tom{k} \wof{R'}$.
+		\State Find leftmost position $(i, j) \notin R$ in row $i$ such that if $\rtt_R(i, j)=(a,b)$, then $a\leq k < b$.
+		\State $R \gets R \cup \{(i, j)\}$
+    \If{there exists $(i', j') \in R$ with $\rtt_R(i', j') \in \Phi^-$}
+        \State $R \gets R \setminus \{(i', j')\}$
+        \State Return to step 3 substituting $i = i'$.
+    \EndIf
+		\State \Return $R$
+	\end{algorithmic}
+\end{algorithm}
+
+Here $u\tom{k}u'$ means $u'=ut_{ab}$ for a single transposition with $a\leq k<b$ and $\ell(u')=\ell(u)+1$, and $\Phi^-$ denotes the set of negative roots, i.e.\ pairs $(a,b)$ with $a>b$.
+
+\begin{lemma}[Insertion validity]\label{lemma:insertworks}
+Algorithm \ref{algorithm:monk} terminates, and its output $R'$ is a valid RC graph with
+$$\wtt_j(R')=\wtt_j(R)\ (j\neq i),\qquad \wtt_i(R')=\wtt_i(R)+1,\qquad \wof{R}\tom{k}\wof{R'}.$$
+\end{lemma}
+\begin{proof}
+The first step adds one crossing in row $i$: adding the crossing $(i,j)$ found in step 3 adjoins the root $t_a-t_b$, $a\leq k<b$, to the inversion set, so the permutation is multiplied by $t_{ab}$ and the length rises by one, unless the addition creates a negative root elsewhere. A negative root can only have been created by the added crossing, and by the strong exchange property it is unique; moreover it occurs at a crossing $(i',j')$ with $i'<i$. Indeed, the root $\rtt_R(i',j')$ of a crossing is computed from the crossings following it in the total order of Definition \ref{definition:rcgraph}, so it is unchanged unless $(i',j')$ precedes $(i,j)$, that is, $i'<i$ or $i'=i$ with $j'>j$; and within row $i$ the crossings at columns $j'>j$ retain their roots as well, since the reflections contributed by row $i$ to the right of column $j'$ are composed in the same relative order with $(i,j)$ inserted after them. Every subsequent step removes the crossing carrying the negative root and immediately replaces it in the row it was initially in: the removal restores the permutation to its value at the start of the pass, and the algorithm re-enters step 3 in that same row. Since the rectification row strictly decreases at every occurrence, the cascade terminates, and the final pass performs a clean addition, multiplying the permutation by a single transposition $t_{ab}$ with $a\leq k<b$. The weight bookkeeping is therefore immediate: the first step contributes one crossing to row $i$, and each rectification removes and replaces one crossing within a single row, so $\wtt_i(R')=\wtt_i(R)+1$ and all other row weights are unchanged.
+\end{proof}
+
+\begin{definition}[Little bumps {\cite{little2003combinatorial}}]\label{definition:littlebump}
+  Given a reduced word $a_1\cdots a_m$ for a permutation $w$ and an index $1\leq p\leq m$, the \emph{Little bump} $\ltb{(a_1\cdots a_m)}{p}$ is defined recursively as follows. If $a_p>1$, replace $a_p$ with $a_p-1$, and if $a_p=1$ then instead replace all $a_q$ with $q\neq p$ with $a_q+1$. Denote the new word by $a_1'\cdots a_m'$. If this resulting word is reduced, we are done. Otherwise, there is a unique index $j\neq p$ such that the word obtained by deleting $a_j'$ from the new word is reduced by the deletion property of Coxeter groups. We then define
+  $$\ltb{(a_1\cdots a_m)}{p} = \ltb{(a_1'\cdots a_m')}{j}$$
+\end{definition}
+
+\begin{definition}[Single-bump map]\label{definition:lmap}
+Let $R$ be a bounded RC graph with $\hr(R)=m$, empty last row, and $\maxd(\wof R)=m$. By the exchange property there is a unique crossing $(i,j)\in R$ with $\rtt_R(i,j)=(m,m+1)$, and $i<m$. Set
+$$R'=(R\setminus\{(i,j)\})\cup\{(m,1)\},$$
+and define
+$$\lmap(R)=(\ins{m-1}{i}R')\setminus\{(m,1)\},$$
+regarded as a bounded RC graph of height $\maxd(\wof{\lmap(R)})$; all its crossings lie in rows $1,\ldots,m-1$.
+\end{definition}
+
+\begin{proposition}[The bump map is a Little bump]\label{proposition:little_bump}
+Let $R$ be as in Definition \ref{definition:lmap} with $m=\maxd(\wof R)$, and let $p$ be the index of the right root $(m, m+1)$ in $\mathrm{word}(R)$. Then
+$$\mathrm{word}(\lmap(R))=\ltb{\mathrm{word}(R)}{p}.$$
+\end{proposition}
+\begin{proof}
+FILL IN PROOF HERE
+\end{proof}
+
+\bibliographystyle{acm}
+\bibliography{schubert_bialgebra}
+
+
+\end{document}

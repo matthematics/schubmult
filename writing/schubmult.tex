@@ -1554,6 +1554,23 @@ $$v_{i-1}d_i^{-1}\downvar{\code^*_i(\dom(u)) + 1} v_i$$
 $$v_m = \phi_m(wu^{-1}\dom(u))$$
 $$d_i = d[\code_i^*(\dom(u)) + 1, \code_i^*(wu^{-1}\dom(u)) - \code_i^*(\dom(u))]$$  
 $$d[p,q]=s_ps_{p+1}\cdots s_{p+q-1}$$
+
+
+\section{LR polynomial}
+
+Suppose $\lambda,\mu,\nu$ are partitions of length at most $k$. These correspond to permutation $v_k(\lambda),v_k(\mu),v_k(\nu)$. Then for an integer $t$, the coefficient
+$$c_{v_k(t\lambda),v_k(t\mu)}^{v_k(t\nu)}$$
+is a polynomial in $t$. Also,
+
+$$c_{v_k(t\lambda),v_k(t\mu)}^{v_k(t\nu)}(0,z) = \sum_{u}c_{v_k(t\lambda),uv_k(t\mu)}^{v_k(t\nu)}\sch_u(z)$$
+It is sufficient to consider $\mu=(p^k)$ for some $p$.
+$$c_{v_k(t\lambda),v_k((tp)^k)}^{v_k(t\nu)}(0,z) = \sum_{u}c_{v_k(t\lambda),uv_k((tp)^k)}^{v_k(t\nu)}\sch_u(z)$$
+and if we let $u=v_k(t\mu)^{-1}$,
+$$c_{v_k(t\lambda),v_k((tp)^k)}^{v_k(t\nu)}(0,z) = \sum_{u}c_{v_k(t\lambda),v_k(t\mu)^{-1}v_k((tp)^k)}^{v_k(t\nu)}\sch_{v_k(t\mu)^{-1}}(z)$$
+
+$$c_{v_k(t\lambda),v_k((tp)^k)}^{v_k(t\nu)}(0,z) = \sum_{u}c_{v_k(t\lambda),v_k(t(p^k\setminus\mu^\vee))}^{v_k(t\nu)}\sch_{v_k(t\mu)^{-1}}(z)$$
+%where the right hand side is the Littlewood-Richardson coefficient. This is a polynomial in $t$ by the saturation theorem.
+
 \bibliographystyle{acm}
 \bibliography{formschub}
 \end{document}
