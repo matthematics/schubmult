@@ -42,8 +42,13 @@ if __name__ == "__main__":
             continue
         perm_pairs = hecke_pairs(perm)
         
-        cauchy_groth = sum([Gx._beta**(p1.inv + p2.inv - perm.inv) * Gx(p2).expand() * Gy(~p1).expand() for p1, p2 in perm_pairs]).expand()
-        dgroth = grothendieck_poly(perm, x, y, Gx._beta).expand()
-        assert (cauchy_groth-dgroth).expand() == 0, f"Grothendieck Cauchy identity failed for {perm}: \n{cauchy_groth=}\n{dgroth=}\n{(cauchy_groth-dgroth).expand()}"
-        print("Hat buckets")
+        # cauchy_groth = sum([Gx._beta**(p1.inv + p2.inv - perm.inv) * Gx(p2).expand() * Gy(~p1).expand() for p1, p2 in perm_pairs]).expand()
+        # dgroth = grothendieck_poly(perm, x, y, Gx._beta).expand()
+        # assert (cauchy_groth-dgroth).expand() == 0, f"Grothendieck Cauchy identity failed for {perm}: \n{cauchy_groth=}\n{dgroth=}\n{(cauchy_groth-dgroth).expand()}"
+        # print("Hat buckets")
+
+        cauchy_groth_tensor = sum([Gx._beta**(p1.inv + p2.inv - perm.inv) * Gx(p2) @ Gy(~p1) for p1, p2 in perm_pairs])
+
+        if all(v == 1 for v in perm.trimcode):
+            print(cauchy_groth_tensor)
             

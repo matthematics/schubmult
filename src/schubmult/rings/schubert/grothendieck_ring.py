@@ -22,6 +22,16 @@ class GrothendieckElement(BaseSchubertElement):
         from schubmult.symbolic import Add
         return Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
+    def mult_poly(self, poly):
+        # GrothendieckRing has no coeff_genset (y) yet, so always use the single-variable path.
+        from schubmult.utils.perm_utils import add_perm_dict
+
+        res_dict2 = {}
+        for k, v in self.items():
+            dict2 = self.ring.mult_poly_single({k: v}, poly, self.ring.genset)
+            res_dict2 = add_perm_dict(res_dict2, dict2)
+        return self.ring.from_dict(res_dict2)
+
 
 class GrothendieckRing(BaseSchubertRing):
     """
@@ -64,6 +74,17 @@ class GrothendieckRing(BaseSchubertRing):
     @property
     def beta(self):
         return self._beta
+
+    @property
+    def mult_poly_single(self):
+        from schubmult.mult.groth import mult_poly_groth
+
+        beta = self._beta
+
+        def _mult(coeff_dict, poly, genset):
+            return mult_poly_groth(coeff_dict, poly, genset, beta)
+
+        return _mult
 
     #def single_variable(self, i):
 
