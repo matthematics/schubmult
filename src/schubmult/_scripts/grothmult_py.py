@@ -2,11 +2,10 @@ import sys
 
 from symengine import Symbol
 
-from schubmult import Permutation, uncode, Sx
+from schubmult import Permutation, uncode, Sx, Gx
 from schubmult.abc import x
 from schubmult.symbolic import sstr, sympify
-from schubmult.symbolic.common_polys import groth_dict_to_poly, groth_mul_full_with_ring, to_groth
-from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+from schubmult.symbolic.common_polys import groth_mul_full_with_ring, to_groth
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -37,8 +36,7 @@ def main(argv=None):
         Permutation.print_as_code = ascode
         pr = args.pr
         raw_result_dict = {}
-        zz = ZeroGeneratingSet()
-        beta = Symbol("\u03B2")
+        beta = Gx._beta
 
         if ascode:
             perms = [Permutation(uncode(perm)) for perm in perms]
@@ -52,7 +50,7 @@ def main(argv=None):
             coeff_dict = groth_mul_full_with_ring(coeff_dict, Permutation(perm), Sx, beta)
         if mult:
             mul_exp = sympify(mulstring)
-            coeff_dict = to_groth(groth_dict_to_poly(coeff_dict, x, zz, beta) * mul_exp, x, zz, beta)
+            coeff_dict = to_groth(Gx.from_dict(coeff_dict).expand() * mul_exp, x, zz, beta)
 
         if pr or formatter is None:
             for perm, val in coeff_dict.items():
