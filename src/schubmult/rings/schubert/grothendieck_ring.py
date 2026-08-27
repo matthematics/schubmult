@@ -3,8 +3,8 @@ from functools import cache
 import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol
-from schubmult.symbolic.common_polys import groth_mul_full, grothendieck_poly
-from schubmult.symbolic.poly.variables import GeneratingSet, ZeroGeneratingSet
+from schubmult.symbolic.common_polys import groth_mul_full, grothendieck_poly_with_ring
+from schubmult.symbolic.poly.variables import GeneratingSet
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
@@ -20,6 +20,7 @@ class GrothendieckElement(BaseSchubertElement):
 
     def as_polynomial(self):
         from schubmult.symbolic import Add
+
         return Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def mult_poly(self, poly):
@@ -53,9 +54,11 @@ class GrothendieckRing(BaseSchubertRing):
     def __init__(self, genset, beta=None):
         super().__init__(genset, coeff_genset=None)
         if beta is None:
-            beta = Symbol("\u03B2")
+            beta = Symbol("\u03b2")
         self._beta = beta
-        self._zz = ZeroGeneratingSet()
+        from .schubert_ring import SingleSchubertRing
+
+        self._schubert_ring = SingleSchubertRing(genset)
         # Rebind dtype to GrothendieckElement subclass
         self.dtype = type("GrothendieckElement", (GrothendieckElement,), {"ring": self})
 
@@ -86,14 +89,12 @@ class GrothendieckRing(BaseSchubertRing):
 
         return _mult
 
-    #def single_variable(self, i):
+    # def single_variable(self, i):
 
     def from_expr(self, expr):
         from schubmult.symbolic.common_polys import schub_dict_to_groth_dict
 
-        from .schubert_ring import SingleSchubertRing
-        ring = SingleSchubertRing(self.genset)
-        schub_dict = ring.from_expr(expr)
+        schub_dict = self._schubert_ring.from_expr(expr)
         return self.from_dict(schub_dict_to_groth_dict({Permutation([]): 1}, schub_dict, self._beta))
 
     def mul_expr(self, elem, expr):
@@ -109,8 +110,7 @@ class GrothendieckRing(BaseSchubertRing):
     def cached_product(self, u, v, basis2):
         if self == basis2:
             return groth_mul_full({u: S.One}, v, self.genset, self._zz, self._beta)
-        # Cross-ring fallback: delegate to single Schubert multiplication
-        return super().cached_product(u, v, basis2)
+        raise ValueError(f"Cannot multiply elements from different rings: {self} and {basis2}")
 
     @cache
     def cached_positive_product(self, u, v, basis2):
@@ -118,7 +118,7 @@ class GrothendieckRing(BaseSchubertRing):
 
     @cache
     def cached_schubpoly(self, k):
-        return grothendieck_poly(k, self.genset, self._zz, self._beta)
+        return grothendieck_poly_with_ring(k, self._schubert_ring, self._beta)
 
     def printing_term(self, k, prefix=""):
         return spolymod.GrothendieckPoly(k, self.genset.label, prefix=prefix)
@@ -142,6 +142,7 @@ class GrothendieckRing(BaseSchubertRing):
 
     def from_dict(self, dct):
         from schubmult.symbolic import sympify
+
         dct = {k: v for k, v in dct.items() if sympify(v).expand() != 0}
         return self.dtype(dct)
 

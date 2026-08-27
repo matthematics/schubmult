@@ -90,7 +90,7 @@ if __name__ == "__main__":
     for k in range(1, n):
         for p in range(1, k + 1):
             poly1 = elem_sym_by_cauchy(p, k)
-            poly2 = grothendieck_poly(_elem_perm(p, k), x, y, beta=1).expand()
+            poly2 = grothendieck_poly_with_ring(_elem_perm(p, k), DSx([]).ring, beta=1).expand()
             try:
                 test_poly = expand_func(poly1).simplify()
                 assert (test_poly - poly2).expand() == 0, f"Failed for k={k} {p=}: {test_poly=}, {poly2=}"

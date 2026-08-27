@@ -175,8 +175,11 @@ def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
 
 
 @cache
-def call_zvars(v1, v2, k, i, min_size=10): # noqa: ARG001
-    return [v2[i - 1]] + [v2[j] for j in range(len(v1), len(v2) + max(0, i - len(v2))) if v2[j] != j + 1 and j != i - 1] + [v2[j] for j in range(max(len(v1),min_size)) if v1[j] != v2[j] and j != i - 1]
+def call_zvars(v1, v2, k, i, min_size=10):  # noqa: ARG001
+    return (
+        [v2[i - 1]] + [v2[j] for j in range(len(v1), len(v2) + max(0, i - len(v2))) if v2[j] != j + 1 and j != i - 1] + [v2[j] for j in range(max(len(v1), min_size)) if v1[j] != v2[j] and j != i - 1]
+    )
+
 
 def efficient_subs(expr, subs_dict):
     subs_dict_new = {}
@@ -483,8 +486,26 @@ def _groth_div_diff(val, index, x, beta):
     return rval
 
 
+def _groth_div_diff_with_y(val, index, x, y, beta):
+    from schubmult.rings.schubert.schubert_ring import DoubleSchubertElement, DoubleSchubertRing
+
+    ring = DoubleSchubertRing(x, y)
+    if not isinstance(val, DoubleSchubertElement):
+        val = ring.from_expr(val)
+
+    up_val = (S.One + beta * x[index + 1]) * val
+    rval = ring.from_dict({w.swap(index - 1, index): coeff for w, coeff in up_val.items() if w[index - 1] > w[index]})
+    return rval
+
+
+def _groth_div_diff_with_ring(val, index, ring, beta):
+    up_val = (S.One + beta * ring.genset[index + 1]) * val
+    rval = ring.from_dict({w.swap(index - 1, index): coeff for w, coeff in up_val.items() if w[index - 1] > w[index]})
+    return rval
+
+
 @cache
-def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
+def grothendieck_poly_legacy(perm, x, y, beta, keep_as_schub=False):
     from schubmult.combinatorics.permutation import Permutation
 
     if perm.inv == 0:
@@ -499,6 +520,97 @@ def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
         return result
     return result.as_polynomial()
 
+@cache
+def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
+    from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
+    from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
+    if not isinstance(x, GeneratingSet_base):
+        x = CustomGeneratingSet(x)
+    if not isinstance(y, GeneratingSet_base):
+        y = CustomGeneratingSet(y)
+    ring = DoubleSchubertRing(x, y)
+    return grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=keep_as_schub)
+
+
+@cache
+def _elem_sym_perms(perm, k):
+    from schubmult.utils.schub_lib import elem_sym_perms
+
+    return elem_sym_perms(perm, k, k)
+
+
+@cache
+def dom_groth(dom_perm, ring, beta):
+    coeff_genset = ring.coeff_genset
+    start_elem = ring.one
+    lengths = (~dom_perm).trimcode
+    n = len(lengths) + 1
+    for i in range(n - 1, 0, -1):
+        new_start_elem = 0
+        yvar = coeff_genset[n - i]
+        bvar = 1 + beta * yvar
+        var2 = [coeff_genset[j] * bvar for j in range(1, 25)]
+        length = lengths[n - i - 1]
+        for permo, coeff in start_elem.items():
+            for elem_perm, diff in _elem_sym_perms(permo, length):
+                new_start_elem += coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(length) if permo[p] == elem_perm[p]]) * ring(elem_perm)
+        start_elem = new_start_elem
+    return start_elem
+
+
+def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
+    from schubmult import uncode
+    from schubmult.abc import E
+    from schubmult.rings.schubert.nil_hecke import NilHeckeRing
+
+    nh = NilHeckeRing(ring.genset)
+    if backwards:
+        operator = nh(~uncode([0] * (index - 1) + [length]))
+    else:
+        operator = nh(uncode([0] * (index - 1) + [length]))
+    schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, ring.genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
+    return operator.apply(schub)
+
+def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta):
+    from schubmult.utils.schub_lib import elem_sym_positional_perms
+    start_schub = ring(schub_perm)
+    bigger_schub = ring.zero
+    positions = list(range(start + 1, start + length + 1))
+    for perm, coeff in start_schub.items():
+        for elem_perm, diff, sign in elem_sym_positional_perms(perm, length, *positions):
+            bigger_schub += sign * coeff * (beta**diff) * prod([ring.coeff_genset[perm[positions[p] - 1]]*beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]]) *ring(elem_perm)
+    stripness = list(range(start, start + length))
+    ret_schub = ring.from_dict(bigger_schub)
+    for desc in stripness:
+        ret_schub = ring.from_dict({perm2.swap(desc - 1, desc): v for perm2, v in ret_schub.items() if perm2[desc - 1] > perm2[desc]})
+    return ret_schub
+
+
+@cache
+def apply_isobaric_to_schub(diff_perm, schub_perm, ring, beta):
+    elem = ring(schub_perm)
+    strips = [[i, (diff_perm).trimcode[i - 1]] for i in range(1, (diff_perm).max_descent + 1)]
+    for strip in reversed(strips):
+        if strip[1] == 0:
+            continue
+        new_elem = elem.ring.zero
+        for perm, coeff in elem.items():
+            new_elem += coeff * isobaric_strip_on_dschub(strip[0], strip[1], perm, ring, beta=beta)
+        elem = new_elem
+    return elem
+
+@cache
+def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False):
+    dom_perm = perm.minimal_dominant_above()
+    diff_perm = (~perm) * dom_perm
+    first_potato = dom_groth(dom_perm, ring, beta=beta)
+    schub_elem = ring.zero
+    for perm2, coeff in first_potato.items():
+        schub_elem += coeff * apply_isobaric_to_schub(diff_perm, perm2, ring, beta=beta)
+    result = ring.from_dict({k: v.expand() for k, v in schub_elem.items()})
+    if keep_as_schub:
+        return result
+    return result.as_polynomial()
 
 @cache
 def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False):
@@ -591,6 +703,26 @@ def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
     schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
     # schub = ring.from_expr(poly)
     return operator.apply(schub)
+
+
+# @cache
+# def grothendieck_poly_strip(perm, x, y, beta, keep_as_schub=False):
+#     from schubmult.combinatorics.permutation import Permutation
+
+#     if perm.inv == 0:
+#         return S.One
+#     n = len(perm)
+#     w0 = Permutation.w0(n)
+#     if perm == w0:
+#         return prod([_groth_plus(x[i], y[j], beta) for i in range(1, n) for j in range(1, n + 1 - i)])
+
+#     index_of_n = (~perm)[n - 1]
+
+#     desc = min([i for i in range(n) if i not in (perm.descents())])
+#     result = _groth_div_diff(grothendieck_poly(perm.swap(desc, desc + 1), x, y, beta, keep_as_schub=True), desc + 1, x, beta)
+#     if keep_as_schub:
+#         return result
+#     return result.as_polynomial()
 
 
 def isobar_it(i, genset, elem):

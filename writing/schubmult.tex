@@ -1571,6 +1571,25 @@ $$c_{v_k(t\lambda),v_k((tp)^k)}^{v_k(t\nu)}(0,z) = \sum_{u}c_{v_k(t\lambda),v_k(
 $$c_{v_k(t\lambda),v_k((tp)^k)}^{v_k(t\nu)}(0,z) = \sum_{u}c_{v_k(t\lambda),v_k(t(p^k\setminus\mu^\vee))}^{v_k(t\nu)}\sch_{v_k(t\mu)^{-1}}(z)$$
 %where the right hand side is the Littlewood-Richardson coefficient. This is a polynomial in $t$ by the saturation theorem.
 
+
+
+$$\pi_i = \frac{(1+\beta x_{i+1}) - (1+\beta x_i)s_i}{x_i - x_{i+1}}$$
+
+$$\pi_i = \frac{1-s_i +\beta (x_{i+1}- x_is_i)}{x_i - x_{i+1}}$$
+
+$$\pi_i = \partial^i + \frac{\beta (x_{i+1}- (x_i - x_{i+1})s_i + x_{i+1}s_i)}{x_i - x_{i+1}}$$
+
+$$\pi_i = (1+\beta x_{i+1})\partial^i - \beta s_i$$
+
+$$\pi_i = (1+\beta x_{i})\partial^i - \beta$$
+
+$$\pi_{i+j}\pi_{i+j-1}\cdots \pi_{i}$$
+$$=\sum_{i \leq i_1<\cdots <i_p \leq i+j} (-\beta)^{j - p}(1+\beta x_{i_1})\cdots (1+\beta x_{i_p})\partial^{i_p}\cdots \partial^{i_1}$$
+
+$$\mathfrak G_{w_0}(x;y) = \prod_{i+j\leq n} (x_i + y_j + \beta x_iy_j)$$
+
+
+$$(\pi_i+\beta)(fg) = (\pi_i+\beta)(f)s_i(g) + f(\pi_i+\beta)(g)$$
 \bibliographystyle{acm}
 \bibliography{formschub}
 \end{document}
