@@ -3,7 +3,7 @@ from functools import cache
 import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol
-from schubmult.symbolic.common_polys import groth_mul_full, grothendieck_poly_with_ring
+from schubmult.symbolic.common_polys import groth_mul_full_with_ring, grothendieck_poly_with_ring
 from schubmult.symbolic.poly.variables import GeneratingSet
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -100,16 +100,11 @@ class GrothendieckRing(BaseSchubertRing):
     def mul_expr(self, elem, expr):
         mul2 = self.from_expr(expr)
         return self.mul(elem, mul2)
-        # ret = self.zero
-        # for v, coeff in mul2.items():
-        #     for u, coeff2 in u.items():
-        #     ret += self.cached_product(u, v) * coeff
-        # return groth_mul_full(u, v, self.genset, self._zz, self._beta)
 
     @cache
     def cached_product(self, u, v, basis2):
         if self == basis2:
-            return groth_mul_full({u: S.One}, v, self.genset, self._zz, self._beta)
+            return groth_mul_full_with_ring({u: S.One}, v, self._schubert_ring, self._beta)
         raise ValueError(f"Cannot multiply elements from different rings: {self} and {basis2}")
 
     @cache

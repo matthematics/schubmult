@@ -777,23 +777,13 @@ def groth_elem_as_schub_dict(perm, beta):
     # return {k: v for k, v in schub_elem.items() if v != S.Zero}
     return WCGraph.groth_to_schub(perm, beta)
 
-
-# (1+beta y)E(x,y/(1+beta y))
-# yy
-# beta/(1-yy)E(x,yy)
-
-
 def groth_mul_full(perm_dict, p2, _x, _zz, beta):
-    # from schubmult import Gx, Sx
     p2 = pl.Permutation(p2)
-    # schub_elem2 = Sx.from_dict(groth_elem_as_schub_dict(p2, beta))
-    # schub_elem1 = sum([v * Sx.from_dict(groth_elem_as_schub_dict(k, beta)) for k, v in perm_dict.items()])
-    # schub_dict_to_groth_dict currently takes (base_groth, schub_dict, beta).
-    # Keep groth_mul_full signature stable for existing call sites, but route
-    # through the updated helper interface.
     return schub_dict_to_groth_dict(perm_dict, groth_elem_as_schub_dict(p2, beta), beta)
-    # result = schub_elem1 * schub_elem2
-    # return sum([v * Gx.from_dict(schub_elem_to_groth_elem_dict(k, beta)) for k, v in result.items()])
+
+def groth_mul_full_with_ring(perm_dict, p2, ring, beta):
+    p2 = pl.Permutation(p2)
+    return schub_dict_to_groth_dict_with_ring(perm_dict, groth_elem_as_schub_dict(p2, beta), ring,beta)
 
 
 def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
@@ -868,6 +858,130 @@ def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
         expr_sym = sympy.sympify(expr)
 
         if isinstance(expr_sym, FactorialElemSym):
+            return _apply_factorial_elem_sym(term_dict, expr_sym.degree, expr_sym.numvars)
+
+        if isinstance(expr, Add):
+            out = {}
+            for arg in expr.args:
+                out = add_perm_dict(out, _eval_expr(term_dict, arg))
+            return out
+
+        if isinstance(expr, Mul):
+            out = term_dict
+            for arg in expr.args:
+                out = _eval_expr(out, arg)
+            return out
+
+        if isinstance(expr, Pow):
+            base, exponent = expr.args
+            exponent_int = int(exponent)
+            if exponent_int < 0 or exponent_int != exponent:
+                raise ValueError(f"Unsupported exponent in CEM expression: {exponent}")
+            out = term_dict
+            for _ in range(exponent_int):
+                out = _eval_expr(out, base)
+            return out
+
+        return _mul_scalar(term_dict, expr)
+
+    # Fast path: compile top-level additive pieces into multiplicative factor lists.
+    top_terms = schub_elem_expr.args if isinstance(schub_elem_expr, Add) else (schub_elem_expr,)
+    compiled_terms = []
+    fallback_terms = []
+    for term_expr in top_terms:
+        flattened = _flatten_factors(term_expr)
+        if flattened is None:
+            fallback_terms.append(term_expr)
+        else:
+            compiled_terms.append(flattened)
+
+    ret = {}
+    for p1, coeff0 in base_groth.items():
+        subtotal = {}
+
+        for scalar, factors in compiled_terms:
+            term_dict = {p1: coeff0}
+            if scalar != S.One:
+                term_dict = _mul_scalar(term_dict, scalar)
+            for degree, numvars in factors:
+                term_dict = _apply_factorial_elem_sym(term_dict, degree, numvars)
+            subtotal = add_perm_dict(subtotal, term_dict)
+
+        for term_expr in fallback_terms:
+            subtotal = add_perm_dict(subtotal, _eval_expr({p1: coeff0}, term_expr))
+
+        ret = add_perm_dict(ret, subtotal)
+    return ret
+
+def schub_dict_to_groth_dict_with_ring(base_groth, schub_dict, ring, beta):
+    # schub_elem_sym_as_groth_elem_sym_dict
+
+    import sympy
+
+    from schubmult.utils.perm_utils import add_perm_dict
+    from schubmult.utils.schub_lib import groth_pieri_mul
+
+    schub_elem_expr = ring.from_dict(schub_dict).in_CEM_basis()
+
+    def _mul_scalar(term_dict, scalar):
+        if scalar == S.Zero:
+            return {}
+        return {perm: coeff * scalar for perm, coeff in term_dict.items()}
+
+    def _apply_factorial_elem_sym(term_dict, degree, numvars):
+        if degree == 0:
+            return term_dict
+        dctt = schub_elem_sym_to_groth_elem_sym_dict(degree, numvars, beta)
+        build = {}
+        for pair, coeff3 in dctt.items():
+            pieri_piece = groth_pieri_mul(term_dict, *pair, beta)
+            build = add_perm_dict(build, {perm: coeff3 * coeff for perm, coeff in pieri_piece.items()})
+        return build
+
+    def _flatten_factors(expr):
+        """Return (scalar, [(deg, numvars), ...]) for multiplicative terms.
+
+        Returns None when expression contains additive structure that would require
+        distribution; caller may then use recursive fallback.
+        """
+        expr_sym = sympy.sympify(expr)
+        if ring.is_elem_mul_type(expr_sym):
+            return S.One, [(expr_sym.degree, expr_sym.numvars)]
+
+        if isinstance(expr, Add):
+            return None
+
+        if isinstance(expr, Mul):
+            scalar = S.One
+            factors = []
+            for arg in expr.args:
+                flattened = _flatten_factors(arg)
+                if flattened is None:
+                    return None
+                arg_scalar, arg_factors = flattened
+                scalar *= arg_scalar
+                factors.extend(arg_factors)
+            return scalar, factors
+
+        if isinstance(expr, Pow):
+            base, exponent = expr.args
+            exponent_int = int(exponent)
+            if exponent_int < 0 or exponent_int != exponent:
+                raise ValueError(f"Unsupported exponent in CEM expression: {exponent}")
+            if exponent_int == 0:
+                return S.One, []
+            flattened_base = _flatten_factors(base)
+            if flattened_base is None:
+                return None
+            base_scalar, base_factors = flattened_base
+            return base_scalar**exponent_int, base_factors * exponent_int
+
+        return expr, []
+
+    def _eval_expr(term_dict, expr):
+        expr_sym = sympy.sympify(expr)
+
+        if ring.is_elem_mul_type(expr_sym):
             return _apply_factorial_elem_sym(term_dict, expr_sym.degree, expr_sym.numvars)
 
         if isinstance(expr, Add):
