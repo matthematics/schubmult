@@ -53,6 +53,38 @@ class DoubleSchubertElement(BaseSchubertElement):
     def simpleref(self, i):
         return self + self.divdiff(i).mult_poly(self.ring.genset[i + 1] - self.ring.genset[i])
 
+    def coeff_isobaric(self, i, beta):
+        coeff_ring = self.ring.coeff_ring
+        result = self.ring.zero
+        for k, v in self.items():
+            coeff = coeff_ring.from_expr(v)
+            coeff_term1 = coeff.simpleref(i).as_polynomial()
+            coeff_term2 = coeff.isobaric(i, beta).as_polynomial() + beta * v
+
+            basis_elemi = self.ring.from_dict({(~k): S.NegativeOne**k.inv})
+            basis_term1i = basis_elemi.isobaric(i, beta) + beta * basis_elemi
+
+            basis_term1 = self.ring.from_dict({(~k2): v2*(S.NegativeOne**k2.inv) for k2, v2 in basis_term1i.items()})
+            basis_term2 = self.ring.from_dict({k: S.One})
+
+            result += coeff_term1 * basis_term1 + coeff_term2 * basis_term2 - beta * v * self.ring(k)
+        return result
+
+    def isobaric(self, i, beta):
+        the_divdiff = self.divdiff(i)
+        return the_divdiff + beta * (the_divdiff.mult_poly(self.ring.genset[i]) - self)
+
+    def isobaric_perm(self, perm, beta):
+        if perm.inv == 0:
+            return self
+        desc = max(perm.descents())
+        perm2 = perm.swap(desc, desc + 1)
+        return self.isobaric_perm(perm2, beta).isobaric(desc + 1, beta)
+
+    def isobaric_plus_beta(self, i, beta):
+        the_divdiff = self.divdiff(i)
+        return the_divdiff + beta * the_divdiff.mult_poly(self.ring.genset[i])
+
     def act(self, perm):
         perm = Permutation(perm)
         dset = perm.descents()
@@ -229,6 +261,9 @@ class DoubleSchubertElement(BaseSchubertElement):
             res += val * self.ring.positive_elem_sym_rep_backward(k)
         return res
 
+    def antipode(self):
+        return self.ring.antipode(self)
+
 
 class DoubleSchubertRing(BaseSchubertRing):
     def __hash__(self):
@@ -241,37 +276,23 @@ class DoubleSchubertRing(BaseSchubertRing):
     def __str__(self):
         return f"Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
 
+    @cached_property
+    def coeff_ring(self):
+        from .schubert_ring import SingleSchubertRing
+        return SingleSchubertRing(self.coeff_genset)
+
+    @cached_property
+    def antipode_ring(self):
+        return DoubleSchubertRing(self.coeff_genset, self.genset, domain=self.domain)
+
+    def antipode(self, elem):
+        aring = self.antipode_ring
+        result = aring.zero
+        for k, v in elem.items():
+            result += aring(~k) * v
+        return result.expand(deep=False)
+
     def rmul(self, elem, other):
-        # import schubmult.rings.free_algebra as fa
-        # import schubmult.rings.free_algebra as fb
-
-        # if isinstance(other, fa.FreeAlgebraElement):
-        #     other = other.change_basis(fb.SchubertBasis)
-        #     manip = elem
-        #     ring = self
-        #     from .schubert_ring import SingleSchubertRing
-
-        #     if not isinstance(self, SingleSchubertRing):
-        #         manip = SingleSchubertRing(self.genset)([]) * elem
-        #         ring = manip.ring
-        #     ret0 = manip.ring.zero
-        #     for (k, n), v in other.items():
-        #         for k1, v1 in manip.items():
-        #             n2 = 0
-        #             if k1.inv > 0:
-        #                 n2 = max(k1.descents(False))
-        #             if n > n2:
-        #                 continue
-        #             toshift = n2 - n
-        #             new_k = uncode([*([0] * toshift), *k.code])
-        #             if (k1 * ~new_k).inv != k1.inv - new_k.inv:
-        #                 continue
-        #             tosplit = ring(k1 * (~new_k))
-        #             dct = tosplit.coproduct(*list(range(1, toshift + 1)))
-        #             for (perm1, perm2), v2 in dct.items():
-        #                 if perm2.inv == 0:
-        #                     ret0 += v * v1 * v2 * ring(perm1)
-        #     return self([]) * ret0
         try:
             other = self.domain_new(other)
             return self.from_dict({k: v * other for k, v in elem.items()})

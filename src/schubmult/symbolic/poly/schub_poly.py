@@ -520,10 +520,12 @@ def grothendieck_poly_legacy(perm, x, y, beta, keep_as_schub=False):
         return result
     return result.as_polynomial()
 
+
 @cache
 def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
     from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
     from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
+
     if not isinstance(x, GeneratingSet_base):
         x = CustomGeneratingSet(x)
     if not isinstance(y, GeneratingSet_base):
@@ -571,14 +573,22 @@ def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
     schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, ring.genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
     return operator.apply(schub)
 
+
 def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta):
     from schubmult.utils.schub_lib import elem_sym_positional_perms
+
     start_schub = ring(schub_perm)
     bigger_schub = ring.zero
     positions = list(range(start + 1, start + length + 1))
     for perm, coeff in start_schub.items():
         for elem_perm, diff, sign in elem_sym_positional_perms(perm, length, *positions):
-            bigger_schub += sign * coeff * (beta**diff) * prod([ring.coeff_genset[perm[positions[p] - 1]]*beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]]) *ring(elem_perm)
+            bigger_schub += (
+                sign
+                * coeff
+                * (beta**diff)
+                * prod([ring.coeff_genset[perm[positions[p] - 1]] * beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]])
+                * ring(elem_perm)
+            )
     stripness = list(range(start, start + length))
     ret_schub = ring.from_dict(bigger_schub)
     for desc in stripness:
@@ -599,6 +609,7 @@ def apply_isobaric_to_schub(diff_perm, schub_perm, ring, beta):
         elem = new_elem
     return elem
 
+
 @cache
 def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False):
     dom_perm = perm.minimal_dominant_above()
@@ -611,6 +622,7 @@ def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False):
     if keep_as_schub:
         return result
     return result.as_polynomial()
+
 
 @cache
 def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False):
@@ -650,6 +662,91 @@ def to_groth(val, x, y, beta):
     if old[perm] == S.Zero:
         del old[perm]
     return old
+
+
+def _y_term_degree(term, beta):
+    """Degree of a single additive term in its non-``beta`` free symbols.
+
+    ``beta`` is a bookkeeping deformation parameter, not an (x,y)-graded
+    coordinate, so it is excluded from the generators handed to ``Poly``
+    (any powers of it simply fall into the coefficient domain).
+    """
+    from schubmult.symbolic import sympify_sympy, sympy_poly
+
+    beta_sym = sympify_sympy(beta)
+    free = term.free_symbols - {beta_sym}
+    if not free:
+        return 0
+    return sympy_poly(term, *sorted(free, key=str)).total_degree()
+
+
+def _min_coeff_degree(v, beta):
+    """Lowest (x,y)-degree (ignoring ``beta``) among the additive terms of ``v``."""
+    from schubmult.symbolic import expand, sympify_sympy, sympy_Add
+
+    expr = sympify_sympy(expand(v))
+    terms = sympy_Add.make_args(expr)
+    return min((_y_term_degree(t, beta) for t in terms), default=0)
+
+
+def _coeff_degree_component(v, degree, beta):
+    """The sum of ``v``'s additive terms whose (x,y)-degree (ignoring ``beta``) is ``degree``.
+
+    A single coefficient can mix several distinct (x,y)-degrees at once (e.g.
+    after a previous Grothendieck correction introduces higher-degree terms
+    into a permutation's slot), so only the requested homogeneous piece may
+    be peeled off in one triangularity step -- never the whole coefficient.
+    """
+    from schubmult.symbolic import expand, sympify, sympify_sympy, sympy_Add
+
+    expr = sympify_sympy(expand(v))
+    terms = sympy_Add.make_args(expr)
+    return sympify(sympy_Add(*[t for t in terms if _y_term_degree(t, beta) == degree]))
+
+
+def to_groth_with_ring(_val, ring, beta):
+    import sympy
+
+    from schubmult.symbolic import expand, sympify
+
+
+    val = ring.from_dict({k: v.expand() for k, v in _val.items() if expand(v) != S.Zero})
+    if len(val.keys()) == 0:
+        return {}
+
+    result_dict = {}
+
+    fracto_subs = {ring.genset[i]: -ring.coeff_genset[i] / (S.One + beta * ring.coeff_genset[i]) for i in range(20)}
+    checked = set()
+    last_val = val
+    while not val.almosteq(ring.zero):
+        residual = S.Zero
+        while True:
+            some_perm = min(set(val.keys()) - checked, key=lambda k: (k.inv, k), default=None)
+            if some_perm is None:
+                return {k: sympify(sympy.simplify(v)) for k, v in result_dict.items()}
+            if some_perm.inv == 0:
+                residual = val.as_polynomial().subs(fracto_subs).simplify().expand()
+            else:
+                iso_val = ring.from_dict({k: v for k, v in val.isobaric_perm(some_perm, beta).items() if expand(v) != S.Zero})
+                residual = iso_val.as_polynomial().subs(fracto_subs).simplify().expand()
+            # print(f"Residual for {some_perm} is {residual}")
+            checked.add(some_perm)
+            if expand(residual) == S.Zero:
+                continue
+            break
+        result_dict[some_perm] = result_dict.get(some_perm, S.Zero) + residual
+        if some_perm.inv == 0:
+            val = val - residual * ring.one
+        else:
+            val = val - residual * grothendieck_poly_with_ring(some_perm, ring, beta, keep_as_schub=True)
+        residual = sympify(sympy.simplify(residual))
+        val = ring.from_dict({k: v.expand() for k, v in val.items() if expand(v) != S.Zero})
+        if val.almosteq(last_val):
+            raise ValueError(f"Failed to reduce {last_val} further; got stuck at {val}")
+        last_val = val
+        # print(val)
+    return {k: sympify(sympy.simplify(v)) for k, v in result_dict.items()}
 
 
 def groth_dict_to_poly(groth_dict, x, zz, beta):
@@ -777,13 +874,15 @@ def groth_elem_as_schub_dict(perm, beta):
     # return {k: v for k, v in schub_elem.items() if v != S.Zero}
     return WCGraph.groth_to_schub(perm, beta)
 
+
 def groth_mul_full(perm_dict, p2, _x, _zz, beta):
     p2 = pl.Permutation(p2)
     return schub_dict_to_groth_dict(perm_dict, groth_elem_as_schub_dict(p2, beta), beta)
 
+
 def groth_mul_full_with_ring(perm_dict, p2, ring, beta):
     p2 = pl.Permutation(p2)
-    return schub_dict_to_groth_dict_with_ring(perm_dict, groth_elem_as_schub_dict(p2, beta), ring,beta)
+    return schub_dict_to_groth_dict_with_ring(perm_dict, groth_elem_as_schub_dict(p2, beta), ring, beta)
 
 
 def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
@@ -912,6 +1011,7 @@ def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
 
         ret = add_perm_dict(ret, subtotal)
     return ret
+
 
 def schub_dict_to_groth_dict_with_ring(base_groth, schub_dict, ring, beta):
     # schub_elem_sym_as_groth_elem_sym_dict
