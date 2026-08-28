@@ -1,9 +1,11 @@
 from functools import cache, cached_property
 
+import symengine
+
 import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol, sympify
-from schubmult.symbolic.common_polys import grothendieck_poly_with_ring
+from schubmult.symbolic.common_polys import grothendieck_poly_with_ring, exp_grothendieck_poly_with_ring
 from schubmult.symbolic.poly.variables import GeneratingSet
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -14,6 +16,26 @@ __all__ = [
     "DoubleGrothendieckElement",
     "DoubleGrothendieckRing",
 ]
+
+class ExponentialGeneratingSet(GeneratingSet):
+    def __new__(cls, label):
+        return ExponentialGeneratingSet.__xnew_cached__(cls, label)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, label):
+        return ExponentialGeneratingSet.__xnew__(_class, label)
+
+    @staticmethod
+    def __xnew__(_class, label):
+        obj = GeneratingSet.__new__(_class, label)
+        return obj
+
+    def __init__(self, label):
+        pass
+
+    def __getitem__(self, i):
+        return symengine.exp(super().__getitem__(i))
 
 
 class DoubleGrothendieckElement(BaseSchubertElement):
@@ -41,6 +63,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         if beta is None:
             beta = Symbol("\u03b2")
         self._beta = beta
+        self._exp_coeff_genset = ExponentialGeneratingSet(coeff_genset.label)
         self._double_schubert_ring = DoubleSchubertRing(genset, coeff_genset)
         self.dtype = type("DoubleGrothendieckElement", (DoubleGrothendieckElement,), {"ring": self})
 
@@ -63,7 +86,8 @@ class DoubleGrothendieckRing(BaseSchubertRing):
     @cache
     def _as_schub_cached(self, perm):
         ring = self._double_schubert_ring
-        return grothendieck_poly_with_ring(perm, ring, self._beta, keep_as_schub=True)
+        #return grothendieck_poly_with_ring(perm, ring, self._beta, keep_as_schub=True)
+        return exp_grothendieck_poly_with_ring(perm, ring, self._beta, self._exp_coeff_genset, keep_as_schub=True)
 
     def _as_schub(self, elem):
         """Expand a G-basis element into the underlying DoubleSchubertRing."""
@@ -75,7 +99,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
     @cached_property
     def vanish_subs_dict(self):
         ring = self._double_schubert_ring
-        return {ring.genset[i]: -ring.coeff_genset[i] / (S.One + self._beta * ring.coeff_genset[i]) for i in range(50)}
+        return {ring.genset[i]: -(self._exp_coeff_genset[i]**(S.One - self._beta) + self._exp_coeff_genset[i]**(-self._beta)) for i in range(50)} | {ring.coeff_genset[i]: self._exp_coeff_genset[i] - 1 for i in range(50)}
 
     def from_double_schubert_elem(self, elem, _simplify=False):
         from schubmult.symbolic import efficient_subs, expand
