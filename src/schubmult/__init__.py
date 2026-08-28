@@ -39,6 +39,7 @@ _lazy_exports = {
     "HPDTile": "schubmult.combinatorics.hpd",
     # Rings
     "Gx": "schubmult.rings.schubert.grothendieck_ring",
+    "DGx": "schubmult.rings.schubert.double_grothendieck_ring",
     "GrothendieckRing": "schubmult.rings.schubert.grothendieck_ring",
     "GrothendieckElement": "schubmult.rings.schubert.grothendieck_ring",
     "Sx": "schubmult.rings.schubert.schubert_ring",

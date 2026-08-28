@@ -29,3 +29,9 @@ def is_of_func_type(elem, typ):
 
 def expand_seq(seq, genset):
     return sympy.prod([genset[i + 1] ** seq[i] for i in range(len(seq))])
+
+
+def efficient_subs(expr, subs_dict):
+    expr = sympify(expr)
+    subs_dict_new = {s: subs_dict[s] for s in expr.free_symbols if s in subs_dict}
+    return expr.subs(subs_dict_new)

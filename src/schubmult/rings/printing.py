@@ -393,3 +393,48 @@ class GrothendieckPoly(PrintingTerm):
 
     def __reduce__(self):
         return (self.__class__, (self._key, self._genset, self._prefix))
+
+
+class DoubleGrothendieckPoly(PrintingTerm):
+    """Printing term for DoubleGrothendieckRing: G_w(x, y)"""
+    is_Atom = True
+
+    _pretty_schub_char = "𝔊"
+
+    def __hash__(self):
+        return hash((self._key, self._genset, self._coeff_genset, "DoubleGrothendieckPoly"))
+
+    def __new__(cls, k, genset, coeff_genset, prefix=""):
+        return DoubleGrothendieckPoly.__xnew_cached__(cls, k, genset, coeff_genset, prefix)
+
+    @staticmethod
+    def __xnew__(_class, k, genset, coeff_genset, prefix):
+        return PrintingTerm.__new__(_class, k, genset, coeff_genset, prefix)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, k, genset, coeff_genset, prefix):
+        return DoubleGrothendieckPoly.__xnew__(_class, k, genset, coeff_genset, prefix)
+
+    def _sympystr(self, printer):
+        key = self._key
+        if key == Permutation([]):
+            return printer.doprint(ssymb.S.One)
+        return printer.doprint(f"{self._prefix}DG{self._genset}({printer.doprint(key)}, {self._coeff_genset})")
+
+    def _pretty(self, printer):
+        key = self._key
+        if key == Permutation([]):
+            return printer._print(ssymb.S.One)
+        subscript = printer._print(key)
+        return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(f"{self._genset}; {self._coeff_genset}")))
+
+    def _latex(self, printer):
+        key = self._key
+        if key == Permutation([]):
+            return printer._print(ssymb.S.One)
+        subscript = printer._print(key)
+        return printer._print_Function(ssymb.Function(f"{self._prefix}\\mathfrak{{G}}_{'{' + subscript + '}'}")(ssymb.Symbol(f"{{{self._genset}}}; {{{self._coeff_genset}}}")))
+
+    def __reduce__(self):
+        return (self.__class__, (self._key, self._genset, self._coeff_genset, self._prefix))

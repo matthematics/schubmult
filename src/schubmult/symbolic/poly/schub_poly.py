@@ -2,7 +2,7 @@ from functools import cache, cached_property
 
 import schubmult.combinatorics.permutation as pl
 import schubmult.utils.schub_lib as schub_lib
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, prod, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, efficient_subs, prod, sympify
 
 from . import variables as vv
 
@@ -179,15 +179,6 @@ def call_zvars(v1, v2, k, i, min_size=10):  # noqa: ARG001
     return (
         [v2[i - 1]] + [v2[j] for j in range(len(v1), len(v2) + max(0, i - len(v2))) if v2[j] != j + 1 and j != i - 1] + [v2[j] for j in range(max(len(v1), min_size)) if v1[j] != v2[j] and j != i - 1]
     )
-
-
-def efficient_subs(expr, subs_dict):
-    subs_dict_new = {}
-    expr = sympify(expr)
-    for s in expr.free_symbols:
-        if s in subs_dict:
-            subs_dict_new[s] = subs_dict[s]
-    return expr.subs(subs_dict_new)
 
 
 def q_vector(q_exp, q_var=_vars.q_var):
