@@ -719,6 +719,66 @@ def to_groth_with_ring(_val, ring, beta):
     fracto_subs = {ring.genset[i]: -ring.coeff_genset[i] / (S.One + beta * ring.coeff_genset[i]) for i in range(20)}
     checked = set()
     last_val = val
+
+    @cache
+    def _isobaric_perm(perm1, div_perm, _beta):
+        coeff = S.One
+        if div_perm.inv == 0:
+            return ring.from_dict({perm1: coeff})
+        desc = min((~div_perm).descents())
+        return _isobaric_perm(perm1, ~((~div_perm).swap(desc, desc + 1)), _beta).isobaric(desc + 1, _beta)
+
+    def _isobaric_schub_elem(elem, div_perm, _beta):
+        result = ring.zero
+        for k, v in elem.items():
+            result += v * _isobaric_perm(k, div_perm, _beta)
+        return result
+
+
+    while not val.almosteq(ring.zero):
+        residual = S.Zero
+        while True:
+            some_perm = min(set(val.keys()) - checked, key=lambda k: (k.inv, k), default=None)
+            if some_perm is None:
+                return {k: sympify(sympy.simplify(v)) for k, v in result_dict.items()}
+            if some_perm.inv == 0:
+                residual = val.as_polynomial().subs(fracto_subs).simplify().expand()
+            else:
+                iso_val = ring.from_dict({k: v for k, v in _isobaric_schub_elem(val, some_perm, beta).items() if expand(v) != S.Zero})
+                residual = iso_val.as_polynomial().subs(fracto_subs).simplify().expand()
+            # print(f"Residual for {some_perm} is {residual}")
+            checked.add(some_perm)
+            if expand(residual) == S.Zero:
+                continue
+            break
+        result_dict[some_perm] = result_dict.get(some_perm, S.Zero) + residual
+        if some_perm.inv == 0:
+            val = val - residual * ring.one
+        else:
+            val = val - residual * grothendieck_poly_with_ring(some_perm, ring, beta, keep_as_schub=True)
+        residual = sympify(sympy.simplify(residual))
+        val = ring.from_dict({k: v.expand() for k, v in val.items() if expand(v) != S.Zero})
+        if val.almosteq(last_val):
+            raise ValueError(f"Failed to reduce {last_val} further; got stuck at {val}")
+        last_val = val
+    return {k: sympify(sympy.simplify(v)) for k, v in result_dict.items()}
+
+
+def to_groth_with_ring_functional(_val, ring, beta):
+    import sympy
+
+    from schubmult.symbolic import expand, sympify
+
+
+    val = ring.from_dict({k: v.expand() for k, v in _val.items() if expand(v) != S.Zero})
+    if len(val.keys()) == 0:
+        return {}
+
+    result_dict = {}
+
+    fracto_subs = {ring.genset[i]: -ring.coeff_genset[i] / (S.One + beta * ring.coeff_genset[i]) for i in range(20)}
+    checked = set()
+    last_val = val
     while not val.almosteq(ring.zero):
         residual = S.Zero
         while True:
