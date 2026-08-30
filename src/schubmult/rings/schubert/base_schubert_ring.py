@@ -79,6 +79,9 @@ class BaseSchubertElement(BaseRingElement):
             return elem1.almosteq(elem1.ring.one * elem2)
         return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
 
+    def strip_zeros(self):
+        return self.ring.from_dict({k: v for k, v in self.items() if v != S.Zero})
+
 
 class BaseSchubertRing(BaseRing):
 
@@ -96,6 +99,7 @@ class BaseSchubertRing(BaseRing):
         if not isinstance(other, BaseSchubertElement):
             return super().mul(elem, other)
         return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
+
 
     def new(self, x): ...
 
