@@ -24,6 +24,9 @@ class DoubleGrothendieckElement(BaseSchubertElement):
 
         return Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
+    def perm_subs(self, perm):
+        return self.ring.perm_subs(self, perm)
+
 
 class DoubleGrothendieckRing(BaseSchubertRing):
     """
@@ -56,6 +59,11 @@ class DoubleGrothendieckRing(BaseSchubertRing):
     def __eq__(self, other):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset and self._beta == other._beta
 
+    def perm_subs(self, elem, perm):
+        elem_schub = self._as_schub(elem)
+        dct = {self.genset[i]: -self.coeff_genset[perm[i - 1]]/(S.One + self._beta * self.coeff_genset[perm[i - 1]]) for i in range(1, max([len(p) for p in elem_schub.keys()]) + 1)}
+        return elem_schub.eval(dct)
+
     @property
     def beta(self):
         return self._beta
@@ -77,17 +85,20 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         ring = self._double_schubert_ring
         return {ring.genset[i]: -ring.coeff_genset[i] / (S.One + self._beta * ring.coeff_genset[i]) for i in range(50)}
 
+    def permuted_subs_dict(self, perm):
+        ring = self._double_schubert_ring
+        return {ring.genset[i]: -ring.coeff_genset[perm[i - 1]] / (S.One + self._beta * ring.coeff_genset[perm[i - 1]]) for i in range(1, len(perm) + 1)}
+
     def from_double_schubert_elem(self, elem, _simplify=False):
-        from schubmult.symbolic import efficient_subs, expand
+        from schubmult.symbolic import expand
 
         ring = self._double_schubert_ring
 
         val = ring.from_dict({k: sympify(v).expand() for k, v in elem.items() if sympify(v).expand() != S.Zero})
 
         final_result = self.zero
-        beta = self._beta
+        # beta = self._beta
 
-        fracto_subs = self.vanish_subs_dict
         checked = set()
         last_val = val
 
@@ -115,15 +126,12 @@ class DoubleGrothendieckRing(BaseSchubertRing):
                     if _simplify:
                         return self.from_dict({k: v.simplify() for k, v in final_result.items()})
                     return final_result
-                if some_perm.inv == 0:
-                    residual = efficient_subs(val.as_polynomial(), fracto_subs).simplify()
-                else:
-                    iso_val = _isobaric_schub_elem(val, some_perm, beta)
-                    residual = efficient_subs(iso_val.as_polynomial(), fracto_subs).simplify()
+                residual = val.eval(self.permuted_subs_dict(some_perm)).simplify()
                 checked.add(some_perm)
-                residual = expand(residual)
-                if residual == S.Zero:
+
+                if expand(residual) == S.Zero:
                     continue
+                residual = (residual / self._as_schub_cached(some_perm).eval(self.permuted_subs_dict(some_perm))).simplify()
                 break
             final_result += residual * self(some_perm)
             if some_perm.inv == 0:
@@ -136,6 +144,55 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         if _simplify:
             return self.from_dict({k: v.simplify() for k, v in final_result.items()})
         return final_result
+
+    # def from_double_schubert_elem_fixed(self, elem, _simplify=False):
+    #     from schubmult.symbolic import efficient_subs, expand, sympify
+    #     from sympy import div
+
+    #     ring = self._double_schubert_ring
+
+    #     val = ring.from_dict({k: sympify(v).expand() for k, v in elem.items() if sympify(v).expand() != S.Zero})
+
+    #     final_result = self.zero
+    #     beta = self._beta
+
+    #     fracto_subs = self.vanish_subs_dict
+    #     checked = set()
+    #     last_val = val
+
+    #     while not val.almosteq(ring.zero):
+    #         residual = S.Zero
+    #         while True:
+    #             val = ring.from_dict({k: v.expand() for k, v in val.items() if v.expand() != S.Zero})
+    #             some_perm = min(set(val.keys()) - checked, key=lambda k: (k.inv, k), default=None)
+    #             if some_perm is None:
+    #                 if _simplify:
+    #                     return self.from_dict({k: v.simplify() for k, v in final_result.items()})
+    #                 return final_result
+    #             if some_perm.inv == 0:
+    #                 residual = efficient_subs(val.as_polynomial(), fracto_subs).simplify()
+    #             else:
+    #                 # iso_val = _isobaric_schub_elem(val, some_perm, beta)
+    #                 fracto_wacto_subs = {ring.genset[(~some_perm)[i] - 1]: -ring.coeff_genset[i] / (S.One + beta * ring.coeff_genset[i]) for i in range(50)}
+    #                 residual = efficient_subs(val.as_polynomial(), fracto_wacto_subs).simplify()
+    #                 for (a,b) in some_perm.inversion_set:
+    #                     residual, _ = div(residual, (ring.genset[b]))
+    #             checked.add(some_perm)
+    #             residual = expand(residual)
+    #             if residual == S.Zero:
+    #                 continue
+    #             break
+    #         final_result += residual * self(some_perm)
+    #         if some_perm.inv == 0:
+    #             val = val - residual * ring.one
+    #         else:
+    #             val = val - residual * self._as_schub_cached(some_perm)
+    #         if val.almosteq(last_val):
+    #             raise ValueError(f"Failed to reduce {last_val} further; got stuck at {val}")
+    #         last_val = val
+    #     if _simplify:
+    #         return self.from_dict({k: v.simplify() for k, v in final_result.items()})
+    #     return final_result
 
     def mul(self, elem, other):
         if not isinstance(other, BaseSchubertElement):

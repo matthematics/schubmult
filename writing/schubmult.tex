@@ -1590,6 +1590,20 @@ $$\mathfrak G_{w_0}(x;y) = \prod_{i+j\leq n} (x_i + y_j + \beta x_iy_j)$$
 
 
 $$(\pi_i+\beta)(fg) = (\pi_i+\beta)(f)s_i(g) + f(\pi_i+\beta)(g)$$
+
+
+\newcommand{\groth}{\mathfrak G}
+
+$$\pi^{(\beta)}_jx_i\groth_u(x;y)=-\beta x_i \groth_u(x;y)+(s_jx_i)(\pi^{(\beta)}_j + \beta)(\groth_u(x;y))$$
+$$+(\pi^{(\beta)}_j+\beta)(x_i)\groth_u(x;y)$$
+
+
+$$=\beta x_i \groth_u(x;y)+x_i\groth_{us_j}(x;y)$$
+
+% $$m_{i,u}^{w} = \beta m_{i,}
+% $$=x_{i+1}\groth_{us_i}(x;y) + (1+\beta x_{i+1})\groth_u(x;y)$$
+
+$$=x_{i-1}\groth_{us_{i-1}}(x;y) - (1-\beta x_{i-1})\groth_u(x;y)$$
 \bibliographystyle{acm}
 \bibliography{formschub}
 \end{document}
