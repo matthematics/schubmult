@@ -170,7 +170,8 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return self._from_double_schubert_elem(self._double_schubert_ring(perm))
 
     def from_double_schubert_elem(self, elem):
-        return sum(v * self.schub_as_groth(schub) for schub, v in elem.items())
+        return self._from_double_schubert_elem(elem)
+        #return sum(v * self.schub_as_groth(schub) for schub, v in elem.items())
 
     def _from_double_schubert_elem(self, elem):
         from sympy import cancel
@@ -216,8 +217,22 @@ class DoubleGrothendieckRing(BaseSchubertRing):
             val = val.strip_zeros()
         return final_result
 
+    def _best_effort_grothmult_double(self, elem, elem2):
+        from schubmult.mult.groth_double import grothmult_double
+        ring2 = elem2.ring
+        result = self.zero
+
+        for k, v in elem2.items():
+            try:
+                result += v * self.from_dict(grothmult_double(elem, k, var2=self.coeff_genset, var3=ring2.coeff_genset, beta=self._beta))
+            except NotImplementedError:
+                result += v * self.from_double_schubert_elem(self._as_schub(elem) * ring2._as_schub(elem2))
+        return result
+
+
     def mul(self, elem, other):
-        return self.from_double_schubert_elem(self._as_schub(elem) * other.ring._as_schub(other))
+        #return self.from_double_schubert_elem(self._as_schub(elem) * other.ring._as_schub(other))
+        return self._best_effort_grothmult_double(elem, other)
 
     def from_expr(self, expr):
         return self.from_double_schubert_elem(self._double_schubert_ring.from_expr(expr))
@@ -254,6 +269,10 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 #DGx = DoubleGrothendieckRing(GeneratingSet("x"), GeneratingSet("y"))
 
 def DGx(x, genset=GeneratingSet("y")):
+    from schubmult.symbolic.poly.variables import ZeroGeneratingSet
     if isinstance(genset, str):
-        genset = GeneratingSet(genset)
+        if genset == "0":
+            genset = ZeroGeneratingSet()
+        else:
+            genset = GeneratingSet(genset)
     return DoubleGrothendieckRing(GeneratingSet("x"), genset)(x)

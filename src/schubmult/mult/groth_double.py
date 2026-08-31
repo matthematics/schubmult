@@ -126,8 +126,13 @@ def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None, n=None):
     if v.inv == 0:
         return perm_dict
     if v.inv > 1:
-        raise NotImplementedError(f"grothmult_double is only implemented for v.inv <= 1, got {list(v)} with {v.inv} inversions")
-
+        if v.max_descent == 1:
+            from schubmult.combinatorics.permutation import uncode
+            numtimes = v.trimcode[0]
+            for index in range(numtimes):
+                perm_dict = grothmult_double(perm_dict, uncode([1]), var2, var3[index:], beta, n)
+            return perm_dict
+        raise NotImplementedError(f"grothmult_double is only implemented for v.inv <= 1 or v.max_descent == 1, got {list(v)} with {v.inv} inversions")
     # v = s_k, so its Lehmer code is [0, ..., 0, 1] with the 1 in position k.
     k = len(v.trimcode)
 
