@@ -63,7 +63,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
     def perm_subs(self, elem, perm):
         elem_schub = self._as_schub(elem)
-        dct = {self.genset[i]: -self.coeff_genset[perm[i - 1]]/(S.One + self._beta * self.coeff_genset[perm[i - 1]]) for i in range(1, max([len(p) for p in elem_schub.keys()]) + 1)}
+        dct = {self.genset[i]: -self.coeff_genset[perm[i - 1]] / (S.One + self._beta * self.coeff_genset[perm[i - 1]]) for i in range(1, max([len(p) for p in elem_schub.keys()]) + 1)}
         return elem_schub.eval(dct)
 
     @property
@@ -108,14 +108,14 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
     @cache
     def _weight(self, index):
-        return -self.coeff_genset[index]/(S.One + self._beta * self.coeff_genset[index])
+        return -self.coeff_genset[index] / (S.One + self._beta * self.coeff_genset[index])
 
     @cache
     def product_of_roots(self, perm):
         roots = (~perm).inversion_set
         result = S.One
-        for (a, b) in roots:
-            result *= (self.coeff_genset[a] - self.coeff_genset[b])/(1+self._beta*self.coeff_genset[b])
+        for a, b in roots:
+            result *= (self.coeff_genset[a] - self.coeff_genset[b]) / (1 + self._beta * self.coeff_genset[b])
         return result
 
     @cache
@@ -157,6 +157,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         from sympy import cancel
 
         from schubmult.symbolic import sympify, sympify_sympy
+
         return sympify(cancel(sympify_sympy(expr)))
 
     def div_by_product_of_roots(self, expr, perm):
@@ -165,7 +166,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         from schubmult.symbolic import sympify
 
         num, den = fraction(cancel(expr))
-        #num = expand(num)
+        # num = expand(num)
 
         # Divide one linear factor at a time. Whatever does not divide exactly stays
         # in the denominator, so the result is a rational function in general.
@@ -176,8 +177,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
             else:
                 den = den * (self.coeff_genset[a] - self.coeff_genset[b])
             num = num * (1 + self._beta * self.coeff_genset[b])
-        return sympify(cancel(num/den))
-
+        return sympify(cancel(num / den))
 
     @property
     def mult_poly_double(self):
@@ -193,7 +193,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
     def from_double_schubert_elem(self, elem):
         return self._from_double_schubert_elem(elem)
-        #return sum(v * self.schub_as_groth(schub) for schub, v in elem.items())
+        # return sum(v * self.schub_as_groth(schub) for schub, v in elem.items())
 
     def _from_double_schubert_elem(self, elem):
         from sympy import cancel
@@ -247,12 +247,12 @@ class DoubleGrothendieckRing(BaseSchubertRing):
             try:
                 result += v * self.from_dict(self.double_mul(elem, k, var2=self.coeff_genset, var3=ring2.coeff_genset, beta=self._beta))
             except NotImplementedError:
-                result += v * self.from_double_schubert_elem(self._as_schub(elem) * ring2._as_schub(elem2))
+                result += v * self.mul_expr(elem, elem2.as_polynomial())
         return result
-
 
     def mul_expr(self, elem, x):
         from schubmult.symbolic import Add, DomainElement, Mul, Pow, sympify
+
         if isinstance(x, DomainElement):
             raise TypeError(f"Cannot multiply {type(elem)} with {type(x)}")
         x = sympify(x)
@@ -277,16 +277,19 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def mul(self, elem, other):
-        #return self.from_double_schubert_elem(self._as_schub(elem) * other.ring._as_schub(other))
+        # return self.from_double_schubert_elem(self._as_schub(elem) * other.ring._as_schub(other))
         return self._best_effort_grothmult_double(elem, other)
 
     def from_expr(self, expr):
         return self.mul_expr(self.one, expr)
-        #self.from_double_schubert_elem(self._double_schubert_ring.from_expr(expr))
+        # self.from_double_schubert_elem(self._double_schubert_ring.from_expr(expr))
 
     @cache
     def cached_schubpoly(self, k):
-        return grothendieck_poly_with_ring(k, self._double_schubert_ring, self._beta)
+        from schubmult.combinatorics.wc_graph import WCGraph
+
+        # return grothendieck_poly_with_ring(k, self._double_schubert_ring, self._beta)
+        return sum([wc.polyvalue(self.genset, self.coeff_genset, beta=self._beta, prop_beta=True) for wc in WCGraph.all_wc_graphs(k)])
 
     def printing_term(self, k, prefix=""):
         return spolymod.DoubleGrothendieckPoly(k, self.genset.label, self.coeff_genset.label, prefix=prefix)
@@ -310,10 +313,12 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return self.dtype(dct)
 
 
-#DGx = DoubleGrothendieckRing(GeneratingSet("x"), GeneratingSet("y"))
+# DGx = DoubleGrothendieckRing(GeneratingSet("x"), GeneratingSet("y"))
+
 
 def DGx(x, genset=GeneratingSet("y")):
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+
     if isinstance(genset, str):
         if genset == "0":
             genset = ZeroGeneratingSet()
