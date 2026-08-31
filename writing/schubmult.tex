@@ -1606,6 +1606,20 @@ $$=\beta x_i \groth_u(x;y)+x_i\groth_{us_j}(x;y)$$
 $$=x_{i-1}\groth_{us_{i-1}}(x;y) - (1-\beta x_{i-1})\groth_u(x;y)$$
 
 
+$$\pi^{(\beta)}_1(\groth_u(x;y)\groth_{(k)}(x_1;z))$$
+
+$$\groth_{us_1}(x;y)\groth_{(k)}(x_2;z)+\beta \groth_u(x;y)\groth_{(k)}(x_2;z)+\groth_u(x;y)(\groth_{(0,k-1)}(x_1,x_2;z)+\beta)-\beta \groth_u(x;y)\groth_{(k)}(x_1;z)$$
+
+$$\groth_{us_1}(x;y)\groth_{s_1}(x_2;z)+\beta \groth_u(x;y)\groth_{s_1}(x_2;z)+\beta\groth_u(x;y)-\beta \groth_u(x;y)\groth_{s_1}(x_1;z)$$
+
+If $u$ has $s_1$ descent,
+
+$$(\beta \groth_u(x;y) + \groth_{us_1}(x;y))\groth_{s_1}(x_2;z)+\beta\groth_u(x;y)(1-\groth_{s_1}(x_1;z)) = \pi_{s_1}^{(\beta)}(\sch_u(x;y)\sch_{s_2s_1}(x;z))$$
+
+
+$$(\beta \groth_u(x;y) + \groth_{us_1}(x;y))x_2 = \pi_{s_1}^{(\beta)}(\sch_u(x;y)x_1^2) + \beta\groth_u(x;y)(1-x_1)$$
+
+$$\groth_{s_2}(x) - \groth_{s_1}(x) = x_2(1 + \beta x_1)$$
 \bibliographystyle{acm}
 \bibliography{formschub}
 \end{document}

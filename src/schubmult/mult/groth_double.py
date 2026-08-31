@@ -55,10 +55,17 @@ reflections in type ``A_{n-1}`` is
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
-from schubmult.symbolic import S, sympify, sympify_sympy
+from schubmult.symbolic import Add, Mul, Pow, S, sympify, sympify_sympy
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
+from schubmult.utils.perm_utils import add_perm_dict
 
-__all__ = ["grothmult_double", "monk_chain"]
+__all__ = [
+    "epsilon_chain",
+    "grothmult_double",
+    "monk_chain",
+    "mult_poly_groth_double",
+    "single_variable_groth",
+]
 
 
 def monk_chain(k, n):
@@ -67,6 +74,114 @@ def monk_chain(k, n):
     Returned as the ordered tuple of transpositions ``(i, j)``, ``i <= k < j``.
     """
     return tuple((i, j) for i in range(1, k + 1) for j in range(n, k, -1))
+
+
+def epsilon_chain(k, n):
+    """Reduced ``(-eps_k)``-chain of reflections in ``A_{n-1}`` (Cor. 15.4).
+
+    ``(-omega_k)``-chains only see the roots ``alpha_{ij}`` with ``i <= k < j``,
+    which is why ``monk_chain`` multiplies by the whole product
+    ``prod_{i<=k}(1 + beta*x_i)``.  Isolating a single ``x_k`` needs the weight
+    ``eps_k = omega_k - omega_{k-1}`` instead, whose chain also involves the
+    roots ``alpha_{ik}`` with ``i < k``.
+
+    Each entry is ``(a, b, level)`` for the affine reflection ``s_{alpha_ab, level}``:
+
+    * ``(i, k, 0)`` for ``i = k-1, ..., 1`` -- positive roots ``alpha_{ik}``;
+    * ``(k, j, 1)`` for ``j = n, ..., k+1`` -- negative roots ``alpha_{jk}``, which
+      are the ones contributing a sign ``(-1)^{n(J)}`` in Theorem 6.1.
+    """
+    return tuple((i, k, 0) for i in range(k - 1, 0, -1)) + tuple((k, j, 1) for j in range(n, k, -1))
+
+
+def _one_plus_beta_x_terms(u, k, var2, beta, n):
+    r"""Expand ``(1 + beta*x_k) G_u(x, var2)`` as ``{w: coeff}``.
+
+    ``1 + beta*x_k`` is the class ``e^{-eps_k}``, so this is Theorem 6.1 for
+    ``lambda = -eps_k``.  Writing ``J`` for a subset of ``epsilon_chain(k, n)``
+    whose reflections form a saturated increasing Bruhat chain
+    ``u = w_0 < w_1 < ... < w_s = w``, the transported coefficient is
+
+        (-1)^{n(J)} (-beta)^{|J|} / (1 + beta*var2[w(k)])
+            * prod_{level-1 steps} (1 + beta*var2[w_j(b)]) / (1 + beta*var2[w_j(k)]),
+
+    where ``w_j`` is the permutation just before the step and ``n(J)`` counts the
+    level-``1`` steps.
+    """
+    chain = epsilon_chain(k, n)
+    terms = {}
+
+    def walk(start, w, character, sign):
+        terms[w] = terms.get(w, S.Zero) + sign * character / (S.One + beta * var2[w[k - 1]])
+        for index in range(start, len(chain)):
+            a, b, level = chain[index]
+            stepped = w.swap(a - 1, b - 1)
+            if stepped.inv != w.inv + 1:
+                continue
+            if level:
+                # r = s_{alpha_kb, 1} translates the weight by w(alpha_kb).
+                walk(index + 1, stepped, character * (S.One + beta * var2[w[b - 1]]) / (S.One + beta * var2[w[k - 1]]), sign * beta)
+            else:
+                walk(index + 1, stepped, character, -sign * beta)
+
+    walk(0, u, S.One, S.One)
+    return terms
+
+
+def single_variable_groth(coeff_dict, varnum, var2=None, beta=None, n=None):
+    r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the single variable ``x_varnum``.
+
+    Returns ``{w: coeff_w}``.  This is ``_one_plus_beta_x_terms`` with the
+    identity subtracted off and ``beta`` divided out; the diagonal coefficient
+    collapses to ``(-) var2[u(varnum)] = -y/(1 + beta*y)``, the formal inverse of
+    ``var2[u(varnum)]``, which is the localization of ``x_varnum`` at ``u``.
+    """
+    if beta is None:
+        beta = _default_beta
+    var2 = _genset(var2)
+    k = varnum
+
+    ret = {}
+    for u, val in coeff_dict.items():
+        u = Permutation(u)
+        rank = max(n or 0, len(u), k + 1) + 1
+        for w, coeff in _one_plus_beta_x_terms(u, k, var2, beta, rank).items():
+            if w == u:
+                y = var2[u[k - 1]]
+                ret[w] = ret.get(w, S.Zero) + val * (-y) / (S.One + beta * y)
+            else:
+                ret[w] = ret.get(w, S.Zero) + val * _divide_by_beta(coeff, beta)
+    return ret
+
+
+def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None, n=None):
+    """Multiply ``sum_u coeff_u G_u(x, var_y)`` by an arbitrary polynomial in ``var_x``.
+
+    Mirrors ``mult_poly_double``; the leaves of the ``Add``/``Mul``/``Pow`` recursion
+    are handled by ``single_variable_groth``.
+    """
+    var_x = _genset(var_x)
+    var_y = _genset(var_y)
+    index = var_x.index(poly)
+    if index != -1:
+        return single_variable_groth(coeff_dict, index, var_y, beta, n)
+    if isinstance(poly, Mul):
+        ret = coeff_dict
+        for arg in poly.args:
+            ret = mult_poly_groth_double(ret, arg, var_x, var_y, beta, n)
+        return ret
+    if isinstance(poly, Pow):
+        base, exponent = poly.args
+        ret = coeff_dict
+        for _ in range(int(exponent)):
+            ret = mult_poly_groth_double(ret, base, var_x, var_y, beta, n)
+        return ret
+    if isinstance(poly, Add):
+        ret = {}
+        for arg in poly.args:
+            ret = add_perm_dict(ret, mult_poly_groth_double(coeff_dict, arg, var_x, var_y, beta, n))
+        return ret
+    return {perm: poly * coeff for perm, coeff in coeff_dict.items()}
 
 
 def _chain_sums(u, k, n, beta):

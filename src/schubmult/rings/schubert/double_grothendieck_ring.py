@@ -1,5 +1,7 @@
 from functools import cache, cached_property
 
+import schubmult.mult.groth as py
+import schubmult.mult.groth_double as yz
 import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol, sympify
@@ -65,8 +67,20 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return elem_schub.eval(dct)
 
     @property
+    def double_mul(self):
+        return yz.grothmult_double
+
+    @property
+    def single_mul(self):
+        return py.grothmult_py
+
+    @property
     def beta(self):
         return self._beta
+
+    @property
+    def single_variable(self):
+        return yz.single_variable_groth
 
     @cache
     def _as_schub_cached(self, perm):
@@ -165,6 +179,14 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return sympify(cancel(num/den))
 
 
+    @property
+    def mult_poly_double(self):
+        return yz.mult_poly_groth_double
+
+    @property
+    def mult_poly_single(self):
+        return py.mult_poly_groth
+
     @cache
     def schub_as_groth(self, perm):
         return self._from_double_schubert_elem(self._double_schubert_ring(perm))
@@ -218,27 +240,49 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return final_result
 
     def _best_effort_grothmult_double(self, elem, elem2):
-        from schubmult.mult.groth_double import grothmult_double
         ring2 = elem2.ring
         result = self.zero
 
         for k, v in elem2.items():
             try:
-                result += v * self.from_dict(grothmult_double(elem, k, var2=self.coeff_genset, var3=ring2.coeff_genset, beta=self._beta))
+                result += v * self.from_dict(self.double_mul(elem, k, var2=self.coeff_genset, var3=ring2.coeff_genset, beta=self._beta))
             except NotImplementedError:
                 result += v * self.from_double_schubert_elem(self._as_schub(elem) * ring2._as_schub(elem2))
         return result
 
+
+    def mul_expr(self, elem, x):
+        from schubmult.symbolic import Add, DomainElement, Mul, Pow, sympify
+        if isinstance(x, DomainElement):
+            raise TypeError(f"Cannot multiply {type(elem)} with {type(x)}")
+        x = sympify(x)
+        ind = self.genset.index(x)
+        if ind != -1:
+            return self.from_dict(self.single_variable(elem, ind, self.coeff_genset, beta=self._beta))
+        if isinstance(x, Add):
+            return self.sum([self.mul_expr(elem, arg) for arg in x.args])
+        if isinstance(x, Mul):
+            res = elem
+            for arg in x.args:
+                res = self.mul_expr(res, arg)
+            return res
+        if isinstance(x, Pow):
+            res = elem
+            base = x.args[0]
+            exponent = x.args[1]
+            if x.args[1] >= 0:
+                for _ in range(int(exponent)):
+                    res = self.mul_expr(res, base)
+                return res
+        return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def mul(self, elem, other):
         #return self.from_double_schubert_elem(self._as_schub(elem) * other.ring._as_schub(other))
         return self._best_effort_grothmult_double(elem, other)
 
     def from_expr(self, expr):
-        return self.from_double_schubert_elem(self._double_schubert_ring.from_expr(expr))
-
-    def mul_expr(self, elem, expr):
-        return self.mul(elem, self.from_expr(expr))
+        return self.mul_expr(self.one, expr)
+        #self.from_double_schubert_elem(self._double_schubert_ring.from_expr(expr))
 
     @cache
     def cached_schubpoly(self, k):
