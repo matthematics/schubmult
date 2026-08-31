@@ -53,6 +53,8 @@ reflections in type ``A_{n-1}`` is
     ``t_{1,n}, t_{1,n-1}, ..., t_{1,k+1}, t_{2,n}, ..., t_{2,k+1}, ..., t_{k,k+1}``.
 """
 
+from fractions import Fraction
+
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, Mul, Pow, S, sympify, sympify_sympy
@@ -60,72 +62,135 @@ from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet
 from schubmult.utils.perm_utils import add_perm_dict
 
 __all__ = [
+    "elem_sym_perms_groth",
     "epsilon_chain",
+    "groth_elem_sym_poly",
     "grothmult_double",
+    "grothmult_double_pieri",
     "monk_chain",
     "mult_poly_groth_double",
+    "one_plus_beta_x_groth",
     "single_variable_groth",
 ]
 
 
 def monk_chain(k, n):
-    """Reduced ``(-omega_k)``-chain of reflections in ``A_{n-1}`` (Cor. 15.4).
+    """Reduced ``(-omega_k)``-chain of reflections in ``A_{n-1}``, as ``(i, j)``, ``i <= k < j``.
 
-    Returned as the ordered tuple of transpositions ``(i, j)``, ``i <= k < j``.
+    ``omega_k = eps_1 + ... + eps_k``, so this is ``epsilon_chain`` on ``{1, ..., k}``:
+    every root ``alpha_{ij}`` with ``i, j <= k`` pairs to zero and drops out, and the
+    survivors all sit at level ``1``.  The order is ``i`` decreasing, then ``j`` decreasing.
     """
-    return tuple((i, j) for i in range(1, k + 1) for j in range(n, k, -1))
+    return tuple((a, b) for a, b, _ in epsilon_chain(tuple(range(1, k + 1)), n))
 
 
-def epsilon_chain(k, n):
-    """Reduced ``(-eps_k)``-chain of reflections in ``A_{n-1}`` (Cor. 15.4).
+def epsilon_chain(positions, n):
+    r"""Reduced ``(-eps_A)``-chain of reflections in ``A_{n-1}``, ``A = positions``.
 
-    ``(-omega_k)``-chains only see the roots ``alpha_{ij}`` with ``i <= k < j``,
-    which is why ``monk_chain`` multiplies by the whole product
-    ``prod_{i<=k}(1 + beta*x_i)``.  Isolating a single ``x_k`` needs the weight
-    ``eps_k = omega_k - omega_{k-1}`` instead, whose chain also involves the
-    roots ``alpha_{ik}`` with ``i < k``.
+    ``positions`` is a single index or an iterable of them (repeats allowed), and
+    ``eps_A = sum_{i in A} eps_i``.  ``(-omega_k)``-chains only see the roots
+    ``alpha_{ij}`` with ``i <= k < j``, which is why ``monk_chain`` multiplies by the
+    whole product ``prod_{i<=k}(1 + beta*x_i)``.  Selecting an arbitrary set of
+    variables needs ``eps_A`` instead, whose chain also involves the roots
+    ``alpha_{ik}`` with ``i < k``.
 
-    Each entry is ``(a, b, level)`` for the affine reflection ``s_{alpha_ab, level}``:
+    Built by Prop. 6.7: the reflections ``s_{alpha, m}`` separating the fundamental
+    alcove from ``A_{eps_A}``, ordered by the lexicographic key
+    ``(lambda, alpha^vee)^{-1} (-m, (omega_1, alpha^vee), ..., (omega_{n-1}, alpha^vee))``.
+    Entries are ``(a, b, m)`` for the positive root ``alpha_{ab} = eps_a - eps_b``, ``a < b``;
+    ``m > 0`` means ``b(r) = -alpha`` is negative and the step carries a sign in Thm 6.1.
 
-    * ``(i, k, 0)`` for ``i = k-1, ..., 1`` -- positive roots ``alpha_{ik}``;
-    * ``(k, j, 1)`` for ``j = n, ..., k+1`` -- negative roots ``alpha_{jk}``, which
-      are the ones contributing a sign ``(-1)^{n(J)}`` in Theorem 6.1.
+    Concatenating the individual ``(-eps_i)``-chains would also be legal (Prop. 12.2) but
+    only after translating the blocks, which shifts their levels; going through Prop. 6.7
+    avoids that and is reduced.  Note a single ``k`` gives ``(i, k, 0)`` for ``i < k`` and
+    ``(k, j, 1)`` for ``j > k``, while for ``A = {1, ..., k}`` every ``alpha_{ij}`` with
+    ``i, j <= k`` pairs to zero and drops out, leaving exactly ``monk_chain(k, n)``.
     """
-    return tuple((i, k, 0) for i in range(k - 1, 0, -1)) + tuple((k, j, 1) for j in range(n, k, -1))
+    if isinstance(positions, int):
+        positions = (positions,)
+    weight = [0] * n
+    for k in positions:
+        weight[k - 1] -= 1
+
+    entries = []
+    for a in range(1, n + 1):
+        for b in range(a + 1, n + 1):
+            pairing = weight[a - 1] - weight[b - 1]
+            if pairing > 0:
+                levels = range(0, -pairing, -1)
+            elif pairing < 0:
+                levels = range(1, -pairing + 1)
+            else:
+                continue
+            omegas = tuple((1 if a <= r else 0) - (1 if b <= r else 0) for r in range(1, n))
+            for m in levels:
+                key = tuple(Fraction(value, pairing) for value in (-m, *omegas))
+                entries.append((key, a, b, m))
+    entries.sort(key=lambda entry: entry[0])
+    return tuple((a, b, m) for _, a, b, m in entries)
 
 
-def _one_plus_beta_x_terms(u, k, var2, beta, n):
-    r"""Expand ``(1 + beta*x_k) G_u(x, var2)`` as ``{w: coeff}``.
+def _one_plus_beta_x_terms(u, positions, var2, beta, n):
+    r"""Expand ``prod_{i in A} (1 + beta*x_i) * G_u(x, var2)`` as ``{w: coeff}``.
 
-    ``1 + beta*x_k`` is the class ``e^{-eps_k}``, so this is Theorem 6.1 for
-    ``lambda = -eps_k``.  Writing ``J`` for a subset of ``epsilon_chain(k, n)``
-    whose reflections form a saturated increasing Bruhat chain
-    ``u = w_0 < w_1 < ... < w_s = w``, the transported coefficient is
+    ``prod_{i in A}(1 + beta*x_i)`` is the class ``e^{-eps_A}``, so this is Theorem 6.1
+    at ``lambda = -eps_A``, in one pass over ``epsilon_chain(positions, n)``.  Writing
+    ``J`` for a subset of that chain whose reflections form a saturated increasing
+    Bruhat chain ``u = w_0 < w_1 < ... < w_s = w``, the transported coefficient is
 
-        (-1)^{n(J)} (-beta)^{|J|} / (1 + beta*var2[w(k)])
-            * prod_{level-1 steps} (1 + beta*var2[w_j(b)]) / (1 + beta*var2[w_j(k)]),
+        (-1)^{n(J)} (-beta)^{|J|} / prod_{i in A} (1 + beta*var2[w(i)])
+            * prod_{steps} ( (1 + beta*var2[w_j(b)]) / (1 + beta*var2[w_j(a)]) )^{level},
 
-    where ``w_j`` is the permutation just before the step and ``n(J)`` counts the
-    level-``1`` steps.
+    where ``w_j`` is the permutation just before the step and ``n(J)`` counts the steps
+    with a negative root, i.e. those of positive level.  Distinct ``J`` can land on the
+    same ``w``, which is where the K-theoretic multiplicities come from, and a position
+    may be stepped on more than once -- both impossible in the ``beta = 0`` rule.
     """
-    chain = epsilon_chain(k, n)
+    chain = epsilon_chain(positions, n)
     terms = {}
 
+    def denominator(w):
+        value = S.One
+        for i in positions:
+            value *= S.One + beta * var2[w[i - 1]]
+        return value
+
     def walk(start, w, character, sign):
-        terms[w] = terms.get(w, S.Zero) + sign * character / (S.One + beta * var2[w[k - 1]])
+        terms[w] = terms.get(w, S.Zero) + sign * character / denominator(w)
         for index in range(start, len(chain)):
             a, b, level = chain[index]
             stepped = w.swap(a - 1, b - 1)
             if stepped.inv != w.inv + 1:
                 continue
-            if level:
-                # r = s_{alpha_kb, 1} translates the weight by w(alpha_kb).
-                walk(index + 1, stepped, character * (S.One + beta * var2[w[b - 1]]) / (S.One + beta * var2[w[k - 1]]), sign * beta)
-            else:
-                walk(index + 1, stepped, character, -sign * beta)
+            # s_{alpha_ab, level} translates the weight by level * w(alpha_ab).
+            factor = ((S.One + beta * var2[w[b - 1]]) / (S.One + beta * var2[w[a - 1]])) ** level
+            walk(index + 1, stepped, character * factor, sign * beta if level > 0 else -sign * beta)
 
     walk(0, u, S.One, S.One)
     return terms
+
+
+def _rank(u, positions, n):
+    return max(n or 0, len(u), max(positions) + 1) + len(positions)
+
+
+def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, n=None):
+    r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``prod_{i in positions} (1 + beta*x_i)``.
+
+    The one-pass Pieri rule of Theorem 6.1 at ``lambda = -eps_A``; see
+    ``_one_plus_beta_x_terms`` for the coefficient.
+    """
+    if beta is None:
+        beta = _default_beta
+    var2 = _genset(var2)
+    positions = (positions,) if isinstance(positions, int) else tuple(positions)
+
+    ret = {}
+    for u, val in coeff_dict.items():
+        u = Permutation(u)
+        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, _rank(u, positions, n)).items():
+            ret[w] = ret.get(w, S.Zero) + val * coeff
+    return ret
 
 
 def single_variable_groth(coeff_dict, varnum, var2=None, beta=None, n=None):
@@ -140,18 +205,90 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None, n=None):
         beta = _default_beta
     var2 = _genset(var2)
     k = varnum
+    positions = (k,)
 
     ret = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
-        rank = max(n or 0, len(u), k + 1) + 1
-        for w, coeff in _one_plus_beta_x_terms(u, k, var2, beta, rank).items():
+        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, _rank(u, positions, n)).items():
             if w == u:
                 y = var2[u[k - 1]]
                 ret[w] = ret.get(w, S.Zero) + val * (-y) / (S.One + beta * y)
             else:
                 ret[w] = ret.get(w, S.Zero) + val * _divide_by_beta(coeff, beta)
     return ret
+
+
+def elem_sym_perms_groth(u, k, n):
+    r"""K-theoretic analogue of ``elem_sym_perms``: ``{w: {d: multiplicity}}``.
+
+    Same recursion as ``elem_sym_perms(u, p, k)`` -- a step is any Bruhat cover
+    ``w -> w t_{ij}`` with ``i <= k < j``, and ``j`` is required to weakly decrease along
+    the chain -- but with the ``p`` cut-off dropped, so chains of every length are
+    produced and the degree cut-off is left to the coefficient.
+
+    This is deliberately *not* a subset-of-a-fixed-chain enumeration.  A
+    ``lambda``-chain imposes a total order on the transpositions, which loses covers such
+    as ``id < [1,3,2] < [2,3,1]`` (that needs ``t_{23}`` before ``t_{13}``); covers come
+    from arbitrary upward transpositions, and only ``j`` is constrained.
+
+    ``d = l(w) - l(u)`` is the chain length.  A position ``i <= k`` may be stepped on more
+    than once, and distinct chains can land on the same ``w`` at the same ``d``, which is
+    the source of the K-theoretic multiplicities.
+    """
+    out = {}
+
+    def walk(w, last_b, d):
+        if d:
+            counts = out.setdefault(w, {})
+            counts[d] = counts.get(d, 0) + 1
+        for b in range(last_b, k, -1):
+            for a in range(1, k + 1):
+                stepped = w.swap(a - 1, b - 1)
+                if stepped.inv == w.inv + 1:
+                    walk(stepped, b, d + 1)
+
+    walk(u, n, 0)
+    return out
+
+
+def groth_elem_sym_poly(p, k, zvar, var_x, beta):
+    """``E_p^beta(x_1..x_k; z) = e_p(x_1 (+) z, ..., x_k (+) z)``, ``x (+) z = x(1 + beta*z) + z``.
+
+    The double Grothendieck elementary symmetric: ``p == k`` gives
+    ``(x_1(1 + beta*z) + z) ... (x_k(1 + beta*z) + z)`` and ``beta == 0`` gives the
+    factorial elementary symmetric ``elem_sym_poly(p, k, x, [-z])``.
+    """
+    acc = [S.One] + [S.Zero] * p
+    for i in range(1, k + 1):
+        shifted = var_x[i] * (S.One + beta * zvar) + zvar
+        for r in range(p, 0, -1):
+            acc[r] = acc[r] + acc[r - 1] * shifted
+    return acc[p]
+
+
+def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, beta=None, n=None):
+    r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``groth_elem_sym_poly(p, k, zvar, var_x, beta)``.
+
+    Exact, via ``mult_poly_groth_double`` on the expanded polynomial.  A closed-form
+    Pieri rule in the style of ``dom_groth`` -- paths from ``elem_sym_perms_groth`` plus an
+    ``elem_sym_poly`` in the localizations -- is *not* implemented: grading the paths by
+    ``beta^{d - m}`` with ``m`` the number of moved positions and taking ``elem_sym_poly``
+    over the untouched ones is wrong already at ``p == k``.  The non-equivariant rule
+    ``groth_pieri_mul`` grades instead by ``beta^{d - (number of marked steps)}`` with the
+    multiplicity counting admissible markings of the chain (``elem_sym_chains_groth``), so
+    the equivariant coefficient presumably needs that marking data rather than the
+    moved/untouched split.
+    """
+    if beta is None:
+        beta = _default_beta
+    if zvar is None:
+        zvar = S.Zero
+    var_x = _genset(var_x)
+    var2 = _genset(var2)
+
+    poly = sympify(sympify_sympy(groth_elem_sym_poly(p, k, zvar, var_x, beta)).expand())
+    return mult_poly_groth_double(coeff_dict, poly, var_x, var2, beta, n)
 
 
 def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None, n=None):

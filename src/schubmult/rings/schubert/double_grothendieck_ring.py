@@ -247,7 +247,8 @@ class DoubleGrothendieckRing(BaseSchubertRing):
             try:
                 result += v * self.from_dict(self.double_mul(elem, k, var2=self.coeff_genset, var3=ring2.coeff_genset, beta=self._beta))
             except NotImplementedError:
-                result += v * self.mul_expr(elem, elem2.as_polynomial())
+                # Fall back on the single basis element G_k, not on all of elem2.
+                result += v * self.mul_expr(elem, ring2.cached_schubpoly(k))
         return result
 
     def mul_expr(self, elem, x):

@@ -15,10 +15,14 @@ Also includes positivity utilities (posify, compute_positive_rep) for root-based
 
 from schubmult.mult.double import mult_poly_double, schubmult_double
 from schubmult.mult.groth_double import (
+    elem_sym_perms_groth,
     epsilon_chain,
+    groth_elem_sym_poly,
     grothmult_double,
+    grothmult_double_pieri,
     monk_chain,
     mult_poly_groth_double,
+    one_plus_beta_x_groth,
     single_variable_groth,
 )
 from schubmult.mult.positivity import compute_positive_rep, posify
@@ -32,13 +36,17 @@ from schubmult.mult.single import mult_poly_py, schubmult_py
 
 __all__ = [
     "compute_positive_rep",
+    "elem_sym_perms_groth",
     "epsilon_chain",
     "factor_out_q",
+    "groth_elem_sym_poly",
     "grothmult_double",
+    "grothmult_double_pieri",
     "monk_chain",
     "mult_poly_double",
     "mult_poly_groth_double",
     "mult_poly_py",
+    "one_plus_beta_x_groth",
     "posify",
     "schubmult_double",
     "schubmult_py",

@@ -65,6 +65,24 @@ def test_grothendieck_associative():
     assert all(expand(v) == 0 for v in diff.values())
 
 
+def test_grothendieck_mult_poly():
+    from schubmult import Gx
+    from schubmult.abc import x
+    from schubmult.symbolic import expand, S
+
+    elem = Gx([1, 3, 2])
+    assert expand((x[1] * elem).expand() - expand(x[1] * elem.expand())) == S.Zero
+
+
+def test_grothendieck_beta_zero_is_schubert():
+    from schubmult import Gx, Sx, uncode
+    from schubmult.symbolic import expand, sympify_sympy
+
+    perm = uncode([1, 1])
+    at_zero = sympify_sympy(Gx(perm).expand()).xreplace({sympify_sympy(Gx._beta): 0})
+    assert expand(at_zero - sympify_sympy(Sx(perm).expand())) == 0
+
+
 def test_double_schubert_expand():
     from schubmult import DSx
     from schubmult.symbolic import symbols, expand
@@ -127,6 +145,80 @@ def test_double_schubert_subs():
     old = z[1]
     new = 3
     assert expand(DSx(perm, "z").subs(old, new) - DSx(perm, "z").as_polynomial().subs(old, new)) == S.Zero
+
+
+def test_double_grothendieck_expand():
+    from schubmult import DGx
+    from schubmult.symbolic import symbols, expand, S
+
+    x_1, y_1, y_2 = symbols("x_1 y_1 y_2")
+    beta = DGx([]).ring.beta
+    # [3, 1, 2] is dominant with code (2, 0), so G is the product over its two cells.
+    assert expand(DGx([3, 1, 2]).expand() - expand((x_1 + y_1 + beta * x_1 * y_1) * (x_1 + y_2 + beta * x_1 * y_2))) == S.Zero
+
+
+def test_double_grothendieck_product_polynomial():
+    from sympy import cancel
+    from schubmult import DGx
+    from schubmult.symbolic import expand, sympify_sympy
+
+    for perm1, perm2 in (([2, 1], [1, 3, 2]), ([1, 3, 2], [1, 3, 2]), ([3, 1, 2], [2, 1])):
+        resid = expand((DGx(perm1) * DGx(perm2)).expand() - expand(DGx(perm1).expand() * DGx(perm2).expand()))
+        assert cancel(sympify_sympy(resid)) == 0
+
+
+def test_double_grothendieck_mult_poly():
+    from sympy import cancel
+    from schubmult import DGx
+    from schubmult.abc import x
+    from schubmult.symbolic import expand, sympify_sympy
+
+    elem = DGx([1, 3, 2])
+    resid = expand((x[1] * elem).expand() - expand(x[1] * elem.expand()))
+    assert cancel(sympify_sympy(resid)) == 0
+
+
+def test_double_grothendieck_associative():
+    from sympy import cancel
+    from schubmult import DGx
+    from schubmult.symbolic import sympify_sympy
+
+    # The right bracketing multiplies by a multi-term non-Monk element, which is the
+    # path that bypasses grothmult_double.
+    perm1, perm2, perm3 = [2, 1], [1, 3, 2], [2, 1]
+    diff = ((DGx(perm1) * DGx(perm2)) * DGx(perm3)) - (DGx(perm1) * (DGx(perm2) * DGx(perm3)))
+    assert all(cancel(sympify_sympy(v)) == 0 for v in diff.values())
+
+
+def test_double_grothendieck_second_genset():
+    from sympy import cancel
+    from schubmult import DGx
+    from schubmult.symbolic import expand, sympify_sympy
+
+    a, b = DGx([2, 1]), DGx([1, 3, 2], "z")
+    resid = expand((a * b).as_polynomial() - a.as_polynomial() * b.as_polynomial())
+    assert cancel(sympify_sympy(resid)) == 0
+
+
+def test_double_grothendieck_expr_trans():
+    from sympy import cancel
+    from schubmult import DGx
+    from schubmult.abc import x, y
+    from schubmult.symbolic import expand, sympify_sympy
+
+    expr = (x[1] + y[1] * x[2]) ** 2
+    groth = DGx([]).ring.from_expr(expr)
+    assert cancel(sympify_sympy(expand(groth.as_polynomial() - expr))) == 0
+
+
+def test_double_grothendieck_poly_round_trip():
+    from sympy import cancel
+    from schubmult import DGx
+    from schubmult.symbolic import sympify_sympy
+
+    elem = DGx([2, 1]) * DGx([1, 3, 2])
+    diff = elem.ring.from_expr(elem.as_polynomial()) - elem
+    assert all(cancel(sympify_sympy(v)) == 0 for v in diff.values())
 
 
 def test_quantum_schub_expand():
