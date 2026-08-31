@@ -8,21 +8,27 @@ in various settings:
 - schubmult_double: Double Schubert polynomial multiplication
 - schubmult_q: Quantum Schubert polynomial multiplication
 - schubmult_q_double: Quantum double Schubert polynomial multiplication
+- grothmult_double: Double Grothendieck multiplication by a degree-one class
 
 Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
 """
 
 from schubmult.mult.double import mult_poly_double, schubmult_double
+from schubmult.mult.groth_double import grothmult_double, monk_chain
 from schubmult.mult.positivity import compute_positive_rep, posify
 from schubmult.mult.quantum import schubmult_q
 from schubmult.mult.quantum_double import factor_out_q, schubmult_q_double
-from schubmult.mult.separated_descents import grothmult_double, separated_descents_coeffs
+from schubmult.mult.separated_descents import (
+    grothmult_double as separated_descents_grothmult_double,
+)
+from schubmult.mult.separated_descents import separated_descents_coeffs
 from schubmult.mult.single import mult_poly_py, schubmult_py
 
 __all__ = [
     "compute_positive_rep",
     "factor_out_q",
     "grothmult_double",
+    "monk_chain",
     "mult_poly_double",
     "mult_poly_py",
     "posify",
@@ -31,4 +37,5 @@ __all__ = [
     "schubmult_q",
     "schubmult_q_double",
     "separated_descents_coeffs",
+    "separated_descents_grothmult_double",
 ]

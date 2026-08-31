@@ -157,16 +157,22 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         # in the denominator, so the result is a rational function in general.
         for a, b in sorted((~perm).inversion_set):
             quotient, remainder = div(num, (self.coeff_genset[a] - self.coeff_genset[b]))
-            if remainder == 0:
+            if remainder == S.Zero:
                 num = quotient
             else:
                 den = den * (self.coeff_genset[a] - self.coeff_genset[b])
             num = num * (1 + self._beta * self.coeff_genset[b])
-        #return sympify(cancel(num / den))
-        return sympify(num/den)
+        return sympify(cancel(num/den))
 
 
-    def from_double_schubert_elem(self, elem, _simplify=False):
+    @cache
+    def schub_as_groth(self, perm):
+        return self._from_double_schubert_elem(self._double_schubert_ring(perm))
+
+    def from_double_schubert_elem(self, elem):
+        return sum(v * self.schub_as_groth(schub) for schub, v in elem.items())
+
+    def _from_double_schubert_elem(self, elem):
         from sympy import cancel
 
         from schubmult.symbolic import expand
@@ -188,8 +194,6 @@ class DoubleGrothendieckRing(BaseSchubertRing):
             residual = S.Zero
             some_perm = min(set(val.keys()) - checked, key=lambda k: (k.inv, k), default=None)
             if some_perm is None:
-                if _simplify:
-                    return self.from_dict({k: v.simplify() for k, v in final_result.items()})
                 return final_result
             num_vars = max([*[len(k) for k in val.keys()], 0])
             residual = val.eval(self.permuted_subs_dict(some_perm, num_vars))
@@ -210,8 +214,6 @@ class DoubleGrothendieckRing(BaseSchubertRing):
                 val = val - residual * self._as_schub_cached(some_perm)
             val = ring.from_dict({k: expand(cancel(v)) for k, v in val.items()})
             val = val.strip_zeros()
-        if _simplify:
-            return self.from_dict({k: v.simplify() for k, v in final_result.items()})
         return final_result
 
     def mul(self, elem, other):
