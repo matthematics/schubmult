@@ -66,6 +66,7 @@ __all__ = [
     "epsilon_chain",
     "groth_elem_sym_poly",
     "grothmult_double",
+    "grothmult_double_block",
     "grothmult_double_pieri",
     "monk_chain",
     "mult_poly_groth_double",
@@ -250,6 +251,46 @@ def elem_sym_perms_groth(u, k, n):
 
     walk(u, n, 0)
     return out
+
+
+def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=None, n=None, fgl=True):
+    r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by a linear block over ``positions``:
+
+        fgl=True  ->  prod_{i in A} (x_i (+) zvar),   x (+) z = x*(1 + beta*z) + z
+        fgl=False ->  prod_{i in A} (x_i - zvar)
+
+    ``positions`` is an arbitrary index set (repeats allowed), matching the ``index_list``
+    that ``pull_out_var`` produces, so this is the ``G``-basis analogue of the top-degree
+    mixed-variable block driving ``schubmult_double_alt`` / ``DoubleSchubertRing.elem_mul``.
+
+    ``fgl=False`` is the plain ``beta = 0`` block ``(x_1 - z)(x_2 - z)...`` -- still a
+    perfectly good operator on the ``G`` basis, and the two are interchangeable via
+    ``x (+) z = (1 + beta*z) * (x - (-)z)``, so either can be recovered from the other by
+    rescaling ``zvar``.
+
+    Computed by folding ``single_variable_groth`` one position at a time, using
+    ``(a x_i + b) F = a (x_i F) + b F``.  That keeps every intermediate coefficient
+    polynomial in ``beta``; the one-pass alternative would expand
+    ``prod_i ((1 + beta*x_i)(1 + beta*z) - 1) / beta**|A|`` by inclusion-exclusion over the
+    subsets of ``A`` (each term a ``one_plus_beta_x_groth`` call) and only cancel the
+    ``beta^{-|A|}`` at the very end.
+    """
+    if beta is None:
+        beta = _default_beta
+    if zvar is None:
+        zvar = S.Zero
+    var2 = _genset(var2)
+    positions = (positions,) if isinstance(positions, int) else tuple(positions)
+
+    scale, shift = (S.One + beta * zvar, zvar) if fgl else (S.One, -zvar)
+
+    ret = {Permutation(key): value for key, value in coeff_dict.items()}
+    for i in positions:
+        stepped = {w: scale * coeff for w, coeff in single_variable_groth(ret, i, var2, beta, n).items()}
+        for w, coeff in ret.items():
+            stepped[w] = stepped.get(w, S.Zero) + shift * coeff
+        ret = stepped
+    return ret
 
 
 def groth_elem_sym_poly(p, k, zvar, var_x, beta):
