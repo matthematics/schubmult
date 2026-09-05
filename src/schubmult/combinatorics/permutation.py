@@ -183,6 +183,14 @@ class Permutation(Printable):
             word += list(range(i + cd[i], i, -1))
         return tuple(word)
 
+    @property
+    def inverse_code_word(self):
+        cd = (~self).trimcode
+        word = []
+        for i in range(len(cd)):
+            word = list(range(i + 1, i + cd[i] + 1)) + word
+        return tuple(word)
+
     def root_swap(self, root):
         return self.swap(root[0] - 1, root[1] - 1)
 
@@ -231,6 +239,35 @@ class Permutation(Printable):
             sub = self.swap(d, d + 1)
             for w in sub.all_reduced_words():
                 out.add((*w, d + 1))
+        return out
+
+    @staticmethod
+    def all_reduced_subwords(word):
+        """All reduced subwords of `self`, by peeling descents."""
+        if len(word) == 0:
+            return {()}
+        out = set()
+        d = word[-1]
+        sub = word[:-1]
+        for w in Permutation.all_reduced_subwords(sub):
+            out.add(w)
+            check_perm = Permutation.ref_product(*w)
+            if check_perm[d-1] < check_perm[d]:
+                out.add((*w, d))
+        return out
+
+    @staticmethod
+    def all_subwords(word):
+        """All subwords of `self`, by peeling descents."""
+        if len(word) == 0:
+            return {()}
+        out = set()
+        d = word[-1]
+        sub = word[:-1]
+        subwords = Permutation.all_subwords(sub)
+        out.update(subwords)
+        for w in subwords:
+            out.add((*w, d))
         return out
 
     @staticmethod

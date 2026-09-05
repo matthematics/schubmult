@@ -246,6 +246,8 @@ with sources and a command line interface included. The names $\textbf{\textsc{p
 
 We record this for two reasons. The bounds of Theorem~\ref{thm:complexity} count coefficient-ring operations, and a reader who wishes to see how that count behaves against wall-clock time, or on inputs beyond the reach of hand computation, can simply run the program. More importantly, every structural claim made here has a computational counterpart that the package makes checkable: the confinement of intermediates to a single weak order interval (Lemma~\ref{lemma:outputsupport}), the coefficient stability of Corollary~\ref{cor:semstability}, the freedom in the counts $\lambda$ afforded by Theorem~\ref{thm:elemrepr}, and the collapse of the Grassmannian case (Section~\ref{sec:grassmannian}) can each be verified directly on any given input. We have used it throughout in exactly that way.
 
+Proposition~\ref{prop:piericomplexity} has in addition been formalized in Lean~4 against \texttt{mathlib}, in the \texttt{lean4} directory of the same repository. The development transcribes $\textbf{\textsc{pieri}}$ as written in Method~\ref{method:pieri}, charges one operation per element visited by each of its three nested loops, and derives both halves of the proposition from that accounting. Length and Bruhat order are built there from the inversion count, so the cover condition of Definition~\ref{def:pieriproblem} is proved rather than posited. The one thing assumed is Lemma~\ref{lemma:pierimultfree}, entered as an axiom carrying its citation and reported as such by \texttt{\#print axioms}; the counts $M$ produced by the formal definition agree with those of the Python routine on the instances checked.
+
 \subsection{Organization}
 
 Section~\ref{sec:foundations} fixes notation and records the two formulas the algorithm is built on. Sections~\ref{sec:pieri}, \ref{sec:elemrepr} and~\ref{sec:schubmult} present $\textbf{\textsc{pieri}}$, $\textbf{\textsc{elemrepr}}$ and $\textbf{\textsc{schubmult}}$ with their correctness and cost statements, and the complexity analysis is assembled in Theorem~\ref{thm:complexity} and Corollary~\ref{cor:singlecomplexity}, with prior work discussed in Remark~\ref{remark:priorcomplexity}. Section~\ref{sec:grassmannian} treats the Grassmannian case. The implementation is described in Section~\ref{sec:implementation}.
@@ -593,7 +595,7 @@ elementary operations, that is $O(n^3)$ per enumerated permutation. Moreover, by
 $$M\;\leq\;\#\{\,w\in S_n\mid w\geq u,\ \ell(w)\leq \ell(u)+p\,\}.$$
 \end{proposition}
 \begin{proof}
-Processing one frontier node $(w,\beta)$ costs $O(k)$ to build $A$, and then iterates over the $n-k$ choices of $b$ and the at most $k$ elements of $A$; for each pair the Bruhat-cover test and the transposition each scan $O(n)$ positions. Thus a node costs $O\!\big(k+(n-k)\,k\,n\big)=O\!\big(k\,(n-k)\,n\big)$. By Lemma~\ref{lemma:pierimultfree} the number of nodes ever placed on a frontier equals $\sum_{t=0}^{p-1}N_t$, where $N_t$ is the number of length-$t$ chains; since $\sum_{t=0}^{p-1}N_t\leq\sum_{t=0}^{p}N_t=M$, the total cost is $O\!\big(k\,(n-k)\,n\cdot M\big)$. The bound on $M$ holds because every endpoint satisfies $w\geq u$ and $\ell(w)\leq\ell(u)+p$.
+Processing one frontier node $(w,\beta)$ costs $O(k)$ to build $A$, and then iterates over the $n-k$ choices of $b$ and the at most $k$ elements of $A$; for each pair the Bruhat-cover test and the transposition each scan $O(n)$ positions. Thus a node costs $O\!\big(k+(n-k)\,k\,n\big)=O\!\big(k\,(n-k)\,n\big)$. The layer-$t$ frontier carries one node per admissible $k$-chain of length $t$, so the number of nodes processed is $\sum_{t=0}^{p-1}N_t$, where $N_t$ is the number of length-$t$ chains; since $\sum_{t=0}^{p-1}N_t\leq\sum_{t=0}^{p}N_t=M$, the total cost is $O\!\big(k\,(n-k)\,n\cdot M\big)$. For the bound on $M$, each step of a chain is a Bruhat cover, so an endpoint reached in $t$ steps satisfies $w\geq u$ and $\ell(w)=\ell(u)+t\leq\ell(u)+p$; by Lemma~\ref{lemma:pierimultfree} distinct chains of a common length have distinct endpoints, and chains of different lengths have endpoints of different length, so the $M$ chains inject into the displayed set.
 \end{proof}
 
 \section{The \textbf{elemrepr} algorithm} \label{sec:elemrepr}
@@ -1620,6 +1622,110 @@ $$(\beta \groth_u(x;y) + \groth_{us_1}(x;y))\groth_{s_1}(x_2;z)+\beta\groth_u(x;
 $$(\beta \groth_u(x;y) + \groth_{us_1}(x;y))x_2 = \pi_{s_1}^{(\beta)}(\sch_u(x;y)x_1^2) + \beta\groth_u(x;y)(1-x_1)$$
 
 $$\groth_{s_2}(x) - \groth_{s_1}(x) = x_2(1 + \beta x_1)$$
+
+
+$$\partial^i(1+\beta x_{i+1})\groth_u(x;y)$$
+$$=\partial^i\groth_u(x;y) + \beta\partial^ix_{i+1}\groth_u(x;y)=\groth_{us_i}(x;y)$$
+
+$$=\partial^i\groth_u(x;y) - \beta\groth_u(x;y) + \beta x_{i}\partial^i\groth_u(x;y)=\groth_{us_i}(x;y)$$
+
+$$=(1+\beta x_{i})\partial^i\groth_u(x;y)=\groth_{us_i}(x;y) + \beta\groth_u(x;y)$$
+
+$$=\partial^i_{(y)}\groth_u(x;y)=\frac{\groth_{s_iu}(x;y) + \beta\groth_u(x;y)}{1+\beta y_i}$$
+
+$$\groth_{w_0}(x;y) = \prod_{i=1}^n \groth_{c[n-i,n-i]}(x;y_i)$$
+
+$$t_i = \frac{x_i}{1+\beta x_i}$$
+
+$$\groth_{w_0}(x;y) = \prod_{i=1}^n  \frac{E_{n-i}\left(t;y_i\right)}{\prod_{j=1}^{n-i}(1-\beta t_j)}$$
+
+$$\partial^{vw_0}\groth_{w_0}(x;y) = \sch_v(t;-y)\prod_{i=1}^n\prod_{j=1}^{n-i}\frac{1}{1-\beta t_j}$$
+
+$$\delta^{vw_0}\groth_{w_0}(x;y) = \sch_v(t;-y)\sch_{w_0}(\beta x;-1)$$
+$$=\sum_{R\in \mathcal{RC}_n(v)}\prod_{(a,b)\in R}(x_a+y_b+\beta x_a y_b)\prod_{(i,j)\notin R}(1+\beta y_j)$$
+
+$$=\sum_{R\in \mathcal{RC}_n(v)}\prod_{(a,b)\in R}(x_a(1+\beta y_b)+ y_b)\prod_{(i,j)\notin R}(1+\beta y_j)$$
+
+On $y$
+$$=\sum_{R\in \mathcal{RC}_n(v)}\prod_{(a,b)\in R}(x_a(1+\beta y_b)+ y_b)\prod_{(i,j)\notin R}(1+\beta x_i)$$
+%$$\partial^w\groth_{w_0}(x;y) = \sum_{P}\prod_{i=1}^n E_{n-i}(\beta x;-1)E_{P_i}\left(\frac{x}{1+\beta x};y_{P_i}\right)$$
+
+$$\groth_{s_iu}(x;y) = (\beta - (1+\beta y_i)\delta^i)\groth_u(x;y)$$
+
+$$\prod_{i=1}^n G_{n-i}(x;y_i)$$
+
+$$G_{n-i}(x;y_i) = (1+\beta y_i)^{n-i}\prod_{j=1}^{n-i}\left(x_j + \frac{y_i}{1+\beta y_i}\right)$$
+
+$$G_{n-i}(\theta;y_i) = \prod_{j=1}^{n-i}\frac{\theta_j + y_i}{1-\beta \theta_j}$$
+
+Define an operator
+$$\pi_i^* = \pi_i^{(\beta,y)} + \beta$$
+where 
+$$\pi_i^{(\beta,y)} = \partial_{(y)}^i(1+\beta y_{i+1})$$
+Let $a_1\cdots a_m$ be a reduced expression for some permutation and define
+$$\pi^*_{\mathbf{a}} = \pi_{a_1}^*\cdots \pi_{a_m}^*$$
+\begin{proposition}
+Let $u$ be a dominant permutation. Then the quantity
+$$\pi^*_{\mathbf{a}}(\groth_u(x;y))$$
+is of the form
+$$\sum_w c_{u,w}^{\mathbf{a}}(y,\beta)\sch_w(x;y)$$
+where $c_{u,w}^{\mathbf{a}}(y,\beta)$ is a polynomial in $y$ and $\beta$ with nonnegative integer coefficients.
+\end{proposition}
+
+\subsection*{A closed form for $\partial^i\groth_u$, $i$ a descent of $u$}
+
+Assume throughout that $\ell(us_i)<\ell(u)$, which is exactly the hypothesis under which
+$\pi_i\groth_u=\groth_{us_i}$, so that the identity above holds; write $v:=us_i$.
+
+The inverse can be removed. Under the dictionary $x^{\varepsilon_a}=1+\beta y_a$ between
+torus characters and the $\beta$-deformed coefficients, $1+\beta x_i$ is the class
+$e^{-\varepsilon_i}$, so $(1+\beta x_i)^{-1}=e^{\varepsilon_i}$ and the Lenart--Postnikov
+$K_T$-Chevalley formula (Theorem 6.1 of \emph{Affine Weyl groups in $K$-theory and
+representation theory}) applies at $\lambda=+\varepsilon_i$. Writing $Y_a:=1+\beta y_a$,
+their Proposition 6.7 gives the reduced $\varepsilon_i$-chain of reflections
+$$\Gamma_i^{+}=\bigl(\,\underbrace{t_{i,i+1},\,\dots,\,t_{i,n}}_{\text{level }0}\ \bigm|\ \underbrace{t_{1,i},\,\dots,\,t_{i-1,i}}_{\text{level }1}\,\bigr),$$
+the mirror of the $(-\varepsilon_i)$-chain, with the two blocks in the opposite order and the
+levels exchanged. For $J=\{j_1<\dots<j_d\}\subseteq\Gamma_i^{+}$ put $w_0=z$ and
+$w_r=w_{r-1}t_{j_r}$, keep only those $J$ for which $z=w_0\lessdot\dots\lessdot w_d=w_J$ is
+saturated in the Bruhat order, and let $n(J)$ count the steps drawn from the second block.
+Then
+$$(1+\beta x_i)^{-1}\groth_z(x;y)\;=\;\sum_{J}(-1)^{d+n(J)}\,\beta^{d}\;Y_{w_J(i)}
+  \prod_{r\,:\,j_r=t_{a,i}}\frac{Y_{w_{r-1}(i)}}{Y_{w_{r-1}(a)}}\;\groth_{w_J}(x;y).$$
+Separately this sum is infinite: $(1+\beta x_i)^{-1}\groth_z$ is only $\beta$-adically
+convergent, and its truncation at ambient rank $n$ grows with $n$. The two copies occurring
+in $\partial^i\groth_u=(1+\beta x_i)^{-1}\groth_v+\beta(1+\beta x_i)^{-1}\groth_u$ however
+cancel almost completely, as follows.
+
+The first entry of $\Gamma_i^{+}$ is $t_{i,i+1}=s_i$, and $vs_i=u$. So the subsets $J$ of
+$\Gamma_i^{+}$ containing $t_{i,i+1}$ --- necessarily as $j_1$, since it comes first ---
+are exactly the chains from $v$ that pass through $u$ at their first step, and deleting that
+step is a bijection onto the chains from $u$. Such a $J$ has $d$ steps and contributes
+$(-1)^{d+n(J)}\beta^{d}$, while its image contributes $\beta\cdot(-1)^{(d-1)+n(J)}\beta^{d-1}$;
+the first step is at level $0$, so it changes neither $n(J)$ nor any $Y$-factor, and the two
+contributions are equal and opposite. Everything containing $t_{i,i+1}$ therefore cancels,
+leaving a single sum over the chain with its first entry removed:
+$$\boxed{\;\partial^i\groth_u(x;y)\;=\;\sum_{J\,\subseteq\,\Gamma_i^{+}\smallsetminus\{t_{i,i+1}\}}
+  (-1)^{d+n(J)}\,\beta^{d}\;Y_{w_J(i)}
+  \prod_{r\,:\,j_r=t_{a,i}}\frac{Y_{w_{r-1}(i)}}{Y_{w_{r-1}(a)}}\;\groth_{w_J}(x;y)\;}$$
+where now $w_0=v=us_i$. This is finite and independent of the ambient rank, and it has been
+checked against the two-term expression for every descent $i$ of every $u\in S_3\cup S_4\cup S_5$
+($282$ pairs, no discrepancies).
+
+Two consequences. First, the coefficients collapse: in every case checked each one is
+$$c^{\,u,i}_{w}\;=\;\pm\,\beta^{\,\ell(w)-\ell(v)}\bigl(1+\beta y_{a(w)}\bigr)$$
+for a single index $a(w)$ --- a signed monomial in $\beta$ times one linear factor, never a
+longer product and never a genuine sum --- the $Y$-ratios above telescoping away.
+
+Second, the sign is $(-1)^{d+n(J)}$, so the only obstruction to positivity is $n(J)$, the
+number of steps taken from the second block of $\Gamma_i^{+}$. For $i=1$ that block is empty,
+$\Gamma_1^{+}=(t_{1,2},t_{1,3},\dots,t_{1,n})$ consisting of level-$0$ entries only, whence
+$n(J)=0$, the $Y$-product is empty, and the rule is manifestly positive in $-\beta$:
+$$\partial^1\groth_u(x;y)\;=\;\sum_{J\,\subseteq\,\{t_{1,3},\dots,t_{1,n}\}}(-\beta)^{d}\;
+  \bigl(1+\beta y_{w_J(1)}\bigr)\;\groth_{w_J}(x;y).$$
+This is Corollary 6.3 of loc.\ cit.\ in disguise: $\varepsilon_1=\omega_1$ is dominant, so a
+reduced $\varepsilon_1$-chain has only positive roots. For $1<i<n$ the weight $\varepsilon_i$
+is neither dominant nor antidominant, their positivity criterion does not apply, and a
+manifestly positive rule requires cancelling $(-1)^{n(J)}$ by other means.
 \bibliographystyle{acm}
 \bibliography{formschub}
 \end{document}

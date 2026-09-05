@@ -74,6 +74,13 @@ class DoubleSchubertElement(BaseSchubertElement):
         the_divdiff = self.divdiff(i)
         return the_divdiff + beta * (the_divdiff.mult_poly(self.ring.genset[i]) - self)
 
+    def divdiff_perm(self, perm):
+        if perm.inv == 0:
+            return self
+        desc = max(perm.descents())
+        perm2 = perm.swap(desc, desc + 1)
+        return self.divdiff(desc + 1).divdiff_perm(perm2)
+
     def isobaric_perm(self, perm, beta):
         if perm.inv == 0:
             return self

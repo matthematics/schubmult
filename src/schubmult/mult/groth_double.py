@@ -85,15 +85,17 @@ def monk_chain(k, n):
     return tuple((a, b) for a, b, _ in epsilon_chain(tuple(range(1, k + 1)), n))
 
 
-def epsilon_chain(positions, n):
+def epsilon_chain(positions, n, inverse=False):
     r"""Reduced ``(-eps_A)``-chain of reflections in ``A_{n-1}``, ``A = positions``.
 
     ``positions`` is a single index or an iterable of them (repeats allowed), and
-    ``eps_A = sum_{i in A} eps_i``.  ``(-omega_k)``-chains only see the roots
-    ``alpha_{ij}`` with ``i <= k < j``, which is why ``monk_chain`` multiplies by the
-    whole product ``prod_{i<=k}(1 + beta*x_i)``.  Selecting an arbitrary set of
-    variables needs ``eps_A`` instead, whose chain also involves the roots
-    ``alpha_{ik}`` with ``i < k``.
+    ``eps_A = sum_{i in A} eps_i``.  With ``inverse=True`` the chain is for ``+eps_A``
+    instead, which is the weight of the inverse class ``prod_{i in A}(1 + beta*x_i)^{-1}``.
+
+    ``(-omega_k)``-chains only see the roots ``alpha_{ij}`` with ``i <= k < j``, which is
+    why ``monk_chain`` multiplies by the whole product ``prod_{i<=k}(1 + beta*x_i)``.
+    Selecting an arbitrary set of variables needs ``eps_A`` instead, whose chain also
+    involves the roots ``alpha_{ik}`` with ``i < k``.
 
     Built by Prop. 6.7: the reflections ``s_{alpha, m}`` separating the fundamental
     alcove from ``A_{eps_A}``, ordered by the lexicographic key
@@ -106,12 +108,14 @@ def epsilon_chain(positions, n):
     avoids that and is reduced.  Note a single ``k`` gives ``(i, k, 0)`` for ``i < k`` and
     ``(k, j, 1)`` for ``j > k``, while for ``A = {1, ..., k}`` every ``alpha_{ij}`` with
     ``i, j <= k`` pairs to zero and drops out, leaving exactly ``monk_chain(k, n)``.
+    Flipping to ``inverse=True`` exchanges those two families.
     """
     if isinstance(positions, int):
         positions = (positions,)
+    step = 1 if inverse else -1
     weight = [0] * n
     for k in positions:
-        weight[k - 1] -= 1
+        weight[k - 1] += step
 
     entries = []
     for a in range(1, n + 1):
@@ -131,33 +135,38 @@ def epsilon_chain(positions, n):
     return tuple((a, b, m) for _, a, b, m in entries)
 
 
-def _one_plus_beta_x_terms(u, positions, var2, beta, n):
-    r"""Expand ``prod_{i in A} (1 + beta*x_i) * G_u(x, var2)`` as ``{w: coeff}``.
+def _one_plus_beta_x_terms(u, positions, var2, beta, n, inverse=False):
+    r"""Expand ``prod_{i in A} (1 + beta*x_i)^{-1 if inverse else 1} * G_u(x, var2)``.
 
     ``prod_{i in A}(1 + beta*x_i)`` is the class ``e^{-eps_A}``, so this is Theorem 6.1
     at ``lambda = -eps_A``, in one pass over ``epsilon_chain(positions, n)``.  Writing
     ``J`` for a subset of that chain whose reflections form a saturated increasing
     Bruhat chain ``u = w_0 < w_1 < ... < w_s = w``, the transported coefficient is
 
-        (-1)^{n(J)} (-beta)^{|J|} / prod_{i in A} (1 + beta*var2[w(i)])
+        (-1)^{n(J)} (-beta)^{|J|} * prod_{i in A} (1 + beta*var2[w(i)])^{-1}
             * prod_{steps} ( (1 + beta*var2[w_j(b)]) / (1 + beta*var2[w_j(a)]) )^{level},
 
     where ``w_j`` is the permutation just before the step and ``n(J)`` counts the steps
     with a negative root, i.e. those of positive level.  Distinct ``J`` can land on the
     same ``w``, which is where the K-theoretic multiplicities come from, and a position
     may be stepped on more than once -- both impossible in the ``beta = 0`` rule.
+
+    ``inverse=True`` is the class ``e^{+eps_A}``: the chain is taken for ``+eps_A`` and,
+    since ``-mu = w(-lambda) + u(tau)`` flips with ``lambda``, the terminal factor moves
+    to the numerator.  The per-step translation factor is unchanged.
     """
-    chain = epsilon_chain(positions, n)
+    chain = epsilon_chain(positions, n, inverse=inverse)
+    exponent = 1 if inverse else -1
     terms = {}
 
-    def denominator(w):
+    def terminal(w):
         value = S.One
         for i in positions:
             value *= S.One + beta * var2[w[i - 1]]
-        return value
+        return value**exponent
 
     def walk(start, w, character, sign):
-        terms[w] = terms.get(w, S.Zero) + sign * character / denominator(w)
+        terms[w] = terms.get(w, S.Zero) + sign * character * terminal(w)
         for index in range(start, len(chain)):
             a, b, level = chain[index]
             stepped = w.swap(a - 1, b - 1)
@@ -175,11 +184,12 @@ def _rank(u, positions, n):
     return max(n or 0, len(u), max(positions) + 1) + len(positions)
 
 
-def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, n=None):
+def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, n=None, inverse=False):
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``prod_{i in positions} (1 + beta*x_i)``.
 
     The one-pass Pieri rule of Theorem 6.1 at ``lambda = -eps_A``; see
-    ``_one_plus_beta_x_terms`` for the coefficient.
+    ``_one_plus_beta_x_terms`` for the coefficient.  ``inverse=True`` gives the inverse
+    operator ``prod_{i in positions} (1 + beta*x_i)^{-1}``, i.e. ``lambda = +eps_A``.
     """
     if beta is None:
         beta = _default_beta
@@ -189,7 +199,7 @@ def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, n=None):
     ret = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
-        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, _rank(u, positions, n)).items():
+        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, _rank(u, positions, n), inverse=inverse).items():
             ret[w] = ret.get(w, S.Zero) + val * coeff
     return ret
 
