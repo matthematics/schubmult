@@ -1,0 +1,31 @@
+# setuptools-scm adds every git-tracked file to the sdist, so non-shipping
+# research material must be pruned explicitly. The wheel is unaffected: it is
+# scoped by [tool.setuptools.packages.find].
+
+prune writing
+prune _lscripts
+prune basedir
+prune lean4
+prune profiling
+prune htmlcov
+prune logs
+prune log
+prune dist_old
+prune .github
+
+exclude bpd_NOTWORK.py
+exclude visualize_pipe_dreams.ipynb
+exclude package_api.html
+exclude schubmult.code-workspace
+exclude generate_test_cmd_lines.sh
+exclude test_cmd_lines.dat
+exclude pydoc-markdown.yml
+exclude TODO.txt
+exclude FACEBOOK_POST.md
+global-exclude *:Zone.Identifier
+global-exclude *.py[cod]
+
+include README.md
+include LICENSE
+include CHANGELOG.md
+include requirements.txt
