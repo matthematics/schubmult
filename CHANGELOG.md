@@ -19,6 +19,14 @@
   external smoke test of 4.1.0, which found the bug while trying to compute QH*(P^3);
   that computation is now a regression test.
 
+- **Five `dual_basis()` declarations raised instead of returning the dual basis.**
+  Each imported the right class name from the wrong module:
+  `GrothendieckPolyBasis` looked for `GrothendieckBasis` in `free_algebra.schubert_basis`,
+  `GlidePolyBasis` and `LascouxPolyBasis` both looked in `free_algebra.fundamental_slide_basis`,
+  and `LascouxBasis` looked for `LascouxPolyBasis` in `polynomial_algebra.key_poly_basis`.
+  `GrovePolyBasis` declared no dual at all and inherited the base implementation, which
+  returns `None`. Every declared dual pair now round-trips in both directions.
+
 ### Added
 
 - Grothendieck polynomial multiplication (`schubmult.mult.groth`,
@@ -28,7 +36,7 @@
   (`rings.free_algebra.lascoux_basis`, `glide_basis`) and the polynomial algebra
   (`rings.polynomial_algebra.lascoux_poly_basis`, `glide_poly_basis`).
 - Chevalley/Monk formula module `rings.schubert.chevalley`.
-- Separated-descents multiplication (`schubmult.mult.separated_descents`).
+- Double Grothendieck polynomial separated-descents multiplication (`schubmult.mult.separated_descents`).
 - Weak order operations on `Permutation`: `weak_order_leq`, `weak_order_meet`,
   `weak_order_join`.
 - Verification scripts `groth_lr_rule` and `verify_quantum_triple_positive`.

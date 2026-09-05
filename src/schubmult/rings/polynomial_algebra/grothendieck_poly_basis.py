@@ -117,7 +117,7 @@ class GrothendieckPolyBasis(PolynomialBasis):
     @classmethod
     def dual_basis(cls):
         """Return the dual free algebra basis class (:class:`GrothendieckBasis`)."""
-        from ..free_algebra.schubert_basis import GrothendieckBasis
+        from ..free_algebra.grothendieck_basis import GrothendieckBasis
         return GrothendieckBasis
 
     def transition_grove_key(self, key):

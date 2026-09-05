@@ -16,7 +16,9 @@ Two properties are checked here, both of which that bug violated:
 """
 
 import functools
+import importlib.util
 import os
+import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -29,6 +31,22 @@ import schubmult
 # Mirrors the package's own scan in schubmult/__init__.py. _scripts is research
 # code that the top-level __getattr__ deliberately tolerates failures from.
 _SKIPPED_DIRS = {"__pycache__", "tests", "docs", "scripts", "build", "_scripts"}
+
+# Top-level module names provided by [project.optional-dependencies]. A module
+# that fails only because one of these is absent is not a packaging bug, so the
+# relevant tests skip instead of failing on installs without the extra.
+_OPTIONAL_DEPENDENCIES = frozenset({"matplotlib", "sage"})
+
+_MISSING_MODULE = re.compile(r"No module named '([^']+)'")
+
+
+def _missing_optional_dependency(message):
+    """Return the optional dependency the message blames, if it is genuinely absent."""
+    for match in _MISSING_MODULE.finditer(message):
+        root = match.group(1).split(".")[0]
+        if root in _OPTIONAL_DEPENDENCIES and importlib.util.find_spec(root) is None:
+            return root
+    return None
 
 # Subpackages that declare a public surface via __all__.
 _SUBPACKAGES = [
@@ -101,6 +119,10 @@ def test_module_imports_in_isolation(module, isolation_results):
     raised ImportError on a partially initialized module.
     """
     returncode, stderr = isolation_results[module]
+    if returncode != 0:
+        missing = _missing_optional_dependency(stderr)
+        if missing:
+            pytest.skip(f"{module} requires the optional dependency {missing}")
     assert returncode == 0, f"`import {module}` failed in a fresh interpreter:\n{stderr}"
 
 
@@ -134,6 +156,8 @@ def test_discovered_names_resolve():
         try:
             getattr(schubmult, name)
         except Exception as exc:  # noqa: BLE001 - collecting failures to report together
+            if _missing_optional_dependency(str(exc)):
+                continue
             broken[name] = f"{module}: {exc}"
     assert not broken, "names advertised by dir(schubmult) that fail on access:\n" + "\n".join(f"  {k} <- {v}" for k, v in broken.items())
 

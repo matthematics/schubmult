@@ -33,7 +33,7 @@ class LascouxBasis(FreeAlgebraBasis):
     @classmethod
     def dual_basis(cls):
         """Return the LascouxPolyBasis as the dual of LascouxBasis."""
-        from ..polynomial_algebra.key_poly_basis import LascouxPolyBasis
+        from ..polynomial_algebra.lascoux_poly_basis import LascouxPolyBasis
 
         return LascouxPolyBasis
 

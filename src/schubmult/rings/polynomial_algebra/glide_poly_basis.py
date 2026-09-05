@@ -142,7 +142,7 @@ class GlidePolyBasis(PolynomialBasis):
     @classmethod
     def dual_basis(cls):
         """Return the dual free algebra basis class (:class:`GlideBasis`)."""
-        from ..free_algebra.fundamental_slide_basis import GlideBasis
+        from ..free_algebra.glide_basis import GlideBasis
 
         return GlideBasis
 

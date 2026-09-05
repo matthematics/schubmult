@@ -60,7 +60,7 @@ class LascouxPolyBasis(PolynomialBasis):
     @classmethod
     def dual_basis(cls):
         """Return the dual free algebra basis class (:class:`LascouxBasis`)."""
-        from ..free_algebra.fundamental_slide_basis import LascouxBasis
+        from ..free_algebra.lascoux_basis import LascouxBasis
 
         return LascouxBasis
 

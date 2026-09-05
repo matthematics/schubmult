@@ -102,6 +102,13 @@ class GrovePolyBasis(PolynomialBasis):
 
         return lambda x: PolynomialBasis.compose_transition(self._monomial_basis.transition(other_basis), self.transition_monomial(x))
 
+    @classmethod
+    def dual_basis(cls):
+        """Return the dual free algebra basis class (:class:`GroveBasis`)."""
+        from ..free_algebra.grove_basis import GroveBasis
+
+        return GroveBasis
+
     @property
     def zero_monom(self):
         return self.as_key([])
