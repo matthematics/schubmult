@@ -2,7 +2,6 @@ from functools import cache
 
 import schubmult.mult.double as yz
 import schubmult.mult.single as py
-import schubmult.rings.schubert.quantum_schubert_ring as qsr
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
@@ -48,7 +47,10 @@ class SingleSchubertRing(DoubleSchubertRing):
         if type(other.ring) is DoubleSchubertRing:
             if self.genset == other.ring.genset:
                 return other
-        if isinstance(other.ring, qsr.QuantumDoubleSchubertRing):
+        # deferred: quantum_schubert_ring imports this module at load time
+        from .quantum_double_schubert_ring import QuantumDoubleSchubertRing
+
+        if isinstance(other.ring, QuantumDoubleSchubertRing):
             return self._coerce_mul(other.as_classical())
         return None
 
