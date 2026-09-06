@@ -68,6 +68,7 @@ __all__ = [
     "grothmult_double",
     "grothmult_double_block",
     "grothmult_double_pieri",
+    "grothmult_double_top",
     "monk_chain",
     "mult_poly_groth_double",
     "one_plus_beta_x_groth",
@@ -340,6 +341,91 @@ def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, b
 
     poly = sympify(sympify_sympy(groth_elem_sym_poly(p, k, zvar, var_x, beta)).expand())
     return mult_poly_groth_double(coeff_dict, poly, var_x, var2, beta, n)
+
+
+def _top_block_support(u, k):
+    """Support of ``prod_{i<=k}(x_i + z) G_u``: endpoints of the marked K-Pieri chains.
+
+    Equals ``union_{p=0..k} supp(e_p^beta(x_1..x_k) G_u)``.  A marked chain from
+    ``elem_sym_chains_groth`` contributes to degree ``p`` iff
+    ``fff <= p <= fff + (len - 1 - fff - ppp)`` with ``fff``/``ppp`` the forced
+    marks/unmarks, so the union over ``0 <= p <= k`` is nonempty iff ``fff <= k``.
+    This is strictly smaller than the ``elem_sym_perms_groth`` endpoint set: a
+    ``j``-weakly-decreasing cover chain need not admit a valid marking (e.g.
+    ``u = [1,2,4,3]``, ``k = 2``, ``w = [3,4,1,2]``).
+    """
+    from schubmult.utils.schub_lib import elem_sym_chains_groth
+
+    support = set()
+    for perms, markings in elem_sym_chains_groth(u, 0, k):
+        if sum(1 for m in markings if m == 1) <= k:
+            support.add(perms[-1])
+    return support
+
+
+def _top_block_coeff(u, w, k, zvar, var2, beta):
+    """Coefficient of ``G_w`` in ``prod_{i<=k}(x_i + zvar) G_u``: one factor per window position."""
+    window = [w[i] for i in range(k)]
+    fixed = 0
+    value = S.One
+    for i in range(k):
+        v = u[i]
+        y = var2[v]
+        if window[i] == v:
+            fixed += 1
+            value *= (zvar * (S.One + beta * y) - y) / (S.One + beta * y)
+        elif v in window and window.index(v) < i:
+            value *= S.One - beta * zvar
+        else:
+            value *= S.One / (S.One + beta * y)
+    power = (w.inv - u.inv) - (k - fixed)
+    if power < 0:
+        raise ValueError(f"negative beta power on support element: u={list(u)}, w={list(w)}, k={k}")
+    return beta**power * value
+
+
+def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
+    r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the top linear block ``prod_{i=1}^{k}(x_i + zvar)``.
+
+    Closed positive Molev--Sagan Pieri rule (conjectural; verified exhaustively on
+    ``S_4`` and sampled through ``S_6``, ``k <= 5``, against
+    ``grothmult_double_block(..., zvar=-zvar, fgl=False)``):
+
+    .. math::
+
+        \prod_{i=1}^{k}(x_i + z)\,\mathfrak{G}_u(x; y)
+            = \sum_{w} \beta^{\,d - k + |Q|} \Bigl(\prod_{i=1}^{k} f_i\Bigr)\,
+              \mathfrak{G}_w(x; y),
+        \qquad d = \ell(w) - \ell(u),
+
+    where the factor ``f_i`` depends on the fate of the window value ``u(i)``:
+
+    * ``u(i) = w(i)`` (the set ``Q``):  ``(z(1 + beta*y_{u(i)}) - y_{u(i)}) / (1 + beta*y_{u(i)})``,
+      i.e. ``z (+) (-)y_{u(i)}``, the K-theoretic analogue of ``z - y_{u(i)}``;
+    * ``u(i)`` stays in the window but moves left:  ``1 - beta*zvar``;
+    * ``u(i)`` exits the window or moves right within it:  ``1/(1 + beta*y_{u(i)})``.
+
+    The sum runs over the marked-chain K-Pieri support (``_top_block_support``).
+    At ``beta = 0`` this collapses to the ``p = k`` Pieri formula for double
+    Schubert polynomials [Samuel, Theorem 7.1]:
+    ``S_u(x;y) prod(x_i - z) = sum_{u ->_k w} prod_{i in Q}(y_{u(i)} - z) S_w(x;y)``
+    with ``z -> -z``.
+    """
+    if beta is None:
+        beta = _default_beta
+    if zvar is None:
+        zvar = S.Zero
+    var2 = _genset(var2)
+
+    ret = {}
+    for u, val in coeff_dict.items():
+        u = Permutation(u)
+        if k == 0:
+            ret[u] = ret.get(u, S.Zero) + val
+            continue
+        for w in _top_block_support(u, k):
+            ret[w] = ret.get(w, S.Zero) + val * _top_block_coeff(u, w, k, zvar, var2, beta)
+    return ret
 
 
 def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None, n=None):
