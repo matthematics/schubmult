@@ -62,8 +62,10 @@ from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet
 from schubmult.utils.perm_utils import add_perm_dict
 
 __all__ = [
+    "dgroth_to_dschub",
     "elem_sym_perms_groth",
     "epsilon_chain",
+    "groth_elem_sym_func",
     "groth_elem_sym_poly",
     "grothmult_double",
     "grothmult_double_block",
@@ -76,17 +78,17 @@ __all__ = [
 ]
 
 
-def monk_chain(k, n):
+def monk_chain(k):
     """Reduced ``(-omega_k)``-chain of reflections in ``A_{n-1}``, as ``(i, j)``, ``i <= k < j``.
 
     ``omega_k = eps_1 + ... + eps_k``, so this is ``epsilon_chain`` on ``{1, ..., k}``:
     every root ``alpha_{ij}`` with ``i, j <= k`` pairs to zero and drops out, and the
     survivors all sit at level ``1``.  The order is ``i`` decreasing, then ``j`` decreasing.
     """
-    return tuple((a, b) for a, b, _ in epsilon_chain(tuple(range(1, k + 1)), n))
+    return tuple((a, b) for a, b, _ in epsilon_chain(tuple(range(1, k + 1))))
 
 
-def epsilon_chain(positions, n, inverse=False):
+def epsilon_chain(positions, inverse=False, ambient_rank=None):
     r"""Reduced ``(-eps_A)``-chain of reflections in ``A_{n-1}``, ``A = positions``.
 
     ``positions`` is a single index or an iterable of them (repeats allowed), and
@@ -108,19 +110,21 @@ def epsilon_chain(positions, n, inverse=False):
     only after translating the blocks, which shifts their levels; going through Prop. 6.7
     avoids that and is reduced.  Note a single ``k`` gives ``(i, k, 0)`` for ``i < k`` and
     ``(k, j, 1)`` for ``j > k``, while for ``A = {1, ..., k}`` every ``alpha_{ij}`` with
-    ``i, j <= k`` pairs to zero and drops out, leaving exactly ``monk_chain(k, n)``.
+    ``i, j <= k`` pairs to zero and drops out, leaving exactly ``monk_chain(k)``.
     Flipping to ``inverse=True`` exchanges those two families.
     """
     if isinstance(positions, int):
         positions = (positions,)
     step = 1 if inverse else -1
-    weight = [0] * n
+    if ambient_rank is None:
+        ambient_rank = max(positions) + len(positions)
+    weight = [0] * ambient_rank
     for k in positions:
         weight[k - 1] += step
 
     entries = []
-    for a in range(1, n + 1):
-        for b in range(a + 1, n + 1):
+    for a in range(1, ambient_rank + 1):
+        for b in range(a + 1, ambient_rank + 1):
             pairing = weight[a - 1] - weight[b - 1]
             if pairing > 0:
                 levels = range(0, -pairing, -1)
@@ -128,7 +132,7 @@ def epsilon_chain(positions, n, inverse=False):
                 levels = range(1, -pairing + 1)
             else:
                 continue
-            omegas = tuple((1 if a <= r else 0) - (1 if b <= r else 0) for r in range(1, n))
+            omegas = tuple((1 if a <= r else 0) - (1 if b <= r else 0) for r in range(1, ambient_rank))
             for m in levels:
                 key = tuple(Fraction(value, pairing) for value in (-m, *omegas))
                 entries.append((key, a, b, m))
@@ -136,11 +140,11 @@ def epsilon_chain(positions, n, inverse=False):
     return tuple((a, b, m) for _, a, b, m in entries)
 
 
-def _one_plus_beta_x_terms(u, positions, var2, beta, n, inverse=False):
+def _one_plus_beta_x_terms(u, positions, var2, beta, inverse=False):
     r"""Expand ``prod_{i in A} (1 + beta*x_i)^{-1 if inverse else 1} * G_u(x, var2)``.
 
     ``prod_{i in A}(1 + beta*x_i)`` is the class ``e^{-eps_A}``, so this is Theorem 6.1
-    at ``lambda = -eps_A``, in one pass over ``epsilon_chain(positions, n)``.  Writing
+    at ``lambda = -eps_A``, in one pass over ``epsilon_chain(positions)``.  Writing
     ``J`` for a subset of that chain whose reflections form a saturated increasing
     Bruhat chain ``u = w_0 < w_1 < ... < w_s = w``, the transported coefficient is
 
@@ -156,7 +160,7 @@ def _one_plus_beta_x_terms(u, positions, var2, beta, n, inverse=False):
     since ``-mu = w(-lambda) + u(tau)`` flips with ``lambda``, the terminal factor moves
     to the numerator.  The per-step translation factor is unchanged.
     """
-    chain = epsilon_chain(positions, n, inverse=inverse)
+    chain = epsilon_chain(positions, inverse=inverse, ambient_rank=_rank(u, positions))
     exponent = 1 if inverse else -1
     terms = {}
 
@@ -181,11 +185,11 @@ def _one_plus_beta_x_terms(u, positions, var2, beta, n, inverse=False):
     return terms
 
 
-def _rank(u, positions, n):
-    return max(n or 0, len(u), max(positions) + 1) + len(positions)
+def _rank(u, positions):
+    return max(len(u), max(positions) + 1) + len(positions)
 
 
-def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, n=None, inverse=False):
+def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, inverse=False):
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``prod_{i in positions} (1 + beta*x_i)``.
 
     The one-pass Pieri rule of Theorem 6.1 at ``lambda = -eps_A``; see
@@ -200,12 +204,12 @@ def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, n=None, i
     ret = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
-        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, _rank(u, positions, n), inverse=inverse).items():
+        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, inverse=inverse).items():
             ret[w] = ret.get(w, S.Zero) + val * coeff
     return ret
 
 
-def single_variable_groth(coeff_dict, varnum, var2=None, beta=None, n=None):
+def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the single variable ``x_varnum``.
 
     Returns ``{w: coeff_w}``.  This is ``_one_plus_beta_x_terms`` with the
@@ -222,7 +226,7 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None, n=None):
     ret = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
-        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, _rank(u, positions, n)).items():
+        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta).items():
             if w == u:
                 y = var2[u[k - 1]]
                 ret[w] = ret.get(w, S.Zero) + val * (-y) / (S.One + beta * y)
@@ -231,7 +235,7 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None, n=None):
     return ret
 
 
-def elem_sym_perms_groth(u, k, n):
+def elem_sym_perms_groth(u, k):
     r"""K-theoretic analogue of ``elem_sym_perms``: ``{w: {d: multiplicity}}``.
 
     Same recursion as ``elem_sym_perms(u, p, k)`` -- a step is any Bruhat cover
@@ -260,11 +264,11 @@ def elem_sym_perms_groth(u, k, n):
                 if stepped.inv == w.inv + 1:
                     walk(stepped, b, d + 1)
 
-    walk(u, n, 0)
+    walk(u, _rank(u, tuple(range(1, k + 1))), 0)
     return out
 
 
-def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=None, n=None, fgl=True):
+def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=None, fgl=True):
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by a linear block over ``positions``:
 
         fgl=True  ->  prod_{i in A} (x_i (+) zvar),   x (+) z = x*(1 + beta*z) + z
@@ -297,7 +301,7 @@ def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=Non
 
     ret = {Permutation(key): value for key, value in coeff_dict.items()}
     for i in positions:
-        stepped = {w: scale * coeff for w, coeff in single_variable_groth(ret, i, var2, beta, n).items()}
+        stepped = {w: scale * coeff for w, coeff in single_variable_groth(ret, i, var2, beta).items()}
         for w, coeff in ret.items():
             stepped[w] = stepped.get(w, S.Zero) + shift * coeff
         ret = stepped
@@ -319,7 +323,7 @@ def groth_elem_sym_poly(p, k, zvar, var_x, beta):
     return acc[p]
 
 
-def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, beta=None, n=None):
+def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, beta=None):
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``groth_elem_sym_poly(p, k, zvar, var_x, beta)``.
 
     Exact, via ``mult_poly_groth_double`` on the expanded polynomial.  A closed-form
@@ -340,7 +344,7 @@ def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, b
     var2 = _genset(var2)
 
     poly = sympify(sympify_sympy(groth_elem_sym_poly(p, k, zvar, var_x, beta)).expand())
-    return mult_poly_groth_double(coeff_dict, poly, var_x, var2, beta, n)
+    return mult_poly_groth_double(coeff_dict, poly, var_x, var2, beta)
 
 
 def _top_block_support(u, k):
@@ -428,7 +432,7 @@ def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
     return ret
 
 
-def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None, n=None):
+def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None):
     """Multiply ``sum_u coeff_u G_u(x, var_y)`` by an arbitrary polynomial in ``var_x``.
 
     Mirrors ``mult_poly_double``; the leaves of the ``Add``/``Mul``/``Pow`` recursion
@@ -438,33 +442,33 @@ def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None, 
     var_y = _genset(var_y)
     index = var_x.index(poly)
     if index != -1:
-        return single_variable_groth(coeff_dict, index, var_y, beta, n)
+        return single_variable_groth(coeff_dict, index, var_y, beta)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for arg in poly.args:
-            ret = mult_poly_groth_double(ret, arg, var_x, var_y, beta, n)
+            ret = mult_poly_groth_double(ret, arg, var_x, var_y, beta)
         return ret
     if isinstance(poly, Pow):
         base, exponent = poly.args
         ret = coeff_dict
         for _ in range(int(exponent)):
-            ret = mult_poly_groth_double(ret, base, var_x, var_y, beta, n)
+            ret = mult_poly_groth_double(ret, base, var_x, var_y, beta)
         return ret
     if isinstance(poly, Add):
         ret = {}
         for arg in poly.args:
-            ret = add_perm_dict(ret, mult_poly_groth_double(coeff_dict, arg, var_x, var_y, beta, n))
+            ret = add_perm_dict(ret, mult_poly_groth_double(coeff_dict, arg, var_x, var_y, beta))
         return ret
     return {perm: poly * coeff for perm, coeff in coeff_dict.items()}
 
 
-def _chain_sums(u, k, n, beta):
+def _chain_sums(u, k, beta):
     """``{w: sum_J beta**(|J| - 1)}`` over nonempty ``J`` with ``u r_J = w``.
 
-    ``J`` runs over subsets of ``monk_chain(k, n)`` whose reflections, applied in
+    ``J`` runs over subsets of ``monk_chain(k)`` whose reflections, applied in
     chain order, form a saturated increasing chain in Bruhat order from ``u``.
     """
-    chain = monk_chain(k, n)
+    chain = monk_chain(k)
     sums = {}
 
     def walk(start, w, size):
@@ -492,18 +496,155 @@ def _divide_by_beta(expr, beta):
     return sympify(cancel(sympify_sympy(expr) / sympify_sympy(beta)))
 
 
-def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None, n=None):
+def dgroth_to_dschub(v, var3, beta=None):
+    """Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
+
+    ``sum_{v'} coeff_{v'} S_{v'}(x, var3) = G_v(x, var3)`` with coefficients in
+    ``var3`` and ``beta``.  Exact but slow; delegates to ``grothendieck_poly``
+    with ``keep_as_schub=True``.
+    """
+    from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+    from schubmult.symbolic.poly.variables import GeneratingSet
+
+    if beta is None:
+        beta = _default_beta
+    var3 = _genset(var3)
+    elem = grothendieck_poly(Permutation(v), GeneratingSet("x"), var3, beta, keep_as_schub=True)
+    return {Permutation(key): value for key, value in elem.items() if value != S.Zero}
+
+
+def _mul_linear(coeffs, c0, c1):
+    """Multiply the polynomial ``sum_m coeffs[m] t^m`` by ``c0 + c1*t``."""
+    out = [S.Zero] * (len(coeffs) + 1)
+    for m, c in enumerate(coeffs):
+        out[m] += c * c0
+        out[m + 1] += c * c1
+    return out
+
+
+def _complete_homog(p, vrs):
+    """Complete homogeneous symmetric polynomial ``h_p`` of ``vrs``; ``h_{<0} = 0``."""
+    if p < 0:
+        return S.Zero
+    acc = [S.One] + [S.Zero] * p
+    for v in vrs:
+        for q in range(1, p + 1):
+            acc[q] = acc[q] + v * acc[q - 1]
+    return acc[p]
+
+
+def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
+    r"""K-analogue of ``elem_sym_func`` for the vpath iteration.
+
+    Coefficient of ``G_{u2}(x, varl1)`` contributed when layer ``i`` (block size
+    ``k``) multiplies ``G_{u1}(x, varl1)`` while the v-path steps ``v1 -> v2``
+    consuming ``vdiff`` of the block degree.
+
+    Method (Molev--Sagan route): the verified top-block rule for
+    ``prod_{j<=k}(x_j - t) G_{u1}`` gives a coefficient that is polynomial in the
+    layer variable ``t``,
+
+        ``C(t) = beta^(d - m) * prod_j f_j(t)``,   d = l(u2) - l(u1),
+
+    with per-window-position factors ``f_j``: fixed value ``y`` ->
+    ``(-y - t(1 + beta*y))/(1 + beta*y)``, left-moving persister -> ``1 + beta*t``,
+    exit or right-mover -> ``1/(1 + beta*y)`` (``m`` = number of movers).  Since
+    ``prod_{j<=k}(x_j - t) = sum_p e_p(x_1..x_k) (-t)^{k-p}``, extracting
+    ``t``-coefficients of ``C`` gives the rule for each ``e_p``.  A v-path step of
+    size ``vdiff`` is the z-side divided difference ``d_{vdiff} ... d_1``, which
+    sends ``t^m`` to ``(-1)^vdiff h_{m - vdiff}`` in the ``vdiff + 1`` z-variables
+    selected by ``call_zvars(v1, v2, k, i)`` (the same "screwed up" alphabet as
+    the classical ``elem_sym_func``).  At ``vdiff = 0`` this is ``C(z_{v2(i)})``;
+    at ``beta = 0`` it collapses to the classical ``elem_sym_func`` via
+    ``E_{q,n}(y; z) = sum_j (-1)^j e_{q-j}(y) h_j(z)``.
+    """
+    from schubmult.symbolic.poly.schub_poly import call_zvars
+
+    d = u2.inv - u1.inv
+    window2 = [u2[j] for j in range(k)]
+    coeffs = [S.One]
+    movers = 0
+    for j in range(k):
+        value = u1[j]
+        if window2[j] == value:
+            y = varl1[value]
+            coeffs = _mul_linear(coeffs, -y / (S.One + beta * y), -S.One)
+        else:
+            movers += 1
+            if value in window2 and window2.index(value) < j:
+                coeffs = _mul_linear(coeffs, S.One, beta)
+            else:
+                scale = S.One / (S.One + beta * varl1[value])
+                coeffs = [c * scale for c in coeffs]
+    if d < movers:
+        return S.Zero
+    zvars = [varl2[a] for a in call_zvars(v1, v2, k, i)][: vdiff + 1]
+    total = S.Zero
+    for m in range(vdiff, len(coeffs)):
+        if coeffs[m] == S.Zero:
+            continue
+        total += coeffs[m] * _complete_homog(m - vdiff, zvars)
+    sign = S.One if vdiff % 2 == 0 else -S.One
+    return sign * beta ** (d - movers) * total
+
+
+def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta):
+    """``sum_u coeff_u G_u(x, var2) * S_v(x, var3)`` in the ``G`` basis.
+
+    Mirrors ``schubmult_double``: expand ``S_v`` by ``compute_vpathdicts`` over the
+    layers of ``theta(v^{-1})``, with ``elem_sym_perms`` -> marked-chain K-Pieri
+    support and ``elem_sym_func`` -> ``groth_elem_sym_func``.
+    """
+    from schubmult.combinatorics.permutation import uncode
+    from schubmult.utils.schub_lib import compute_vpathdicts
+
+    v = Permutation(v)
+    vn1 = ~v
+    th = list(vn1.theta())
+    while th and th[-1] == 0:
+        th.pop()
+    if not th:
+        return dict(perm_dict)
+    mu = uncode(th)
+    vmu = v * mu
+    vpathdicts = compute_vpathdicts(tuple(th), vmu)
+    ret_dict = {}
+    for u, val in perm_dict.items():
+        u = Permutation(u)
+        vpathsums = {u: {Permutation([1, 2]): val}}
+        for index in range(len(th)):
+            k = th[index]
+            newpathsums = {}
+            for up, sums in vpathsums.items():
+                for up2 in _top_block_support(up, k) | {up}:
+                    for v_iter, steps in vpathdicts[index].items():
+                        sumval = sums.get(v_iter, S.Zero)
+                        if sumval == S.Zero:
+                            continue
+                        for v2, vdiff, s in steps:
+                            coeff = groth_elem_sym_func(k, index + 1, up, up2, v_iter, v2, vdiff, var2, var3, beta)
+                            if coeff == S.Zero:
+                                continue
+                            bucket = newpathsums.setdefault(up2, {})
+                            bucket[v2] = bucket.get(v2, S.Zero) + s * sumval * coeff
+            vpathsums = newpathsums
+        ret_dict = add_perm_dict({ep: sums.get(vmu, S.Zero) for ep, sums in vpathsums.items()}, ret_dict)
+    return {w: coeff for w, coeff in ret_dict.items() if coeff != S.Zero}
+
+
+def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
     r"""Multiply double Grothendieck polynomials, mirroring ``schubmult_double``.
 
     Computes the expansion of ``sum_u coeff_u G_u(x, var2) * G_v(x, var3)`` in
     the basis ``{G_w(x, var2)}`` and returns it as ``{w: coeff_w}``.
 
-    Only ``v.inv <= 1`` is implemented: ``v = 1`` is the identity and ``v = s_k``
-    is the degree-one (plus higher ``beta``-corrected) Grothendieck polynomial of
-    Corollary 8.2.
+    ``v = s_k`` uses the verified chain formula of Corollary 8.2, and
+    ``max_descent == 1`` folds that column by column.  General ``v`` goes through
+    ``dgroth_to_dschub`` (exact, slow) and the conjectural vpath kernel
+    ``_groth_schub_vpath_mul``, one run per double Schubert ``S_{v'}`` in the
+    expansion of ``G_v``.
 
-    ``n`` overrides the ambient rank used for the ``(-omega_k)``-chain; the
-    default is large enough for the product to stabilize.
+    The chain rank is inferred from the current permutation and selected positions.
     """
     if beta is None:
         beta = _default_beta
@@ -514,33 +655,8 @@ def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None, n=None):
     perm_dict = {Permutation(key): value for key, value in perm_dict.items()}
     if v.inv == 0:
         return perm_dict
-    if v.inv > 1:
-        if v.max_descent == 1:
-            from schubmult.combinatorics.permutation import uncode
-            numtimes = v.trimcode[0]
-            for index in range(numtimes):
-                perm_dict = grothmult_double(perm_dict, uncode([1]), var2, var3[index:], beta, n)
-            return perm_dict
-        raise NotImplementedError(f"grothmult_double is only implemented for v.inv <= 1 or v.max_descent == 1, got {list(v)} with {v.inv} inversions")
-    # v = s_k, so its Lehmer code is [0, ..., 0, 1] with the 1 in position k.
-    k = len(v.trimcode)
-
     ret = {}
-    for u, val in perm_dict.items():
-        rank = max(n or 0, len(u), k + 1) + k
-
-        numerator = S.One
-        denominator = S.One
-        for i in range(1, k + 1):
-            numerator *= S.One + beta * var3[i]
-            denominator *= S.One + beta * var2[u[i - 1]]
-        theta = numerator / denominator
-
-        # J = {} contributes (Theta_u - 1)/beta, which is regular at beta = 0.
-        diagonal = _divide_by_beta(numerator - denominator, beta) / denominator
-        ret[u] = ret.get(u, S.Zero) + val * diagonal
-
-        for w, coeff in _chain_sums(u, k, rank, beta).items():
-            ret[w] = ret.get(w, S.Zero) + val * theta * coeff
-
-    return ret
+    for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
+        for w, value in _groth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta).items():
+            ret[w] = ret.get(w, S.Zero) + coeff * value
+    return {w: value for w, value in ret.items() if value != S.Zero}

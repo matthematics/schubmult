@@ -245,6 +245,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
         for k, v in elem2.items():
             try:
+                # raise NotImplementedError()
                 result += v * self.from_dict(self.double_mul(elem, k, var2=self.coeff_genset, var3=ring2.coeff_genset, beta=self._beta))
             except NotImplementedError:
                 # Fall back on the single basis element G_k, not on all of elem2.
