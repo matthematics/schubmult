@@ -57,7 +57,7 @@ from fractions import Fraction
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
-from schubmult.symbolic import Add, Mul, Pow, S, sympify, sympify_sympy
+from schubmult.symbolic import Add, Mul, Pow, S, expand, prod, sympify, sympify_sympy
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -533,7 +533,46 @@ def _complete_homog(p, vrs):
     return acc[p]
 
 
+def _frac_mul(f1, f2):
+    """Multiply two flat fractions ``(numer, {atom: exp})``; denominators multiply by adding exponents."""
+    n1, d1 = f1
+    n2, d2 = f2
+    d = dict(d1)
+    for a, e in d2.items():
+        d[a] = d.get(a, 0) + e
+    return (n1 * n2, d)
+
+
+def _frac_add(f1, f2, varl1, beta):
+    """Add two flat fractions over the LCM denominator, expanding the polynomial numerator.
+
+    Each side is only scaled by the *missing* atoms ``(1 + beta*varl1[a])``, so the
+    result stays a single-level fraction with a canonical atom-exponent denominator.
+    """
+    if f1 is None:
+        return f2
+    n1, d1 = f1
+    n2, d2 = f2
+    d = {a: max(d1.get(a, 0), d2.get(a, 0)) for a in set(d1) | set(d2)}
+    m1 = prod([(S.One + beta * varl1[a]) ** (d[a] - d1.get(a, 0)) for a in d])
+    m2 = prod([(S.One + beta * varl1[a]) ** (d[a] - d2.get(a, 0)) for a in d])
+    return (expand(n1 * m1 + n2 * m2), d)
+
+
+def _frac_to_expr(f, varl1, beta):
+    n, d = f
+    n = expand(n)
+    if n == S.Zero:
+        return S.Zero
+    return n / prod([(S.One + beta * varl1[a]) ** e for a, e in d.items() if e])
+
+
 def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
+    """Expression form of ``_groth_elem_sym_frac``; see there for the rule."""
+    return _frac_to_expr(_groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta), varl1, beta)
+
+
+def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
     r"""K-analogue of ``elem_sym_func`` for the vpath iteration.
 
     Coefficient of ``G_{u2}(x, varl1)`` contributed when layer ``i`` (block size
@@ -557,27 +596,34 @@ def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
     the classical ``elem_sym_func``).  At ``vdiff = 0`` this is ``C(z_{v2(i)})``;
     at ``beta = 0`` it collapses to the classical ``elem_sym_func`` via
     ``E_{q,n}(y; z) = sum_j (-1)^j e_{q-j}(y) h_j(z)``.
+
+    Returns a flat fraction ``(numer, {a: exp})`` with denominator
+    ``prod_a (1 + beta*varl1[a])**exp``: the per-position factors are distributed
+    so the numerator stays polynomial and the denominator is tracked as atom
+    exponents, never as nested symbolic fractions.
     """
     from schubmult.symbolic.poly.schub_poly import call_zvars
 
     d = u2.inv - u1.inv
     window2 = [u2[j] for j in range(k)]
     coeffs = [S.One]
+    denom = {}
     movers = 0
     for j in range(k):
         value = u1[j]
         if window2[j] == value:
             y = varl1[value]
-            coeffs = _mul_linear(coeffs, -y / (S.One + beta * y), -S.One)
+            # (-y/(1+by) - t) = (-y - t(1+by)) / (1+by): polynomial numerator, atom bump.
+            coeffs = _mul_linear(coeffs, -y, -(S.One + beta * y))
+            denom[value] = denom.get(value, 0) + 1
         else:
             movers += 1
             if value in window2 and window2.index(value) < j:
                 coeffs = _mul_linear(coeffs, S.One, beta)
             else:
-                scale = S.One / (S.One + beta * varl1[value])
-                coeffs = [c * scale for c in coeffs]
+                denom[value] = denom.get(value, 0) + 1
     if d < movers:
-        return S.Zero
+        return (S.Zero, {})
     zvars = [varl2[a] for a in call_zvars(v1, v2, k, i)][: vdiff + 1]
     total = S.Zero
     for m in range(vdiff, len(coeffs)):
@@ -585,15 +631,18 @@ def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
             continue
         total += coeffs[m] * _complete_homog(m - vdiff, zvars)
     sign = S.One if vdiff % 2 == 0 else -S.One
-    return sign * beta ** (d - movers) * total
+    return (expand(sign * beta ** (d - movers) * total), denom)
 
 
-def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta):
+def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
     """``sum_u coeff_u G_u(x, var2) * S_v(x, var3)`` in the ``G`` basis.
 
     Mirrors ``schubmult_double``: expand ``S_v`` by ``compute_vpathdicts`` over the
     layers of ``theta(v^{-1})``, with ``elem_sym_perms`` -> marked-chain K-Pieri
-    support and ``elem_sym_func`` -> ``groth_elem_sym_func``.
+    support and ``elem_sym_func`` -> ``_groth_elem_sym_frac``.
+
+    All path sums are carried as flat fractions ``(numer, {atom: exp})`` and only
+    reconstituted at the very end (or returned raw with ``as_frac=True``).
     """
     from schubmult.combinatorics.permutation import uncode
     from schubmult.utils.schub_lib import compute_vpathdicts
@@ -604,6 +653,8 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta):
     while th and th[-1] == 0:
         th.pop()
     if not th:
+        if as_frac:
+            return {Permutation(w): (sympify(val), {}) for w, val in perm_dict.items()}
         return dict(perm_dict)
     mu = uncode(th)
     vmu = v * mu
@@ -611,25 +662,34 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta):
     ret_dict = {}
     for u, val in perm_dict.items():
         u = Permutation(u)
-        vpathsums = {u: {Permutation([1, 2]): val}}
+        vpathsums = {u: {Permutation([1, 2]): (sympify(val), {})}}
         for index in range(len(th)):
             k = th[index]
             newpathsums = {}
             for up, sums in vpathsums.items():
                 for up2 in _top_block_support(up, k) | {up}:
                     for v_iter, steps in vpathdicts[index].items():
-                        sumval = sums.get(v_iter, S.Zero)
-                        if sumval == S.Zero:
+                        sumval = sums.get(v_iter)
+                        if sumval is None or sumval[0] == S.Zero:
                             continue
                         for v2, vdiff, s in steps:
-                            coeff = groth_elem_sym_func(k, index + 1, up, up2, v_iter, v2, vdiff, var2, var3, beta)
-                            if coeff == S.Zero:
+                            coeff = _groth_elem_sym_frac(k, index + 1, up, up2, v_iter, v2, vdiff, var2, var3, beta)
+                            if coeff[0] == S.Zero:
                                 continue
+                            contrib = _frac_mul(sumval, coeff)
+                            if s != 1:
+                                contrib = (s * contrib[0], contrib[1])
                             bucket = newpathsums.setdefault(up2, {})
-                            bucket[v2] = bucket.get(v2, S.Zero) + s * sumval * coeff
+                            bucket[v2] = _frac_add(bucket.get(v2), contrib, var2, beta)
             vpathsums = newpathsums
-        ret_dict = add_perm_dict({ep: sums.get(vmu, S.Zero) for ep, sums in vpathsums.items()}, ret_dict)
-    return {w: coeff for w, coeff in ret_dict.items() if coeff != S.Zero}
+        for ep, sums in vpathsums.items():
+            pair = sums.get(vmu)
+            if pair is not None and pair[0] != S.Zero:
+                ret_dict[ep] = _frac_add(ret_dict.get(ep), pair, var2, beta)
+    if as_frac:
+        return {w: f for w, f in ret_dict.items() if expand(f[0]) != S.Zero}
+    ret = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
+    return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
 
 
 def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
@@ -657,6 +717,7 @@ def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
         return perm_dict
     ret = {}
     for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
-        for w, value in _groth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta).items():
-            ret[w] = ret.get(w, S.Zero) + coeff * value
-    return {w: value for w, value in ret.items() if value != S.Zero}
+        for w, value in _groth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, as_frac=True).items():
+            ret[w] = _frac_add(ret.get(w), (expand(coeff * value[0]), value[1]), var2, beta)
+    out = {w: _frac_to_expr(f, var2, beta) for w, f in ret.items()}
+    return {w: value for w, value in out.items() if value != S.Zero}

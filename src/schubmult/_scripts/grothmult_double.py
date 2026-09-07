@@ -67,8 +67,8 @@ def main(argv=None):
             coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
 
             for perm in coeff_perms:
-                val = expand(coeff_dict[perm]).simplify()
-                if val != 0:
+                val = coeff_dict[perm]
+                if expand(val) != 0:
                     raw_result_dict[perm] = val
                     if formatter:
                         print(f"{sstr(perm)!s:>{width}}  {formatter(val)}")
