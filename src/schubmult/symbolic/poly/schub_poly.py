@@ -535,20 +535,21 @@ def _elem_sym_perms(perm, k):
 @cache
 def dom_groth(dom_perm, ring, beta):
     coeff_genset = ring.coeff_genset
-    start_elem = ring.one
+    start_dict = {pl.Permutation([]): S.One}
     lengths = (~dom_perm).trimcode
     n = len(lengths) + 1
     for i in range(n - 1, 0, -1):
-        new_start_elem = 0
+        new_start_dict = {}
         yvar = coeff_genset[n - i]
         bvar = 1 + beta * yvar
         var2 = [coeff_genset[j] * bvar for j in range(1, 25)]
         length = lengths[n - i - 1]
-        for permo, coeff in start_elem.items():
+        for permo, coeff in start_dict.items():
             for elem_perm, diff in _elem_sym_perms(permo, length):
-                new_start_elem += coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(length) if permo[p] == elem_perm[p]]) * ring(elem_perm)
-        start_elem = new_start_elem
-    return start_elem
+                value = coeff * (bvar**diff) * prod([var2[permo[p] - 1] + yvar for p in range(length) if permo[p] == elem_perm[p]])
+                new_start_dict[elem_perm] = new_start_dict.get(elem_perm, S.Zero) + value
+        start_dict = new_start_dict
+    return ring.from_dict(start_dict)
 
 
 def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
@@ -565,40 +566,42 @@ def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
     return operator.apply(schub)
 
 
-def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta):
+def isobaric_strip_on_dschub_dict(start, length, perm_dict, coeff_genset, beta):
+    """Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded.
+
+    Coefficients landing on the same permutation merge at every stage instead of
+    being carried per input basis element, mirroring ``compute_vpathdicts``.
+    """
     from schubmult.utils.schub_lib import elem_sym_positional_perms
 
-    start_schub = ring(schub_perm)
-    bigger_schub = ring.zero
     positions = list(range(start + 1, start + length + 1))
-    for perm, coeff in start_schub.items():
+    bigger = {}
+    for perm, coeff in perm_dict.items():
         for elem_perm, diff, sign in elem_sym_positional_perms(perm, length, *positions):
-            bigger_schub += (
-                sign
-                * coeff
-                * (beta**diff)
-                * prod([ring.coeff_genset[perm[positions[p] - 1]] * beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]])
-                * ring(elem_perm)
-            )
-    stripness = list(range(start, start + length))
-    ret_schub = ring.from_dict(bigger_schub)
-    for desc in stripness:
-        ret_schub = ring.from_dict({perm2.swap(desc - 1, desc): v for perm2, v in ret_schub.items() if perm2[desc - 1] > perm2[desc]})
-    return ret_schub
+            value = sign * coeff * (beta**diff) * prod([coeff_genset[perm[positions[p] - 1]] * beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]])
+            bigger[elem_perm] = bigger.get(elem_perm, S.Zero) + value
+    for desc in range(start, start + length):
+        bigger = {perm2.swap(desc - 1, desc): v for perm2, v in bigger.items() if perm2[desc - 1] > perm2[desc]}
+    return bigger
+
+
+def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta):
+    return ring.from_dict(isobaric_strip_on_dschub_dict(start, length, {schub_perm: S.One}, ring.coeff_genset, beta))
+
+
+def apply_isobaric_to_schub_dict(diff_perm, perm_dict, coeff_genset, beta):
+    """Fold every strip of ``diff_perm`` over the whole dict, merging between strips."""
+    strips = [[i, diff_perm.trimcode[i - 1]] for i in range(1, diff_perm.max_descent + 1)]
+    for strip in reversed(strips):
+        if strip[1] == 0:
+            continue
+        perm_dict = isobaric_strip_on_dschub_dict(strip[0], strip[1], perm_dict, coeff_genset, beta)
+    return perm_dict
 
 
 @cache
 def apply_isobaric_to_schub(diff_perm, schub_perm, ring, beta):
-    elem = ring(schub_perm)
-    strips = [[i, (diff_perm).trimcode[i - 1]] for i in range(1, (diff_perm).max_descent + 1)]
-    for strip in reversed(strips):
-        if strip[1] == 0:
-            continue
-        new_elem = elem.ring.zero
-        for perm, coeff in elem.items():
-            new_elem += coeff * isobaric_strip_on_dschub(strip[0], strip[1], perm, ring, beta=beta)
-        elem = new_elem
-    return elem
+    return ring.from_dict(apply_isobaric_to_schub_dict(diff_perm, {schub_perm: S.One}, ring.coeff_genset, beta))
 
 
 @cache
@@ -606,10 +609,8 @@ def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False):
     dom_perm = perm.minimal_dominant_above()
     diff_perm = (~perm) * dom_perm
     first_potato = dom_groth(dom_perm, ring, beta=beta)
-    schub_elem = ring.zero
-    for perm2, coeff in first_potato.items():
-        schub_elem += coeff * apply_isobaric_to_schub(diff_perm, perm2, ring, beta=beta)
-    result = ring.from_dict({k: v.expand() for k, v in schub_elem.items()})
+    schub_dict = apply_isobaric_to_schub_dict(diff_perm, dict(first_potato.items()), ring.coeff_genset, beta)
+    result = ring.from_dict({k: v.expand() for k, v in schub_dict.items()})
     if keep_as_schub:
         return result
     return result.as_polynomial()
