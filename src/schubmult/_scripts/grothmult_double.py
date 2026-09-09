@@ -9,6 +9,16 @@ from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+_posify_cache = {}
+
+
+def _solver(msg):
+    import pulp as pu
+
+    if pu.HiGHS_CMD().available():
+        return pu.HiGHS_CMD(msg=msg)
+    return pu.PULP_CBC_CMD(msg=msg)
+
 
 def _denominator_budget(den, var2):
     """Atom multiplicities ``{y_symbol: exp}`` of a denominator ``prod (1 + beta*y_i)**e``.
@@ -81,48 +91,117 @@ def groth_posify(val, var2, var3, msg):
     num_l = expand(num_l)
     caps = {g: int(p) for g, p in den_l.as_powers_dict().items() if g != S.One and int(p) != 0}
 
-    vec0 = {k: int(c) for k, c in num_l.as_coefficients_dict().items() if c != 0}
-    max_m = max((sum(int(p) for p in mono.as_powers_dict().values()) for mono in vec0), default=0)
+    # opaque exponent-tuple representation over the u, v generators
+    gens = [*[uu[ys] for ys in ysyms], *[vv[zs] for zs in zsyms]]
+    gpos = {g: i for i, g in enumerate(gens)}
+    ng = len(gens)
+    zero_m = (0,) * ng
 
-    # candidates: product of m difference atoms times a leftover clearing
-    # monomial (unused inverse depth); expand and keep the coefficient dict
-    pairs = [(ys, zs) for ys in ysyms for zs in zsyms]
-    cap_syms = list(caps)
+    def to_vec(expr):
+        vec = {}
+        for mono, c in expr.as_coefficients_dict().items():
+            if c == 0:
+                continue
+            m = [0] * ng
+            for g, p in mono.as_powers_dict().items():
+                if g in gpos:
+                    m[gpos[g]] = int(p)
+                elif g != S.One:
+                    raise ValueError(f"unexpected generator {g}")
+            key = tuple(m)
+            vec[key] = vec.get(key, 0) + int(c)
+        return vec
+
+    def dict_mul(a, b):
+        out = {}
+        for m1, c1 in a.items():
+            for m2, c2 in b.items():
+                k = tuple(x + y for x, y in zip(m1, m2))
+                cc = out.get(k, 0) + c1 * c2
+                if cc:
+                    out[k] = cc
+                elif k in out:
+                    del out[k]
+        return out
+
+    vec0 = to_vec(num_l)
+    max_m = max((sum(p for p in mono if p > 0) for mono in vec0), default=0)
+
+    def unit(g):
+        m = [0] * ng
+        m[gpos[g]] = 1
+        return tuple(m)
+
+    # candidate construction is shared across coefficients with the same
+    # generators, denominator caps, and degree data
+    cache_key = (tuple(str(s) for s in ysyms), tuple(str(s) for s in zsyms), tuple(sorted((str(g), p) for g, p in caps.items())), d, max_m)
+    if cache_key in _posify_cache:
+        levels = _posify_cache[cache_key]
+    else:
+        # difference products built incrementally: each level multiplies by one
+        # 2-term pair vector (integer convolution, no symbolic expand)
+        pair_vecs = [({unit(vv[zs]): 1, unit(uu[ys]): -1}, (ys, zs)) for ys in ysyms for zs in zsyms]
+        prods = [[({zero_m: 1}, (), 0)]]
+        for m in range(1, max_m + 1):
+            cur = []
+            for vec, combo, start in prods[m - 1]:
+                for idx in range(start, len(pair_vecs)):
+                    pv, pair = pair_vecs[idx]
+                    cur.append((dict_mul(vec, pv), (*combo, pair), idx))
+            prods.append(cur)
+
+        # clearing monomials as precomputed exponent shifts
+        cap_syms = list(caps)
+        usage_shifts = []
+        for usage in itertools.product(*[range(caps[g] + 1) for g in cap_syms]):
+            s = [0] * ng
+            for g, a in zip(cap_syms, usage):
+                s[gpos[g]] = caps[g] - a
+            usage_shifts.append((tuple(s), dict(zip(cap_syms, usage))))
+
+        levels = []
+        for m in range(0, max_m + 1):
+            lev = []
+            if m >= max(d, 0):
+                for vec, combo, _ in prods[m]:
+                    for shift, usage in usage_shifts:
+                        svec = {tuple(x + y for x, y in zip(k, shift)): c for k, c in vec.items()}
+                        lev.append((svec, combo, usage, m))
+            levels.append(lev)
+        _posify_cache[cache_key] = levels
+
+    def solve(candidates):
+        vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(candidates))]
+        lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+        lp_prob += 0
+        eqs = {}
+        for i, (svec, _, _, _) in enumerate(candidates):
+            for k, c in svec.items():
+                eqs.setdefault(k, []).append(c * vrs[i])
+        for k in set(eqs) | set(vec0):
+            lp_prob += pu.lpSum(eqs.get(k, [])) == vec0.get(k, 0)
+        try:
+            status = lp_prob.solve(_solver(msg))
+        except KeyboardInterrupt:
+            import psutil
+
+            current_process = psutil.Process()
+            for child in current_process.children(recursive=True):
+                child_process = psutil.Process(child.pid)
+                child_process.terminate()
+                child_process.kill()
+            raise
+        return status, vrs
+
+    # escalate the factor-count ceiling: small LPs solve fast and usually suffice
     candidates = []
+    status = None
     for m in range(max(d, 0), max_m + 1):
-        for combo in itertools.combinations_with_replacement(pairs, m):
-            prd = S.One
-            for ys, zs in combo:
-                prd = prd * (vv[zs] - uu[ys])
-            for usage in itertools.product(*[range(caps[g] + 1) for g in cap_syms]):
-                cand = prd
-                for g, a in zip(cap_syms, usage):
-                    cand = cand * g ** (caps[g] - a)
-                svec = {k: int(c) for k, c in expand(cand).as_coefficients_dict().items() if c != 0}
-                candidates.append((svec, combo, dict(zip(cap_syms, usage)), m))
-
-    vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(candidates))]
-    lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
-    lp_prob += 0
-    eqs = {}
-    for i, (svec, _, _, _) in enumerate(candidates):
-        for k, c in svec.items():
-            eqs.setdefault(k, []).append(c * vrs[i])
-    for k in set(eqs) | set(vec0):
-        lp_prob += pu.lpSum(eqs.get(k, [])) == vec0.get(k, 0)
-    try:
-        solver = pu.PULP_CBC_CMD(msg=msg)
-        status = lp_prob.solve(solver)
-    except KeyboardInterrupt:
-        import psutil
-
-        current_process = psutil.Process()
-        for child in current_process.children(recursive=True):
-            child_process = psutil.Process(child.pid)
-            child_process.terminate()
-            child_process.kill()
-        raise
-    if pu.LpStatus[status] != "Optimal":
+        candidates = [*candidates, *levels[m]]
+        status, vrs = solve(candidates)
+        if pu.LpStatus[status] == "Optimal":
+            break
+    if status is None or pu.LpStatus[status] != "Optimal":
         raise ValueError(f"no positive representation found for {val}")
 
     result = S.Zero
