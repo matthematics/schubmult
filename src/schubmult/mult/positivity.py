@@ -155,8 +155,9 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
     val2 = 0
     for k in base_vectors:
         x = vrs[k].value()
-        if x != 0 and x is not None:
-            val2 += int(x) * k
+        # round, don't truncate: solvers return near-integers like 0.9999999999996
+        if x is not None and round(x) != 0:
+            val2 += round(x) * k
     if expand(val - val2, func=True) != 0:
         # print(f"{vec=}")
         raise Exception

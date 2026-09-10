@@ -156,14 +156,13 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         """Reduce a rational function to lowest terms without the overhead of full simplify()."""
         from sympy import cancel
 
-        from schubmult.symbolic import sympify, sympify_sympy
+        from schubmult.symbolic import sympify_sympy
 
         return sympify(cancel(sympify_sympy(expr)))
 
     def div_by_product_of_roots(self, expr, perm):
         from sympy import cancel, div, fraction
 
-        from schubmult.symbolic import sympify
 
         num, den = fraction(cancel(expr))
         # num = expand(num)
@@ -253,7 +252,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return result
 
     def mul_expr(self, elem, x):
-        from schubmult.symbolic import Add, DomainElement, Mul, Pow, sympify
+        from schubmult.symbolic import Add, DomainElement, Mul, Pow
 
         if isinstance(x, DomainElement):
             raise TypeError(f"Cannot multiply {type(elem)} with {type(x)}")
@@ -311,7 +310,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return self.from_expr(x)
 
     def from_dict(self, dct):
-        dct = {k: v for k, v in dct.items() if sympify(v).expand() != 0}
+        dct = {k: v for k, v in dct.items() if v != S.Zero}
         return self.dtype(dct)
 
 

@@ -11,6 +11,26 @@ logger = get_logger(__name__)
 
 _posify_cache = {}
 
+# graceful failure ceiling: candidate enumeration and the LP grow combinatorially,
+# and unbounded growth has OOM-killed the whole machine before
+_MAX_CANDIDATES = 1_000_000
+
+
+def _limit_memory():
+    """Cap this process's address space so runaway cases die with MemoryError
+    instead of taking down the host (WSL is especially fragile under OOM)."""
+    import resource
+
+    try:
+        import psutil
+
+        cap = max(int(psutil.virtual_memory().available * 0.7), 1024**3)
+        soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+        if soft == resource.RLIM_INFINITY or soft > cap:
+            resource.setrlimit(resource.RLIMIT_AS, (cap, hard))
+    except Exception:  # noqa: BLE001
+        logger.debug("could not set memory limit", exc_info=True)
+
 
 def _solver(msg):
     import pulp as pu
@@ -91,32 +111,35 @@ def groth_posify(val, var2, var3, msg):
     num_l = expand(num_l)
     caps = {g: int(p) for g, p in den_l.as_powers_dict().items() if g != S.One and int(p) != 0}
 
-    # opaque exponent-tuple representation over the u, v generators
+    # packed-int monomial representation over the u, v generators: PBITS bits
+    # of exponent per generator, so monomial products are plain integer sums
+    PBITS = 10
     gens = [*[uu[ys] for ys in ysyms], *[vv[zs] for zs in zsyms]]
-    gpos = {g: i for i, g in enumerate(gens)}
-    ng = len(gens)
-    zero_m = (0,) * ng
+    gshift = {g: PBITS * i for i, g in enumerate(gens)}
 
     def to_vec(expr):
         vec = {}
+        degs = {}
         for mono, c in expr.as_coefficients_dict().items():
             if c == 0:
                 continue
-            m = [0] * ng
+            key = 0
+            deg = 0
             for g, p in mono.as_powers_dict().items():
-                if g in gpos:
-                    m[gpos[g]] = int(p)
+                if g in gshift:
+                    key += int(p) << gshift[g]
+                    deg += int(p)
                 elif g != S.One:
                     raise ValueError(f"unexpected generator {g}")
-            key = tuple(m)
             vec[key] = vec.get(key, 0) + int(c)
-        return vec
+            degs[key] = deg
+        return vec, degs
 
     def dict_mul(a, b):
         out = {}
         for m1, c1 in a.items():
             for m2, c2 in b.items():
-                k = tuple(x + y for x, y in zip(m1, m2))
+                k = m1 + m2
                 cc = out.get(k, 0) + c1 * c2
                 if cc:
                     out[k] = cc
@@ -124,51 +147,59 @@ def groth_posify(val, var2, var3, msg):
                     del out[k]
         return out
 
-    vec0 = to_vec(num_l)
-    max_m = max((sum(p for p in mono if p > 0) for mono in vec0), default=0)
+    vec0, deg0 = to_vec(num_l)
+    max_m = max(deg0.values(), default=0)
+    # candidates are homogeneous of total degree #pairs + clearing-shift degree,
+    # so degrees absent from the target can be pruned losslessly
+    target_degs = frozenset(deg0.values())
 
-    def unit(g):
-        m = [0] * ng
-        m[gpos[g]] = 1
-        return tuple(m)
-
-    # candidate construction is shared across coefficients with the same
-    # generators, denominator caps, and degree data
-    cache_key = (tuple(str(s) for s in ysyms), tuple(str(s) for s in zsyms), tuple(sorted((str(g), p) for g, p in caps.items())), d, max_m)
-    if cache_key in _posify_cache:
-        levels = _posify_cache[cache_key]
-    else:
+    # construction state is shared across coefficients: difference products
+    # depend only on the generators, levels also on caps and target degrees;
+    # both are built lazily on demand
+    gens_key = (tuple(str(s) for s in ysyms), tuple(str(s) for s in zsyms))
+    prods_state = _posify_cache.get(gens_key)
+    if prods_state is None:
         # difference products built incrementally: each level multiplies by one
         # 2-term pair vector (integer convolution, no symbolic expand)
-        pair_vecs = [({unit(vv[zs]): 1, unit(uu[ys]): -1}, (ys, zs)) for ys in ysyms for zs in zsyms]
-        prods = [[({zero_m: 1}, (), 0)]]
-        for m in range(1, max_m + 1):
-            cur = []
-            for vec, combo, start in prods[m - 1]:
-                for idx in range(start, len(pair_vecs)):
-                    pv, pair = pair_vecs[idx]
-                    cur.append((dict_mul(vec, pv), (*combo, pair), idx))
-            prods.append(cur)
+        pair_vecs = [({1 << gshift[vv[zs]]: 1, 1 << gshift[uu[ys]]: -1}, (ys, zs)) for ys in ysyms for zs in zsyms]
+        prods_state = {"pair_vecs": pair_vecs, "prods": [[({0: 1}, (), 0)]]}
+        _posify_cache[gens_key] = prods_state
 
-        # clearing monomials as precomputed exponent shifts
-        cap_syms = list(caps)
+    cache_key = (gens_key, tuple(sorted((str(g), p) for g, p in caps.items())), target_degs)
+    state = _posify_cache.get(cache_key)
+    if state is None:
+        # clearing monomials as precomputed packed shifts with their degrees
         usage_shifts = []
-        for usage in itertools.product(*[range(caps[g] + 1) for g in cap_syms]):
-            s = [0] * ng
-            for g, a in zip(cap_syms, usage):
-                s[gpos[g]] = caps[g] - a
-            usage_shifts.append((tuple(s), dict(zip(cap_syms, usage))))
+        for usage in itertools.product(*[range(caps[g] + 1) for g in caps]):
+            shift = 0
+            sdeg = 0
+            for g, a in zip(caps, usage):
+                shift += (caps[g] - a) << gshift[g]
+                sdeg += caps[g] - a
+            usage_shifts.append((shift, dict(zip(caps, usage)), sdeg))
+        state = {"usage_shifts": usage_shifts, "levels": {}}
+        _posify_cache[cache_key] = state
 
-        levels = []
-        for m in range(0, max_m + 1):
-            lev = []
-            if m >= max(d, 0):
-                for vec, combo, _ in prods[m]:
-                    for shift, usage in usage_shifts:
-                        svec = {tuple(x + y for x, y in zip(k, shift)): c for k, c in vec.items()}
-                        lev.append((svec, combo, usage, m))
-            levels.append(lev)
-        _posify_cache[cache_key] = levels
+    def get_level(m):
+        if m in state["levels"]:
+            return state["levels"][m]
+        prods = prods_state["prods"]
+        pair_vecs = prods_state["pair_vecs"]
+        shifts = [(shift, usage) for shift, usage, sdeg in state["usage_shifts"] if m + sdeg in target_degs]
+        lev = []
+        if shifts:
+            while len(prods) <= m:
+                cur = []
+                for vec, combo, start in prods[-1]:
+                    for idx in range(start, len(pair_vecs)):
+                        pv, pair = pair_vecs[idx]
+                        cur.append((dict_mul(vec, pv), (*combo, pair), idx))
+                prods.append(cur)
+            for vec, combo, _ in prods[m]:
+                for shift, usage in shifts:
+                    lev.append(({k + shift: c for k, c in vec.items()}, combo, usage, m))
+        state["levels"][m] = lev
+        return lev
 
     def solve(candidates):
         vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(candidates))]
@@ -177,9 +208,9 @@ def groth_posify(val, var2, var3, msg):
         eqs = {}
         for i, (svec, _, _, _) in enumerate(candidates):
             for k, c in svec.items():
-                eqs.setdefault(k, []).append(c * vrs[i])
+                eqs.setdefault(k, {})[vrs[i]] = c
         for k in set(eqs) | set(vec0):
-            lp_prob += pu.lpSum(eqs.get(k, [])) == vec0.get(k, 0)
+            lp_prob += pu.LpAffineExpression(eqs.get(k, {})) == vec0.get(k, 0)
         try:
             status = lp_prob.solve(_solver(msg))
         except KeyboardInterrupt:
@@ -197,7 +228,13 @@ def groth_posify(val, var2, var3, msg):
     candidates = []
     status = None
     for m in range(max(d, 0), max_m + 1):
-        candidates = [*candidates, *levels[m]]
+        lev = get_level(m)
+        if not lev:
+            continue
+        candidates = [*candidates, *lev]
+        if len(candidates) > _MAX_CANDIDATES:
+            raise ValueError(f"candidate set too large ({len(candidates)}) for {val}")
+        print(f"  solving level m={m}: {len(candidates)} candidates", file=sys.stderr)
         status, vrs = solve(candidates)
         if pu.LpStatus[status] == "Optimal":
             break
@@ -207,14 +244,16 @@ def groth_posify(val, var2, var3, msg):
     result = S.Zero
     for i, (_, combo, usage, m) in enumerate(candidates):
         x = vrs[i].value()
-        if x is not None and int(x) != 0:
+        # round, don't truncate: solvers return near-integers like 0.9999999999996
+        xi = 0 if x is None else round(x)
+        if xi != 0:
             term = S.One
             for ys, zs in combo:
                 term = term * (sympify(zs) - sympify(ys))
             for g, a in usage.items():
                 if a:
                     term = term / back[g] ** a
-            result += int(x) * bs ** (m - d) * term
+            result += xi * bs ** (m - d) * term
     # exact symbolic verification: structural numerator of the difference
     diff_num, _ = sympify_sympy(result - e).as_numer_denom()
     if expand(sympify(diff_num)) != S.Zero:
@@ -242,6 +281,9 @@ def main(argv=None):
         if args.display_positive and args.same:
             print("--display-positive is only supported with --mixed-var for grothmult_double")
             return 1
+
+        if args.display_positive:
+            _limit_memory()
 
         mult = args.mult
         mulstring = args.mulstring
@@ -273,35 +315,29 @@ def main(argv=None):
             mul_exp = sympify(mulstring)
             coeff_dict = mult_poly_groth_double(coeff_dict, mul_exp, var2, var3)
 
-        if args.display_positive:
-            new_dict = {}
-            for perm, val in coeff_dict.items():
-                if expand(val) == 0:
-                    continue
+        # sort/filter up front so posified coefficients can stream out as each
+        # one finishes (the LPs can take a long time)
+        coeff_perms = [perm for perm, val in coeff_dict.items() if expand(val) != 0]
+        coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
+        width = max([len(sstr(perm)) for perm in coeff_perms]) if coeff_perms else 0
+
+        raw_result_dict = {}
+        for i, perm in enumerate(coeff_perms):
+            val = coeff_dict[perm]
+            if args.display_positive:
+                print(f"posify {i + 1}/{len(coeff_perms)}: {sstr(perm)}", file=sys.stderr)
                 try:
                     # groth_posify verifies its own output exactly
-                    pos_val = groth_posify(val, var2, var3, args.msg)
+                    val = groth_posify(val, var2, var3, args.msg)
                 except Exception:
                     import traceback
 
                     traceback.print_exc()
                     print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=}")
                     return 1
-                new_dict[perm] = pos_val
-            coeff_dict = new_dict
-
-        raw_result_dict = {}
-        if pr or formatter is None:
-            width = max([len(sstr(perm)) for perm in coeff_dict]) if coeff_dict else 0
-            coeff_perms = list(coeff_dict.keys())
-            coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
-
-            for perm in coeff_perms:
-                val = coeff_dict[perm]
-                if expand(val) != 0:
-                    raw_result_dict[perm] = val
-                    if formatter:
-                        print(f"{sstr(perm)!s:>{width}}  {formatter(val)}")
+            raw_result_dict[perm] = val
+            if pr and formatter:
+                print(f"{sstr(perm)!s:>{width}}  {formatter(val)}", flush=True)
 
         if formatter is None:
             return raw_result_dict

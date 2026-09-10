@@ -175,7 +175,7 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
             elem1 = self
             elem2 = other
             test_elem = elem1 - elem2
-            if all(v == 0 for v in test_elem.values()):
+            if all(expand(v) == 0 for v in test_elem.values()):
                 return True
             return False
         return False
@@ -209,11 +209,11 @@ class BaseRing(Ring, CompositeDomain):
 
     def add(self, elem, other):
         res = self.from_dict(add_perm_dict(elem, other))
-        return self.from_dict({k: v for k, v in res.items() if expand(v) != S.Zero})
+        return self.from_dict({k: v for k, v in res.items() if v != S.Zero})
 
     def sub(self, elem, other):
         res = self.from_dict(add_perm_dict(elem, {k: -v for k, v in other.items()}))
-        return self.from_dict({k: v for k, v in res.items() if expand(v) != S.Zero})
+        return self.from_dict({k: v for k, v in res.items() if v != S.Zero})
 
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})

@@ -57,7 +57,7 @@ from fractions import Fraction
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
-from schubmult.symbolic import Add, Mul, Pow, S, expand, prod, sympify, sympify_sympy
+from schubmult.symbolic import Add, Mul, Pow, S, prod, sympify
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -140,7 +140,7 @@ def epsilon_chain(positions, inverse=False, ambient_rank=None):
     return tuple((a, b, m) for _, a, b, m in entries)
 
 
-def _one_plus_beta_x_terms(u, positions, var2, beta, inverse=False):
+def _one_plus_beta_x_terms(u, positions, var2, beta, inverse=False, beta_offset=0):
     r"""Expand ``prod_{i in A} (1 + beta*x_i)^{-1 if inverse else 1} * G_u(x, var2)``.
 
     ``prod_{i in A}(1 + beta*x_i)`` is the class ``e^{-eps_A}``, so this is Theorem 6.1
@@ -170,8 +170,11 @@ def _one_plus_beta_x_terms(u, positions, var2, beta, inverse=False):
             value *= S.One + beta * var2[w[i - 1]]
         return value**exponent
 
-    def walk(start, w, character, sign):
-        terms[w] = terms.get(w, S.Zero) + sign * character * terminal(w)
+    def walk(start, w, character, sign, depth):
+        # beta_offset strips beta factors structurally (chains of depth > 0 all
+        # carry beta**depth); the depth-0 diagonal term is skipped when offset
+        if depth or not beta_offset:
+            terms[w] = terms.get(w, S.Zero) + sign * beta ** (depth + beta_offset) * character * terminal(w)
         for index in range(start, len(chain)):
             a, b, level = chain[index]
             stepped = w.swap(a - 1, b - 1)
@@ -179,9 +182,9 @@ def _one_plus_beta_x_terms(u, positions, var2, beta, inverse=False):
                 continue
             # s_{alpha_ab, level} translates the weight by level * w(alpha_ab).
             factor = ((S.One + beta * var2[w[b - 1]]) / (S.One + beta * var2[w[a - 1]])) ** level
-            walk(index + 1, stepped, character * factor, sign * beta if level > 0 else -sign * beta)
+            walk(index + 1, stepped, character * factor, sign if level > 0 else -sign, depth + 1)
 
-    walk(0, u, S.One, S.One)
+    walk(0, u, S.One, S.One, 0)
     return terms
 
 
@@ -226,12 +229,11 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
     ret = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
-        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta).items():
-            if w == u:
-                y = var2[u[k - 1]]
-                ret[w] = ret.get(w, S.Zero) + val * (-y) / (S.One + beta * y)
-            else:
-                ret[w] = ret.get(w, S.Zero) + val * _divide_by_beta(coeff, beta)
+        y = var2[u[k - 1]]
+        ret[u] = ret.get(u, S.Zero) + val * (-y) / (S.One + beta * y)
+        # beta_offset=-1 divides out the beta structurally, no cancel() needed
+        for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, beta_offset=-1).items():
+            ret[w] = ret.get(w, S.Zero) + val * coeff
     return ret
 
 
@@ -323,28 +325,41 @@ def groth_elem_sym_poly(p, k, zvar, var_x, beta):
     return acc[p]
 
 
-def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, beta=None):
+def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, beta=None):  # noqa: ARG001
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``groth_elem_sym_poly(p, k, zvar, var_x, beta)``.
 
-    Exact, via ``mult_poly_groth_double`` on the expanded polynomial.  A closed-form
-    Pieri rule in the style of ``dom_groth`` -- paths from ``elem_sym_perms_groth`` plus an
-    ``elem_sym_poly`` in the localizations -- is *not* implemented: grading the paths by
-    ``beta^{d - m}`` with ``m`` the number of moved positions and taking ``elem_sym_poly``
-    over the untouched ones is wrong already at ``p == k``.  The non-equivariant rule
-    ``groth_pieri_mul`` grades instead by ``beta^{d - (number of marked steps)}`` with the
-    multiplicity counting admissible markings of the chain (``elem_sym_chains_groth``), so
-    the equivariant coefficient presumably needs that marking data rather than the
-    moved/untouched split.
+    Exact, by folding the ``e_p`` DP over coefficient dicts one shifted variable
+    ``x_i (+) zvar`` at a time (``single_variable_groth`` per step) -- no symbolic
+    expansion.  A closed-form Pieri rule in the style of ``dom_groth`` -- paths from
+    ``elem_sym_perms_groth`` plus an ``elem_sym_poly`` in the localizations -- is *not*
+    implemented: grading the paths by ``beta^{d - m}`` with ``m`` the number of moved
+    positions and taking ``elem_sym_poly`` over the untouched ones is wrong already at
+    ``p == k``.  The non-equivariant rule ``groth_pieri_mul`` grades instead by
+    ``beta^{d - (number of marked steps)}`` with the multiplicity counting admissible
+    markings of the chain (``elem_sym_chains_groth``), so the equivariant coefficient
+    presumably needs that marking data rather than the moved/untouched split.
+
+    ``var_x`` is unused (kept for signature compatibility).
     """
     if beta is None:
         beta = _default_beta
     if zvar is None:
         zvar = S.Zero
-    var_x = _genset(var_x)
     var2 = _genset(var2)
 
-    poly = sympify(sympify_sympy(groth_elem_sym_poly(p, k, zvar, var_x, beta)).expand())
-    return mult_poly_groth_double(coeff_dict, poly, var_x, var2, beta)
+    # acc[r] = e_r(x_1 (+) z, ..., x_i (+) z) * input, folded as coefficient dicts
+    acc = [{Permutation(key): value for key, value in coeff_dict.items()}] + [{} for _ in range(p)]
+    scale = S.One + beta * zvar
+    for i in range(1, k + 1):
+        for r in range(min(p, i), 0, -1):
+            if not acc[r - 1]:
+                continue
+            term = {w: scale * c for w, c in single_variable_groth(acc[r - 1], i, var2, beta).items()}
+            if zvar != S.Zero:
+                for w, c in acc[r - 1].items():
+                    term[w] = term.get(w, S.Zero) + zvar * c
+            acc[r] = add_perm_dict(acc[r], term)
+    return acc[p]
 
 
 def _top_block_support(u, k):
@@ -490,12 +505,6 @@ def _genset(var):
     return CustomGeneratingSet(var)
 
 
-def _divide_by_beta(expr, beta):
-    from sympy import cancel
-
-    return sympify(cancel(sympify_sympy(expr) / sympify_sympy(beta)))
-
-
 def dgroth_to_dschub(v, var3, beta=None):
     """Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
 
@@ -544,10 +553,11 @@ def _frac_mul(f1, f2):
 
 
 def _frac_add(f1, f2, varl1, beta):
-    """Add two flat fractions over the LCM denominator, expanding the polynomial numerator.
+    """Add two flat fractions over the LCM denominator.
 
     Each side is only scaled by the *missing* atoms ``(1 + beta*varl1[a])``, so the
     result stays a single-level fraction with a canonical atom-exponent denominator.
+    The numerator is left unexpanded (small, but possibly a hidden zero).
     """
     if f1 is None:
         return f2
@@ -556,12 +566,11 @@ def _frac_add(f1, f2, varl1, beta):
     d = {a: max(d1.get(a, 0), d2.get(a, 0)) for a in set(d1) | set(d2)}
     m1 = prod([(S.One + beta * varl1[a]) ** (d[a] - d1.get(a, 0)) for a in d])
     m2 = prod([(S.One + beta * varl1[a]) ** (d[a] - d2.get(a, 0)) for a in d])
-    return (expand(n1 * m1 + n2 * m2), d)
+    return (n1 * m1 + n2 * m2, d)
 
 
 def _frac_to_expr(f, varl1, beta):
     n, d = f
-    n = expand(n)
     if n == S.Zero:
         return S.Zero
     return n / prod([(S.One + beta * varl1[a]) ** e for a, e in d.items() if e])
@@ -631,7 +640,7 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
             continue
         total += coeffs[m] * _complete_homog(m - vdiff, zvars)
     sign = S.One if vdiff % 2 == 0 else -S.One
-    return (expand(sign * beta ** (d - movers) * total), denom)
+    return (sign * beta ** (d - movers) * total, denom)
 
 
 def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
@@ -687,7 +696,7 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
             if pair is not None and pair[0] != S.Zero:
                 ret_dict[ep] = _frac_add(ret_dict.get(ep), pair, var2, beta)
     if as_frac:
-        return {w: f for w, f in ret_dict.items() if expand(f[0]) != S.Zero}
+        return {w: f for w, f in ret_dict.items() if f[0] != S.Zero}
     ret = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
     return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
 
@@ -718,6 +727,6 @@ def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
     ret = {}
     for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
         for w, value in _groth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, as_frac=True).items():
-            ret[w] = _frac_add(ret.get(w), (expand(coeff * value[0]), value[1]), var2, beta)
+            ret[w] = _frac_add(ret.get(w), (coeff * value[0], value[1]), var2, beta)
     out = {w: _frac_to_expr(f, var2, beta) for w, f in ret.items()}
     return {w: value for w, value in out.items() if value != S.Zero}
