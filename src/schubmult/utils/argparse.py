@@ -1,7 +1,7 @@
 import sys  # noqa: F401
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
-from schubmult.symbolic import init_printing, latex, pretty, sstr, sympify_sympy
+from schubmult.symbolic import init_printing, latex, pretty, sstr, sympify, sympify_sympy
 
 # from sympy import init_printing
 from schubmult.utils.logging import init_logging
@@ -149,10 +149,10 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
                 help="Substitute commuting difference operators for perm1, then apply to Schub indexed by perm2",
             )
 
-    disp_mode_list = ["basic", "pretty", "latex", "raw"]
+    disp_mode_list = ["basic", "sympy", "pretty", "latex", "raw"]
 
     if not yz and not quantum:
-        disp_mode_list = ["basic", "raw"]
+        disp_mode_list = ["basic", "sympy", "raw"]
 
     parser.add_argument(
         "--display-mode",
@@ -228,6 +228,8 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
             else pretty(sympify_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n", "\n" + " ".join(["" for i in range(width)]))
         )
     elif args.disp_mode == "basic":
+        formatter = lambda bob, width=None: repr(sympify(bob))#, order="none")  # , order="rev-lex" if args.same else "none")  # noqa: E731
+    elif args.disp_mode == "sympy":
         formatter = lambda bob, width=None: sstr(sympify_sympy(bob), order="old")  # , order="rev-lex" if args.same else "none")  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
