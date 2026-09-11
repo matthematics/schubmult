@@ -324,7 +324,7 @@ def main(argv=None):
             #         mul_exp = eval(mulstring)
             #         check_coeff_dict = mult_poly_down(check_coeff_dict, mul_exp)
             # else:
-            use_alt = True
+            use_alt = display_positive
             elem_dict = None
             if use_alt:
                 if not same:
