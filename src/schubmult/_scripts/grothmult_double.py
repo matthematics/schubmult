@@ -79,7 +79,7 @@ def groth_posify(val, var2, var3, msg):
     from schubmult.symbolic import efficient_subs
 
     try:
-        return int(expand(val))
+        return int(val)
     except Exception:
         pass
     bs = sympify(beta)
@@ -316,8 +316,8 @@ def main(argv=None):
             coeff_dict = mult_poly_groth_double(coeff_dict, mul_exp, var2, var3)
 
         # sort/filter up front so posified coefficients can stream out as each
-        # one finishes (the LPs can take a long time)
-        coeff_perms = [perm for perm, val in coeff_dict.items() if expand(val) != 0]
+        # one finishes (the LPs can take a long time); structural zero test only
+        coeff_perms = [perm for perm, val in coeff_dict.items() if val != S.Zero]
         coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
         width = max([len(sstr(perm)) for perm in coeff_perms]) if coeff_perms else 0
 
