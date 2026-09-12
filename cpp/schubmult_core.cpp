@@ -1,9 +1,9 @@
 // schubmult_core: standalone C++ port of schubmult.mult.single.schubmult_py
 // (products of ordinary Schubert polynomials via theta codes / v-path dicts).
 //
-// Build:  make            (or: g++ -O3 -march=native -std=c++17 -o schubmult_core schubmult_core.cpp)
-// Usage:  ./schubmult_core 3 1 2 - 2 1 3
-//         ./schubmult_core --code 2 0 - 1 0
+// Build:  make            (binaries go to build/; or: g++ -O3 -march=native -std=c++17 -o build/schubmult_core schubmult_core.cpp)
+// Usage:  ./build/schubmult_core 3 1 2 - 2 1 3
+//         ./build/schubmult_core --code 2 0 - 1 0
 // Output lines are "coeff  (w1, w2, ...)" like schubmult_py (or "[c1, c2]" with --code).
 
 #include "schub_common.h"

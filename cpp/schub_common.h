@@ -1,5 +1,6 @@
 // schub_common.h: permutation utilities, v-path precomputation, elem_sym_perms,
-// and the intern table shared by schubmult_core (single) and schubmult_double_core.
+// and the intern table shared by schubmult_core (single), schubmult_double_core and
+// schubmult_q_core.
 //
 // Every permutation is one fixed-size byte array of length MAXN padded with the identity,
 // so equal permutations are byte-identical; rebuild with -DMAXN=64 for larger inputs
@@ -96,6 +97,31 @@ static std::vector<int> theta(std::vector<int> cd) {
         for (int j = i - 1; j >= 0; --j)
             if (cd[j] < cd[i]) cd[i] += 1;
     std::sort(cd.begin(), cd.end(), [](int x, int y) { return x > y; });
+    while (!cd.empty() && cd.back() == 0) cd.pop_back();
+    return cd;
+}
+
+// Permutation._cached_medium_theta (used by schubmult_q_fast), with trailing zeros removed.
+static std::vector<int> medium_theta(std::vector<int> cd) {
+    int L = (int)cd.size();
+    bool found_one = true;
+    while (found_one) {
+        found_one = false;
+        for (int i = 0; i + 1 < L; ++i) {
+            if (cd[i] < cd[i + 1]) {
+                int a = cd[i], b = cd[i + 1];
+                cd[i] = b + 1;
+                cd[i + 1] = a;
+                found_one = true;
+                break;
+            }
+            if (cd[i] == cd[i + 1] && cd[i] != 0 && i > 0 && cd[i - 1] <= cd[i] + 1) {
+                cd[i] += 1;
+                found_one = true;
+                break;
+            }
+        }
+    }
     while (!cd.empty() && cd.back() == 0) cd.pop_back();
     return cd;
 }
@@ -288,7 +314,7 @@ struct UpEntry {
 };
 
 // Appends (perm, udiff) pairs to out (cleared first). n bounds the positions considered.
-static void elem_sym_perms(const Perm& orig, int p, int k, int n, std::vector<std::pair<Perm, int>>& out) {
+[[maybe_unused]] static void elem_sym_perms(const Perm& orig, int p, int k, int n, std::vector<std::pair<Perm, int>>& out) {
     static std::vector<UpEntry> cur, nxt;
     out.clear();
     out.push_back({orig, 0});
@@ -406,9 +432,10 @@ struct MultSetup {
     bool trivial = false;  // v is the identity
 };
 
-static MultSetup mult_setup(const Perm& v) {
+static MultSetup mult_setup(const Perm& v, bool medium = false) {
     MultSetup s;
-    s.th = theta(lehmer_code(inverse(v, MAXN), MAXN));
+    std::vector<int> cd = lehmer_code(inverse(v, MAXN), MAXN);
+    s.th = medium ? medium_theta(cd) : theta(cd);
     if (s.th.empty()) {
         s.trivial = true;
         return s;
