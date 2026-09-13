@@ -1,5 +1,39 @@
 # Changelog
 
+## 5.0.0b1
+
+Pre-release. The multiplication kernels are now compiled C++.
+
+### Changed
+
+- **The Schubert multiplication kernels run in a C++ extension (`schubmult.schubmult_cpp`).**
+  `schubmult_py`, `schubmult_double`, `schubmult_q_fast`, `schubmult_q_double_fast`,
+  `schubmult_double_from_elems` and `schubmult_double_alt_from_elems` — and therefore
+  every ring product built on them — dispatch to ports of the same algorithms in `cpp/`.
+  Results are identical to the Python kernels (coefficients are still unexpanded symengine
+  expressions); typical products are one to two orders of magnitude faster. The Python
+  kernels remain as the fallback for permutations beyond the compiled size limit
+  (`MAXN`, default 32). `SCHUBMULT_NO_CPP=1` forces the Python kernels.
+- **Binary wheels for Linux, macOS and Windows** (CPython 3.10–3.14). The extension uses
+  only the Python C API — coefficients are handled as `symengine` Python objects — so it
+  has no SymEngine C++ dependency and builds from source with any C++17 compiler.
+- Ring products no longer re-scan every coefficient's `free_symbols` when assembling the
+  result, and products are computed directly in the ring's variables instead of in generic
+  variables followed by a substitution pass.
+- `requires-python` is now `>=3.10` (3.9 was declared but never supported).
+
+### Added
+
+- Standalone C++ command-line tools in `cpp/` (`schubmult_core`, `schubmult_double_core`,
+  `schubmult_q_core`, `schubmult_q_double_core`) mirroring the CLI scripts, including
+  `--display-positive` for the double kernel (MILP via `cbc`). These are development tools
+  built with `make`; they need the SymEngine C++ headers.
+
+### Fixed
+
+- The script test fixtures are located relative to the test modules, so the test suite
+  runs against a non-editable install.
+
 ## 4.2.0
 
 ### Fixed
