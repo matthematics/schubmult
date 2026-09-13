@@ -1,9 +1,9 @@
-"""C++ multiplication kernels (the ``schubmult_cpp`` extension built from ``cpp/``).
+"""C++ multiplication kernels (the ``schubmult_cpp`` extension, built from ``cpp/`` by setup.py).
 
-``schubmult_py``, ``schubmult_double``, ``schubmult_q_fast`` and ``schubmult_q_double_fast``
-dispatch here. The extension is required; the pure-Python kernels remain only as the fallback
-for permutations beyond the compiled MAXN (the wrappers return ``None`` in that case).
-Set ``SCHUBMULT_NO_CPP=1`` to force the Python kernels.
+``schubmult_py``, ``schubmult_double``, ``schubmult_q_fast``, ``schubmult_q_double_fast`` and the
+``*_from_elems`` kernels dispatch here. The extension is a required part of the package; the
+pure-Python kernels remain only as the fallback for permutations beyond the compiled MAXN (the
+wrappers return ``None`` in that case). Set ``SCHUBMULT_NO_CPP=1`` to force the Python kernels.
 """
 
 import os
@@ -14,10 +14,7 @@ else:
     try:
         from schubmult import schubmult_cpp as _cpp
     except ImportError as e:
-        raise ImportError(
-            "the schubmult_cpp extension is not built; run `make python` in cpp/ "
-            "(needs Cython and the SymEngine C++ headers/library, e.g. from conda)",
-        ) from e
+        raise ImportError("the schubmult_cpp extension is missing; reinstall the package (`pip install .`), which compiles it") from e
 
 available = _cpp is not None
 
@@ -66,7 +63,7 @@ def schubmult_q_double_fast(perm_dict, v, var2, var3, q_var):
 
 
 def schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func):
-    return _call(_cpp.schubmult_double_from_elems, perm_dict, v, var2, var3, elem_func)
+    return _call(_cpp.schubmult_double, perm_dict, v, var2, var3, elem_func)
 
 
 def schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func):

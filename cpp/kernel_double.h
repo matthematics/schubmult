@@ -27,9 +27,9 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
     // Each sum entry holds the pending terms; at the end of a level they are summed
     // (SymEngine's Add merges like terms at the top level, as Python's + does) and
     // structurally zero entries are dropped. Nothing is ever expanded.
-    typedef PermTable<vec_basic> Table;
+    typedef PermTable<ExprVec> Table;
     typedef Table::VSum VSum;
-    std::unordered_map<Perm, vec_basic, PermHash> result;
+    std::unordered_map<Perm, ExprVec, PermHash> result;
 
     Table tabA, tabB;
     Table* A = &tabA;
@@ -44,7 +44,7 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
         int inv_u = perm_inv(u, n);
 
         A->reset();
-        A->sums[A->intern(u, inv_u)].push_back({vp.id_start, vec_basic{kv.second}});
+        A->sums[A->intern(u, inv_u)].push_back({vp.id_start, ExprVec{kv.second}});
 
         for (int index = 0; index < thL; ++index) {
             int k = th[index];
@@ -81,9 +81,9 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
                             } else {
                                 const Expr& esf = esc.get(newk - tr.vdiff, newk, yidx, zidx[index][sv.first][t]);
                                 if (is_zero(esf)) continue;
-                                term = SymEngine::mul(sumval, esf);
+                                term = ex_mul(sumval, esf);
                             }
-                            if (tr.s < 0) term = SymEngine::neg(term);
+                            if (tr.s < 0) term = ex_neg(term);
                             if (id < 0) id = B->intern(up2, inv_up + udiff);
                             B->get_or_insert((uint32_t)id, tr.v2).push_back(term);
 #ifdef STATS
@@ -98,7 +98,7 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
             size_t alive = 0, live_sums = 0;
             for (auto& vec : B->sums) {
                 for (VSum& e : vec) {
-                    Expr s = SymEngine::add(e.second);
+                    Expr s = ex_add(e.second);
                     e.second.clear();
                     if (!is_zero(s)) e.second.push_back(s);
                 }
@@ -116,13 +116,13 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
         }
 
         for (uint32_t sid = 0; sid < A->count; ++sid)
-            if (vec_basic* c = A->find(sid, id_vmu)) result[A->perms[sid]].push_back((*c)[0]);
+            if (ExprVec* c = A->find(sid, id_vmu)) result[A->perms[sid]].push_back((*c)[0]);
     }
 
     ExprDict out;
     out.reserve(result.size());
     for (auto& kv : result) {
-        Expr s = SymEngine::add(kv.second);
+        Expr s = ex_add(kv.second);
         if (!is_zero(s)) out.push_back({kv.first, s});
     }
     std::sort(out.begin(), out.end(), [](const std::pair<Perm, Expr>& x, const std::pair<Perm, Expr>& y) { return x.first < y.first; });

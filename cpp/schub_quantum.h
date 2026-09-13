@@ -5,6 +5,8 @@
 
 #include "schub_common.h"
 
+#include <bitset>
+
 // e[i] = exponent of q_{i+1}
 struct Mono {
     uint8_t e[MAXN];
@@ -117,7 +119,7 @@ static bool double_step_good(const std::vector<Cycle>& c1s, const std::vector<Cy
         for (const Cycle& c1 : c1s) {
             if (c1.mx != c2.mx) continue;
             int common = 0;
-            for (size_t w = 0; w < sizeof c1.mask / 8; ++w) common += __builtin_popcountll(c1.mask[w] & c2.mask[w]);
+            for (size_t w = 0; w < sizeof c1.mask / 8; ++w) common += (int)std::bitset<64>(c1.mask[w] & c2.mask[w]).count();
             if (common > 1) return false;
         }
     return true;

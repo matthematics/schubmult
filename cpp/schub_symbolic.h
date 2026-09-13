@@ -1,4 +1,4 @@
-// schub_symbolic.h: SymEngine layer shared by the double kernels — factorial elementary
+// schub_symbolic.h: symbolic layer shared by the double kernels (see expr.h for the backends) — factorial elementary
 // symmetric polynomials (schub_poly.elem_sym_poly), their memo, and call_zvars.
 
 #pragma once
@@ -7,40 +7,28 @@
 
 #include <functional>
 
-#include <symengine/add.h>
-#include <symengine/basic.h>
-#include <symengine/constants.h>
-#include <symengine/integer.h>
-#include <symengine/mul.h>
-#include <symengine/pow.h>
-#include <symengine/printers.h>
-#include <symengine/symbol.h>
+#include "expr.h"
 
-using SymEngine::Basic;
-using SymEngine::RCP;
-using SymEngine::vec_basic;
-typedef RCP<const Basic> Expr;
-
-static bool is_zero(const Expr& e) { return SymEngine::eq(*e, *SymEngine::zero); }
+static bool is_zero(const Expr& e) { return ex_is_zero(e); }
 
 // e_p(y[xs..xs+k) | z[ys..]) via the same divide-and-conquer recursion as the Python.
 static Expr elem_sym_poly(int p, int k, const std::vector<Expr>& y, const std::vector<Expr>& z, int xs, int ys) {
-    if (p > k) return SymEngine::zero;
-    if (p == 0) return SymEngine::one;
+    if (p > k) return ex_zero();
+    if (p == 0) return ex_one();
     if (p == 1) {
-        vec_basic terms;
-        for (int i = 0; i < k; ++i) terms.push_back(SymEngine::sub(y.at(xs + i), z.at(ys + i)));
-        return SymEngine::add(terms);
+        ExprVec terms;
+        for (int i = 0; i < k; ++i) terms.push_back(ex_sub(y.at(xs + i), z.at(ys + i)));
+        return ex_add(terms);
     }
     if (p == k) {
-        Expr res = SymEngine::mul(SymEngine::sub(y.at(xs), z.at(ys)), SymEngine::sub(y.at(xs + 1), z.at(ys)));
-        for (int i = 2; i < k; ++i) res = SymEngine::mul(res, SymEngine::sub(y.at(i + xs), z.at(ys)));
+        Expr res = ex_mul(ex_sub(y.at(xs), z.at(ys)), ex_sub(y.at(xs + 1), z.at(ys)));
+        for (int i = 2; i < k; ++i) res = ex_mul(res, ex_sub(y.at(i + xs), z.at(ys)));
         return res;
     }
     int mid = k / 2, xsm = xs + mid, ysm = ys + mid, kmm = k - mid;
-    Expr res = SymEngine::add(elem_sym_poly(p, mid, y, z, xs, ys), elem_sym_poly(p, kmm, y, z, xsm, ysm));
+    Expr res = ex_add(elem_sym_poly(p, mid, y, z, xs, ys), elem_sym_poly(p, kmm, y, z, xsm, ysm));
     for (int p2 = std::max(1, p - kmm); p2 < std::min(p, mid + 1); ++p2)
-        res = SymEngine::add(res, SymEngine::mul(elem_sym_poly(p2, mid, y, z, xs, ys), elem_sym_poly(p - p2, kmm, y, z, xsm, ysm - p2)));
+        res = ex_add(res, ex_mul(elem_sym_poly(p2, mid, y, z, xs, ys), elem_sym_poly(p - p2, kmm, y, z, xsm, ysm - p2)));
     return res;
 }
 
@@ -73,9 +61,9 @@ struct ElemSymCache {
         Z.resize(MAXN + 1);
         Q.resize(MAXN + 1);
         for (int i = 0; i <= MAXN; ++i) {
-            Y[i] = SymEngine::symbol(yname + "_" + std::to_string(i));
-            Z[i] = same ? Y[i] : Expr(SymEngine::symbol(zname + "_" + std::to_string(i)));
-            Q[i] = SymEngine::symbol(qname + "_" + std::to_string(i));
+            Y[i] = ex_symbol(yname + "_" + std::to_string(i));
+            Z[i] = same ? Y[i] : Expr(ex_symbol(zname + "_" + std::to_string(i)));
+            Q[i] = ex_symbol(qname + "_" + std::to_string(i));
         }
     }
 

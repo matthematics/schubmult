@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
     ElemSymCache esc(same);
     ExprDict coeff_dict;
-    coeff_dict.push_back({args.perms[0], SymEngine::one});
+    coeff_dict.push_back({args.perms[0], ex_one()});
     for (size_t i = 1; i < args.perms.size(); ++i) coeff_dict = schubmult_q_double_fast(coeff_dict, args.perms[i], esc);
 
     // schubmult_q_double prints sorted by (inv, one-line notation)
@@ -31,6 +31,6 @@ int main(int argc, char** argv) {
         int ix = perm_inv(x.first, MAXN), iy = perm_inv(y.first, MAXN);
         return ix != iy ? ix < iy : x.first < y.first;
     });
-    for (const auto& kv : coeff_dict) std::printf("%s  %s\n", format_perm(kv.first, args.ascode).c_str(), SymEngine::str(*kv.second).c_str());
+    for (const auto& kv : coeff_dict) std::printf("%s  %s\n", format_perm(kv.first, args.ascode).c_str(), ex_str(kv.second).c_str());
     return 0;
 }

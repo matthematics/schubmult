@@ -1,7 +1,7 @@
-// schubmult_api.h: thin C++ entry points for the Python extension (schubmult_cpp.pyx).
-// Permutations cross the boundary as one-line-notation int vectors, coefficients as
-// SymEngine RCP<const Basic> (or int for the classical kernel), and generating sets as
-// vectors of expressions (index i = i-th variable), so any symbols the caller uses work.
+// schubmult_api.h: C++ entry points for the schubmult_cpp extension (schubmult_module.cpp).
+// Compiled with SCHUB_PYEXPR: coefficients are Python `symengine` objects (see expr.h), so this
+// header has no SymEngine C++ dependency. Permutations cross the boundary as one-line-notation
+// int vectors and generating sets as vectors of Python objects (index i = i-th variable).
 
 #pragma once
 
@@ -48,27 +48,38 @@ static int perm_len(const PyPerm& a) {
 static std::string vars_key(const PyVars& v) {
     std::string s;
     for (const Expr& e : v) {
-        s += e.is_null() ? std::string("~") : e->__str__();
+        s += e.is_null() ? std::string("~") : ex_str(e);
         s += '\x01';
     }
     return s;
 }
 
-// One ElemSymCache per distinct (y, z, q, elem_func) so the e_p memo survives across calls.
-// `cb(ctx, p, k, y, z)` builds the elementary symmetric object (null ctx: elem_sym_poly).
-typedef Expr (*ElemFuncCB)(void* ctx, int p, int k, const std::vector<Expr>& y, const std::vector<Expr>& z);
-
-static ElemSymCache& esc_for(const PyVars& y, const PyVars& z, const PyVars& q, ElemFuncCB cb = nullptr, void* ctx = nullptr) {
-    static std::map<std::string, std::unique_ptr<ElemSymCache>> caches;
-    std::string key = vars_key(y) + "\x02" + vars_key(z) + "\x02" + vars_key(q) + "\x02" + std::to_string((uintptr_t)ctx);
-    auto it = caches.find(key);
-    if (it == caches.end()) {
-        it = caches.emplace(key, std::make_unique<ElemSymCache>(y, z, q)).first;
-        if (ctx) it->second->builder = [cb, ctx](int p, int k, const std::vector<Expr>& yv, const std::vector<Expr>& zv) {
-            Expr e = cb(ctx, p, k, yv, zv);
-            if (e.is_null()) die("elem_func raised");
-            return e;
+// Builds e_p(y | z) by calling a Python elem_func(p, k, yvars, zvars) (the *_from_elems kernels).
+static ElemSymCache::Builder python_builder(const Expr& elem_func) {
+    return [elem_func](int p, int k, const std::vector<Expr>& y, const std::vector<Expr>& z) {
+        auto list_of = [](const std::vector<Expr>& v) {
+            Expr lst = pyexpr_detail::checked(PyList_New((Py_ssize_t)v.size()));
+            for (size_t i = 0; i < v.size(); ++i) {
+                Py_INCREF(v[i].get());
+                PyList_SET_ITEM(lst.get(), (Py_ssize_t)i, v[i].get());
+            }
+            return lst;
         };
+        Expr yl = list_of(y), zl = list_of(z);
+        Expr r = pyexpr_detail::checked(PyObject_CallFunction(elem_func.get(), "iiOO", p, k, yl.get(), zl.get()));
+        return ex_sympify(r);
+    };
+}
+
+// One ElemSymCache per distinct (y, z, q, elem_func), so the e_p memo survives across calls.
+static ElemSymCache& esc_for(const PyVars& y, const PyVars& z, const PyVars& q, const Expr& elem_func = Expr()) {
+    // leaked on purpose: the caches hold Python references (see expr.h)
+    static auto* caches = new std::map<std::string, std::unique_ptr<ElemSymCache>>();
+    std::string key = vars_key(y) + "\x02" + vars_key(z) + "\x02" + vars_key(q) + "\x02" + std::to_string((uintptr_t)elem_func.get());
+    auto it = caches->find(key);
+    if (it == caches->end()) {
+        it = caches->emplace(key, std::make_unique<ElemSymCache>(y, z, q)).first;
+        if (!elem_func.is_null()) it->second->builder = python_builder(elem_func);  // keeps elem_func alive with the cache
     }
     return *it->second;
 }
@@ -81,6 +92,18 @@ static int dict_bound(const PyExprDict& d, const PyPerm& vpy) {
     return n;
 }
 
+static ExprDict expr_dict_in(const PyExprDict& d) {
+    ExprDict in;
+    for (const auto& kv : d) in.push_back({perm_from_py(kv.first), kv.second});
+    return in;
+}
+
+static PyExprDict expr_dict_out(const ExprDict& out) {
+    PyExprDict r;
+    for (const auto& kv : out) r.push_back({perm_to_py(kv.first), kv.second});
+    return r;
+}
+
 static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy) {
     IntDict in;
     int a_max = 1;
@@ -88,7 +111,7 @@ static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy) {
         in.push_back({perm_from_py(kv.first), kv.second});
         a_max = std::max(a_max, perm_len(kv.first));
     }
-    int n = std::max(2, a_max + std::max(1, perm_len(vpy)) - 1);  // S_a * S_b lives in S_{a+b-1}
+    int n = std::max(2, a_max + std::max(1, perm_len(vpy)) - 1);
     if (n > MAXN) die("product needs S_n with n > MAXN; rebuild the extension with a larger MAXN");
     IntDict out = schubmult_single(in, perm_from_py(vpy), n);
     PyIntDict r;
@@ -96,32 +119,12 @@ static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy) {
     return r;
 }
 
-static PyExprDict api_schubmult_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z) {
-    ExprDict in;
-    for (const auto& kv : d) in.push_back({perm_from_py(kv.first), kv.second});
-    ExprDict out = schubmult_double(in, perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars()));
-    PyExprDict r;
-    for (const auto& kv : out) r.push_back({perm_to_py(kv.first), kv.second});
-    return r;
+static PyExprDict api_schubmult_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const Expr& elem_func) {
+    return expr_dict_out(schubmult_double(expr_dict_in(d), perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars(), elem_func)));
 }
 
-// schubmult_double_from_elems: the theta-code kernel with elem_func in place of elem_sym_poly.
-static PyExprDict api_schubmult_double_from_elems(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, ElemFuncCB cb, void* ctx) {
-    ExprDict in;
-    for (const auto& kv : d) in.push_back({perm_from_py(kv.first), kv.second});
-    ExprDict out = schubmult_double(in, perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars(), cb, ctx));
-    PyExprDict r;
-    for (const auto& kv : out) r.push_back({perm_to_py(kv.first), kv.second});
-    return r;
-}
-
-static PyExprDict api_schubmult_double_alt_from_elems(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, ElemFuncCB cb, void* ctx) {
-    ExprDict in;
-    for (const auto& kv : d) in.push_back({perm_from_py(kv.first), kv.second});
-    ExprDict out = schubmult_double_alt_from_elems_backwards(in, perm_from_py(vpy), esc_for(y, z, PyVars(), cb, ctx));
-    PyExprDict r;
-    for (const auto& kv : out) r.push_back({perm_to_py(kv.first), kv.second});
-    return r;
+static PyExprDict api_schubmult_double_alt_from_elems(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const Expr& elem_func) {
+    return expr_dict_out(schubmult_double_alt_from_elems_backwards(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, PyVars(), elem_func)));
 }
 
 // Integer input coefficients; output is symbolic in the q's.
@@ -136,18 +139,13 @@ static PyExprDict api_schubmult_q(const PyIntDict& d, const PyPerm& vpy, const P
     QDict out = schubmult_q_fast(in, perm_from_py(vpy));
     PyExprDict r;
     for (const auto& kv : out) {
-        vec_basic terms;
-        for (const auto& t : kv.second.t) terms.push_back(SymEngine::mul(SymEngine::integer(t.second), mono_expr(t.first, esc)));
-        r.push_back({perm_to_py(kv.first), SymEngine::add(terms)});
+        ExprVec terms;
+        for (const auto& t : kv.second.t) terms.push_back(ex_mul(ex_integer(t.second), mono_expr(t.first, esc)));
+        r.push_back({perm_to_py(kv.first), ex_add(terms)});
     }
     return r;
 }
 
 static PyExprDict api_schubmult_q_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const PyVars& q) {
-    ExprDict in;
-    for (const auto& kv : d) in.push_back({perm_from_py(kv.first), kv.second});
-    ExprDict out = schubmult_q_double_fast(in, perm_from_py(vpy), esc_for(y, z, q));
-    PyExprDict r;
-    for (const auto& kv : out) r.push_back({perm_to_py(kv.first), kv.second});
-    return r;
+    return expr_dict_out(schubmult_q_double_fast(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, q)));
 }

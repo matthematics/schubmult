@@ -135,7 +135,7 @@ static std::vector<PosUp> elem_sym_positional_perms(const Perm& orig, int p, con
 typedef std::vector<std::pair<Perm, Expr>> ExprDict;
 #endif
 
-typedef std::unordered_map<Perm, vec_basic, PermHash> TermMap;
+typedef std::unordered_map<Perm, ExprVec, PermHash> TermMap;
 
 static TermMap alt_backwards_rec(const TermMap& perm_dict, const Perm& v, ElemSymCache& esc) {
     if (perm_inv_full(v) == 0) return perm_dict;
@@ -157,7 +157,7 @@ static TermMap alt_backwards_rec(const TermMap& perm_dict, const Perm& v, ElemSy
         for (int i : po.index_list) kpos.push_back(i - 1);
         for (const auto& kv : start) {
             const Perm& u = kv.first;
-            Expr val = SymEngine::add(kv.second);
+            Expr val = ex_add(kv.second);
             if (is_zero(val)) continue;
             for (const PosUp& e : elem_sym_positional_perms(u, m, kpos)) {
                 yidx.clear();
@@ -165,8 +165,8 @@ static TermMap alt_backwards_rec(const TermMap& perm_dict, const Perm& v, ElemSy
                     if (e.perm.p[i - 1] == u.p[i - 1]) yidx.push_back(e.perm.p[i - 1]);
                 const Expr& ef = esc.get(m - e.udiff, m - e.udiff, yidx, std::vector<int>{index});
                 if (is_zero(ef)) continue;
-                Expr term = SymEngine::mul(val, ef);
-                if (e.sign < 0) term = SymEngine::neg(term);
+                Expr term = ex_mul(val, ef);
+                if (e.sign < 0) term = ex_neg(term);
                 ret[e.perm].push_back(term);
             }
         }
@@ -181,7 +181,7 @@ static ExprDict schubmult_double_alt_from_elems_backwards(const ExprDict& perm_d
     TermMap out = alt_backwards_rec(in, v, esc);
     ExprDict r;
     for (auto& kv : out) {
-        Expr s = SymEngine::add(kv.second);
+        Expr s = ex_add(kv.second);
         if (!is_zero(s)) r.push_back({kv.first, s});
     }
     std::sort(r.begin(), r.end(), [](const std::pair<Perm, Expr>& x, const std::pair<Perm, Expr>& y) { return x.first < y.first; });

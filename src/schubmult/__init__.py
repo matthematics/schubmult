@@ -130,6 +130,8 @@ def _scan_modules():
             continue
         if any(part in _skipped_dirs for part in py.parts):
             continue
+        if py.stem.startswith("_") and py.stem != "__init__":
+            continue  # private modules (e.g. mult._accel) may deliberately reuse public names
         try:
             rel = py.relative_to(_package_root.parent)
         except Exception:

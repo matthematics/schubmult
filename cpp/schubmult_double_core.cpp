@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     ElemSymCache esc(same);
     // Order matters here (u carries y, v carries z), so multiply in the order given.
     ExprDict coeff_dict;
-    coeff_dict.push_back({args.perms[0], SymEngine::one});
+    coeff_dict.push_back({args.perms[0], ex_one()});
     for (size_t i = 1; i < args.perms.size(); ++i) coeff_dict = schubmult_double(coeff_dict, args.perms[i], args.n, esc);
 
     // Mixed variables: every coefficient goes straight to the MILP (the posify shortcut formulas are
@@ -48,6 +48,6 @@ int main(int argc, char** argv) {
     });
     size_t width = 0;
     for (const auto& kv : coeff_dict) width = std::max(width, format_perm(kv.first, args.ascode).size());
-    for (const auto& kv : coeff_dict) std::printf("%*s  %s\n", (int)width, format_perm(kv.first, args.ascode).c_str(), SymEngine::str(*kv.second).c_str());
+    for (const auto& kv : coeff_dict) std::printf("%*s  %s\n", (int)width, format_perm(kv.first, args.ascode).c_str(), ex_str(kv.second).c_str());
     return 0;
 }

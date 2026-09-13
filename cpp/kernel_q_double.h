@@ -11,17 +11,17 @@ typedef std::vector<std::pair<Perm, Expr>> ExprDict;
 #endif
 
 static Expr mono_expr(const Mono& m, const ElemSymCache& esc) {
-    vec_basic fs;
+    ExprVec fs;
     for (int i = 0; i < MAXN; ++i)
-        if (m.e[i]) fs.push_back(m.e[i] == 1 ? ElemSymCache::need(esc.Q, i + 1) : Expr(SymEngine::pow(ElemSymCache::need(esc.Q, i + 1), SymEngine::integer(m.e[i]))));
-    return SymEngine::mul(fs);
+        if (m.e[i]) fs.push_back(m.e[i] == 1 ? ElemSymCache::need(esc.Q, i + 1) : Expr(ex_pow(ElemSymCache::need(esc.Q, i + 1), m.e[i])));
+    return ex_mul(fs);
 }
 
-// elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff): nullptr when it is 0, SymEngine::one when 1.
+// elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff): nullptr when it is 0, ex_one() when 1.
 static Expr elem_sym_func_q(int k, const Perm& u1, const Perm& u2, int udiff, const Trans& tr, const std::vector<int>& zs, ElemSymCache& esc, std::vector<int>& yidx) {
     int newk = k - udiff;
     if (newk < tr.vdiff) return Expr();
-    if (newk == tr.vdiff) return SymEngine::one;
+    if (newk == tr.vdiff) return ex_one();
     yvars_of(u1, u2, k, yidx);
     return esc.get(newk - tr.vdiff, newk, yidx, zs);
 }
@@ -39,9 +39,9 @@ static ExprDict schubmult_q_double_fast(const ExprDict& perm_dict, const Perm& v
 
     // Each sum entry holds the pending terms; at the end of a level they are summed and
     // structurally zero entries are dropped. Nothing is ever expanded.
-    typedef PermTable<vec_basic> Table;
+    typedef PermTable<ExprVec> Table;
     typedef Table::VSum VSum;
-    std::unordered_map<Perm, vec_basic, PermHash> result;
+    std::unordered_map<Perm, ExprVec, PermHash> result;
 
     Table tabA, tabB;
     Table* A = &tabA;
@@ -59,11 +59,11 @@ static ExprDict schubmult_q_double_fast(const ExprDict& perm_dict, const Perm& v
                 e.second.push_back(term);
                 return;
             }
-        vec.push_back({v2, vec_basic{term}});
+        vec.push_back({v2, ExprVec{term}});
     };
     auto collapse = [](std::vector<VSum>& vec) {
         for (VSum& e : vec) {
-            Expr s = SymEngine::add(e.second);
+            Expr s = ex_add(e.second);
             e.second.clear();
             if (!is_zero(s)) e.second.push_back(s);
         }
@@ -76,7 +76,7 @@ static ExprDict schubmult_q_double_fast(const ExprDict& perm_dict, const Perm& v
         int inv_u = perm_inv(u, MAXN);
 
         A->reset();
-        A->sums[A->intern(u, inv_u)].push_back({vp.id_start, vec_basic{kv.second}});
+        A->sums[A->intern(u, inv_u)].push_back({vp.id_start, ExprVec{kv.second}});
 
         for (int index = 0; index < thL; ++index) {
             if (index > 0 && th[index - 1] == th[index]) continue;  // consumed by the double step below
@@ -105,8 +105,8 @@ static ExprDict schubmult_q_double_fast(const ExprDict& perm_dict, const Perm& v
                             for (size_t kk = 0; kk < keys.size(); ++kk) {
                                 Expr esf = elem_sym_func_q(k, up, keys[kk].perm, keys[kk].udiff, tr, zidx[index][sv.first][t], esc, yidx);
                                 if (esf.is_null()) continue;
-                                Expr term = SymEngine::mul(vec_basic{sumval, esf, keyq[kk]});
-                                if (tr.s < 0) term = SymEngine::neg(term);
+                                Expr term = ex_mul(ExprVec{sumval, esf, keyq[kk]});
+                                if (tr.s < 0) term = ex_neg(term);
                                 local_push(nps0[kk], tr.v2, term);
                             }
                         }
@@ -126,8 +126,8 @@ static ExprDict schubmult_q_double_fast(const ExprDict& perm_dict, const Perm& v
                                     const QUp& e2 = second[kk][s2];
                                     Expr esf = elem_sym_func_q(k1, up1, e2.perm, e2.udiff, tr, zidx[index + 1][sv.first][t], esc, yidx);
                                     if (esf.is_null()) continue;
-                                    Expr term = SymEngine::mul(vec_basic{sumval, esf, secq[s2]});
-                                    if (tr.s < 0) term = SymEngine::neg(term);
+                                    Expr term = ex_mul(ExprVec{sumval, esf, secq[s2]});
+                                    if (tr.s < 0) term = ex_neg(term);
                                     uint32_t id = B->intern(e2.perm, perm_inv(e2.perm, MAXN));
                                     B->get_or_insert(id, tr.v2).push_back(term);
                                 }
@@ -148,14 +148,14 @@ static ExprDict schubmult_q_double_fast(const ExprDict& perm_dict, const Perm& v
                         Expr qe = mono_expr(e.q, esc);
                         long id = -1;
                         for (const VSum& sv : sums) {
-                            Expr sumval = SymEngine::mul(sv.second[0], qe);
+                            Expr sumval = ex_mul(sv.second[0], qe);
                             const auto& trs = trans[sv.first];
                             for (size_t t = 0; t < trs.size(); ++t) {
                                 const Trans& tr = trs[t];
                                 Expr esf = elem_sym_func_q(k, up, e.perm, e.udiff, tr, zidx[index][sv.first][t], esc, yidx);
                                 if (esf.is_null()) continue;
-                                Expr term = SymEngine::mul(sumval, esf);
-                                if (tr.s < 0) term = SymEngine::neg(term);
+                                Expr term = ex_mul(sumval, esf);
+                                if (tr.s < 0) term = ex_neg(term);
                                 if (id < 0) id = B->intern(e.perm, perm_inv(e.perm, MAXN));
                                 B->get_or_insert((uint32_t)id, tr.v2).push_back(term);
                             }
@@ -178,13 +178,13 @@ static ExprDict schubmult_q_double_fast(const ExprDict& perm_dict, const Perm& v
         }
 
         for (uint32_t sid = 0; sid < A->count; ++sid)
-            if (vec_basic* c = A->find(sid, id_vmu)) result[A->perms[sid]].push_back((*c)[0]);
+            if (ExprVec* c = A->find(sid, id_vmu)) result[A->perms[sid]].push_back((*c)[0]);
     }
 
     ExprDict out;
     out.reserve(result.size());
     for (auto& kv : result) {
-        Expr s = SymEngine::add(kv.second);
+        Expr s = ex_add(kv.second);
         if (!is_zero(s)) out.push_back({kv.first, s});
     }
     std::sort(out.begin(), out.end(), [](const std::pair<Perm, Expr>& x, const std::pair<Perm, Expr>& y) { return x.first < y.first; });
