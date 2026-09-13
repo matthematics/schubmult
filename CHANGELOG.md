@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.0.0b2
+
+### Fixed
+
+- **`--display-positive` crashed when PuLP 4 was installed.** The PuLP 4 pre-releases are a
+  rewrite with an incompatible API (no `LpVariable(name=...)`, no bundled CBC), and
+  `pip install --pre schubmult` pulled them in through the open-ended `PuLP>=2.7.0`
+  requirement. The requirement is now `PuLP>=2.7.0,<4`.
+
 ## 5.0.0b1
 
 Pre-release. The multiplication kernels are now compiled C++.

@@ -11,7 +11,7 @@ dependencies = [
         "numpy",
         "joblib",
         "latex2sympy2_extended",
-        "PuLP>=2.7.0",
+        "PuLP>=2.7.0,<4",  # PuLP 4 (Rust rewrite) drops LpVariable(name=...) and PULP_CBC_CMD
         "symengine>=0.14.1",
         "sympy>=1.14.0",
         "psutil",
