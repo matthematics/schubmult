@@ -12,25 +12,31 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # setuptools-scm version
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install ruff==0.11.0 pytest build
-        # Install the package in editable mode
+        # Editable install; compiles the schubmult_cpp extension (MSVC / clang / gcc)
         python -m pip install -e .
+    - name: Check the extension loaded
+      run: python -c "from schubmult import schubmult_cpp; print(schubmult_cpp.__file__, schubmult_cpp.MAXN)"
     - name: Lint with ruff
+      if: runner.os == 'Linux'
       run: |
         # Run ruff linter with your local configuration from pyproject.toml
         ruff check . --config pyproject.toml
@@ -38,9 +44,11 @@ jobs:
       run: |
         pytest tests/ -v
     - name: Build package
+      if: runner.os == 'Linux'
       run: |
         python -m build
     - name: Upload build artifacts
+      if: runner.os == 'Linux'
       uses: actions/upload-artifact@v4
       with:
         name: dist-${{ matrix.python-version }}

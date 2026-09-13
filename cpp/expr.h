@@ -20,7 +20,9 @@
 // ---------------------------------------------------------------------------
 // Python-object backend
 // ---------------------------------------------------------------------------
+#ifndef PY_SSIZE_T_CLEAN
 #define PY_SSIZE_T_CLEAN
+#endif
 #include <Python.h>
 
 struct PyErrorSet : std::runtime_error {

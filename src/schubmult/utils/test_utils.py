@@ -23,24 +23,35 @@ def generate_all(module, filename):
     print("]")
 
 
+def _data_dir():
+    """tests/scripts/data, located from the calling test module (works for non-editable installs too)."""
+    import inspect
+    import os
+
+    for frame in inspect.stack()[2:]:
+        d = os.path.dirname(os.path.abspath(frame.filename))
+        while d and d != os.path.dirname(d):
+            cand = os.path.join(d, "tests", "scripts", "data")
+            if os.path.isdir(cand):
+                return cand
+            if os.path.basename(d) == "scripts" and os.path.isdir(os.path.join(d, "data")):
+                return os.path.join(d, "data")
+            d = os.path.dirname(d)
+    raise FileNotFoundError("tests/scripts/data not found relative to the calling test module")
+
+
 def get_json(file: str):
     import json
     import os
 
-    script_dir = os.path.dirname(__file__)
-    rel_path = f"../../../tests/scripts/data/{file}.json"
-    abs_file_path = os.path.join(script_dir, rel_path)
-    with open(abs_file_path) as f:
+    with open(os.path.join(_data_dir(), f"{file}.json")) as f:
         return json.load(f)
 
 
 def load_json_test_names(this_dir):
     import os
 
-    script_dir = os.path.dirname(__file__)
-    rel_path = f"../../../tests/scripts/data/{this_dir}"
-    abs_path = os.path.join(script_dir, rel_path)
-    files = os.listdir(abs_path)
+    files = os.listdir(os.path.join(_data_dir(), this_dir))
     ret = []
     for file in files:
         index = file.rfind(".json")

@@ -1,0 +1,62 @@
+# Prebuilt binary wheels (Linux / macOS / Windows, CPython 3.10-3.14) so users never need a
+# compiler: `pip install schubmult` picks the wheel, exactly as `symengine` itself is shipped.
+# Runs on tags and on demand; the publish job uploads to PyPI via trusted publishing.
+name: Wheels
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # setuptools-scm needs the tags
+      - uses: pypa/cibuildwheel@v3.2
+        env:
+          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
+          CIBW_SKIP: "*-musllinux_* *_i686 *-win32"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: python -c "from schubmult import schubmult_cpp, DSx; print(schubmult_cpp.MAXN, DSx([3,1,2]) * DSx([2,3,1], 'z'))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build && python -m build --sdist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  publish:
+    # Needs the `pypi` environment on the repo with a PyPI trusted publisher configured.
+    needs: [build_wheels, sdist]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1

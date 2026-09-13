@@ -10,7 +10,6 @@ build machine's CPU; off by default so wheels are portable).
 """
 
 import os
-import sys
 from pathlib import Path
 
 from setuptools import Extension, setup
@@ -32,8 +31,6 @@ class BuildExt(build_ext):
                 ext.extra_compile_args = ["-std=c++17", "-O3"]
                 if os.environ.get("SCHUBMULT_NATIVE"):
                     ext.extra_compile_args.append("-march=native")
-                if sys.platform == "darwin":
-                    ext.extra_compile_args.append("-mmacosx-version-min=10.14")  # std::filesystem-free, but needs a C++17 libc++
         super().build_extensions()
 
 

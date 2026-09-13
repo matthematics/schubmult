@@ -11,7 +11,12 @@
 // Permutations are anything iterable over ints (one-line notation); results are keyed by
 // schubmult.combinatorics.permutation.Permutation. A RuntimeError signals "exceeds MAXN".
 
+#ifndef SCHUB_PYEXPR
 #define SCHUB_PYEXPR
+#endif
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>  // must precede every standard header
+
 #include "schubmult_api.h"
 
 namespace {

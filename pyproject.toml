@@ -18,7 +18,7 @@ dependencies = [
         "cachetools",
         "setuptools"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   {name = "Matt Samuel", email = "schubmult@gmail.com"},
 ]
@@ -30,6 +30,14 @@ readme = "README.md"
 keywords = ["Schubert", "polynomial", "double", "algebra"]
 classifiers = [
   "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: C++",
+  "Operating System :: OS Independent",
 ]
 dynamic = ["version"]
 
@@ -69,8 +77,8 @@ exclude = [
 line-length = 200
 indent-width = 4
 
-# Assume Python 3.9
-target-version = "py39"
+# Oldest supported Python (matches requires-python and the CI matrix)
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
@@ -100,6 +108,7 @@ ignore = [
     "RUF003",
     "N806",
     "D105",
+    "UP038",  # isinstance(x, (A, B)) is faster than A | B; rule is deprecated upstream
     "D107",
     "D203",
     "D212",
