@@ -62,6 +62,8 @@ jobs:
           path: dist
           merge-multiple: true
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true  # tolerate files already uploaded by hand (e.g. the sdist via twine)
       - name: Extract this version's changelog section
         run: |
           awk -v ver="${GITHUB_REF_NAME}" '
