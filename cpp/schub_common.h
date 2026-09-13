@@ -47,9 +47,16 @@ struct PermHash {
     }
 };
 
+#include <stdexcept>
+
+// Fatal error: exits in the CLI binaries, throws (-> Python exception) in the extension module.
 [[noreturn]] static void die(const char* msg) {
+#ifdef SCHUB_THROW
+    throw std::runtime_error(msg);
+#else
     std::fprintf(stderr, "schubmult: %s\n", msg);
     std::exit(1);
+#endif
 }
 
 static Perm identity_perm() {

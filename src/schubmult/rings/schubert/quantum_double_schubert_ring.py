@@ -92,7 +92,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_q_double_pair_generic(u, v).items()}
+        return yz.schubmult_q_double_fast({u: S.One}, v, self.coeff_genset, basis2.coeff_genset)
 
     def in_quantum_basis(self, elem):
         return elem

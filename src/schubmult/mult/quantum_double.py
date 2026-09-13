@@ -4,6 +4,7 @@ import numpy as np
 
 import schubmult.mult.positivity as pos
 from schubmult.combinatorics.permutation import Permutation, uncode
+from schubmult.mult import _accel
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 from schubmult.symbolic.common_polys import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
@@ -471,6 +472,14 @@ def schubmult_q_double_dict_fast(perm_dict1, perm_dict2, var2=None, var3=None, q
 
 
 def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
+    if _accel.available and var2 is not None and var3 is not None:
+        ret = _accel.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+        if ret is not None:
+            return ret
+    return _schubmult_q_double_fast_python(perm_dict, v, var2, var3, q_var)
+
+
+def _schubmult_q_double_fast_python(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
     th = (~v).medium_theta()

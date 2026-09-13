@@ -28,6 +28,11 @@ $(BUILD)/schubmult_q_double_core: schubmult_q_double_core.cpp schub_common.h sch
 	$(CXX) $(CXXFLAGS) -DMAXN=$(MAXN) $(SE_CXXFLAGS) -o $@ $< $(SE_LDFLAGS)
 
 clean:
-	rm -rf $(BUILD)
+	rm -rf $(BUILD) schubmult_cpp.cpp schubmult_cpp*.so ../src/schubmult/schubmult_cpp*.so
 
-.PHONY: all clean
+# Python extension (Cython + SymEngine); installed into the package so `import schubmult` picks it up.
+python: schubmult_cpp.pyx schubmult_api.h kernel_single.h kernel_q.h kernel_double.h kernel_q_double.h kernel_double_alt.h schub_common.h schub_quantum.h schub_symbolic.h
+	MAXN=$(MAXN) python setup_ext.py build_ext --inplace
+	cp schubmult_cpp*.so ../src/schubmult/
+
+.PHONY: all clean python

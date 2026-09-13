@@ -335,7 +335,7 @@ def main(argv=None):
                     else:
                         check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
                 if not same:
-                    check_coeff_dict = {k: expand_func(expand(v)) for k, v in elem_dict.items()}
+                    check_coeff_dict = {k: expand_func(v) for k, v in elem_dict.items()}
                 if args.secret:
                     check_coeff_dict = {k: expand(v) for k, v in elem_dict.items() if expand(v, func=True) != S.Zero}
             else:

@@ -268,6 +268,15 @@ class BaseRing(Ring, CompositeDomain):
                 poly[monom] = coeff
         return poly
 
+    def from_dict_unchecked(self, element):
+        """from_dict for coefficients already known to lie in the domain (drops structural zeros only)."""
+        poly = self.zero
+        zero = self.domain.zero
+        for monom, coeff in element.items():
+            if coeff != zero:
+                poly[monom] = coeff
+        return poly
+
     @property
     def zero(self):
         return self.dtype()

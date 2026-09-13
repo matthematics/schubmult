@@ -5,6 +5,8 @@
 
 #include "schub_common.h"
 
+#include <functional>
+
 #include <symengine/add.h>
 #include <symengine/basic.h>
 #include <symengine/constants.h>
@@ -55,21 +57,39 @@ struct VecHash {
 };
 
 // Memoized e_p(y_{yidx} | z_{zidx}), kept unexpanded. The polynomial is symmetric in the
-// y's and in the z's, so the key uses the sorted index lists.
+// y's and in the z's, so the key uses the sorted index lists. `builder` produces the
+// elementary symmetric object (default: schub_poly.elem_sym_poly; the Python binding can
+// substitute e.g. FactorialElemSym, the `elem_func` of the *_from_elems kernels).
 struct ElemSymCache {
+    typedef std::function<Expr(int p, int k, const std::vector<Expr>& y, const std::vector<Expr>& z)> Builder;
     std::vector<Expr> Y, Z, Q;  // Y[i] = y_i, Z[i] = z_i, Q[i] = q_i (1-indexed)
     std::unordered_map<std::vector<int>, Expr, VecHash> memo;
+    Builder builder;
     size_t misses = 0;
 
-    ElemSymCache(bool same) {
+    // yname/zname: symbol name prefixes ("y" -> y_1, y_2, ...); same variables when zname is empty.
+    ElemSymCache(bool same, const std::string& yname = "y", const std::string& zname = "z", const std::string& qname = "q") {
         Y.resize(MAXN + 1);
         Z.resize(MAXN + 1);
         Q.resize(MAXN + 1);
         for (int i = 0; i <= MAXN; ++i) {
-            Y[i] = SymEngine::symbol("y_" + std::to_string(i));
-            Z[i] = same ? Y[i] : Expr(SymEngine::symbol("z_" + std::to_string(i)));
-            Q[i] = SymEngine::symbol("q_" + std::to_string(i));
+            Y[i] = SymEngine::symbol(yname + "_" + std::to_string(i));
+            Z[i] = same ? Y[i] : Expr(SymEngine::symbol(zname + "_" + std::to_string(i)));
+            Q[i] = SymEngine::symbol(qname + "_" + std::to_string(i));
         }
+    }
+
+    // Explicit variable vectors (index i = i-th variable, 0..MAXN); any expression is allowed,
+    // e.g. the integer 0 for a "zero" generating set. Missing entries (null) die when used.
+    ElemSymCache(std::vector<Expr> y, std::vector<Expr> z, std::vector<Expr> q) : Y(std::move(y)), Z(std::move(z)), Q(std::move(q)) {
+        Y.resize(MAXN + 1);
+        Z.resize(MAXN + 1);
+        Q.resize(MAXN + 1);
+    }
+
+    static const Expr& need(const std::vector<Expr>& v, int i) {
+        if (v[i].is_null()) die("generating set has too few variables for this product");
+        return v[i];
     }
 
     const Expr& get(int p, int k, std::vector<int> yidx, std::vector<int> zidx) {
@@ -86,9 +106,9 @@ struct ElemSymCache {
         if (it != memo.end()) return it->second;
         ++misses;
         std::vector<Expr> yv, zv;
-        for (int i : yidx) yv.push_back(Y.at(i));
-        for (int i : zidx) zv.push_back(Z.at(i));
-        Expr e = elem_sym_poly(p, k, yv, zv, 0, 0);
+        for (int i : yidx) yv.push_back(need(Y, i));
+        for (int i : zidx) zv.push_back(need(Z, i));
+        Expr e = builder ? builder(p, k, yv, zv) : elem_sym_poly(p, k, yv, zv, 0, 0);
         return memo.emplace(key, e).first->second;
     }
 };

@@ -4,6 +4,7 @@ from schubmult.combinatorics.permutation import (
     Permutation,
     uncode,
 )
+from schubmult.mult import _accel
 from schubmult.symbolic import Add, Mul, Pow
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger, init_logging
@@ -77,6 +78,14 @@ def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x):
 
 
 def schubmult_py(perm_dict, v):
+    if _accel.available:
+        ret = _accel.schubmult_py(perm_dict, v)
+        if ret is not None:
+            return ret
+    return _schubmult_py_python(perm_dict, v)
+
+
+def _schubmult_py_python(perm_dict, v):
     v = Permutation(v)
     # print(f"{v=}")
     vn1 = ~v

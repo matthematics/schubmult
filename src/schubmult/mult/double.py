@@ -5,6 +5,7 @@ from schubmult.combinatorics.permutation import (
     Permutation,
     uncode,
 )
+from schubmult.mult import _accel
 from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func, sympify
 from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_func_func_mul, elem_sym_func, elem_sym_poly
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
@@ -203,6 +204,14 @@ def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
 
 
 def schubmult_double(perm_dict, v, var2=None, var3=None):
+    if _accel.available and var2 is not None and var3 is not None:
+        ret = _accel.schubmult_double(perm_dict, v, var2, var3)
+        if ret is not None:
+            return ret
+    return _schubmult_double_python(perm_dict, v, var2, var3)
+
+
+def _schubmult_double_python(perm_dict, v, var2=None, var3=None):
     perm_dict = {Permutation(k): vv for k, vv in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
@@ -332,6 +341,14 @@ def schubmult_double_alt_from_elems_forwards(perm_dict, v, var2=None, var3=None,
 
 # backwards mul before
 def schubmult_double_alt_from_elems_backwards(perm_dict, v, var2=None, var3=None, elem_func=None):
+    if _accel.available and var2 is not None and var3 is not None and elem_func is not None:
+        ret = _accel.schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
+        if ret is not None:
+            return ret
+    return _schubmult_double_alt_from_elems_backwards_python(perm_dict, v, var2, var3, elem_func)
+
+
+def _schubmult_double_alt_from_elems_backwards_python(perm_dict, v, var2=None, var3=None, elem_func=None):
     if v.inv == 0:
         return perm_dict
     ret_dict = {}
@@ -389,6 +406,14 @@ schubmult_double_alt_from_elems = schubmult_double_alt_from_elems_backwards
 
 
 def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=None):
+    if _accel.available and var2 is not None and var3 is not None and elem_func is not None:
+        ret = _accel.schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func)
+        if ret is not None:
+            return ret
+    return _schubmult_double_from_elems_python(perm_dict, v, var2, var3, elem_func)
+
+
+def _schubmult_double_from_elems_python(perm_dict, v, var2=None, var3=None, elem_func=None):
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v

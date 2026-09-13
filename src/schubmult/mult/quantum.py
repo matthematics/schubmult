@@ -5,6 +5,7 @@ from schubmult.combinatorics.permutation import (
     Permutation,
     uncode,
 )
+from schubmult.mult import _accel
 from schubmult.symbolic import Add, Mul, Pow
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger
@@ -80,6 +81,14 @@ def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
 
 
 def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
+    if _accel.available:
+        ret = _accel.schubmult_q_fast(perm_dict, v, q_var)
+        if ret is not None:
+            return ret
+    return _schubmult_q_fast_python(perm_dict, v, q_var)
+
+
+def _schubmult_q_fast_python(perm_dict, v, q_var=_vars.q_var):
     if v.inv == 0:
         return perm_dict
     th = (~v).medium_theta()

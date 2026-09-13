@@ -441,7 +441,7 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
+        return yz.schubmult_double({u: S.One}, v, self.coeff_genset, basis2.coeff_genset)
 
     @cache
     def cached_positive_product(self, u, v, basis2):

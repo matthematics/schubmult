@@ -5,7 +5,6 @@ import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert.schubert_ring as spr
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, Mul, Pow, S, sympify
-from schubmult.symbolic.common_polys import xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, poly_genset
 
 from .parabolic_quantum_double_schubert_ring import (
@@ -50,7 +49,7 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     def cached_product(self, u, v, basis2):
         if self == basis2:
             return py.schubmult_q_fast({u: S.One}, v)
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_q_double_pair_generic(u, v).items()}
+        return yz.schubmult_q_double_fast({u: S.One}, v, self.coeff_genset, basis2.coeff_genset)
 
     @cache
     def cached_positive_product(self, u, v, basis2):

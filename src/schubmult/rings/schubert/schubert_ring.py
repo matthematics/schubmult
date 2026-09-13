@@ -5,7 +5,6 @@ import schubmult.mult.single as py
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
-from schubmult.symbolic.common_polys import xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, poly_genset
 from schubmult.symbolic.symmetric_polynomials import ElemSym
 
@@ -58,7 +57,8 @@ class SingleSchubertRing(DoubleSchubertRing):
     def cached_product(self, u, v, basis2):
         if self == basis2:
             return py.schubmult_py({u: S.One}, v)
-        return {k: xreplace_genvars(x, poly_genset(0), basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
+        # directly in the target variables (y = 0 for this ring)
+        return yz.schubmult_double({u: S.One}, v, poly_genset(0), basis2.coeff_genset if basis2.coeff_genset else poly_genset(0))
 
     @cache
     def cached_positive_product(self, u, v, basis2):

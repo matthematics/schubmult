@@ -98,7 +98,12 @@ class BaseSchubertRing(BaseRing):
     def mul(self, elem, other):
         if not isinstance(other, BaseSchubertElement):
             return super().mul(elem, other)
-        return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
+        prod = _mul_schub_dicts(elem, other, elem.ring, other.ring)
+        # kernel output is already in the coefficient domain: skip the per-coefficient
+        # free_symbols scan unless a subclass customizes from_dict
+        if type(self).from_dict is BaseRing.from_dict:
+            return self.from_dict_unchecked(prod)
+        return self.from_dict(prod)
 
 
     def new(self, x): ...
@@ -127,8 +132,9 @@ class BaseSchubertRing(BaseRing):
         try:
             if isinstance(element, BaseRingElement):
                 raise CoercionFailed("Not a domain element")
-            if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
-                return sympify(element)
+            element = sympify(element)
+            if not any(x in self.genset for x in element.free_symbols):
+                return element
             raise CoercionFailed("Ring element to coerce contains an element of the set of generators")
         except Exception:
             raise CoercionFailed(f"Could not coerce type {type(element)} to {self.__class__.__name__}")

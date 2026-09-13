@@ -6,16 +6,14 @@ def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=False):
     this_dict = {}
     for k, v in dict2.items():
         for kd, vd in dict1.items():
-            did_positive = False
             to_mul = v * vd
-            if best_effort_positive:
-                try:
-                    this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_positive_product(kd, k, basis2).items()})
-                    did_positive = True
-                except Exception:
-                    raise
-            if not did_positive:
-                this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_product(kd, k, basis2).items()})
+            prod = basis1.cached_positive_product(kd, k, basis2) if best_effort_positive else basis1.cached_product(kd, k, basis2)
+            if to_mul == 1:
+                for k1, v1 in prod.items():
+                    this_dict[k1] = this_dict[k1] + v1 if k1 in this_dict else v1
+            else:
+                for k1, v1 in prod.items():
+                    this_dict[k1] = this_dict[k1] + v1 * to_mul if k1 in this_dict else v1 * to_mul
     return this_dict
 
 
