@@ -19,7 +19,7 @@ Configuration via environment variables:
     SCHUBMULT_COMPUTE_TIMEOUT   Per-request compute timeout in seconds.
                                 Default: 8.
     SCHUBMULT_MAX_PERM_LENGTH   Max integers across all permutations in a
-                                single request. Default: 24.
+                                single request. Default: 64.
     SCHUBMULT_ENABLE_MULT       Set to "1" to enable the --mult polynomial
                                 factor (passes through sympify; treat as
                                 untrusted). Default: disabled.
@@ -92,7 +92,7 @@ ALLOWED_ORIGINS = [
     if o.strip()
 ]
 COMPUTE_TIMEOUT = float(os.environ.get("SCHUBMULT_COMPUTE_TIMEOUT", "8"))
-MAX_PERM_LENGTH = int(os.environ.get("SCHUBMULT_MAX_PERM_LENGTH", "24"))
+MAX_PERM_LENGTH = int(os.environ.get("SCHUBMULT_MAX_PERM_LENGTH", "64"))  # the compute timeout is the real guard
 ENABLE_MULT = os.environ.get("SCHUBMULT_ENABLE_MULT", "0") == "1"
 MAX_INT_VALUE = 64  # reject permutation entries above this
 

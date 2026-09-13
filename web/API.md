@@ -60,7 +60,7 @@ Unsupported options are silently ignored for that flavor.
 
 ### Limits
 
-- **`SCHUBMULT_MAX_PERM_LENGTH`** integers per request (default 24, may be
+- **`SCHUBMULT_MAX_PERM_LENGTH`** integers per request (default 64, may be
   lower on this host). Each integer counts; `-` separators don't.
 - **Per-entry range:** integers must be in `[-64, 64]`.
 - **Compute timeout:** `SCHUBMULT_COMPUTE_TIMEOUT` seconds (default 8). On

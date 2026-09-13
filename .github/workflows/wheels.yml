@@ -25,7 +25,9 @@ jobs:
           CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
           CIBW_SKIP: "*-musllinux_* *_i686 *-win32"
           CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: python -c "from schubmult import schubmult_cpp, DSx; print(schubmult_cpp.MAXN, DSx([3,1,2]) * DSx([2,3,1], 'z'))"
+          # Windows consoles default to cp1252; the ring elements print with U+1D516
+          CIBW_ENVIRONMENT_WINDOWS: PYTHONUTF8=1
+          CIBW_TEST_COMMAND: python -c "from schubmult import schubmult_cpp, DSx; p = DSx([3,1,2]) * DSx([2,3,1], 'z'); print(schubmult_cpp.MAXN, len(p))"
       - uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.os }}

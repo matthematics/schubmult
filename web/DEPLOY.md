@@ -71,7 +71,7 @@ import os, sys
 # Your WordPress origin(s):
 os.environ['SCHUBMULT_ALLOWED_ORIGINS'] = 'https://your-wordpress-site.com,https://www.your-wordpress-site.com'
 os.environ['SCHUBMULT_COMPUTE_TIMEOUT'] = '8'
-os.environ['SCHUBMULT_MAX_PERM_LENGTH'] = '24'
+os.environ['SCHUBMULT_MAX_PERM_LENGTH'] = '64'
 # Leave SCHUBMULT_ENABLE_MULT unset (i.e. disabled) for public deployments.
 
 project_home = '/home/YOURUSER/schubmult/web'
@@ -117,7 +117,7 @@ point the WordPress plugin at `https://your-host/embed`.
 The bundled `web/app.py` already:
 
 - Validates permutation tokens (integers only, bounded range).
-- Rejects requests above `SCHUBMULT_MAX_PERM_LENGTH` integers (default 24).
+- Rejects requests above `SCHUBMULT_MAX_PERM_LENGTH` integers (default 64).
 - Runs each computation in a child process with a hard
   `SCHUBMULT_COMPUTE_TIMEOUT` (default 8s). The child is `terminate()`d /
   `kill()`ed if it overruns.
