@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # setuptools-scm needs the tags
       - uses: pypa/cibuildwheel@v3.2
@@ -26,7 +26,7 @@ jobs:
           CIBW_SKIP: "*-musllinux_* *_i686 *-win32"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: python -c "from schubmult import schubmult_cpp, DSx; print(schubmult_cpp.MAXN, DSx([3,1,2]) * DSx([2,3,1], 'z'))"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -34,14 +34,14 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: python -m pip install build && python -m build --sdist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: dist/*.tar.gz
@@ -56,8 +56,8 @@ jobs:
       id-token: write
       contents: write  # for the GitHub Release
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
@@ -70,7 +70,7 @@ jobs:
           ' CHANGELOG.md > release_notes.md
           test -s release_notes.md || echo "See CHANGELOG.md." > release_notes.md
       - name: GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: ${{ github.ref_name }}
           body_path: release_notes.md
