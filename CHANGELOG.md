@@ -1,17 +1,9 @@
 # Changelog
 
-## 5.0.0b2
+## 5.0.0
 
-### Fixed
-
-- **`--display-positive` crashed when PuLP 4 was installed.** The PuLP 4 pre-releases are a
-  rewrite with an incompatible API (no `LpVariable(name=...)`, no bundled CBC), and
-  `pip install --pre schubmult` pulled them in through the open-ended `PuLP>=2.7.0`
-  requirement. The requirement is now `PuLP>=2.7.0,<4`.
-
-## 5.0.0b1
-
-Pre-release. The multiplication kernels are now compiled C++.
+The multiplication kernels are now compiled C++. This release consolidates the
+5.0.0b1 and 5.0.0b2 pre-releases.
 
 ### Changed
 
@@ -30,6 +22,8 @@ Pre-release. The multiplication kernels are now compiled C++.
   result, and products are computed directly in the ring's variables instead of in generic
   variables followed by a substitution pass.
 - `requires-python` is now `>=3.10` (3.9 was declared but never supported).
+- The PuLP requirement is `PuLP>=2.7.0,<4`. The PuLP 4 pre-releases are a rewrite with an
+  incompatible API (no `LpVariable(name=...)`, no bundled CBC) and broke `--display-positive`.
 
 ### Added
 
