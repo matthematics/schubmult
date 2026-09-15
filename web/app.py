@@ -95,6 +95,32 @@ COMPUTE_TIMEOUT = float(os.environ.get("SCHUBMULT_COMPUTE_TIMEOUT", "8"))
 MAX_PERM_LENGTH = int(os.environ.get("SCHUBMULT_MAX_PERM_LENGTH", "64"))  # the compute timeout is the real guard
 ENABLE_MULT = os.environ.get("SCHUBMULT_ENABLE_MULT", "0") == "1"
 MAX_INT_VALUE = 64  # reject permutation entries above this
+# Some inputs blow up combinatorially and can print gigabytes; cap captured
+# stdout/stderr so a runaway script can't exhaust memory or the response body.
+MAX_OUTPUT_BYTES = int(os.environ.get("SCHUBMULT_MAX_OUTPUT_BYTES", str(1024 * 1024)))
+
+
+class _CappedBuffer(io.StringIO):
+    """StringIO that discards writes past a size cap instead of growing forever."""
+
+    def __init__(self, max_chars: int):
+        super().__init__()
+        self._max_chars = max_chars
+        self._truncated = False
+
+    def write(self, s: str) -> int:
+        if not self._truncated:
+            remaining = self._max_chars - self.tell()
+            if remaining <= 0:
+                self._truncated = True
+                super().write(f"\n... [output truncated at {self._max_chars} characters]\n")
+            elif len(s) > remaining:
+                super().write(s[:remaining])
+                self._truncated = True
+                super().write(f"\n... [output truncated at {self._max_chars} characters]\n")
+            else:
+                super().write(s)
+        return len(s)
 
 
 def _tokenize(s: str) -> list[str]:
@@ -202,7 +228,7 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
 
 def _worker(flavor: str, argv: list[str], q) -> None:
     """Subprocess entrypoint: run the script's main() and ship back its stdio."""
-    out, err = io.StringIO(), io.StringIO()
+    out, err = _CappedBuffer(MAX_OUTPUT_BYTES), _CappedBuffer(MAX_OUTPUT_BYTES)
     try:
         if flavor == "py":
             from schubmult._scripts import schubmult_py as mod
@@ -231,7 +257,7 @@ def _worker(flavor: str, argv: list[str], q) -> None:
 
 def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
     """Fallback: run in-process (no timeout). Used when multiprocessing fails."""
-    out, err = io.StringIO(), io.StringIO()
+    out, err = _CappedBuffer(MAX_OUTPUT_BYTES), _CappedBuffer(MAX_OUTPUT_BYTES)
     try:
         if flavor == "py":
             from schubmult._scripts import schubmult_py as mod
