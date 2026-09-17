@@ -2,6 +2,9 @@
 
 # schubmult.combinatorics.increasing\_tableau
 
+`IncreasingTableau`: K-theoretic increasing tableaux (a `Plactic` variant where insertion may
+bump without adding a box), plus grid-shape helper utilities.
+
 <a id="schubmult.combinatorics.increasing_tableau.IncreasingTableau"></a>
 
 ## IncreasingTableau Objects

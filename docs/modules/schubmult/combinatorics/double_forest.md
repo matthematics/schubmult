@@ -83,6 +83,29 @@ def sylvester_word(forest)
 
 Return one Sylvester word of `forest` via pre-order traversal.
 
+<a id="schubmult.combinatorics.double_forest.sylvester_forest"></a>
+
+#### sylvester\_forest
+
+```python
+def sylvester_forest(code, genset, t)
+```
+
+Sum of ``polyvalue(genset, t)`` over all RC graphs of ``uncode(code)`` with the given forest weight;
+the single (non-double) specialization of `double_sylvester_forest`.
+
+<a id="schubmult.combinatorics.double_forest.double_sylvester_forest"></a>
+
+#### double\_sylvester\_forest
+
+```python
+def double_sylvester_forest(code, genset, t)
+```
+
+Double (equivariant) forest polynomial, computed by pairing RC graphs of ``u`` and ``v`` from
+the double Schubert expansion ``Sx([]) * DSx(perm, "t")`` whose merged vine diagram matches the
+principal RC graph's omega-invariant target.
+
 <a id="schubmult.combinatorics.double_forest.canonical_forest_from_word"></a>
 
 #### canonical\_forest\_from\_word

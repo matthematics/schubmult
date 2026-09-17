@@ -2,6 +2,25 @@
 
 # schubmult.combinatorics.indexed\_forests
 
+Indexed forests: binary-search-tree forests indexed by a composition (via the Thompson
+monoid factorization), used for the forest basis / forest Schubert-polynomial model
+(``schubmult._scripts.forest_*`` research scripts and `schubmult.rings.free_algebra.forest_basis`).
+
+Includes `Node`/`IndexedForest` (the forests themselves), `ParallelInjLetter`/`letterpair`
+(parallel-injection alphabet used by omega-insertion), and `LabeledForest`/`DecLabeling`/`LBS`
+(labelings of a forest's nodes).
+
+<a id="schubmult.combinatorics.indexed_forests.Node"></a>
+
+## Node Objects
+
+```python
+class Node()
+```
+
+A node of an indexed forest's binary search tree: an ``index`` (BST key), optional
+``label``, and ``left``/``right`` children.
+
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest"></a>
 
 ## IndexedForest Objects
@@ -9,6 +28,9 @@
 ```python
 class IndexedForest()
 ```
+
+A forest of `Node` binary search trees, indexed by a composition (``code``) via the
+Thompson monoid factorization (see `forest_from_code`/`double_forest.forest_from_code`).
 
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest.terminal_nodes"></a>
 
@@ -122,6 +144,17 @@ Returns
 tuple
     `(fig, ax)` for the rendered drawing.
 
+<a id="schubmult.combinatorics.indexed_forests.ParallelInjLetter"></a>
+
+## ParallelInjLetter Objects
+
+```python
+@dataclass(frozen=True, order=True)
+class ParallelInjLetter()
+```
+
+A letter ``primary[secondary]`` in the parallel-injection alphabet used by omega-insertion.
+
 <a id="schubmult.combinatorics.indexed_forests.weak_composition_to_indfor"></a>
 
 #### weak\_composition\_to\_indfor
@@ -206,6 +239,37 @@ def build_balanced_tree(labels)
 Helper to build a tree where the in-order traversal matches the labels.
 This creates the 'canonical labeling' referenced in the paper.
 
+<a id="schubmult.combinatorics.indexed_forests.letterpair"></a>
+
+## letterpair Objects
+
+```python
+class letterpair()
+```
+
+A letter ``primary[secondary]`` (plain-object counterpart of `ParallelInjLetter`, used
+where a frozen dataclass isn't convenient).
+
+<a id="schubmult.combinatorics.indexed_forests.LabeledForest"></a>
+
+## LabeledForest Objects
+
+```python
+class LabeledForest()
+```
+
+An `IndexedForest` together with a labeling of its nodes (``self(index)`` looks up a label).
+
+<a id="schubmult.combinatorics.indexed_forests.DecLabeling"></a>
+
+## DecLabeling Objects
+
+```python
+class DecLabeling(LabeledForest)
+```
+
+A `LabeledForest` whose labels strictly decrease from each node to its children (checked by ``is_valid``).
+
 <a id="schubmult.combinatorics.indexed_forests.LBS"></a>
 
 ## LBS Objects
@@ -213,6 +277,8 @@ This creates the 'canonical labeling' referenced in the paper.
 ```python
 class LBS(LabeledForest)
 ```
+
+A `LabeledForest` variant used for the LBS (labeled binary search tree) construction.
 
 <a id="schubmult.combinatorics.indexed_forests.LBS.rootlist"></a>
 

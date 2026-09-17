@@ -2,6 +2,9 @@
 
 # schubmult.combinatorics.root\_tableau
 
+`RootTableau`: root-labeled tableaux implementing dual Knuth equivalence via JDT
+(jeu-de-taquin) slides, with the Edelman-Greene invariant preserved by the crystal operators.
+
 <a id="schubmult.combinatorics.root_tableau.RootTableau"></a>
 
 ## RootTableau Objects
@@ -10,7 +13,9 @@
 class RootTableau(CrystalGraph, GridPrint)
 ```
 
-Root tableau with dual knuth equivalence
+A tableau of positive roots (grid cells hold ``(root, recording_letter)`` pairs)
+implementing dual Knuth equivalence via up/down JDT slides. ``edelman_greene_invariant``
+is preserved by the crystal raising/lowering operators.
 
 <a id="schubmult.combinatorics.root_tableau.RootTableau.down_jdt_slide"></a>
 

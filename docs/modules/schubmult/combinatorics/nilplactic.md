@@ -2,6 +2,9 @@
 
 # schubmult.combinatorics.nilplactic
 
+`NilPlactic`: the nilCoxeter/nilHecke analogue of `Plactic`, used for Edelman-Greene tableaux
+(skew shapes over increasing/decreasing-adjacent tableau rules) and their reduced-word data.
+
 <a id="schubmult.combinatorics.nilplactic.NilPlactic"></a>
 
 ## NilPlactic Objects
@@ -9,6 +12,9 @@
 ```python
 class NilPlactic(Plactic)
 ```
+
+A nilCoxeter/nilHecke skew tableau: like `Plactic` but under the Edelman-Greene insertion
+rule (increasing rows and columns, no repeated entries).
 
 <a id="schubmult.combinatorics.nilplactic.NilPlactic.all_skew_ed_tableaux"></a>
 

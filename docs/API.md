@@ -6160,9 +6160,230 @@ def key_to_wc_graph(key) -> WCGraph
 
 Evaluate a tensor key to an WCGraph using left-to-right squash_product.
 
+<a id="schubmult.combinatorics.planar_history"></a>
+
+# schubmult.combinatorics.planar\_history
+
+Grid of NORTH/EAST/SOUTH/WEST-edged tiles (crossings, bumps, empty cells) tracking pipe
+history in a lattice, with conversion to the induced permutation reduced word (``perm_word``).
+
+<a id="schubmult.combinatorics.planar_history.Tile"></a>
+
+## Tile Objects
+
+```python
+class Tile()
+```
+
+A grid tile, identified by which of its NORTH/EAST/SOUTH/WEST edges are connected (as pairs).
+
+<a id="schubmult.combinatorics.planar_history.PlanarHistory"></a>
+
+## PlanarHistory Objects
+
+```python
+class PlanarHistory()
+```
+
+A grid of `Tile`s (``CROSS``, ``BUMP``, or ``EMPTY``) recording pipe crossing history;
+``perm_word`` reads off the induced permutation word from the crossing positions.
+
+<a id="schubmult.combinatorics.planar_history.PlanarHistory.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(grid: np.ndarray)
+```
+
+Wrap a 2D array of `Tile` objects.
+
+<a id="schubmult.combinatorics.planar_history.PlanarHistory.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows()
+```
+
+Number of grid rows.
+
+<a id="schubmult.combinatorics.planar_history.PlanarHistory.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols()
+```
+
+Number of grid columns.
+
+<a id="schubmult.combinatorics.planar_history.PlanarHistory.grid"></a>
+
+#### grid
+
+```python
+@cached_property
+def grid()
+```
+
+Copy of the underlying tile array.
+
+<a id="schubmult.combinatorics.planar_history.PlanarHistory.perm_word"></a>
+
+#### perm\_word
+
+```python
+@property
+def perm_word()
+```
+
+The permutation word induced by the ``CROSS`` tiles, read column by column
+(bottom-to-top within a column) via the NE pipe-count recurrence.
+
+<a id="schubmult.combinatorics.pipe_dream"></a>
+
+# schubmult.combinatorics.pipe\_dream
+
+Classical pipe dreams (rectangular grid of crosses/bumps encoding a reduced word),
+with conversion to/from `RCGraph`/`WCGraph` and grid symmetries (transpose-like duals,
+inversion, vertical reflection).
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream"></a>
+
+## PipeDream Objects
+
+```python
+class PipeDream(PlanarHistory, GridPrint)
+```
+
+A pipe dream: pipes enter from the left and exit at the top of a triangular grid of
+``CROSS``/``BUMP`` tiles. ``perm`` recovers the induced permutation; ``perm_word`` its
+associated (not necessarily reduced) word.
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.perm_word"></a>
+
+#### perm\_word
+
+```python
+@property
+def perm_word()
+```
+
+The word read off the crosses in native (left-to-right, top-to-bottom) orientation.
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.is_reduced"></a>
+
+#### is\_reduced
+
+```python
+@property
+def is_reduced()
+```
+
+Whether ``perm_word`` is a reduced word for ``perm`` (length equals the number of crosses).
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.perm"></a>
+
+#### perm
+
+```python
+@property
+def perm()
+```
+
+The permutation induced by this pipe dream (0-Hecke product of the cross word).
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.to_rc_graph"></a>
+
+#### to\_rc\_graph
+
+```python
+def to_rc_graph()
+```
+
+Convert to an `RCGraph` (crosses of row ``i`` become that row's column labels).
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.to_wc_graph"></a>
+
+#### to\_wc\_graph
+
+```python
+def to_wc_graph()
+```
+
+Convert to a `WCGraph`, analogous to ``to_rc_graph``.
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.from_rc_graph"></a>
+
+#### from\_rc\_graph
+
+```python
+@classmethod
+def from_rc_graph(cls, rc_graph)
+```
+
+Build the pipe dream whose crosses are exactly the RC graph's marked positions.
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.from_wc_graph"></a>
+
+#### from\_wc\_graph
+
+```python
+@classmethod
+def from_wc_graph(cls, wc_graph)
+```
+
+Build the pipe dream whose crosses are exactly the WC graph's marked positions.
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.co_pipe_dream"></a>
+
+#### co\_pipe\_dream
+
+```python
+def co_pipe_dream()
+```
+
+Swap crosses and bumps under the anti-diagonal reflection (the "co" dual pipe dream).
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.co_stinkbat_pipe_dream"></a>
+
+#### co\_stinkbat\_pipe\_dream
+
+```python
+def co_stinkbat_pipe_dream()
+```
+
+Like ``co_pipe_dream`` but preserving (rather than swapping) cross/bump identity under the reflection.
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.inverse_pipe_dream"></a>
+
+#### inverse\_pipe\_dream
+
+```python
+def inverse_pipe_dream()
+```
+
+Pipe dream for ``~self.perm``, obtained by reflecting bumps/crosses through the anti-diagonal.
+
+<a id="schubmult.combinatorics.pipe_dream.PipeDream.reflect_vertically"></a>
+
+#### reflect\_vertically
+
+```python
+def reflect_vertically()
+```
+
+Flip the grid top-to-bottom.
+
 <a id="schubmult.combinatorics.set_valued_tableau"></a>
 
 # schubmult.combinatorics.set\_valued\_tableau
+
+`SetValuedTableau`: semistandard set-valued tableaux (Grothendieck-polynomial combinatorics),
+with a crystal structure realized via `SetWord`/`SetLetter`.
 
 <a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau"></a>
 
@@ -6227,6 +6448,49 @@ def cells()
 ```
 
 Return the underlying ``{(row, col): tuple(labels)}`` dict (a copy).
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows()
+```
+
+Number of rows (one past the maximum row index present).
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols()
+```
+
+Number of columns (one past the maximum column index present).
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.__getitem__"></a>
+
+#### \_\_getitem\_\_
+
+```python
+def __getitem__(key)
+```
+
+``self[row, col]`` -> the label tuple at that box, or ``None`` if empty.
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.shape"></a>
+
+#### shape
+
+```python
+@property
+def shape()
+```
+
+Row lengths (number of boxes per row), trailing zeros dropped.
 
 <a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.weight"></a>
 
@@ -6300,9 +6564,23 @@ def crystal_length()
 
 Upper bound on crystal operator indices (matches ``Plactic``).
 
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.__eq__"></a>
+
+#### \_\_eq\_\_
+
+```python
+def __eq__(other)
+```
+
+Equal iff the underlying cell dicts match.
+
 <a id="schubmult.combinatorics.anti_rc_graph"></a>
 
 # schubmult.combinatorics.anti\_rc\_graph
+
+`AntiRCGraph`: RC graphs viewed "anti" (rows counted from the bottom, entries at least
+their anti row label), used by `RCGraph.left_squash`/`squash_decomp` to peel a Grassmannian
+factor off the top of a general RC graph.
 
 <a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph"></a>
 
@@ -6311,6 +6589,244 @@ Upper bound on crystal operator indices (matches ``Plactic``).
 ```python
 class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph)
 ```
+
+An RC graph in "anti" orientation: row ``i`` (1-indexed from the bottom) holds reflections
+``>= i``. ``to_rc_graph``/``from_rc_graph`` convert to/from the ordinary `RCGraph` orientation
+(row reversal); most other operations (crystal operators, products, squashing) are defined by
+delegating to the `RCGraph` view.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(rows_or_grid: Iterable[Iterable[int]] | np.ndarray,
+             *,
+             _is_copy: bool = False) -> None
+```
+
+Build from a sequence of rows (each an iterable of reflection labels) or a raw 0/1 grid.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows() -> int
+```
+
+Number of rows.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols() -> int
+```
+
+Number of columns.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.copy"></a>
+
+#### copy
+
+```python
+def copy() -> AntiRCGraph
+```
+
+Shallow copy.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.has_element"></a>
+
+#### has\_element
+
+```python
+def has_element(i: int, j: int) -> bool
+```
+
+Whether the reflection is marked at 1-indexed grid position ``(i, j)``.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.perm"></a>
+
+#### perm
+
+```python
+@property
+def perm() -> Permutation
+```
+
+The permutation induced by this anti RC graph: ``~anti_permutation``.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.reflection_view"></a>
+
+#### reflection\_view
+
+```python
+@property
+def reflection_view() -> RCGraph
+```
+
+The rows reversed into ordinary `RCGraph` orientation.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.to_rc_graph"></a>
+
+#### to\_rc\_graph
+
+```python
+def to_rc_graph() -> RCGraph
+```
+
+Alias for ``reflection_view``.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.from_rc_graph"></a>
+
+#### from\_rc\_graph
+
+```python
+@classmethod
+def from_rc_graph(cls, rc: RCGraph) -> AntiRCGraph
+```
+
+Inverse of ``to_rc_graph``: reverse the rows of an ordinary `RCGraph`.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.from_reduced_anticompatible"></a>
+
+#### from\_reduced\_anticompatible
+
+```python
+@classmethod
+def from_reduced_anticompatible(cls,
+                                word: Sequence[int],
+                                seq: Sequence[int],
+                                length: int | None = None) -> AntiRCGraph
+```
+
+Build from a reduced word and its anti-compatible sequence (dual of `RCGraph.from_reduced_compatible`).
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.normalize"></a>
+
+#### normalize
+
+```python
+def normalize() -> AntiRCGraph
+```
+
+Drop trailing empty rows (via the `RCGraph` view).
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.polyvalue"></a>
+
+#### polyvalue
+
+```python
+def polyvalue(x, y=None, **_kwargs) -> Expr
+```
+
+Monomial (or, with ``y``, double) contribution of this anti RC graph to a Schubert polynomial.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.left_zero_act"></a>
+
+#### left\_zero\_act
+
+```python
+def left_zero_act() -> set[AntiRCGraph]
+```
+
+Set of anti RC graphs obtained from applying the zero-action to the `RCGraph` view.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.right_zero_act"></a>
+
+#### right\_zero\_act
+
+```python
+def right_zero_act() -> set[AntiRCGraph]
+```
+
+Alias for ``left_zero_act`` (the anti orientation swaps left/right).
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.antiaut"></a>
+
+#### antiaut
+
+```python
+def antiaut() -> AntiRCGraph
+```
+
+Reverse the row order (an anti-automorphism of the grid).
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.vertical_cut"></a>
+
+#### vertical\_cut
+
+```python
+def vertical_cut(row: int) -> tuple[AntiRCGraph, AntiRCGraph]
+```
+
+Split at ``row`` into two anti RC graphs (order swapped relative to `RCGraph.vertical_cut`).
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.product"></a>
+
+#### product
+
+```python
+def product(other: SchubertMonomialGraph) -> dict[AntiRCGraph, int]
+```
+
+RC graph product of ``other`` (stacked above) and ``self``, converted back to anti orientation.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.lowering_operator"></a>
+
+#### lowering\_operator
+
+```python
+def lowering_operator(row: int) -> AntiRCGraph | None
+```
+
+Crystal lowering operator, realized via the raising operator of the `RCGraph` view at the mirrored row.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.raising_operator"></a>
+
+#### raising\_operator
+
+```python
+def raising_operator(row: int) -> AntiRCGraph | None
+```
+
+Crystal raising operator, realized via the lowering operator of the `RCGraph` view at the mirrored row.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.max_reflection"></a>
+
+#### max\_reflection
+
+```python
+@property
+def max_reflection() -> int
+```
+
+Largest reflection label appearing in any row.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.disjoint_union"></a>
+
+#### disjoint\_union
+
+```python
+def disjoint_union(anti_rc: AntiRCGraph) -> AntiRCGraph
+```
+
+Stack ``anti_rc`` above ``self`` (shifted so their reflections don't collide), keeping the
+same number of rows.
+
+<a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.squash_product"></a>
+
+#### squash\_product
+
+```python
+def squash_product(anti_rc: AntiRCGraph) -> AntiRCGraph
+```
+
+Product used by `RCGraph.left_squash`: disjoint-union then cut back down to ``self``'s row count.
 
 <a id="schubmult.combinatorics.anti_rc_graph.AntiRCGraph.squash_decomp"></a>
 
@@ -7300,6 +7816,16 @@ This represents the Schubert polynomial multiplication at the monomial level.
 
 # schubmult.combinatorics.rc\_graph
 
+`RCGraph`: reduced (pipe-dream-like) compatible graphs, the central combinatorial model for
+Schubert polynomials in this package.
+
+An RC graph is a tuple of rows, row ``i`` (0-indexed) a strictly decreasing tuple of column
+labels ``>= i + 1``; reading the rows top-to-bottom, right-to-left within a row, gives a reduced
+word for the graph's permutation (``perm``). RC graphs support the crystal structure
+(`CrystalGraph`), the KOH/Monk product (`product`), conversions to `PipeDream`/`WCGraph`, and
+the squash decomposition used to peel a Grassmannian factor off a general RC graph
+(``squash_decomp``/``left_squash``, via `AntiRCGraph`).
+
 <a id="schubmult.combinatorics.rc_graph.RCGraph"></a>
 
 ## RCGraph Objects
@@ -7307,6 +7833,33 @@ This represents the Schubert polynomial multiplication at the monomial level.
 ```python
 class RCGraph(WCGraph, CrystalGraph)
 ```
+
+A reduced compatible graph: a tuple of rows (row ``i`` a strictly decreasing tuple of
+column labels ``>= i + 1``) whose concatenated reading order gives a reduced word for `perm`.
+Construct via the ``WCGraph``/tuple-of-rows constructor, ``RCGraph.principal_rc(perm, n)``, or
+``RCGraph.all_rc_graphs(perm, n)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_elem_sym"></a>
+
+#### is\_elem\_sym
+
+```python
+@property
+def is_elem_sym()
+```
+
+Whether ``perm`` is the identity or a single elementary-symmetric-type permutation
+(one descent, code entries all 0 or 1).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.left_squash"></a>
+
+#### left\_squash
+
+```python
+def left_squash(other_rc)
+```
+
+Squash product with ``other_rc`` stacked to the left (via `AntiRCGraph.squash_product`).
 
 <a id="schubmult.combinatorics.rc_graph.RCGraph.squash_decomp"></a>
 
@@ -7327,7 +7880,18 @@ Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass.
 def left_squash_decomp()
 ```
 
-Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass.
+Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass (left variant of ``squash_decomp``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_full_grass"></a>
+
+#### is\_full\_grass
+
+```python
+@property
+def is_full_grass()
+```
+
+Whether ``perm`` is the identity or Grassmannian with descent at the last row.
 
 <a id="schubmult.combinatorics.rc_graph.RCGraph.args"></a>
 
@@ -7339,6 +7903,159 @@ def args() -> tuple
 ```
 
 Return args for sympy compatibility - prevents traversal into tuple contents.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.loc_of_inversion"></a>
+
+#### loc\_of\_inversion
+
+```python
+def loc_of_inversion(a, b)
+```
+
+``(row, col)`` where the left-to-right inversion ``(a, b)`` sits, via a lookup over all inversions.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.index_of_inversion"></a>
+
+#### index\_of\_inversion
+
+```python
+def index_of_inversion(a, b)
+```
+
+Position in `perm_word` of the left-to-right inversion ``(a, b)``, or ``-1`` if absent.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.as_reduced_compatible"></a>
+
+#### as\_reduced\_compatible
+
+```python
+def as_reduced_compatible()
+```
+
+Return ``(perm_word, compatible_sequence)`` where the sequence entry is each letter's row.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.little_bump_desc"></a>
+
+#### little\_bump\_desc
+
+```python
+def little_bump_desc()
+```
+
+Bump the RC graph at its last descent by one (normalizing first if the graph is too short).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.inversions"></a>
+
+#### inversions
+
+```python
+def inversions()
+```
+
+All left-to-right inversion roots, in reading order.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.vex"></a>
+
+#### vex
+
+```python
+@property
+def vex()
+```
+
+A vexillary representative in the same crystal component, obtained by iteratively
+extending/zeroing rows until ``perm`` avoids the pattern ``2143``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.hw_tab_rep"></a>
+
+#### hw\_tab\_rep
+
+```python
+def hw_tab_rep()
+```
+
+``(highest_weight_rc, tableau)`` where ``tableau`` is the Yamanouchi tableau of the highest
+weight's shape, reverse-raised back to ``self``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.hw_grass_rep"></a>
+
+#### hw\_grass\_rep
+
+```python
+def hw_grass_rep()
+```
+
+``(highest_weight_rc, grass)`` pairing the highest weight element with `grass`.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_chute_moves"></a>
+
+#### all\_chute\_moves
+
+```python
+def all_chute_moves()
+```
+
+All valid chute moves ``(start, end)`` available on this RC graph (see `ChuteMoveElement`).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.chute_lower"></a>
+
+#### chute\_lower
+
+```python
+def chute_lower(row_num)
+```
+
+Apply a chute move lowering the marked element from ``row_num`` into ``row_num - 1``, or ``None`` if invalid.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.chute_raise"></a>
+
+#### chute\_raise
+
+```python
+def chute_raise(row_num)
+```
+
+Apply a chute move raising the marked element from ``row_num`` into ``row_num + 1``, or ``None`` if invalid.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.to_top_rc"></a>
+
+#### to\_top\_rc
+
+```python
+def to_top_rc()
+```
+
+Push every element as far up (chute-raise) as possible; returns ``(rc, raise_seq)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.to_bottom_rc"></a>
+
+#### to\_bottom\_rc
+
+```python
+def to_bottom_rc()
+```
+
+Push every element as far down (chute-lower) as possible; returns ``(rc, raise_seq)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_inverse_chute_moves"></a>
+
+#### all\_inverse\_chute\_moves
+
+```python
+def all_inverse_chute_moves()
+```
+
+All valid inverse chute moves ``(start, end)`` (the reverse direction of ``all_chute_moves``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.to_lowest_weight_demaz"></a>
+
+#### to\_lowest\_weight\_demaz
+
+```python
+def to_lowest_weight_demaz()
+```
+
+Lowest-weight element reached from ``self``'s highest weight by repeated Demazure lowering; ``(rc, raise_seq)``.
 
 <a id="schubmult.combinatorics.rc_graph.RCGraph.extract_demazure_atom"></a>
 
@@ -7358,6 +8075,192 @@ weight tableaux have the same right key.
 
 Returns a list of RC graphs forming the Demazure atom.
 
+<a id="schubmult.combinatorics.rc_graph.RCGraph.raise_seq_word"></a>
+
+#### raise\_seq\_word
+
+```python
+@staticmethod
+def raise_seq_word(raise_seq)
+```
+
+Collapse consecutive repeated entries out of a raising sequence.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.grass"></a>
+
+#### grass
+
+```python
+@property
+def grass()
+```
+
+The Grassmannian RC graph with the same weight as ``self``'s highest weight, reverse-raised back to ``self``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.transition"></a>
+
+#### transition
+
+```python
+def transition()
+```
+
+One step of the Lascoux-Schutzenberger transition: exchange at the last descent and zero out
+rows past ``perm``'s trimcode length.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.little_bump"></a>
+
+#### little\_bump
+
+```python
+def little_bump(i=None, j=None)
+```
+
+Bump the reduced word at the inversion ``(i, j)`` (default: the last-descent inversion) up by
+one letter, repeatedly re-reducing until valid; the permutation is unchanged.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.little_bump_down"></a>
+
+#### little\_bump\_down
+
+```python
+def little_bump_down(i, j)
+```
+
+Dual of ``little_bump``: bump the letter at inversion ``(i, j)`` down instead of up.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.from_reduced_compatible"></a>
+
+#### from\_reduced\_compatible
+
+```python
+@classmethod
+def from_reduced_compatible(cls, word, seq, length=None)
+```
+
+Build an RC graph from a reduced word and its compatible sequence (row assignment per letter).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.from_wc_graph"></a>
+
+#### from\_wc\_graph
+
+```python
+@classmethod
+def from_wc_graph(cls, wc_graph: WCGraph) -> RCGraph
+```
+
+Reduce a `WCGraph` down to an `RCGraph` by canceling matching positive/negative inversion pairs.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.crystal_weight"></a>
+
+#### crystal\_weight
+
+```python
+@cached_property
+def crystal_weight()
+```
+
+Alias for ``length_vector``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.tableau_decomp"></a>
+
+#### tableau\_decomp
+
+```python
+def tableau_decomp() -> tuple[NilPlactic, Plactic]
+```
+
+Split ``self`` into a tuple of RC graphs, one per column of descents (vertical cuts at each descent).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.sorted_length_vector"></a>
+
+#### sorted\_length\_vector
+
+```python
+@cached_property
+def sorted_length_vector()
+```
+
+``length_vector`` sorted into weakly decreasing order.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.extremal_weight"></a>
+
+#### extremal\_weight
+
+```python
+@property
+def extremal_weight()
+```
+
+The extremal weight of ``self``'s crystal component (via ``_extremal_weight``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.forest_invariant"></a>
+
+#### forest\_invariant
+
+```python
+@property
+def forest_invariant()
+```
+
+The forest (indexed by ``omega_invariant``) attached to ``self`` under omega-insertion.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.omega_invariant"></a>
+
+#### omega\_invariant
+
+```python
+@property
+@cache
+def omega_invariant()
+```
+
+Omega-insertion of the reversed ``perm_word`` (P-symbol data used for forest/K-theoretic invariants).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.w0_automorphism"></a>
+
+#### w0\_automorphism
+
+```python
+def w0_automorphism(n=None)
+```
+
+Conjugate the reduced word by ``w0`` on ``n`` letters (or the minimal ``n`` fitting ``self``),
+producing the RC graph for ``w0 * perm * w0`` on the same crystal-compatible footing.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.antiaut"></a>
+
+#### antiaut
+
+```python
+def antiaut()
+```
+
+Convert to `AntiRCGraph` (the anti-orientation view).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.forest_weight"></a>
+
+#### forest\_weight
+
+```python
+@cached_property
+def forest_weight()
+```
+
+``forest_invariant``'s composition, padded to ``len(self)`` (see `schubmult.combinatorics.indexed_forests`).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_extremal"></a>
+
+#### is\_extremal
+
+```python
+@property
+def is_extremal() -> bool
+```
+
+Whether ``self`` is the (unique) extremal element of its Demazure crystal weight class:
+weakly decreasing length vector matching the highest weight, minimal among ties by sorting-permutation length.
+
 <a id="schubmult.combinatorics.rc_graph.RCGraph.demazure_weight"></a>
 
 #### demazure\_weight
@@ -7368,6 +8271,543 @@ def demazure_weight() -> tuple[int, ...]
 ```
 
 Weight of the distinguished Demazure extremal element.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_rc"></a>
+
+#### is\_rc
+
+```python
+@property
+def is_rc() -> bool
+```
+
+Whether every entry of row ``i`` (0-indexed) is ``>= i + 1`` (the basic RC graph shape constraint).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_valid"></a>
+
+#### is\_valid
+
+```python
+@property
+def is_valid() -> bool
+```
+
+Whether ``perm_word`` is reduced for ``perm`` and every entry respects the row-shape constraint.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.shiftup"></a>
+
+#### shiftup
+
+```python
+def shiftup(shift: int = 1, check_valid=True) -> RCGraph
+```
+
+Add ``shift`` to every entry of every row.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.right_root_at"></a>
+
+#### right\_root\_at
+
+```python
+@cache
+def right_root_at(i: int, j: int) -> tuple[int, int]
+```
+
+The positive root at grid position ``(i, j)``, transported to the right by the remaining word.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.left_root_at"></a>
+
+#### left\_root\_at
+
+```python
+@cache
+def left_root_at(i: int, j: int) -> tuple[int, int] | None
+```
+
+The positive root at grid position ``(i, j)``, transported by everything to its left/above.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.inversion_label"></a>
+
+#### inversion\_label
+
+```python
+@cache
+def inversion_label(i: int, j: int) -> int
+```
+
+Row where the inversion ``(i+1, j+1)`` is crossed (its "label" in the weak/Lehmer order sense).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.lehmer_label"></a>
+
+#### lehmer\_label
+
+```python
+@cache
+def lehmer_label(i: int, j: int) -> int
+```
+
+Rank of ``inversion_label(i, j)`` among the inversion labels of the roots ``(i', j)``, ``i' <= i``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.perm_word"></a>
+
+#### perm\_word
+
+```python
+@cached_property
+def perm_word() -> tuple[int, ...]
+```
+
+Concatenation of the rows, top to bottom: a reduced word for ``perm``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.reduced_word"></a>
+
+#### reduced\_word
+
+```python
+@property
+def reduced_word() -> tuple[int, ...]
+```
+
+Alias for ``perm_word``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_dom_perm_yamanouchi"></a>
+
+#### is\_dom\_perm\_yamanouchi
+
+```python
+def is_dom_perm_yamanouchi(dom_perm: Permutation, perm: Permutation) -> bool
+```
+
+Whether ``self`` (assumed to have permutation ``dom_perm``) matches the highest weight of the
+Demazure-crystal tensor factor for the ``dom_perm``-part of the product ``S_self.perm * S_dom_perm``
+landing on ``perm``, via matching P/weight tableaux against the principal RC graphs.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.shape"></a>
+
+#### shape
+
+```python
+@property
+def shape() -> tuple[int, ...]
+```
+
+Row lengths of the Edelman-Greene P-tableau (``p_tableau``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.__invert__"></a>
+
+#### \_\_invert\_\_
+
+```python
+def __invert__() -> RCGraph
+```
+
+RC graph for ``~perm``, transposed via toggling every marked cell to its mirror position.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.normalize"></a>
+
+#### normalize
+
+```python
+def normalize() -> RCGraph
+```
+
+Resize to ``perm.max_descent`` rows (drop or extend trailing empty rows to the canonical length).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.resize"></a>
+
+#### resize
+
+```python
+def resize(new_length: int) -> RCGraph
+```
+
+Truncate (via ``rowrange``) or extend to exactly ``new_length`` rows.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.edelman_greene"></a>
+
+#### edelman\_greene
+
+```python
+def edelman_greene() -> tuple[NilPlactic, Plactic]
+```
+
+Edelman-Greene correspondence: insert the inversions (in reverse reading order) to build the
+``(P, Q)`` pair of a nilCoxeter tableau and a plactic recording tableau.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.__mul__"></a>
+
+#### \_\_mul\_\_
+
+```python
+def __mul__(other: object) -> object
+```
+
+Multiply as elements of the `RCGraphRing` (delegates to that ring's product for `RCGraph` operands).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.asdtype"></a>
+
+#### asdtype
+
+```python
+def asdtype(cls: type) -> object
+```
+
+Convert to the combinatorial-ring element type ``cls`` (via ``cls.dtype().ring.from_rc_graph``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.as_nil_hecke"></a>
+
+#### as\_nil\_hecke
+
+```python
+def as_nil_hecke(x: object, y: object | None = None) -> object
+```
+
+Represent as a `NilHeckeRing` element: ``polyvalue(x, y) * R(perm)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.has_element"></a>
+
+#### has\_element
+
+```python
+@cache
+def has_element(i: int, j: int) -> bool
+```
+
+Whether row ``i`` (1-indexed) contains the reflection at column ``j`` (i.e. label ``i + j - 1``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.length_vector"></a>
+
+#### length\_vector
+
+```python
+@cached_property
+def length_vector() -> tuple[int]
+```
+
+Row lengths (the crystal weight vector).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.lehmer_partial_leq"></a>
+
+#### lehmer\_partial\_leq
+
+```python
+@cache
+def lehmer_partial_leq(other: RCGraph) -> bool
+```
+
+Whether every root's `lehmer_label` in ``self`` is ``<=`` the corresponding label in ``other``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.rowrange"></a>
+
+#### rowrange
+
+```python
+def rowrange(start: int, end: int | None = None) -> RCGraph
+```
+
+Rows ``[start, end)`` as a fresh RC graph, entries shifted down by ``start``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.polyvalue"></a>
+
+#### polyvalue
+
+```python
+def polyvalue(x: Sequence[Expr],
+              y: Sequence[Expr] | None = None,
+              *,
+              beta: Expr = None,
+              prop_beta: bool = False,
+              crystal: bool = False) -> Expr
+```
+
+Monomial (``y=None``), double (``y`` given), or beta-deformed Grothendieck contribution of this RC graph.
+
+With ``crystal=True``, sums ``polyvalue`` over the whole crystal component instead of just ``self``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.random_rc_graph"></a>
+
+#### random\_rc\_graph
+
+```python
+@classmethod
+def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph
+```
+
+A uniformly random RC graph for ``perm`` with the given number of rows.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_rcs_with_word"></a>
+
+#### all\_rcs\_with\_word
+
+```python
+@classmethod
+def all_rcs_with_word(cls, perm: Permutation,
+                      word: tuple[int, ...]) -> set[RCGraph]
+```
+
+All RC graphs for ``perm`` whose ``perm_word`` equals ``word`` exactly.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_rc_graphs"></a>
+
+#### all\_rc\_graphs
+
+```python
+@classmethod
+def all_rc_graphs(cls,
+                  perm: Permutation,
+                  length: int = -1,
+                  weight: tuple[int, ...] | None = None,
+                  *,
+                  check_length=False) -> set[RCGraph]
+```
+
+All RC graphs for ``perm`` with ``length`` rows (default: ``len(perm.trimcode)``), optionally
+restricted to a given ``weight`` (row-length vector). Recursively built via ``pull_out_var``
+on the top variable; results are cached by ``(perm, length)`` / ``(perm, weight)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.extend"></a>
+
+#### extend
+
+```python
+def extend(extra_rows: int) -> RCGraph
+```
+
+Append ``extra_rows`` empty rows at the bottom.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.prepend"></a>
+
+#### prepend
+
+```python
+def prepend(extra_rows: int) -> RCGraph
+```
+
+Insert ``extra_rows`` empty rows at the top (shifting existing entries up accordingly).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.pieri_insert"></a>
+
+#### pieri\_insert
+
+```python
+def pieri_insert(descent,
+                 rows,
+                 return_reflections=False,
+                 backwards=True,
+                 left=False)
+```
+
+Insert one crossing per entry of ``rows`` (grouped by row) at the given ``descent``, rectifying
+as needed to stay a valid RC graph; the Pieri-rule building block used by `zero_out_last_row`,
+`pull_out_row`, and related transition-formula operations.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.weight"></a>
+
+#### weight
+
+```python
+@property
+def weight() -> tuple[int, ...]
+```
+
+Flat weight sequence: row index (1-indexed) repeated once per crossing in that row.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.perm"></a>
+
+#### perm
+
+```python
+@property
+def perm() -> Permutation
+```
+
+The permutation induced by this RC graph: the reduced product of its reflections.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.hecke_perm"></a>
+
+#### hecke\_perm
+
+```python
+@property
+def hecke_perm() -> Permutation
+```
+
+The 0-Hecke (Demazure) product of the reflections, allowing non-length-additive steps.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.multiply_reps"></a>
+
+#### multiply\_reps
+
+```python
+@classmethod
+def multiply_reps(cls, drep1, drep2)
+```
+
+Multiply two dicts of ``{tuple-of-RCGraph: coeff}`` representations by squash-producting their
+factors in size order, returning an `RCGraphRing` element.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.cem_rep"></a>
+
+#### cem\_rep
+
+```python
+@cached_property
+def cem_rep()
+```
+
+``self``'s coefficient in the complete-elementary-monomial (CEM) basis expansion of its own permutation.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.custom_cem_rep"></a>
+
+#### custom\_cem\_rep
+
+```python
+@cache
+def custom_cem_rep(partition)
+```
+
+Like ``cem_rep``, but expanding against an explicit dominant ``partition`` rather than the inferred one.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.sem_rep"></a>
+
+#### sem\_rep
+
+```python
+@cache
+def sem_rep(length=None)
+```
+
+``custom_cem_rep`` specialized to the staircase partition ``w0(length).trimcode``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.in_CEM_basis"></a>
+
+#### in\_CEM\_basis
+
+```python
+@classmethod
+@cache
+def in_CEM_basis(
+    cls,
+    perm: Permutation,
+    length: int,
+    partition: tuple[int] | None = None
+) -> dict[RCGraph, dict[tuple[RCGraph], int]]
+```
+
+Expand ``S_perm``'s complete-elementary-monomial (CEM) representation, restricted to the
+pieces landing on RC graphs of the given ``length``: ``{rc: {tuple-of-elem-sym-RCGraphs: coeff}}``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.full_CEM"></a>
+
+#### full\_CEM
+
+```python
+@classmethod
+@cache
+def full_CEM(
+    cls,
+    perm: Permutation,
+    length: int,
+    partition: tuple[int] | None = None
+) -> dict[RCGraph, dict[tuple[RCGraph], int]]
+```
+
+Like ``in_CEM_basis`` but expanding against the full staircase-bounded strict dominant permutation.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.full_double_elem_sym_squash"></a>
+
+#### full\_double\_elem\_sym\_squash
+
+```python
+def full_double_elem_sym_squash(p, yvars, zvars)
+```
+
+Sum ``double_elem_sym_squash(p, ...)`` over every elementary-symmetric RC graph of degree ``p``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.snap_qy"></a>
+
+#### snap\_qy
+
+```python
+def snap_qy()
+```
+
+Merge adjacent rows where possible to reach a quasi-Yamanouchi representative, raising
+``ValueError`` if that's not achievable.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.double_elem_rep"></a>
+
+#### double\_elem\_rep
+
+```python
+def double_elem_rep(yvars, size)
+```
+
+Express ``self`` in the double elementary-symmetric basis of `BoundedRCFactorAlgebra`, via its
+(assumed unique) `full_CEM` decomposition, recursively correcting for lower-order terms.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.double_elem_sym_squash"></a>
+
+#### double\_elem\_sym\_squash
+
+```python
+def double_elem_sym_squash(weight, _yvars, _zvars)
+```
+
+Squash-product ``self`` with the elementary-symmetric RC graph of the given ``weight``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.elem_sym_rcs"></a>
+
+#### elem\_sym\_rcs
+
+```python
+@classmethod
+def elem_sym_rcs(cls, p, k, length=None, weight=None) -> set[RCGraph]
+```
+
+All RC graphs for the elementary-symmetric permutation ``uncode([0]*(k-p) + [1]*p)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.transpose"></a>
+
+#### transpose
+
+```python
+def transpose(length: int | None = None) -> RCGraph
+```
+
+RC graph for ``~perm``, built by peeling diagonals off the end of each row.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.from_array"></a>
+
+#### from\_array
+
+```python
+@classmethod
+def from_array(cls, arr, min_length=None) -> RCGraph
+```
+
+Build an RC graph from a 2D object array (non-``None``/non-zero cells mark crossings).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.one_row"></a>
+
+#### one\_row
+
+```python
+@classmethod
+def one_row(cls, p: int) -> RCGraph
+```
+
+The single-row RC graph ``(p, p-1, ..., 1)`` (for the permutation with one nonzero code entry ``p``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.weak_order_leq"></a>
+
+#### weak\_order\_leq
+
+```python
+def weak_order_leq(other: RCGraph) -> bool
+```
+
+Whether every root's `lehmer_label`/`inversion_label` in ``self`` is ``<=`` in ``other`` (weak order comparison).
 
 <a id="schubmult.combinatorics.rc_graph.RCGraph.w_key_cache"></a>
 
@@ -7380,6 +8820,262 @@ noqa: RUF012
 #### rc\_cache
 
 noqa: RUF012
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.toggle_ref_at"></a>
+
+#### toggle\_ref\_at
+
+```python
+def toggle_ref_at(i: int, j: int) -> RCGraph
+```
+
+Add or remove the crossing at 1-indexed grid position ``(i, j)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.principal_rc_factorization"></a>
+
+#### principal\_rc\_factorization
+
+```python
+@classmethod
+@cache
+def principal_rc_factorization(cls, perm: Permutation) -> tuple[RCGraph]
+```
+
+Factor the principal RC graph of ``perm`` into a tuple of elementary-symmetric RC graphs,
+one per nonzero code entry, peeled off from the top descent down.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.zero_out_last_row"></a>
+
+#### zero\_out\_last\_row
+
+```python
+@cache
+def zero_out_last_row() -> RCGraph
+```
+
+Drop the (empty) last row, exchanging descents down via `pieri_insert` so the permutation is preserved.
+
+Core step of the Lascoux-Schutzenberger transition formula.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.zero_out_last_column"></a>
+
+#### zero\_out\_last\_column
+
+```python
+def zero_out_last_column(width) -> RCGraph
+```
+
+Transpose analogue of `zero_out_last_row`: drop the last column down to ``width``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.zero_out_in_place"></a>
+
+#### zero\_out\_in\_place
+
+```python
+def zero_out_in_place() -> RCGraph
+```
+
+Normalize then repeatedly `zero_out_last_row`, restoring the original row count.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.alt_product"></a>
+
+#### alt\_product
+
+```python
+def alt_product(other)
+```
+
+Alternate product of ``self`` and ``other`` (shifted up), searching the zero-action orbit of
+``self`` for representatives that stack validly with ``other``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.crystal_length"></a>
+
+#### crystal\_length
+
+```python
+def crystal_length() -> int
+```
+
+Number of rows.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.lowering_operator"></a>
+
+#### lowering\_operator
+
+```python
+def lowering_operator(row: int) -> RCGraph | None
+```
+
+Crystal lowering operator ``f_row``: pair letters of row ``row`` with larger unpaired letters
+of row ``row + 1``, move the least unpaired letter of ``row`` down if that stays a valid RC graph.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.quasi_raising_operator"></a>
+
+#### quasi\_raising\_operator
+
+```python
+def quasi_raising_operator(row: int) -> RCGraph | None
+```
+
+``raising_operator``, but only if it leaves the reduced word ``perm_word`` unchanged.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.quasi_lowering_operator"></a>
+
+#### quasi\_lowering\_operator
+
+```python
+def quasi_lowering_operator(row: int) -> RCGraph | None
+```
+
+``lowering_operator``, but only if it leaves the reduced word ``perm_word`` unchanged.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.raising_operator"></a>
+
+#### raising\_operator
+
+```python
+def raising_operator(row: int) -> RCGraph | None
+```
+
+Crystal raising operator ``e_row``, dual to ``lowering_operator``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.right_zero_act"></a>
+
+#### right\_zero\_act
+
+```python
+def right_zero_act() -> set[RCGraph]
+```
+
+All RC graphs one row longer that reduce back to ``self`` under `zero_out_last_row`
+(the covering set used to build the crystal upward).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.bisect_left_coords_index"></a>
+
+#### bisect\_left\_coords\_index
+
+```python
+@cache
+def bisect_left_coords_index(row: int,
+                             col: int,
+                             lo: int = 0,
+                             hi: int | None = None) -> int
+```
+
+Binary search over ``perm_word`` positions for the insertion point of grid coordinate ``(row, col)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.exchange_property"></a>
+
+#### exchange\_property
+
+```python
+def exchange_property(descent: int,
+                      return_row: bool = False,
+                      left: bool = False) -> RCGraph | tuple[RCGraph, int]
+```
+
+Toggle off the crossing realizing the simple root ``(descent, descent + 1)``, per the exchange
+property; optionally also return the row it was found in.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.left_to_right_inversion"></a>
+
+#### left\_to\_right\_inversion
+
+```python
+@cache
+def left_to_right_inversion(index: int) -> tuple[int, int]
+```
+
+Positive root of the ``index``-th letter of ``perm_word``, transported to the right.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.left_to_right_left_inversion"></a>
+
+#### left\_to\_right\_left\_inversion
+
+```python
+@cache
+def left_to_right_left_inversion(index: int) -> tuple[int, int]
+```
+
+Positive root of the ``index``-th letter of ``perm_word``, transported to the left.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.left_to_right_inversion_coords"></a>
+
+#### left\_to\_right\_inversion\_coords
+
+```python
+@cache
+def left_to_right_inversion_coords(index: int) -> tuple[int, int]
+```
+
+Grid coordinates ``(row, col)`` of the ``index``-th letter of ``perm_word``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.principal_rc"></a>
+
+#### principal\_rc
+
+```python
+@classmethod
+def principal_rc(cls, perm: Permutation, length: int | None = None) -> RCGraph
+```
+
+The canonical (dominant/staircase-filled) RC graph for ``perm``: row ``i`` is
+``(i + code[i], ..., i + 1)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.p_tableau"></a>
+
+#### p\_tableau
+
+```python
+@cached_property
+def p_tableau() -> NilPlactic
+```
+
+Edelman-Greene ``P``-tableau (alias for ``edelman_greene()[0]``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.q_tableau"></a>
+
+#### q\_tableau
+
+```python
+@cached_property
+def q_tableau() -> Plactic
+```
+
+Edelman-Greene ``Q``-tableau, recording tableau (alias for ``edelman_greene()[1]``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.weight_tableau"></a>
+
+#### weight\_tableau
+
+```python
+@cached_property
+def weight_tableau() -> Plactic
+```
+
+Plactic tableau recording the RC graph's weight, via column Edelman-Greene RSK insertion.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.monk_insert"></a>
+
+#### monk\_insert
+
+```python
+def monk_insert(row)
+```
+
+Insert a new crossing at ``row`` via the (equivariant) Monk rule, cascading corrections
+upward through earlier rows as needed to stay valid.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.huang_bump"></a>
+
+#### huang\_bump
+
+```python
+def huang_bump(a, b)
+```
+
+Toggle off the inversion ``(a, b)`` and re-insert it one column to the right, rectifying any
+resulting invalid crossings (a Huang-style bump used in transition-formula bijections).
 
 <a id="schubmult.combinatorics.rc_graph.RCGraph.product"></a>
 
@@ -7402,6 +9098,165 @@ def prod_with_rc(other: RCGraph) -> dict[RCGraph, int]
 
 Deprecated: Use product() instead.
 
+<a id="schubmult.combinatorics.rc_graph.RCGraph.bpd_transpose"></a>
+
+#### bpd\_transpose
+
+```python
+def bpd_transpose() -> RCGraph
+```
+
+Transpose via the `BPD` model: convert to a bumpless pipe dream, transpose that, and convert back.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_potential_coproduct"></a>
+
+#### is\_potential\_coproduct
+
+```python
+def is_potential_coproduct(rc1: RCGraph, rc2: RCGraph) -> bool
+```
+
+Whether ``(rc1, rc2)`` could be the two factors of a coproduct term for ``self``: necessary
+conditions on descents, Bruhat order, and row-length additivity, checked recursively on vertical cuts.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.ring_act"></a>
+
+#### ring\_act
+
+```python
+def ring_act(elem: FreeAlgebraElement) -> dict[RCGraph, Expr]
+```
+
+Act on ``self`` by a `FreeAlgebraElement` (converted to the word basis), applying each word's
+letters right to left via ``act``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.act"></a>
+
+#### act
+
+```python
+def act(p: int) -> set[RCGraph]
+```
+
+Act by the single free-algebra word letter ``p``: all RC graphs obtained by prepending a new
+top row realizing the length-additive product ``uncode([p]) * perm``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.iterative_act"></a>
+
+#### iterative\_act
+
+```python
+def iterative_act(p: int, insert: bool = True) -> set[RCGraph]
+```
+
+Iterative implementation of ``act``, building up the new top row one letter at a time.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.__ge__"></a>
+
+#### \_\_ge\_\_
+
+```python
+def __ge__(other: object) -> bool
+```
+
+``not (self < other)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.__gt__"></a>
+
+#### \_\_gt\_\_
+
+```python
+def __gt__(other: object) -> bool
+```
+
+``not (self <= other)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.inv"></a>
+
+#### inv
+
+```python
+@property
+def inv() -> int
+```
+
+Length of ``perm``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows() -> int
+```
+
+Number of rows.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.width"></a>
+
+#### width
+
+```python
+@property
+def width() -> int
+```
+
+Alias for ``cols``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.height"></a>
+
+#### height
+
+```python
+@property
+def height() -> int
+```
+
+Alias for ``rows``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.compatible_sequence"></a>
+
+#### compatible\_sequence
+
+```python
+@property
+def compatible_sequence() -> tuple[int, ...]
+```
+
+Row index (1-indexed) repeated once per crossing in that row, in reading order (paired with ``perm_word``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols() -> int
+```
+
+Number of columns: ``len(perm) - 1``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.leibniz_rep"></a>
+
+#### leibniz\_rep
+
+```python
+def leibniz_rep() -> tuple
+```
+
+Represent ``self`` as a tuple of permutations via repeated ``shiftcut``, one per row from the bottom.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.classify_demazure_crystal"></a>
+
+#### classify\_demazure\_crystal
+
+```python
+def classify_demazure_crystal() -> tuple[tuple[int], Permutation]
+```
+
+``(highest_weight, sorting_perm)`` classifying ``self``'s Demazure crystal isomorphism class.
+
 <a id="schubmult.combinatorics.rc_graph.RCGraph.demazure_isomorphism_class"></a>
 
 #### demazure\_isomorphism\_class
@@ -7413,9 +9268,239 @@ def demazure_isomorphism_class() -> tuple[tuple[int], Permutation]
 
 Alias for classify_demazure_crystal for explicit API usage.
 
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_hw_rcs"></a>
+
+#### all\_hw\_rcs
+
+```python
+@classmethod
+@cache
+def all_hw_rcs(cls,
+               perm: Permutation,
+               length: int,
+               weight=None) -> set[RCGraph]
+```
+
+All distinct highest-weight elements among the RC graphs for ``perm`` at ``length`` rows.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_forest_rcs"></a>
+
+#### all\_forest\_rcs
+
+```python
+@classmethod
+@cache
+def all_forest_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]
+```
+
+All RC graphs whose `forest_weight` equals the composition ``comp`` (over every permutation
+appearing in the forest-dual expansion of ``comp``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_key_rcs"></a>
+
+#### all\_key\_rcs
+
+```python
+@classmethod
+@cache
+def all_key_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]
+```
+
+All RC graphs whose `extremal_weight` equals the composition ``comp`` (over every permutation
+appearing in the key-dual expansion of ``comp``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.all_lw_rcs"></a>
+
+#### all\_lw\_rcs
+
+```python
+@classmethod
+@cache
+def all_lw_rcs(cls,
+               perm: Permutation,
+               length: int,
+               weight=None) -> set[RCGraph]
+```
+
+All distinct lowest-weight elements among the RC graphs for ``perm`` at ``length`` rows.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.shiftcut"></a>
+
+#### shiftcut
+
+```python
+def shiftcut() -> RCGraph
+```
+
+Drop the bottom row and shift every remaining row down by one, discarding entries that would
+become non-positive (companion step of ``leibniz_rep``).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.divdiff_desc"></a>
+
+#### divdiff\_desc
+
+```python
+def divdiff_desc(desc: int) -> set[RCGraph]
+```
+
+All RC graphs reachable from exchanging then lowering at descent ``desc`` (a single divided-difference step).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.divdiff_perm"></a>
+
+#### divdiff\_perm
+
+```python
+def divdiff_perm(u: Permutation) -> set[RCGraph]
+```
+
+Apply the divided-difference operator for each simple reflection in a reduced word of ``u``
+(from the top descent down), via repeated ``divdiff_desc``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.last_descent_strip"></a>
+
+#### last\_descent\_strip
+
+```python
+def last_descent_strip() -> tuple[int, ...]
+```
+
+Peel off crossings at (or past) the last descent via ``exchange_property``; returns ``(rc, strip)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.is_forest_rc"></a>
+
+#### is\_forest\_rc
+
+```python
+@property
+def is_forest_rc() -> bool
+```
+
+Whether ``forest_weight`` matches ``length_vector`` (i.e. ``self`` already realizes its own forest weight).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.pull_out_row"></a>
+
+#### pull\_out\_row
+
+```python
+def pull_out_row(row: int, keep_size=False) -> tuple[tuple, RCGraph]
+```
+
+Remove all crossings of ``row`` (assumed a descent/empty row), reflowing the rows above via
+`pieri_insert`/`_pieri_rectify` to preserve validity.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.little_bump_zero"></a>
+
+#### little\_bump\_zero
+
+```python
+def little_bump_zero()
+```
+
+Bump the empty last-descent row by one, normalizing and recursing until the descent is fully cleared.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.dualpieri"></a>
+
+#### dualpieri
+
+```python
+def dualpieri(mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]
+```
+
+Dual Pieri expansion (RC graph analogue of `schubmult.mult.positivity.dualpieri`): peels one
+column of variables at a time via `divdiff_perm`/`pull_out_row`.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.divdiff_act_dict"></a>
+
+#### divdiff\_act\_dict
+
+```python
+@staticmethod
+def divdiff_act_dict(dct, *s_list) -> dict[RCGraph, Expr]
+```
+
+Apply `divdiff_desc` for each simple reflection index in ``s_list`` (right to left) to every
+RC graph key of ``dct``, accumulating coefficients.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.__getitem__"></a>
+
+#### \_\_getitem\_\_
+
+```python
+def __getitem__(key: int | tuple[int, int]) -> tuple[int, ...] | int
+```
+
+``self[i]`` -> row ``i``; ``self[i, j]`` -> the crossing label at 0-indexed ``(i, j)`` or ``None``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.__lt__"></a>
+
+#### \_\_lt\_\_
+
+```python
+def __lt__(other: object) -> bool
+```
+
+Compare first by ``perm.trimcode``, then lexicographically by inversion labels.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.__le__"></a>
+
+#### \_\_le\_\_
+
+```python
+def __le__(other: object) -> bool
+```
+
+``self < other or self == other``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.weight_bump"></a>
+
+#### weight\_bump
+
+```python
+def weight_bump() -> RCGraph
+```
+
+Extend by one row and shift up by one (a crystal-structure-preserving perturbation, used by
+`CrystalGraph.weight_reflection`'s fallback).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.inverse_crystal_product"></a>
+
+#### inverse\_crystal\_product
+
+```python
+def inverse_crystal_product(other) -> RCGraph
+```
+
+Product with ``other`` in `RCGraphRing`, projecting each term to its crystal highest weight.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.monk_rc"></a>
+
+#### monk\_rc
+
+```python
+@classmethod
+def monk_rc(cls, row, descent)
+```
+
+The elementary-symmetric RC graph of degree 1 marking ``row`` among ``descent`` rows (used by
+the double Monk-rule squash helpers).
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.forest_poly_value"></a>
+
+#### forest\_poly\_value
+
+```python
+def forest_poly_value(x: Sequence[Expr],
+                      y: Sequence[Expr] | None = None) -> Expr
+```
+
+Double polynomial value using the forest/vine-model column convention (``y`` indexed by inversion column).
+
 <a id="schubmult.combinatorics.increasing_tableau"></a>
 
 # schubmult.combinatorics.increasing\_tableau
+
+`IncreasingTableau`: K-theoretic increasing tableaux (a `Plactic` variant where insertion may
+bump without adding a box), plus grid-shape helper utilities.
 
 <a id="schubmult.combinatorics.increasing_tableau.IncreasingTableau"></a>
 
@@ -7601,6 +9686,10 @@ Plactic product: insert entries of `other` in row-reading order
 
 # schubmult.combinatorics.set\_word
 
+Set-valued crystal words: `SetLetter` (a subset-of-``{1..n}`` letter with a
+GL_n-type crystal structure) and `SetWord` (a tensor of such letters), with
+conversions to/from `WCGraph`.
+
 <a id="schubmult.combinatorics.set_word.SetLetter"></a>
 
 ## SetLetter Objects
@@ -7610,6 +9699,47 @@ class SetLetter(CrystalGraph, frozenset)
 ```
 
 A set of ints with a sqrt(gl_n) crystal structure.
+
+<a id="schubmult.combinatorics.set_word.SetLetter.crystal_length"></a>
+
+#### crystal\_length
+
+```python
+def crystal_length()
+```
+
+The ambient rank ``n`` (number of crystal indices).
+
+<a id="schubmult.combinatorics.set_word.SetLetter.crystal_weight"></a>
+
+#### crystal\_weight
+
+```python
+@property
+def crystal_weight()
+```
+
+Weight vector: multiplicity of each value ``1..n`` in the set.
+
+<a id="schubmult.combinatorics.set_word.SetLetter.raising_operator"></a>
+
+#### raising\_operator
+
+```python
+def raising_operator(i)
+```
+
+``e_i``: move an element from ``i+1`` to ``i`` if that increases the weight at ``i``, else ``None``.
+
+<a id="schubmult.combinatorics.set_word.SetLetter.lowering_operator"></a>
+
+#### lowering\_operator
+
+```python
+def lowering_operator(i)
+```
+
+``f_i``: the inverse move to ``raising_operator``, or ``None`` if undefined.
 
 <a id="schubmult.combinatorics.set_word.SetWord"></a>
 
@@ -7621,9 +9751,34 @@ class SetWord(CrystalGraphTensor)
 
 A tuple of SetLetters with a sqrt(gl_n) crystal structure.
 
+<a id="schubmult.combinatorics.set_word.SetWord.to_wc_graph"></a>
+
+#### to\_wc\_graph
+
+```python
+def to_wc_graph(rows)
+```
+
+Convert to a `WCGraph` with the given number of rows: column ``j`` gets a reflection
+at each row in ``self.factors[j-1]``.
+
+<a id="schubmult.combinatorics.set_word.SetWord.from_wc_graph"></a>
+
+#### from\_wc\_graph
+
+```python
+@classmethod
+def from_wc_graph(cls, wc)
+```
+
+Inverse of ``to_wc_graph``: build a `SetWord` from a `WCGraph`, one `SetLetter` per column.
+
 <a id="schubmult.combinatorics.inversions_tableau"></a>
 
 # schubmult.combinatorics.inversions\_tableau
+
+Inversions tableaux: a root -> label-set assignment on the positive roots ``(i, j)``
+(``i < j``) of a permutation, generalizing RC/WC graphs to a set-valued labeling.
 
 <a id="schubmult.combinatorics.inversions_tableau.InversionsTableau"></a>
 
@@ -7632,6 +9787,20 @@ A tuple of SetLetters with a sqrt(gl_n) crystal structure.
 ```python
 class InversionsTableau()
 ```
+
+A dict-like assignment of label sets to roots ``(i, j)`` of a permutation, satisfying the
+three axioms checked by `is_valid`. Build via the constructor (dict of root -> int-or-set),
+`from_rc_graph`, or `from_wc_graph`; convert back via `to_rc_graph`/`to_wc_graph`.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(_dict, *_, **__)
+```
+
+Build from a mapping ``{(i, j): label_or_label_set}`` (roots to integer or set/frozenset labels).
 
 <a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.iter_keys"></a>
 
@@ -7652,6 +9821,55 @@ def iter_items(reverse=False)
 ```
 
 Iterates in word order
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.from_rc_graph"></a>
+
+#### from\_rc\_graph
+
+```python
+@classmethod
+def from_rc_graph(cls, rc)
+```
+
+Build from an `RCGraph`: each left-to-right inversion root gets the row it's crossed at as its label.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.from_wc_graph"></a>
+
+#### from\_wc\_graph
+
+```python
+@classmethod
+def from_wc_graph(cls, wc)
+```
+
+Build from a `WCGraph`: replays its perm word/compatible sequence, tracking transported
+roots and accumulating labels at each simple-root position.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.perm_word"></a>
+
+#### perm\_word
+
+```python
+@cached_property
+def perm_word()
+```
+
+A (not necessarily reduced) word recovering the tableau's permutation, built by repeatedly
+peeling the largest label off a simple root and transporting the remaining roots.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.is_valid"></a>
+
+#### is\_valid
+
+```python
+@property
+def is_valid()
+```
+
+Whether the root/label assignment satisfies the three defining axioms:
+(1) simple-root labels are bounded by the smaller index, (2) roots sharing a second
+index have disjoint label sets, and (3) the label sets of ``(i,j)``, ``(j,k)``, ``(i,k)``
+interleave consistently whenever all three roots are present.
 
 <a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.set_leq"></a>
 
@@ -7692,9 +9910,116 @@ filters by validity and target permutation.
 
 The optional ``max_value`` bounds all labels by ``{1, ..., max_value}``.
 
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.perm"></a>
+
+#### perm
+
+```python
+@cached_property
+def perm()
+```
+
+The permutation recovered from `perm_word` via the 0-Hecke (Demazure) product.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.compatible_sequence"></a>
+
+#### compatible\_sequence
+
+```python
+@cached_property
+def compatible_sequence()
+```
+
+The compatible sequence paired with `perm_word`: labels in weakly increasing order,
+each repeated by the size of its label set.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.is_reduced"></a>
+
+#### is\_reduced
+
+```python
+@cached_property
+def is_reduced()
+```
+
+Whether ``perm_word`` is a reduced word for ``perm``.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.reduced_word"></a>
+
+#### reduced\_word
+
+```python
+@cached_property
+def reduced_word()
+```
+
+A reduced word for ``perm``, obtained from ``perm_word`` by dropping non-ascending steps
+and folding their compatible-sequence entries into the surviving root's label set.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.is_set_valued"></a>
+
+#### is\_set\_valued
+
+```python
+@property
+def is_set_valued()
+```
+
+Whether any root has more than a single label (a genuinely set-valued tableau).
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.to_rc_graph"></a>
+
+#### to\_rc\_graph
+
+```python
+def to_rc_graph(length=None)
+```
+
+Convert a reduced (non-set-valued) tableau to an `RCGraph` via ``RCGraph.from_reduced_compatible``.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.to_wc_graph"></a>
+
+#### to\_wc\_graph
+
+```python
+def to_wc_graph(length=None)
+```
+
+Convert to a `WCGraph` built directly from the root/label-set dictionary.
+
+<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.polyvalue"></a>
+
+#### polyvalue
+
+```python
+def polyvalue(x, y=None, *, beta=None, prop_beta=False)
+```
+
+Monomial contribution of this tableau to the (beta-deformed) Grothendieck polynomial:
+``prod_v x[v] ** |labels at v|``, times a power of ``beta`` accounting for non-reduced excess.
+
 <a id="schubmult.combinatorics.indexed_forests"></a>
 
 # schubmult.combinatorics.indexed\_forests
+
+Indexed forests: binary-search-tree forests indexed by a composition (via the Thompson
+monoid factorization), used for the forest basis / forest Schubert-polynomial model
+(``schubmult._scripts.forest_*`` research scripts and `schubmult.rings.free_algebra.forest_basis`).
+
+Includes `Node`/`IndexedForest` (the forests themselves), `ParallelInjLetter`/`letterpair`
+(parallel-injection alphabet used by omega-insertion), and `LabeledForest`/`DecLabeling`/`LBS`
+(labelings of a forest's nodes).
+
+<a id="schubmult.combinatorics.indexed_forests.Node"></a>
+
+## Node Objects
+
+```python
+class Node()
+```
+
+A node of an indexed forest's binary search tree: an ``index`` (BST key), optional
+``label``, and ``left``/``right`` children.
 
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest"></a>
 
@@ -7703,6 +10028,9 @@ The optional ``max_value`` bounds all labels by ``{1, ..., max_value}``.
 ```python
 class IndexedForest()
 ```
+
+A forest of `Node` binary search trees, indexed by a composition (``code``) via the
+Thompson monoid factorization (see `forest_from_code`/`double_forest.forest_from_code`).
 
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest.terminal_nodes"></a>
 
@@ -7816,6 +10144,17 @@ Returns
 tuple
     `(fig, ax)` for the rendered drawing.
 
+<a id="schubmult.combinatorics.indexed_forests.ParallelInjLetter"></a>
+
+## ParallelInjLetter Objects
+
+```python
+@dataclass(frozen=True, order=True)
+class ParallelInjLetter()
+```
+
+A letter ``primary[secondary]`` in the parallel-injection alphabet used by omega-insertion.
+
 <a id="schubmult.combinatorics.indexed_forests.weak_composition_to_indfor"></a>
 
 #### weak\_composition\_to\_indfor
@@ -7900,6 +10239,37 @@ def build_balanced_tree(labels)
 Helper to build a tree where the in-order traversal matches the labels.
 This creates the 'canonical labeling' referenced in the paper.
 
+<a id="schubmult.combinatorics.indexed_forests.letterpair"></a>
+
+## letterpair Objects
+
+```python
+class letterpair()
+```
+
+A letter ``primary[secondary]`` (plain-object counterpart of `ParallelInjLetter`, used
+where a frozen dataclass isn't convenient).
+
+<a id="schubmult.combinatorics.indexed_forests.LabeledForest"></a>
+
+## LabeledForest Objects
+
+```python
+class LabeledForest()
+```
+
+An `IndexedForest` together with a labeling of its nodes (``self(index)`` looks up a label).
+
+<a id="schubmult.combinatorics.indexed_forests.DecLabeling"></a>
+
+## DecLabeling Objects
+
+```python
+class DecLabeling(LabeledForest)
+```
+
+A `LabeledForest` whose labels strictly decrease from each node to its children (checked by ``is_valid``).
+
 <a id="schubmult.combinatorics.indexed_forests.LBS"></a>
 
 ## LBS Objects
@@ -7907,6 +10277,8 @@ This creates the 'canonical labeling' referenced in the paper.
 ```python
 class LBS(LabeledForest)
 ```
+
+A `LabeledForest` variant used for the LBS (labeled binary search tree) construction.
 
 <a id="schubmult.combinatorics.indexed_forests.LBS.rootlist"></a>
 
@@ -8447,6 +10819,14 @@ first rebuild ``N = nabla_r D = Psi(rest)``, then apply
 
 # schubmult.combinatorics.crystal\_graph
 
+Abstract Kashiwara/Demazure crystal graph interface, plus the dual, reversed, and
+tensor-product crystal constructions built generically on top of it.
+
+Subclasses (`RCGraph`, `Plactic`, `SetLetter`, ...) implement `raising_operator`,
+`lowering_operator`, `crystal_weight`, and `crystal_length`; everything else here
+(``epsilon``/``phi``, highest/lowest weight, full crystal enumeration, tensor
+products) is generic in terms of those four.
+
 <a id="schubmult.combinatorics.crystal_graph.CrystalGraph"></a>
 
 ## CrystalGraph Objects
@@ -8454,6 +10834,13 @@ first rebuild ``N = nabla_r D = Psi(rest)``, then apply
 ```python
 class CrystalGraph(Printable)
 ```
+
+Abstract base for Kashiwara/Demazure crystal elements.
+
+Concrete subclasses must implement `raising_operator`, `lowering_operator`,
+`crystal_weight`, and `crystal_length`; operators return ``None`` when undefined
+(not an error). Everything else (``epsilon``/``phi``, highest/lowest weight,
+full crystal enumeration) is derived generically from those four.
 
 <a id="schubmult.combinatorics.crystal_graph.CrystalGraph.raising_operator"></a>
 
@@ -8486,6 +10873,26 @@ def crystal_weight()
 
 The weight of the crystal graph element.
 
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.phi"></a>
+
+#### phi
+
+```python
+def phi(i)
+```
+
+``phi_i``: the number of times ``lowering_operator(i)`` can be applied before hitting ``None``.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.epsilon"></a>
+
+#### epsilon
+
+```python
+def epsilon(i)
+```
+
+``epsilon_i``: the number of times ``raising_operator(i)`` can be applied before hitting ``None``.
+
 <a id="schubmult.combinatorics.crystal_graph.CrystalGraph.to_lowest_weight"></a>
 
 #### to\_lowest\_weight
@@ -8515,6 +10922,317 @@ def crystal_length()
 ```
 
 Return the length of the crystal element.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.square"></a>
+
+#### square
+
+```python
+@property
+def square()
+```
+
+Wrap ``self`` so each raising/lowering operator call applies the underlying operator twice
+(the "squared" crystal used to detect index-2 symmetrized structures).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.reverse_raise_seq"></a>
+
+#### reverse\_raise\_seq
+
+```python
+def reverse_raise_seq(raise_seq)
+```
+
+Apply ``lowering_operator`` along ``raise_seq`` in reverse: undo a recorded raising sequence
+(e.g. from ``to_highest_weight``) to recover the original element.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.reverse_lower_seq"></a>
+
+#### reverse\_lower\_seq
+
+```python
+def reverse_lower_seq(lower_seq)
+```
+
+Apply ``raising_operator`` along ``lower_seq`` in reverse: undo a recorded lowering sequence
+(e.g. from ``to_lowest_weight``) to recover the original element.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.crystal_reflection"></a>
+
+#### crystal\_reflection
+
+```python
+def crystal_reflection(index)
+```
+
+The ``sl_2``-string reflection at ``index``: raise or lower ``|epsilon_i - phi_i|`` times to
+the opposite end of the ``i``-string through ``self``.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.full_crystal"></a>
+
+#### full\_crystal
+
+```python
+@property
+def full_crystal()
+```
+
+All elements reachable from ``self``'s highest-weight element by lowering operators.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.full_crystal_bothways"></a>
+
+#### full\_crystal\_bothways
+
+```python
+def full_crystal_bothways(condition=None)
+```
+
+All elements reachable from ``self`` by raising or lowering operators in either direction,
+optionally restricted to elements satisfying ``condition``.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.full_squared_crystal"></a>
+
+#### full\_squared\_crystal
+
+```python
+@property
+def full_squared_crystal()
+```
+
+All elements reachable from ``self`` via *pairs* of raising/lowering steps (index-2 substructure).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.crystal_beneath"></a>
+
+#### crystal\_beneath
+
+```python
+@property
+def crystal_beneath()
+```
+
+All elements reachable from ``self`` by repeated lowering operators.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.crystal_above"></a>
+
+#### crystal\_above
+
+```python
+def crystal_above(length=None)
+```
+
+All elements reachable from ``self`` by repeated raising operators (indices ``1..length-1``).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.truncated_crystal"></a>
+
+#### truncated\_crystal
+
+```python
+def truncated_crystal(length, start=1)
+```
+
+All elements reachable from ``self``'s highest-weight element (computed at ``length``) by
+lowering operators restricted to indices ``start..length-1``.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.params"></a>
+
+#### params
+
+```python
+@property
+def params()
+```
+
+For each index ``i``, the number of times ``raising_operator(i)`` can be applied
+(the ``i``-string parameters of ``self``, a poor man's weight-in-a-box coordinate).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.weight_bump"></a>
+
+#### weight\_bump
+
+```python
+def weight_bump()
+```
+
+Hook for subclasses: an element with the same crystal structure but perturbed so that
+``crystal_reflection`` is guaranteed to succeed (used as a fallback by ``weight_reflection``).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.weight_reflection"></a>
+
+#### weight\_reflection
+
+```python
+def weight_reflection(index)
+```
+
+Like ``crystal_reflection``, but falls back to ``weight_bump`` first if the direct reflection fails.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.is_highest_weight"></a>
+
+#### is\_highest\_weight
+
+```python
+@property
+def is_highest_weight()
+```
+
+Whether no raising operator is defined on ``self`` (it is highest weight in its component).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.is_lowest_weight"></a>
+
+#### is\_lowest\_weight
+
+```python
+@property
+def is_lowest_weight()
+```
+
+Whether no lowering operator is defined on ``self`` (it is lowest weight in its component).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.dual"></a>
+
+#### dual
+
+```python
+@property
+def dual()
+```
+
+Wrap ``self`` in `CrystalGraphDual` (raising/lowering operators swapped, weight negated).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraph.reverse"></a>
+
+#### reverse
+
+```python
+@property
+def reverse()
+```
+
+Wrap ``self`` in `CrystalGraphReverse` (indices reversed, ``i <-> length + 1 - i``).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphDual"></a>
+
+## CrystalGraphDual Objects
+
+```python
+class CrystalGraphDual(CrystalGraph)
+```
+
+Dual crystal: raising and lowering operators are swapped and the weight is negated.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphReverse"></a>
+
+## CrystalGraphReverse Objects
+
+```python
+class CrystalGraphReverse(CrystalGraph)
+```
+
+Crystal with indices reversed: index ``i`` acts as index ``n + 1 - i`` on the base crystal.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor"></a>
+
+## CrystalGraphTensor Objects
+
+```python
+class CrystalGraphTensor(CrystalGraph)
+```
+
+Tensor product of crystal elements (`factors`), with the standard (signature-rule) tensor
+product crystal structure -- raising/lowering act on the leftmost/rightmost eligible factor
+according to the left-folded ``(epsilon, phi)`` values (``_left_folded_ep_phi``).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.crystal_weight"></a>
+
+#### crystal\_weight
+
+```python
+@property
+def crystal_weight()
+```
+
+Sum of the factors' weights (zero-padded to the longest).
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.weight_bump"></a>
+
+#### weight\_bump
+
+```python
+def weight_bump()
+```
+
+Apply ``weight_bump`` to every factor.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.all_highest_weights"></a>
+
+#### all\_highest\_weights
+
+```python
+def all_highest_weights()
+```
+
+All highest-weight tensors reachable by taking the highest weight of independently chosen
+elements from each factor's full crystal.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(*factors)
+```
+
+Build the tensor product of the given crystal elements, left to right.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.crystal_length"></a>
+
+#### crystal\_length
+
+```python
+def crystal_length()
+```
+
+The maximum ``crystal_length`` over all factors.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.lowering_operator"></a>
+
+#### lowering\_operator
+
+```python
+def lowering_operator(index)
+```
+
+Apply ``lowering_operator(index)`` to the rightmost factor for which the tensor signature rule allows it.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.raising_operator"></a>
+
+#### raising\_operator
+
+```python
+def raising_operator(index)
+```
+
+Apply ``raising_operator(index)`` to the rightmost factor for which the tensor signature rule allows it.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.epsilon"></a>
+
+#### epsilon
+
+```python
+def epsilon(i)
+```
+
+``epsilon_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table.
+
+<a id="schubmult.combinatorics.crystal_graph.CrystalGraphTensor.phi"></a>
+
+#### phi
+
+```python
+def phi(i)
+```
+
+``phi_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table.
 
 <a id="schubmult.combinatorics.bpd"></a>
 
@@ -8579,6 +11297,16 @@ def as_tile() -> Tile
 ```
 
 Convert TileType to a Tile object with edge information.
+
+<a id="schubmult.combinatorics.bpd.TileType.__str__"></a>
+
+#### \_\_str\_\_
+
+```python
+def __str__() -> str
+```
+
+Single-character display glyph for the tile.
 
 <a id="schubmult.combinatorics.bpd.TileType.is_crossing"></a>
 
@@ -8691,6 +11419,66 @@ Initialize a BPD from a grid.
 
 - `grid` - n×n array-like of TileType values, integers 0-5, or list of lists
 
+<a id="schubmult.combinatorics.bpd.BPD.as_planar_history"></a>
+
+#### as\_planar\_history
+
+```python
+def as_planar_history() -> PlanarHistory
+```
+
+Convert to a `PlanarHistory` grid of `Tile` objects (via `TileType.as_tile`).
+
+<a id="schubmult.combinatorics.bpd.BPD.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows() -> int
+```
+
+Number of rows.
+
+<a id="schubmult.combinatorics.bpd.BPD.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols() -> int
+```
+
+Number of columns.
+
+<a id="schubmult.combinatorics.bpd.BPD.clear_unreduced_cache"></a>
+
+#### clear\_unreduced\_cache
+
+```python
+@classmethod
+def clear_unreduced_cache(cls) -> None
+```
+
+Clear the memoization caches used by `all_unreduced_bpds`.
+
+<a id="schubmult.combinatorics.bpd.BPD.all_bpds"></a>
+
+#### all\_bpds
+
+```python
+@classmethod
+def all_bpds(cls,
+             w: Permutation,
+             length: int | None = None,
+             weight: tuple[int] | None = None) -> set[BPD]
+```
+
+All (reduced) BPDs for ``w`` with ``length`` rows, optionally restricted to a given ``weight``.
+
+Built recursively from Bruhat paths (`pull_out_var` chains) via the nested ``bruhat_bpd`` helper;
+results are cached by ``(w, length)``/``(w, weight)``.
+
 <a id="schubmult.combinatorics.bpd.BPD.all_unreduced_bpds"></a>
 
 #### all\_unreduced\_bpds
@@ -8708,6 +11496,47 @@ Enumerate all (possibly unreduced) BPDs for w.
 Defers to :meth:`WCGraph.all_wc_graphs`, converts each WCGraph to its
 marked bumpless pipe dream, forgets the marks, and reduces to an
 ordinary BPD. This is dramatically faster than enumerating ASMs.
+
+<a id="schubmult.combinatorics.bpd.BPD.delete_top_row"></a>
+
+#### delete\_top\_row
+
+```python
+def delete_top_row()
+```
+
+Remove the top row, first popping it off with `pop_op` until it's exhausted.
+
+<a id="schubmult.combinatorics.bpd.BPD.delete_row"></a>
+
+#### delete\_row
+
+```python
+def delete_row(row: int) -> BPD
+```
+
+Remove ``row`` by tracing its pipe out to the boundary and dropping the corresponding grid row/column.
+
+<a id="schubmult.combinatorics.bpd.BPD.prepend_row"></a>
+
+#### prepend\_row
+
+```python
+def prepend_row(value_of_row: int) -> BPD
+```
+
+Insert a new top row realizing the given permutation value, growing the permutation by one.
+
+<a id="schubmult.combinatorics.bpd.BPD.append"></a>
+
+#### append
+
+```python
+def append(other: BPD) -> BPD
+```
+
+Stack ``other`` below ``self`` (analogous to `RCGraph.product` but on BPD grids), tracing
+pipes across the boundary to resolve the joining tiles.
 
 <a id="schubmult.combinatorics.bpd.BPD.from_bruhat_path"></a>
 
@@ -8753,6 +11582,16 @@ k-chain from u to w and constructs a row of n tiles based on that chain.
   - If c not among first k numbers of w: BLANK (□)
   - If chain swaps values a,b with a < c < b: BUMP (╬)
   - Otherwise: CROSS (■)
+
+<a id="schubmult.combinatorics.bpd.BPD.to_bruhat_path"></a>
+
+#### to\_bruhat\_path
+
+```python
+def to_bruhat_path()
+```
+
+Recover the Bruhat path (one permutation per row cut) that produces this BPD via `from_bruhat_path`.
 
 <a id="schubmult.combinatorics.bpd.BPD.build"></a>
 
@@ -8811,6 +11650,29 @@ Pipes enter from the bottom (vertical) and left (horizontal).
 **Returns**:
 
   Permutation object
+
+<a id="schubmult.combinatorics.bpd.BPD.co_bpd"></a>
+
+#### co\_bpd
+
+```python
+def co_bpd()
+```
+
+The complementary BPD: swap HORIZ<->CROSS and VERT<->BLANK, reading rows bottom to top.
+
+<a id="schubmult.combinatorics.bpd.BPD.groth_to_schub"></a>
+
+#### groth\_to\_schub
+
+```python
+@classmethod
+@cache
+def groth_to_schub(cls, groth_perm: Permutation, beta)
+```
+
+Expand the Grothendieck class of ``groth_perm`` in the (beta-deformed) Schubert basis, by
+taking the co-BPD of every unreduced BPD and keeping the reduced results.
 
 <a id="schubmult.combinatorics.bpd.BPD.permutation"></a>
 
@@ -8911,6 +11773,28 @@ Create a BPD from an ASM (Alternating Sign Matrix).
 **Returns**:
 
   BPD object
+
+<a id="schubmult.combinatorics.bpd.BPD.to_asm"></a>
+
+#### to\_asm
+
+```python
+def to_asm()
+```
+
+Convert to its alternating sign matrix (``+1``/``-1`` at SE/NW elbows, ``0`` elsewhere).
+
+<a id="schubmult.combinatorics.bpd.BPD.rothe_bpd"></a>
+
+#### rothe\_bpd
+
+```python
+@classmethod
+@cache
+def rothe_bpd(cls, perm: Permutation, num_rows: int | None = None) -> BPD
+```
+
+The canonical Rothe BPD for ``perm`` (crossings exactly at the Rothe diagram cells).
 
 <a id="schubmult.combinatorics.bpd.BPD.weight"></a>
 
@@ -9057,6 +11941,130 @@ The inversion is determined by tracing the pipes through the BPD.
 
   The inversion value as an integer
 
+<a id="schubmult.combinatorics.bpd.BPD.trace_pipe"></a>
+
+#### trace\_pipe
+
+```python
+def trace_pipe(i: int, j: int, direction: str | None = None) -> int | None
+```
+
+Follow the pipe through cell ``(i, j)`` (entering from ``direction``) out to a grid boundary,
+returning the column permutation value it exits at.
+
+<a id="schubmult.combinatorics.bpd.BPD.all_se_elbows"></a>
+
+#### all\_se\_elbows
+
+```python
+def all_se_elbows() -> set[tuple[int, int]]
+```
+
+All ``(row, col)`` positions holding an SE-elbow tile.
+
+<a id="schubmult.combinatorics.bpd.BPD.all_nw_elbows"></a>
+
+#### all\_nw\_elbows
+
+```python
+def all_nw_elbows() -> set[tuple[int, int]]
+```
+
+All ``(row, col)`` positions holding an NW-elbow tile.
+
+<a id="schubmult.combinatorics.bpd.BPD.all_blanks"></a>
+
+#### all\_blanks
+
+```python
+def all_blanks() -> set[tuple[int, int]]
+```
+
+All ``(row, col)`` positions holding a blank tile.
+
+<a id="schubmult.combinatorics.bpd.BPD.all_crossings"></a>
+
+#### all\_crossings
+
+```python
+def all_crossings() -> set[tuple[int, int]]
+```
+
+All ``(row, col)`` positions holding a crossing tile.
+
+<a id="schubmult.combinatorics.bpd.BPD.all_tiles_of_type"></a>
+
+#### all\_tiles\_of\_type
+
+```python
+def all_tiles_of_type(tile_type: TileType) -> set[tuple[int, int]]
+```
+
+All ``(row, col)`` positions matching ``tile_type`` (or any type in an iterable of types).
+
+<a id="schubmult.combinatorics.bpd.BPD.droop_moves"></a>
+
+#### droop\_moves
+
+```python
+def droop_moves() -> set[tuple[tuple[int, int], tuple[int, int]]]
+```
+
+All valid droop moves ``((elbow_pos), (blank_pos))``: legal (SE-elbow, blank) pairs with no
+blocking elbow/bump strictly between them.
+
+<a id="schubmult.combinatorics.bpd.BPD.min_droop_moves"></a>
+
+#### min\_droop\_moves
+
+```python
+def min_droop_moves() -> set[tuple[tuple[int, int], tuple[int, int]]]
+```
+
+The minimal (nearest-blank) droop move available from each SE-elbow/bump, if any.
+
+<a id="schubmult.combinatorics.bpd.BPD.do_min_droop_move"></a>
+
+#### do\_min\_droop\_move
+
+```python
+def do_min_droop_move(move: tuple[tuple[int, int], tuple[int, int]]) -> BPD
+```
+
+Apply a minimal droop move (from `min_droop_moves`), which may leave a bump tile at the corners.
+
+<a id="schubmult.combinatorics.bpd.BPD.do_droop_move"></a>
+
+#### do\_droop\_move
+
+```python
+def do_droop_move(move: tuple[tuple[int, int], tuple[int, int]]) -> BPD
+```
+
+Apply a droop move (from `droop_moves`): slide the SE-elbow down-right into the blank corner.
+
+<a id="schubmult.combinatorics.bpd.BPD.huang_bump"></a>
+
+#### huang\_bump
+
+```python
+def huang_bump(a, b)
+```
+
+Mark the crossing at inversion ``(a, b)`` as a bump and propagate via `_monk_iterate` (BPD
+analogue of `RCGraph.huang_bump`).
+
+<a id="schubmult.combinatorics.bpd.BPD.random_bpd"></a>
+
+#### random\_bpd
+
+```python
+@classmethod
+def random_bpd(cls, perm, num_rows)
+```
+
+A uniformly random BPD for ``perm`` with ``num_rows`` rows.
+
 <a id="schubmult.combinatorics.bpd.BPD.monk_insert"></a>
 
 #### monk\_insert
@@ -9066,6 +12074,69 @@ def monk_insert(row)
 ```
 
 RETURNS NORMALIZED
+
+<a id="schubmult.combinatorics.bpd.BPD.normalize"></a>
+
+#### normalize
+
+```python
+def normalize() -> BPD
+```
+
+Not yet implemented; intended to trim/pad to the canonical ``len(perm)`` x ``len(perm)`` size.
+
+<a id="schubmult.combinatorics.bpd.BPD.pop_op"></a>
+
+#### pop\_op
+
+```python
+def pop_op() -> tuple[BPD, tuple[int, int]]
+```
+
+Remove one inversion by the Bergeron-Billey "pop" operation (droop the first blank tile
+down-right through the grid); returns ``(new_bpd, (col, row))`` of the popped position.
+
+<a id="schubmult.combinatorics.bpd.BPD.column_perm_at_row"></a>
+
+#### column\_perm\_at\_row
+
+```python
+def column_perm_at_row(row: int) -> Permutation
+```
+
+Permutation obtained by tracing every pipe entering ``row`` from below out to the bottom boundary.
+
+<a id="schubmult.combinatorics.bpd.BPD.resize"></a>
+
+#### resize
+
+```python
+def resize(new_num_rows: int, new_num_cols: int | None = None) -> BPD
+```
+
+Grow or shrink to ``new_num_rows`` rows, filling new rows from the Rothe BPD of ``perm``.
+
+<a id="schubmult.combinatorics.bpd.BPD.transpose"></a>
+
+#### transpose
+
+```python
+def transpose() -> BPD
+```
+
+BPD for ``~perm``: transpose the grid and swap HORIZ/VERT tiles.
+
+<a id="schubmult.combinatorics.bpd.BPD.from_rc_graph"></a>
+
+#### from\_rc\_graph
+
+```python
+@classmethod
+def from_rc_graph(cls, rc_graph) -> BPD
+```
+
+Build the BPD corresponding to an `RCGraph`, via a sequence of `inverse_pop_op` calls
+(one per inversion, in reverse reading order).
 
 <a id="schubmult.combinatorics.bpd.BPD.combine"></a>
 
@@ -9097,6 +12168,38 @@ def prod_with_bpd(other: BPD) -> BPD
 
 Deprecated: Use product() instead. Returns the single BPD from product dictionary.
 
+<a id="schubmult.combinatorics.bpd.BPD.inverse_pop_op"></a>
+
+#### inverse\_pop\_op
+
+```python
+def inverse_pop_op(*interlaced_rc) -> BPD
+```
+
+Inverse of `pop_op`: insert an inversion at ``(col, row)`` pairs, working through each in turn.
+
+<a id="schubmult.combinatorics.bpd.BPD.is_reduced"></a>
+
+#### is\_reduced
+
+```python
+@property
+def is_reduced()
+```
+
+Whether ``self`` is valid and its length vector sums to ``perm.inv`` (no extraneous crossings).
+
+<a id="schubmult.combinatorics.bpd.BPD.as_reduced_compatible"></a>
+
+#### as\_reduced\_compatible
+
+```python
+@cache
+def as_reduced_compatible()
+```
+
+``((col, row), ...)`` pairs recovered by repeatedly applying `pop_op` down to the identity (reversed).
+
 <a id="schubmult.combinatorics.bpd.BPD.rebuild"></a>
 
 #### rebuild
@@ -9106,6 +12209,47 @@ def rebuild() -> None
 ```
 
 Rebuild the BPD to resolve any TBD tiles
+
+<a id="schubmult.combinatorics.bpd.BPD.zero_out_last_row"></a>
+
+#### zero\_out\_last\_row
+
+```python
+def zero_out_last_row() -> BPD
+```
+
+Drop the last row (`resize` to one fewer row).
+
+<a id="schubmult.combinatorics.bpd.BPD.set_tile"></a>
+
+#### set\_tile
+
+```python
+def set_tile(i: int, j: int, tile_type: TileType) -> None
+```
+
+Return a copy with the tile at ``(i, j)`` set to ``tile_type``.
+
+<a id="schubmult.combinatorics.bpd.BPD.right_zero_act"></a>
+
+#### right\_zero\_act
+
+```python
+def right_zero_act() -> set[BPD]
+```
+
+All BPDs one row longer that reduce back to ``self`` under `zero_out_last_row`
+(enumerated by trying every subset of new-row crossings and keeping the valid, reduced ones).
+
+<a id="schubmult.combinatorics.bpd.BPD.set_tiles"></a>
+
+#### set\_tiles
+
+```python
+def set_tiles(a, b, value: TileType) -> None
+```
+
+Return a copy with the tile at ``(a, b)`` set to ``value`` (alias-style variant of ``set_tile``).
 
 <a id="schubmult.combinatorics.bpd.BPD.snap_width"></a>
 
@@ -9149,9 +12293,107 @@ Convert this BPD to an RC-graph representation.
 
   RCGraph object (if available in the module)
 
+<a id="schubmult.combinatorics.chute_move_element"></a>
+
+# schubmult.combinatorics.chute\_move\_element
+
+Chute moves on RC graphs: a marked-row wrapper tracking a before/after pair of RC graphs
+related by simultaneous chute moves on a chosen set of non-adjacent rows.
+
+<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement"></a>
+
+## ChuteMoveElement Objects
+
+```python
+class ChuteMoveElement(GridPrint)
+```
+
+An RC graph together with the result of applying chute moves at ``rows``.
+
+``rows`` must be pairwise non-adjacent; for each row, moves the element hanging
+off the row's end down into the first available gap in the row below,
+raising ``ValueError`` if no valid chute move exists. Stores the pair
+``(original, moved)`` RC graphs.
+
+<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.product"></a>
+
+#### product
+
+```python
+def product(other)
+```
+
+Stack ``self`` above ``other`` (via the underlying RC graph product) and combine their marked rows.
+
+<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.chute_degree"></a>
+
+#### chute\_degree
+
+```python
+@property
+def chute_degree()
+```
+
+Number of marked rows (simultaneous chute moves applied).
+
+<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.chute_move_rows"></a>
+
+#### chute\_move\_rows
+
+```python
+@property
+def chute_move_rows()
+```
+
+The set of marked row indices.
+
+<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols()
+```
+
+Number of columns of the underlying RC graph.
+
+<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows()
+```
+
+Number of rows of the underlying RC graph.
+
+<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.print_element"></a>
+
+#### print\_element
+
+```python
+@property
+def print_element()
+```
+
+A `GridPrint`-compatible view highlighting the before/after cells at the marked rows.
+
 <a id="schubmult.combinatorics.permutation"></a>
 
 # schubmult.combinatorics.permutation
+
+The core indexing object used throughout ``schubmult``: finite permutations.
+
+A `Permutation` wraps a 1-indexed array (``self[i]`` is the value at 0-indexed
+position ``i``, extended by the identity ``self[i] = i + 1`` past its window)
+and is immutable/hashable/cached (equal permutations of different window
+lengths, e.g. ``[2, 1]`` and ``[2, 1, 3]``, compare and hash equal).
+Multiplication ``p * q`` is composition of the underlying functions,
+``(p * q)[i] = p[q[i] - 1]``; ``~p`` is the inverse. Most of the combinatorics
+library is built from a `Permutation`'s Lehmer code (``code``/``trimcode``),
+inversions, and Bruhat/weak order.
 
 <a id="schubmult.combinatorics.permutation.Permutation"></a>
 
@@ -9161,7 +12403,215 @@ Convert this BPD to an RC-graph representation.
 class Permutation(Printable)
 ```
 
-Permutation class representing permutations of positive integers.
+A finite permutation, stored as a 1-indexed array and extended by the identity.
+
+Construct from array form, e.g. ``Permutation([2, 1, 3])``, or via
+``uncode(lehmer_code)``. Supports composition (``*``), inversion (``~``),
+Bruhat order (``<=``/``bruhat_leq``), and iteration over the window
+(``list(perm)``, ``perm[i]`` 0-indexed).
+
+<a id="schubmult.combinatorics.permutation.Permutation.apply"></a>
+
+#### apply
+
+```python
+def apply(arr)
+```
+
+Permute the elements of ``arr`` by this permutation: return ``[arr[self[i] - 1] for i in range(len(arr))]``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.is_reducible"></a>
+
+#### is\_reducible
+
+```python
+@property
+def is_reducible()
+```
+
+Whether ``self`` splits as a direct sum of two smaller permutations across some fixed point.
+
+<a id="schubmult.combinatorics.permutation.Permutation.reduce"></a>
+
+#### reduce
+
+```python
+def reduce(start_spot=1, strict=False)
+```
+
+Split ``self`` at a fixed point into ``(perm1, perm2)`` on disjoint blocks of values, or ``None`` if not reducible.
+
+<a id="schubmult.combinatorics.permutation.Permutation.act_root"></a>
+
+#### act\_root
+
+```python
+def act_root(a, b)
+```
+
+Image of the root/pair ``(a, b)`` (1-indexed positions) under ``self``: ``(self[a-1], self[b-1])``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.one_dominates"></a>
+
+#### one\_dominates
+
+```python
+def one_dominates(other)
+```
+
+Whether ``self`` one-step dominates ``other`` (one level of the recursive ``dominates`` test).
+
+<a id="schubmult.combinatorics.permutation.Permutation.dominates"></a>
+
+#### dominates
+
+```python
+def dominates(other)
+```
+
+Whether ``self`` dominates ``other`` in the sense used by the dual Pieri / positivity rules.
+
+<a id="schubmult.combinatorics.permutation.Permutation.antiperm"></a>
+
+#### antiperm
+
+```python
+@property
+def antiperm()
+```
+
+Conjugate of ``self`` by the longest element ``w0``: ``w0 * self * w0``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.weight_coset_decomp"></a>
+
+#### weight\_coset\_decomp
+
+```python
+def weight_coset_decomp(dominant_weight)
+```
+
+Coset decomposition of ``self`` with respect to the stabilizer of ``dominant_weight``; see ``coset_decomp``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.min_of_weight_coset"></a>
+
+#### min\_of\_weight\_coset
+
+```python
+def min_of_weight_coset(dominant_weight)
+```
+
+Minimal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.max_of_weight_coset"></a>
+
+#### max\_of\_weight\_coset
+
+```python
+def max_of_weight_coset(dominant_weight)
+```
+
+Maximal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.does_demazure_crystal_tensor_decompose"></a>
+
+#### does\_demazure\_crystal\_tensor\_decompose
+
+```python
+@staticmethod
+def does_demazure_crystal_tensor_decompose(dominant_weight1, low_perm1,
+                                           dominant_weight2, low_perm2)
+```
+
+Whether the tensor product of the two Demazure crystals (given by their dominant weights and
+lowest-weight sorting permutations) decomposes as their `does_demazure_crystal_tensor_decompose`
+criterion predicts: the minimal coset representative of ``low_perm1`` in weight ``dominant_weight1``
+lies below the longest element of the left descents of the maximal coset representative of
+``low_perm2`` in weight ``dominant_weight2``, in Bruhat order.
+
+<a id="schubmult.combinatorics.permutation.Permutation.coset_decomp"></a>
+
+#### coset\_decomp
+
+```python
+def coset_decomp(*descs)
+```
+
+Decompose ``self = reduced_perm * w_J`` where ``w_J`` lies in the parabolic subgroup generated
+by the simple reflections at 1-indexed positions ``descs`` and ``reduced_perm`` is the minimal-length
+coset representative (no descents in ``descs``).
+
+**Returns**:
+
+- `tuple` - ``(reduced_perm, w_J)``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.min_coset_rep"></a>
+
+#### min\_coset\_rep
+
+```python
+def min_coset_rep(*descs)
+```
+
+Minimal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.max_coset_rep"></a>
+
+#### max\_coset\_rep
+
+```python
+def max_coset_rep(*descs)
+```
+
+Maximal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.longest_element"></a>
+
+#### longest\_element
+
+```python
+@classmethod
+def longest_element(cls, *descs)
+```
+
+Longest element of the parabolic subgroup generated by the simple reflections at 1-indexed positions ``descs``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.w0"></a>
+
+#### w0
+
+```python
+@classmethod
+def w0(cls, n)
+```
+
+The longest element of the symmetric group on ``n`` letters: ``[n, n-1, ..., 1]``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.all_permutations"></a>
+
+#### all\_permutations
+
+```python
+@classmethod
+@cache
+def all_permutations(cls, n)
+```
+
+All permutations of ``{1, ..., n}``, as a list of `Permutation`.
+
+<a id="schubmult.combinatorics.permutation.Permutation.parabolic_reduce"></a>
+
+#### parabolic\_reduce
+
+```python
+def parabolic_reduce(*descs)
+```
+
+Decompose ``self = reduced_perm * w_J`` where ``w_J`` is generated by the simple reflections
+*not* in ``descs`` and ``reduced_perm`` has no descents outside ``descs``.
+
+**Returns**:
+
+- `tuple` - ``(reduced_perm, w_J)``.
 
 <a id="schubmult.combinatorics.permutation.Permutation.__truediv__"></a>
 
@@ -9172,6 +12622,105 @@ def __truediv__(other)
 ```
 
 Returns a tuple of (self, other) if other is a permutation. Intended for skew elements.
+
+<a id="schubmult.combinatorics.permutation.Permutation.fixers"></a>
+
+#### fixers
+
+```python
+@staticmethod
+def fixers(dominant_weight)
+```
+
+1-indexed positions ``i`` where ``dominant_weight[i-1] == dominant_weight[i]``
+(the simple reflections fixing ``dominant_weight``, i.e. generating its stabilizer).
+
+<a id="schubmult.combinatorics.permutation.Permutation.ref_product"></a>
+
+#### ref\_product
+
+```python
+@classmethod
+def ref_product(cls, *args)
+```
+
+Product of the simple reflections ``s_a`` for ``a`` in ``args``, applied left to right.
+
+<a id="schubmult.combinatorics.permutation.Permutation.hecke_ref_product"></a>
+
+#### hecke\_ref\_product
+
+```python
+@classmethod
+def hecke_ref_product(cls, *args)
+```
+
+Like ``ref_product``, but each ``s_a`` is applied only if it is a Bruhat ascent
+(the 0-Hecke / Demazure product of the simple reflections).
+
+<a id="schubmult.combinatorics.permutation.Permutation.code_word"></a>
+
+#### code\_word
+
+```python
+@property
+def code_word()
+```
+
+A canonical reduced word for ``self``, read off from ``trimcode``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.inverse_code_word"></a>
+
+#### inverse\_code\_word
+
+```python
+@property
+def inverse_code_word()
+```
+
+A canonical reduced word for ``~self``, read off from ``(~self).trimcode``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.root_swap"></a>
+
+#### root\_swap
+
+```python
+def root_swap(root)
+```
+
+Multiply ``self`` by the reflection swapping the 1-indexed positions ``root = (a, b)``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.reflection"></a>
+
+#### reflection
+
+```python
+@classmethod
+def reflection(cls, root)
+```
+
+The transposition swapping the 1-indexed positions ``root = (a, b)``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.right_root_at"></a>
+
+#### right\_root\_at
+
+```python
+def right_root_at(index, word=None)
+```
+
+The positive root sent to a negative root by the ``index``-th letter of ``word``
+(default ``self.code_word``), read from the right (post-multiplied by the remaining suffix).
+
+<a id="schubmult.combinatorics.permutation.Permutation.left_root_at"></a>
+
+#### left\_root\_at
+
+```python
+def left_root_at(index, word=None)
+```
+
+Like ``right_root_at``, but the root is transported by the prefix of ``word`` before ``index``.
 
 <a id="schubmult.combinatorics.permutation.Permutation.all_reduced_words"></a>
 
@@ -9206,6 +12755,39 @@ def all_subwords(word)
 
 All subwords of `self`, by peeling descents.
 
+<a id="schubmult.combinatorics.permutation.Permutation.commutation_class_of"></a>
+
+#### commutation\_class\_of
+
+```python
+@staticmethod
+def commutation_class_of(word)
+```
+
+All words obtainable from ``word`` by commuting adjacent far-apart letters (``|a - b| >= 2``).
+
+<a id="schubmult.combinatorics.permutation.Permutation.forest_class_of"></a>
+
+#### forest\_class\_of
+
+```python
+@staticmethod
+def forest_class_of(word)
+```
+
+Words reachable from ``word`` by commutation moves that also preserve the indexed-forest
+insertion structure (``omega_insertion``); a refinement of ``commutation_class_of``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.code_index_of_index"></a>
+
+#### code\_index\_of\_index
+
+```python
+def code_index_of_index(index)
+```
+
+The position in ``trimcode`` whose block of ``code_word`` letters contains position ``index``.
+
 <a id="schubmult.combinatorics.permutation.Permutation.cycle"></a>
 
 #### cycle
@@ -9217,6 +12799,242 @@ def cycle(p, q)
 
 Construct the cycle permutation used elsewhere in the code.
 Kept as a staticmethod on Permutation for call sites like Permutation.cycle(p,q).
+
+<a id="schubmult.combinatorics.permutation.Permutation.sorting_perm"></a>
+
+#### sorting\_perm
+
+```python
+@classmethod
+def sorting_perm(cls, itera, reverse=False)
+```
+
+The permutation that sorts ``itera`` into (by default) increasing order.
+
+<a id="schubmult.combinatorics.permutation.Permutation.right_act"></a>
+
+#### right\_act
+
+```python
+def right_act(lst)
+```
+
+Permute the entries of ``lst`` by this permutation, preserving ``lst``'s type (list stays a list).
+
+<a id="schubmult.combinatorics.permutation.Permutation.bruhat_leq"></a>
+
+#### bruhat\_leq
+
+```python
+def bruhat_leq(perm, perm2)
+```
+
+Whether ``perm <= perm2`` in Bruhat order (equivalently, ``perm``'s tableau criterion
+against ``perm2`` on every prefix of their windows).
+
+<a id="schubmult.combinatorics.permutation.Permutation.from_code"></a>
+
+#### from\_code
+
+```python
+@classmethod
+def from_code(cls, cd)
+```
+
+Alias for ``uncode(cd)``: the permutation with Lehmer code ``cd``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.has_pattern"></a>
+
+#### has\_pattern
+
+```python
+def has_pattern(pattern)
+```
+
+Whether ``self`` contains ``pattern`` (a plain list, not necessarily reduced) as a pattern:
+some subsequence of ``self``'s window order-isomorphic to ``pattern``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.zero_indexed_descents"></a>
+
+#### zero\_indexed\_descents
+
+```python
+def zero_indexed_descents()
+```
+
+0-indexed descent positions: ``i`` such that ``self[i] > self[i+1]``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.descents"></a>
+
+#### descents
+
+```python
+def descents(zero_indexed=True)
+```
+
+Descent positions of ``self``, 0-indexed by default or 1-indexed if ``zero_indexed=False``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.get_cycles"></a>
+
+#### get\_cycles
+
+```python
+def get_cycles(sort_min=False)
+```
+
+Cycle decomposition of ``self`` as a list of tuples; ``sort_min`` rotates each cycle to start
+at its minimum element instead of the sympy convention.
+
+<a id="schubmult.combinatorics.permutation.Permutation.from_cycles"></a>
+
+#### from\_cycles
+
+```python
+@classmethod
+def from_cycles(cls, cycle_iter)
+```
+
+Build a permutation from a cycle decomposition (sequence of cycles, each a sequence of 1-indexed values).
+
+<a id="schubmult.combinatorics.permutation.Permutation.code"></a>
+
+#### code
+
+```python
+@property
+def code()
+```
+
+Lehmer code of ``self``: ``code[i]`` counts ``j > i`` with ``self[i] > self[j]``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.graph"></a>
+
+#### graph
+
+```python
+@property
+def graph()
+```
+
+The permutation matrix support as a set of 1-indexed pairs ``{(i, self[i])}``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.reduced_with"></a>
+
+#### reduced\_with
+
+```python
+def reduced_with(other)
+```
+
+Whether ``self * other`` is length-additive: ``inv(self) + inv(other) == inv(self * other)``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.shape"></a>
+
+#### shape
+
+```python
+@property
+def shape()
+```
+
+The Lehmer code sorted into weakly decreasing order (a partition).
+
+<a id="schubmult.combinatorics.permutation.Permutation.inversion_set"></a>
+
+#### inversion\_set
+
+```python
+@cached_property
+def inversion_set()
+```
+
+Set of inversions ``(i, j)`` (1-indexed, ``i < j``) with ``self[i-1] > self[j-1]``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.weak_order_leq"></a>
+
+#### weak\_order\_leq
+
+```python
+def weak_order_leq(other)
+```
+
+Whether ``self <= other`` in left weak order (``self``'s inversion set is a subset of ``other``'s).
+
+<a id="schubmult.combinatorics.permutation.Permutation.weak_order_meet"></a>
+
+#### weak\_order\_meet
+
+```python
+def weak_order_meet(other)
+```
+
+Meet (greatest lower bound) of ``self`` and ``other`` in left weak order.
+
+<a id="schubmult.combinatorics.permutation.Permutation.weak_order_join"></a>
+
+#### weak\_order\_join
+
+```python
+def weak_order_join(other)
+```
+
+Join (least upper bound) of ``self`` and ``other`` in left weak order, via ``w0``-duality with the meet.
+
+<a id="schubmult.combinatorics.permutation.Permutation.diagram"></a>
+
+#### diagram
+
+```python
+@property
+def diagram()
+```
+
+The Rothe diagram of ``self``: cells ``(i, j)`` with ``self[i-1] > j`` and ``(~self)[j-1] > i``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.rothe_diagram"></a>
+
+#### rothe\_diagram
+
+```python
+@property
+def rothe_diagram()
+```
+
+The graph of ``self`` as a set of 1-indexed pairs (see ``diagram`` for the Rothe diagram cells).
+
+<a id="schubmult.combinatorics.permutation.Permutation.max_descent"></a>
+
+#### max\_descent
+
+```python
+@cached_property
+def max_descent()
+```
+
+Number of entries in ``trimcode`` (one past the last nonzero code entry).
+
+<a id="schubmult.combinatorics.permutation.Permutation.maximal_corner"></a>
+
+#### maximal\_corner
+
+```python
+@property
+def maximal_corner()
+```
+
+The maximal corner ``(maxd, end_spot)`` of ``self``'s diagram, used by ``pivots``/``pivot_transition``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.from_partial"></a>
+
+#### from\_partial
+
+```python
+@classmethod
+def from_partial(cls, partial_perm)
+```
+
+Complete a partial assignment (a list with some ``None`` entries) to a full permutation,
+filling the gaps with the missing values in increasing order.
 
 <a id="schubmult.combinatorics.permutation.Permutation.pivots"></a>
 
@@ -9239,6 +13057,122 @@ def pivot_transition(pivot_set)
 
 Grothendieck transition for a given pivot set at the maximal corner. Returns the resulting permutation.
 
+<a id="schubmult.combinatorics.permutation.Permutation.pad_code"></a>
+
+#### pad\_code
+
+```python
+def pad_code(length)
+```
+
+``trimcode`` padded with trailing zeros to ``length``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.trimcode"></a>
+
+#### trimcode
+
+```python
+@cached_property
+def trimcode()
+```
+
+Lehmer code truncated to drop trailing zeros (length equals the last descent position).
+
+<a id="schubmult.combinatorics.permutation.Permutation.mul_dominant"></a>
+
+#### mul\_dominant
+
+```python
+def mul_dominant()
+```
+
+Left factor of ``self`` in its decomposition against the minimal dominant permutation above it.
+
+<a id="schubmult.combinatorics.permutation.Permutation.strict_mul_dominant"></a>
+
+#### strict\_mul\_dominant
+
+```python
+def strict_mul_dominant(size=None)
+```
+
+Variant of ``mul_dominant`` built from the strict theta (strictly decreasing dominant code).
+
+<a id="schubmult.combinatorics.permutation.Permutation.shiftup"></a>
+
+#### shiftup
+
+```python
+def shiftup(k)
+```
+
+``self`` with its Lehmer code shifted right by ``k`` (``k`` leading zero code entries prepended).
+
+<a id="schubmult.combinatorics.permutation.Permutation.inv"></a>
+
+#### inv
+
+```python
+@cached_property
+def inv()
+```
+
+Length of ``self``: the number of inversions, i.e. ``sum(self.code)``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.is_dominant"></a>
+
+#### is\_dominant
+
+```python
+@property
+def is_dominant()
+```
+
+Whether ``self`` equals the minimal dominant permutation above it (its code is already weakly decreasing).
+
+<a id="schubmult.combinatorics.permutation.Permutation.is_strict_dominant"></a>
+
+#### is\_strict\_dominant
+
+```python
+@property
+def is_strict_dominant()
+```
+
+Whether ``self`` is dominant with a strictly decreasing ``trimcode``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.is_vexillary"></a>
+
+#### is\_vexillary
+
+```python
+@property
+def is_vexillary()
+```
+
+Whether ``self`` avoids the pattern ``2143`` (equivalently, its Schubert polynomial is a
+single Schur polynomial in the ``trimcode``-shape).
+
+<a id="schubmult.combinatorics.permutation.Permutation.swap"></a>
+
+#### swap
+
+```python
+def swap(i, j)
+```
+
+Multiply ``self`` by the transposition of 0-indexed positions ``i`` and ``j`` (window extended as needed).
+
+<a id="schubmult.combinatorics.permutation.Permutation.rslice"></a>
+
+#### rslice
+
+```python
+def rslice(start, stop)
+```
+
+Window values at 0-indexed positions ``start`` (inclusive) to ``stop`` (exclusive), extended by fixed points.
+
 <a id="schubmult.combinatorics.permutation.Permutation.__matmul__"></a>
 
 #### \_\_matmul\_\_
@@ -9249,9 +13183,148 @@ def __matmul__(other)
 
 Demazure product
 
+<a id="schubmult.combinatorics.permutation.Permutation.pattern_at"></a>
+
+#### pattern\_at
+
+```python
+def pattern_at(*indices)
+```
+
+The (inverse sorting) pattern induced by ``self`` on the given 1-indexed ``indices``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.minimal_dominant_above"></a>
+
+#### minimal\_dominant\_above
+
+```python
+def minimal_dominant_above()
+```
+
+The minimal dominant permutation ``>= self`` in Bruhat order: ``uncode(self.theta())``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.foundational_root"></a>
+
+#### foundational\_root
+
+```python
+@property
+def foundational_root()
+```
+
+The pivot pair ``(k, mx)`` marking ``self``'s last descent block and the last position dropping below it.
+
+<a id="schubmult.combinatorics.permutation.Permutation.theta"></a>
+
+#### theta
+
+```python
+def theta()
+```
+
+Dominant (weakly decreasing) sequence bounding ``self``'s code, used throughout the v-path
+multiplication algorithms (see ``schubmult.mult``).
+
+<a id="schubmult.combinatorics.permutation.Permutation.medium_theta"></a>
+
+#### medium\_theta
+
+```python
+def medium_theta()
+```
+
+Variant of ``theta`` used by the "fast"/merged-layer multiplication kernels.
+
+<a id="schubmult.combinatorics.permutation.Permutation.strict_theta"></a>
+
+#### strict\_theta
+
+```python
+def strict_theta()
+```
+
+Variant of ``theta`` with strictly decreasing entries (no repeated nonzero layers).
+
+<a id="schubmult.combinatorics.permutation.Permutation.maximal_sortable_below"></a>
+
+#### maximal\_sortable\_below
+
+```python
+def maximal_sortable_below()
+```
+
+The maximal "sortable" permutation ``<= self`` (code has no gap of more than 1 between
+consecutive entries), used by ``mul_sortable``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.mul_sortable"></a>
+
+#### mul\_sortable
+
+```python
+def mul_sortable()
+```
+
+Left factor of ``self`` against its ``maximal_sortable_below`` decomposition (dual to ``mul_dominant``).
+
+<a id="schubmult.combinatorics.permutation.uncode"></a>
+
+#### uncode
+
+```python
+def uncode(cd)
+```
+
+The permutation whose Lehmer code is ``cd`` (a list of nonnegative integers).
+
+<a id="schubmult.combinatorics.permutation.permtrim"></a>
+
+#### permtrim
+
+```python
+def permtrim(perm)
+```
+
+Normalize ``perm`` (a plain array) into a `Permutation` (trims trailing fixed points).
+
+<a id="schubmult.combinatorics.permutation.phi1"></a>
+
+#### phi1
+
+```python
+def phi1(u)
+```
+
+Drop the first entry of ``(~u).code`` and re-invert: one step of the ``dominates`` recursion.
+
+<a id="schubmult.combinatorics.permutation.split_perms"></a>
+
+#### split\_perms
+
+```python
+def split_perms(perms)
+```
+
+Split each permutation in ``perms`` (after the first) into two smaller ones across a
+reducible point, whenever a valid split point exists; used to normalize a chain of
+dominant permutations into minimal reducible pieces.
+
+<a id="schubmult.combinatorics.permutation.s"></a>
+
+#### s
+
+```python
+@cache
+def s(i)
+```
+
+The simple reflection swapping 1-indexed positions ``i`` and ``i + 1``.
+
 <a id="schubmult.combinatorics.nilplactic"></a>
 
 # schubmult.combinatorics.nilplactic
+
+`NilPlactic`: the nilCoxeter/nilHecke analogue of `Plactic`, used for Edelman-Greene tableaux
+(skew shapes over increasing/decreasing-adjacent tableau rules) and their reduced-word data.
 
 <a id="schubmult.combinatorics.nilplactic.NilPlactic"></a>
 
@@ -9260,6 +13333,9 @@ Demazure product
 ```python
 class NilPlactic(Plactic)
 ```
+
+A nilCoxeter/nilHecke skew tableau: like `Plactic` but under the Edelman-Greene insertion
+rule (increasing rows and columns, no repeated entries).
 
 <a id="schubmult.combinatorics.nilplactic.NilPlactic.all_skew_ed_tableaux"></a>
 
@@ -9355,6 +13431,9 @@ Plactic product: insert entries of `other` in row-reading order
 
 # schubmult.combinatorics.root\_tableau
 
+`RootTableau`: root-labeled tableaux implementing dual Knuth equivalence via JDT
+(jeu-de-taquin) slides, with the Edelman-Greene invariant preserved by the crystal operators.
+
 <a id="schubmult.combinatorics.root_tableau.RootTableau"></a>
 
 ## RootTableau Objects
@@ -9363,7 +13442,9 @@ Plactic product: insert entries of `other` in row-reading order
 class RootTableau(CrystalGraph, GridPrint)
 ```
 
-Root tableau with dual knuth equivalence
+A tableau of positive roots (grid cells hold ``(root, recording_letter)`` pairs)
+implementing dual Knuth equivalence via up/down JDT slides. ``edelman_greene_invariant``
+is preserved by the crystal raising/lowering operators.
 
 <a id="schubmult.combinatorics.root_tableau.RootTableau.down_jdt_slide"></a>
 
@@ -9425,6 +13506,11 @@ Direct crystal lowering operator f_i using EG invariant tracking.
 
 # schubmult.combinatorics.quasi\_crystal\_graph
 
+Quasi-crystal variant of `CrystalGraph`: raising/lowering operators (``quasi_raising_operator``/
+``quasi_lowering_operator``) that may be undefined even mid-string, used where the standard
+crystal axioms only hold up to the extra ``ep[-2][0] > 0 and ep[-1][1] > 0`` obstruction
+checked in `QuasiCrystalGraphTensor`.
+
 <a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraph"></a>
 
 ## QuasiCrystalGraph Objects
@@ -9432,6 +13518,8 @@ Direct crystal lowering operator f_i using EG invariant tracking.
 ```python
 class QuasiCrystalGraph(CrystalGraph)
 ```
+
+Abstract base for quasi-crystal elements; see the module docstring.
 
 <a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraph.quasi_raising_operator"></a>
 
@@ -9472,6 +13560,112 @@ def reverse_quasi_lower_seq(seq)
 ```
 
 Apply the reverse of the given lowering sequence.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor"></a>
+
+## QuasiCrystalGraphTensor Objects
+
+```python
+class QuasiCrystalGraphTensor(QuasiCrystalGraph)
+```
+
+Tensor product of quasi-crystal elements (`factors`); mirrors `CrystalGraphTensor` but the
+``quasi_lowering_operator``/``quasi_raising_operator`` calls additionally return ``None`` when
+``ep[-2][0] > 0 and ep[-1][1] > 0`` at the last two left-folded ``(epsilon, phi)`` entries.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.crystal_weight"></a>
+
+#### crystal\_weight
+
+```python
+@property
+def crystal_weight()
+```
+
+Sum of the factors' weights (zero-padded to the longest).
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.weight_bump"></a>
+
+#### weight\_bump
+
+```python
+def weight_bump()
+```
+
+Apply ``weight_bump`` to every factor.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.all_highest_weights"></a>
+
+#### all\_highest\_weights
+
+```python
+def all_highest_weights()
+```
+
+All highest-weight tensors reachable by taking the highest weight of independently chosen
+elements from each factor's full quasi-crystal.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(*factors)
+```
+
+Build the tensor product of the given quasi-crystal elements, left to right.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.crystal_length"></a>
+
+#### crystal\_length
+
+```python
+def crystal_length()
+```
+
+The maximum ``crystal_length`` over all factors.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.quasi_lowering_operator"></a>
+
+#### quasi\_lowering\_operator
+
+```python
+def quasi_lowering_operator(index)
+```
+
+Apply ``quasi_lowering_operator(index)`` to the rightmost eligible factor, or ``None``
+if the quasi-crystal obstruction blocks it.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.quasi_raising_operator"></a>
+
+#### quasi\_raising\_operator
+
+```python
+def quasi_raising_operator(index)
+```
+
+Apply ``quasi_raising_operator(index)`` to the rightmost eligible factor, or ``None``
+if the quasi-crystal obstruction blocks it.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.epsilon"></a>
+
+#### epsilon
+
+```python
+def epsilon(i)
+```
+
+``epsilon_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table.
+
+<a id="schubmult.combinatorics.quasi_crystal_graph.QuasiCrystalGraphTensor.phi"></a>
+
+#### phi
+
+```python
+def phi(i)
+```
+
+``phi_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table.
 
 <a id="schubmult.combinatorics.double_forest"></a>
 
@@ -9557,6 +13751,29 @@ def sylvester_word(forest)
 ```
 
 Return one Sylvester word of `forest` via pre-order traversal.
+
+<a id="schubmult.combinatorics.double_forest.sylvester_forest"></a>
+
+#### sylvester\_forest
+
+```python
+def sylvester_forest(code, genset, t)
+```
+
+Sum of ``polyvalue(genset, t)`` over all RC graphs of ``uncode(code)`` with the given forest weight;
+the single (non-double) specialization of `double_sylvester_forest`.
+
+<a id="schubmult.combinatorics.double_forest.double_sylvester_forest"></a>
+
+#### double\_sylvester\_forest
+
+```python
+def double_sylvester_forest(code, genset, t)
+```
+
+Double (equivariant) forest polynomial, computed by pairing RC graphs of ``u`` and ``v`` from
+the double Schubert expansion ``Sx([]) * DSx(perm, "t")`` whose merged vine diagram matches the
+principal RC graph's omega-invariant target.
 
 <a id="schubmult.combinatorics.double_forest.canonical_forest_from_word"></a>
 
@@ -9669,6 +13886,22 @@ so we can stare at the symmetric difference.
 
 # schubmult.combinatorics.wc\_graph
 
+`WCGraph`: word-compatible graphs, the common tuple-of-rows base shared by `RCGraph` and
+`AntiRCGraph`, where the induced permutation is the Demazure (0-Hecke) product of the row word
+rather than requiring it to be reduced.
+
+<a id="schubmult.combinatorics.wc_graph.pivot_transition"></a>
+
+#### pivot\_transition
+
+```python
+@cache
+def pivot_transition(perm2, target_d=None)
+```
+
+Recursively apply `Permutation.pivot_transition` over every nonempty pivot subset until the
+maximal corner drops to ``target_d`` (default: ``perm2.max_descent``); returns the set of results.
+
 <a id="schubmult.combinatorics.wc_graph.WCGraph"></a>
 
 ## WCGraph Objects
@@ -9684,6 +13917,253 @@ is a strictly decreasing tuple of positive integers >= i + 1.
 
 For WCGraph, the associated permutation is the Demazure product of the
 concatenated row word (1-indexed simple reflections).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.args"></a>
+
+#### args
+
+```python
+@property
+def args() -> tuple
+```
+
+Return args for sympy compatibility - prevents traversal into tuple contents.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.__eq__"></a>
+
+#### \_\_eq\_\_
+
+```python
+def __eq__(other: object) -> bool
+```
+
+Equal iff both are `WCGraph` with the same rows.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.trans_co_pipe"></a>
+
+#### trans\_co\_pipe
+
+```python
+def trans_co_pipe()
+```
+
+The complementary graph on twice as many rows: mark every position ``(i+j, j)`` that is
+empty in ``self``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.perm_word"></a>
+
+#### perm\_word
+
+```python
+@cached_property
+def perm_word() -> tuple[int, ...]
+```
+
+Concatenation of the rows, top to bottom (not necessarily reduced).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.perm"></a>
+
+#### perm
+
+```python
+@cached_property
+def perm() -> Permutation
+```
+
+The permutation induced by this graph: the Demazure (0-Hecke) product of `perm_word`.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.hecke_perm"></a>
+
+#### hecke\_perm
+
+```python
+@property
+def hecke_perm() -> Permutation
+```
+
+Alias for `perm` (already a Hecke/Demazure product).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.is_rc"></a>
+
+#### is\_rc
+
+```python
+@property
+def is_rc() -> bool
+```
+
+Whether every entry of row ``i`` (0-indexed) is ``>= i + 1`` (the basic row-shape constraint).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.is_reduced"></a>
+
+#### is\_reduced
+
+```python
+@property
+def is_reduced()
+```
+
+Whether ``perm_word`` has exactly ``perm.inv`` letters (no Hecke-cancelling excess).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.is_valid"></a>
+
+#### is\_valid
+
+```python
+@property
+def is_valid() -> bool
+```
+
+Whether every row is strictly decreasing, respects the row-shape constraint, and the
+compatible sequence/word pair is compatible.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.shiftup"></a>
+
+#### shiftup
+
+```python
+def shiftup(shift: int = 1, check_valid=True) -> WCGraph
+```
+
+Add ``shift`` to every entry of every row.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.normalize"></a>
+
+#### normalize
+
+```python
+def normalize() -> WCGraph
+```
+
+Resize to ``perm.max_descent`` rows.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.resize"></a>
+
+#### resize
+
+```python
+def resize(new_length: int) -> WCGraph
+```
+
+Truncate (via ``rowrange``) or extend to exactly ``new_length`` rows.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.rowrange"></a>
+
+#### rowrange
+
+```python
+def rowrange(start: int, end: int | None = None) -> WCGraph
+```
+
+Rows ``[start, end)`` as a fresh graph, entries shifted down by ``start``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.extend"></a>
+
+#### extend
+
+```python
+def extend(extra_rows: int) -> WCGraph
+```
+
+Append ``extra_rows`` empty rows at the bottom.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.toggle_ref_at"></a>
+
+#### toggle\_ref\_at
+
+```python
+def toggle_ref_at(i: int, j: int) -> WCGraph
+```
+
+Add or remove the reflection at 1-indexed grid position ``(i, j)``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.has_element"></a>
+
+#### has\_element
+
+```python
+@cache
+def has_element(i: int, j: int) -> bool
+```
+
+Whether row ``i`` (1-indexed) contains the reflection at column ``j`` (label ``i + j - 1``).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.length_vector"></a>
+
+#### length\_vector
+
+```python
+@cached_property
+def length_vector() -> tuple[int, ...]
+```
+
+Row lengths.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.weight"></a>
+
+#### weight
+
+```python
+@cached_property
+def weight() -> tuple[int, ...]
+```
+
+Flat weight sequence: row index (1-indexed) repeated once per reflection in that row.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows() -> int
+```
+
+Number of rows.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols() -> int
+```
+
+Number of columns: ``len(perm) - 1``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.width"></a>
+
+#### width
+
+```python
+@property
+def width() -> int
+```
+
+Alias for ``cols``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.height"></a>
+
+#### height
+
+```python
+@property
+def height() -> int
+```
+
+Alias for ``rows``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.compatible_sequence"></a>
+
+#### compatible\_sequence
+
+```python
+@cached_property
+def compatible_sequence() -> tuple[int, ...]
+```
+
+Row index (1-indexed) repeated once per reflection in that row, in reading order.
 
 <a id="schubmult.combinatorics.wc_graph.WCGraph.to_mbpd"></a>
 
@@ -9718,6 +14198,17 @@ Inverse of :meth:`to_mbpd`: the WCGraph ``RCP(Phi(mbpd))`` obtained
 from the row-pop bijection ``Phi`` (paper Theorem "T: main").
 
 Cached on the (hashable) ``mbpd`` argument.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.is_principal"></a>
+
+#### is\_principal
+
+```python
+@property
+def is_principal() -> bool
+```
+
+Whether ``perm`` equals ``uncode(length_vector)`` (this graph realizes its own dominant weight).
 
 <a id="schubmult.combinatorics.wc_graph.WCGraph.grove_wcs"></a>
 
@@ -9756,6 +14247,28 @@ Concretely:
 Each WCGraph contributes ``beta**(|kappa| - |F|)`` times its monomial; beta is
 the degree ``-1`` homogenizer recording extra labels beyond one per node.
 
+<a id="schubmult.combinatorics.wc_graph.WCGraph.forest_weight"></a>
+
+#### forest\_weight
+
+```python
+@cached_property
+def forest_weight()
+```
+
+``forest_invariant``'s composition, padded to ``len(self)`` (see `schubmult.combinatorics.indexed_forests`).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.grove_weight"></a>
+
+#### grove\_weight
+
+```python
+@property
+def grove_weight()
+```
+
+Length vector of ``grove_invariant`` (the base member's forest weight).
+
 <a id="schubmult.combinatorics.wc_graph.WCGraph.grove_invariant"></a>
 
 #### grove\_invariant
@@ -9780,6 +14293,181 @@ coincides with the forest weight; for set-valued members it recovers the
 composition of the base rather than the (larger, occurrence-inflated)
 forest weight of ``self`` itself.
 
+<a id="schubmult.combinatorics.wc_graph.WCGraph.one_row"></a>
+
+#### one\_row
+
+```python
+@classmethod
+def one_row(cls, a: int) -> WCGraph
+```
+
+The single-row graph ``(a, a-1, ..., 1)``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.omega_invariant"></a>
+
+#### omega\_invariant
+
+```python
+@property
+@cache
+def omega_invariant()
+```
+
+Omega-insertion of the reversed ``perm_word`` (P-symbol data used for forest/K-theoretic invariants).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.forest_invariant"></a>
+
+#### forest\_invariant
+
+```python
+@property
+def forest_invariant()
+```
+
+The forest attached to ``self`` under omega-insertion (first component of ``omega_invariant``).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.flipped_co_wc"></a>
+
+#### flipped\_co\_wc
+
+```python
+def flipped_co_wc()
+```
+
+Reflect crossings through the anti-diagonal one row shorter than ``perm``'s length.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.to_reduced_compatible_set_sequence"></a>
+
+#### to\_reduced\_compatible\_set\_sequence
+
+```python
+def to_reduced_compatible_set_sequence()
+```
+
+Reduce ``perm_word`` to a genuine reduced word, grouping the compatible sequence values that
+collapse onto each surviving root into label sets; returns ``(word, set_seq)``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.from_reduced_compatible_set_sequence"></a>
+
+#### from\_reduced\_compatible\_set\_sequence
+
+```python
+@classmethod
+def from_reduced_compatible_set_sequence(cls, word, set_seq, length=None)
+```
+
+Build a graph from a reduced word and a set-valued compatible sequence (via `_from_root_dict`).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.from_word_compatible"></a>
+
+#### from\_word\_compatible
+
+```python
+@classmethod
+def from_word_compatible(cls, word, seq, length=None)
+```
+
+Build a graph from a word and its (weakly increasing) compatible sequence, validating compatibility.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.left_to_right_inversion_coords"></a>
+
+#### left\_to\_right\_inversion\_coords
+
+```python
+def left_to_right_inversion_coords(index: int) -> tuple[int, int]
+```
+
+Grid coordinates ``(row, col)`` of the ``index``-th letter of ``perm_word``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.left_to_right_inversion"></a>
+
+#### left\_to\_right\_inversion
+
+```python
+def left_to_right_inversion(index: int) -> tuple[int, int]
+```
+
+Positive root of the ``index``-th letter of ``perm_word``, transported to the right.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.left_to_right_hecke_inversion"></a>
+
+#### left\_to\_right\_hecke\_inversion
+
+```python
+def left_to_right_hecke_inversion(index: int) -> tuple[int, int]
+```
+
+Like `left_to_right_inversion`, transported via the 0-Hecke (Demazure) product instead.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.right_root_at"></a>
+
+#### right\_root\_at
+
+```python
+def right_root_at(i: int, j: int) -> tuple[int, int]
+```
+
+The positive root at grid position ``(i, j)``, transported to the right by the remaining word.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.right_hecke_root_at"></a>
+
+#### right\_hecke\_root\_at
+
+```python
+def right_hecke_root_at(i: int, j: int) -> tuple[int, int]
+```
+
+Like `right_root_at`, transported via the 0-Hecke (Demazure) product instead.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.polyvalue"></a>
+
+#### polyvalue
+
+```python
+def polyvalue(x: Sequence[Expr],
+              y: Sequence[Expr] | None = None,
+              *,
+              beta: Expr = None,
+              prop_beta: bool = False,
+              crystal: bool = False,
+              minus_convention=False) -> Expr
+```
+
+Monomial (``y=None``), double (``y`` given), or beta-deformed Grothendieck contribution of this graph.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.is_elem_sym"></a>
+
+#### is\_elem\_sym
+
+```python
+@property
+def is_elem_sym() -> bool
+```
+
+Whether ``perm``'s trimcode is all zeros then all ones (elementary-symmetric shape).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.crystal_length"></a>
+
+#### crystal\_length
+
+```python
+def crystal_length() -> int
+```
+
+Number of rows.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.hecke_invariant"></a>
+
+#### hecke\_invariant
+
+```python
+@property
+def hecke_invariant()
+```
+
+Hecke column-insertion RSK pair ``(P, Q)`` for ``(compatible_sequence, reversed(perm_word))``.
+
 <a id="schubmult.combinatorics.wc_graph.WCGraph.strong_hecke_invariant"></a>
 
 #### strong\_hecke\_invariant
@@ -9798,6 +14486,16 @@ then repeatedly apply the simultaneous inner-corner K-theoretic down
 slide until the tableau is rectified (no inner corners remain). The
 rectified increasing tableau is the strong Hecke invariant.
 
+<a id="schubmult.combinatorics.wc_graph.WCGraph.elem_sym_wcs"></a>
+
+#### elem\_sym\_wcs
+
+```python
+def elem_sym_wcs(p, k, weight=None)
+```
+
+All WC graphs for the elementary-symmetric permutation ``uncode([0]*(k-p) + [1]*p)``.
+
 <a id="schubmult.combinatorics.wc_graph.WCGraph.to_rc_pieri"></a>
 
 #### to\_rc\_pieri
@@ -9812,6 +14510,176 @@ Snap to the underlying reduced RCGraph, then reinsert the missing
 (excess) letters row-by-row: the number of letters missing from row
 ``i + 1`` is ``self.length_vector[i] - reduced.length_vector[i]``, and
 those rows (with multiplicity) are Pieri-inserted at ``perm.max_descent``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.crystal_weight"></a>
+
+#### crystal\_weight
+
+```python
+@property
+def crystal_weight() -> tuple[int, ...]
+```
+
+Alias for ``length_vector``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.excess"></a>
+
+#### excess
+
+```python
+@property
+def excess()
+```
+
+How far ``perm_word`` overshoots a reduced word: ``len(perm_word) - perm.inv``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.raising_operator"></a>
+
+#### raising\_operator
+
+```python
+def raising_operator(i: int) -> WCGraph | None
+```
+
+Crystal raising operator ``e_i``, via the recording tableau of `hecke_invariant`.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.lowering_operator"></a>
+
+#### lowering\_operator
+
+```python
+def lowering_operator(i: int) -> WCGraph | None
+```
+
+Crystal lowering operator ``f_i``, dual to `raising_operator`.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.sorted_length_vector"></a>
+
+#### sorted\_length\_vector
+
+```python
+@cached_property
+def sorted_length_vector()
+```
+
+``length_vector`` sorted into weakly decreasing order.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.extremal_weight"></a>
+
+#### extremal\_weight
+
+```python
+@property
+def extremal_weight()
+```
+
+The extremal weight of ``self``'s strong-Hecke-invariant class, padded to ``len(self)``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.groth_to_schub"></a>
+
+#### groth\_to\_schub
+
+```python
+@classmethod
+@cache
+def groth_to_schub(cls, groth_perm: Permutation, beta: Expr)
+```
+
+Expand the Grothendieck class of ``groth_perm`` in the (beta-deformed) Schubert basis, via
+co-pipe-dreams of every WC graph for ``groth_perm``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.schub_to_groth"></a>
+
+#### schub\_to\_groth
+
+```python
+@classmethod
+@cache
+def schub_to_groth(cls, schub_perm: Permutation, beta: Expr)
+```
+
+Expand the Schubert class of ``schub_perm`` in the (beta-deformed) Grothendieck basis, via
+co-pipe-dreams of every RC graph for ``schub_perm``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.grove_to_forest"></a>
+
+#### grove\_to\_forest
+
+```python
+@classmethod
+@cache
+def grove_to_forest(cls, comp, beta: Expr)
+```
+
+Expand the grove class of composition ``comp`` in the forest-weight basis, via co-pipe-dreams
+of every WC graph in the grove.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.bisect_left_coords_index"></a>
+
+#### bisect\_left\_coords\_index
+
+```python
+@cache
+def bisect_left_coords_index(row: int,
+                             col: int,
+                             lo: int = 0,
+                             hi: int | None = None) -> int
+```
+
+Binary search over ``perm_word`` positions for the insertion point of grid coordinate ``(row, col)``.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.vertical_cut"></a>
+
+#### vertical\_cut
+
+```python
+def vertical_cut(row: int) -> tuple[WCGraph, WCGraph]
+```
+
+Split at ``row`` into two graphs: ``(front, back)`` with ``front`` zeroed down to ``row`` rows.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.disjoint_union"></a>
+
+#### disjoint\_union
+
+```python
+def disjoint_union(rc: WCGraph) -> WCGraph
+```
+
+Stack ``rc`` beside ``self`` (shifted so their reflections don't collide), same row count.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.is_quasi_yamanouchi"></a>
+
+#### is\_quasi\_yamanouchi
+
+```python
+@property
+def is_quasi_yamanouchi() -> bool
+```
+
+Whether no row can be merged into the row above it (a normal-form condition for `dst`).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.dst"></a>
+
+#### dst
+
+```python
+@property
+def dst()
+```
+
+Merge mergeable adjacent rows until reaching a quasi-Yamanouchi ("dominant sorting"-normalized) form.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.squash_product"></a>
+
+#### squash\_product
+
+```python
+@cache
+def squash_product(rc: WCGraph) -> WCGraph
+```
+
+Disjoint-union ``self`` and ``rc``, then repeatedly `zero_out_last_row` back down to ``len(self)`` rows.
 
 <a id="schubmult.combinatorics.wc_graph.WCGraph.zero_out_last_row"></a>
 
@@ -9834,6 +14702,28 @@ this is total: it works for non-core-reduced graphs as well.
 Cached: the full MBPD round trip is memoized on the (hashable) graph,
 so repeated ``squash_product`` calls reuse the result.
 
+<a id="schubmult.combinatorics.wc_graph.WCGraph.right_zero_act"></a>
+
+#### right\_zero\_act
+
+```python
+def right_zero_act() -> set[WCGraph]
+```
+
+All WC graphs one row longer that reduce back to ``self`` under `zero_out_last_row`
+(the covering set used to build the crystal upward).
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.principal_wc"></a>
+
+#### principal\_wc
+
+```python
+@classmethod
+def principal_wc(cls, perm, length)
+```
+
+The canonical WC graph for ``perm``: the principal RC graph viewed as a `WCGraph`.
+
 <a id="schubmult.combinatorics.wc_graph.WCGraph.product"></a>
 
 #### product
@@ -9843,6 +14733,21 @@ def product(other: SchubertMonomialGraph) -> dict[WCGraph, int]
 ```
 
 Compute the product of this WC graph with another.
+
+<a id="schubmult.combinatorics.wc_graph.WCGraph.upieri_insert"></a>
+
+#### upieri\_insert
+
+```python
+def upieri_insert(descent,
+                  rows,
+                  return_reflections=False,
+                  backwards=True,
+                  left=False)
+```
+
+Insert one crossing per entry of ``rows`` at the given ``descent``, rectifying as needed;
+WCGraph analogue of `RCGraph.pieri_insert`.
 
 <a id="schubmult.combinatorics.wc_graph.WCGraph.pull_out_var_hecke"></a>
 
@@ -9878,6 +14783,27 @@ Generate all WC graphs with Demazure permutation ``perm`` and fixed row count.
 The recursion mirrors ``all_rc_graphs`` but uses Hecke/Demazure pull-out on the
 first row via ``pull_out_var_hecke``.
 
+<a id="schubmult.combinatorics.wc_graph.WCGraph.all_wc_graphs"></a>
+
+#### all\_wc\_graphs
+
+```python
+@classmethod
+def all_wc_graphs(cls,
+                  perm: Permutation,
+                  length: int | None = None,
+                  weight: tuple[int, ...] | None = None,
+                  *,
+                  check_length=False,
+                  do_cache=True) -> set[WCGraph]
+```
+
+All WC graphs for ``perm`` with ``length`` rows (default: ``len(perm.trimcode)``), optionally
+restricted to a given ``weight``. Recursively built via ``pull_out_var`` on the top variable,
+enumerating every addable-descent row via a stack-based search; results are cached by
+``(perm, length)``/``(perm, weight)`` unless ``do_cache=False``. See also the reference
+(slower) implementation `all_wc_graphs_slow`.
+
 <a id="schubmult.combinatorics.wc_graph.WCGraph.grothendieck_polynomial_via_wc"></a>
 
 #### grothendieck\_polynomial\_via\_wc
@@ -9895,9 +14821,22 @@ Compute a Grothendieck candidate by summing WC graph monomials.
 
 Uses weight monomials with ``beta`` exponent ``|word|-inv(perm)``.
 
+<a id="schubmult.combinatorics.wc_graph.WCGraph.__getitem__"></a>
+
+#### \_\_getitem\_\_
+
+```python
+def __getitem__(key: int | tuple[int, int]) -> tuple[int, ...] | int
+```
+
+``self[i]`` -> row ``i``; ``self[i, j]`` -> the crossing label at 0-indexed ``(i, j)`` or ``None``.
+
 <a id="schubmult.combinatorics.plactic"></a>
 
 # schubmult.combinatorics.plactic
+
+`Plactic`: skew semistandard tableaux with the plactic (Knuth) crystal structure, stored as a
+grid with an optional inner (skew) shape of holes.
 
 <a id="schubmult.combinatorics.plactic.Plactic"></a>
 
@@ -9906,6 +14845,10 @@ Uses weight monomials with ``beta`` exponent ``|word|-inv(perm)``.
 ```python
 class Plactic(GridPrint, CrystalGraph)
 ```
+
+A (skew) semistandard Young tableau stored as a grid, with the ``gl_n`` plactic crystal
+structure (Knuth relations). ``inner_shape`` (a partition of leading holes per row) makes it a
+skew tableau; construct directly from a grid or via classmethods like ``Plactic.yamanouchi``.
 
 <a id="schubmult.combinatorics.plactic.Plactic.up_jdt_slide"></a>
 
@@ -10167,6 +15110,8 @@ up_jdt_slide to move the hole inward.
 <a id="schubmult.combinatorics.hecke_plactic"></a>
 
 # schubmult.combinatorics.hecke\_plactic
+
+`HeckePlactic`: size-preserving Hecke column insertion, a `Plactic` variant.
 
 <a id="schubmult.combinatorics.hecke_plactic.HeckePlactic"></a>
 

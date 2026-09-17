@@ -1,0 +1,48 @@
+site_name: schubmult
+site_description: Littlewood-Richardson coefficients for Schubert polynomials
+site_url: https://matthematics.github.io/schubmult/
+repo_url: https://github.com/matthematics/schubmult
+repo_name: matthematics/schubmult
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+exclude_docs: |
+  /API.md
+  /generate_docs.py
+  /README.md
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.details
+
+plugins:
+  - search

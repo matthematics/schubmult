@@ -2,6 +2,9 @@
 
 # schubmult.combinatorics.set\_valued\_tableau
 
+`SetValuedTableau`: semistandard set-valued tableaux (Grothendieck-polynomial combinatorics),
+with a crystal structure realized via `SetWord`/`SetLetter`.
+
 <a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau"></a>
 
 ## SetValuedTableau Objects
@@ -65,6 +68,49 @@ def cells()
 ```
 
 Return the underlying ``{(row, col): tuple(labels)}`` dict (a copy).
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.rows"></a>
+
+#### rows
+
+```python
+@property
+def rows()
+```
+
+Number of rows (one past the maximum row index present).
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.cols"></a>
+
+#### cols
+
+```python
+@property
+def cols()
+```
+
+Number of columns (one past the maximum column index present).
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.__getitem__"></a>
+
+#### \_\_getitem\_\_
+
+```python
+def __getitem__(key)
+```
+
+``self[row, col]`` -> the label tuple at that box, or ``None`` if empty.
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.shape"></a>
+
+#### shape
+
+```python
+@property
+def shape()
+```
+
+Row lengths (number of boxes per row), trailing zeros dropped.
 
 <a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.weight"></a>
 
@@ -137,4 +183,14 @@ def crystal_length()
 ```
 
 Upper bound on crystal operator indices (matches ``Plactic``).
+
+<a id="schubmult.combinatorics.set_valued_tableau.SetValuedTableau.__eq__"></a>
+
+#### \_\_eq\_\_
+
+```python
+def __eq__(other)
+```
+
+Equal iff the underlying cell dicts match.
 

@@ -2,6 +2,8 @@
 
 # schubmult.combinatorics.hecke\_plactic
 
+`HeckePlactic`: size-preserving Hecke column insertion, a `Plactic` variant.
+
 <a id="schubmult.combinatorics.hecke_plactic.HeckePlactic"></a>
 
 ## HeckePlactic Objects

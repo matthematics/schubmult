@@ -319,7 +319,6 @@ class CrystalGraph(Printable):
         """Hook for subclasses: an element with the same crystal structure but perturbed so that
         ``crystal_reflection`` is guaranteed to succeed (used as a fallback by ``weight_reflection``).
         """
-        ...
 
     def weight_reflection(self, index):
         """Like ``crystal_reflection``, but falls back to ``weight_bump`` first if the direct reflection fails."""
