@@ -1,3 +1,19 @@
+"""Double Schubert polynomial multiplication.
+
+Implements the ``schubmult_double`` kernel: the product of a linear
+combination of double Schubert polynomials ``S_u(x, var2)`` with a single
+``S_v(x, var3)``, returned as a coefficient dict ``{w: coeff}`` of polynomials
+in ``var2``/``var3``. Uses the same ``theta``/``vmu``/v-path recursion as
+``schubmult.mult.single`` (see that module), replacing the plain elementary
+symmetric contribution with ``elem_sym_func``, which carries the secondary
+variables ``var2``/``var3``.
+
+Also provides the "alt"/"from_elems" variants (building the product one
+descent-pulled variable at a time via ``pull_out_var``, generic to any choice
+of elementary-symmetric-like function), ``nilhecke_mult`` (nilHecke ring
+multiplication), and ``schub_coprod_double`` (the double Schubert coproduct).
+"""
+
 from bisect import bisect_left
 from functools import cache
 
@@ -26,6 +42,7 @@ logger = get_logger(__name__)
 
 
 def count_sorted(mn, tp):
+    """Count occurrences of ``tp`` in the sorted sequence ``mn`` via binary search."""
     index = bisect_left(mn, tp)
     ct = 0
     if mn[index] == tp:
@@ -39,6 +56,21 @@ def count_sorted(mn, tp):
 
 
 def single_variable(coeff_dict, varnum, var2=None):
+    """Multiply ``sum_u coeff_u S_u(x, var2)`` by the single variable ``x_varnum``.
+
+    Equivariant Monk rule: the diagonal term contributes ``var2[u(varnum)]``
+    (localization of ``x_varnum`` at ``u``) and the off-diagonal terms are the
+    same Bruhat-cover moves as the ordinary (non-equivariant) ``single_variable``
+    in ``schubmult.mult.single``.
+
+    Args:
+        coeff_dict: Mapping ``{Permutation: coeff}``.
+        varnum: 1-indexed variable index ``k``.
+        var2: Secondary (``y``) generating set.
+
+    Returns:
+        dict: The updated coefficient dict.
+    """
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
@@ -59,6 +91,7 @@ def single_variable(coeff_dict, varnum, var2=None):
 
 
 def single_variable_down(coeff_dict, varnum, var2=None):
+    """Down (descent) variant of ``single_variable``, using ``elem_sym_perms_op``."""
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
@@ -79,6 +112,12 @@ def single_variable_down(coeff_dict, varnum, var2=None):
 
 
 def mult_poly_double(coeff_dict, poly, var_x=None, var_y=None):
+    """Multiply ``sum_u coeff_u S_u(x, var_y)`` by an arbitrary polynomial ``poly`` in ``var_x``.
+
+    Recurses over the ``Add``/``Mul``/``Pow`` structure of ``poly``, dispatching
+    single-variable leaves to ``single_variable``; mirrors ``mult_poly_py`` with
+    the extra secondary alphabet ``var_y``.
+    """
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
     if var_x.index(poly) != -1:
@@ -107,6 +146,10 @@ def mult_poly_double(coeff_dict, poly, var_x=None, var_y=None):
 
 
 def mult_poly_double_alt(coeff_dict, poly, var_x=None, var_y=None):
+    """Variant of ``mult_poly_double`` that folds each factor via ``schubmult_double_dict``
+    instead of ``single_variable``, so ``poly`` is only ever expanded one variable/factor
+    at a time in the ``S_v`` basis rather than left as a raw scalar multiplier.
+    """
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
     if var_x.index(poly) != -1:
@@ -140,6 +183,9 @@ def mult_poly_double_alt(coeff_dict, poly, var_x=None, var_y=None):
 
 
 def mult_poly_down(coeff_dict, poly):
+    """Down (descent) variant of ``mult_poly_double``, using ``single_variable_down``
+    and the fixed default alphabet ``_vars.var1``.
+    """
     if poly in _vars.var1:
         return single_variable_down(coeff_dict, _vars.var1.index(poly))
     if isinstance(poly, Mul):
@@ -166,6 +212,16 @@ def mult_poly_down(coeff_dict, poly):
 
 
 def nilhecke_mult(coeff_dict1, coeff_dict2):
+    """NilHecke ring product of ``coeff_dict1`` (polynomial coefficients) and
+    ``coeff_dict2`` (permutation coefficients acting as divided-difference operators).
+
+    For each ``w`` in ``coeff_dict2`` its coefficient polynomial is pushed through
+    ``mult_poly_down`` against ``coeff_dict1``, and each resulting permutation ``v``
+    is right-multiplied by ``w`` whenever that multiplication is length-additive.
+
+    Returns:
+        dict: Coefficient dict ``{Permutation: coeff}``.
+    """
     ret = {}
     for w in coeff_dict2:
         w1 = w
@@ -183,20 +239,31 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
 
 @cache
 def schubmult_double_pair(perm1, perm2, var2=None, var3=None):
+    """``schubmult_double`` specialized to a single ``perm1`` with coefficient 1, cached."""
     return schubmult_double({perm1: S.One}, perm2, var2, var3)
 
 
 @cache
 def schubmult_double_pair_generic(perm1, perm2):
+    """``schubmult_double_pair`` with the fixed generic secondary alphabets ``_vars.var_g1``/``_vars.var_g2``."""
     return schubmult_double({perm1: S.One}, perm2, _vars.var_g1, _vars.var_g2)
 
 
 @cache
 def schubmult_double_pair_generic_alt(perm1, perm2):
+    """Like ``schubmult_double_pair_generic`` but computed via ``schubmult_double_alt_from_elems``
+    with the factorial elementary symmetric function, then expanded/simplified.
+    """
     return {k: expand_func(expand(v)) for k, v in schubmult_double_alt_from_elems({perm1: S.One}, perm2, _vars.var_g1, _vars.var_g2, elem_func=FactorialElemSym).items()}
 
 
 def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
+    """Multiply two coefficient dicts of double Schubert polynomials together.
+
+    Computes ``(sum_u coeff1_u S_u(x, var2)) * (sum_v coeff2_v S_v(x, var3))``
+    by summing ``schubmult_double(perm_dict1, v, var2, var3)`` scaled by
+    ``coeff2_v`` over ``v`` in ``perm_dict2``.
+    """
     ret = {}
     for k, v in perm_dict2.items():
         ret = add_perm_dict(ret, {k2: v2 * v for k2, v2 in schubmult_double(perm_dict1, k, var2, var3).items()})
@@ -204,6 +271,22 @@ def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
 
 
 def schubmult_double(perm_dict, v, var2=None, var3=None):
+    """Multiply ``sum_u coeff_u S_u(x, var2)`` by the double Schubert polynomial ``S_v(x, var3)``.
+
+    Dispatches to the compiled ``schubmult_cpp`` kernel when available (and both
+    secondary alphabets are given), falling back to the pure-Python
+    implementation ``_schubmult_double_python`` otherwise.
+
+    Args:
+        perm_dict: Mapping ``{Permutation: coeff}``.
+        v: Permutation (or array-form list) indexing the Schubert polynomial to
+            multiply by.
+        var2: Secondary alphabet attached to ``perm_dict``'s permutations.
+        var3: Secondary alphabet attached to ``v``.
+
+    Returns:
+        dict: Coefficient dict ``{Permutation: coeff}`` (polynomials in ``var2``/``var3``).
+    """
     if _accel.available and var2 is not None and var3 is not None:
         ret = _accel.schubmult_double(perm_dict, v, var2, var3)
         if ret is not None:
@@ -212,6 +295,7 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
 
 
 def _schubmult_double_python(perm_dict, v, var2=None, var3=None):
+    """Pure-Python implementation of ``schubmult_double``; see there for the contract."""
     perm_dict = {Permutation(k): vv for k, vv in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
@@ -275,6 +359,13 @@ def _schubmult_double_python(perm_dict, v, var2=None, var3=None):
 
 
 def schubmult_double_alt(perm_dict, v, var2=None, var3=None, index=1):
+    """Alternate double Schubert product, built by peeling one variable of ``~v`` at a
+    time via ``pull_out_var`` instead of the ``theta``/v-path recursion.
+
+    Multiplies ``sum_u coeff_u S_u(x, var2)`` by ``S_v(x, var3)``, recursing on
+    ``~new_v`` with the elementary symmetric factor coming from
+    ``elem_sym_positional_perms`` at each step.
+    """
     if v.inv == 0:
         return perm_dict
         # ret = S.Zero
@@ -297,6 +388,10 @@ def schubmult_double_alt(perm_dict, v, var2=None, var3=None, index=1):
 
 # forwards backwards
 def schubmult_double_alt_from_elems_forwards(perm_dict, v, var2=None, var3=None, index=1, elem_func=None):
+    """``schubmult_double_alt`` generalized to an arbitrary elementary-symmetric-like
+    ``elem_func(p, k, x_vars, y_vars)``, processing variables of ``~v`` from the first
+    pulled-out index forward.
+    """
     if v.inv == 0:
         return perm_dict
         # ret = S.Zero
@@ -341,6 +436,10 @@ def schubmult_double_alt_from_elems_forwards(perm_dict, v, var2=None, var3=None,
 
 # backwards mul before
 def schubmult_double_alt_from_elems_backwards(perm_dict, v, var2=None, var3=None, elem_func=None):
+    """Like ``schubmult_double_alt_from_elems_forwards`` but processing ``~v``'s pulled-out
+    variables from the last descent backward, multiplying the elementary-symmetric
+    factor in *before* recursing (dispatches to the compiled kernel when available).
+    """
     if _accel.available and var2 is not None and var3 is not None and elem_func is not None:
         ret = _accel.schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
         if ret is not None:
@@ -349,6 +448,7 @@ def schubmult_double_alt_from_elems_backwards(perm_dict, v, var2=None, var3=None
 
 
 def _schubmult_double_alt_from_elems_backwards_python(perm_dict, v, var2=None, var3=None, elem_func=None):
+    """Pure-Python implementation of ``schubmult_double_alt_from_elems_backwards``."""
     if v.inv == 0:
         return perm_dict
     ret_dict = {}
@@ -376,6 +476,10 @@ def _schubmult_double_alt_from_elems_backwards_python(perm_dict, v, var2=None, v
 
 
 def schubmult_double_alt_from_elems_backwards_backwards(perm_dict, v, var2=None, var3=None, elem_func=None):
+    """Variant of ``_schubmult_double_alt_from_elems_backwards_python`` without the
+    per-``new_v`` memoization cache, recursing on the interim dict instead of the
+    original ``perm_dict`` at each pulled-out variable.
+    """
     if v.inv == 0:
         return perm_dict
     ret_dict = {}
@@ -406,6 +510,12 @@ schubmult_double_alt_from_elems = schubmult_double_alt_from_elems_backwards
 
 
 def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=None):
+    """``schubmult_double`` generalized to an arbitrary elementary-symmetric-like
+    ``elem_func``, via the ``theta``/v-path recursion (rather than ``pull_out_var``).
+
+    Dispatches to the compiled kernel when available, falling back to
+    ``_schubmult_double_from_elems_python``.
+    """
     if _accel.available and var2 is not None and var3 is not None and elem_func is not None:
         ret = _accel.schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func)
         if ret is not None:
@@ -414,6 +524,7 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
 
 
 def _schubmult_double_from_elems_python(perm_dict, v, var2=None, var3=None, elem_func=None):
+    """Pure-Python implementation of ``schubmult_double_from_elems``."""
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
@@ -478,6 +589,7 @@ def _schubmult_double_from_elems_python(perm_dict, v, var2=None, var3=None, elem
 
 
 def schubmult_double_down(perm_dict, v, var2=None, var3=None):
+    """Down (descent) variant of ``_schubmult_double_python``, using ``elem_sym_perms_op``."""
     vn1 = ~v
     th = vn1.theta()
     if len(th) == 0 or th[0] == 0:
@@ -530,6 +642,23 @@ def schubmult_double_down(perm_dict, v, var2=None, var3=None):
 
 
 def schub_coprod_double(mperm, indices, var2=None, var3=None):
+    """Coproduct of the double Schubert polynomial ``S_mperm`` restricted to the
+    variable split named by ``indices``.
+
+    Analogue of ``schub_coprod_py``: multiplies the Grassmannian permutation for
+    ``indices`` against ``mperm`` (via ``schubmult_double`` with a merged ``2N``
+    variable alphabet), splits each resulting permutation's window, and
+    substitutes the merged alphabet back to ``var2``/``var3``.
+
+    Args:
+        mperm: Permutation (or array-form list) to take the coproduct of.
+        indices: Iterable of 1-indexed positions selecting the variable split.
+        var2: Secondary alphabet for the first factor's variables.
+        var3: Secondary alphabet for the second factor's variables.
+
+    Returns:
+        dict: Mapping ``{(firstperm, secondperm): coeff}``.
+    """
     indices = sorted(indices)
     subs_dict_coprod = {}
     k = len(indices)

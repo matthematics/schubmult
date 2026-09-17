@@ -85,6 +85,9 @@ def chevalley_x_k(w, k, beta, n=None):
 
 
 def single_variable_groth(coeff_dict, varnum, beta):
+    """Multiply ``sum_u coeff_u G_u^(beta)`` by the single variable ``x_varnum``
+    (Grothendieck Chevalley formula), via ``chevalley_x_k``.
+    """
     ret = {}
     for u, coeff in coeff_dict.items():
         for v, c in chevalley_x_k(u, varnum, beta).items():
@@ -93,6 +96,11 @@ def single_variable_groth(coeff_dict, varnum, beta):
 
 
 def mult_poly_groth(coeff_dict, poly, var_x, beta):
+    """Multiply ``sum_u coeff_u G_u^(beta)`` by an arbitrary polynomial ``poly`` in ``var_x``.
+
+    Recurses over the ``Add``/``Mul``/``Pow`` structure of ``poly``, dispatching
+    single-variable leaves to ``single_variable_groth``.
+    """
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
     if var_x.index(poly) != -1:
