@@ -63,6 +63,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return self.perm.inv == 0 or (len(self.perm.descents()) == 1 and set(self.perm.trimcode).issubset({0, 1}))
 
     def left_squash(self, other_rc):
+        """Squash product with ``other_rc`` stacked to the left (via `AntiRCGraph.squash_product`)."""
         from .anti_rc_graph import AntiRCGraph
 
         assert len(other_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
@@ -122,7 +123,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return tensor.factors
 
     def left_squash_decomp(self):
-        """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
+        """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass (left variant of ``squash_decomp``)."""
         from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
 
         from .anti_rc_graph import AntiRCGraph
@@ -182,6 +183,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def is_full_grass(self):
+        """Whether ``perm`` is the identity or Grassmannian with descent at the last row."""
         return self.perm.inv == 0 or self.perm.descents() == {len(self) - 1}
 
     @property
@@ -202,19 +204,23 @@ class RCGraph(WCGraph, CrystalGraph):
 
 
     def loc_of_inversion(self, a, b):
+        """``(row, col)`` where the left-to-right inversion ``(a, b)`` sits, via a lookup over all inversions."""
         lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
         return lookup[(a, b)]
 
     def index_of_inversion(self, a, b):
+        """Position in `perm_word` of the left-to-right inversion ``(a, b)``, or ``-1`` if absent."""
         lookup = {self.left_to_right_inversion(i): i for i in range(self.perm.inv)}
         return lookup.get((a, b), -1)
 
     def as_reduced_compatible(self):
+        """Return ``(perm_word, compatible_sequence)`` where the sequence entry is each letter's row."""
         word = self.perm_word
         seq = tuple([self.left_to_right_inversion_coords(i)[0] for i in range(self.perm.inv)])
         return word, seq
 
     def little_bump_desc(self):
+        """Bump the RC graph at its last descent by one (normalizing first if the graph is too short)."""
         if self.perm.inv == 0:
             return self
         last_desc = max(self.perm.descents()) + 1
@@ -228,10 +234,14 @@ class RCGraph(WCGraph, CrystalGraph):
         return rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
 
     def inversions(self):
+        """All left-to-right inversion roots, in reading order."""
         return tuple([self.left_to_right_inversion(i) for i in range(self.perm.inv)])
 
     @property
     def vex(self):
+        """A vexillary representative in the same crystal component, obtained by iteratively
+        extending/zeroing rows until ``perm`` avoids the pattern ``2143``.
+        """
         if self.perm.inv == 0:
             return self
         prm = self.perm
@@ -260,6 +270,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return vex_rc
 
     def hw_tab_rep(self):
+        """``(highest_weight_rc, tableau)`` where ``tableau`` is the Yamanouchi tableau of the highest
+        weight's shape, reverse-raised back to ``self``.
+        """
         from schubmult import Plactic
 
         hw, raise_seq = self.to_highest_weight()
@@ -268,9 +281,11 @@ class RCGraph(WCGraph, CrystalGraph):
         return hw, tab.reverse_raise_seq(raise_seq)
 
     def hw_grass_rep(self):
+        """``(highest_weight_rc, grass)`` pairing the highest weight element with `grass`."""
         return self.to_highest_weight()[0], self.grass
 
     def all_chute_moves(self):
+        """All valid chute moves ``(start, end)`` available on this RC graph (see `ChuteMoveElement`)."""
         chute_moves = set()
         rc = self
         for row_num in range(len(self), 0, -1):
@@ -287,6 +302,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return chute_moves
 
     def chute_lower(self, row_num):
+        """Apply a chute move lowering the marked element from ``row_num`` into ``row_num - 1``, or ``None`` if invalid."""
         rc = self
         row_num = row_num + 1
         if row_num > len(self):
@@ -307,6 +323,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return None
 
     def chute_raise(self, row_num):
+        """Apply a chute move raising the marked element from ``row_num`` into ``row_num + 1``, or ``None`` if invalid."""
         rc = self
         if row_num >= len(self):
             return None
@@ -326,6 +343,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return None
 
     def to_top_rc(self):
+        """Push every element as far up (chute-raise) as possible; returns ``(rc, raise_seq)``."""
         rc = self
         found = True
         raise_seq = []
@@ -341,6 +359,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return rc, tuple(raise_seq)
 
     def to_bottom_rc(self):
+        """Push every element as far down (chute-lower) as possible; returns ``(rc, raise_seq)``."""
         rc = self
         found = True
         raise_seq = []
@@ -356,6 +375,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return rc, tuple(raise_seq)
 
     def all_inverse_chute_moves(self):
+        """All valid inverse chute moves ``(start, end)`` (the reverse direction of ``all_chute_moves``)."""
         chute_moves = set()
         rc = self
         for row_num in range(1, len(self)):
@@ -371,6 +391,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return chute_moves
 
     def to_lowest_weight_demaz(self):
+        """Lowest-weight element reached from ``self``'s highest weight by repeated Demazure lowering; ``(rc, raise_seq)``."""
         rc = self.to_highest_weight()[0]
         raise_seq = []
         is_any = True
@@ -488,6 +509,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @staticmethod
     def raise_seq_word(raise_seq):
+        """Collapse consecutive repeated entries out of a raising sequence."""
         last_elem = None
         wrd = []
         for i in raise_seq:
@@ -500,6 +522,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def grass(self):
+        """The Grassmannian RC graph with the same weight as ``self``'s highest weight, reverse-raised back to ``self``."""
         hw, raise_seq = self.to_highest_weight()
         the_weight = [*hw.length_vector]
         while len(the_weight) > len(self.perm.trimcode) and the_weight[-1] == 0:
@@ -510,6 +533,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return top_rc.reverse_raise_seq(raise_seq)
 
     def transition(self):
+        """One step of the Lascoux-Schutzenberger transition: exchange at the last descent and zero out
+        rows past ``perm``'s trimcode length.
+        """
         if len(self) == 0:
             return self
         if len(self[-1]) == 0:
@@ -523,6 +549,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return the_rc
 
     def little_bump(self, i=None, j=None):
+        """Bump the reduced word at the inversion ``(i, j)`` (default: the last-descent inversion) up by
+        one letter, repeatedly re-reducing until valid; the permutation is unchanged.
+        """
         if i is not None or j is not None:
             assert i is not None
             assert j is not None
@@ -545,6 +574,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return RCGraph.from_reduced_compatible(word, seq)
 
     def little_bump_down(self, i, j):
+        """Dual of ``little_bump``: bump the letter at inversion ``(i, j)`` down instead of up."""
         index_list = [ii for ii in range(len(self.perm_word)) if self.left_to_right_inversion(ii) == (i, j)]
         if len(index_list) == 0:
             raise ValueError("RC graph has no such inversion")
@@ -564,6 +594,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def from_reduced_compatible(cls, word, seq, length=None):
+        """Build an RC graph from a reduced word and its compatible sequence (row assignment per letter)."""
         rows = []
         for elem, row in zip(word, seq):
             while row > len(rows):
@@ -576,6 +607,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def from_wc_graph(cls, wc_graph: WCGraph) -> RCGraph:
+        """Reduce a `WCGraph` down to an `RCGraph` by canceling matching positive/negative inversion pairs."""
         working = cls(wc_graph)
         changed = True
         while changed:
@@ -599,10 +631,12 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cached_property
     def crystal_weight(self):
+        """Alias for ``length_vector``."""
         return self.length_vector
 
     # UNIQUE
     def tableau_decomp(self) -> tuple[NilPlactic, Plactic]:
+        """Split ``self`` into a tuple of RC graphs, one per column of descents (vertical cuts at each descent)."""
         descs = self.perm.descents()
         if len(descs) == 0:
             return (self,)
@@ -616,11 +650,13 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cached_property
     def sorted_length_vector(self):
+        """``length_vector`` sorted into weakly decreasing order."""
         return tuple(sorted(self.length_vector, reverse=True))
 
     @classmethod
     @cache
     def _extremal_weight(cls, hw_rc):
+        """Weight of the extremal (properly-sortable, minimal-partial-sum) element of ``hw_rc``'s full crystal."""
         import numpy as np
         properly_sortable = [rc for rc in hw_rc.full_crystal if rc.sorted_length_vector == hw_rc.length_vector]
         min_vec = min([(i, np.cumsum(properly_sortable[i].length_vector).tolist()) for i in range(len(properly_sortable))], key=lambda x: x[1])[0]
@@ -628,15 +664,18 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def extremal_weight(self):
+        """The extremal weight of ``self``'s crystal component (via ``_extremal_weight``)."""
         return RCGraph._extremal_weight(self.to_highest_weight()[0])
 
     @property
     def forest_invariant(self):
+        """The forest (indexed by ``omega_invariant``) attached to ``self`` under omega-insertion."""
         return self.omega_invariant[0]
 
     @property
     @cache
     def omega_invariant(self):
+        """Omega-insertion of the reversed ``perm_word`` (P-symbol data used for forest/K-theoretic invariants)."""
         from schubmult.combinatorics.indexed_forests import omega_insertion, word_to_pair_labeled
 
         word = list(reversed(self.perm_word))
@@ -644,6 +683,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return omega_insertion(word_to_pair_labeled(word))
 
     def w0_automorphism(self, n=None):
+        """Conjugate the reduced word by ``w0`` on ``n`` letters (or the minimal ``n`` fitting ``self``),
+        producing the RC graph for ``w0 * perm * w0`` on the same crystal-compatible footing.
+        """
         # from ..rings.combinatorial.eg_plactic_ring import EGPlacticRing
         if n is None:
             n = max(len(self), len(self.perm))
@@ -666,18 +708,23 @@ class RCGraph(WCGraph, CrystalGraph):
         return RCGraph.from_reduced_compatible(new_perm_word, compat_seq).resize(n + exceed)
 
     def antiaut(self):
+        """Convert to `AntiRCGraph` (the anti-orientation view)."""
         from .anti_rc_graph import AntiRCGraph
 
         return AntiRCGraph.from_rc_graph(self)
 
     @cached_property
     def forest_weight(self):
+        """``forest_invariant``'s composition, padded to ``len(self)`` (see `schubmult.combinatorics.indexed_forests`)."""
         from schubmult.utils.tuple_utils import pad_tuple
 
         return pad_tuple(self.forest_invariant.forest.code, len(self))
 
     @property
     def is_extremal(self) -> bool:
+        """Whether ``self`` is the (unique) extremal element of its Demazure crystal weight class:
+        weakly decreasing length vector matching the highest weight, minimal among ties by sorting-permutation length.
+        """
         if sorted(self.length_vector, reverse=True) != self.to_highest_weight()[0].length_vector:
             return False
         sorting_perm_self = Permutation.sorting_perm(self.length_vector, reverse=True)
@@ -716,6 +763,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def is_rc(self) -> bool:
+        """Whether every entry of row ``i`` (0-indexed) is ``>= i + 1`` (the basic RC graph shape constraint)."""
         for i, row in enumerate(self):
             for a in row:
                 if a < i + 1:
@@ -724,6 +772,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def is_valid(self) -> bool:
+        """Whether ``perm_word`` is reduced for ``perm`` and every entry respects the row-shape constraint."""
         if self.perm.inv != len(self.perm_word):
             return False
         if any(r <= index for index, row in enumerate(self) for r in row):
@@ -734,6 +783,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return True
 
     def shiftup(self, shift: int = 1, check_valid=True) -> RCGraph:
+        """Add ``shift`` to every entry of every row."""
         rc = self
         # if len(self) < len(self.perm.trimcode) + shift:
         #     rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
@@ -745,6 +795,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def right_root_at(self, i: int, j: int) -> tuple[int, int]:
+        """The positive root at grid position ``(i, j)``, transported to the right by the remaining word."""
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
         if len(self.perm_word) > 0:
@@ -764,6 +815,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def left_root_at(self, i: int, j: int) -> tuple[int, int] | None:
+        """The positive root at grid position ``(i, j)``, transported by everything to its left/above."""
         start_root = (i + j - 1, i + j)
         for j2 in range(j + 1, self.cols):
             if self[i - 1, j2 - 1]:
@@ -776,6 +828,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def inversion_label(self, i: int, j: int) -> int:
+        """Row where the inversion ``(i+1, j+1)`` is crossed (its \"label\" in the weak/Lehmer order sense)."""
         if i >= j:
             raise ValueError("i must be less than j")
         if self.perm[i] < self.perm[j]:
@@ -787,6 +840,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def lehmer_label(self, i: int, j: int) -> int:
+        """Rank of ``inversion_label(i, j)`` among the inversion labels of the roots ``(i', j)``, ``i' <= i``."""
         value = self.inversion_label(i, j)
         numeros = set(range(1, value + 1))
         for ip in range(i):
@@ -832,6 +886,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cached_property
     def perm_word(self) -> tuple[int, ...]:
+        """Concatenation of the rows, top to bottom: a reduced word for ``perm``."""
         ret = []
         for row in self:
             ret = [*ret, *row]
@@ -839,9 +894,14 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def reduced_word(self) -> tuple[int, ...]:
+        """Alias for ``perm_word``."""
         return self.perm_word
 
     def is_dom_perm_yamanouchi(self, dom_perm: Permutation, perm: Permutation) -> bool:
+        """Whether ``self`` (assumed to have permutation ``dom_perm``) matches the highest weight of the
+        Demazure-crystal tensor factor for the ``dom_perm``-part of the product ``S_self.perm * S_dom_perm``
+        landing on ``perm``, via matching P/weight tableaux against the principal RC graphs.
+        """
         from schubmult.rings.schubert.schubert_ring import Sx
 
         if (Sx(self.perm) * Sx(dom_perm)).get(perm, 0) == 0:
@@ -860,6 +920,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def shape(self) -> tuple[int, ...]:
+        """Row lengths of the Edelman-Greene P-tableau (``p_tableau``)."""
         P = self.edelman_greene()[0]
         return tuple(len(P[i]) for i in range(len(P)))
 
@@ -867,6 +928,7 @@ class RCGraph(WCGraph, CrystalGraph):
     # transpose is weight preserving
 
     def __invert__(self) -> RCGraph:
+        """RC graph for ``~perm``, transposed via toggling every marked cell to its mirror position."""
         new_rc = RCGraph([()] * self.cols)
         for i in range(1, self.rows + 1):
             for j in range(1, self.cols + 1):
@@ -875,14 +937,19 @@ class RCGraph(WCGraph, CrystalGraph):
         return new_rc
 
     def normalize(self) -> RCGraph:
+        """Resize to ``perm.max_descent`` rows (drop or extend trailing empty rows to the canonical length)."""
         return self.resize(self.perm.max_descent)
 
     def resize(self, new_length: int) -> RCGraph:
+        """Truncate (via ``rowrange``) or extend to exactly ``new_length`` rows."""
         if new_length < len(self):
             return self.rowrange(0, new_length)
         return self.extend(new_length - len(self))
 
     def edelman_greene(self) -> tuple[NilPlactic, Plactic]:
+        """Edelman-Greene correspondence: insert the inversions (in reverse reading order) to build the
+        ``(P, Q)`` pair of a nilCoxeter tableau and a plactic recording tableau.
+        """
         word1, word2 = (), ()
         index = 0
         for index, (row, col) in enumerate(list(reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]))):
@@ -896,6 +963,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return (NilPlactic(P), Plactic(Q))
 
     def __mul__(self, other: object) -> object:
+        """Multiply as elements of the `RCGraphRing` (delegates to that ring's product for `RCGraph` operands)."""
         if isinstance(other, RCGraph):
             from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 
@@ -907,22 +975,27 @@ class RCGraph(WCGraph, CrystalGraph):
         return NotImplemented
 
     def asdtype(self, cls: type) -> object:
+        """Convert to the combinatorial-ring element type ``cls`` (via ``cls.dtype().ring.from_rc_graph``)."""
         return cls.dtype().ring.from_rc_graph(self)
 
     def as_nil_hecke(self, x: object, y: object | None = None) -> object:
+        """Represent as a `NilHeckeRing` element: ``polyvalue(x, y) * R(perm)``."""
         R = NilHeckeRing(x)
         return self.polyvalue(x, y) * R(self.perm)
 
     @cache
     def has_element(self, i: int, j: int) -> bool:
+        """Whether row ``i`` (1-indexed) contains the reflection at column ``j`` (i.e. label ``i + j - 1``)."""
         return i <= len(self) and i + j - 1 in self[i - 1]
 
     @cached_property
     def length_vector(self) -> tuple[int]:
+        """Row lengths (the crystal weight vector)."""
         return tuple([len(row) for row in self])
 
     @cache
     def lehmer_partial_leq(self, other: RCGraph) -> bool:
+        """Whether every root's `lehmer_label` in ``self`` is ``<=`` the corresponding label in ``other``."""
         try:
             for i in range(self.perm.inv):
                 a, b = self.perm.right_root_at(i)
@@ -933,6 +1006,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return True
 
     def rowrange(self, start: int, end: int | None = None) -> RCGraph:
+        """Rows ``[start, end)`` as a fresh RC graph, entries shifted down by ``start``."""
         if not end:
             end = len(self)
         if start == end:
@@ -940,6 +1014,10 @@ class RCGraph(WCGraph, CrystalGraph):
         return self._rebuild([tuple([a - start for a in row]) for row in self[start:end]])
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False) -> Expr:
+        """Monomial (``y=None``), double (``y`` given), or beta-deformed Grothendieck contribution of this RC graph.
+
+        With ``crystal=True``, sums ``polyvalue`` over the whole crystal component instead of just ``self``.
+        """
         ret = S.One
         if crystal:
             ret = S.Zero
@@ -971,12 +1049,14 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph:  # pragma: no cover
+        """A uniformly random RC graph for ``perm`` with the given number of rows."""
         import random
 
         return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
 
     @classmethod
     def all_rcs_with_word(cls, perm: Permutation, word: tuple[int, ...]) -> set[RCGraph]:
+        """All RC graphs for ``perm`` whose ``perm_word`` equals ``word`` exactly."""
         return {rc for rc in RCGraph.all_rc_graphs(perm) if rc.perm_word == word}
 
     @classmethod
@@ -1010,6 +1090,10 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def all_rc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None, *, check_length=False) -> set[RCGraph]:
+        """All RC graphs for ``perm`` with ``length`` rows (default: ``len(perm.trimcode)``), optionally
+        restricted to a given ``weight`` (row-length vector). Recursively built via ``pull_out_var``
+        on the top variable; results are cached by ``(perm, length)`` / ``(perm, weight)``.
+        """
         if check_length and length > 0 and length < len(perm.trimcode):
             raise ValueError(f"Length must be at least the last descent of the permutation, permutation has {len(perm.trimcode)} rows and {perm=}, got {length=}")
         if length < 0:
@@ -1056,12 +1140,17 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def extend(self, extra_rows: int) -> RCGraph:
+        """Append ``extra_rows`` empty rows at the bottom."""
         return self._rebuild([*self, *tuple([()] * extra_rows)])
 
     def prepend(self, extra_rows: int) -> RCGraph:
+        """Insert ``extra_rows`` empty rows at the top (shifting existing entries up accordingly)."""
         return self._rebuild([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
 
     def _pieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None, left=False):
+        """Insert ``num_times`` new crossings into ``row``, tracking root pairings in ``dict_by_a``/``dict_by_b``
+        so `_pieri_rectify` can restore validity afterward; core worker of `pieri_insert`.
+        """
         working_rc = self
         if descent is not None and row > descent:
             raise ValueError("All rows must be less than or equal to descent")
@@ -1132,6 +1221,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return working_rc, new_reflections
 
     def _pieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None, left=False):
+        """Undo invalid crossings introduced by `_pieri_insert_row` by canceling paired roots row by row,
+        walking away from the insertion row until ``is_valid`` holds again.
+        """
         working_rc = self
         if working_rc.is_valid:
             return working_rc
@@ -1203,6 +1295,10 @@ class RCGraph(WCGraph, CrystalGraph):
 
     # VERIFY
     def pieri_insert(self, descent, rows, return_reflections=False, backwards=True, left=False):
+        """Insert one crossing per entry of ``rows`` (grouped by row) at the given ``descent``, rectifying
+        as needed to stay a valid RC graph; the Pieri-rule building block used by `zero_out_last_row`,
+        `pull_out_row`, and related transition-formula operations.
+        """
         dict_by_a = {}
         dict_by_b = {}
         reflection_rows = {}  # Track which row each reflection was added to
@@ -1242,6 +1338,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def weight(self) -> tuple[int, ...]:
+        """Flat weight sequence: row index (1-indexed) repeated once per crossing in that row."""
         wt = []
         for i, row in enumerate(self):
             wt.extend([i + 1] * len(row))
@@ -1249,6 +1346,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def perm(self) -> Permutation:
+        """The permutation induced by this RC graph: the reduced product of its reflections."""
         perm = Permutation([])
         for row in self:
             for p in row:
@@ -1257,6 +1355,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def hecke_perm(self) -> Permutation:
+        """The 0-Hecke (Demazure) product of the reflections, allowing non-length-additive steps."""
         perm = Permutation([])
         for row in self:
             for p in row:
@@ -1266,6 +1365,9 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def multiply_reps(cls, drep1, drep2):
+        """Multiply two dicts of ``{tuple-of-RCGraph: coeff}`` representations by squash-producting their
+        factors in size order, returning an `RCGraphRing` element.
+        """
         from schubmult import RCGraphRing
 
         r = RCGraphRing()
@@ -1294,6 +1396,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cached_property
     def cem_rep(self):
+        """``self``'s coefficient in the complete-elementary-monomial (CEM) basis expansion of its own permutation."""
         if len(self) == 0:
             return {(): 1}
         bas = RCGraph.in_CEM_basis(self.perm, len(self), tuple((~(self.perm.strict_mul_dominant(len(self)))).trimcode))
@@ -1302,6 +1405,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def custom_cem_rep(self, partition):
+        """Like ``cem_rep``, but expanding against an explicit dominant ``partition`` rather than the inferred one."""
         length = max(len(partition), partition[0])
         if length is None:
             length = len(self.perm)
@@ -1313,6 +1417,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def sem_rep(self, length=None):
+        """``custom_cem_rep`` specialized to the staircase partition ``w0(length).trimcode``."""
         if length is None:
             length = len(self.perm)
         if len(self) == 0:
@@ -1324,6 +1429,9 @@ class RCGraph(WCGraph, CrystalGraph):
     @classmethod
     @cache
     def in_CEM_basis(cls, perm: Permutation, length: int, partition: tuple[int] | None = None) -> dict[RCGraph, dict[tuple[RCGraph], int]]:
+        """Expand ``S_perm``'s complete-elementary-monomial (CEM) representation, restricted to the
+        pieces landing on RC graphs of the given ``length``: ``{rc: {tuple-of-elem-sym-RCGraphs: coeff}}``.
+        """
         import itertools
         import math
 
@@ -1383,6 +1491,7 @@ class RCGraph(WCGraph, CrystalGraph):
     @classmethod
     @cache
     def full_CEM(cls, perm: Permutation, length: int, partition: tuple[int] | None = None) -> dict[RCGraph, dict[tuple[RCGraph], int]]:
+        """Like ``in_CEM_basis`` but expanding against the full staircase-bounded strict dominant permutation."""
         import itertools
         import math
 
@@ -1440,6 +1549,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def full_double_elem_sym_squash(self, p, yvars, zvars):
+        """Sum ``double_elem_sym_squash(p, ...)`` over every elementary-symmetric RC graph of degree ``p``."""
         from ..rings.combinatorial.rc_graph_ring import RCGraphRing
 
         r = RCGraphRing()
@@ -1449,6 +1559,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return result
 
     def snap_qy(self):
+        """Merge adjacent rows where possible to reach a quasi-Yamanouchi representative, raising
+        ``ValueError`` if that's not achievable.
+        """
         for i in range(1, len(self)):
             if max(self[i], default=0) < min(self[i - 1], default=0) and min(self[i - 1], default=0) >= i + 1:
                 new_rc = [*self]
@@ -1460,6 +1573,9 @@ class RCGraph(WCGraph, CrystalGraph):
         raise ValueError("Could not snap to quasi-yamanouchi, should have been able to")
 
     def double_elem_rep(self, yvars, size):
+        """Express ``self`` in the double elementary-symmetric basis of `BoundedRCFactorAlgebra`, via its
+        (assumed unique) `full_CEM` decomposition, recursively correcting for lower-order terms.
+        """
         from ..rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
 
         r = BoundedRCFactorAlgebra()
@@ -1502,6 +1618,7 @@ class RCGraph(WCGraph, CrystalGraph):
         # return base_elem
 
     def double_elem_sym_squash(self, weight, _yvars, _zvars):
+        """Squash-product ``self`` with the elementary-symmetric RC graph of the given ``weight``."""
         from ..rings.combinatorial.rc_graph_ring import RCGraphRing
 
         r = RCGraphRing()
@@ -1577,11 +1694,13 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def elem_sym_rcs(cls, p, k, length=None, weight=None) -> set[RCGraph]:
+        """All RC graphs for the elementary-symmetric permutation ``uncode([0]*(k-p) + [1]*p)``."""
         if length is None:
             length = k
         return cls.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=length, weight=weight)
 
     def transpose(self, length: int | None = None) -> RCGraph:
+        """RC graph for ``~perm``, built by peeling diagonals off the end of each row."""
         newrc = []
 
         the_self = self
@@ -1632,6 +1751,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def from_array(cls, arr, min_length=None) -> RCGraph:
+        """Build an RC graph from a 2D object array (non-``None``/non-zero cells mark crossings)."""
         rows = []
         if min_length is None:
             min_length = arr.shape[0]
@@ -1647,9 +1767,11 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def one_row(cls, p: int) -> RCGraph:
+        """The single-row RC graph ``(p, p-1, ..., 1)`` (for the permutation with one nonzero code entry ``p``)."""
         return cls((tuple(range(p, 0, -1)),))
 
     def weak_order_leq(self, other: RCGraph) -> bool:
+        """Whether every root's `lehmer_label`/`inversion_label` in ``self`` is ``<=`` in ``other`` (weak order comparison)."""
         for i in range(self.perm.inv):
             a, b = self.perm.right_root_at(i)
             try:
@@ -1663,6 +1785,7 @@ class RCGraph(WCGraph, CrystalGraph):
     rc_cache = set()  # noqa: RUF012
 
     def toggle_ref_at(self, i: int, j: int) -> RCGraph:
+        """Add or remove the crossing at 1-indexed grid position ``(i, j)``."""
         if i <= 0 or j <= 0:
             raise IndexError()
         new_row = [*self[i - 1]]
@@ -1686,6 +1809,9 @@ class RCGraph(WCGraph, CrystalGraph):
     @classmethod
     @cache
     def principal_rc_factorization(cls, perm: Permutation) -> tuple[RCGraph]:
+        """Factor the principal RC graph of ``perm`` into a tuple of elementary-symmetric RC graphs,
+        one per nonzero code entry, peeled off from the top descent down.
+        """
         n = len(perm)
         length = n - 1
         if perm.inv == 0:
@@ -1716,6 +1842,10 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def zero_out_last_row(self) -> RCGraph:
+        """Drop the (empty) last row, exchanging descents down via `pieri_insert` so the permutation is preserved.
+
+        Core step of the Lascoux-Schutzenberger transition formula.
+        """
         # this is important!
         # transition formula
         # assert len(self.perm.trimcode) <= len(self), (
@@ -1746,6 +1876,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def zero_out_last_column(self, width) -> RCGraph:
+        """Transpose analogue of `zero_out_last_row`: drop the last column down to ``width``."""
         # this is important!
         # transition formula
         if width < len((~self.perm).trimcode):
@@ -1771,6 +1902,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return interim.transpose().resize(width - 1).transpose().resize(len(self))
 
     def zero_out_in_place(self) -> RCGraph:
+        """Normalize then repeatedly `zero_out_last_row`, restoring the original row count."""
         # this is important!
         # transition formula
         if len(self.perm.trimcode) <= len(self):
@@ -1780,6 +1912,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return norm.zero_out_last_row().resize(len(self))
 
     def alt_product(self, other):
+        """Alternate product of ``self`` and ``other`` (shifted up), searching the zero-action orbit of
+        ``self`` for representatives that stack validly with ``other``.
+        """
         zero_up = {self.normalize() if len(self) < len(self.perm.trimcode) else self}
         self_len = len(self)
         other_shifted = other.shiftup(self_len)
@@ -1796,9 +1931,13 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret_module
 
     def crystal_length(self) -> int:
+        """Number of rows."""
         return len(self)
 
     def lowering_operator(self, row: int) -> RCGraph | None:
+        """Crystal lowering operator ``f_row``: pair letters of row ``row`` with larger unpaired letters
+        of row ``row + 1``, move the least unpaired letter of ``row`` down if that stays a valid RC graph.
+        """
         # RF word is just the RC word backwards
         if row >= len(self):
             return None
@@ -1832,18 +1971,21 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret_rc
 
     def quasi_raising_operator(self, row: int) -> RCGraph | None:
+        """``raising_operator``, but only if it leaves the reduced word ``perm_word`` unchanged."""
         new_rc = self.raising_operator(row)
         if new_rc is not None and new_rc.perm_word != self.perm_word:
             return None
         return new_rc
 
     def quasi_lowering_operator(self, row: int) -> RCGraph | None:
+        """``lowering_operator``, but only if it leaves the reduced word ``perm_word`` unchanged."""
         new_rc = self.lowering_operator(row)
         if new_rc is not None and new_rc.perm_word != self.perm_word:
             return None
         return new_rc
 
     def raising_operator(self, row: int) -> RCGraph | None:
+        """Crystal raising operator ``e_row``, dual to ``lowering_operator``."""
         # RF word is just the RC word backwards
         if row >= len(self):
             return None
@@ -1899,6 +2041,9 @@ class RCGraph(WCGraph, CrystalGraph):
     #     return (front, back)
 
     def right_zero_act(self) -> set[RCGraph]:
+        """All RC graphs one row longer that reduce back to ``self`` under `zero_out_last_row`
+        (the covering set used to build the crystal upward).
+        """
         if self.perm.inv == 0:
             return {self._rebuild([*self, ()])}
 
@@ -1922,6 +2067,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def bisect_left_coords_index(self, row: int, col: int, lo: int = 0, hi: int | None = None) -> int:
+        """Binary search over ``perm_word`` positions for the insertion point of grid coordinate ``(row, col)``."""
         from bisect import bisect_left, bisect_right  # noqa: F401
 
         if hi is None:
@@ -1937,6 +2083,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return lo
 
     def exchange_property(self, descent: int, return_row: bool = False, left: bool = False) -> RCGraph | tuple[RCGraph, int]:
+        """Toggle off the crossing realizing the simple root ``(descent, descent + 1)``, per the exchange
+        property; optionally also return the row it was found in.
+        """
         for i in range(len(self.perm_word)):
             if not left:
                 a, b = self.left_to_right_inversion(i)
@@ -1954,14 +2103,17 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cache
     def left_to_right_inversion(self, index: int) -> tuple[int, int]:
+        """Positive root of the ``index``-th letter of ``perm_word``, transported to the right."""
         return self.right_root_at(*self.left_to_right_inversion_coords(index))
 
     @cache
     def left_to_right_left_inversion(self, index: int) -> tuple[int, int]:
+        """Positive root of the ``index``-th letter of ``perm_word``, transported to the left."""
         return self.left_root_at(*self.left_to_right_inversion_coords(index))
 
     @cache
     def left_to_right_inversion_coords(self, index: int) -> tuple[int, int]:
+        """Grid coordinates ``(row, col)`` of the ``index``-th letter of ``perm_word``."""
         if index < 0 or index >= len(self.perm_word):
             raise ValueError(f"Index {index} out of range {self.perm.inv}")
         index_find = 0
@@ -1975,6 +2127,9 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def principal_rc(cls, perm: Permutation, length: int | None = None) -> RCGraph:
+        """The canonical (dominant/staircase-filled) RC graph for ``perm``: row ``i`` is
+        ``(i + code[i], ..., i + 1)``.
+        """
         if length is None:
             length = len(perm.trimcode)
         cd = perm.trimcode
@@ -1987,18 +2142,24 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @cached_property
     def p_tableau(self) -> NilPlactic:
+        """Edelman-Greene ``P``-tableau (alias for ``edelman_greene()[0]``)."""
         return self.edelman_greene()[0]
 
     @cached_property
     def q_tableau(self) -> Plactic:
+        """Edelman-Greene ``Q``-tableau, recording tableau (alias for ``edelman_greene()[1]``)."""
         return self.edelman_greene()[1]
 
     @cached_property
     def weight_tableau(self) -> Plactic:
+        """Plactic tableau recording the RC graph's weight, via column Edelman-Greene RSK insertion."""
         nilp, plac = NilPlactic.ed_column_insert_rsk(self.perm_word, self.compatible_sequence)
         return plac
 
     def monk_insert(self, row):
+        """Insert a new crossing at ``row`` via the (equivariant) Monk rule, cascading corrections
+        upward through earlier rows as needed to stay valid.
+        """
         if row <= 0:
             raise ValueError("Row must be positive")
         if row > len(self):
@@ -2021,6 +2182,9 @@ class RCGraph(WCGraph, CrystalGraph):
         raise ValueError("Could not find place to insert")
 
     def huang_bump(self, a, b):
+        """Toggle off the inversion ``(a, b)`` and re-insert it one column to the right, rectifying any
+        resulting invalid crossings (a Huang-style bump used in transition-formula bijections).
+        """
         assert self.perm[a - 1] > self.perm[b - 1], f"{self=}, {a=}, {b=}"
         new_rc = self
         for i in range(self.perm.inv):
@@ -2080,6 +2244,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return self.product(other)
 
     def bpd_transpose(self) -> RCGraph:
+        """Transpose via the `BPD` model: convert to a bumpless pipe dream, transpose that, and convert back."""
         from .bpd import BPD
 
         ret = BPD.from_rc_graph(self).transpose().to_rc_graph()
@@ -2089,6 +2254,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def is_potential_coproduct(self, rc1: RCGraph, rc2: RCGraph) -> bool:
+        """Whether ``(rc1, rc2)`` could be the two factors of a coproduct term for ``self``: necessary
+        conditions on descents, Bruhat order, and row-length additivity, checked recursively on vertical cuts.
+        """
         if len(rc1) != len(self) or len(rc2) != len(self):
             return False
         if not self.perm.descents().issubset(rc1.perm.descents().union(rc2.perm.descents())):
@@ -2115,6 +2283,9 @@ class RCGraph(WCGraph, CrystalGraph):
         # self.rowrange(max_desc).is_potential_coproduct(rc1.rowrange(max_desc), rc2.rowrange(max_desc))
 
     def ring_act(self, elem: FreeAlgebraElement) -> dict[RCGraph, Expr]:
+        """Act on ``self`` by a `FreeAlgebraElement` (converted to the word basis), applying each word's
+        letters right to left via ``act``.
+        """
         if isinstance(elem, FreeAlgebraElement):
             wd_dict = elem.change_basis(WordBasis)
             ret = {}
@@ -2130,6 +2301,9 @@ class RCGraph(WCGraph, CrystalGraph):
         raise ValueError(f"Cannot act by {type(elem)} {elem=}")
 
     def act(self, p: int) -> set[RCGraph]:
+        """Act by the single free-algebra word letter ``p``: all RC graphs obtained by prepending a new
+        top row realizing the length-additive product ``uncode([p]) * perm``.
+        """
         pm = self.perm
         elem = FA(pm, len(self))
         bumpup = FA(uncode([p]), 1) * elem
@@ -2145,6 +2319,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def iterative_act(self, p: int, insert: bool = True) -> set[RCGraph]:
+        """Iterative implementation of ``act``, building up the new top row one letter at a time."""
         if p == 0:
             if insert:
                 return {self._rebuild([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
@@ -2171,29 +2346,36 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def __ge__(self, other: object) -> bool:
+        """``not (self < other)``."""
         return not (self < other)
 
     def __gt__(self, other: object) -> bool:
+        """``not (self <= other)``."""
         return not (self <= other)
 
     @property
     def inv(self) -> int:
+        """Length of ``perm``."""
         return self.perm.inv
 
     @property
     def rows(self) -> int:
+        """Number of rows."""
         return len(self)
 
     @property
     def width(self) -> int:
+        """Alias for ``cols``."""
         return self.cols
 
     @property
     def height(self) -> int:
+        """Alias for ``rows``."""
         return self.rows
 
     @property
     def compatible_sequence(self) -> tuple[int, ...]:
+        """Row index (1-indexed) repeated once per crossing in that row, in reading order (paired with ``perm_word``)."""
         seq = []
         for i in range(len(self)):
             for _ in range(len(self[i])):
@@ -2202,10 +2384,12 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def cols(self) -> int:
+        """Number of columns: ``len(perm) - 1``."""
         # return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
         return len(self.perm) - 1
 
     def leibniz_rep(self) -> tuple:
+        """Represent ``self`` as a tuple of permutations via repeated ``shiftcut``, one per row from the bottom."""
         if len(self) == 0:
             return ()
         w0 = Permutation.w0(len(self) + 1)
@@ -2214,6 +2398,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return (*cut_rc.leibniz_rep(), the_perm)
 
     def classify_demazure_crystal(self) -> tuple[tuple[int], Permutation]:
+        """``(highest_weight, sorting_perm)`` classifying ``self``'s Demazure crystal isomorphism class."""
         dominant_weight = self.to_highest_weight()[0].length_vector
         return dominant_weight, Permutation.sorting_perm(self.demazure_weight, reverse=True)
 
@@ -2225,6 +2410,7 @@ class RCGraph(WCGraph, CrystalGraph):
     @classmethod
     @cache
     def all_hw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
+        """All distinct highest-weight elements among the RC graphs for ``perm`` at ``length`` rows."""
         ret = set()
         for rc in cls.all_rc_graphs(perm, length, weight=weight):
             rc_hw, _ = rc.to_highest_weight()
@@ -2235,6 +2421,9 @@ class RCGraph(WCGraph, CrystalGraph):
     @classmethod
     @cache
     def all_forest_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
+        """All RC graphs whose `forest_weight` equals the composition ``comp`` (over every permutation
+        appearing in the forest-dual expansion of ``comp``).
+        """
         # return {rc for rc in cls.all_rc_graphs(uncode(comp), len(comp), weight=weight) if rc.forest_weight == comp}
         from schubmult.rings.free_algebra import ForestDual, SchubertBasis
 
@@ -2249,6 +2438,9 @@ class RCGraph(WCGraph, CrystalGraph):
     @classmethod
     @cache
     def all_key_rcs(cls, comp: tuple[int, ...], weight=None) -> set[RCGraph]:
+        """All RC graphs whose `extremal_weight` equals the composition ``comp`` (over every permutation
+        appearing in the key-dual expansion of ``comp``).
+        """
         from schubmult.rings.free_algebra import FreeAlgebra, KeyBasis, SchubertBasis
 
         ret_set = set()
@@ -2263,6 +2455,7 @@ class RCGraph(WCGraph, CrystalGraph):
     @classmethod
     @cache
     def all_lw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
+        """All distinct lowest-weight elements among the RC graphs for ``perm`` at ``length`` rows."""
         ret = set()
         for rc in cls.all_rc_graphs(perm, length, weight=weight):
             rc_lw, _ = rc.to_lowest_weight()
@@ -2271,9 +2464,13 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def shiftcut(self) -> RCGraph:
+        """Drop the bottom row and shift every remaining row down by one, discarding entries that would
+        become non-positive (companion step of ``leibniz_rep``).
+        """
         return RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
 
     def divdiff_desc(self, desc: int) -> set[RCGraph]:
+        """All RC graphs reachable from exchanging then lowering at descent ``desc`` (a single divided-difference step)."""
         ret = set()
         the_rc = self
         try:
@@ -2293,6 +2490,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def divdiff_perm(self, u: Permutation) -> set[RCGraph]:
+        """Apply the divided-difference operator for each simple reflection in a reduced word of ``u``
+        (from the top descent down), via repeated ``divdiff_desc``.
+        """
         v = self.perm
         perm2 = v * (~u)
         if perm2.inv != v.inv - u.inv:
@@ -2312,6 +2512,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def last_descent_strip(self) -> tuple[int, ...]:
+        """Peel off crossings at (or past) the last descent via ``exchange_property``; returns ``(rc, strip)``."""
         if self.perm.inv == 0:
             return ()
         last_desc = max(self.perm.descents()) + 1
@@ -2324,10 +2525,14 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @property
     def is_forest_rc(self) -> bool:
+        """Whether ``forest_weight`` matches ``length_vector`` (i.e. ``self`` already realizes its own forest weight)."""
         #return self.forest_invariant == RCGraph.principal_rc(self.perm, len(self)).forest_invariant
         return self.forest_weight == self.length_vector
 
     def pull_out_row(self, row: int, keep_size=False) -> tuple[tuple, RCGraph]:
+        """Remove all crossings of ``row`` (assumed a descent/empty row), reflowing the rows above via
+        `pieri_insert`/`_pieri_rectify` to preserve validity.
+        """
         # if row - 1 not in self.perm.descents():
         #     raise ValueError("Row not a descent")
         # if len(self[row - 1]) != 0:
@@ -2384,6 +2589,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def little_bump_zero(self):
+        """Bump the empty last-descent row by one, normalizing and recursing until the descent is fully cleared."""
         if self.perm.inv == 0:
             return self
         last_desc = max(self.perm.descents()) + 1
@@ -2402,6 +2608,9 @@ class RCGraph(WCGraph, CrystalGraph):
         return rc.little_bump_zero().resize(last_desc - 1)
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
+        """Dual Pieri expansion (RC graph analogue of `schubmult.mult.positivity.dualpieri`): peels one
+        column of variables at a time via `divdiff_perm`/`pull_out_row`.
+        """
         from schubmult.combinatorics.bpd import BPD  # noqa: F401
         from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
         from schubmult.utils.schub_lib import pull_out_var
@@ -2455,6 +2664,9 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @staticmethod
     def divdiff_act_dict(dct, *s_list) -> dict[RCGraph, Expr]:
+        """Apply `divdiff_desc` for each simple reflection index in ``s_list`` (right to left) to every
+        RC graph key of ``dct``, accumulating coefficients.
+        """
         ret = {**dct}
         for s in reversed(s_list):
             new_ret = {}
@@ -2465,6 +2677,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return ret
 
     def __getitem__(self, key: int | tuple[int, int]) -> tuple[int, ...] | int:
+        """``self[i]`` -> row ``i``; ``self[i, j]`` -> the crossing label at 0-indexed ``(i, j)`` or ``None``."""
         # FLIPPED FOR PRINTING
         if isinstance(key, int):
             return tuple(self)[key]
@@ -2485,6 +2698,7 @@ class RCGraph(WCGraph, CrystalGraph):
         raise ValueError(f"Bad indexing {key=}")
 
     def __lt__(self, other: object) -> bool:
+        """Compare first by ``perm.trimcode``, then lexicographically by inversion labels."""
         if not isinstance(other, RCGraph):
             return NotImplemented
         if self.perm.trimcode < other.perm.trimcode:
@@ -2501,15 +2715,20 @@ class RCGraph(WCGraph, CrystalGraph):
         return False
 
     def __le__(self, other: object) -> bool:
+        """``self < other or self == other``."""
         if not isinstance(other, RCGraph):
             return NotImplemented
         return self < other or self == other
 
     # WE CAN DO STUFF WITH THIS
     def weight_bump(self) -> RCGraph:
+        """Extend by one row and shift up by one (a crystal-structure-preserving perturbation, used by
+        `CrystalGraph.weight_reflection`'s fallback).
+        """
         return self.extend(1).shiftup(1)
 
     def inverse_crystal_product(self, other) -> RCGraph:
+        """Product with ``other`` in `RCGraphRing`, projecting each term to its crystal highest weight."""
         from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 
         rc_ring = RCGraphRing()
@@ -2530,6 +2749,9 @@ class RCGraph(WCGraph, CrystalGraph):
 
     @classmethod
     def monk_rc(cls, row, descent):
+        """The elementary-symmetric RC graph of degree 1 marking ``row`` among ``descent`` rows (used by
+        the double Monk-rule squash helpers).
+        """
         weight = [0] * descent
         weight[row - 1] = 1
         return next(iter(cls.all_rc_graphs(uncode([0] * (descent - 1) + [1]), descent, weight=tuple(weight))))
@@ -2572,6 +2794,7 @@ class RCGraph(WCGraph, CrystalGraph):
     #     return InverseRCGraph(self)
 
     def forest_poly_value(self, x: Sequence[Expr], y: Sequence[Expr] | None = None) -> Expr:
+        """Double polynomial value using the forest/vine-model column convention (``y`` indexed by inversion column)."""
         if y is None:
             return self.polyvalue(x)
         result = 1

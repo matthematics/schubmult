@@ -21,6 +21,9 @@ from .crystal_graph import CrystalGraph
 
 @cache
 def pivot_transition(perm2, target_d=None):
+    """Recursively apply `Permutation.pivot_transition` over every nonempty pivot subset until the
+    maximal corner drops to ``target_d`` (default: ``perm2.max_descent``); returns the set of results.
+    """
     build_groth = set()
     if target_d is None:
         d = perm2.max_descent
@@ -39,6 +42,7 @@ def pivot_transition(perm2, target_d=None):
 
 
 def _is_row_root(row: int, root: tuple[int, int]) -> bool:
+    """Whether ``root`` straddles ``row`` (``root[0] <= row < root[1]``), or ``row`` is ``None`` (always true)."""
     return row is None or (root[0] <= row and root[1] > row)
 
 
@@ -74,15 +78,18 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def args(self) -> tuple:
+        """Return args for sympy compatibility - prevents traversal into tuple contents."""
         return ()
 
     def _sympyrepr(self, printer=None) -> str:
+        """``repr``-style rendering used by sympy's printers."""
         rows = list(self)
         if printer is None:
             return f"WCGraph({rows!r})"
         return f"WCGraph({printer._print(rows)})"
 
     def __eq__(self, other: object) -> bool:
+        """Equal iff both are `WCGraph` with the same rows."""
         if not isinstance(other, WCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
@@ -91,6 +98,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return hash((tuple(self), "Tweezers"))
 
     def trans_co_pipe(self):
+        """The complementary graph on twice as many rows: mark every position ``(i+j, j)`` that is
+        empty in ``self``.
+        """
         # return self._rebuild([tuple(reversed([])) for i, row in enumerate(reversed(self))])
         new_wc = WCGraph([]).resize(2 * len(self))
         for i in range(1, self.rows + 1):
@@ -122,10 +132,12 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         pass
 
     def _rebuild(self, rows=()) -> WCGraph:
+        """Construct a fresh instance of this graph's concrete type from the given row data."""
         return type(self)(rows)
 
     @cached_property
     def perm_word(self) -> tuple[int, ...]:
+        """Concatenation of the rows, top to bottom (not necessarily reduced)."""
         ret = []
         for row in self:
             ret = [*ret, *row]
@@ -133,6 +145,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @cached_property
     def perm(self) -> Permutation:
+        """The permutation induced by this graph: the Demazure (0-Hecke) product of `perm_word`."""
         perm = Permutation([])
         for row in self:
             for p in row:
@@ -141,10 +154,12 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def hecke_perm(self) -> Permutation:
+        """Alias for `perm` (already a Hecke/Demazure product)."""
         return self.perm
 
     @property
     def is_rc(self) -> bool:
+        """Whether every entry of row ``i`` (0-indexed) is ``>= i + 1`` (the basic row-shape constraint)."""
         for i, row in enumerate(self):
             for a in row:
                 if a < i + 1:
@@ -153,10 +168,14 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def is_reduced(self):
+        """Whether ``perm_word`` has exactly ``perm.inv`` letters (no Hecke-cancelling excess)."""
         return len(self.perm_word) == self.perm.inv
 
     @property
     def is_valid(self) -> bool:
+        """Whether every row is strictly decreasing, respects the row-shape constraint, and the
+        compatible sequence/word pair is compatible.
+        """
         for i, row in enumerate(self):
             if any(a < i + 1 for a in row):
                 return False
@@ -167,20 +186,24 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return True
 
     def shiftup(self, shift: int = 1, check_valid=True) -> WCGraph:
+        """Add ``shift`` to every entry of every row."""
         ret = self._rebuild([tuple(a + shift for a in row) for row in self])
         if check_valid:
             assert ret.is_valid
         return ret
 
     def normalize(self) -> WCGraph:
+        """Resize to ``perm.max_descent`` rows."""
         return self.resize(self.perm.max_descent)
 
     def resize(self, new_length: int) -> WCGraph:
+        """Truncate (via ``rowrange``) or extend to exactly ``new_length`` rows."""
         if new_length < len(self):
             return self.rowrange(0, new_length)
         return self.extend(new_length - len(self))
 
     def rowrange(self, start: int, end: int | None = None) -> WCGraph:
+        """Rows ``[start, end)`` as a fresh graph, entries shifted down by ``start``."""
         if end is None:
             end = len(self)
         if start == end:
@@ -188,9 +211,11 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return self._rebuild([tuple(a - start for a in row) for row in self[start:end]])
 
     def extend(self, extra_rows: int) -> WCGraph:
+        """Append ``extra_rows`` empty rows at the bottom."""
         return self._rebuild([*self, *tuple([()] * extra_rows)])
 
     def toggle_ref_at(self, i: int, j: int) -> WCGraph:
+        """Add or remove the reflection at 1-indexed grid position ``(i, j)``."""
         if i <= 0 or j <= 0:
             raise IndexError()
         new_row = [*self[i - 1]]
@@ -207,14 +232,17 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @cache
     def has_element(self, i: int, j: int) -> bool:
+        """Whether row ``i`` (1-indexed) contains the reflection at column ``j`` (label ``i + j - 1``)."""
         return i <= len(self) and i + j - 1 in self[i - 1]
 
     @cached_property
     def length_vector(self) -> tuple[int, ...]:
+        """Row lengths."""
         return tuple(len(row) for row in self)
 
     @cached_property
     def weight(self) -> tuple[int, ...]:
+        """Flat weight sequence: row index (1-indexed) repeated once per reflection in that row."""
         wt = []
         for i, row in enumerate(self):
             wt.extend([i + 1] * len(row))
@@ -222,22 +250,27 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def rows(self) -> int:
+        """Number of rows."""
         return len(self)
 
     @property
     def cols(self) -> int:
+        """Number of columns: ``len(perm) - 1``."""
         return len(self.perm) - 1
 
     @property
     def width(self) -> int:
+        """Alias for ``cols``."""
         return self.cols
 
     @property
     def height(self) -> int:
+        """Alias for ``rows``."""
         return self.rows
 
     @cached_property
     def compatible_sequence(self) -> tuple[int, ...]:
+        """Row index (1-indexed) repeated once per reflection in that row, in reading order."""
         seq = []
         for i in range(len(self)):
             for _ in range(len(self[i])):
@@ -272,6 +305,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def is_principal(self) -> bool:
+        """Whether ``perm`` equals ``uncode(length_vector)`` (this graph realizes its own dominant weight)."""
         from schubmult.combinatorics.permutation import uncode
         return self.perm == uncode(self.length_vector)
 
@@ -316,6 +350,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         forest = weak_composition_to_indfor(comp)
 
         def labelings_below(node, min_value):
+            """All valid decreasing-labeling assignments for the subtree rooted at ``node``, with labels ``>= min_value``."""
             results = []
             for subset_size in range(1, node.rho - min_value + 2):
                 for subset in combinations(range(min_value, node.rho + 1), subset_size):
@@ -364,12 +399,14 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @cached_property
     def forest_weight(self):
+        """``forest_invariant``'s composition, padded to ``len(self)`` (see `schubmult.combinatorics.indexed_forests`)."""
         from schubmult.utils.tuple_utils import pad_tuple
 
         return pad_tuple(self.forest_invariant.forest.code, len(self))
 
     @property
     def grove_weight(self):
+        """Length vector of ``grove_invariant`` (the base member's forest weight)."""
         return self.grove_invariant.length_vector
 
     @property
@@ -408,16 +445,19 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @classmethod
     def one_row(cls, a: int) -> WCGraph:
+        """The single-row graph ``(a, a-1, ..., 1)``."""
         return cls([tuple(range(a, 0, -1))])
 
     @property
     @cache
     def omega_invariant(self):
+        """Omega-insertion of the reversed ``perm_word`` (P-symbol data used for forest/K-theoretic invariants)."""
         from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 
         word = list(reversed(self.perm_word))
 
         def word_to_pair_labeled(word):
+            """Attach a ``(letter, occurrence count)`` pair-label to each letter of ``word``, in order."""
             counts = {}
             out = []
             for a in word:
@@ -430,9 +470,11 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def forest_invariant(self):
+        """The forest attached to ``self`` under omega-insertion (first component of ``omega_invariant``)."""
         return self.omega_invariant[0]
 
     def flipped_co_wc(self):
+        """Reflect crossings through the anti-diagonal one row shorter than ``perm``'s length."""
         spet = self.resize(len(self.perm) - 1)
         refspet = []
         for i in range(1, spet.rows):
@@ -443,6 +485,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return refspet
 
     def to_reduced_compatible_set_sequence(self):
+        """Reduce ``perm_word`` to a genuine reduced word, grouping the compatible sequence values that
+        collapse onto each surviving root into label sets; returns ``(word, set_seq)``.
+        """
         word = []
         seq = self.compatible_sequence
         set_seq = []
@@ -462,6 +507,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @classmethod
     def _from_root_dict(cls, root_dict: dict[tuple[int, int], set[int]], length: int | None = None) -> WCGraph:
+        """Build a graph from a root -> label-set assignment, greedily peeling the largest label off a
+        simple root and transporting the rest (inverse of `to_reduced_compatible_set_sequence`-style data).
+        """
         ret_word = []
         compat_seq = []
         while root_dict:
@@ -478,6 +526,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @classmethod
     def from_reduced_compatible_set_sequence(cls, word, set_seq, length=None):
+        """Build a graph from a reduced word and a set-valued compatible sequence (via `_from_root_dict`)."""
         if len(word) != len(set_seq):
             raise ValueError("Word and set sequence must have the same length")
         working_set_seq = [set(s) for s in set_seq]
@@ -488,6 +537,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return cls._from_root_dict(root_dict, length=length)
 
     def _snap_reduced(self):
+        """Reduce to an `RCGraph` by taking the minimum label of each merged root set."""
         from .rc_graph import RCGraph
 
         red_word, seq = self.to_reduced_compatible_set_sequence()
@@ -508,6 +558,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     #     hw_wc = WCGraph.from_word
 
     def _snap_min(self):
+        """Collapse the Hecke recording tableau's set-valued labels to their minimum and uninsert."""
         from .increasing_tableau import IncreasingTableau
         from .set_valued_tableau import SetValuedTableau
         increasing_tab, recording_tab = self.hecke_invariant
@@ -516,6 +567,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @classmethod
     def from_word_compatible(cls, word, seq, length=None):
+        """Build a graph from a word and its (weakly increasing) compatible sequence, validating compatibility."""
         if length is None:
             length = max(seq, default=0)
         if length < max(seq, default=0):
@@ -532,6 +584,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return cls(tuple([tuple(row) for row in result]))
 
     def left_to_right_inversion_coords(self, index: int) -> tuple[int, int]:
+        """Grid coordinates ``(row, col)`` of the ``index``-th letter of ``perm_word``."""
         if index < 0 or index >= len(self.perm_word):
             raise ValueError(f"Index {index} out of range {self.perm.inv}")
         index_find = 0
@@ -544,14 +597,17 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return (i + 1, self[i][(index - index_find)] - i)
 
     def left_to_right_inversion(self, index: int) -> tuple[int, int]:
+        """Positive root of the ``index``-th letter of ``perm_word``, transported to the right."""
         coords = self.left_to_right_inversion_coords(index)
         return self.right_root_at(*coords)
 
     def left_to_right_hecke_inversion(self, index: int) -> tuple[int, int]:
+        """Like `left_to_right_inversion`, transported via the 0-Hecke (Demazure) product instead."""
         coords = self.left_to_right_inversion_coords(index)
         return self.right_hecke_root_at(*coords)
 
     def right_root_at(self, i: int, j: int) -> tuple[int, int]:
+        """The positive root at grid position ``(i, j)``, transported to the right by the remaining word."""
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
         if len(self.perm_word) > 0:
@@ -570,6 +626,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return result
 
     def right_hecke_root_at(self, i: int, j: int) -> tuple[int, int]:
+        """Like `right_root_at`, transported via the 0-Hecke (Demazure) product instead."""
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
         if len(self.perm_word) > 0:
@@ -588,10 +645,12 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return result
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False, minus_convention=False) -> Expr:
+        """Monomial (``y=None``), double (``y`` given), or beta-deformed Grothendieck contribution of this graph."""
         if crystal:
             raise NotImplementedError("WCGraph is not a crystal graph")
         ret = S.One
         def _combine(a, b, bet):
+            """Combine ``x_i`` and ``y_j`` under the chosen formal group law (``minus_convention`` or the additive-beta one)."""
             if minus_convention:
                 return (a - b)*(1 + bet * b)**(S.NegativeOne)
             return a + b + beta * a * b
@@ -615,6 +674,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def is_elem_sym(self) -> bool:
+        """Whether ``perm``'s trimcode is all zeros then all ones (elementary-symmetric shape)."""
         cd = self.perm.trimcode
         if len(cd) == 0:
             return True
@@ -625,10 +685,12 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         #return False
 
     def crystal_length(self) -> int:
+        """Number of rows."""
         return len(self)
 
     @property
     def hecke_invariant(self):
+        """Hecke column-insertion RSK pair ``(P, Q)`` for ``(compatible_sequence, reversed(perm_word))``."""
         from .increasing_tableau import IncreasingTableau
         return IncreasingTableau.hecke_column_insert_rsk(self.compatible_sequence, tuple(reversed(self.perm_word)))
 
@@ -660,12 +722,14 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @cache
     def _convert_elem_rc(self):
+        """Convert an elementary-symmetric-shaped graph to its (unique) `RCGraph` representative."""
         if self.is_elem_sym:
             from .rc_graph import RCGraph
             return next(iter(RCGraph.elem_sym_rcs(len(self.perm_word), self.perm.max_descent, weight=self.length_vector)))
         raise ValueError("Cannot convert non-elementary symmetric WCGraph to RCGraph")
 
     def elem_sym_wcs(p, k, weight=None):
+        """All WC graphs for the elementary-symmetric permutation ``uncode([0]*(k-p) + [1]*p)``."""
         from schubmult import uncode
         perm = uncode([0] * (k - p) + [1] * p)
         return WCGraph.all_wc_graphs(perm, k, weight=weight)
@@ -687,14 +751,17 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def crystal_weight(self) -> tuple[int, ...]:
+        """Alias for ``length_vector``."""
         return self.length_vector
 
     @property
     def excess(self):
+        """How far ``perm_word`` overshoots a reduced word: ``len(perm_word) - perm.inv``."""
         return len(self.perm_word) - self.perm.inv
 
 
     def raising_operator(self, i: int) -> WCGraph | None:
+        """Crystal raising operator ``e_i``, via the recording tableau of `hecke_invariant`."""
         from .increasing_tableau import IncreasingTableau
 
         if i <= 0 or i >= len(self):
@@ -717,6 +784,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return result
 
     def lowering_operator(self, i: int) -> WCGraph | None:
+        """Crystal lowering operator ``f_i``, dual to `raising_operator`."""
         from .increasing_tableau import IncreasingTableau
 
         if i <= 0 or i >= len(self):
@@ -741,15 +809,18 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     @classmethod
     @cache
     def _extremal_weight(cls, perm: Permutation, length, h_inv):
+        """Minimal length vector among all WC graphs for ``perm`` sharing the strong Hecke invariant ``h_inv``."""
         return min(wc.length_vector for wc in WCGraph.all_wc_graphs(perm, length) if wc.strong_hecke_invariant == h_inv)
 
     @cached_property
     def sorted_length_vector(self):
+        """``length_vector`` sorted into weakly decreasing order."""
         return tuple(sorted(self.length_vector, reverse=True))
 
 
     @property
     def extremal_weight(self):
+        """The extremal weight of ``self``'s strong-Hecke-invariant class, padded to ``len(self)``."""
         # from schubmult.utils.tuple_utils import pad_tuple
         from schubmult.utils.tuple_utils import pad_tuple
         return pad_tuple(WCGraph._extremal_weight(self.perm, len(self), self.strong_hecke_invariant), len(self))
@@ -757,6 +828,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     @classmethod
     @cache
     def groth_to_schub(cls, groth_perm: Permutation, beta: Expr):
+        """Expand the Grothendieck class of ``groth_perm`` in the (beta-deformed) Schubert basis, via
+        co-pipe-dreams of every WC graph for ``groth_perm``.
+        """
         from .pipe_dream import PipeDream
 
         boip = WCGraph.all_wc_graphs(groth_perm, len(groth_perm))
@@ -772,6 +846,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     @classmethod
     @cache
     def schub_to_groth(cls, schub_perm: Permutation, beta: Expr):
+        """Expand the Schubert class of ``schub_perm`` in the (beta-deformed) Grothendieck basis, via
+        co-pipe-dreams of every RC graph for ``schub_perm``.
+        """
         from .pipe_dream import PipeDream
         from .rc_graph import RCGraph
 
@@ -787,6 +864,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     @classmethod
     @cache
     def grove_to_forest(cls, comp, beta: Expr):
+        """Expand the grove class of composition ``comp`` in the forest-weight basis, via co-pipe-dreams
+        of every WC graph in the grove.
+        """
         from .pipe_dream import PipeDream
 
         boip = WCGraph.grove_wcs(comp, len(comp))
@@ -801,6 +881,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @cache
     def bisect_left_coords_index(self, row: int, col: int, lo: int = 0, hi: int | None = None) -> int:
+        """Binary search over ``perm_word`` positions for the insertion point of grid coordinate ``(row, col)``."""
         from bisect import bisect_left, bisect_right  # noqa: F401
 
         if hi is None:
@@ -816,6 +897,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return lo
 
     def vertical_cut(self, row: int) -> tuple[WCGraph, WCGraph]:
+        """Split at ``row`` into two graphs: ``(front, back)`` with ``front`` zeroed down to ``row`` rows."""
         if row < 0:
             raise ValueError("Row out of range")
         if row == 0:
@@ -836,6 +918,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return (front, back)
 
     def disjoint_union(self, rc: WCGraph) -> WCGraph:
+        """Stack ``rc`` beside ``self`` (shifted so their reflections don't collide), same row count."""
         if len(self) != len(rc):
             raise ValueError(f"{type(self).__name__}s must have the same number of rows")
         if self.perm.inv == 0:
@@ -848,6 +931,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def is_quasi_yamanouchi(self) -> bool:
+        """Whether no row can be merged into the row above it (a normal-form condition for `dst`)."""
         for i in range(1, len(self)):
             if max(self[i], default=0) <= min(self[i - 1], default=0) and min(self[i - 1], default=0) >= i + 1:
                 return False
@@ -855,6 +939,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @property
     def dst(self):
+        """Merge mergeable adjacent rows until reaching a quasi-Yamanouchi (\"dominant sorting\"-normalized) form."""
         if self.is_quasi_yamanouchi:
             return self
         rows = [*self]
@@ -874,6 +959,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @cache
     def squash_product(self, rc: WCGraph) -> WCGraph:
+        """Disjoint-union ``self`` and ``rc``, then repeatedly `zero_out_last_row` back down to ``len(self)`` rows."""
         combined_rc = self.disjoint_union(rc)
         while len(combined_rc) > len(self):
             combined_rc = combined_rc.zero_out_last_row()
@@ -903,6 +989,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     _z_cache: ClassVar[dict[WCGraph, set[WCGraph]]] = {}
 
     def right_zero_act(self) -> set[WCGraph]:
+        """All WC graphs one row longer that reduce back to ``self`` under `zero_out_last_row`
+        (the covering set used to build the crystal upward).
+        """
         from schubmult import AGx, uncode
         if self.perm.inv == 0:
             return {self._rebuild([*self, ()])}
@@ -952,6 +1041,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @classmethod
     def principal_wc(cls, perm, length):
+        """The canonical WC graph for ``perm``: the principal RC graph viewed as a `WCGraph`."""
         from schubmult.combinatorics.rc_graph import RCGraph
         return cls(RCGraph.principal_rc(perm, length))
 
@@ -984,6 +1074,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return ret_module
 
     def _upieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None, left=False):
+        """Insert ``num_times`` new crossings into ``row``, tracking root pairings in ``dict_by_a``/``dict_by_b``
+        so `_upieri_rectify` can restore validity afterward; WCGraph analogue of `RCGraph._pieri_insert_row`.
+        """
         working_rc = self
         if descent is not None and row > descent:
             raise ValueError("All rows must be less than or equal to descent")
@@ -1054,6 +1147,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return working_rc, new_reflections
 
     def _upieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None, left=False):
+        """Undo invalid crossings introduced by `_upieri_insert_row`; WCGraph analogue of `RCGraph._pieri_rectify`."""
         working_rc = self
         if working_rc.is_valid:
             return working_rc
@@ -1125,6 +1219,9 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     # VERIFY
     def upieri_insert(self, descent, rows, return_reflections=False, backwards=True, left=False):
+        """Insert one crossing per entry of ``rows`` at the given ``descent``, rectifying as needed;
+        WCGraph analogue of `RCGraph.pieri_insert`.
+        """
         dict_by_a = {}
         dict_by_b = {}
         reflection_rows = {}  # Track which row each reflection was added to
@@ -1164,6 +1261,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @staticmethod
     def _strict_decreasing_reflection_rows(max_reflection: int, k: int) -> tuple[tuple[int, ...], ...]:
+        """All strictly decreasing ``k``-subsets of ``{1, ..., max_reflection}`` (candidate WCGraph rows)."""
         if k < 0:
             raise ValueError("k must be nonnegative")
         if k == 0:
@@ -1177,6 +1275,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
     @staticmethod
     @cache
     def _solve_shifted_right_hecke_factors(w_prime: Permutation, w: Permutation) -> tuple[Permutation, ...]:
+        """All ``wpp`` with ``w_prime @ wpp.shiftup(1) == w`` (brute force over ``S_{n-1}``); used by `pull_out_var_hecke`."""
         n = len(w)
         if n == 0:
             return (Permutation([]),)
@@ -1274,6 +1373,12 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
 
     @classmethod
     def all_wc_graphs(cls, perm: Permutation, length: int | None = None, weight: tuple[int, ...] | None = None, *, check_length=False, do_cache=True) -> set[WCGraph]:
+        """All WC graphs for ``perm`` with ``length`` rows (default: ``len(perm.trimcode)``), optionally
+        restricted to a given ``weight``. Recursively built via ``pull_out_var`` on the top variable,
+        enumerating every addable-descent row via a stack-based search; results are cached by
+        ``(perm, length)``/``(perm, weight)`` unless ``do_cache=False``. See also the reference
+        (slower) implementation `all_wc_graphs_slow`.
+        """
         from schubmult.utils.schub_lib import pull_out_var
         # print(f"{weight=}")
         if check_length and length is not None and (length > 0 and length < len(perm.trimcode)):
@@ -1363,6 +1468,7 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return ret
 
     def __getitem__(self, key: int | tuple[int, int]) -> tuple[int, ...] | int:
+        """``self[i]`` -> row ``i``; ``self[i, j]`` -> the crossing label at 0-indexed ``(i, j)`` or ``None``."""
         if isinstance(key, int):
             return tuple(self)[key]
         if isinstance(key, tuple):

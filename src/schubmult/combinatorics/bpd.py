@@ -58,6 +58,7 @@ class TileType(IntEnum):
         raise ValueError(f"Cannot convert TileType {self} to a Tile object.")
 
     def __str__(self) -> str:
+        """Single-character display glyph for the tile."""
         symbols = {TileType.BLANK: "▢", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.BUMP: "╬", TileType.TBD: "?"}
         return symbols.get(self, "?")
 
@@ -164,6 +165,7 @@ def _invalidate_grid(grid: np.ndarray) -> None:
 
 
 def _display_grid(grid: np.ndarray) -> str:
+    """Print a grid of `TileType` values using their glyphs."""
     rows = ["".join(str(TileType(grid[i, j])) for j in range(grid.shape[1])) for i in range(grid.shape[0])]
     print("\n".join(rows))
 
@@ -193,6 +195,7 @@ def _all_asms_data(n: int) -> tuple[tuple[tuple[int, ...], ...], ...]:
     results: list[tuple[tuple[int, ...], ...]] = []
 
     def recurse(row_idx: int, col_prefix: tuple[int, ...], built_rows: tuple[tuple[int, ...], ...]) -> None:
+        """Backtracking search over ASM row patterns, tracking the running column sums in ``col_prefix``."""
         if row_idx == n:
             if all(v == 1 for v in col_prefix):
                 results.append(built_rows)
@@ -238,6 +241,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self.build()
 
     def as_planar_history(self) -> PlanarHistory:
+        """Convert to a `PlanarHistory` grid of `Tile` objects (via `TileType.as_tile`)."""
         def _map_tile(t: TileType) -> Tile:
             return t.as_tile()
         new_grid = np.empty((self._grid.shape[0], self._grid.shape[1]), dtype=object)
@@ -246,6 +250,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
 
     def _invalidate_cache(self):
+        """Reset cached permutation/validity/word data (called after mutating the grid)."""
         self._perm = None
         self._valid = None
         self._word = None
@@ -253,10 +258,12 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @property
     def rows(self) -> int:
+        """Number of rows."""
         return self._grid.shape[0]
 
     @property
     def cols(self) -> int:
+        """Number of columns."""
         return self._grid.shape[1]
 
     _bpd_cache = {}  # noqa: RUF012
@@ -266,11 +273,17 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @classmethod
     def clear_unreduced_cache(cls) -> None:
+        """Clear the memoization caches used by `all_unreduced_bpds`."""
         cls._unreduced_bpd_cache.clear()
         cls._unreduced_cache_by_weight.clear()
 
     @classmethod
     def all_bpds(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None) -> set[BPD]:
+        """All (reduced) BPDs for ``w`` with ``length`` rows, optionally restricted to a given ``weight``.
+
+        Built recursively from Bruhat paths (`pull_out_var` chains) via the nested ``bruhat_bpd`` helper;
+        results are cached by ``(w, length)``/``(w, weight)``.
+        """
         if weight and len(weight) != length:
             raise ValueError("Weight must have length equal to the number of rows")
         if weight:
@@ -298,6 +311,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         ret = set()
         def bruhat_bpd(w):
+            """Enumerate Bruhat paths down from ``w`` to the identity, adding the resulting BPD at each leaf."""
             bpath = []
             w2 = w
             stack = [(w2, bpath, len(w))]
@@ -371,6 +385,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     _TBD_LOOKUP = None
 
     def delete_top_row(self):
+        """Remove the top row, first popping it off with `pop_op` until it's exhausted."""
         the_bpd = self
 
         while True:
@@ -383,6 +398,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 return BPD(new_grid)
 
     def delete_row(self, row: int) -> BPD:
+        """Remove ``row`` by tracing its pipe out to the boundary and dropping the corresponding grid row/column."""
         new_grid = self._grid.copy()
         col = self.cols - 1
         current_row = row - 1
@@ -417,6 +433,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return ret
 
     def prepend_row(self, value_of_row: int) -> BPD:
+        """Insert a new top row realizing the given permutation value, growing the permutation by one."""
         the_self = self.resize(len(self) + 1)
         new_grid = the_self._grid.copy()
         new_grid = np.resize(new_grid, (the_self.rows, self.cols + 1))
@@ -555,6 +572,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     # return BPD(new_grid)
 
     def append(self, other: BPD) -> BPD:
+        """Stack ``other`` below ``self`` (analogous to `RCGraph.product` but on BPD grids), tracing
+        pipes across the boundary to resolve the joining tiles.
+        """
         perm = self.perm * other.perm.shiftup(self.rows)
         new_grid = np.full((self.rows + other.rows, max(self.cols, len(perm))), TileType.TBD, dtype=TileType)
         solf = self.resize(new_grid.shape[1])
@@ -792,6 +812,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     #     return ret
 
     def to_bruhat_path(self):
+        """Recover the Bruhat path (one permutation per row cut) that produces this BPD via `from_bruhat_path`."""
         n = len(self.perm)
         bigself = self.resize(n)
         return tuple([bigself.resize(i).perm * Permutation.w0(n - i).shiftup(i) for i in range(n - 1, -1, -1)])
@@ -1097,6 +1118,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self._perm
 
     def co_bpd(self):
+        """The complementary BPD: swap HORIZ<->CROSS and VERT<->BLANK, reading rows bottom to top."""
         new_grid = self._grid.copy()
         mapping = {
             TileType.HORIZ: TileType.CROSS,
@@ -1114,6 +1136,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     @classmethod
     @cache
     def groth_to_schub(cls, groth_perm: Permutation, beta):
+        """Expand the Grothendieck class of ``groth_perm`` in the (beta-deformed) Schubert basis, by
+        taking the co-BPD of every unreduced BPD and keeping the reduced results.
+        """
         boip = BPD.all_unreduced_bpds(groth_perm, len(groth_perm))
         bods = [b.co_bpd() for b in boip]
         spits = [bpd.perm*Permutation.w0(bpd.rows) for bpd in bods if bpd.is_reduced]
@@ -1210,6 +1235,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         grid = np.full((n, n), fill_value=TileType.TBD, dtype=TileType)
 
         def asm_tile(i, j):
+            """Tile type at ``(i, j)`` for an already-zero ASM entry, inferred from the corner-sum pattern."""
             if corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 2:
                 return TileType.CROSS
             if corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 0:
@@ -1229,6 +1255,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return cls(grid)
 
     def to_asm(self):
+        """Convert to its alternating sign matrix (``+1``/``-1`` at SE/NW elbows, ``0`` elsewhere)."""
         to_trans = self.resize(len(self.perm))
         n = max(to_trans.rows, to_trans.cols)
         asm = np.full(shape=(n, n), fill_value=0, dtype=int)
@@ -1246,6 +1273,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     @classmethod
     @cache
     def rothe_bpd(cls, perm: Permutation, num_rows: int | None = None) -> BPD:
+        """The canonical Rothe BPD for ``perm`` (crossings exactly at the Rothe diagram cells)."""
         if num_rows is None:
             num_rows = len(perm)
         n = max(num_rows, len(perm))
@@ -1519,6 +1547,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     #     return up_r + 1, right_r + 1
 
     def trace_pipe(self, i: int, j: int, direction: str | None = None) -> int | None:
+        """Follow the pipe through cell ``(i, j)`` (entering from ``direction``) out to a grid boundary,
+        returning the column permutation value it exits at.
+        """
         if self[i, j] == TileType.ELBOW_NW:
             if direction == "left":
                 return None
@@ -1558,18 +1589,23 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}\n{self=}")
 
     def all_se_elbows(self) -> set[tuple[int, int]]:
+        """All ``(row, col)`` positions holding an SE-elbow tile."""
         return self.all_tiles_of_type(TileType.ELBOW_SE)
 
     def all_nw_elbows(self) -> set[tuple[int, int]]:
+        """All ``(row, col)`` positions holding an NW-elbow tile."""
         return self.all_tiles_of_type(TileType.ELBOW_NW)
 
     def all_blanks(self) -> set[tuple[int, int]]:
+        """All ``(row, col)`` positions holding a blank tile."""
         return self.all_tiles_of_type(TileType.BLANK)
 
     def all_crossings(self) -> set[tuple[int, int]]:
+        """All ``(row, col)`` positions holding a crossing tile."""
         return self.all_tiles_of_type(TileType.CROSS)
 
     def all_tiles_of_type(self, tile_type: TileType) -> set[tuple[int, int]]:
+        """All ``(row, col)`` positions matching ``tile_type`` (or any type in an iterable of types)."""
         if isinstance(tile_type, (list, tuple)):
             result = set()
             for t in tile_type:
@@ -1578,6 +1614,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return set({(int(i), int(j)) for i, j in zip(*np.where(self._grid == tile_type))})
 
     def droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
+        """All valid droop moves ``((elbow_pos), (blank_pos))``: legal (SE-elbow, blank) pairs with no
+        blocking elbow/bump strictly between them.
+        """
         import itertools
 
         droop_moves = set()
@@ -1593,6 +1632,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return droop_moves
 
     def min_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
+        """The minimal (nearest-blank) droop move available from each SE-elbow/bump, if any."""
         droop_moves = set()
         for a, b in self.all_tiles_of_type((TileType.ELBOW_SE, TileType.BUMP)):
             # Find min x coordinate in column b where tile is not CROSS and x > a
@@ -1611,6 +1651,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return droop_moves
 
     def do_min_droop_move(self, move: tuple[tuple[int, int], tuple[int, int]]) -> BPD:
+        """Apply a minimal droop move (from `min_droop_moves`), which may leave a bump tile at the corners."""
         D = self.copy()
         (ri, rj) = move[0]
         (bi, bj) = move[1]
@@ -1646,6 +1687,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return D
 
     def do_droop_move(self, move: tuple[tuple[int, int], tuple[int, int]]) -> BPD:
+        """Apply a droop move (from `droop_moves`): slide the SE-elbow down-right into the blank corner."""
         D = self.copy()
         (ri, rj) = move[0]
         (bi, bj) = move[1]
@@ -1679,6 +1721,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return D
 
     def huang_bump(self, a, b):
+        """Mark the crossing at inversion ``(a, b)`` as a bump and propagate via `_monk_iterate` (BPD
+        analogue of `RCGraph.huang_bump`).
+        """
         # perm_inverse = ~self.perm
         working_bpd = self.copy()  # resize(len(self.perm))
         the_cross_list = [(i, j) for (i, j) in working_bpd.all_crossings() if working_bpd.right_root_at(i, j) == (a, b)]
@@ -1691,6 +1736,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @classmethod
     def random_bpd(cls, perm, num_rows):
+        """A uniformly random BPD for ``perm`` with ``num_rows`` rows."""
         import random
 
         return random.choice(list(cls.all_bpds(perm, num_rows)))
@@ -1707,6 +1753,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return working_bpd._monk_iterate(x, y, row, self.perm[row - 1]).resize(max(row, self.rows))
 
     def _monk_iterate(self, x, y, row, row_val) -> BPD:
+        """Shared worker for `huang_bump`/`monk_insert`: repeatedly apply the minimal droop move at the
+        marked position, resolving bump collisions, until a genuine crossing is created.
+        """
         x_iter, y_iter = x, y
         working_bpd = self.copy()
         while True:
@@ -1741,6 +1790,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return working_bpd
 
     def normalize(self) -> BPD:
+        """Not yet implemented; intended to trim/pad to the canonical ``len(perm)`` x ``len(perm)`` size."""
         raise NotImplementedError("normalize method is not implemented yet")
         # if len(self) == len(self.perm):
         #     if len(self.perm) == self.cols:
@@ -1763,6 +1813,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # return new_bpd
 
     def pop_op(self) -> tuple[BPD, tuple[int, int]]:
+        """Remove one inversion by the Bergeron-Billey \"pop\" operation (droop the first blank tile
+        down-right through the grid); returns ``(new_bpd, (col, row))`` of the popped position.
+        """
         # --- STEP 0 --- #
         # if len(self) < len(self.perm):
         #     # D = self.normalize()
@@ -1883,6 +1936,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return D, (int(a + 1), int(r + 1))
 
     def column_perm_at_row(self, row: int) -> Permutation:
+        """Permutation obtained by tracing every pipe entering ``row`` from below out to the bottom boundary."""
         build_perm = []
         for col in range(self.cols):
             if self[row, col].entrance_from_bottom:
@@ -1895,6 +1949,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return Permutation.from_partial(build_perm)
 
     def resize(self, new_num_rows: int, new_num_cols: int | None = None) -> BPD:
+        """Grow or shrink to ``new_num_rows`` rows, filling new rows from the Rothe BPD of ``perm``."""
         self._perm = None  # Invalidate cached permutation
 
         if new_num_rows > self.rows:
@@ -1940,6 +1995,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return new_bpd
 
     def transpose(self) -> BPD:
+        """BPD for ``~perm``: transpose the grid and swap HORIZ/VERT tiles."""
         self_n = self.resize(len(self.perm))
         t_grid = self_n._grid.T
         new_grid = t_grid.copy()
@@ -1953,6 +2009,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @classmethod
     def from_rc_graph(cls, rc_graph) -> BPD:
+        """Build the BPD corresponding to an `RCGraph`, via a sequence of `inverse_pop_op` calls
+        (one per inversion, in reverse reading order).
+        """
         if cls.DEBUG:
             assert len(rc_graph.perm.trimcode) <= len(rc_graph), f"RC graph permutation length exceeds RC graph size: {rc_graph.perm} vs {len(rc_graph)}"
             assert rc_graph.perm.inv == sum(len(rc_graph[i]) for i in range(len(rc_graph))), f"RC graph permutation inversion count does not match RC graph crossings: {rc_graph.perm} vs {rc_graph}"
@@ -2046,6 +2105,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.product(other)
 
     def inverse_pop_op(self, *interlaced_rc) -> BPD:
+        """Inverse of `pop_op`: insert an inversion at ``(col, row)`` pairs, working through each in turn."""
         if self.rows < len(self.perm):
             D = self.resize(len(self.perm))
         else:
@@ -2163,12 +2223,14 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @property
     def is_reduced(self):
+        """Whether ``self`` is valid and its length vector sums to ``perm.inv`` (no extraneous crossings)."""
         if not self.is_valid:
             return False
         return self.perm.inv == np.sum(self.length_vector)
 
     @cache
     def as_reduced_compatible(self):
+        """``((col, row), ...)`` pairs recovered by repeatedly applying `pop_op` down to the identity (reversed)."""
         if not self.is_valid:
             raise ValueError("BPD is not valid, cannot compute reduced compatible sequence")
         if not self.is_reduced:
@@ -2197,15 +2259,20 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self.build()
 
     def zero_out_last_row(self) -> BPD:
+        """Drop the last row (`resize` to one fewer row)."""
         return self.resize(self.rows - 1)
 
     def set_tile(self, i: int, j: int, tile_type: TileType) -> None:
+        """Return a copy with the tile at ``(i, j)`` set to ``tile_type``."""
         new_bpd = self.copy()
         new_bpd._grid[i, j] = tile_type
         new_bpd.rebuild()
         return new_bpd
 
     def right_zero_act(self) -> set[BPD]:
+        """All BPDs one row longer that reduce back to ``self`` under `zero_out_last_row`
+        (enumerated by trying every subset of new-row crossings and keeping the valid, reduced ones).
+        """
         # # find crosses, untransition them
         if self._unzero_cache is not None:
             return self._unzero_cache
@@ -2256,6 +2323,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return results
 
     def set_tiles(self, a, b, value: TileType) -> None:
+        """Return a copy with the tile at ``(a, b)`` set to ``value`` (alias-style variant of ``set_tile``)."""
         ret = self.copy()
         ret._grid[a, b] = value
         ret.rebuild()
