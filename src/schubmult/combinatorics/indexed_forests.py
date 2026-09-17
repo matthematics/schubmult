@@ -1,3 +1,12 @@
+"""Indexed forests: binary-search-tree forests indexed by a composition (via the Thompson
+monoid factorization), used for the forest basis / forest Schubert-polynomial model
+(``schubmult._scripts.forest_*`` research scripts and `schubmult.rings.free_algebra.forest_basis`).
+
+Includes `Node`/`IndexedForest` (the forests themselves), `ParallelInjLetter`/`letterpair`
+(parallel-injection alphabet used by omega-insertion), and `LabeledForest`/`DecLabeling`/`LBS`
+(labelings of a forest's nodes).
+"""
+
 from dataclasses import dataclass
 
 from schubmult import FreeAlgebra, WordBasis
@@ -15,6 +24,10 @@ def _eq_except_trailing_zeros(cd1, cd2):
 
 
 class Node:
+    """A node of an indexed forest's binary search tree: an ``index`` (BST key), optional
+    ``label``, and ``left``/``right`` children.
+    """
+
     def __init__(self, index, label=None):
         self.index = index
         self.label = label
@@ -69,6 +82,10 @@ class Node:
 
 
 class IndexedForest:
+    """A forest of `Node` binary search trees, indexed by a composition (``code``) via the
+    Thompson monoid factorization (see `forest_from_code`/`double_forest.forest_from_code`).
+    """
+
     def __init__(self, roots=None, code=None):
         self._code = None
         if roots is not None:
@@ -418,6 +435,8 @@ def _forest_intervals(forest_roots):
 
 @dataclass(frozen=True, order=True)
 class ParallelInjLetter:
+    """A letter ``primary[secondary]`` in the parallel-injection alphabet used by omega-insertion."""
+
     primary: int
     secondary: int
 
@@ -1046,6 +1065,10 @@ def word_from_labeling(root, labeling):
 
 
 class letterpair:
+    """A letter ``primary[secondary]`` (plain-object counterpart of `ParallelInjLetter`, used
+    where a frozen dataclass isn't convenient).
+    """
+
     def __init__(self, primary, secondary):
         self.primary = primary
         self.secondary = secondary
@@ -1091,6 +1114,8 @@ class letterpair:
 
 
 class LabeledForest:
+    """An `IndexedForest` together with a labeling of its nodes (``self(index)`` looks up a label)."""
+
     def __init__(self, forest):
         self.forest = forest
         self.mapping = {}
@@ -1119,6 +1144,8 @@ class LabeledForest:
 
 
 class DecLabeling(LabeledForest):
+    """A `LabeledForest` whose labels strictly decrease from each node to its children (checked by ``is_valid``)."""
+
     def __init__(self, forest):
         super().__init__(forest)
 
@@ -1144,6 +1171,8 @@ class DecLabeling(LabeledForest):
 
 
 class LBS(LabeledForest):
+    """A `LabeledForest` variant used for the LBS (labeled binary search tree) construction."""
+
     def __init__(self, forest):
         super().__init__(forest)
 

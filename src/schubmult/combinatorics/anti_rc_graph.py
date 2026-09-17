@@ -1,3 +1,8 @@
+"""`AntiRCGraph`: RC graphs viewed \"anti\" (rows counted from the bottom, entries at least
+their anti row label), used by `RCGraph.left_squash`/`squash_decomp` to peel a Grassmannian
+factor off the top of a general RC graph.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Sequence
@@ -14,9 +19,16 @@ from schubmult.utils._grid_print import GridPrint
 
 
 class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
+    """An RC graph in \"anti\" orientation: row ``i`` (1-indexed from the bottom) holds reflections
+    ``>= i``. ``to_rc_graph``/``from_rc_graph`` convert to/from the ordinary `RCGraph` orientation
+    (row reversal); most other operations (crystal operators, products, squashing) are defined by
+    delegating to the `RCGraph` view.
+    """
+
     _display_name = "AntiRCGraph"
 
     def __init__(self, rows_or_grid: Iterable[Iterable[int]] | np.ndarray, *, _is_copy: bool = False) -> None:
+        """Build from a sequence of rows (each an iterable of reflection labels) or a raw 0/1 grid."""
         if _is_copy:
             return
         self._perm = None
@@ -51,10 +63,12 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
 
     @property
     def rows(self) -> int:
+        """Number of rows."""
         return self._grid.shape[0]
 
     @property
     def cols(self) -> int:
+        """Number of columns."""
         return self._grid.shape[1]
 
     def __len__(self) -> int:
@@ -104,6 +118,7 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
         return hash(self._grid.tobytes())
 
     def copy(self) -> AntiRCGraph:
+        """Shallow copy."""
         new_graph = AntiRCGraph(None, _is_copy=True)
         new_graph._grid = self._grid.copy()
         new_graph._perm = self._perm
@@ -111,6 +126,7 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
         return new_graph
 
     def has_element(self, i: int, j: int) -> bool:
+        """Whether the reflection is marked at 1-indexed grid position ``(i, j)``."""
         if i <= 0 or j <= 0:
             return False
         if i > self.rows or j > self.cols:
@@ -153,17 +169,21 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
 
     @property
     def perm(self) -> Permutation:
+        """The permutation induced by this anti RC graph: ``~anti_permutation``."""
         return ~self.anti_permutation
 
     @property
     def reflection_view(self) -> RCGraph:
+        """The rows reversed into ordinary `RCGraph` orientation."""
         return RCGraph(tuple(reversed(self._row_words)))
 
     def to_rc_graph(self) -> RCGraph:
+        """Alias for ``reflection_view``."""
         return self.reflection_view
 
     @classmethod
     def from_rc_graph(cls, rc: RCGraph) -> AntiRCGraph:
+        """Inverse of ``to_rc_graph``: reverse the rows of an ordinary `RCGraph`."""
         return cls(tuple(reversed(tuple(rc))))
 
     @classmethod
@@ -173,6 +193,7 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
         seq: Sequence[int],
         length: int | None = None,
     ) -> AntiRCGraph:
+        """Build from a reduced word and its anti-compatible sequence (dual of `RCGraph.from_reduced_compatible`)."""
         if len(word) != len(seq):
             raise ValueError("word and seq must have the same length")
         if any(entry <= 0 for entry in word) or any(row <= 0 for row in seq):
@@ -211,9 +232,11 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
         return self.rows
 
     def normalize(self) -> AntiRCGraph:
+        """Drop trailing empty rows (via the `RCGraph` view)."""
         return type(self).from_rc_graph(self.to_rc_graph().normalize())
 
     def polyvalue(self, x, y=None, **_kwargs) -> Expr:
+        """Monomial (or, with ``y``, double) contribution of this anti RC graph to a Schubert polynomial."""
         ret = S.One
         for i in range(self.rows):
             row_label = self.rows - i
@@ -226,31 +249,38 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
         return ret
 
     def left_zero_act(self) -> set[AntiRCGraph]:
+        """Set of anti RC graphs obtained from applying the zero-action to the `RCGraph` view."""
         return {type(self).from_rc_graph(rc) for rc in self.to_rc_graph().right_zero_act()}
 
     def right_zero_act(self) -> set[AntiRCGraph]:
+        """Alias for ``left_zero_act`` (the anti orientation swaps left/right)."""
         return self.left_zero_act()
 
     def antiaut(self) -> AntiRCGraph:
+        """Reverse the row order (an anti-automorphism of the grid)."""
         return type(self)(self._grid[::-1, :].copy())
 
     def vertical_cut(self, row: int) -> tuple[AntiRCGraph, AntiRCGraph]:
+        """Split at ``row`` into two anti RC graphs (order swapped relative to `RCGraph.vertical_cut`)."""
         front_rc, back_rc = self.to_rc_graph().vertical_cut(self.rows - row)
         # Anti orientation swaps the cut factors relative to RC orientation.
         return type(self).from_rc_graph(back_rc), type(self).from_rc_graph(front_rc)
 
     def product(self, other: SchubertMonomialGraph) -> dict[AntiRCGraph, int]:
+        """RC graph product of ``other`` (stacked above) and ``self``, converted back to anti orientation."""
         other_rc = other.to_rc_graph() if isinstance(other, AntiRCGraph) else other
         product = other_rc.product(self.to_rc_graph())
         return {type(self).from_rc_graph(rc): coeff for rc, coeff in product.items()}
 
     def lowering_operator(self, row: int) -> AntiRCGraph | None:
+        """Crystal lowering operator, realized via the raising operator of the `RCGraph` view at the mirrored row."""
         flipped = self.to_rc_graph().raising_operator(self.rows - row)
         if flipped is None:
             return None
         return type(self).from_rc_graph(flipped)
 
     def raising_operator(self, row: int) -> AntiRCGraph | None:
+        """Crystal raising operator, realized via the lowering operator of the `RCGraph` view at the mirrored row."""
         flipped = self.to_rc_graph().lowering_operator(self.rows - row)
         if flipped is None:
             return None
@@ -258,9 +288,13 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
 
     @property
     def max_reflection(self) -> int:
+        """Largest reflection label appearing in any row."""
         return max((entry for row in self for entry in row), default=0)
 
     def disjoint_union(self, anti_rc: AntiRCGraph) -> AntiRCGraph:
+        """Stack ``anti_rc`` above ``self`` (shifted so their reflections don't collide), keeping the
+        same number of rows.
+        """
         if self.rows != anti_rc.rows:
             raise ValueError("Anti RC graphs must have the same number of rows")
         if self.perm.inv == 0:
@@ -278,6 +312,7 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
 
 
     def squash_product(self, anti_rc: AntiRCGraph) -> AntiRCGraph:
+        """Product used by `RCGraph.left_squash`: disjoint-union then cut back down to ``self``'s row count."""
         dju = anti_rc.to_rc_graph().disjoint_union(self.to_rc_graph())
         return type(self).from_rc_graph(dju).vertical_cut(dju.rows - self.rows)[1]
 

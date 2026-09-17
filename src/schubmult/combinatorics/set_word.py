@@ -1,3 +1,8 @@
+"""Set-valued crystal words: `SetLetter` (a subset-of-``{1..n}`` letter with a
+GL_n-type crystal structure) and `SetWord` (a tensor of such letters), with
+conversions to/from `WCGraph`.
+"""
+
 from .crystal_graph import CrystalGraph, CrystalGraphTensor
 
 
@@ -29,13 +34,16 @@ class SetLetter(CrystalGraph, frozenset):
         return f"SetLetter({super().__repr__()})"
 
     def crystal_length(self):
+        """The ambient rank ``n`` (number of crystal indices)."""
         return self._length
 
     @property
     def crystal_weight(self):
+        """Weight vector: multiplicity of each value ``1..n`` in the set."""
         return self._weight
 
     def raising_operator(self, i):
+        """``e_i``: move an element from ``i+1`` to ``i`` if that increases the weight at ``i``, else ``None``."""
         if i >= self._length or i < 1:
             return None
         if i + 1 in self and i not in self:
@@ -45,6 +53,7 @@ class SetLetter(CrystalGraph, frozenset):
         return None
 
     def lowering_operator(self, i):
+        """``f_i``: the inverse move to ``raising_operator``, or ``None`` if undefined."""
         if i >= self._length or i < 1:
             return None
         if i in self and i + 1 not in self:
@@ -65,6 +74,9 @@ class SetWord(CrystalGraphTensor):
         return f"SetWord({self.factors.__repr__()})"
 
     def to_wc_graph(self, rows):
+        """Convert to a `WCGraph` with the given number of rows: column ``j`` gets a reflection
+        at each row in ``self.factors[j-1]``.
+        """
         from .wc_graph import WCGraph
         wc = WCGraph([()]).resize(rows)
         for j in range(1, len(self.factors) + 1):
@@ -74,6 +86,7 @@ class SetWord(CrystalGraphTensor):
 
     @classmethod
     def from_wc_graph(cls, wc):
+        """Inverse of ``to_wc_graph``: build a `SetWord` from a `WCGraph`, one `SetLetter` per column."""
         columns = wc.cols
         rows = wc.perm.max_descent
         factors = []

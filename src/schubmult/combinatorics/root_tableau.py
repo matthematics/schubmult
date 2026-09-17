@@ -1,3 +1,7 @@
+"""`RootTableau`: root-labeled tableaux implementing dual Knuth equivalence via JDT
+(jeu-de-taquin) slides, with the Edelman-Greene invariant preserved by the crystal operators.
+"""
+
 import copy
 import logging
 from functools import cached_property
@@ -417,8 +421,9 @@ def _root_map(rc1, rc2):
 
 
 class RootTableau(CrystalGraph, GridPrint):
-    """
-    Root tableau with dual knuth equivalence
+    """A tableau of positive roots (grid cells hold ``(root, recording_letter)`` pairs)
+    implementing dual Knuth equivalence via up/down JDT slides. ``edelman_greene_invariant``
+    is preserved by the crystal raising/lowering operators.
     """
 
     def __hash__(self) -> int:

@@ -1,8 +1,17 @@
 loaders:
   - type: python
+    search_path: [src]
+
 processors:
   - type: filter
+    documented_only: true
+    skip_empty_modules: true
+    # _scripts/unlinted is research scratch space, not public API
+    expression: "not name.startswith('schubmult._scripts.unlinted') and default()"
   - type: smart
   - type: crossref
+
 renderer:
   type: markdown
+  insert_header_anchors: true
+  render_module_header: true

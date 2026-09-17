@@ -12,12 +12,14 @@ from sympy import expand
 
 
 def _rightmost_leaf(t):
+    """The rightmost leaf label of a binary tree ``t`` (in the ``("node", left, right)``/``("leaf", i)`` encoding)."""
     while t[0] == "node":
         t = t[2]
     return t[1]
 
 
 def _max_leaf(t):
+    """The maximum leaf label appearing in tree ``t``."""
     if t[0] == "leaf":
         return t[1]
     return max(_max_leaf(t[1]), _max_leaf(t[2]))
@@ -146,6 +148,9 @@ def sylvester_word(forest):
 
 
 def sylvester_forest(code, genset, t):
+    """Sum of ``polyvalue(genset, t)`` over all RC graphs of ``uncode(code)`` with the given forest weight;
+    the single (non-double) specialization of `double_sylvester_forest`.
+    """
     from schubmult import RCGraph, uncode
     # forest = forest_from_code(code)
     # word = tuple(reversed(sylvester_word(forest)))
@@ -154,6 +159,10 @@ def sylvester_forest(code, genset, t):
 
 
 def double_sylvester_forest(code, genset, t):
+    """Double (equivariant) forest polynomial, computed by pairing RC graphs of ``u`` and ``v`` from
+    the double Schubert expansion ``Sx([]) * DSx(perm, \"t\")`` whose merged vine diagram matches the
+    principal RC graph's omega-invariant target.
+    """
     import itertools
 
     from schubmult import DSx, RCGraph, SingleSchubertRing, Sx, uncode
@@ -217,6 +226,7 @@ def double_sylvester_forest(code, genset, t):
 
 
 def _bst_insert(t, a):
+    """Insert ``a`` into binary search tree ``t`` (``(root, left, right)`` encoding, ``None`` for empty)."""
     if t is None:
         return (a, None, None)
     r, L, R = t

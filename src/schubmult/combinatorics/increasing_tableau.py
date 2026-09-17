@@ -1,3 +1,6 @@
+"""`IncreasingTableau`: K-theoretic increasing tableaux (a `Plactic` variant where insertion may
+bump without adding a box), plus grid-shape helper utilities.
+"""
 
 import numpy as np
 

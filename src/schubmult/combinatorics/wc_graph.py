@@ -1,3 +1,8 @@
+"""`WCGraph`: word-compatible graphs, the common tuple-of-rows base shared by `RCGraph` and
+`AntiRCGraph`, where the induced permutation is the Demazure (0-Hecke) product of the row word
+rather than requiring it to be reduced.
+"""
+
 from __future__ import annotations
 
 import itertools

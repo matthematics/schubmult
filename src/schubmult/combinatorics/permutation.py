@@ -1,3 +1,15 @@
+"""The core indexing object used throughout ``schubmult``: finite permutations.
+
+A `Permutation` wraps a 1-indexed array (``self[i]`` is the value at 0-indexed
+position ``i``, extended by the identity ``self[i] = i + 1`` past its window)
+and is immutable/hashable/cached (equal permutations of different window
+lengths, e.g. ``[2, 1]`` and ``[2, 1, 3]``, compare and hash equal).
+Multiplication ``p * q`` is composition of the underlying functions,
+``(p * q)[i] = p[q[i] - 1]``; ``~p`` is the inverse. Most of the combinatorics
+library is built from a `Permutation`'s Lehmer code (``code``/``trimcode``),
+inversions, and Bruhat/weak order.
+"""
+
 import math
 from functools import cache, cached_property
 
@@ -15,13 +27,21 @@ n = 100
 
 
 class Permutation(Printable):
-    """Permutation class representing permutations of positive integers."""
+    """A finite permutation, stored as a 1-indexed array and extended by the identity.
+
+    Construct from array form, e.g. ``Permutation([2, 1, 3])``, or via
+    ``uncode(lehmer_code)``. Supports composition (``*``), inversion (``~``),
+    Bruhat order (``<=``/``bruhat_leq``), and iteration over the window
+    (``list(perm)``, ``perm[i]`` 0-indexed).
+    """
 
     def apply(self, arr):
+        """Permute the elements of ``arr`` by this permutation: return ``[arr[self[i] - 1] for i in range(len(arr))]``."""
         return tuple([arr[self[i] - 1] for i in range(len(arr))])
 
     @property
     def is_reducible(self):
+        """Whether ``self`` splits as a direct sum of two smaller permutations across some fixed point."""
         if self.inv == 0:
             return False
         for i in range(1, len(self)):
@@ -32,6 +52,7 @@ class Permutation(Printable):
         return False
 
     def reduce(self, start_spot=1, strict=False):
+        """Split ``self`` at a fixed point into ``(perm1, perm2)`` on disjoint blocks of values, or ``None`` if not reducible."""
         if self.inv == 0:
             return None
         for i in range(start_spot - 1, len(self)):
@@ -47,32 +68,45 @@ class Permutation(Printable):
         return None
 
     def act_root(self, a, b):
+        """Image of the root/pair ``(a, b)`` (1-indexed positions) under ``self``: ``(self[a-1], self[b-1])``."""
         return self[a - 1], self[b - 1]
 
     def one_dominates(self, other):
+        """Whether ``self`` one-step dominates ``other`` (one level of the recursive ``dominates`` test)."""
         return _one_dominates(self, other)
 
     def dominates(self, other):
+        """Whether ``self`` dominates ``other`` in the sense used by the dual Pieri / positivity rules."""
         return _dominates(self, other)
 
     @property
     def antiperm(self):
+        """Conjugate of ``self`` by the longest element ``w0``: ``w0 * self * w0``."""
         w0 = Permutation.w0(len(self))
         return w0 * (self) * w0
 
     def weight_coset_decomp(self, dominant_weight):
+        """Coset decomposition of ``self`` with respect to the stabilizer of ``dominant_weight``; see ``coset_decomp``."""
         fixers = Permutation.fixers(dominant_weight)
         return self.coset_decomp(*list(fixers))
 
     def min_of_weight_coset(self, dominant_weight):
+        """Minimal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``."""
         return self.weight_coset_decomp(dominant_weight)[0]
 
     def max_of_weight_coset(self, dominant_weight):
+        """Maximal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``."""
         return self.weight_coset_decomp(dominant_weight)[0] * Permutation.longest_element(*Permutation.fixers(dominant_weight))
 
     # low_perm is sorting_perm of lowest weight, reverse=True
     @staticmethod
     def does_demazure_crystal_tensor_decompose(dominant_weight1, low_perm1, dominant_weight2, low_perm2):
+        """Whether the tensor product of the two Demazure crystals (given by their dominant weights and
+        lowest-weight sorting permutations) decomposes as their `does_demazure_crystal_tensor_decompose`
+        criterion predicts: the minimal coset representative of ``low_perm1`` in weight ``dominant_weight1``
+        lies below the longest element of the left descents of the maximal coset representative of
+        ``low_perm2`` in weight ``dominant_weight2``, in Bruhat order.
+        """
         # min dom weight 1 low perm 1 is in coset of max dom weight 2 low perm 2
         min_v = low_perm1.min_of_weight_coset(dominant_weight1)
         max_w = low_perm2.max_of_weight_coset(dominant_weight2)
@@ -81,6 +115,13 @@ class Permutation(Printable):
         return min_v.bruhat_leq(Permutation.longest_element(*left_descents))
 
     def coset_decomp(self, *descs):
+        """Decompose ``self = reduced_perm * w_J`` where ``w_J`` lies in the parabolic subgroup generated
+        by the simple reflections at 1-indexed positions ``descs`` and ``reduced_perm`` is the minimal-length
+        coset representative (no descents in ``descs``).
+
+        Returns:
+            tuple: ``(reduced_perm, w_J)``.
+        """
         descs = set(descs)
         reduced_perm = self
         w_J = Permutation([])
@@ -96,14 +137,17 @@ class Permutation(Printable):
         return reduced_perm, w_J
 
     def min_coset_rep(self, *descs):
+        """Minimal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``."""
         return self.coset_decomp(*descs)[0]
 
     def max_coset_rep(self, *descs):
+        """Maximal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``."""
         red, w_J = self.coset_decomp(*descs)
         return red * Permutation.longest_element(*descs)
 
     @classmethod
     def longest_element(cls, *descs):
+        """Longest element of the parabolic subgroup generated by the simple reflections at 1-indexed positions ``descs``."""
         perm = Permutation([])
         did_one = True
         while did_one:
@@ -117,16 +161,24 @@ class Permutation(Printable):
 
     @classmethod
     def w0(cls, n):
+        """The longest element of the symmetric group on ``n`` letters: ``[n, n-1, ..., 1]``."""
         return cls.from_code([n - 1 - i for i in range(n - 1)])
 
     @classmethod
     @cache
     def all_permutations(cls, n):
+        """All permutations of ``{1, ..., n}``, as a list of `Permutation`."""
         from itertools import permutations
 
         return [cls(perm) for perm in list(permutations(list(range(1, n + 1))))]
 
     def parabolic_reduce(self, *descs):
+        """Decompose ``self = reduced_perm * w_J`` where ``w_J`` is generated by the simple reflections
+        *not* in ``descs`` and ``reduced_perm`` has no descents outside ``descs``.
+
+        Returns:
+            tuple: ``(reduced_perm, w_J)``.
+        """
         descs = set(descs)
         reduced_perm = self
         w_J = Permutation([])
@@ -154,6 +206,9 @@ class Permutation(Printable):
 
     @staticmethod
     def fixers(dominant_weight):
+        """1-indexed positions ``i`` where ``dominant_weight[i-1] == dominant_weight[i]``
+        (the simple reflections fixing ``dominant_weight``, i.e. generating its stabilizer).
+        """
         fixers = set()
         for i in range(len(dominant_weight) - 1):
             if dominant_weight[i] == dominant_weight[i + 1]:
@@ -162,6 +217,7 @@ class Permutation(Printable):
 
     @classmethod
     def ref_product(cls, *args):
+        """Product of the simple reflections ``s_a`` for ``a`` in ``args``, applied left to right."""
         p = cls([])
         for a in args:
             p = p.swap(a - 1, a)
@@ -169,6 +225,9 @@ class Permutation(Printable):
 
     @classmethod
     def hecke_ref_product(cls, *args):
+        """Like ``ref_product``, but each ``s_a`` is applied only if it is a Bruhat ascent
+        (the 0-Hecke / Demazure product of the simple reflections).
+        """
         p = cls([])
         for a in args:
             if p[a - 1] < p[a]:
@@ -177,6 +236,7 @@ class Permutation(Printable):
 
     @property
     def code_word(self):
+        """A canonical reduced word for ``self``, read off from ``trimcode``."""
         cd = self.trimcode
         word = []
         for i in range(len(cd)):
@@ -185,6 +245,7 @@ class Permutation(Printable):
 
     @property
     def inverse_code_word(self):
+        """A canonical reduced word for ``~self``, read off from ``(~self).trimcode``."""
         cd = (~self).trimcode
         word = []
         for i in range(len(cd)):
@@ -192,18 +253,24 @@ class Permutation(Printable):
         return tuple(word)
 
     def root_swap(self, root):
+        """Multiply ``self`` by the reflection swapping the 1-indexed positions ``root = (a, b)``."""
         return self.swap(root[0] - 1, root[1] - 1)
 
     @classmethod
     def reflection(cls, root):
+        """The transposition swapping the 1-indexed positions ``root = (a, b)``."""
         return cls([]).swap(root[0] - 1, root[1] - 1)
 
     def right_root_at(self, index, word=None):
+        """The positive root sent to a negative root by the ``index``-th letter of ``word``
+        (default ``self.code_word``), read from the right (post-multiplied by the remaining suffix).
+        """
         if word is None:
             word = [*self.code_word]
         return Permutation._right_root_at(index, word)
 
     def left_root_at(self, index, word=None):
+        """Like ``right_root_at``, but the root is transported by the prefix of ``word`` before ``index``."""
         if word is None:
             word = [*self.code_word]
         return Permutation._left_root_at(index, word)
@@ -272,6 +339,7 @@ class Permutation(Printable):
 
     @staticmethod
     def commutation_class_of(word):
+        """All words obtainable from ``word`` by commuting adjacent far-apart letters (``|a - b| >= 2``)."""
         stack = [tuple(word)]
         ret = set()
         while len(stack) > 0:
@@ -286,6 +354,9 @@ class Permutation(Printable):
 
     @staticmethod
     def forest_class_of(word):
+        """Words reachable from ``word`` by commutation moves that also preserve the indexed-forest
+        insertion structure (``omega_insertion``); a refinement of ``commutation_class_of``.
+        """
         from .indexed_forests import omega_insertion, word_to_pairinj_labeled
 
         stack = [tuple(word)]
@@ -304,6 +375,7 @@ class Permutation(Printable):
         return ret
 
     def code_index_of_index(self, index):
+        """The position in ``trimcode`` whose block of ``code_word`` letters contains position ``index``."""
         running_sum = 0
         running_code_index = 0
         for code_index, code_elem in enumerate(self.trimcode):
@@ -352,16 +424,21 @@ class Permutation(Printable):
 
     @classmethod
     def sorting_perm(cls, itera, reverse=False):
+        """The permutation that sorts ``itera`` into (by default) increasing order."""
         L = [i + 1 for i in range(len(itera))]
         L.sort(key=lambda i: itera[i - 1], reverse=reverse)
         return Permutation(L)
 
     def right_act(self, lst):
+        """Permute the entries of ``lst`` by this permutation, preserving ``lst``'s type (list stays a list)."""
         if isinstance(lst, list):
             return [lst[self[i] - 1] for i in range(len(lst))]
         return tuple([lst[self[i] - 1] for i in range(len(lst))])
 
     def bruhat_leq(perm, perm2):
+        """Whether ``perm <= perm2`` in Bruhat order (equivalently, ``perm``'s tableau criterion
+        against ``perm2`` on every prefix of their windows).
+        """
         if perm.inv == perm2.inv:
             return perm == perm2
         if perm.inv > perm2.inv:
@@ -380,6 +457,7 @@ class Permutation(Printable):
 
     @classmethod
     def from_code(cls, cd):
+        """Alias for ``uncode(cd)``: the permutation with Lehmer code ``cd``."""
         return uncode(cd)
 
     # def _latex(self, printer):
@@ -389,6 +467,9 @@ class Permutation(Printable):
 
     # pattern is a list, not a permutation
     def has_pattern(self, pattern):
+        """Whether ``self`` contains ``pattern`` (a plain list, not necessarily reduced) as a pattern:
+        some subsequence of ``self``'s window order-isomorphic to ``pattern``.
+        """
         if self == Permutation(pattern):
             return True
         if len(self._perm) <= len(Permutation(pattern)):
@@ -428,6 +509,7 @@ class Permutation(Printable):
         return tuple(self[i - 1] for i in tup)
 
     def zero_indexed_descents(self):
+        """0-indexed descent positions: ``i`` such that ``self[i] > self[i+1]``."""
         desc = set()
         for i in range(len(self._perm) - 1):
             if self[i] > self[i + 1]:
@@ -435,11 +517,15 @@ class Permutation(Printable):
         return desc
 
     def descents(self, zero_indexed=True):
+        """Descent positions of ``self``, 0-indexed by default or 1-indexed if ``zero_indexed=False``."""
         if zero_indexed:
             return self.zero_indexed_descents()
         return {i + 1 for i in self.zero_indexed_descents()}
 
     def get_cycles(self, sort_min=False):
+        """Cycle decomposition of ``self`` as a list of tuples; ``sort_min`` rotates each cycle to start
+        at its minimum element instead of the sympy convention.
+        """
         return self.get_cycles_cached(sort_min)
 
     @cache
@@ -450,11 +536,13 @@ class Permutation(Printable):
 
     @classmethod
     def from_cycles(cls, cycle_iter):
+        """Build a permutation from a cycle decomposition (sequence of cycles, each a sequence of 1-indexed values)."""
         spoing = spp.Permutation(*cycle_iter)
         return cls([a + 1 for a in spoing.array_form])
 
     @property
     def code(self):
+        """Lehmer code of ``self``: ``code[i]`` counts ``j > i`` with ``self[i] > self[j]``."""
         return [*self._cached_code()]
 
     @cache
@@ -463,17 +551,21 @@ class Permutation(Printable):
 
     @property
     def graph(self):
+        """The permutation matrix support as a set of 1-indexed pairs ``{(i, self[i])}``."""
         return {(i + 1, self[i]) for i in range(len(self._perm))}
 
     def reduced_with(self, other):
+        """Whether ``self * other`` is length-additive: ``inv(self) + inv(other) == inv(self * other)``."""
         return (self.inv + other.inv) == (self * other).inv
 
     @property
     def shape(self):
+        """The Lehmer code sorted into weakly decreasing order (a partition)."""
         return tuple(sorted(self.code, reverse=True))
 
     @cached_property
     def inversion_set(self):
+        """Set of inversions ``(i, j)`` (1-indexed, ``i < j``) with ``self[i-1] > self[j-1]``."""
         inv_set = set()
         for i in range(len(self._perm)):
             for j in range(i + 1, len(self._perm)):
@@ -483,9 +575,11 @@ class Permutation(Printable):
 
     # left weak order
     def weak_order_leq(self, other):
+        """Whether ``self <= other`` in left weak order (``self``'s inversion set is a subset of ``other``'s)."""
         return self.inversion_set.issubset(other.inversion_set)
 
     def weak_order_meet(self, other):
+        """Meet (greatest lower bound) of ``self`` and ``other`` in left weak order."""
         if self.weak_order_leq(other):
             return self
         if other.weak_order_leq(self):
@@ -500,12 +594,14 @@ class Permutation(Printable):
         return downself.weak_order_meet(downother).swap(a - 1, a)
 
     def weak_order_join(self, other):
+        """Join (least upper bound) of ``self`` and ``other`` in left weak order, via ``w0``-duality with the meet."""
         max_len = max(len(self), len(other))
         w0 = Permutation.w0(max_len)
         return (self * w0).weak_order_meet(other * w0) * w0
 
     @property
     def diagram(self):
+        """The Rothe diagram of ``self``: cells ``(i, j)`` with ``self[i-1] > j`` and ``(~self)[j-1] > i``."""
         diag = set()
         for i in range(len(self._perm)):
             for j in range(len(self._perm)):
@@ -515,20 +611,26 @@ class Permutation(Printable):
 
     @property
     def rothe_diagram(self):
+        """The graph of ``self`` as a set of 1-indexed pairs (see ``diagram`` for the Rothe diagram cells)."""
         return {(i + 1, self[i]) for i in range(len(self))}
 
     @cached_property
     def max_descent(self):
+        """Number of entries in ``trimcode`` (one past the last nonzero code entry)."""
         return len(self.trimcode)
 
     @property
     def maximal_corner(self):
+        """The maximal corner ``(maxd, end_spot)`` of ``self``'s diagram, used by ``pivots``/``pivot_transition``."""
         maxd = len(self.trimcode)
         end_spot = max(self[i] for i in range(maxd, len(self)) if self[i] < self[maxd - 1])
         return (maxd, end_spot)
 
     @classmethod
     def from_partial(cls, partial_perm):
+        """Complete a partial assignment (a list with some ``None`` entries) to a full permutation,
+        filling the gaps with the missing values in increasing order.
+        """
         max_required = max([a for a in partial_perm if a is not None], default=len(partial_perm))
         partial_perm = list(partial_perm)
         if len(partial_perm) < max_required:
@@ -590,48 +692,60 @@ class Permutation(Printable):
         return self.swap(maxd - 1, b_prime - 1) * cycle_perm
 
     def pad_code(self, length):
+        """``trimcode`` padded with trailing zeros to ``length``."""
         if length < len(self.trimcode):
             raise ValueError("Cannot pad to a length shorter than the trimcode")
         return tuple(list(self.trimcode) + [0 for i in range(length - len(self.trimcode))])
 
     @cached_property
     def trimcode(self):
+        """Lehmer code truncated to drop trailing zeros (length equals the last descent position)."""
         if self._perm == ():
             return []
         return self.code[: max(self.descents(False), default=0)]
 
     def mul_dominant(self):
+        """Left factor of ``self`` in its decomposition against the minimal dominant permutation above it."""
         return ~((~self).minimal_dominant_above())
 
     def strict_mul_dominant(self, size=None):
+        """Variant of ``mul_dominant`` built from the strict theta (strictly decreasing dominant code)."""
         if size is None:
             return uncode((~(uncode((~self).theta()))).strict_theta())
         the_perm = uncode([self.trimcode[a] + 1 if a < len(self.trimcode) else 1 for a in range(size)])
         return uncode((~(uncode((~the_perm).theta()))).strict_theta())
 
     def shiftup(self, k):
+        """``self`` with its Lehmer code shifted right by ``k`` (``k`` leading zero code entries prepended)."""
         return Permutation.from_code(k * [0] + self.code)
 
     @cached_property
     def inv(self):
+        """Length of ``self``: the number of inversions, i.e. ``sum(self.code)``."""
         return sum(self.code)
 
     @property
     def is_dominant(self):
+        """Whether ``self`` equals the minimal dominant permutation above it (its code is already weakly decreasing)."""
         return self.minimal_dominant_above() == self
 
     @property
     def is_strict_dominant(self):
+        """Whether ``self`` is dominant with a strictly decreasing ``trimcode``."""
         return self.is_dominant and all(self.trimcode[i] > self.trimcode[i + 1] for i in range(self.max_descent - 1))
 
     @property
     def is_vexillary(self):
+        """Whether ``self`` avoids the pattern ``2143`` (equivalently, its Schubert polynomial is a
+        single Schur polynomial in the ``trimcode``-shape).
+        """
         return not self.has_pattern([2, 1, 4, 3])
 
     def __reduce__(self):
         return (self.__class__, (self._perm,))
 
     def swap(self, i, j):
+        """Multiply ``self`` by the transposition of 0-indexed positions ``i`` and ``j`` (window extended as needed)."""
         if i > j:
             i, j = j, i
         if j >= len(self._perm):
@@ -646,6 +760,7 @@ class Permutation(Printable):
         return Permutation(new_arr)
 
     def rslice(self, start, stop):
+        """Window values at 0-indexed positions ``start`` (inclusive) to ``stop`` (exclusive), extended by fixed points."""
         ttup = [*self._perm, *list(range(len(self._perm) + 1, stop + 2))]
         return ttup[start:stop]
 
@@ -757,15 +872,18 @@ class Permutation(Printable):
         return tuple(self) < tuple(other)
 
     def pattern_at(self, *indices):
+        """The (inverse sorting) pattern induced by ``self`` on the given 1-indexed ``indices``."""
         indices = sorted(indices)
         seq = [self[i] for i in indices]
         return ~Permutation.sorting_perm(seq)
 
     def minimal_dominant_above(self):
+        """The minimal dominant permutation ``>= self`` in Bruhat order: ``uncode(self.theta())``."""
         return uncode(self.theta())
 
     @property
     def foundational_root(self):
+        """The pivot pair ``(k, mx)`` marking ``self``'s last descent block and the last position dropping below it."""
         if self.inv == 0:
             return None
         mx = -1
@@ -791,18 +909,27 @@ class Permutation(Printable):
         return tuple(ret)
 
     def theta(self):
+        """Dominant (weakly decreasing) sequence bounding ``self``'s code, used throughout the v-path
+        multiplication algorithms (see ``schubmult.mult``).
+        """
         return [*self._cached_theta()]
 
     def medium_theta(self):
+        """Variant of ``theta`` used by the \"fast\"/merged-layer multiplication kernels."""
         return [*self._cached_medium_theta()]
 
     def strict_theta(self):
+        """Variant of ``theta`` with strictly decreasing entries (no repeated nonzero layers)."""
         return [*self._cached_strict_theta()]
 
     def maximal_sortable_below(self):
+        """The maximal \"sortable\" permutation ``<= self`` (code has no gap of more than 1 between
+        consecutive entries), used by ``mul_sortable``.
+        """
         return self._cached_maximal_sortable_below()
 
     def mul_sortable(self):
+        """Left factor of ``self`` against its ``maximal_sortable_below`` decomposition (dual to ``mul_dominant``)."""
         return ~((~self).maximal_sortable_below())
 
     @cache
@@ -846,6 +973,7 @@ class Permutation(Printable):
 
 
 def uncode(cd):
+    """The permutation whose Lehmer code is ``cd`` (a list of nonnegative integers)."""
     cd2 = [*cd]
     if cd2 == []:
         return Permutation([])
@@ -860,6 +988,7 @@ def uncode(cd):
 
 
 def permtrim(perm):
+    """Normalize ``perm`` (a plain array) into a `Permutation` (trims trailing fixed points)."""
     return Permutation(perm)
 
 
@@ -869,6 +998,7 @@ def cycle(p, q):
 
 
 def phi1(u):
+    """Drop the first entry of ``(~u).code`` and re-invert: one step of the ``dominates`` recursion."""
     c_star = (~u).code
     c_star.pop(0)
     # print(f"{uncode(c_star)=}")
@@ -876,6 +1006,10 @@ def phi1(u):
 
 
 def split_perms(perms):
+    """Split each permutation in ``perms`` (after the first) into two smaller ones across a
+    reducible point, whenever a valid split point exists; used to normalize a chain of
+    dominant permutations into minimal reducible pieces.
+    """
     perms2 = [perms[0]]
     for perm in perms[1:]:
         cd = perm.code
@@ -944,4 +1078,5 @@ ID_PERM = Permutation([])
 
 @cache
 def s(i):
+    """The simple reflection swapping 1-indexed positions ``i`` and ``i + 1``."""
     return Permutation([*list(range(1, i)), i + 1, i])

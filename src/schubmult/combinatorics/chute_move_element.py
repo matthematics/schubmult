@@ -1,8 +1,20 @@
+"""Chute moves on RC graphs: a marked-row wrapper tracking a before/after pair of RC graphs
+related by simultaneous chute moves on a chosen set of non-adjacent rows.
+"""
+
 from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.utils._grid_print import GridPrint
 
 
 class ChuteMoveElement(GridPrint):
+    """An RC graph together with the result of applying chute moves at ``rows``.
+
+    ``rows`` must be pairwise non-adjacent; for each row, moves the element hanging
+    off the row's end down into the first available gap in the row below,
+    raising ``ValueError`` if no valid chute move exists. Stores the pair
+    ``(original, moved)`` RC graphs.
+    """
+
     def __init__(self, rc_graph, rows):
         super().__init__()
         self._rc = RCGraph(rc_graph)
@@ -39,6 +51,7 @@ class ChuteMoveElement(GridPrint):
         self._pair = (self._rc, new_rc)
 
     def product(self, other):
+        """Stack ``self`` above ``other`` (via the underlying RC graph product) and combine their marked rows."""
         if not isinstance(other, ChuteMoveElement):
             raise ValueError("Can only multiply ChuteMoveElement by another ChuteMoveElement")
         new_rows = set(self._rows)
@@ -51,22 +64,27 @@ class ChuteMoveElement(GridPrint):
 
     @property
     def chute_degree(self):
+        """Number of marked rows (simultaneous chute moves applied)."""
         return len(self._rows)
 
     @property
     def chute_move_rows(self):
+        """The set of marked row indices."""
         return self._rows
 
     @property
     def cols(self):
+        """Number of columns of the underlying RC graph."""
         return self._rc.cols
 
     @property
     def rows(self):
+        """Number of rows of the underlying RC graph."""
         return len(self._rc)
 
     @property
     def print_element(self):
+        """A `GridPrint`-compatible view highlighting the before/after cells at the marked rows."""
         class PrintElement(GridPrint):
 
             _display_name = self.__class__.__name__

@@ -1,3 +1,5 @@
+"""`HeckePlactic`: size-preserving Hecke column insertion, a `Plactic` variant."""
+
 from .permutation import Permutation
 from .plactic import Plactic
 

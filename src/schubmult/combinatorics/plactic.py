@@ -1,3 +1,7 @@
+"""`Plactic`: skew semistandard tableaux with the plactic (Knuth) crystal structure, stored as a
+grid with an optional inner (skew) shape of holes.
+"""
+
 # filepath: /home/matthematics/schubmult/src/schubmult.combinatorics.plactic.py
 import copy
 
@@ -149,6 +153,11 @@ def _root_compare(root1, root2):
 
 
 class Plactic(GridPrint, CrystalGraph):
+    """A (skew) semistandard Young tableau stored as a grid, with the ``gl_n`` plactic crystal
+    structure (Knuth relations). ``inner_shape`` (a partition of leading holes per row) makes it a
+    skew tableau; construct directly from a grid or via classmethods like ``Plactic.yamanouchi``.
+    """
+
     def __iter__(self):
         for i in range(self._grid.shape[0]):
             for j in range(self._grid.shape[1]):

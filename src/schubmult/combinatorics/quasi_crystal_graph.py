@@ -1,9 +1,17 @@
+"""Quasi-crystal variant of `CrystalGraph`: raising/lowering operators (``quasi_raising_operator``/
+``quasi_lowering_operator``) that may be undefined even mid-string, used where the standard
+crystal axioms only hold up to the extra ``ep[-2][0] > 0 and ep[-1][1] > 0`` obstruction
+checked in `QuasiCrystalGraphTensor`.
+"""
+
 from itertools import zip_longest
 
 from .crystal_graph import CrystalGraph
 
 
 class QuasiCrystalGraph(CrystalGraph):
+    """Abstract base for quasi-crystal elements; see the module docstring."""
+
     def quasi_raising_operator(self, index):
         """The raising operator for the crystal graph."""
         raise NotImplementedError
@@ -41,6 +49,7 @@ class QuasiCrystalGraph(CrystalGraph):
 
     @classmethod
     def _wrap(cls, element):
+        """Adapt an arbitrary object exposing the quasi-crystal protocol into a `QuasiCrystalGraph` instance."""
         if isinstance(element, cls):
             return element
         wrapper = cls()
@@ -56,8 +65,14 @@ class QuasiCrystalGraph(CrystalGraph):
 # There is a decomposition here into subcrystals
 # NOT COMMUTATIVE TENSOR PRODUCT
 class QuasiCrystalGraphTensor(QuasiCrystalGraph):
+    """Tensor product of quasi-crystal elements (`factors`); mirrors `CrystalGraphTensor` but the
+    ``quasi_lowering_operator``/``quasi_raising_operator`` calls additionally return ``None`` when
+    ``ep[-2][0] > 0 and ep[-1][1] > 0`` at the last two left-folded ``(epsilon, phi)`` entries.
+    """
+
     @property
     def crystal_weight(self):
+        """Sum of the factors' weights (zero-padded to the longest)."""
         result = self.factors[0].crystal_weight
         for factor in self.factors[1:]:
             result = tuple(a + b for a, b in zip_longest(result, factor.crystal_weight, fillvalue=0))
@@ -95,9 +110,13 @@ class QuasiCrystalGraphTensor(QuasiCrystalGraph):
         return self.factors
 
     def weight_bump(self):
+        """Apply ``weight_bump`` to every factor."""
         return type(self)(*(f.weight_bump() for f in self.factors))
 
     def all_highest_weights(self):
+        """All highest-weight tensors reachable by taking the highest weight of independently chosen
+        elements from each factor's full quasi-crystal.
+        """
         import itertools
 
         full_quasi_crystals = [f.full_quasi_crystal for f in self.factors]
@@ -116,9 +135,11 @@ class QuasiCrystalGraphTensor(QuasiCrystalGraph):
         return None, self.factors
 
     def __init__(self, *factors):
+        """Build the tensor product of the given quasi-crystal elements, left to right."""
         self.factors = factors
 
     def crystal_length(self):
+        """The maximum ``crystal_length`` over all factors."""
         return max([factor.crystal_length() for factor in self.factors], default=0)
 
     def _left_folded_ep_phi(self, index):
@@ -134,6 +155,9 @@ class QuasiCrystalGraphTensor(QuasiCrystalGraph):
         return result
 
     def quasi_lowering_operator(self, index):
+        """Apply ``quasi_lowering_operator(index)`` to the rightmost eligible factor, or ``None``
+        if the quasi-crystal obstruction blocks it.
+        """
         n = len(self.factors)
         ep = self._left_folded_ep_phi(index)
         if len(ep) > 1 and ep[-2][0] > 0 and ep[-1][1] > 0:
@@ -155,6 +179,9 @@ class QuasiCrystalGraphTensor(QuasiCrystalGraph):
         return QuasiCrystalGraphTensor(*new_factors)
 
     def quasi_raising_operator(self, index):
+        """Apply ``quasi_raising_operator(index)`` to the rightmost eligible factor, or ``None``
+        if the quasi-crystal obstruction blocks it.
+        """
         n = len(self.factors)
         ep = self._left_folded_ep_phi(index)
         if len(ep) > 1 and ep[-2][0] > 0 and ep[-1][1] > 0:
@@ -175,7 +202,9 @@ class QuasiCrystalGraphTensor(QuasiCrystalGraph):
         return QuasiCrystalGraphTensor(*new_factors)
 
     def epsilon(self, i):
+        """``epsilon_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table."""
         return self._left_folded_ep_phi(i)[-1][0]
 
     def phi(self, i):
+        """``phi_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table."""
         return self._left_folded_ep_phi(i)[-1][1]

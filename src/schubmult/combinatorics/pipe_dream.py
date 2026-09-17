@@ -1,3 +1,8 @@
+"""Classical pipe dreams (rectangular grid of crosses/bumps encoding a reduced word),
+with conversion to/from `RCGraph`/`WCGraph` and grid symmetries (transpose-like duals,
+inversion, vertical reflection).
+"""
+
 from functools import cached_property
 
 import numpy as np
@@ -9,6 +14,11 @@ from .planar_history import PlanarHistory
 
 
 class PipeDream(PlanarHistory, GridPrint):
+    """A pipe dream: pipes enter from the left and exit at the top of a triangular grid of
+    ``CROSS``/``BUMP`` tiles. ``perm`` recovers the induced permutation; ``perm_word`` its
+    associated (not necessarily reduced) word.
+    """
+
     # def __str__(self) -> str:
     #     symbols = {Tile(edges=set()): " ", PipeDream.CROSS: "┼", PipeDream.BUMP: "*"}
     #     return symbols.get(self, "?")
@@ -36,18 +46,22 @@ class PipeDream(PlanarHistory, GridPrint):
 
     @property
     def perm_word(self):
+        """The word read off the crosses in native (left-to-right, top-to-bottom) orientation."""
         return self._native_cross_word
 
     @property
     def is_reduced(self):
+        """Whether ``perm_word`` is a reduced word for ``perm`` (length equals the number of crosses)."""
         return self.perm.inv == len(self.perm_word)
 
     @property
     def perm(self):
+        """The permutation induced by this pipe dream (0-Hecke product of the cross word)."""
         # Use native pipe-dream orientation (left -> top) for permutation extraction.
         return Permutation.hecke_ref_product(*self._native_cross_word)
 
     def to_rc_graph(self):
+        """Convert to an `RCGraph` (crosses of row ``i`` become that row's column labels)."""
         from schubmult import RCGraph
 
         rows = []
@@ -60,6 +74,7 @@ class PipeDream(PlanarHistory, GridPrint):
         return RCGraph(rows)
 
     def to_wc_graph(self):
+        """Convert to a `WCGraph`, analogous to ``to_rc_graph``."""
         from schubmult import WCGraph
 
         rows = []
@@ -73,6 +88,7 @@ class PipeDream(PlanarHistory, GridPrint):
 
     @classmethod
     def from_rc_graph(cls, rc_graph):
+        """Build the pipe dream whose crosses are exactly the RC graph's marked positions."""
         grid = np.full((len(rc_graph.perm), len(rc_graph.perm)), cls.EMPTY, dtype=object)
         for i in range(grid.shape[0]):
             for j in range(grid.shape[1] - i):
@@ -84,6 +100,7 @@ class PipeDream(PlanarHistory, GridPrint):
 
     @classmethod
     def from_wc_graph(cls, wc_graph):
+        """Build the pipe dream whose crosses are exactly the WC graph's marked positions."""
         grid = np.full((len(wc_graph.perm), len(wc_graph.perm)), cls.EMPTY, dtype=object)
         for i in range(grid.shape[0]):
             for j in range(grid.shape[1] - i):
@@ -101,6 +118,7 @@ class PipeDream(PlanarHistory, GridPrint):
         return np.rot90(self._grid, 2)
 
     def co_pipe_dream(self):
+        """Swap crosses and bumps under the anti-diagonal reflection (the \"co\" dual pipe dream)."""
         new_grid = self.grid.copy()
         new_grid[:] = self.EMPTY
         for i in range(1, self.grid.shape[0] + 1):
@@ -113,6 +131,7 @@ class PipeDream(PlanarHistory, GridPrint):
         return PipeDream(new_grid)
 
     def co_stinkbat_pipe_dream(self):
+        """Like ``co_pipe_dream`` but preserving (rather than swapping) cross/bump identity under the reflection."""
         new_grid = self.grid.copy()
         new_grid[:] = self.EMPTY
         for i in range(1, self.grid.shape[0] + 1):
@@ -125,6 +144,7 @@ class PipeDream(PlanarHistory, GridPrint):
         return PipeDream(new_grid)
 
     def inverse_pipe_dream(self):
+        """Pipe dream for ``~self.perm``, obtained by reflecting bumps/crosses through the anti-diagonal."""
         new_grid = self.grid.copy()
         new_grid[:] = self.EMPTY
         for i in range(1, self.grid.shape[0] + 1):
@@ -137,6 +157,7 @@ class PipeDream(PlanarHistory, GridPrint):
         return PipeDream(new_grid)
 
     def reflect_vertically(self):
+        """Flip the grid top-to-bottom."""
         new_grid = np.flipud(self.grid.copy())
         return PipeDream(new_grid)
 

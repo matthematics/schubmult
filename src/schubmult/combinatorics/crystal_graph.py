@@ -1,9 +1,26 @@
+"""Abstract Kashiwara/Demazure crystal graph interface, plus the dual, reversed, and
+tensor-product crystal constructions built generically on top of it.
+
+Subclasses (`RCGraph`, `Plactic`, `SetLetter`, ...) implement `raising_operator`,
+`lowering_operator`, `crystal_weight`, and `crystal_length`; everything else here
+(``epsilon``/``phi``, highest/lowest weight, full crystal enumeration, tensor
+products) is generic in terms of those four.
+"""
+
 from itertools import zip_longest
 
 from sympy.printing.defaults import Printable
 
 
 class CrystalGraph(Printable):
+    """Abstract base for Kashiwara/Demazure crystal elements.
+
+    Concrete subclasses must implement `raising_operator`, `lowering_operator`,
+    `crystal_weight`, and `crystal_length`; operators return ``None`` when undefined
+    (not an error). Everything else (``epsilon``/``phi``, highest/lowest weight,
+    full crystal enumeration) is derived generically from those four.
+    """
+
     def raising_operator(self, index):
         """The raising operator for the crystal graph."""
         raise NotImplementedError
@@ -18,6 +35,7 @@ class CrystalGraph(Printable):
         raise NotImplementedError
 
     def phi(self, i):
+        """``phi_i``: the number of times ``lowering_operator(i)`` can be applied before hitting ``None``."""
         # if i < 1 or i >= self.crystal_length():
         #     if i - 1 < self.crystal_length():
         #         return self.epsilon(i) + self.crystal_weight[i - 1]
@@ -34,6 +52,7 @@ class CrystalGraph(Printable):
         return 0
 
     def epsilon(self, i):
+        """``epsilon_i``: the number of times ``raising_operator(i)`` can be applied before hitting ``None``."""
         if i > 0 and i < self.crystal_length():
             cnt = 0
             rc = self
@@ -88,6 +107,9 @@ class CrystalGraph(Printable):
 
     @property
     def square(self):
+        """Wrap ``self`` so each raising/lowering operator call applies the underlying operator twice
+        (the \"squared\" crystal used to detect index-2 symmetrized structures).
+        """
         class CrystalGraphSquare(CrystalGraph):
             def __init__(self, base_crystal):
                 self.base_crystal = base_crystal
@@ -131,6 +153,9 @@ class CrystalGraph(Printable):
         return CrystalGraphSquare(self)
 
     def reverse_raise_seq(self, raise_seq):
+        """Apply ``lowering_operator`` along ``raise_seq`` in reverse: undo a recorded raising sequence
+        (e.g. from ``to_highest_weight``) to recover the original element.
+        """
         rc = self
         for row in reversed(raise_seq):
             rc = rc.lowering_operator(row)
@@ -139,6 +164,9 @@ class CrystalGraph(Printable):
         return rc
 
     def reverse_lower_seq(self, lower_seq):
+        """Apply ``raising_operator`` along ``lower_seq`` in reverse: undo a recorded lowering sequence
+        (e.g. from ``to_lowest_weight``) to recover the original element.
+        """
         rc = self
         for row in reversed(lower_seq):
             rc = rc.raising_operator(row)
@@ -147,6 +175,9 @@ class CrystalGraph(Printable):
         return rc
 
     def crystal_reflection(self, index):
+        """The ``sl_2``-string reflection at ``index``: raise or lower ``|epsilon_i - phi_i|`` times to
+        the opposite end of the ``i``-string through ``self``.
+        """
         new_rc = self
         e = self.epsilon(index)
         f = self.phi(index)
@@ -165,10 +196,14 @@ class CrystalGraph(Printable):
 
     @property
     def full_crystal(self):
+        """All elements reachable from ``self``'s highest-weight element by lowering operators."""
         hw, _ = self.to_highest_weight()
         return hw.crystal_beneath
 
     def full_crystal_bothways(self, condition=None):
+        """All elements reachable from ``self`` by raising or lowering operators in either direction,
+        optionally restricted to elements satisfying ``condition``.
+        """
         ret = set()
         stack = [self]
         while len(stack) > 0:
@@ -192,6 +227,7 @@ class CrystalGraph(Printable):
 
     @property
     def full_squared_crystal(self):
+        """All elements reachable from ``self`` via *pairs* of raising/lowering steps (index-2 substructure)."""
         ret = set()
         stack = [self]
         while len(stack) > 0:
@@ -221,6 +257,7 @@ class CrystalGraph(Printable):
 
     @property
     def crystal_beneath(self):
+        """All elements reachable from ``self`` by repeated lowering operators."""
         crystal = set()
         stack = [self]
         while len(stack) > 0:
@@ -233,6 +270,7 @@ class CrystalGraph(Printable):
         return crystal
 
     def crystal_above(self, length=None):
+        """All elements reachable from ``self`` by repeated raising operators (indices ``1..length-1``)."""
         crystal = set()
         stack = [self]
         if length is None:
@@ -247,6 +285,9 @@ class CrystalGraph(Printable):
         return crystal
 
     def truncated_crystal(self, length, start=1):
+        """All elements reachable from ``self``'s highest-weight element (computed at ``length``) by
+        lowering operators restricted to indices ``start..length-1``.
+        """
         hw, _ = self.to_highest_weight(length=length)
         crystal = set()
         stack = [hw]
@@ -261,6 +302,9 @@ class CrystalGraph(Printable):
 
     @property
     def params(self):
+        """For each index ``i``, the number of times ``raising_operator(i)`` can be applied
+        (the ``i``-string parameters of ``self``, a poor man's weight-in-a-box coordinate).
+        """
         param_list = []
         rc = self
         for i in range(1, self.crystal_length()):
@@ -272,9 +316,13 @@ class CrystalGraph(Printable):
         return tuple(param_list)
 
     def weight_bump(self):
+        """Hook for subclasses: an element with the same crystal structure but perturbed so that
+        ``crystal_reflection`` is guaranteed to succeed (used as a fallback by ``weight_reflection``).
+        """
         ...
 
     def weight_reflection(self, index):
+        """Like ``crystal_reflection``, but falls back to ``weight_bump`` first if the direct reflection fails."""
         res = self
         try:
             res = res.crystal_reflection(index)
@@ -287,6 +335,7 @@ class CrystalGraph(Printable):
 
     @property
     def is_highest_weight(self):
+        """Whether no raising operator is defined on ``self`` (it is highest weight in its component)."""
         for row in range(1, self.crystal_length()):
             if self.raising_operator(row) is not None:
                 # print(f"IKINPROVENOTHIGHESTWEIGHT {row=}")
@@ -296,6 +345,7 @@ class CrystalGraph(Printable):
 
     @property
     def is_lowest_weight(self):
+        """Whether no lowering operator is defined on ``self`` (it is lowest weight in its component)."""
         for row in range(1, self.crystal_length()):
             if self.lowering_operator(row) is not None:
                 return False
@@ -303,13 +353,17 @@ class CrystalGraph(Printable):
 
     @property
     def dual(self):
+        """Wrap ``self`` in `CrystalGraphDual` (raising/lowering operators swapped, weight negated)."""
         return CrystalGraphDual(self)
 
     @property
     def reverse(self):
+        """Wrap ``self`` in `CrystalGraphReverse` (indices reversed, ``i <-> length + 1 - i``)."""
         return CrystalGraphReverse(self)
 
 class CrystalGraphDual(CrystalGraph):
+    """Dual crystal: raising and lowering operators are swapped and the weight is negated."""
+
     def __init__(self, base_crystal):
         self.base_crystal = base_crystal
 
@@ -333,6 +387,8 @@ class CrystalGraphDual(CrystalGraph):
         return self.base_crystal.crystal_length()
 
 class CrystalGraphReverse(CrystalGraph):
+    """Crystal with indices reversed: index ``i`` acts as index ``n + 1 - i`` on the base crystal."""
+
     def __init__(self, base_crystal):
         self.base_crystal = base_crystal
 
@@ -361,9 +417,14 @@ class CrystalGraphReverse(CrystalGraph):
 # There is a decomposition here into subcrystals
 # NOT COMMUTATIVE TENSOR PRODUCT
 class CrystalGraphTensor(CrystalGraph):
+    """Tensor product of crystal elements (`factors`), with the standard (signature-rule) tensor
+    product crystal structure -- raising/lowering act on the leftmost/rightmost eligible factor
+    according to the left-folded ``(epsilon, phi)`` values (``_left_folded_ep_phi``).
+    """
 
     @property
     def crystal_weight(self):
+        """Sum of the factors' weights (zero-padded to the longest)."""
         result = self.factors[0].crystal_weight
         for factor in self.factors[1:]:
             result = tuple(a + b for a, b in zip_longest(result, factor.crystal_weight, fillvalue=0))
@@ -437,9 +498,13 @@ class CrystalGraphTensor(CrystalGraph):
         return self.factors
 
     def weight_bump(self):
+        """Apply ``weight_bump`` to every factor."""
         return type(self)(*(f.weight_bump() for f in self.factors))
 
     def all_highest_weights(self):
+        """All highest-weight tensors reachable by taking the highest weight of independently chosen
+        elements from each factor's full crystal.
+        """
         import itertools
         full_crystals = [f.full_crystal for f in self.factors]
         highest_weights = set()
@@ -457,9 +522,11 @@ class CrystalGraphTensor(CrystalGraph):
         return None, self.factors
 
     def __init__(self, *factors):
+        """Build the tensor product of the given crystal elements, left to right."""
         self.factors = factors
 
     def crystal_length(self):
+        """The maximum ``crystal_length`` over all factors."""
         return max([factor.crystal_length() for factor in self.factors], default=0)
 
     def _left_folded_ep_phi(self, index):
@@ -475,6 +542,7 @@ class CrystalGraphTensor(CrystalGraph):
         return result
 
     def lowering_operator(self, index):
+        """Apply ``lowering_operator(index)`` to the rightmost factor for which the tensor signature rule allows it."""
         n = len(self.factors)
         ep = self._left_folded_ep_phi(index)
         for k in range(n - 1, 0, -1):
@@ -494,6 +562,7 @@ class CrystalGraphTensor(CrystalGraph):
         return self.__class__(*new_factors)
 
     def raising_operator(self, index):
+        """Apply ``raising_operator(index)`` to the rightmost factor for which the tensor signature rule allows it."""
         n = len(self.factors)
         ep = self._left_folded_ep_phi(index)
         for k in range(n - 1, 0, -1):
@@ -512,7 +581,9 @@ class CrystalGraphTensor(CrystalGraph):
         return self.__class__(*new_factors)
 
     def epsilon(self, i):
+        """``epsilon_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table."""
         return self._left_folded_ep_phi(i)[-1][0]
 
     def phi(self, i):
+        """``phi_i`` of the tensor, read off the last entry of the left-folded ``(epsilon, phi)`` table."""
         return self._left_folded_ep_phi(i)[-1][1]

@@ -1,3 +1,7 @@
+"""Inversions tableaux: a root -> label-set assignment on the positive roots ``(i, j)``
+(``i < j``) of a permutation, generalizing RC/WC graphs to a set-valued labeling.
+"""
+
 from functools import cached_property
 from itertools import combinations
 
@@ -18,7 +22,13 @@ def _is_compatible(compat_seq, word):
     return True
 
 class InversionsTableau:
+    """A dict-like assignment of label sets to roots ``(i, j)`` of a permutation, satisfying the
+    three axioms checked by `is_valid`. Build via the constructor (dict of root -> int-or-set),
+    `from_rc_graph`, or `from_wc_graph`; convert back via `to_rc_graph`/`to_wc_graph`.
+    """
+
     def __init__(self, _dict, *_, **__):
+        """Build from a mapping ``{(i, j): label_or_label_set}`` (roots to integer or set/frozenset labels)."""
         self._dict = {k: frozenset(v) if isinstance(v, set) else v for k, v in _dict.items()}
         self._reverse_lookup = {}
         for k, v in self._dict.items():
@@ -63,6 +73,7 @@ class InversionsTableau:
 
     @classmethod
     def from_rc_graph(cls, rc):
+        """Build from an `RCGraph`: each left-to-right inversion root gets the row it's crossed at as its label."""
         dct = {}
         for i in range(rc.perm.inv):
             dct[rc.left_to_right_inversion(i)] = rc.left_to_right_inversion_coords(i)[0]
@@ -70,6 +81,9 @@ class InversionsTableau:
 
     @classmethod
     def from_wc_graph(cls, wc):
+        """Build from a `WCGraph`: replays its perm word/compatible sequence, tracking transported
+        roots and accumulating labels at each simple-root position.
+        """
         word, seq = wc.perm_word, wc.compatible_sequence
         # wc.to_reduced_compatible_set_sequence()
         #perm = wc.perm
@@ -99,6 +113,9 @@ class InversionsTableau:
     @cached_property
     #@property
     def perm_word(self):
+        """A (not necessarily reduced) word recovering the tableau's permutation, built by repeatedly
+        peeling the largest label off a simple root and transporting the remaining roots.
+        """
         root_dict = {root: set(v) for root, v in self._dict.items()}
         ret_word = []
         while root_dict:
@@ -117,13 +134,11 @@ class InversionsTableau:
 
     @property
     def is_valid(self):
-        # """Check if the tableau satisfies the necessary conditions to be an inversions tableau.
-        # 1. If a root is a simple root, all values assigned to it must be less than or equal to the smaller index.
-        # 2. If two roots have the same second index, their value sets must be disjoint.
-        # 3. If there exist two roots that have indices (i, j) and (j, k), then necessarily there also exists (i,k) provided
-        # i < j < k. In that case, for each such (i,k) and each v in (i,k) set there exist v1 in (i,j) set and v2 in (j,k) set such that either
-        # v1 <= v < v2 or v2 < v <= v1.
-        # """
+        """Whether the root/label assignment satisfies the three defining axioms:
+        (1) simple-root labels are bounded by the smaller index, (2) roots sharing a second
+        index have disjoint label sets, and (3) the label sets of ``(i,j)``, ``(j,k)``, ``(i,k)``
+        interleave consistently whenever all three roots are present.
+        """
         import itertools
         # try:
         #     if not self.to_wc_graph().is_valid:
@@ -186,9 +201,11 @@ class InversionsTableau:
         return max(set1) < min(set2)
 
     def _snap_min(self):
+        """Collapse each root's label set to its minimum element (an ordinary, non-set-valued tableau)."""
         return InversionsTableau({k: {min(v)} for k, v in self._dict.items()})
 
     def _snap_max(self):
+        """Collapse each root's label set to its maximum element (an ordinary, non-set-valued tableau)."""
         return InversionsTableau({k: {max(v)} for k, v in self._dict.items()})
 
     @classmethod
@@ -296,6 +313,7 @@ class InversionsTableau:
 
     @cached_property
     def perm(self):
+        """The permutation recovered from `perm_word` via the 0-Hecke (Demazure) product."""
         result = Permutation([])
         for swap in self.perm_word:
             result = result @ Permutation.ref_product(swap)
@@ -303,6 +321,9 @@ class InversionsTableau:
 
     @cached_property
     def compatible_sequence(self):
+        """The compatible sequence paired with `perm_word`: labels in weakly increasing order,
+        each repeated by the size of its label set.
+        """
         result = []
         for key in sorted(self._reverse_lookup.keys()):
             result.extend([key] * len(self._reverse_lookup[key]))
@@ -310,6 +331,7 @@ class InversionsTableau:
 
     @cached_property
     def is_reduced(self):
+        """Whether ``perm_word`` is a reduced word for ``perm``."""
         return self.perm.inv == len(self.perm_word)
 
     def __hash__(self):
@@ -317,6 +339,9 @@ class InversionsTableau:
 
     @cached_property
     def reduced_word(self):
+        """A reduced word for ``perm``, obtained from ``perm_word`` by dropping non-ascending steps
+        and folding their compatible-sequence entries into the surviving root's label set.
+        """
         word = []
         seq = self.compatible_sequence
         set_seq = []
@@ -343,17 +368,23 @@ class InversionsTableau:
 
     @property
     def is_set_valued(self):
+        """Whether any root has more than a single label (a genuinely set-valued tableau)."""
         return any(isinstance(v, set | frozenset) for v in self._dict.values())
 
     def to_rc_graph(self, length=None):
+        """Convert a reduced (non-set-valued) tableau to an `RCGraph` via ``RCGraph.from_reduced_compatible``."""
         if self.is_set_valued:
             raise ValueError("Inversions tableau must be reduced to convert to RC graph")
         return RCGraph.from_reduced_compatible(self.perm_word, self.compatible_sequence, length=length)
 
     def to_wc_graph(self, length=None):
+        """Convert to a `WCGraph` built directly from the root/label-set dictionary."""
         return WCGraph._from_root_dict({root: set(v) for root, v in self._dict.items()}, length=length)
 
     def polyvalue(self, x, y=None, *, beta=None, prop_beta=False):
+        """Monomial contribution of this tableau to the (beta-deformed) Grothendieck polynomial:
+        ``prod_v x[v] ** |labels at v|``, times a power of ``beta`` accounting for non-reduced excess.
+        """
         from schubmult import Gx
         from schubmult.symbolic import S
 

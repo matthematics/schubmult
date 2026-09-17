@@ -1,3 +1,14 @@
+"""`RCGraph`: reduced (pipe-dream-like) compatible graphs, the central combinatorial model for
+Schubert polynomials in this package.
+
+An RC graph is a tuple of rows, row ``i`` (0-indexed) a strictly decreasing tuple of column
+labels ``>= i + 1``; reading the rows top-to-bottom, right-to-left within a row, gives a reduced
+word for the graph's permutation (``perm``). RC graphs support the crystal structure
+(`CrystalGraph`), the KOH/Monk product (`product`), conversions to `PipeDream`/`WCGraph`, and
+the squash decomposition used to peel a Grassmannian factor off a general RC graph
+(``squash_decomp``/``left_squash``, via `AntiRCGraph`).
+"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -38,8 +49,17 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
 
 
 class RCGraph(WCGraph, CrystalGraph):
+    """A reduced compatible graph: a tuple of rows (row ``i`` a strictly decreasing tuple of
+    column labels ``>= i + 1``) whose concatenated reading order gives a reduced word for `perm`.
+    Construct via the ``WCGraph``/tuple-of-rows constructor, ``RCGraph.principal_rc(perm, n)``, or
+    ``RCGraph.all_rc_graphs(perm, n)``.
+    """
+
     @property
     def is_elem_sym(self):
+        """Whether ``perm`` is the identity or a single elementary-symmetric-type permutation
+        (one descent, code entries all 0 or 1).
+        """
         return self.perm.inv == 0 or (len(self.perm.descents()) == 1 and set(self.perm.trimcode).issubset({0, 1}))
 
     def left_squash(self, other_rc):

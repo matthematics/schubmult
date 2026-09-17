@@ -1,3 +1,7 @@
+"""`SetValuedTableau`: semistandard set-valued tableaux (Grothendieck-polynomial combinatorics),
+with a crystal structure realized via `SetWord`/`SetLetter`.
+"""
+
 from ..utils._grid_print import GridPrint
 from .crystal_graph import CrystalGraph
 
@@ -68,17 +72,20 @@ class SetValuedTableau(GridPrint, CrystalGraph):
 
     @property
     def rows(self):
+        """Number of rows (one past the maximum row index present)."""
         if not self._cells:
             return 0
         return max(r for (r, _) in self._cells) + 1
 
     @property
     def cols(self):
+        """Number of columns (one past the maximum column index present)."""
         if not self._cells:
             return 0
         return max(c for (_, c) in self._cells) + 1
 
     def __getitem__(self, key):
+        """``self[row, col]`` -> the label tuple at that box, or ``None`` if empty."""
         if isinstance(key, tuple):
             return self._cells.get((int(key[0]), int(key[1])))
         raise ValueError(f"Bad indexing {key=}")
@@ -89,6 +96,7 @@ class SetValuedTableau(GridPrint, CrystalGraph):
 
     @property
     def shape(self):
+        """Row lengths (number of boxes per row), trailing zeros dropped."""
         shape_list = []
         for r in range(self.rows):
             count = sum(1 for (rr, _) in self._cells if rr == r)
@@ -155,6 +163,7 @@ class SetValuedTableau(GridPrint, CrystalGraph):
 
     @classmethod
     def _from_set_word(cls, set_word, boxes):
+        """Rebuild a tableau from a `SetWord` and the box order it was read off from (inverse of ``_to_set_word``)."""
         cells = {}
         for rc, letter in zip(boxes, set_word.factors, strict=True):
             labels = tuple(sorted(int(v) for v in letter))
@@ -196,6 +205,7 @@ class SetValuedTableau(GridPrint, CrystalGraph):
         return 100
 
     def __eq__(self, other):
+        """Equal iff the underlying cell dicts match."""
         if isinstance(other, SetValuedTableau):
             return self._cells == other._cells
         return NotImplemented

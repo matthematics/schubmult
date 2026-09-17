@@ -1,3 +1,7 @@
+"""`NilPlactic`: the nilCoxeter/nilHecke analogue of `Plactic`, used for Edelman-Greene tableaux
+(skew shapes over increasing/decreasing-adjacent tableau rules) and their reduced-word data.
+"""
+
 from functools import cache
 
 from .permutation import Permutation
@@ -84,6 +88,10 @@ def _compact_grid(grid):
 
 
 class NilPlactic(Plactic):
+    """A nilCoxeter/nilHecke skew tableau: like `Plactic` but under the Edelman-Greene insertion
+    rule (increasing rows and columns, no repeated entries).
+    """
+
     def __init__(self, word=(), inner_shape=None):
         super().__init__(word, inner_shape=inner_shape)
 

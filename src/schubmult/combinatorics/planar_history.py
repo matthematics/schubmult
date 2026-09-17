@@ -1,9 +1,15 @@
+"""Grid of NORTH/EAST/SOUTH/WEST-edged tiles (crossings, bumps, empty cells) tracking pipe
+history in a lattice, with conversion to the induced permutation reduced word (``perm_word``).
+"""
+
 from functools import cached_property
 
 import numpy as np
 
 
 class Tile:
+    """A grid tile, identified by which of its NORTH/EAST/SOUTH/WEST edges are connected (as pairs)."""
+
     NORTH = 0
     EAST = 1
     SOUTH = 2
@@ -19,22 +25,28 @@ class Tile:
         return self.edges == other.edges
 
 class PlanarHistory:
+    """A grid of `Tile`s (``CROSS``, ``BUMP``, or ``EMPTY``) recording pipe crossing history;
+    ``perm_word`` reads off the induced permutation word from the crossing positions.
+    """
 
     CROSS = type("Tile", (Tile,), {"__str__": lambda self: "┼", "__repr__": lambda self: "┼"})(edges={(Tile.SOUTH, Tile.NORTH), (Tile.WEST, Tile.EAST)})
     BUMP = type("Tile", (Tile,), {"__str__": lambda self: "*", "__repr__": lambda self: "*"})(edges={(Tile.SOUTH, Tile.EAST), (Tile.WEST, Tile.NORTH)})
     EMPTY = type("Tile", (Tile,), {"__str__": lambda self: " ", "__repr__": lambda self: " "})(edges=set())
 
     def __init__(self, grid: np.ndarray):
+        """Wrap a 2D array of `Tile` objects."""
         self._grid = grid.copy()
         self._rows = grid.shape[0]
         self._cols = grid.shape[1]
 
     @property
     def rows(self):
+        """Number of grid rows."""
         return self._rows
 
     @property
     def cols(self):
+        """Number of grid columns."""
         return self._cols
 
     def __getitem__(self, key):
@@ -42,6 +54,7 @@ class PlanarHistory:
 
     @cached_property
     def grid(self):
+        """Copy of the underlying tile array."""
         return self._grid.copy()
 
     @property
@@ -62,6 +75,9 @@ class PlanarHistory:
 
     @property
     def perm_word(self):
+        """The permutation word induced by the ``CROSS`` tiles, read column by column
+        (bottom-to-top within a column) via the NE pipe-count recurrence.
+        """
         cross = self.CROSS
         diff = np.zeros((self.rows, self.cols), dtype=int)
         for i in range(self.rows):
