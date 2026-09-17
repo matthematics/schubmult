@@ -26,20 +26,33 @@ CONFIG_FILE = ROOT / "pydoc-markdown.yml"
 # Path components that mark research scratch space rather than public API.
 EXCLUDED_PARTS = {"unlinted", "__pycache__"}
 
+# Dotted module names backed by an __init__.py (i.e. packages), filled in by discover_modules().
+PACKAGE_MODULES: set[str] = set()
+
 
 def discover_modules() -> list[str]:
-    """Dotted module names for every non-excluded file under src/schubmult."""
+    """Dotted module names for every non-excluded file under src/schubmult.
+
+    Also records which of those names are packages (came from __init__.py) into
+    PACKAGE_MODULES, so module_rel_path() can place their page at <pkg>/index.md
+    instead of a <pkg>.md file sitting beside the <pkg>/ directory.
+    """
     modules = []
+    PACKAGE_MODULES.clear()
     for path in sorted((SRC / "schubmult").rglob("*.py")):
         rel = path.relative_to(SRC)
         if EXCLUDED_PARTS & set(rel.parts):
             continue
         parts = list(rel.with_suffix("").parts)
-        if parts[-1] == "__init__":
+        is_package = parts[-1] == "__init__"
+        if is_package:
             parts = parts[:-1]
         if not parts:
             continue
-        modules.append(".".join(parts))
+        modname = ".".join(parts)
+        if is_package:
+            PACKAGE_MODULES.add(modname)
+        modules.append(modname)
     return modules
 
 
@@ -69,8 +82,17 @@ def render_consolidated(filename: Path) -> None:
 
 
 def module_rel_path(modname: str) -> Path:
-    """Nested file path (relative to docs/modules/) for a dotted module name."""
-    return Path(*modname.split(".")).with_suffix(".md")
+    """Nested file path (relative to docs/modules/) for a dotted module name.
+
+    Packages are placed at ``<pkg>/index.md`` (inside their own directory) rather
+    than a ``<pkg>.md`` file next to the ``<pkg>/`` directory, so MkDocs'
+    ``navigation.indexes`` feature attaches the page to the section instead of
+    creating a separate, mostly-empty entry.
+    """
+    parts = modname.split(".")
+    if modname in PACKAGE_MODULES:
+        return Path(*parts, "index.md")
+    return Path(*parts).with_suffix(".md")
 
 
 def write_index(module_names: list[str]) -> None:

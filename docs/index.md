@@ -23,5 +23,5 @@ print(Sx([3, 1, 2]) * Sx([2, 1, 3]))
 See the [module reference](modules/README.md) for the full API, starting with
 [`schubmult.combinatorics.permutation`](modules/schubmult/combinatorics/permutation.md)
 (the core `Permutation` object) and
-[`schubmult.rings.schubert`](modules/schubmult/rings/schubert.md)
+[`schubmult.rings.schubert`](modules/schubmult/rings/schubert/index.md)
 (the `Sx`/`DSx` ring interface).

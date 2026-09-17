@@ -131,6 +131,20 @@ Generate TikZ code for a pipe dream visualization of an RC graph.
   >>> tikz_code = draw_pipe_dream_tikz(rc)
   >>> print(tikz_code)
 
+<a id="schubmult.rings.nsym"></a>
+
+# schubmult.rings.nsym
+
+Noncommutative symmetric functions (NSym) ring implementation.
+
+<a id="schubmult.rings"></a>
+
+# schubmult.rings
+
+<a id="schubmult.rings.thompson_algebra"></a>
+
+# schubmult.rings.thompson\_algebra
+
 <a id="schubmult.rings.quasisymmetric_functions"></a>
 
 # schubmult.rings.quasisymmetric\_functions
@@ -635,6 +649,28 @@ def SeparatedDescentsBasis(k)
 ```
 
 Factory that creates a separated descents basis class for level *k*.
+
+<a id="schubmult.rings.free_algebra"></a>
+
+# schubmult.rings.free\_algebra
+
+Free algebra module providing multiple bases for Schubert calculus.
+
+The core classes are :class:`FreeAlgebra` (the ring) and
+:class:`FreeAlgebraElement` (its elements).  Elements can be expressed in
+any of the available bases and converted between them via ``change_basis``.
+
+Pre-built instances:
+    - ``FA``: FreeAlgebra with WordBasis (default)
+    - ``ASx``: FreeAlgebra with SchubertBasis
+    - ``AGx``: FreeAlgebra with GrothendieckBasis
+    - ``ADSx``: FreeAlgebra with double Schubert basis
+
+Available bases:
+    WordBasis, SchubertBasis, CompositionSchubertBasis, ElementaryBasis,
+    ForestBasis, FundamentalSlideBasis, JBasis, JTBasis, KeyBasis,
+    MonomialSlideBasis, NElementaryBasis, SchubertSchurBasis,
+    SchurElementaryBasis, SeparatedDescentsBasis, ZBasis.
 
 <a id="schubmult.rings.free_algebra.composition_schubert_basis"></a>
 
@@ -3023,6 +3059,26 @@ def transition(cls, other_basis)
 
 Return a transition function from FundamentalSlideBasis to *other_basis*.
 
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring"></a>
+
+# schubmult.rings.schubert.parabolic\_quantum\_schubert\_ring
+
+<a id="schubmult.rings.schubert"></a>
+
+# schubmult.rings.schubert
+
+<a id="schubmult.rings.schubert.separated_descents"></a>
+
+# schubmult.rings.schubert.separated\_descents
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring"></a>
+
+# schubmult.rings.schubert.quantum\_double\_schubert\_ring
+
+<a id="schubmult.rings.schubert.base_schubert_ring"></a>
+
+# schubmult.rings.schubert.base\_schubert\_ring
+
 <a id="schubmult.rings.schubert.double_schubert_ring"></a>
 
 # schubmult.rings.schubert.double\_schubert\_ring
@@ -3037,6 +3093,10 @@ class DoubleSchubertElement(BaseSchubertElement)
 
 Algebra with sympy coefficients
 and a dict basis
+
+<a id="schubmult.rings.schubert.quantum_schubert_ring"></a>
+
+# schubmult.rings.schubert.quantum\_schubert\_ring
 
 <a id="schubmult.rings.schubert.double_grothendieck_ring"></a>
 
@@ -3114,6 +3174,14 @@ def chevalley(weight, perm, n=None)
 Lenart--Postnikov K_T-Chevalley formula for ``e^weight * G_perm``.
 
 ``weight`` is an integer vector in the ``epsilon`` basis.
+
+<a id="schubmult.rings.schubert.beta_coxeter"></a>
+
+# schubmult.rings.schubert.beta\_coxeter
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring"></a>
+
+# schubmult.rings.schubert.parabolic\_quantum\_double\_schubert\_ring
 
 <a id="schubmult.rings.schubert.chevalley"></a>
 
@@ -3211,6 +3279,14 @@ genset : GeneratingSet
     The generating set (variable alphabet).
 beta : sympy/symengine symbol, optional
     The deformation parameter. Defaults to Symbol("β").
+
+<a id="schubmult.rings.schubert.nil_hecke"></a>
+
+# schubmult.rings.schubert.nil\_hecke
+
+<a id="schubmult.rings.schubert.schubert_ring"></a>
+
+# schubmult.rings.schubert.schubert\_ring
 
 <a id="schubmult.rings.direct_product_ring"></a>
 
@@ -3492,6 +3568,21 @@ def transition(other_basis)
 ```
 
 Return a transition function from Schubert basis to *other_basis*.
+
+<a id="schubmult.rings.polynomial_algebra"></a>
+
+# schubmult.rings.polynomial\_algebra
+
+Polynomial algebra ring and pre-built basis instances.
+
+Exports the core :class:`PolynomialAlgebra` and :class:`PolynomialAlgebraElement`
+classes as well as ready-to-use ring instances:
+
+- ``Schub`` — Schubert polynomial basis
+- ``Forest`` — Forest polynomial basis
+- ``Key`` — Key polynomial (Demazure character) basis
+- ``FSlide`` — Fundamental slide polynomial basis
+- ``Monomial`` — Standard monomial basis
 
 <a id="schubmult.rings.polynomial_algebra.composition_schubert_poly_basis"></a>
 
@@ -4031,6 +4122,12 @@ def dual_basis(cls)
 ```
 
 Return the dual free algebra basis class.
+
+<a id="schubmult.rings.polynomial_algebra.polynomial_basis"></a>
+
+# schubmult.rings.polynomial\_algebra.polynomial\_basis
+
+Re-export hub for all polynomial basis classes.
 
 <a id="schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis"></a>
 
@@ -5052,6 +5149,10 @@ def from_dict_unchecked(element)
 
 from_dict for coefficients already known to lie in the domain (drops structural zeros only).
 
+<a id="schubmult.rings.product_ring"></a>
+
+# schubmult.rings.product\_ring
+
 <a id="schubmult.rings.tensor_ring"></a>
 
 # schubmult.rings.tensor\_ring
@@ -5109,6 +5210,22 @@ def coproduct()
 
 Override coproduct to use the correct target ring.
 
+<a id="schubmult.rings.combinatorial.hw_rc_ring"></a>
+
+# schubmult.rings.combinatorial.hw\_rc\_ring
+
+<a id="schubmult.rings.combinatorial.grove_wc_ring"></a>
+
+# schubmult.rings.combinatorial.grove\_wc\_ring
+
+<a id="schubmult.rings.combinatorial"></a>
+
+# schubmult.rings.combinatorial
+
+<a id="schubmult.rings.combinatorial.forest_invariant_rc_ring"></a>
+
+# schubmult.rings.combinatorial.forest\_invariant\_rc\_ring
+
 <a id="schubmult.rings.combinatorial.plactic_algebra"></a>
 
 # schubmult.rings.combinatorial.plactic\_algebra
@@ -5122,6 +5239,10 @@ class PlacticAlgebraElement(BaseRingElement)
 ```
 
 PlacticAlgebra elements are linear combinations of Plactic basis elements.
+
+<a id="schubmult.rings.combinatorial.slide_rc_ring"></a>
+
+# schubmult.rings.combinatorial.slide\_rc\_ring
 
 <a id="schubmult.rings.combinatorial.schubert_monomial_ring"></a>
 
@@ -5873,6 +5994,14 @@ def key_to_rc_graph(key) -> RCGraph
 
 Evaluate a tensor key to an RCGraph using left-to-right squash_product.
 
+<a id="schubmult.rings.combinatorial.forest_rc_ring"></a>
+
+# schubmult.rings.combinatorial.forest\_rc\_ring
+
+<a id="schubmult.rings.combinatorial.qy_rc_graph_ring"></a>
+
+# schubmult.rings.combinatorial.qy\_rc\_graph\_ring
+
 <a id="schubmult.rings.combinatorial.crystal_graph_ring"></a>
 
 # schubmult.rings.combinatorial.crystal\_graph\_ring
@@ -5924,6 +6053,14 @@ def lowering_operator(index: int)
 ```
 
 Linearized lowering operator: delegate to each key's lowering_operator.
+
+<a id="schubmult.rings.combinatorial.bpd_ring"></a>
+
+# schubmult.rings.combinatorial.bpd\_ring
+
+<a id="schubmult.rings.combinatorial.eg_ring"></a>
+
+# schubmult.rings.combinatorial.eg\_ring
 
 <a id="schubmult.rings.combinatorial.eg_plactic_ring"></a>
 
@@ -6101,6 +6238,10 @@ def key_to_rc_graph(key: CrystalGraphTensor | tuple) -> RCGraph
 
 Evaluate a tensor key to an RCGraph using left-to-right squash_product.
 
+<a id="schubmult.rings.combinatorial.schubert_rc_ring"></a>
+
+# schubmult.rings.combinatorial.schubert\_rc\_ring
+
 <a id="schubmult.rings.combinatorial.chute_move_ring"></a>
 
 # schubmult.rings.combinatorial.chute\_move\_ring
@@ -6159,6 +6300,18 @@ def key_to_wc_graph(key) -> WCGraph
 ```
 
 Evaluate a tensor key to an WCGraph using left-to-right squash_product.
+
+<a id="schubmult.rings.combinatorial.key_rc_ring"></a>
+
+# schubmult.rings.combinatorial.key\_rc\_ring
+
+<a id="schubmult._version"></a>
+
+# schubmult.\_version
+
+<a id="schubmult.abc"></a>
+
+# schubmult.abc
 
 <a id="schubmult.combinatorics.planar_history"></a>
 
@@ -6837,6 +6990,17 @@ def squash_decomp()
 ```
 
 Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass.
+
+<a id="schubmult.combinatorics"></a>
+
+# schubmult.combinatorics
+
+Combinatorics package (permutations, RC/BPD/HPD-graphs, tableaux, crystals).
+
+This ``__init__`` currently re-exports nothing; import submodules directly,
+e.g. ``from schubmult.combinatorics.permutation import Permutation``. The
+commented-out block below is legacy scaffolding from before the module was
+split out of ``schub_lib``/``quantum_double``, kept for reference.
 
 <a id="schubmult.combinatorics.hpd"></a>
 
@@ -13427,6 +13591,12 @@ def __mul__(other)
 Plactic product: insert entries of `other` in row-reading order
 (top-to-bottom, left-to-right) into a copy of self.
 
+<a id="schubmult.combinatorics.schub_poly"></a>
+
+# schubmult.combinatorics.schub\_poly
+
+Backwards-compatible re-export shim; see `schubmult.symbolic.common_polys` for the actual implementations.
+
 <a id="schubmult.combinatorics.root_tableau"></a>
 
 # schubmult.combinatorics.root\_tableau
@@ -15355,6 +15525,34 @@ its first ``N`` and remaining ``len(perm) - N`` values.
 
 - `dict` - Mapping ``{(firstperm, secondperm): coeff}``.
 
+<a id="schubmult.mult"></a>
+
+# schubmult.mult
+
+Multiplication algorithms for Schubert polynomials.
+
+This module provides kernels for computing products of Schubert polynomials
+in various settings:
+
+- schubmult_py: Ordinary (single) Schubert polynomial multiplication
+- schubmult_double: Double Schubert polynomial multiplication
+- schubmult_q: Quantum Schubert polynomial multiplication
+- schubmult_q_double: Quantum double Schubert polynomial multiplication
+- grothmult_double: Double Grothendieck multiplication by a degree-one class
+
+Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
+
+<a id="schubmult.mult._accel"></a>
+
+# schubmult.mult.\_accel
+
+C++ multiplication kernels (the ``schubmult_cpp`` extension, built from ``cpp/`` by setup.py).
+
+``schubmult_py``, ``schubmult_double``, ``schubmult_q_fast``, ``schubmult_q_double_fast`` and the
+``*_from_elems`` kernels dispatch here. The extension is a required part of the package; the
+pure-Python kernels remain only as the fallback for permutations beyond the compiled MAXN (the
+wrappers return ``None`` in that case). Set ``SCHUBMULT_NO_CPP=1`` to force the Python kernels.
+
 <a id="schubmult.mult.separated_descents"></a>
 
 # schubmult.mult.separated\_descents
@@ -15831,6 +16029,10 @@ is simpler but slower than ``schubmult_q_fast``. Results agree with
 
 - `dict` - Coefficient dict ``{Permutation: coeff}``, polynomial in the
   default quantum parameters ``q``.
+
+<a id="schubmult.mult.quantum_double"></a>
+
+# schubmult.mult.quantum\_double
 
 <a id="schubmult.mult.groth_double"></a>
 
@@ -16479,6 +16681,10 @@ substitutes the merged alphabet back to ``var2``/``var3``.
 
 - `dict` - Mapping ``{(firstperm, secondperm): coeff}``.
 
+<a id="schubmult.utils.argparse"></a>
+
+# schubmult.utils.argparse
+
 <a id="schubmult.utils.perm_utils"></a>
 
 # schubmult.utils.perm\_utils
@@ -16573,6 +16779,10 @@ def little_bump(word, i, j)
 
 Perform a Little bump on a reduced word at the inversion (i, j).
 
+<a id="schubmult.utils"></a>
+
+# schubmult.utils
+
 <a id="schubmult.utils.schub_lib"></a>
 
 # schubmult.utils.schub\_lib
@@ -16658,6 +16868,42 @@ def pad_tuple(tup, length)
 
 Pad a tuple-like with trailing zeros up to ``length``.
 
+<a id="schubmult.utils.test_utils"></a>
+
+# schubmult.utils.test\_utils
+
+<a id="schubmult.utils._mul_utils"></a>
+
+# schubmult.utils.\_mul\_utils
+
+<a id="schubmult.utils.parsing"></a>
+
+# schubmult.utils.parsing
+
+<a id="schubmult.utils.logging"></a>
+
+# schubmult.utils.logging
+
+<a id="schubmult.utils._grid_print"></a>
+
+# schubmult.utils.\_grid\_print
+
+<a id="schubmult._scripts.forest_nowork_branch"></a>
+
+# schubmult.\_scripts.forest\_nowork\_branch
+
+<a id="schubmult._scripts.rc_product_ms"></a>
+
+# schubmult.\_scripts.rc\_product\_ms
+
+<a id="schubmult._scripts.dgroth_by_dschub_test"></a>
+
+# schubmult.\_scripts.dgroth\_by\_dschub\_test
+
+<a id="schubmult._scripts.groth_lr_rule"></a>
+
+# schubmult.\_scripts.groth\_lr\_rule
+
 <a id="schubmult._scripts.count_sanity"></a>
 
 # schubmult.\_scripts.count\_sanity
@@ -16686,6 +16932,20 @@ Count `2`: subwords of the FULL long word (barred+unbarred) whose value
 sequence is a reduced word for perm = uncode(code) and whose
 omega_invariant[0] (of reversed values) matches the principal-RC target.
 
+<a id="schubmult._scripts"></a>
+
+# schubmult.\_scripts
+
+Console and helper scripts shipped with schubmult.
+
+<a id="schubmult._scripts.fslide_prod"></a>
+
+# schubmult.\_scripts.fslide\_prod
+
+<a id="schubmult._scripts.schubmult_py"></a>
+
+# schubmult.\_scripts.schubmult\_py
+
 <a id="schubmult._scripts.forest_graph_lr_rule"></a>
 
 # schubmult.\_scripts.forest\_graph\_lr\_rule
@@ -16699,6 +16959,14 @@ def clear_rcgraph_caches()
 ```
 
 Clear all known RCGraph and related caches to reduce memory overhead.
+
+<a id="schubmult._scripts.slide_coproduct_graphs"></a>
+
+# schubmult.\_scripts.slide\_coproduct\_graphs
+
+<a id="schubmult._scripts.canonical_elem_sym_fact"></a>
+
+# schubmult.\_scripts.canonical\_elem\_sym\_fact
 
 <a id="schubmult._scripts.quasi_dd_test"></a>
 
@@ -16789,6 +17057,10 @@ def enum_forest_codes(length, max_sum)
 
 All forest codes (c_1, ..., c_length) with sum <= max_sum, c_i >= 0.
 
+<a id="schubmult._scripts.rc_molev_sagan"></a>
+
+# schubmult.\_scripts.rc\_molev\_sagan
+
 <a id="schubmult._scripts.graph_lr_rule"></a>
 
 # schubmult.\_scripts.graph\_lr\_rule
@@ -16842,6 +17114,18 @@ Concretely:
 
 Each WCGraph contributes ``beta**(|kappa| - |F|)`` times its monomial; beta is
 the degree ``-1`` homogenizer recording extra labels beyond one per node.
+
+<a id="schubmult._scripts.schubprompt"></a>
+
+# schubmult.\_scripts.schubprompt
+
+<a id="schubmult._scripts.groth_elem_as_schub"></a>
+
+# schubmult.\_scripts.groth\_elem\_as\_schub
+
+<a id="schubmult._scripts.groth_trans_wcgraph"></a>
+
+# schubmult.\_scripts.groth\_trans\_wcgraph
 
 <a id="schubmult._scripts.grove_lr_rule_nope"></a>
 
@@ -16907,6 +17191,30 @@ def cauchy_dual_forest(n)
 
 ???
 
+<a id="schubmult._scripts.verify_quantum_triple_positive"></a>
+
+# schubmult.\_scripts.verify\_quantum\_triple\_positive
+
+Parallel, restartable verification of positive representations for quantum
+double Schubert triple products.
+
+Each individual case is keyed by ``(perm1, perm2, perm3)`` and logged as its
+own JSON record (JSON Lines format) to a log file. There is no shared,
+in-memory results dictionary: workers pull independent ``(perm1, perm2)``
+tasks off a queue, compute the triple product, verify each ``perm3`` term,
+and append one record per case directly to the log file. This keeps workers
+fully independent and makes the log the single source of truth.
+
+Restartability: on startup the log file (if it exists) is scanned once to
+recover the set of ``(perm1, perm2, perm3)`` cases already verified, plus the
+set of ``(perm1, perm2)`` pairs that were fully completed. Both are skipped
+on subsequent runs.
+
+Overwrite safety: the log file is only ever opened in append mode, so a
+crashed or restarted run can never truncate or clobber previously recorded
+results. The default log filename is derived from ``n`` so runs for
+different ``n`` do not collide by default.
+
 <a id="schubmult._scripts.check_omega_last_row"></a>
 
 # schubmult.\_scripts.check\_omega\_last\_row
@@ -16927,6 +17235,16 @@ symmetric RC graphs of matching length and last descent, and verify:
     rc.disjoint_union(elem_sym_rc).omega_invariant[1]
     ==
     rc.squash_product(elem_sym_rc).omega_invariant[1]
+
+<a id="schubmult._scripts.diag_subwords"></a>
+
+# schubmult.\_scripts.diag\_subwords
+
+Compare per-subword weights between alphabet-vine (canonical_forest filter)
+and reflection model (reduced+omega filter) on the same long_word index sets.
+
+Both models select subwords of long_word(n). For each kept subword, print
+(idx, values, per-letter weights, total weight) under each model.
 
 <a id="schubmult._scripts.compu_double_forest"></a>
 
@@ -17039,6 +17357,67 @@ def queue_producer(task_queue, perms, n, num_processors, skip_id, irreducible,
 
 Producer with periodic garbage collection.
 
+<a id="schubmult._scripts.schubert_formula"></a>
+
+# schubmult.\_scripts.schubert\_formula
+
+<a id="schubmult._scripts.forest_prod"></a>
+
+# schubmult.\_scripts.forest\_prod
+
+<a id="schubmult._scripts.key_prod"></a>
+
+# schubmult.\_scripts.key\_prod
+
+<a id="schubmult._scripts.unique_code_sort_test"></a>
+
+# schubmult.\_scripts.unique\_code\_sort\_test
+
+<a id="schubmult._scripts.dschub_cut_coprod"></a>
+
+# schubmult.\_scripts.dschub\_cut\_coprod
+
+<a id="schubmult._scripts.assoc_test_slide"></a>
+
+# schubmult.\_scripts.assoc\_test\_slide
+
+<a id="schubmult._scripts.middling_lr_rule"></a>
+
+# schubmult.\_scripts.middling\_lr\_rule
+
+<a id="schubmult._scripts.forest_branching"></a>
+
+# schubmult.\_scripts.forest\_branching
+
+<a id="schubmult._scripts.verify_paper_formulas"></a>
+
+# schubmult.\_scripts.verify\_paper\_formulas
+
+<a id="schubmult._scripts.dual_forest_signed_expansion"></a>
+
+# schubmult.\_scripts.dual\_forest\_signed\_expansion
+
+CLI: dual forest polynomial computations from arXiv:2306.10939 (Nadeau-Tewari).
+
+Two formulas are supported, both expressed as elements of
+``FreeAlgebra(WordBasis)`` keyed by composition (exponent) tuples:
+
+  * ``--mode dual`` (default):  signed lower-ideal expansion, equal to P_F by
+    Theorem 4.1::
+
+        P_F = sum_{lower ideals L of F} (-1)^|L|
+                  * sum_{L-compatible kappa} x^kappa
+
+  * ``--mode tilde``:  the unsigned dual forest polynomial of eq. (4.1)::
+
+        ~P_F = sum_{internal(F)-compatible kappa} x^kappa
+
+  * ``--mode both``:  print both.
+
+<a id="schubmult._scripts.invariant_double_rc"></a>
+
+# schubmult.\_scripts.invariant\_double\_rc
+
 <a id="schubmult._scripts.forest_lr_rule"></a>
 
 # schubmult.\_scripts.forest\_lr\_rule
@@ -17052,6 +17431,22 @@ def clear_rcgraph_caches()
 ```
 
 Clear all known RCGraph and related caches to reduce memory overhead.
+
+<a id="schubmult._scripts.lr_rc_verification"></a>
+
+# schubmult.\_scripts.lr\_rc\_verification
+
+<a id="schubmult._scripts.can_we_split_vars"></a>
+
+# schubmult.\_scripts.can\_we\_split\_vars
+
+<a id="schubmult._scripts.schubmult_double"></a>
+
+# schubmult.\_scripts.schubmult\_double
+
+<a id="schubmult._scripts.groth_trans"></a>
+
+# schubmult.\_scripts.groth\_trans
 
 <a id="schubmult._scripts.elem_monom_formula"></a>
 
@@ -17067,6 +17462,22 @@ def elem_monom_formula(n)
 
 ???
 
+<a id="schubmult._scripts.sharp_p_test"></a>
+
+# schubmult.\_scripts.sharp\_p\_test
+
+<a id="schubmult._scripts.forest_schub"></a>
+
+# schubmult.\_scripts.forest\_schub
+
+<a id="schubmult._scripts.forest_squash"></a>
+
+# schubmult.\_scripts.forest\_squash
+
+<a id="schubmult._scripts.assoc_test_forest"></a>
+
+# schubmult.\_scripts.assoc\_test\_forest
+
 <a id="schubmult._scripts.slide_lr_rule"></a>
 
 # schubmult.\_scripts.slide\_lr\_rule
@@ -17081,6 +17492,20 @@ def clear_rcgraph_caches()
 
 Clear all known RCGraph and related caches to reduce memory overhead.
 
+<a id="schubmult._scripts.forest_poly_basis"></a>
+
+# schubmult.\_scripts.forest\_poly\_basis
+
+Express forest polynoials in the Schubert basis
+
+<a id="schubmult._scripts.final_lr_rule"></a>
+
+# schubmult.\_scripts.final\_lr\_rule
+
+<a id="schubmult._scripts.schubmult_q"></a>
+
+# schubmult.\_scripts.schubmult\_q
+
 <a id="schubmult._scripts.pieri_formula_forest"></a>
 
 # schubmult.\_scripts.pieri\_formula\_forest
@@ -17094,6 +17519,25 @@ def pieri_forest(n)
 ```
 
 ???
+
+<a id="schubmult._scripts.schubmult_q_double"></a>
+
+# schubmult.\_scripts.schubmult\_q\_double
+
+<a id="schubmult._scripts.make_principal"></a>
+
+# schubmult.\_scripts.make\_principal
+
+Script: make_principal.py
+Description: Entry point for principal object construction in schubmult.
+
+<a id="schubmult._scripts.conjecture_check_positive_charac"></a>
+
+# schubmult.\_scripts.conjecture\_check\_positive\_charac
+
+<a id="schubmult._scripts.which_schubs_forest"></a>
+
+# schubmult.\_scripts.which\_schubs\_forest
 
 <a id="schubmult._scripts.double_forest_polynomial"></a>
 
@@ -17358,6 +17802,34 @@ difference products times leftover clearing monomials, expanded once, with
 LP.  ``beta`` is restored as ``beta**(`diffs` - d)`` with the Laurent atoms
 ``(1 + beta*y)`` degree 0 by construction.
 
+<a id="schubmult._scripts.anti_rc_graph_showcase"></a>
+
+# schubmult.\_scripts.anti\_rc\_graph\_showcase
+
+<a id="schubmult._scripts.key_branching"></a>
+
+# schubmult.\_scripts.key\_branching
+
+<a id="schubmult._scripts.grothmult_py"></a>
+
+# schubmult.\_scripts.grothmult\_py
+
+<a id="schubmult._scripts.isobaric_formula"></a>
+
+# schubmult.\_scripts.isobaric\_formula
+
+<a id="schubmult.symbolic"></a>
+
+# schubmult.symbolic
+
+<a id="schubmult.symbolic.common_polys"></a>
+
+# schubmult.symbolic.common\_polys
+
+<a id="schubmult.symbolic.poly"></a>
+
+# schubmult.symbolic.poly
+
 <a id="schubmult.symbolic.poly.schub_poly"></a>
 
 # schubmult.symbolic.poly.schub\_poly
@@ -17467,4 +17939,28 @@ def genset_dict_from_expr(expr, genset, length=None)
 ```
 
 Transform expressions into a multinomial form given generators.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym"></a>
+
+# schubmult.symbolic.symmetric\_polynomials.elem\_sym
+
+<a id="schubmult.symbolic.symmetric_polynomials"></a>
+
+# schubmult.symbolic.symmetric\_polynomials
+
+<a id="schubmult.symbolic.symmetric_polynomials.qelem_sym"></a>
+
+# schubmult.symbolic.symmetric\_polynomials.qelem\_sym
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions"></a>
+
+# schubmult.symbolic.symmetric\_polynomials.functions
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym"></a>
+
+# schubmult.symbolic.symmetric\_polynomials.complete\_sym
+
+<a id="schubmult.symbolic.functions"></a>
+
+# schubmult.symbolic.functions
 

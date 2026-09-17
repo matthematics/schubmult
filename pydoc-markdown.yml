@@ -5,7 +5,12 @@ loaders:
 processors:
   - type: filter
     documented_only: true
-    skip_empty_modules: true
+    # NOTE: skip_empty_modules must stay false -- it drops a module (its
+    # docstring included) entirely once it has zero *documented members*,
+    # even if the module itself has a perfectly good docstring. That broke
+    # every package's __init__.py page (combinatorics/, mult/, rings/, ...)
+    # since those often re-export without adding new documented functions.
+    skip_empty_modules: false
     # _scripts/unlinted is research scratch space, not public API
     expression: "not name.startswith('schubmult._scripts.unlinted') and default()"
   - type: smart
