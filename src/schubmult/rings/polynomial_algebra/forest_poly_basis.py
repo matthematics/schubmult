@@ -1,3 +1,7 @@
+"""`ForestPolyBasis`: the forest polynomial basis (Nadeau-Spink-Tewari) of `PolynomialAlgebra`, indexed
+by weak compositions via indexed forests (`schubmult.combinatorics.indexed_forests`).
+"""
+
 from itertools import combinations
 
 from schubmult.combinatorics.indexed_forests import decreasing_labelings, weak_composition_to_indfor, word_from_labeling

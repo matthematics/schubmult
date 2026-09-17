@@ -1,3 +1,8 @@
+"""`EGPlacticRing`: a `CrystalGraphRing` on pairs ``((NilPlactic, length), Plactic)`` -- an RC
+graph's Edelman-Greene insertion tableau together with its plactic recording tableau -- with
+conversion to and from `RCGraphRing`.
+"""
+
 from sympy import Tuple
 
 from schubmult.combinatorics.nilplactic import NilPlactic
@@ -20,6 +25,7 @@ from .rc_graph_ring import RCGraphRing
 
 
 class EGPlacticPrintingTerm(PrintingTerm):
+    """Display symbol for an `EGPlacticRing` basis key."""
     is_commutative = False
     precedence = 50
 
@@ -50,17 +56,7 @@ class EGPlacticPrintingTerm(PrintingTerm):
 
 
 class EGPlacticRingElement(CrystalGraphRingElement):
-    """
-    EGPlacticRing elements are linear combinations of RCGraph basis elements.
-
-    The product % is the polynomial product. Currently only defined when the right side
-    is a dominant RC graph.
-
-    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-    to do this directly.
-
-    The product * is well defined for any pair of RC graphs and is the dual product.
-    """
+    """EGPlacticRing elements are linear combinations of ``((NilPlactic, length), Plactic)`` basis keys."""
 
     # ----------------------
     # Presentation helpers
@@ -189,6 +185,7 @@ class EGPlacticRingElement(CrystalGraphRingElement):
 
 
 class EGPlacticRing(CrystalGraphRing):
+    """The EG-plactic ring; see the module docstring."""
     _id = 0
 
     def __init__(self, *_, **__):

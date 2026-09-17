@@ -1,3 +1,11 @@
+"""`FreeAlgebra` and `FreeAlgebraElement`: the graded dual of the polynomial algebra.
+
+See the package docstring (`schubmult.rings.free_algebra`) for the duality. This module
+holds the ring and element classes; the individual bases live in sibling modules and
+plug in through the `FreeAlgebraBasis` interface. ``FA``, ``ASx``, ``AGx`` are the
+standard instances.
+"""
+
 from functools import cache
 from itertools import zip_longest
 
@@ -25,12 +33,16 @@ logger = get_logger(__name__)
 
 # keys are tuples of nonnegative integers
 class FreeAlgebraElement(BaseRingElement):
-    """Element of a free algebra, stored as a dict mapping basis keys to coefficients.
+    """An element of a `FreeAlgebra`: ``{basis_key: coefficient}``.
 
-    Keys are tuples of nonnegative integers (words in the word basis) or
-    basis-specific keys depending on the parent ring's basis. Supports
-    arithmetic operations, basis changes, and word-level operations like
-    injection, prefix, suffix, and interval extraction.
+    In the `WordBasis` a key is a word -- a tuple of nonnegative integers -- dual to
+    the monomial with that exponent vector. In other bases the key is that basis's
+    combinatorial index together with a number of variables (e.g. ``(perm, numvars)``
+    for `SchubertBasis`). Beyond ring arithmetic, elements support basis changes
+    (``change_basis``), the duality pairing with polynomials (``pairing``,
+    ``poly_inner_product``), expansion into Schubert rings (``schub_expand``), and
+    word-level operations (``inject``, ``prefix``, ``suffix``, ``interval``, ``split``,
+    ``factorize``) that are computed in the word basis and transported back.
     """
 
     def interleave(self, other, zero_pad=True):
@@ -156,10 +168,12 @@ class FreeAlgebraElement(BaseRingElement):
         return result
 
     def poly_inner_product(self, poly, genset, n):
-        """Compute the inner product of this element with a polynomial.
+        """The duality pairing of this element with a polynomial expression.
 
-        Converts to WordBasis and pairs coefficient-by-coefficient with
-        the monomial expansion of *poly* in *genset*.
+        Expands ``poly`` into monomials in ``genset`` (exponent vectors padded/truncated to
+        ``n`` variables, or trailing zeros stripped if ``n`` is ``None``), converts ``self``
+        to the word basis, and sums ``coeff_word * coeff_monomial`` over matching
+        word/exponent-vector pairs.
 
         Args:
             poly: A polynomial expression.
@@ -251,13 +265,14 @@ class FreeAlgebraElement(BaseRingElement):
         return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
 
     def pairing(self, other):
-        """Compute the pairing of this element with *other* via the monomial basis.
+        """The duality pairing with a `PolynomialAlgebraElement`.
 
-        Converts *self* to WordBasis and *other* to MonomialBasis, then
-        sums products of matching coefficients.
+        Converts ``self`` to the word basis and ``other`` to the monomial basis, then sums
+        ``coeff_word * coeff_monomial`` over words equal to exponent vectors. This is the
+        pairing under which the free algebra is the graded dual of the polynomial algebra.
 
         Args:
-            other: Another element to pair with.
+            other: A polynomial algebra element to pair with.
 
         Returns:
             The integer pairing value.
@@ -295,7 +310,9 @@ class FreeAlgebraElement(BaseRingElement):
     @staticmethod
     @cache
     def tup_double_expand(tup):
-        """Expand a word tuple into the double Schubert basis via Pieri products."""
+        """Realize the word ``tup`` as a double Schubert (separated-descents) ring element: the
+        product ``prod_i S_{uncode([tup[i]])}`` with each factor in its own variable.
+        """
         res = ADSx([])
         if len(tup) == 0:
             return res
@@ -305,7 +322,11 @@ class FreeAlgebraElement(BaseRingElement):
     @staticmethod
     @cache
     def tup_expand(tup):
-        """Expand a word tuple into the single Schubert basis via divide-and-conquer Pieri products."""
+        """Realize the word ``tup`` as a single Schubert (separated-descents) ring element: the
+        product ``prod_i S_{uncode([tup[i]])}`` with each factor in its own variable, computed
+        by divide-and-conquer. This is the map word -> ``h_{a_1}(x_1) h_{a_2}(x_2) ...`` that
+        sends the word basis onto complete-symmetric-in-one-variable products.
+        """
         res = splugSx([])
         if len(tup) == 0:
             return res
@@ -315,7 +336,10 @@ class FreeAlgebraElement(BaseRingElement):
         return FreeAlgebraElement.tup_expand(tup[:mid]) * FreeAlgebraElement.tup_expand(tup[mid:])
 
     def change_basis(self, other_basis):
-        """Convert this element to another basis.
+        """Re-express this element in another `FreeAlgebraBasis`.
+
+        Uses ``self.ring._basis.transition(other_basis)``, which most bases implement by
+        routing through the `WordBasis`.
 
         Args:
             other_basis: The target basis class (e.g. WordBasis, SchubertBasis).
@@ -331,21 +355,23 @@ class FreeAlgebraElement(BaseRingElement):
         return ret
 
     def schub_expand(self):
-        """Expand this element into a single Schubert polynomial ring element."""
+        """Realize this element in the single Schubert separated-descents ring via ``tup_expand``
+        (each word becomes a product of one-variable complete symmetric functions).
+        """
         res = splugSx([]).ring.zero
         for tup, val in self.items():
             res += val * self.__class__.tup_expand(tup)
         return res
 
     def schub_double_expand(self):
-        """Expand this element into a double Schubert polynomial ring element."""
+        """Double-alphabet analogue of ``schub_expand`` via ``tup_double_expand``."""
         res = ADSx([]).ring.zero
         for tup, val in self.items():
             res += val * self.__class__.tup_double_expand(tup)
         return res
 
     def bcoproduct(self):
-        """Compute the bar-coproduct of this element in the tensor ring."""
+        """The \"bar\" coproduct (see `WordBasis.bcoproduct`) in the tensor square ring."""
         T = self.ring @ self.ring
         res = T.zero
 
@@ -426,6 +452,9 @@ class FreeAlgebraElement(BaseRingElement):
         return new_elem
 
     def __truediv__(self, other):
+        """Skew by a permutation: ``elem / u`` applies ``skew_element(w, u, n)`` to each ``(w, n)`` key
+        (the dual of multiplying by ``S_u`` on the polynomial side).
+        """
         from schubmult.combinatorics.permutation import Permutation
 
         if isinstance(other, list | tuple | Permutation):
@@ -479,11 +508,13 @@ class FreeAlgebraElement(BaseRingElement):
 
 
 class FreeAlgebra(BaseRing):
-    """Free algebra ring with a configurable basis.
+    """The free algebra on generators indexed by nonnegative integers, in a chosen basis.
 
-    The algebra operates on :class:`FreeAlgebraElement` instances whose keys
-    are determined by the chosen basis (default :class:`WordBasis`). Supports
-    multiplication, tensor products, coproducts, and basis changes.
+    The ring is basis-agnostic; a `FreeAlgebraBasis` *class* (not instance) supplies the
+    key type, product, coproduct, and transitions. ``FreeAlgebra(WordBasis)`` is the
+    concatenation algebra on words; ``FreeAlgebra(SchubertBasis)`` is the same algebra
+    written in the basis dual to Schubert polynomials. See the package docstring for
+    the duality with the polynomial algebra.
 
     Args:
         basis: The basis class to use (default ``WordBasis``).
@@ -614,10 +645,13 @@ class FreeAlgebra(BaseRing):
         return self.from_dict(self._basis.from_rc_graph(rc_graph))
 
     def matmul(self, elem, other):
-        """Internal product (``@`` operator) or scalar multiplication.
+        """Internal (Kronecker) product (``@`` operator) or scalar multiplication.
 
-        If *other* is a scalar, multiplies all coefficients. If *other* is
-        a FreeAlgebraElement, computes the internal product via the basis.
+        If ``other`` is a scalar, multiplies all coefficients. If it is a `FreeAlgebraElement`,
+        computes the basis's ``internal_product`` -- essentially the Kronecker product of
+        noncommutative symmetric functions, enumerated in the word basis by nonnegative
+        integer matrices with prescribed row/column sums (see `WordBasis.internal_product`;
+        requires SageMath).
         """
         try:
             other = self.domain_new(other)
@@ -666,7 +700,7 @@ class FreeAlgebra(BaseRing):
         return poly
 
     def skew_element(self, w, u, n):
-        """Skew schubert by elem sym"""
+        """The skew element ``S_w / S_u`` in ``n`` variables (dual to multiplication by ``S_u``); see `SchubertBasis.skew_element`."""
         return self.from_dict(self._basis.skew_element(w, u, n))
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002

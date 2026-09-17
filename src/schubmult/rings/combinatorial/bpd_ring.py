@@ -1,3 +1,7 @@
+"""`BPDRing`: a `SchubertMonomialRing` whose basis elements are bumpless pipe dreams (`BPD`),
+with conversion to `RCGraphRing` via ``to_rc_graph_ring_element``.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,7 +15,10 @@ if TYPE_CHECKING:
 
 
 class BPDRingElement(SchubertMonomialRingElement):
+    """Linear combination of `BPD` basis elements."""
+
     def to_rc_graph_ring_element(self, rc_ring: RCGraphRing | None = None) -> RCGraphRingElement:
+        """Convert each BPD to its RC graph and re-express in an `RCGraphRing`."""
         from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 
         if rc_ring is None:
@@ -26,6 +33,8 @@ class BPDRingElement(SchubertMonomialRingElement):
 
 
 class BPDRing(SchubertMonomialRing):
+    """The ring of bumpless pipe dreams; products use `BPD.product`."""
+
     _id = 0
 
     def __init__(self, genset=None, coeff_genset=None, *_, **__):

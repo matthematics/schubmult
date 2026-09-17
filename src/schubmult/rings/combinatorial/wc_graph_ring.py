@@ -1,4 +1,9 @@
 
+"""`WCGraphRing`: the ring whose basis elements are `WCGraph`s (the K-theoretic / Grothendieck
+analogue of `RCGraphRing`). ``to_free_algebra_element`` lands in the free-algebra Grothendieck
+basis by default.
+"""
+
 from schubmult.combinatorics.wc_graph import WCGraph
 from schubmult.rings.free_algebra import FreeAlgebra, GrothendieckBasis, WordBasis
 from schubmult.symbolic import S, sympify_sympy, sympy_Mul
@@ -15,17 +20,7 @@ from .schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingEl
 
 
 class WCGraphRingElement(SchubertMonomialRingElement):
-    """
-    WCGraphRing elements are linear combinations of WCGraph basis elements.
-
-    The product % is the polynomial product. Currently only defined when the right side
-    is a dominant RC graph.
-
-    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-    to do this directly.
-
-    The product * is well defined for any pair of RC graphs and is the dual product.
-    """
+    """WCGraphRing elements are linear combinations of WCGraph basis elements."""
 
     # ----------------------
     # Presentation helpers
@@ -125,6 +120,8 @@ class WCGraphRingElement(SchubertMonomialRingElement):
 
 
 class WCGraphRing(SchubertMonomialRing):
+    """The ring of `WCGraph`s; see the module docstring."""
+
     _id = 0
 
     def __call__(self, x):

@@ -1,3 +1,7 @@
+"""`AltRCGraphRing`: an alternate `RCGraphRing` implementation exploring a different polynomial
+product (``%``) construction; the exported `RCGraphRing` is the primary one.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.rc_graph import RCGraph
@@ -19,13 +23,8 @@ class AltRCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement
     """
     AltRCGraphRing elements are linear combinations of RCGraph basis elements.
 
-    The product % is the polynomial product. Currently only defined when the right side
-    is a dominant RC graph.
-
-    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-    to do this directly.
-
-    The product * is well defined for any pair of RC graphs and is the dual product.
+    The product % is the polynomial product (only defined when the right side is a dominant RC graph);
+    the product * is the dual product, defined for any pair of RC graphs.
     """
 
     # ----------------------
@@ -232,6 +231,7 @@ class AltRCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement
 
 
 class AltRCGraphRing(SchubertMonomialRing, CrystalGraphRing):
+    """Alternate RC graph ring; see the module docstring."""
     _id = 0
 
     def __init__(self, *_, **__):

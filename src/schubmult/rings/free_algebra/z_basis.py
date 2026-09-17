@@ -1,3 +1,7 @@
+"""`ZBasis`: free-algebra basis indexed by compositions with no zeros, related to `SchubertBasis`
+by shifting code entries by one and dropping zeros.
+"""
+
 import schubmult.rings.free_algebra as fa
 from schubmult.combinatorics.permutation import uncode
 from schubmult.symbolic import S

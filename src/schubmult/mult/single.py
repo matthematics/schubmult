@@ -37,6 +37,8 @@ init_logging(debug=False)
 logger = get_logger(__name__)
 
 class _gvars:
+    """Lazily-constructed default generating set (avoids building symbols at import time)."""
+
     @cached_property
     def var_x(self):
         return GeneratingSet("x")

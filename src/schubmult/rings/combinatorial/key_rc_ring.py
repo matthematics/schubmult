@@ -1,9 +1,17 @@
+"""`KeyRCGraphRing`: `RCGraphRing` quotient modeling key polynomials (Demazure characters).
+
+RC graphs are snapped to a canonical representative of their ``extremal_weight`` class
+(matching Edelman-Greene recording tableaux), and ``to_free_algebra_element`` lands in
+the dual key basis indexed by ``extremal_weight``.
+"""
+
 from schubmult.combinatorics.rc_graph import RCGraph
 
 from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 def _canonical_rc(rc):
+    """The representative of ``rc``'s key class with the same EG recording tableau, or raise if none."""
     from schubmult import NilPlactic
     # not needed
     # if rc.extremal_weight != rc.perm.pad_code(len(rc)):
@@ -23,7 +31,10 @@ def _canonical_rc(rc):
     #return next(iter(the_set))
 
 class KeyRCGraphRingElement(RCGraphRingElement):
+    """Element of `KeyRCGraphRing`; converts to the free-algebra key basis via ``extremal_weight``."""
+
     def to_free_algebra_element(self, basis=None):
+        """Map each RC graph to the dual key basis element indexed by its ``extremal_weight``."""
         from schubmult.rings.free_algebra import FreeAlgebra, KeyBasis
         KeyDual = FreeAlgebra(KeyBasis)
         result = sum([coeff * KeyDual(*key.extremal_weight) for key, coeff in self.items()])
@@ -32,6 +43,8 @@ class KeyRCGraphRingElement(RCGraphRingElement):
         return result.change_basis(basis)
 
 class KeyRCGraphRing(RCGraphRing):
+    """`RCGraphRing` with products snapped to canonical key-class representatives; see the module docstring."""
+
     _id = 0
 
     def __init__(self, *_, **__):

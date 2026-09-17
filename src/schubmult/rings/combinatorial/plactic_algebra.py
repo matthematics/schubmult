@@ -1,3 +1,7 @@
+"""`PlacticAlgebra` and `NilPlacticAlgebra`: rings whose basis elements are `Plactic` /
+`NilPlactic` tableaux (plactic and nilplactic monoid algebras).
+"""
+
 from schubmult.combinatorics.nilplactic import NilPlactic
 from schubmult.combinatorics.plactic import Plactic
 from schubmult.rings.base_ring import BaseRing, BaseRingElement
@@ -11,7 +15,8 @@ from schubmult.symbolic import S, sympy_Mul
 
 
 class PlacticPrintingTerm(TypedPrintingTerm):
-    pass
+    """Display symbol for a `PlacticAlgebra` basis tableau."""
+
 
 
 class PlacticAlgebraElement(BaseRingElement):
@@ -35,6 +40,8 @@ class PlacticAlgebraElement(BaseRingElement):
 
 
 class PlacticAlgebra(BaseRing):
+    """The plactic monoid algebra on `Plactic` tableaux (``op=True`` for the opposite product)."""
+
     _id = 0
 
     def __init__(self, *_, op=False, **__):

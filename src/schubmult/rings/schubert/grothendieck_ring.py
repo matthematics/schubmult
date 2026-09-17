@@ -1,3 +1,11 @@
+"""Grothendieck polynomial ring (non-equivariant): the ``Gx`` interface.
+
+`GrothendieckRing` is the beta-deformation of `SingleSchubertRing`; basis
+elements ``G_w`` are the K-theoretic Schubert classes, with ``beta = 0``
+recovering ordinary Schubert polynomials. There is no coefficient alphabet yet
+(see `double_grothendieck_ring` for the equivariant version).
+"""
+
 from functools import cache
 
 import schubmult.rings.printing as spolymod
@@ -19,11 +27,13 @@ class GrothendieckElement(BaseSchubertElement):
     """Element of a GrothendieckRing, stored as {Permutation: coeff}."""
 
     def as_polynomial(self):
+        """Expand to an explicit polynomial: ``sum coeff * G_w(x)``."""
         from schubmult.symbolic import Add
 
         return Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def mult_poly(self, poly):
+        """Multiply by an arbitrary polynomial in ``x`` via the Grothendieck Chevalley rule (`mult_poly_groth`)."""
         # GrothendieckRing has no coeff_genset (y) yet, so always use the single-variable path.
         from schubmult.utils.perm_utils import add_perm_dict
 
@@ -76,10 +86,12 @@ class GrothendieckRing(BaseSchubertRing):
 
     @property
     def beta(self):
+        """The deformation parameter."""
         return self._beta
 
     @property
     def mult_poly_single(self):
+        """`mult_poly_groth` with this ring's ``beta`` bound."""
         from schubmult.mult.groth import mult_poly_groth
 
         beta = self._beta
@@ -92,36 +104,45 @@ class GrothendieckRing(BaseSchubertRing):
     # def single_variable(self, i):
 
     def from_expr(self, expr):
+        """Convert a polynomial to the Grothendieck basis: expand in Schubert polynomials first, then
+        change basis Schubert -> Grothendieck.
+        """
         from schubmult.symbolic.common_polys import schub_dict_to_groth_dict
 
         schub_dict = self._schubert_ring.from_expr(expr)
         return self.from_dict(schub_dict_to_groth_dict({Permutation([]): 1}, schub_dict, self._beta))
 
     def mul_expr(self, elem, expr):
+        """Multiply by an expression by first converting it into the Grothendieck basis."""
         mul2 = self.from_expr(expr)
         return self.mul(elem, mul2)
 
     @cache
     def cached_product(self, u, v, basis2):
+        """Structure constants ``c^w_{u,v}(beta)`` via ``groth_mul_full_with_ring``; only same-ring products supported."""
         if self == basis2:
             return groth_mul_full_with_ring({u: S.One}, v, self._schubert_ring, self._beta)
         raise ValueError(f"Cannot multiply elements from different rings: {self} and {basis2}")
 
     @cache
     def cached_positive_product(self, u, v, basis2):
+        """Same as ``cached_product``."""
         return self.cached_product(u, v, basis2)
 
     @cache
     def cached_schubpoly(self, k):
+        """The explicit Grothendieck polynomial ``G_k(x)`` (cached)."""
         return grothendieck_poly_with_ring(k, self._schubert_ring, self._beta)
 
     def printing_term(self, k, prefix=""):
+        """The ``GrothendieckPoly`` display symbol for basis element ``k``."""
         return spolymod.GrothendieckPoly(k, self.genset.label, prefix=prefix)
 
     def __call__(self, x):
         return self.new(x)
 
     def new(self, x):
+        """Build an element from a permutation/Lehmer list, an element of this ring, or a polynomial expression."""
         genset = self.genset
         if isinstance(x, list) or isinstance(x, tuple):
             elem = self.from_dict({Permutation(x): self.domain.one})
@@ -136,6 +157,7 @@ class GrothendieckRing(BaseSchubertRing):
         return elem
 
     def from_dict(self, dct):
+        """Build an element from ``{Permutation: coeff}``, dropping terms whose coefficient expands to zero."""
         from schubmult.symbolic import sympify
 
         dct = {k: v for k, v in dct.items() if sympify(v).expand() != 0}

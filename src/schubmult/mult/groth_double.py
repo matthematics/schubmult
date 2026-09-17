@@ -189,6 +189,7 @@ def _one_plus_beta_x_terms(u, positions, var2, beta, inverse=False, beta_offset=
 
 
 def _rank(u, positions):
+    """Ambient rank large enough for chains starting at ``u`` touching ``positions``."""
     return max(len(u), max(positions) + 1) + len(positions)
 
 
@@ -500,6 +501,7 @@ def _chain_sums(u, k, beta):
 
 
 def _genset(var):
+    """Wrap a plain sequence of symbols in a ``CustomGeneratingSet``; pass generating sets and ``None`` through."""
     if var is None or isinstance(var, GeneratingSet_base):
         return var
     return CustomGeneratingSet(var)
@@ -570,6 +572,7 @@ def _frac_add(f1, f2, varl1, beta):
 
 
 def _frac_to_expr(f, varl1, beta):
+    """Reconstitute a flat fraction ``(numer, {atom: exp})`` as ``numer / prod (1 + beta*varl1[a])**exp``."""
     n, d = f
     if n == S.Zero:
         return S.Zero

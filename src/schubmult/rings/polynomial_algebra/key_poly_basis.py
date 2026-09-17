@@ -1,3 +1,5 @@
+"""`KeyPolyBasis`: the key polynomial (Demazure character) basis of `PolynomialAlgebra`, indexed by weak compositions."""
+
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.combinatorics.plactic import Plactic
 from schubmult.symbolic import S, expand_seq

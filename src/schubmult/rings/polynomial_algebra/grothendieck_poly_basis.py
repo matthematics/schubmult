@@ -1,3 +1,5 @@
+"""`GrothendieckPolyBasis`: the (beta-deformed) Grothendieck polynomial basis of `PolynomialAlgebra`."""
+
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff

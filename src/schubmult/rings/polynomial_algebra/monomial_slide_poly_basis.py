@@ -1,3 +1,5 @@
+"""`MonomialSlidePolyBasis`: the monomial slide polynomial basis (Assaf-Searles) of `PolynomialAlgebra`."""
+
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import Add, S, expand_seq
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff

@@ -1,3 +1,7 @@
+"""`BoundedWCFactorAlgebra`: the `WCGraph` (K-theoretic) analogue of `BoundedRCFactorAlgebra`,
+factoring Grothendieck classes into tuples of full Grassmannian WC graphs.
+"""
+
 from __future__ import annotations
 
 import logging  # noqa: F401
@@ -137,6 +141,7 @@ def _build_schur_elem_from_key(key):
 
 
 class BoundedWCFactorPrintingTerm(PrintingTerm):
+    """Display symbol for a `BoundedWCFactorAlgebra` basis key."""
     is_commutative = False
     precedence = 50
 

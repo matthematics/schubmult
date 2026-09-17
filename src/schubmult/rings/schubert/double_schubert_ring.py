@@ -1,3 +1,18 @@
+"""Double Schubert polynomial ring: the ``DSx`` interface.
+
+`DoubleSchubertRing` represents ``Z[y][x]`` in the basis of double Schubert
+polynomials ``S_w(x; y)``, dispatching products to `schubmult.mult.double`.
+It is also the workhorse behind the single ring (`schubert_ring.SingleSchubertRing`
+is a `DoubleSchubertRing` with an all-zero coefficient alphabet). Beyond ring
+arithmetic, `DoubleSchubertElement` supports divided differences, isobaric
+divided differences, variable substitution/evaluation, coproducts, and
+expansion into elementary-symmetric (\"CEM\"/\"SEM\") bases.
+
+Variants: `ElemDoubleSchubertRing` keeps coefficients as unevaluated factorial
+elementary symmetric functions; `DoubleSchubertRingDown` uses the descent-side
+(\"down\") kernels.
+"""
+
 from functools import cache, cached_property
 
 import schubmult.mult.double as yz
@@ -17,19 +32,24 @@ from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
 def is_fact_elem_sym(obj):
+    """Whether ``obj`` is an (unevaluated) factorial elementary symmetric function."""
     return is_of_func_type(obj, ElemSym_base)
 
 
 def is_fact_complete_sym(obj):
+    """Whether ``obj`` is an (unevaluated) factorial complete homogeneous symmetric function."""
     return is_of_func_type(obj, CompleteSym_base)
 
 
 class DoubleSchubertElement(BaseSchubertElement):
-    """Algebra with sympy coefficients
-    and a dict basis
+    """An element of a `DoubleSchubertRing`: ``{Permutation: coefficient}`` in the
+    double Schubert basis ``S_w(x; y)``, with sympy coefficients in ``y``.
     """
 
     def to_genset_dict(self, trim=False):
+        """Expand to a polynomial and return ``{exponent_tuple: coeff}`` over the ``x`` variables;
+        ``trim=True`` merges keys that differ only by trailing zeros.
+        """
         gdict = genset_dict_from_expr(self.as_polynomial(), self.ring.genset)
 
         def _trim_tuple(tup):
@@ -48,12 +68,17 @@ class DoubleSchubertElement(BaseSchubertElement):
         return new_dict
 
     def divdiff(self, i):
+        """Divided difference ``partial_i``: ``S_w -> S_{w s_i}`` when ``i`` is a descent of ``w``, else 0."""
         return self.ring.from_dict({k.swap(i - 1, i): v for k, v in self.items() if i - 1 in k.descents()})
 
     def simpleref(self, i):
+        """Action of the simple reflection ``s_i`` on the ``x`` variables: ``f + (x_{i+1} - x_i) partial_i f``."""
         return self + self.divdiff(i).mult_poly(self.ring.genset[i + 1] - self.ring.genset[i])
 
     def coeff_isobaric(self, i, beta):
+        """Isobaric divided difference acting on the ``y`` (coefficient) alphabet, transported through
+        the basis via the antipode-style inversion ``S_w -> (-1)^{l(w)} S_{w^{-1}}``.
+        """
         coeff_ring = self.ring.coeff_ring
         result = self.ring.zero
         for k, v in self.items():
@@ -71,10 +96,12 @@ class DoubleSchubertElement(BaseSchubertElement):
         return result
 
     def isobaric(self, i, beta):
+        """Beta-deformed isobaric divided difference ``pi_i = partial_i + beta (x_i partial_i - 1)``."""
         the_divdiff = self.divdiff(i)
         return the_divdiff + beta * (the_divdiff.mult_poly(self.ring.genset[i]) - self)
 
     def divdiff_perm(self, perm):
+        """Apply ``partial_w`` for ``w = perm``, peeling simple reflections from the last descent."""
         if perm.inv == 0:
             return self
         desc = max(perm.descents())
@@ -82,6 +109,7 @@ class DoubleSchubertElement(BaseSchubertElement):
         return self.divdiff(desc + 1).divdiff_perm(perm2)
 
     def isobaric_perm(self, perm, beta):
+        """Apply the beta-isobaric ``pi_w`` for ``w = perm``."""
         if perm.inv == 0:
             return self
         desc = max(perm.descents())
@@ -89,10 +117,12 @@ class DoubleSchubertElement(BaseSchubertElement):
         return self.isobaric_perm(perm2, beta).isobaric(desc + 1, beta)
 
     def isobaric_plus_beta(self, i, beta):
+        """The variant ``partial_i + beta x_i partial_i`` (isobaric without the ``-beta`` identity term)."""
         the_divdiff = self.divdiff(i)
         return the_divdiff + beta * the_divdiff.mult_poly(self.ring.genset[i])
 
     def act(self, perm):
+        """Permute the ``x`` variables by ``perm``, as a composition of ``simpleref``s."""
         perm = Permutation(perm)
         dset = perm.descents()
         if len(dset) == 0:
@@ -101,9 +131,13 @@ class DoubleSchubertElement(BaseSchubertElement):
         return self.simpleref(i + 1).act(perm.swap(i, i + 1))
 
     def max_index(self):
+        """The largest ``x`` index (1-indexed) any basis permutation actually depends on."""
         return max([max([0, *list(k.descents(zero_indexed=False))]) for k in self.keys()])
 
     def eval(self, x):
+        """Substitute ``{generator: value}`` pairs one at a time (via ``pull_out_gen``); returns a
+        scalar if the result collapses to the identity basis element.
+        """
         ret = self
         for v, val in x.items():
             ret = ret.pull_out_gen(v)
@@ -113,6 +147,10 @@ class DoubleSchubertElement(BaseSchubertElement):
         return ret
 
     def subs(self, old, new):
+        """Substitute ``old -> new`` where ``old`` is an ``x`` variable (moved to the last position and
+        pulled out via ``pull_out_var``), a ``y`` variable (transported through the basis), or a plain
+        coefficient symbol.
+        """
         result = 0
         if self.ring.genset.index(old) != -1:
             result = 0
@@ -155,6 +193,7 @@ class DoubleSchubertElement(BaseSchubertElement):
 
     @property
     def free_symbols(self):
+        """Coefficient symbols plus the ``x``/``y`` variables the basis permutations actually depend on."""
         ret = set()
         for k, v in self.items():
             ret.update(v.free_symbols)
@@ -169,6 +208,10 @@ class DoubleSchubertElement(BaseSchubertElement):
         return ret
 
     def pull_out_gen(self, gen):
+        """Factor out all dependence on one generator ``gen`` (an ``x`` or ``y`` variable), returning an
+        element over a `MaskedGeneratingSet` ring with ``gen`` removed and explicit ``(gen - y_j)``
+        (or factorial-elementary-symmetric) prefactors.
+        """
         ind = self.ring.genset.index(gen)
         if ind == -1:
             ind = self.ring.coeff_genset.index(gen)
@@ -197,12 +240,16 @@ class DoubleSchubertElement(BaseSchubertElement):
         return ret
 
     def in_CEM_basis(self):
+        """Expand in the complete-elementary-monomial (CEM) basis using the ring's symbolic elementary function."""
         result = S.Zero
         for k, v in self.items():
             result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
         return result
 
     def cem_rep(self, elem_func, mumu=None):
+        """CEM expansion with a custom ``elem_func``; ``mumu`` selects a dominant permutation to expand
+        against (defaults to the classical route).
+        """
         result = S.Zero
         if mumu is not None:
             for k, v in self.items():
@@ -213,6 +260,10 @@ class DoubleSchubertElement(BaseSchubertElement):
         return result
 
     def coproduct(self, *indices, alt_coeff_genset=None, on_coeff_gens=False, gname1=None, gname2=None):
+        """Coproduct splitting the ``x`` variables (or ``y`` if ``on_coeff_gens``) at the given 1-indexed
+        ``indices``: returns an element of the `TensorRing` of two `DoubleSchubertRing`s over the
+        complementary `MaskedGeneratingSet`s, labeled ``gname1``/``gname2``.
+        """
         result_dict = {}
         genset = self.ring.genset
         if on_coeff_gens:
@@ -254,25 +305,34 @@ class DoubleSchubertElement(BaseSchubertElement):
 
     @cached_property
     def max_gens(self):
+        """Largest 0-indexed descent over all basis permutations."""
         return max([max(k.descents()) for k in self.keys()])
 
     def positive_elem_sym_rep(self):
+        """Manifestly positive expansion in factorial elementary symmetric functions (forward ``pull_out_var``)."""
         res = S.Zero
         for k, val in self.items():
             res += val * self.ring.positive_elem_sym_rep(k)
         return res
 
     def positive_elem_sym_rep_backward(self):
+        """Like ``positive_elem_sym_rep`` but peeling from the last descent backward."""
         res = S.Zero
         for k, val in self.items():
             res += val * self.ring.positive_elem_sym_rep_backward(k)
         return res
 
     def antipode(self):
+        """The antipode: swap the two alphabets and invert each basis permutation (see `DoubleSchubertRing.antipode`)."""
         return self.ring.antipode(self)
 
 
 class DoubleSchubertRing(BaseSchubertRing):
+    """The ring of double Schubert polynomials ``S_w(x; y)`` over ``genset`` (``x``) and
+    ``coeff_genset`` (``y``). Call the ring with a permutation, Lehmer code, or polynomial
+    expression to construct an element; the module-level ``DSx`` is the standard instance.
+    """
+
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "DBS"))
 
@@ -285,14 +345,17 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @cached_property
     def coeff_ring(self):
+        """The single Schubert ring over the coefficient alphabet ``y`` (used by ``coeff_isobaric``)."""
         from .schubert_ring import SingleSchubertRing
         return SingleSchubertRing(self.coeff_genset)
 
     @cached_property
     def antipode_ring(self):
+        """The same ring with the two alphabets swapped."""
         return DoubleSchubertRing(self.coeff_genset, self.genset, domain=self.domain)
 
     def antipode(self, elem):
+        """Map ``sum c_w S_w(x; y)`` to ``sum c_w S_{w^{-1}}(y; x)`` in the swapped-alphabet ring."""
         aring = self.antipode_ring
         result = aring.zero
         for k, v in elem.items():
@@ -300,6 +363,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         return result.expand(deep=False)
 
     def rmul(self, elem, other):
+        """Right-multiply by a scalar (coefficient-domain element) or, failing that, by an expression."""
         try:
             other = self.domain_new(other)
             return self.from_dict({k: v * other for k, v in elem.items()})
@@ -307,6 +371,9 @@ class DoubleSchubertRing(BaseSchubertRing):
             return self.mul_expr(elem, other)
 
     def positive_elem_sym_rep(self, perm, index=1):
+        """Manifestly positive expansion of ``S_perm`` in factorial elementary symmetric functions, peeling
+        the first variable of ``~perm`` at each step (``pull_out_var(1, ...)``).
+        """
         if perm.inv == 0:
             return S.One
         ret = S.Zero
@@ -316,6 +383,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def positive_elem_sym_rep_backward(self, perm):
+        """Like ``positive_elem_sym_rep`` but peeling from the last descent of ``~perm`` backward."""
         if perm.inv == 0:
             return S.One
         ret = S.Zero
@@ -326,9 +394,11 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def printing_term(self, k, prefix=""):
+        """The ``DSchubPoly`` display symbol for basis element ``k``."""
         return spolymod.DSchubPoly(k, self.genset.label, self.coeff_genset.label, prefix=prefix)
 
     def _coerce_mul(self, other):
+        """Accept double/elem-double Schubert elements as-is; convert quantum double elements to classical."""
         from . import quantum_schubert_ring as qsr
 
         if isinstance(other, BaseSchubertElement):
@@ -345,12 +415,17 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @property
     def elem_sym(self):
+        """`FactorialElemSym`."""
         return FactorialElemSym
 
     def is_elem_mul_type(self, other):
+        """Whether ``other`` is a factorial elementary symmetric function (eligible for ``elem_mul``)."""
         return is_fact_elem_sym(other)
 
     def elem_mul(self, ring_elem, elem):
+        """Multiply by a factorial elementary symmetric function in ``x`` variables via the positional
+        Pieri rule (``elem_sym_positional_perms``), expanding the leftover factor with ``expand_func``.
+        """
         elem = sympify(elem)
         indexes = [self.genset.index(a) for a in genvars(elem)]
         ret = self.zero
@@ -365,9 +440,13 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @property
     def symbol_elem_func(self):
+        """`FactorialElemSym` (kept unevaluated for symbolic expansions)."""
         return FactorialElemSym
 
     def schubert_schur_elem_func(self, numvars):
+        """Elementary-symmetric substitute for the Schubert-tensor-Schur expansion: ``e_p(x_1..x_k)`` maps
+        to a Schubert basis element on the left factor when ``k >= numvars`` and on the right otherwise.
+        """
         ring = self @ self
 
         def elem_func(p, k, *args):  # noqa: ARG001
@@ -384,6 +463,9 @@ class DoubleSchubertRing(BaseSchubertRing):
         return elem_func
 
     def in_schubert_schur_basis(self, perm, numvars):
+        """Expand ``S_perm`` in the Schubert-tensor-Schur basis, treating the last ``numvars`` variables
+        as the symmetric (Schur) part.
+        """
         elem_func = self.schubert_schur_elem_func(numvars)
         if perm.inv == 0:
             return elem_func(0, 0)
@@ -392,6 +474,9 @@ class DoubleSchubertRing(BaseSchubertRing):
         return schubpoly_from_elems(perm, self.genset, self.coeff_genset, elem_func=elem_func, mumu=dom)
 
     def in_descending_schur_basis(self, perm, numvars):
+        """Iterate ``in_schubert_schur_basis`` down through ``numvars, numvars-1, ..., 1``, producing a
+        nested tensor of Schur-like factors.
+        """
         from .schubert_ring import Sx
 
         if numvars == 1:
@@ -412,6 +497,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         return result
 
     def elem_sym_subs(self, kk):
+        """Substitution dict ``{e_p_k: elem_sym_poly(p, k, x)}`` for all ``1 <= p <= k <= kk``."""
         elems = []
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
@@ -420,6 +506,9 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @staticmethod
     def flip(elem):
+        """Re-express a factorial elementary symmetric function with its two alphabets swapped, via the
+        corresponding Grassmannian Schubert polynomial's CEM expansion.
+        """
         R = DoubleSchubertRing(CustomGeneratingSet([0, *coeffvars(elem)]), CustomGeneratingSet([0, *genvars(elem)]))
         p = degree(elem)
         K = numvars(elem) + 1 - p
@@ -427,44 +516,56 @@ class DoubleSchubertRing(BaseSchubertRing):
         return poly.in_CEM_basis()
 
     def in_quantum_basis(self, elem):
+        """Expand each basis element via ``quantum_schubpoly`` (a quantum double Schubert element)."""
         result = S.Zero
         for k, v in elem.items():
             result += v * self.quantum_schubpoly(k)
         return result
 
     def in_classical_basis(self, elem):
+        """Identity (this ring is already classical)."""
         return elem
 
     @cache
     def quantum_schubpoly(self, perm):
+        """The classical ``S_perm`` expressed in the quantum double Schubert basis (via ``quantum_elem_func``)."""
         return schubpoly_classical_from_elems(perm, self.genset, self.coeff_genset, self.quantum_elem_func)
 
     @cache
     def cached_product(self, u, v, basis2):
+        """Structure constants of ``S_u(x; y) * S_v(x; z)`` (``z`` = ``basis2.coeff_genset``), via ``schubmult_double``."""
         return yz.schubmult_double({u: S.One}, v, self.coeff_genset, basis2.coeff_genset)
 
     @cache
     def cached_positive_product(self, u, v, basis2):
+        """Like ``cached_product`` but with manifestly positive coefficients (generic alphabets, then substituted)."""
         return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in pos.schubmult_generic_partial_posify(u, v).items()}
 
     @property
     def double_mul(self):
+        """`schubmult.mult.double.schubmult_double`."""
         return yz.schubmult_double
 
     @property
     def single_mul(self):
+        """`schubmult.mult.single.schubmult_py`."""
         return py.schubmult_py
 
     @property
     def mult_poly_single(self):
+        """`schubmult.mult.single.mult_poly_py`."""
         return py.mult_poly_py
 
     @property
     def mult_poly_double(self):
+        """`schubmult.mult.double.mult_poly_double`."""
         return yz.mult_poly_double
 
     @property
     def quantum_elem_func(self):
+        """Elementary symmetric function valued in the quantum double Schubert ring, computed by a
+        divide-and-conquer recursion on the variable set (used by ``quantum_schubpoly``).
+        """
         from . import quantum_schubert_ring as qsr
 
         basis = qsr.QuantumDoubleSchubertRing(self.genset, self.coeff_genset)
@@ -510,6 +611,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         return elem_func
 
     def monomial_schub(self, monom):
+        """The monomial ``x^monom`` expressed in the Schubert basis (trailing zeros in ``monom`` ignored)."""
         monom = [*monom]
         while len(monom) > 0 and monom[-1] == 0:
             monom.pop()
@@ -517,15 +619,20 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def _monomial_schub_cache(self, monom):
+        """``monomial_schub`` worker: the dominant Schubert polynomial for the sorted exponent, permuted back."""
         srt_perm = Permutation.sorting_perm([-i for i in monom])
         schub_perm = uncode(sorted(monom, reverse=True))
         return self.from_dict({(schub_perm, 0): S.One}).act(srt_perm)
 
     @cache
     def cached_schubpoly(self, k):
+        """The explicit polynomial ``S_k(x; y)`` (cached)."""
         return schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly)
 
     def complete_mul(self, elem, x):
+        """Multiply by a factorial complete homogeneous symmetric function in ``x`` variables via
+        ``complete_sym_positional_perms`` (the dual Pieri rule).
+        """
         x = sympify(x)
         x_sympy = sympify_sympy(x)
         indexes = {self.genset.index(a) for a in genvars(x)}
@@ -539,9 +646,11 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def handle_sympoly(self, other):
+        """How a symmetric-function coefficient is stored: evaluated to a polynomial here."""
         return expand_func(other)
 
     def single_variable(self, elem, varnum):
+        """Multiply by the single variable ``x_varnum`` (equivariant Monk rule)."""
         ret = self.zero
         for u, v in elem.items():
             ret += v * self.coeff_genset[u[varnum - 1]] * self(u)
@@ -552,9 +661,15 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def from_expr(self, expr):
+        """Convert a polynomial expression in ``x``/``y`` into the Schubert basis."""
         return super().from_expr(expr)
 
     def mul_expr(self, elem, x):
+        """Multiply ``elem`` by an arbitrary expression ``x``: single variables use the Monk rule,
+        (factorial) elementary/complete symmetric functions use their Pieri rules (splitting out
+        variables from the wrong alphabet as needed), and ``Add``/``Mul``/``Pow`` recurse; anything
+        else is treated as a coefficient.
+        """
         if isinstance(x, DomainElement):
             raise TypeError(f"Cannot multiply {type(elem)} with {type(x)}")
         x = sympify(x)
@@ -609,6 +724,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def new(self, x):
+        """Build an element from a permutation/Lehmer list, an existing element of this ring, or an expression."""
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
@@ -631,30 +747,43 @@ class DoubleSchubertRing(BaseSchubertRing):
 
 
 class DoubleSchubertRingDown(DoubleSchubertRing):
+    """`DoubleSchubertRing` using the descent-side (\"down\") multiplication kernels
+    (``schubmult_double_down``/``schubmult_py_down``); basis symbols print with an ``op`` prefix.
+    """
+
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "fatcabasi"))
 
     @property
     def double_mul(self):
+        """`schubmult.mult.double.schubmult_double_down`."""
         return yz.schubmult_double_down
 
     @property
     def single_mul(self):
+        """`schubmult.mult.single.schubmult_py_down`."""
         return py.schubmult_py_down
 
     @cache
     def cached_product(self, u, v, basis2):
+        """Down-kernel structure constants over generic alphabets, substituted back to the ring's alphabets."""
         return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_double_down({u: S.One}, v, yz._vars.var_g1, yz._vars.var_g2).items()}
 
     @cache
     def cached_positive_product(self, u, v, basis2):
+        """Positive variant of ``cached_product`` for the down kernel."""
         return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in pos.schubmult_double_down({u: S.One}, v, yz._vars.var_g1, yz._vars.var_g2).items()}
 
     def printing_term(self, k, prefix="op"):
+        """The ``DSchubPoly`` display symbol, prefixed with ``op`` by default."""
         return spolymod.DSchubPoly(k, self.genset.label, self.coeff_genset.label, prefix=prefix)
 
 
 class ElemDoubleSchubertRing(DoubleSchubertRing):
+    """`DoubleSchubertRing` whose coefficients are kept as unevaluated `FactorialElemSym`
+    functions instead of being expanded to polynomials; products use the ``*_from_elems`` kernels.
+    """
+
     def __init__(self, genset, coeff_genset):
         super().__init__(genset, coeff_genset)
         self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
@@ -664,6 +793,9 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
     @property
     def replacematch(self):
+        """A ``(a, b) -> expression`` rewriter turning differences ``a - b`` into `FactorialElemSym(1, 1, ...)`
+        forms, respecting which alphabet each symbol belongs to.
+        """
         def bob(*args, **kwargs):  # noqa: ARG001
             a = kwargs["a"]
             b = kwargs["b"]
@@ -683,12 +815,17 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
     @property
     def elem_func(self):
+        """`FactorialElemSym`."""
         return FactorialElemSym
 
     def handle_sympoly(self, other):
+        """Keep symmetric-function coefficients unevaluated."""
         return other
 
     def elem_mul(self, ring_elem, elem):
+        """Positional Pieri rule for a factorial elementary symmetric function, keeping the leftover
+        factor as an unevaluated coefficient.
+        """
         indexes = [self.genset.index(a) for a in genvars(elem)]
         ret = self.zero
         elem_sympy = sympify_sympy(elem)
@@ -702,6 +839,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
         return ret
 
     def complete_mul(self, elem, x):
+        """Dual Pieri rule for a factorial complete symmetric function, keeping the leftover factor unevaluated."""
         indexes = {self.genset.index(a) for a in genvars(x)}
         ret = self.zero
         x_sympy = sympify_sympy(x)
@@ -715,13 +853,16 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
+        """Structure constants via ``schubmult_double_from_elems`` with `FactorialElemSym` coefficients."""
         return yz.schubmult_double_from_elems({u: self.domain.one}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func)
 
     @cache
     def cached_positive_product(self, u, v, basis2):
+        """Structure constants via the positive ``schubmult_double_alt_from_elems`` route."""
         return {k: expand(v) for k, v in yz.schubmult_double_alt_from_elems({u: self.domain.one}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func).items()}
 
     def new(self, x):
+        """Build an element from a permutation/Lehmer list, an element of this ring, or an expression."""
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
@@ -741,6 +882,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
         return elem
 
     def _coerce_mul(self, other):
+        """Accept double/elem-double Schubert elements as-is; convert quantum double elements to classical."""
         from . import quantum_schubert_ring as qsr
 
         if isinstance(other, BaseSchubertElement):
@@ -754,6 +896,12 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
 
 def DSx(x, genset=GeneratingSet("y"), elem_sym=False, down=False):
+    """Construct a double Schubert polynomial element in ``x`` with coefficient alphabet ``genset``.
+
+    ``DSx([3, 1, 2])`` is ``S_{312}(x; y)``. Pass ``genset="z"`` (or a `GeneratingSet`) for a
+    different coefficient alphabet; ``elem_sym=True`` uses `ElemDoubleSchubertRing`, ``down=True``
+    uses `DoubleSchubertRingDown`.
+    """
     if isinstance(genset, str):
         genset = GeneratingSet(genset)
     if down:

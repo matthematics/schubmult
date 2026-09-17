@@ -1,3 +1,7 @@
+"""`DoubleForestPolyBasis`: the double (two-alphabet) forest polynomial basis of `PolynomialAlgebra`;
+see `schubmult.combinatorics.double_forest` for the underlying polynomials.
+"""
+
 from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import expand

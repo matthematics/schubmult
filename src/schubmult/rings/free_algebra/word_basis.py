@@ -1,3 +1,13 @@
+"""`WordBasis`: the word (concatenation) basis of the free algebra, dual to the monomial basis.
+
+A key is a word ``(a_1, ..., a_n)`` of nonnegative integers, dual to the monomial
+``x_1^{a_1} ... x_n^{a_n}``. The product is concatenation; the coproduct splits each
+letter ``a`` into ``(i, a - i)`` (dual to polynomial multiplication). This is the hub
+basis: every other `FreeAlgebraBasis` implements its operations by transitioning to
+words and back, and this module holds the ``transition_*`` routines from words into
+each of the other bases.
+"""
+
 from functools import cache
 
 import schubmult.rings.free_algebra as fa
@@ -15,11 +25,9 @@ ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 
 class WordBasis(FreeAlgebraBasis):
-    """Word basis of the free algebra.
-
-    Keys are tuples of nonnegative integers representing words. This is the
-    fundamental basis through which all other bases perform their operations
-    via basis transitions.
+    """Word basis of the free algebra: keys are tuples of nonnegative integers (words), each
+    dual to the monomial whose exponent vector is that word. Product is concatenation.
+    See the module docstring.
     """
 
     @staticmethod
@@ -53,7 +61,7 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def product(cls, key1, key2, coeff=S.One):
-        """Concatenate two words."""
+        """Concatenate two words (dual to the variable-splitting coproduct on polynomials)."""
         return {(*key1, *key2): coeff}
 
     @classmethod
@@ -83,10 +91,11 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def coproduct(cls, key, coeff=S.One):
-        """Compute the additive coproduct of a word.
+        """The coproduct of a word, dual to polynomial multiplication.
 
-        Decomposes each letter into all (i, key-i) splittings and combines
-        via a divide-and-conquer tensor product.
+        Each letter ``a`` splits into all ``(i, a - i)`` pairs (``x_j^a`` is the sum over
+        ways to write it as ``x_j^i * x_j^{a-i}``); the pieces are combined letterwise
+        by a divide-and-conquer tensor product.
         """
         if len(key) == 0:
             return {((), ()): coeff}
@@ -108,10 +117,8 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def bcoproduct(cls, key, coeff=S.One):
-        """Compute the bar-coproduct of a word.
-
-        Like :meth:`coproduct` but drops empty factors (zeros map to
-        the empty tuple).
+        """The \"bar\" coproduct: like `coproduct` but a zero letter is dropped rather than kept as
+        a ``0`` in the word, so word lengths are not preserved.
         """
         if len(key) == 0:
             return {((), ()): coeff}
@@ -160,10 +167,10 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def internal_product(cls, key1, key2, coeff=S.One):
-        """Compute the internal product of two words via integer matrices (requires SageMath).
-
-        Words must not contain zeros. Returns the dict of result
-        words weighted by *coeff*.
+        """The internal (Kronecker) product of two compositions (words without zeros), as in
+        noncommutative symmetric functions: sum over nonnegative integer matrices with row
+        sums ``key1`` and column sums ``key2`` of the word read off the nonzero entries.
+        Requires SageMath's ``IntegerMatrices``.
         """
         if 0 in key1 or 0 in key2:
             return {}
@@ -396,6 +403,9 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_zbasis(cls, key):
+        """Expand a word in `ZBasis` by triangular elimination: repeatedly peel off the smallest
+        remaining word, subtracting the word expansion of the corresponding Z element.
+        """
         from .z_basis import ZBasis
 
         FA = fa.FreeAlgebra(WordBasis)
@@ -413,6 +423,9 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_nelementary(cls, tup):
+        """Expand a composition in `NElementaryBasis`: signed sum over its refinements
+        (``(-1)^(|tup| - len(beta))``), via SageMath's ``Composition.finer``.
+        """
         from sage.all import Composition
 
         pain = Composition(tup)
@@ -421,6 +434,9 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_key(cls, key):
+        """Expand a word in `KeyBasis`: count RC graphs of length vector ``key`` whose extremal
+        weight equals their permutation's padded code (the dual of the key-to-monomial expansion).
+        """
         from schubmult.rings.combinatorial import RCGraphRing
         r = RCGraphRing()
         dct = {}
@@ -433,6 +449,7 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_lascoux(cls, key):
+        """Expand a word in `LascouxBasis`: the K-theoretic analogue of `transition_key` using WC graphs."""
         from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
         r = WCGraphRing()
         dct = {}
@@ -446,6 +463,10 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_glide(cls, key):
+        """Expand a word in `GlideBasis`: for each WC graph of weight ``key``, take the length vector of
+        its ``dst`` (destandardization); the first graph seen at each weight is the representative
+        and only graphs with that same ``dst`` contribute.
+        """
         from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
 
         r = WCGraphRing()
@@ -464,6 +485,10 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_fundamental_slide(cls, key):
+        """Expand a word in `FundamentalSlideBasis` as the transpose of the polynomial side: the
+        coefficient of ``candidate`` is the coefficient of the monomial ``x^key`` in the fundamental
+        slide polynomial of ``candidate``, over all weak compositions of the same length and size.
+        """
         from schubmult.abc import x
         from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
 
@@ -499,6 +524,9 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def transition(cls, other_basis):
+        """Key -> ``{key: coeff}`` function into ``other_basis``; dispatches to the ``transition_*``
+        method for each directly supported basis and otherwise goes through `SchubertBasis`.
+        """
         from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
         from .glide_basis import GlideBasis

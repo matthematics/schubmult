@@ -1,3 +1,7 @@
+"""`JTBasis`: `JBasis` with a formal parameter ``t`` recording the number of stripped zeros.
+Keys are ``(composition, power_of_t)``.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import uncode

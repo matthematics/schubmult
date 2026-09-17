@@ -1,3 +1,11 @@
+"""Ordinary (single) Schubert polynomial ring: the ``Sx`` interface.
+
+`SingleSchubertRing` is a `DoubleSchubertRing` whose coefficient alphabet is
+identically zero, so ``S_w(x; 0) = S_w(x)``. Products dispatch to the fast
+integer kernel ``schubmult_py`` when both operands are single, and to
+``schubmult_double`` when mixed with a genuinely double element.
+"""
+
 from functools import cache
 
 import schubmult.mult.double as yz
@@ -21,6 +29,8 @@ __all__ = [
 
 
 class SingleSchubertRing(DoubleSchubertRing):
+    """The ring of ordinary Schubert polynomials ``S_w(x)``; ``Sx`` is the standard instance."""
+
     def __init__(self, genset):
         super().__init__(genset, poly_genset(0))
         self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
@@ -32,13 +42,8 @@ class SingleSchubertRing(DoubleSchubertRing):
         return hash((self.genset, self.coeff_genset, "SBS"))
 
     def _coerce_mul(self, other):
-        """Coerce a basis schubert algebra element so it can be multiplied
-
-        Args:
-            other (_type_): _description_
-
-        Returns:
-            _type_: _description_
+        """Accept single or double Schubert elements over the same ``x`` alphabet; convert quantum
+        double elements to classical first. Returns ``None`` if incompatible.
         """
         if type(other.ring) is type(self):
             if self.genset == other.ring.genset:
@@ -55,6 +60,9 @@ class SingleSchubertRing(DoubleSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
+        """Structure constants of ``S_u * S_v``: integer ``schubmult_py`` when ``basis2`` is this ring,
+        else ``schubmult_double`` with ``y = 0``.
+        """
         if self == basis2:
             return py.schubmult_py({u: S.One}, v)
         # directly in the target variables (y = 0 for this ring)
@@ -62,9 +70,11 @@ class SingleSchubertRing(DoubleSchubertRing):
 
     @cache
     def cached_positive_product(self, u, v, basis2):
+        """Same as ``cached_product`` (single coefficients are already nonnegative integers)."""
         return self.cached_product(u, v, basis2)
 
     def single_variable(self, elem, varnum):
+        """Multiply by ``x_varnum`` (non-equivariant Monk rule)."""
         ret = self.zero
         for u, v in elem.items():
             new_perms = schub_lib.elem_sym_positional_perms(u, 1, varnum)
@@ -74,6 +84,7 @@ class SingleSchubertRing(DoubleSchubertRing):
         return ret
 
     def new(self, x):
+        """Build an element from a permutation/Lehmer list or a polynomial expression."""
         genset = self.genset
         if not genset:
             genset = self.genset
@@ -89,9 +100,11 @@ class SingleSchubertRing(DoubleSchubertRing):
 
     @property
     def elem_func(self):
+        """`ElemSym` (non-factorial elementary symmetric function)."""
         return ElemSym
 
     def divdiff(self, v, elem):
+        """Apply the divided difference ``partial_v``: ``S_u -> S_{u v^{-1}}`` when length-additive, else 0."""
         ret = self.zero
         for u, coeff in elem.items():
             if (u * (~v)).inv == u.inv - v.inv:

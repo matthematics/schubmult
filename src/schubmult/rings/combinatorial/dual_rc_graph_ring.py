@@ -1,3 +1,7 @@
+"""`DualRCGraphRing`: RC graph ring carrying the dual (polynomial-side) product, computed by
+expanding into the Schubert polynomial basis of `PolynomialAlgebra` and back.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.rc_graph import RCGraph
@@ -16,17 +20,7 @@ from ..polynomial_algebra import PA, SchubertPolyBasis
 
 
 class DualRCGraphRingElement(SchubertMonomialRingElement):
-    """
-    DualRCGraphRing elements are linear combinations of RCGraph basis elements.
-
-    The product % is the polynomial product. Currently only defined when the right side
-    is a dominant RC graph.
-
-    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-    to do this directly.
-
-    The product * is well defined for any pair of RC graphs and is the dual product.
-    """
+    """DualRCGraphRing elements are linear combinations of RCGraph basis elements under the dual product."""
 
     # ----------------------
     # Presentation helpers
@@ -115,6 +109,8 @@ class DualRCGraphRingElement(SchubertMonomialRingElement):
 
 
 class DualRCGraphRing(SchubertMonomialRing):
+    """The dual RC graph ring; see the module docstring."""
+
     _id = 0
 
     def __init__(self, *_, **__):

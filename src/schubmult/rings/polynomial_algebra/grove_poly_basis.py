@@ -1,3 +1,5 @@
+"""`GrovePolyBasis`: the grove polynomial basis (K-theoretic analogue of forest polynomials) of `PolynomialAlgebra`."""
+
 from functools import cache
 
 from schubmult.combinatorics.indexed_forests import grove_polynomial

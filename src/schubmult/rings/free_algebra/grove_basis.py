@@ -1,3 +1,9 @@
+"""`GroveBasis`: the free-algebra basis dual to grove polynomials (``GrovePolyBasis``), the
+K-theoretic analogue of `ForestBasis`. Keys are weak compositions (grove weights); expansion
+into `GrothendieckBasis` enumerates WC graphs by grove weight. ``GroveDual`` is the standard
+instance.
+"""
+
 from schubmult.rings.free_algebra._core import FreeAlgebra
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm

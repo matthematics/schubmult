@@ -1,3 +1,10 @@
+"""`SchubertRCGraphRing`: `RCGraphRing` whose product is computed through `BoundedRCFactorAlgebra`.
+
+Each RC graph is factored into elementary-symmetric RC graphs (``_factor_rc``), the factors
+are multiplied in the bounded factor algebra, and the result is converted back; ``schubert_poly``
+is the sum of all RC graphs of a permutation.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.rc_graph import RCGraph
@@ -6,6 +13,8 @@ from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 class SchubertRCGraphRingElement(RCGraphRingElement):
+    """Element of `SchubertRCGraphRing`."""
+
     def to_free_algebra_element(self, basis=None):
         # from schubmult.free_algebra
 
@@ -17,6 +26,8 @@ class SchubertRCGraphRingElement(RCGraphRingElement):
 
 
 class SchubertRCGraphRing(RCGraphRing):
+    """`RCGraphRing` multiplying via `BoundedRCFactorAlgebra` factorizations; see the module docstring."""
+
     _id = 0
 
     def __init__(self, *_, **__):

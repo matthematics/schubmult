@@ -1,3 +1,7 @@
+"""`GrassTensorAlgebra`: an algebra on tuples of full Grassmannian RC graphs (as `CrystalGraphTensor`
+keys), with conversion to `RCGraphRing` by squash-multiplying the factors together.
+"""
+
 from __future__ import annotations
 
 from sympy import Tuple
@@ -48,6 +52,7 @@ def _last_descent_size(rc: RCGraph) -> int:
 
 
 class GrassTensorPrintingTerm(PrintingTerm):
+    """Display symbol for a `GrassTensorAlgebra` basis tuple."""
     is_commutative = False
     precedence = 50
 

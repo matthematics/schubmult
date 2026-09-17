@@ -1,3 +1,8 @@
+"""Orphaned earlier variant of `bounded_rc_factor_algebra` (defines the same class names, is not
+imported anywhere, and is not exported from the package). Kept for reference; prefer
+`schubmult.rings.combinatorial.bounded_rc_factor_algebra`.
+"""
+
 from __future__ import annotations
 
 import logging  # noqa: F401
@@ -149,6 +154,7 @@ def _build_schur_elem_from_key(key):
 
 
 class BoundedRCFactorPrintingTerm(PrintingTerm):
+    """Display symbol for a basis key (orphaned variant)."""
     is_commutative = False
     precedence = 50
 

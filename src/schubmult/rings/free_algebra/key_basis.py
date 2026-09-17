@@ -1,3 +1,10 @@
+"""`KeyBasis`: the free-algebra basis dual to key polynomials (Demazure characters).
+
+Keys are weak compositions; the element is dual to the key polynomial with that weight
+(``KeyPolyBasis``). Expansion into `SchubertBasis` enumerates RC graphs and keeps those whose
+length vector is the extremal weight.
+"""
+
 from functools import cache
 
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis

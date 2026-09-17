@@ -1,3 +1,7 @@
+"""`GlideBasis`: the free-algebra basis dual to glide polynomials (``GlidePolyBasis``), the
+K-theoretic analogue of `FundamentalSlideBasis`. Keys are weak compositions. ``GlideDual`` is
+the standard instance.
+"""
 
 from schubmult.symbolic import S
 

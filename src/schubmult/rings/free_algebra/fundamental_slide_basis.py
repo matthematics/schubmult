@@ -1,3 +1,8 @@
+"""`FundamentalSlideBasis`: the free-algebra basis dual to fundamental slide polynomials
+(``FundamentalSlidePolyBasis``). Keys are weak compositions; transitions are transposed from
+the polynomial-side slide expansions.
+"""
+
 from functools import cache
 
 from schubmult.symbolic import S

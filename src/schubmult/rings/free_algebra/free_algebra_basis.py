@@ -1,3 +1,13 @@
+"""`FreeAlgebraBasis`: the interface a basis must implement to plug into `FreeAlgebra`.
+
+A basis is a *class* (its methods are classmethods) defining a key type (``is_key``/
+``as_key``/``zero_monom``), how to print a key, ``transition(other_basis)`` returning a
+key -> ``{key: coeff}`` function into another basis, and ``dual_basis()`` naming the
+`schubmult.rings.polynomial_algebra` basis it is dual to. Products, coproducts, and
+the word-level operations all have default implementations that route through the
+`WordBasis` via ``compose_transition``.
+"""
+
 from functools import cache
 from typing import TYPE_CHECKING
 
@@ -6,11 +16,12 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 
 class FreeAlgebraBasis:
-    """Abstract base class for free algebra bases.
+    """Abstract base for free-algebra bases; see the module docstring.
 
-    Subclasses define how keys are represented, how products and coproducts
-    are computed, and how to transition between bases.  Default implementations
-    delegate through the :class:`WordBasis` via ``compose_transition``.
+    Subclasses override the key methods (``is_key``, ``as_key``, ``zero_monom``,
+    ``printing_term``, ``transition``, ``dual_basis``) and may override ``product``/
+    ``coproduct`` with a direct rule; otherwise everything is computed in the `WordBasis`
+    and transported back.
     """
 
     @classmethod
@@ -54,7 +65,7 @@ class FreeAlgebraBasis:
 
     @classmethod
     def dual_basis(cls):
-        """Return the dual basis class (for polynomial algebra pairing)."""
+        """The `schubmult.rings.polynomial_algebra` basis this basis is dual to under the word/monomial pairing."""
 
     @classmethod
     def change_tensor_basis(cls, tensor_elem, basis1, basis2):
@@ -121,7 +132,7 @@ class FreeAlgebraBasis:
 
     @classmethod
     def internal_product(cls, key1, key2, coeff=S.One):
-        """Compute the internal product of two keys by delegating through WordBasis."""
+        """The internal (Kronecker) product of NSym (see `WordBasis.internal_product`), computed via the word basis."""
         from .word_basis import WordBasis
 
         left = cls.transition(WordBasis)(key1)
@@ -182,6 +193,7 @@ class FreeAlgebraBasis:
 
 
 def __getattr__(name):
+    """Lazily resolve basis classes to avoid circular imports between basis modules."""
     if name == "WordBasis":
         from .word_basis import WordBasis
 

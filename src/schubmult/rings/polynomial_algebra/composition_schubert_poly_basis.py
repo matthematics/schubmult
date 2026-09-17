@@ -1,3 +1,7 @@
+"""`CompositionSchubertPolyBasis`: Schubert polynomials re-indexed by weak compositions (Lehmer codes)
+instead of permutations, wrapping `SchubertPolyBasis`.
+"""
+
 from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.rings.printing import GenericPrintingTerm
 

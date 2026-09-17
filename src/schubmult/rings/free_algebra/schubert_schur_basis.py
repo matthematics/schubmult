@@ -1,3 +1,8 @@
+"""`SchubertSchurBasis`: free-algebra basis dual to products ``s_lambda(x_1..x_n) * S_perm``
+of a Schur polynomial in the first ``n`` variables with a Schubert polynomial. Keys are
+``(partition, perm, numvars)``.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import Permutation, uncode

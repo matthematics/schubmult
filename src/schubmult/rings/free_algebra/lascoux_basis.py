@@ -1,3 +1,7 @@
+"""`LascouxBasis`: the free-algebra basis dual to Lascoux polynomials (``LascouxPolyBasis``),
+the K-theoretic analogue of `KeyBasis`. Keys are weak compositions.
+"""
+
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S

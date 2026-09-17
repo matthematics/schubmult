@@ -1,3 +1,11 @@
+"""`PolynomialBasis`: the abstract interface a basis must implement to plug into `PolynomialAlgebra`.
+
+A basis defines its key type (``is_key``/``as_key``/``zero_monom``), how to print a
+key, and ``transition(other_basis)`` -- a function converting coefficient dicts
+into another basis. Products, coproducts, expansion, and parsing from expressions
+all have default implementations that route through the `MonomialBasis`.
+"""
+
 from abc import ABC, abstractmethod
 
 from schubmult.symbolic import S
@@ -13,6 +21,7 @@ class PolynomialBasis(ABC):
     """
     @property
     def genset(self):
+        """The generating set (variable alphabet)."""
         return self._genset
 
     @abstractmethod
@@ -32,10 +41,12 @@ class PolynomialBasis(ABC):
     @property
     @abstractmethod
     def zero_monom(self):
+        """The key of the multiplicative identity."""
         raise NotImplementedError
 
     @property
     def monomial_basis(self):
+        """The `MonomialBasis` over the same generating set (the hub for default transitions)."""
         return self._monomial_basis
 
     @abstractmethod

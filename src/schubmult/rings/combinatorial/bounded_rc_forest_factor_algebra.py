@@ -1,3 +1,7 @@
+"""`BoundedRCForestFactorAlgebra`: variant of `BoundedRCFactorAlgebra` whose factorizations are
+snapped to forest-class representatives (``_to_forest``), for the forest-polynomial setting.
+"""
+
 from __future__ import annotations
 
 import logging  # noqa: F401
@@ -152,6 +156,7 @@ def _build_schur_elem_from_key(key):
 
 
 class BoundedRCFactorPrintingTerm(PrintingTerm):
+    """Display symbol for a `BoundedRCForestFactorAlgebra` basis key."""
     is_commutative = False
     precedence = 50
 

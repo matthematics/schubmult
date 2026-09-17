@@ -1,3 +1,9 @@
+"""`JBasis`: free-algebra basis indexed by compositions with no zeros.
+
+A Schubert key ``(perm, n)`` whose padded code has no zeros is itself a J key; zeros are
+handled by the transitions in `SchubertBasis.transition_jbasis` and `WordBasis.transition_jbasis`.
+"""
+
 import schubmult.rings.free_algebra as fa
 from schubmult.combinatorics.permutation import uncode
 from schubmult.symbolic import S

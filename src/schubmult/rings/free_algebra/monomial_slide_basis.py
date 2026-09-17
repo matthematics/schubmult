@@ -1,3 +1,7 @@
+"""`MonomialSlideBasis`: the free-algebra basis dual to monomial slide polynomials. Keys are
+weak compositions; transitions use coarsenings of compositions.
+"""
+
 from functools import cache
 from itertools import combinations
 

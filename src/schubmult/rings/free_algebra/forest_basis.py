@@ -1,3 +1,10 @@
+"""`ForestBasis`: the free-algebra basis dual to forest polynomials (``ForestPolyBasis``).
+
+Keys are weak compositions (indexed-forest weights). Expansion into `SchubertBasis`
+enumerates RC graphs and keeps those whose forest weight is the key. ``ForestDual`` is the
+standard instance.
+"""
+
 from schubmult.rings.free_algebra._core import FreeAlgebra
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm

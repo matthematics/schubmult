@@ -1,3 +1,16 @@
+"""Separated-descents ring: Schubert polynomials graded by an explicit number of variables.
+
+`SeparatedDescentsRing` wraps a Schubert-family ring and indexes basis elements by
+``(perm, num_vars)`` with ``num_vars >= max_descent(perm)``. The product of
+``(u, p)`` and ``(v, q)`` places ``u`` in the first ``p`` variables and ``v`` in the
+next ``q``, so descents of the two factors are separated. ``_sep_desc_mul`` computes
+this (Samuel) as a twisted ordinary Schubert product by a dominant permutation. Also
+carries experimental Pieri/coproduct routines (``pieri_formula``, ``coproduct_test``).
+
+Not to be confused with `schubmult.mult.separated_descents`, which implements the
+Fan-Guo-Xiong pipe-puzzle rule for double Grothendieck polynomials.
+"""
+
 from functools import cache
 
 # import schubmult.rings.free_algebra as fa
@@ -9,6 +22,10 @@ from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
 def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
+    """Descent-side analogue of ``complete_sym_positional_perms``: all ``(perm, degree, sign)`` reachable
+    from ``orig_perm`` by up to ``p`` Bruhat *descents* swapping a fixed position in ``k`` (1-indexed)
+    with a still-untouched position. ``hack_off`` bounds the positions considered.
+    """
     k = {i - 1 for i in k}
     orig_perm = Permutation(orig_perm)
     total_list = {(orig_perm, 0, 1)}
@@ -35,6 +52,10 @@ def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
+    """Separated-descents product of ``S_perm`` (first ``p`` variables) and ``S_perm2`` (next ``q``):
+    twist both by the dominant permutations for the two variable blocks, multiply in ``ring``,
+    and untwist by the full dominant permutation, tracking the sign.
+    """
     c1 = perm.code
     while len(c1) < p:
         c1 += [0]
@@ -72,6 +93,7 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
 
 @cache
 def _single_coprod(p, n, T):
+    """Coproduct of the single-row element ``(uncode([p]), n)``: ``sum_i (i, n) (x) (p-i, n)``."""
     res = T.zero
     for i in range(p + 1):
         res += T.from_dict({((uncode([i]), n), (uncode([p - i]), n)): S.One})
@@ -79,20 +101,27 @@ def _single_coprod(p, n, T):
 
 
 def _is_code1(perm):
+    """Whether all of ``perm``'s length sits in the first code entry (a single-row Grassmannian)."""
     return perm.inv > 0 and perm.code[0] == perm.inv
 
 
 class SeparatedDescentsRing(BaseSchubertRing):
+    """Ring with basis ``(perm, num_vars)``; construct with ``SeparatedDescentsRing(Sx.ring)`` and call
+    as ``ring(perm, num_vars)``. See the module docstring.
+    """
+
     @property
     def args(self):
         return ()
 
     @property
     def schub_ring(self):
+        """The underlying Schubert-family ring used for products."""
         return self._schub_ring
 
     # pieri formula for uncode([p]), 1
     def _single_coprod_test(self, p, tensor_elem):
+        """Apply the Pieri rule for ``(uncode([p]), 1)`` factor-wise to a tensor element (coproduct helper)."""
         res = tensor_elem.ring.zero
         for (t1, t2), val in tensor_elem.items():
             for i in range(p + 1):
@@ -105,6 +134,9 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return res
 
     def pieri_formula(self, p, elem):
+        """Multiply ``elem`` by the single-row element ``(uncode([p]), 1)`` (adds one variable), via
+        ``complete_sym_positional_perms_down``.
+        """
         val = self.zero
         for (perm, num_vars), coeff in elem.items():
             lne = len(perm)
@@ -121,6 +153,7 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return val
 
     def __init__(self, ring):
+        """Wrap the Schubert-family ``ring`` (inherits its alphabets)."""
         self._schub_ring = ring
         super().__init__(self._schub_ring.genset, self._schub_ring.coeff_genset)
         self.zero_monom = (self._schub_ring.zero_monom, 0)
@@ -145,6 +178,9 @@ class SeparatedDescentsRing(BaseSchubertRing):
     #     return fa.FreeAlgebra().schub_elem(perm, numvars)
 
     def coproduct_test(self, key):
+        """Experimental coproduct of the basis element ``key = (perm, num_vars)``, computed by
+        triangular peeling of the leading code entry via ``pieri_formula``/``_single_coprod_test``.
+        """
         T = self @ self
         # if val == self.zero:
         #     return T.zero
@@ -170,6 +206,9 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return cprd_val
 
     def mul(self, elem1, elem2):
+        """Ring product: scalars scale; otherwise each pair of basis elements multiplies via ``_sep_desc_mul``
+        and lands in degree ``deg1 + deg2`` (terms whose descents exceed that are dropped).
+        """
         # print(f"{elem1=}, {elem2=}")
         try:
             bongus = self.domain_new(elem1)
@@ -205,6 +244,7 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return ret
 
     def _coerce_add(self, x):
+        """Coerce a scalar into the identity basis element, or return ``None``."""
         try:
             x = self.domain_new(x)
             return self.from_dict({self.zero_monom: x})
@@ -222,6 +262,7 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return None
 
     def printing_term(self, k):
+        """The ``SepDescSchubPoly`` display symbol for ``k = (perm, num_vars)``."""
         # k is a tuple (perm, length)
         from schubmult.rings.printing import SepDescSchubPoly
         coeff_label = None
@@ -234,11 +275,15 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return self.from_dict({self.zero_monom: S.One})
 
     def _get_min_deg(self, perm):
+        """Smallest valid ``num_vars`` for ``perm``: its last descent position (0 for the identity)."""
         if perm.inv > 0:
             return max(perm.descents()) + 1
         return 0
 
     def new(self, perm, deg=0):
+        """Build ``(perm, deg)`` with ``deg`` raised to at least ``perm``'s last descent; a non-permutation
+        ``perm`` is expanded in the underlying ring and each term given its minimal degree.
+        """
         if not isinstance(perm, Permutation) and not isinstance(perm, list) and not isinstance(perm, tuple):
             elem = self._schub_ring(perm)
             return self.from_dict({(k, self._get_min_deg(k)): v for k, v in elem.items()})
@@ -251,6 +296,8 @@ class SeparatedDescentsRing(BaseSchubertRing):
 
 
 class SeparatedDescentsRingElement(BaseSchubertElement):
+    """An element of a `SeparatedDescentsRing`: ``{(perm, num_vars): coeff}``."""
+
     @property
     def free_symbols(self):
         return set()
@@ -263,6 +310,7 @@ class SeparatedDescentsRingElement(BaseSchubertElement):
     #     return res
 
     def coproduct_test(self):
+        """Experimental coproduct; see `SeparatedDescentsRing.coproduct_test`."""
         return self.ring.coproduct_test(self)
 
     # def free_element(self):
@@ -272,6 +320,7 @@ class SeparatedDescentsRingElement(BaseSchubertElement):
     #     return ret
 
     def as_ordered_terms(self, *_, **__):
+        """Terms sorted by permutation length, permutation, then ``num_vars`` (sympy printing hook)."""
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
         # Keys are (perm, length) tuples - sort by perm.inv and perm, then by length

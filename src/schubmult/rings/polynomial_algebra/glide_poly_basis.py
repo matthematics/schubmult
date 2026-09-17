@@ -1,3 +1,5 @@
+"""`GlidePolyBasis`: the glide polynomial basis (K-theoretic analogue of fundamental slides) of `PolynomialAlgebra`."""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import uncode

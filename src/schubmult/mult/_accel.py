@@ -20,6 +20,7 @@ available = _cpp is not None
 
 
 def _is_int(x):
+    """Whether ``x`` is (numerically) an integer."""
     try:
         return int(x) == x
     except Exception:
@@ -27,6 +28,7 @@ def _is_int(x):
 
 
 def _call(f, *args):
+    """Call the extension function ``f``; return ``None`` on its ``RuntimeError`` (exceeds ``MAXN``) signal."""
     # RuntimeError is the extension's "exceeds MAXN" signal; let the caller fall back
     try:
         return f(*args)
@@ -35,16 +37,19 @@ def _call(f, *args):
 
 
 def schubmult_py(perm_dict, v):
+    """C++ ``schubmult_py``; returns ``None`` if any coefficient is non-integer or the size exceeds ``MAXN``."""
     if not all(_is_int(c) for c in perm_dict.values()):
         return None
     return _call(_cpp.schubmult_py, {k: int(c) for k, c in perm_dict.items()}, v)
 
 
 def schubmult_double(perm_dict, v, var2, var3):
+    """C++ ``schubmult_double``; returns ``None`` if the size exceeds ``MAXN``."""
     return _call(_cpp.schubmult_double, perm_dict, v, var2, var3)
 
 
 def schubmult_q_fast(perm_dict, v, q_var):
+    """C++ ``schubmult_q_fast``; non-integer coefficients are handled by linearity, one key at a time."""
     if all(_is_int(c) for c in perm_dict.values()):
         return _call(_cpp.schubmult_q_fast, {k: int(c) for k, c in perm_dict.items()}, v, q_var)
     # the kernel is linear in the coefficients
@@ -59,12 +64,15 @@ def schubmult_q_fast(perm_dict, v, q_var):
 
 
 def schubmult_q_double_fast(perm_dict, v, var2, var3, q_var):
+    """C++ ``schubmult_q_double_fast``; returns ``None`` if the size exceeds ``MAXN``."""
     return _call(_cpp.schubmult_q_double_fast, perm_dict, v, var2, var3, q_var)
 
 
 def schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func):
+    """C++ ``schubmult_double`` with a custom elementary-symmetric ``elem_func``; ``None`` if size exceeds ``MAXN``."""
     return _call(_cpp.schubmult_double, perm_dict, v, var2, var3, elem_func)
 
 
 def schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func):
+    """C++ ``schubmult_double_alt_from_elems``; ``None`` if size exceeds ``MAXN``."""
     return _call(_cpp.schubmult_double_alt_from_elems, perm_dict, v, var2, var3, elem_func)

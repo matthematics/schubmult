@@ -1,10 +1,17 @@
 
+"""`QYRCGraphRing`: `RCGraphRing` quotient onto quasi-Yamanouchi RC graphs.
+
+Every product is snapped by merging mergeable adjacent rows (``_canonical_rc``, the
+same normalization as `RCGraph.snap_qy`), so basis elements are quasi-Yamanouchi.
+"""
+
 from schubmult.combinatorics.rc_graph import RCGraph
 
 from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 def _canonical_rc(rc):
+    """Merge mergeable adjacent rows until ``rc`` is quasi-Yamanouchi."""
     if rc.is_quasi_yamanouchi:
         return rc
     #row = 1
@@ -18,6 +25,8 @@ def _canonical_rc(rc):
 
 
 class QYRCGraphRing(RCGraphRing):
+    """`RCGraphRing` with products snapped to quasi-Yamanouchi form; see the module docstring."""
+
     _id = 0
 
     def __init__(self, *_, **__):

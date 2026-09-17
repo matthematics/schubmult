@@ -1,3 +1,8 @@
+"""`MonomialBasis`: the standard monomial basis ``x^a`` (keys are exponent tuples) of `PolynomialAlgebra`.
+
+This is the hub basis: every other `PolynomialBasis` transitions through it by default.
+"""
+
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import Add, Mul, S
 from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff

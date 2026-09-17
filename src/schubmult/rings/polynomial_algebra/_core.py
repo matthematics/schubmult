@@ -1,3 +1,13 @@
+"""`PolynomialAlgebra`: the polynomial ring ``Z[x_1, x_2, ...]`` with a pluggable basis.
+
+The ring itself is basis-agnostic; a `PolynomialBasis` instance supplies the key
+type, the product rule, the coproduct, and the transitions to/from the monomial
+basis. Elements of rings with different bases are interconverted via
+``change_basis``. ``PA`` is the standard monomial-basis instance in ``x``; the
+pre-built instances for other bases (``Schub``, ``Key``, ``FSlide``, ...) live in
+the package ``__init__``.
+"""
+
 from functools import cache
 
 import schubmult.abc as abc
@@ -38,6 +48,9 @@ class PolynomialAlgebraElement(BaseRingElement):
     #     return self.change_basis(EXBasis())
 
     def branch(self, index):
+        """Split the variables at ``index``: ``x_1..x_index`` on the left tensor factor, the rest on the
+        right, returned in the tensor square of this ring's basis.
+        """
         monom = self.change_basis(MonomialBasis)
         monom_result = (monom.ring@monom.ring).zero
         for k, v in monom.items():
@@ -50,6 +63,7 @@ class PolynomialAlgebraElement(BaseRingElement):
         return PolynomialBasis.change_tensor_basis(monom_result, self.ring._basis, self.ring._basis)
 
     def coproduct(self):
+        """Sum of ``branch(index)`` over every split point (the full variable-splitting coproduct)."""
         monom = self.change_basis(MonomialBasis)
         mx_size = max([len(k) for k in monom.keys()])
         return sum([self.branch(index) for index in range(mx_size)])
@@ -151,6 +165,7 @@ class PolynomialAlgebra(BaseRing):
 
     @property
     def genset(self):
+        """The basis's generating set."""
         return self._basis.genset
 
     @cache

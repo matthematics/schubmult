@@ -1,3 +1,17 @@
+"""`RCGraphRing`: the ring whose basis elements are `RCGraph`s.
+
+Two products live here. ``*`` is the dual (stacking) product from `RCGraph.product`,
+defined for every pair and compatible with the Schubert-polynomial coproduct
+(``vertical_coproduct``). ``%`` (``rc_product``) is the polynomial product,
+currently implemented only when one factor is Grassmannian with a sufficiently
+large descent (or in two-row cases via squash decomposition). Crystal operators
+and most `RCGraph` methods extend linearly to ring elements (see ``broadcast``).
+``schub(perm, n)`` is the sum of all RC graphs of ``perm`` with ``n`` rows, i.e. the
+Schubert polynomial as a ring element.
+
+`GrassRCGraphRing` restricts to Grassmannian RC graphs (single descent at the last row).
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.rc_graph import RCGraph
@@ -22,8 +36,8 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
     The product % is the polynomial product. Currently only defined when the right side
     is a dominant RC graph.
 
-    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-    to do this directly.
+    The Leibniz rule should hold for %; the approach taken is to define the ambiguous term in the Leibniz formula
+    rather than compute the polynomial product directly.
 
     The product * is well defined for any pair of RC graphs and is the dual product.
     """
@@ -33,12 +47,14 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
     # ----------------------
 
     def as_terms(self):
+        """Terms ``coeff * rc`` in dict order; the empty RC graph is kept as a symbol rather than collapsing to 1."""
         if len(self.keys()) == 0:
             return [sympify_sympy(S.Zero)]
         # Keep RCGraph([]) as a basis monomial rather than collapsing to scalar 1.
         return [sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k)) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
+        """Terms sorted by RC graph (sympy printing hook)."""
         if len(self.keys()) == 0:
             return [sympify_sympy(S.Zero)]
         # Keep RCGraph([]) as a basis monomial rather than collapsing to scalar 1.
@@ -46,6 +62,7 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
 
     @property
     def vex(self):
+        """Linear extension of `RCGraph.vex`."""
         ret = self.ring.zero
         for rc, coeff in self.items():
             ret += coeff * self.ring(rc.vex)
@@ -53,6 +70,7 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
 
     @property
     def grass(self):
+        """Linear extension of `RCGraph.grass`."""
         ret = self.ring.zero
         for rc, coeff in self.items():
             ret += coeff * self.ring(rc.grass)
@@ -117,6 +135,7 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
         return res
 
     def coproduct(self):
+        """Coproduct via `RCGraphRing.coproduct_on_basis` (currently pattern-restricted; see there)."""
         tring = self.ring @ self.ring
         res = tring.zero
         for rc_graph, coeff in self.items():
@@ -193,6 +212,7 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
         return max(getattr(rc_graph, "crystal_length", lambda: len(rc_graph))() for rc_graph in self.keys())
 
     def almosteq(self, other):
+        """Whether ``self - other`` has all-zero coefficients."""
         return all(v == 0 for v in (self - other).values())
 
     def to_highest_weight(self):
@@ -248,24 +268,28 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
         return res
 
     def weight_reflection(self, index):
+        """Linear extension of `RCGraph.weight_reflection`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring(rc_graph.weight_reflection(index))
         return res
 
     def shiftup(self, k):
+        """Linear extension of `RCGraph.shiftup`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring(rc_graph.shiftup(k))
         return res
 
     def prepend(self, k):
+        """Linear extension of `RCGraph.prepend`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring(rc_graph.prepend(k))
         return res
 
     def zero_out_last_row(self):
+        """Linear extension of `RCGraph.zero_out_last_row`, dropping terms whose last row is nonempty."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             if len(rc_graph[-1]) == 0:
@@ -273,45 +297,55 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
         return res
 
     def resize(self, n):
+        """Linear extension of `RCGraph.resize`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring(rc_graph.resize(n))
         return res
 
     def clip(self, n):
+        """Keep the first ``n`` rows of each RC graph (left factor of `RCGraph.vertical_cut`)."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring(rc_graph.vertical_cut(n)[0])
         return res
 
     def transpose(self, length):
+        """Linear extension of `RCGraph.transpose`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring(rc_graph.transpose(length))
         return res
 
     def project(self):
+        """Round-trip through the free algebra: ``from_free_algebra_element(to_free_algebra_element())``
+        (projects onto the sum-of-all-RC-graphs representatives).
+        """
         return self.ring.from_free_algebra_element(self.to_free_algebra_element())
 
     def trim_operator(self, i):
+        """Linear extension of `RCGraphRing.trim_operator`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring.trim_operator(i, rc_graph)
         return res
 
     def double_elem_sym_squash(self, weight, yvars, zvars):
+        """Linear extension of `RCGraph.double_elem_sym_squash`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * rc_graph.double_elem_sym_squash(weight, yvars, zvars)
         return res
 
     def full_double_elem_sym_squash(self, p, yvars, zvars):
+        """Linear extension of `RCGraph.full_double_elem_sym_squash`."""
         res = self.ring.zero
         for rc_graph, coeff in self.items():
             res += coeff * rc_graph.full_double_elem_sym_squash(p, yvars, zvars)
         return res
 
     def grass_coaction(self):
+        """Linear extension of `RCGraphRing.grass_coaction`."""
         ret = self.ring.zero @ self.ring.zero
         for rc, coeff in self.items():
             ret += coeff * self.ring.grass_coaction(rc)
@@ -319,6 +353,9 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
 
     @property
     def broadcast(self):
+        """Proxy that lifts any `RCGraph` method linearly: ``elem.broadcast.method(*args)`` applies
+        ``rc.method(*args)`` to each basis RC graph and sums the results with coefficients.
+        """
         class BroadcastWrapper:
             def __init__(self, elem):
                 self.elem = elem
@@ -335,14 +372,18 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
 
 
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
+    """The ring of `RCGraph`s; see the module docstring. Instances are distinct (hashed by an id counter)."""
+
     _id = 0
 
     def __call__(self, x):
+        """Wrap an `RCGraph` as a basis element (or re-parent an existing element)."""
         if isinstance(x, RCGraphRingElement):
             return self.from_dict(x)
         return self.new(x)
 
     def new(self, x):
+        """The basis element for RC graph ``x`` with coefficient 1."""
         return self.from_dict({x: 1})
 
     def __init__(self, *_, **__):
@@ -411,6 +452,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return super().from_dict(dct)
 
     def monomial(self, *tup):
+        """The ring element for the monomial ``x^tup``: product of one-row RC graphs, split recursively."""
         elem = self.one
         if len(tup) <= 1:
             for a in tup:
@@ -420,6 +462,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return self.monomial(*tup[:mid]) * self.monomial(*tup[mid:])
 
     def elem_sym(self, descent, weight):
+        """Sum of all RC graphs for the elementary-symmetric permutation with the given ``weight`` and descent."""
         from schubmult import uncode
 
         return self.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(uncode([0] * (descent - sum(weight)) + [1] * sum(weight)), len(weight), weight=weight), 1))
@@ -429,6 +472,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return RCGraph([])
 
     def from_free_algebra_element(self, elem):
+        """Convert a free-algebra element (via the word basis) into a sum of ``monomial`` elements."""
         wordelem = elem.change_basis(WordBasis)
         result = self.zero
         for word, coeff in wordelem.items():
@@ -469,6 +513,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     # def weight_coproduct(self, elem):
 
     def trim_operator(self, i, rc):
+        """Divided difference at ``i`` followed by pulling out row ``i`` (only for terms where that row emptied)."""
         res = self(rc).divdiff(i)
         ret = self.zero
         for rc0, coeff in res.items():
@@ -478,6 +523,9 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return ret
 
     def grass_coaction(self, elem: RCGraph):
+        """Coaction of the Grassmannian ring: squash-decompose ``elem`` as ``base * grass``, coproduct
+        ``grass`` in `GrassRCGraphRing`, and reattach ``base`` to the left factors.
+        """
         r = GrassRCGraphRing()
         base_rc, grass_rc = elem.squash_decomp()
         the_cprod = r.coproduct_on_basis(grass_rc)
@@ -488,6 +536,9 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     @cache
     def coproduct_on_basis(self, rc):
+        """Coproduct of a single RC graph, lifted from the free-algebra Schubert coproduct via
+        `BoundedRCFactorAlgebra`; only implemented for permutations avoiding ``4132``, ``1432``, ``3142``.
+        """
 
         from schubmult import ASx, BoundedRCFactorAlgebra
         #from schubmult.rings.combinatorial.grass_tensor_algebra import
@@ -528,6 +579,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return pudge
 
     def old_coproduct_on_basis(self, elem):
+        """Earlier recursive coproduct (peel the last row, recurse, correct); superseded by ``coproduct_on_basis``."""
         # if not elem.is_principal:
         #     raise NotImplementedError
         tring = self @ self
@@ -581,6 +633,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return ret_elem
 
     def rc_product(self, elem1, elem2):
+        """Polynomial product (``%``), bilinear extension of ``rc_single_product``."""
         res = self.zero
         for u_rc, coeff_u in elem1.items():
             for v_rc, coeff_v in elem2.items():
@@ -588,6 +641,10 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return res
 
     def rc_single_product(self, u_rc, v_rc):
+        """Polynomial product of two RC graphs of equal length: handled via squash decomposition for two
+        rows, and via ``squash_product``/``left_squash`` when one factor is Grassmannian with a large
+        enough descent; raises ``NotImplementedError`` otherwise.
+        """
         # INSERTION WEIGHT TABLEAU
         # from symengine import S
 
@@ -669,6 +726,9 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     @cache
     def potential_products(self, left, right, length):
+        """Candidate RC graphs that could appear in ``left % right``, obtained by multiplying the
+        transposes with ``*`` and transposing back.
+        """
         len0 = max(len(left.perm.trimcode), len(right.perm.trimcode))
         left_rc_hw = left
         right_rc_hw = right
@@ -687,6 +747,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return set(tprodst.keys())
 
     def potential_prodperms(self, left, right, length):
+        """Permutations of the ``potential_products``."""
         return set({rc.perm for rc in self.potential_products(left, right, length)})
 
     @property
@@ -699,10 +760,16 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
 
 def _is_valid_grass(rc):
+    """Whether ``rc`` is Grassmannian for its row count: identity, or single descent at the last row."""
     if rc.perm.inv == 0:
         return True
     return rc.perm.descents() == {len(rc) - 1}
 class GrassRCGraphRing(RCGraphRing):
+    """`RCGraphRing` restricted to Grassmannian RC graphs (``_is_valid_grass``); non-Grassmannian terms
+    are filtered out of sums and products, and ``coproduct_on_basis`` is computed recursively by
+    vertical cuts.
+    """
+
     _id = 0
 
     def __init__(self, *_, **__):
@@ -726,6 +793,7 @@ class GrassRCGraphRing(RCGraphRing):
         return RCGraph([])
 
     def _snap_grass(self, elem):
+        """Drop non-Grassmannian terms."""
         ret = self.zero
         for key, coeff in elem.items():
             if not _is_valid_grass(key):
@@ -734,6 +802,7 @@ class GrassRCGraphRing(RCGraphRing):
         return ret
 
     def mul_pair(self, a, b):
+        """Product of two Grassmannian RC graphs: stack ``b`` (shifted) below ``a`` and keep valid Grassmannian results."""
         sputnik = a * b
         ret = self.zero
         for rc in sputnik:
@@ -761,6 +830,9 @@ class GrassRCGraphRing(RCGraphRing):
         return elem
 
     def coproduct_on_basis(self, elem):
+        """Coproduct of a Grassmannian RC graph: one-row case is the standard Pieri splitting; otherwise
+        cut in half vertically, coproduct each half, and keep pairs whose ``%`` product recovers ``elem``.
+        """
         if len(elem) == 0:
             return self(elem) @ self(elem)
         if len(elem) == 1:

@@ -1,3 +1,8 @@
+"""`CompositionSchubertBasis`: `SchubertBasis` re-indexed by compositions. The key ``c`` (a code
+padded with zeros to length ``numvars``) stands for the Schubert key ``(uncode(c), len(c))``,
+so the dual polynomial basis is again Schubert polynomials.
+"""
+
 from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import S
 from schubmult.utils.tuple_utils import pad_tuple

@@ -29,6 +29,8 @@ logger = get_logger(__name__)
 
 
 class _gvars:
+    """Lazily-constructed default generating sets (avoids building symbols at import time)."""
+
     @cached_property
     def n(self):
         return 100

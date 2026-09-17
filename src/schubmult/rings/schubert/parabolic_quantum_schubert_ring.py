@@ -1,3 +1,10 @@
+"""Parabolic quantum (single) Schubert polynomial ring: the ``QPSx`` interface.
+
+`ParabolicQuantumSingleSchubertRing` is a `ParabolicQuantumDoubleSchubertRing`
+with a zero coefficient alphabet, indexed by a composition ``index_comp``
+specifying the parabolic subgroup's block sizes.
+"""
+
 from bisect import bisect_left
 from functools import cache
 
@@ -14,6 +21,10 @@ from .parabolic_quantum_double_schubert_ring import ParabolicQuantumDoubleSchube
 
 
 class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
+    """Quantum Schubert polynomials for the partial flag variety with block sizes ``index_comp``.
+    Construct via ``QPSx(*index_comp)``; basis permutations must be parabolic for the given blocks.
+    """
+
     def __init__(self, genset, index_comp):
         super().__init__(genset, poly_genset(0), index_comp)
 
@@ -22,6 +33,9 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
 
     @cache
     def cached_schubpoly(self, k):
+        """The explicit parabolic quantum Schubert polynomial for ``k``, expanded against the appropriate
+        longest element (extended if ``k`` is larger than the ring's default).
+        """
         if len(k) > len(self._longest):
             parabolic_index = []
             start = 0
@@ -38,6 +52,9 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
         return schubpoly_from_elems(k, self.genset, self.coeff_genset, elem_func=self.elem_sym, mumu=~longest)
 
     def elem_sym(self, p, k, varl1, varl2):
+        """Parabolic quantum elementary symmetric polynomial ``E_p(x_1..x_k)``: classical below the first
+        block boundary, with a ``q``-correction term at each block boundary ``N_j``.
+        """
         if p < 0 or p > k:
             return 0
         if p == 0 and k >= 0:
@@ -52,6 +69,7 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
         return ret
 
     def _coerce_mul(self, other):
+        """Accept elements of this ring, or of the double parabolic ring with matching blocks (coefficient alphabet zeroed)."""
         if isinstance(other, BaseSchubertElement):
             if other.ring == self:
                 if self.genset == other.ring.genset:
@@ -64,10 +82,14 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
 
     @property
     def coeff_genset(self):
+        """Always the zero alphabet."""
         return poly_genset(0)
 
     @cache
     def cached_product(self, u, v, basis2):
+        """Full-flag quantum product (``schubmult_q_fast`` or the generic double kernel), then projected
+        to the parabolic ring via ``process_coeff_dict`` (Peterson-Woodward).
+        """
         if self == basis2:
             initial_dict = py.schubmult_q_fast({u: S.One}, v)
         else:
@@ -76,9 +98,13 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
 
     @cache
     def cached_positive_product(self, u, v, basis2):
+        """Same as ``cached_product``."""
         return self.cached_product(u, v, basis2)
 
     def __call__(self, x):
+        """Build an element from a parabolic permutation/Lehmer list or an expression; raises ``ValueError``
+        if the permutation is not parabolic for this ring's blocks.
+        """
         genset = self.genset
         if not genset:
             genset = self.genset
@@ -99,9 +125,11 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
 
 
 def make_single_parabolic_quantum_basis(index_comp):
+    """The `ParabolicQuantumSingleSchubertRing` in ``x`` for block sizes ``index_comp``."""
     return ParabolicQuantumSingleSchubertRing(GeneratingSet("x"), index_comp)
 
 
 @cache
 def QPSx(*args):
+    """Cached `ParabolicQuantumSingleSchubertRing` for block sizes ``args``, e.g. ``QPSx(2, 1)([2, 1, 3])``."""
     return make_single_parabolic_quantum_basis(args)

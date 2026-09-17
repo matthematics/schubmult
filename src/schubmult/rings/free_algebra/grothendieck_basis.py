@@ -1,3 +1,13 @@
+"""`GrothendieckBasis`: the free-algebra basis dual to Grothendieck polynomials.
+
+Keys are ``(perm, numvars)`` as in `SchubertBasis`; the key is dual to ``G_perm`` in ``numvars``
+variables (``GrothendieckPolyBasis`` on the polynomial side). The change of
+basis to `SchubertBasis` is the transpose of the Grothendieck-to-Schubert expansion and is
+computed combinatorially: enumerate unreduced BPDs of ``perm * w0``, take the co-BPD, and keep
+the reduced ones, with sign ``(-1)^(inv(perm) - inv(result))``. Products and all other
+transitions route through `SchubertBasis`. ``AGx`` is the standard instance.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import Permutation
@@ -8,11 +18,9 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class GrothendieckBasis(FreeAlgebraBasis):
-    """Grothendieck basis for FreeAlgebra.
+    """Free-algebra basis dual to Grothendieck polynomials; keys are ``(Permutation, numvars)``.
 
-    Keys match the Schubert basis shape: ``(Permutation, numvars)``.
-    The deformation parameter ``beta`` is a class variable so the class can be
-    passed directly to ``FreeAlgebra`` without requiring a basis constructor.
+    See the module docstring. Products and transitions go through `SchubertBasis`.
     """
 
     zero_monom = (Permutation([]), 0)
@@ -24,10 +32,12 @@ class GrothendieckBasis(FreeAlgebraBasis):
 
     @classmethod
     def is_key(cls, x):
+        """Whether ``x`` is ``(perm,)`` or ``(perm, numvars)``."""
         return (len(x) == 1 and isinstance(x[0], Permutation | list | tuple)) or (len(x) == 2 and isinstance(x[0], Permutation | list | tuple) and isinstance(x[1], int))
 
     @classmethod
     def as_key(cls, x):
+        """Normalize to ``(Permutation, numvars)``; ``numvars`` defaults to the last descent."""
         if len(x) == 1:
             perm = Permutation(x[0])
             return (perm, 0) if len(perm.descents()) == 0 else (perm, max(perm.descents()) + 1)
@@ -36,6 +46,11 @@ class GrothendieckBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def transition_schubert(cls, perm, numvars):
+        """Expand ``(perm, numvars)`` in `SchubertBasis`.
+
+        For each unreduced BPD of ``perm * w0`` whose co-BPD is reduced with permutation ``u``
+        fitting in ``numvars`` variables, contributes ``(-1)^(inv(perm) - inv(u))`` to ``(u, numvars)``.
+        """
         from schubmult.combinatorics.bpd import BPD
 
         n = len(perm)
@@ -131,6 +146,9 @@ class GrothendieckBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        """Key -> ``{key: coeff}`` function into ``other_basis``: identity on Grothendieck subclasses,
+        `transition_schubert` for `SchubertBasis`, and Schubert-then-onward for everything else.
+        """
         # from .elementary_basis import ElementaryBasis
         from .schubert_basis import SchubertBasis
         #from .word_basis import WordBasis
@@ -144,13 +162,16 @@ class GrothendieckBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Display as ``AGx(perm, numvars)``."""
         perm, numvars = cls.as_key(k)
         return GenericPrintingTerm((perm, numvars), "AGx")
 
     @classmethod
     @cache
     def product(cls, key1, key2, coeff=S.One):
-        """Multiply two keys by transitioning to WordBasis and back."""
+        """Multiply by expanding both keys in `SchubertBasis`, using its separated-descents product,
+        and converting the result back.
+        """
         from schubmult.utils._mul_utils import add_perm_dict
 
         from .schubert_basis import SchubertBasis
@@ -169,5 +190,6 @@ class GrothendieckBasis(FreeAlgebraBasis):
 
     @classmethod
     def dual_basis(cls):
+        """``GrothendieckPolyBasis``: Grothendieck polynomials are the dual basis."""
         from ..polynomial_algebra.grothendieck_poly_basis import GrothendieckPolyBasis
         return GrothendieckPolyBasis

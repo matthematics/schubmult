@@ -1,3 +1,8 @@
+"""`ForestRCGraphRing` / `DualForestRCGraphRing`: `RCGraphRing` quotients modeling forest polynomials
+(Nadeau-Spink-Tewari). RC graphs are snapped to canonical representatives of their
+``forest_weight`` class; the dual variant carries the dual product.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import uncode
@@ -25,6 +30,7 @@ def _canonical_rc(rc):
 
 
 class ForestRCGraphRingElement(RCGraphRingElement):
+    """Element of `ForestRCGraphRing`."""
     def to_free_algebra_element(self, basis=None):
         from schubmult import ForestDual
 
@@ -48,9 +54,10 @@ class ForestRCGraphRingElement(RCGraphRingElement):
         return self.divdiff(i).quasi_shift(i)
 
 class DualForestRCGraphRingElement(ForestRCGraphRingElement):
-    pass
+    """Element of `DualForestRCGraphRing`."""
 
 class ForestRCGraphRing(RCGraphRing):
+    """`RCGraphRing` snapped to forest-class representatives; see the module docstring."""
     _id = 0
 
     def __init__(self, *_, **__):
@@ -139,6 +146,7 @@ class ForestRCGraphRing(RCGraphRing):
 
 
 class DualForestRCGraphRing(RCGraphRing):
+    """Dual-product variant of `ForestRCGraphRing`."""
     _id = 0
 
     def __init__(self, *_, **__):

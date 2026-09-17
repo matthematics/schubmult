@@ -1,3 +1,7 @@
+"""`ChuteMoveRing`: a `SchubertMonomialRing` whose basis elements are `ChuteMoveElement`s
+(RC graphs marked with a set of simultaneous chute-move rows).
+"""
+
 from schubmult.combinatorics.chute_move_element import ChuteMoveElement
 from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 
@@ -10,17 +14,7 @@ from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomia
 
 
 class ChuteMoveRingElement(SchubertMonomialRingElement):
-    """
-    ChuteMoveRing elements are linear combinations of ChuteMoveElement basis elements.
-
-    The product % is the polynomial product. Currently only defined when the right side
-    is a dominant RC graph.
-
-    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-    to do this directly.
-
-    The product * is well defined for any pair of RC graphs and is the dual product.
-    """
+    """ChuteMoveRing elements are linear combinations of ChuteMoveElement basis elements."""
 
     # ----------------------
     # Presentation helpers
@@ -29,6 +23,8 @@ class ChuteMoveRingElement(SchubertMonomialRingElement):
 
 
 class ChuteMoveRing(SchubertMonomialRing):
+    """The ring of `ChuteMoveElement`s; products use `ChuteMoveElement.product`."""
+
     _id = 0
 
     def __init__(self, *_, **__):

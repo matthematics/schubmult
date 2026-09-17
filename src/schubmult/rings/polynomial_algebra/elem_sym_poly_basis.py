@@ -1,3 +1,5 @@
+"""`ElemSymPolyBasis`: the basis of products of elementary symmetric polynomials ``e_p(x_1..x_k)`` for `PolynomialAlgebra`."""
+
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 

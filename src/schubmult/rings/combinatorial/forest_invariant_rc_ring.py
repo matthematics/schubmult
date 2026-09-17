@@ -1,10 +1,15 @@
 
+"""`ForestInvariantRCGraphRing`: `RCGraphRing` quotient where every product is snapped to its crystal
+highest-weight representative (identical in behavior to `HWRCGraphRing`).
+"""
+
 from schubmult.combinatorics.rc_graph import RCGraph
 
 from .rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 class ForestInvariantRCGraphRing(RCGraphRing):
+    """`RCGraphRing` with products projected onto highest-weight RC graphs (``_snap_highest_weight``)."""
     _id = 0
 
     def __init__(self, *_, **__):

@@ -59,6 +59,7 @@ class SchubertMonomialRingElement(BaseRingElement):
         return result
 
     def as_ordered_terms(self, *_, **__):
+        """Terms ``coeff * basis_symbol`` in dict order (sympy printing hook)."""
         if len(self.keys()) == 0:
             return [S.Zero]
         return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
@@ -88,14 +89,19 @@ class SchubertMonomialRing(BaseRing):
     """
 
     def printing_term(self, key):
+        """Wrap the basis key in a `SchubertMonomialPrintingTerm`."""
         return SchubertMonomialPrintingTerm(key)
 
     def from_dict(self, dct):
+        """Build an element from ``{key: coeff}`` without coefficient coercion."""
         elem = self.dtype()
         elem.update(dct)
         return elem
 
     def mul(self, a, b):
+        """Multiply two elements via each basis key's ``product`` method (which returns ``{key: coeff}``),
+        or scale by a scalar ``b``.
+        """
         if isinstance(b, SchubertMonomialRingElement):
             result_dict = {}
             for g1, c1 in a.items():
@@ -112,6 +118,7 @@ class SchubertMonomialRing(BaseRing):
             raise NotImplementedError("Multiplication with fs not implemented for SchubertMonomialRingElement")
 
     def rmul(self, a, b):
+        """Scale by the scalar ``b``."""
         return self.from_dict({k: v * sympify(b) for k, v in a.items()})
 
     @property
@@ -119,4 +126,5 @@ class SchubertMonomialRing(BaseRing):
         return self.dtype()
 
     def __call__(self, key):
+        """The basis element for ``key`` with coefficient 1."""
         return self.from_dict({key: 1})

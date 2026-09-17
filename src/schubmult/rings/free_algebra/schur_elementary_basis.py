@@ -1,3 +1,7 @@
+"""`SchurElementaryBasis`: free-algebra basis dual to products of a nested elementary monomial
+(as in `ElementaryBasis`) with a Schur polynomial. Keys are ``(elementary_tuple, partition)``.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import uncode

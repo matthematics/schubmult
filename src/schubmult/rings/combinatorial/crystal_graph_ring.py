@@ -1,3 +1,8 @@
+"""`CrystalGraphRing`: a ring whose basis elements are crystal-graph objects, with the crystal
+operators extended linearly to ring elements. Base class for the RC graph / WC graph /
+factor-algebra rings in this package.
+"""
+
 from typing import Any, Tuple
 
 from schubmult.combinatorics.crystal_graph import CrystalGraph
@@ -14,6 +19,7 @@ class CrystalGraphRing(BaseRing):
     """
 
     def dtype(self):
+        """A fresh empty element bound to this ring."""
         elem = CrystalGraphRingElement()
         elem.ring = self
         return elem
@@ -42,6 +48,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
 
 
     def phi(self, index: int) -> int:
+        """Maximum of ``phi(index)`` over the basis keys."""
         if len(self) == 0:
             return 0
         m = 0
@@ -60,6 +67,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
 
 
     def epsilon(self, index: int) -> int:
+        """Maximum of ``epsilon(index)`` over the basis keys."""
         if len(self) == 0:
             return 0
         m = 0
@@ -119,6 +127,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
         return res
 
     def crystal_length(self) -> int:
+        """Maximum of ``crystal_length()`` over the basis keys."""
         if len(self) == 0:
             return 0
         m = 0
@@ -136,6 +145,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
         return m
 
     def to_highest_weight(self) -> Tuple["CrystalGraphRingElement", Tuple[int, ...]]:
+        """Apply linearized raising operators until none changes the element; returns ``(element, raise_seq)``."""
         elem = self
         seq = []
         found = True

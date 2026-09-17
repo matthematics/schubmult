@@ -1,3 +1,14 @@
+"""The nilHecke ring of divided-difference operators acting on Schubert polynomials.
+
+`NilHeckeRing` elements are ``{Permutation: coefficient}`` combinations of the
+divided-difference operators ``partial_w`` (printed ``df(w)``), with polynomial
+coefficients in the ``x`` variables multiplied on the left. ``partial_w`` acts on
+a `DoubleSchubertElement` via `NilHeckeElement.apply`, sending ``S_v -> S_{v w^{-1}}``
+when length-additive. Products use the descent-side kernel ``schubmult_double_down``
+to commute polynomial coefficients past operators. The module-level ``df`` is the
+standard instance in ``x``.
+"""
+
 from sympy import Expr
 
 from schubmult.combinatorics.permutation import Permutation
@@ -33,12 +44,17 @@ logger = get_logger(__name__)
 
 
 class NilHeckeElement(DomainElement, DefaultPrinting, dict):
+    """An element of a `NilHeckeRing`: ``{Permutation: coeff}`` combination of divided-difference operators."""
+
     _op_priority = 1e200
     precedence = 40
 
     __sympy__ = True
 
     def apply(self, other):
+        """Act on a `DoubleSchubertElement`: each ``partial_w`` sends ``S_v -> S_{v w^{-1}}`` when
+        ``l(v w^{-1}) = l(v) - l(w)``, else kills it; coefficients multiply the result.
+        """
         if not isinstance(other, DoubleSchubertElement):
             raise NotImplementedError
         ret = other.ring.zero
@@ -84,11 +100,13 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
         return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
 
     def as_terms(self):
+        """Terms ``coeff * df(w)`` in dict order (sympy printing hook)."""
         if len(self.keys()) == 0:
             return [sympify_sympy(S.Zero)]
         return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
+        """Terms sorted by permutation length then lexicographically (sympy printing hook)."""
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
         return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
@@ -169,12 +187,15 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
             return NotImplemented
 
     def as_coefficients_dict(self):
+        """``{df(w): coeff}`` mapping display symbols to coefficients."""
         return {self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()}
 
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+        """Expand each coefficient, keeping the operator basis."""
         return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
 
     def as_expr(self):
+        """Sum of the ``as_terms()`` as a sympy ``Add``."""
         return Add(*self.as_terms())
 
     def __eq__(self, other):
@@ -185,6 +206,8 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
 
 
 class NilHeckeRing(Ring, CompositeDomain):
+    """The nilHecke ring in the alphabet ``genset``; see the module docstring. ``df`` is the standard instance."""
+
     def __str__(self):
         return self.__class__.__name__
 
@@ -192,9 +215,14 @@ class NilHeckeRing(Ring, CompositeDomain):
         return type(self) is type(other) and self.genset == other.genset
 
     def to_sympy(self, elem):
+        """Convert an element to a sympy expression (``as_expr``)."""
         return elem.as_expr()
 
     def isobaric(self, perm, groth=False, *, groth_beta = None):
+        """The isobaric divided difference ``pi_perm`` as a nilHecke element: ``pi_i = partial_i x_{i+1}``
+        (or the Grothendieck version ``partial_i (1 + beta x_{i+1})`` with ``groth=True``), composed
+        along a reduced word of ``perm``.
+        """
         perm = Permutation(perm)
         if perm.inv == 0:
             return self.one
@@ -209,9 +237,13 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.mul(elem, self.genset[index + 1])
 
     def g_isobaric(self, perm):
+        """``isobaric(perm, groth=True)``."""
         return self.isobaric(perm, groth=True)
 
     def fgp_operator(self, k, length, q_var=GeneratingSet("q")):
+        """The Fomin-Gelfand-Postnikov quantization of ``x_k`` as a nilHecke element:
+        ``x_k - sum_{i<k} q_i...q_{k-1} partial_{(i k)} + sum_{i>k} q_k...q_{i-1} partial_{(k i)}``.
+        """
         # xk
         elem = self.zero
         elem += self.genset[k] * self.one
@@ -226,6 +258,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return elem
 
     def subs_fgp(self, poly, length):
+        """Substitute every ``x_k`` in ``poly`` by its ``fgp_operator`` (quantize a polynomial)."""
         if self.genset.index(poly) != -1:
             return self.fgp_operator(self.genset.index(poly), length)
         if isinstance(poly, Add):
@@ -260,6 +293,9 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.from_dict({k: -v for k, v in elem.items()})
 
     def mul_scalar(self, elem, other):
+        """Multiply on the right by a polynomial/Schubert element, commuting it past the operators via
+        ``schubmult_double_down`` (Leibniz rule for divided differences).
+        """
         try:
             other = self.domain_new(other)
             # print(f"{other=} {type(other)=}")
@@ -279,6 +315,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return ret
 
     def mul_perm(self, elem, perm):
+        """Right-multiply every operator ``partial_k`` by ``partial_perm``, keeping only length-additive products."""
         dct = {}
         for k, v in elem.items():
             newperm = k * perm
@@ -287,6 +324,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.from_dict(dct)
 
     def rmul(self, elem, other):
+        """Left-multiply by a scalar/polynomial (coefficients sit on the left, so this is plain scaling)."""
         # print(f"{self=} {elem=} {other=}")
         if isinstance(other, NilHeckeElement):
             raise NotImplementedError
@@ -295,6 +333,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def mul(self, elem, other):
+        """Ring product: scalars scale, nilHecke elements combine via ``mul_scalar`` then ``mul_perm``, else ``mul_scalar``."""
         # print("Fry the leg")
         # print(f"{self=} {elem=} {other=}")
         try:
@@ -319,6 +358,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.from_expr(expr)
 
     def new(self, x):
+        """Build an element from a permutation/Lehmer list (the operator ``partial_w``) or a polynomial (a scalar)."""
         if isinstance(x, NilHeckeElement):
             return x
         if isinstance(x, list) or isinstance(x, tuple):
@@ -331,6 +371,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return hash(self.genset)
 
     def printing_term(self, k):
+        """The display symbol ``df(w)`` / ``\u2202(w)`` / ``\\partial^w`` for the operator indexed by ``k``."""
         # from sympy import Symbol
 
         # return Symbol(f"df({k})", commutative=False)
@@ -367,6 +408,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.dtype()
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
+        """Coerce ``element`` into the coefficient domain, refusing ring elements and anything containing an ``x`` variable."""
         # print(f"{element=} {type(element)=} bagels {type(sympify(element))=} {sympify(element).has(*self.symbols)=}")
         if isinstance(element, NilHeckeElement) or isinstance(element, BaseSchubertElement):
             raise CoercionFailed("Not a domain element")
@@ -376,9 +418,11 @@ class NilHeckeRing(Ring, CompositeDomain):
 
     @property
     def genset(self):
+        """The ``x`` alphabet."""
         return self._genset
 
     def from_expr(self, x):
+        """Build the scalar element ``x * partial_id``."""
         return self.mul_scalar(self.one, x)
 
 

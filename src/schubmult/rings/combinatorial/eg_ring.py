@@ -1,3 +1,8 @@
+"""`EGRing`: a ring whose basis elements are ``(NilPlactic, length)`` pairs -- the Edelman-Greene
+insertion tableau of an RC graph's word together with its row count. ``from_rc_graph`` maps an RC
+graph to its EG class.
+"""
+
 from schubmult.combinatorics.nilplactic import NilPlactic
 from schubmult.symbolic import S
 
@@ -6,6 +11,8 @@ from ..printing import PrintingTerm
 
 
 class EGPrintingTerm(PrintingTerm):
+    """Display symbol for an `EGRing` basis key (prints the key directly)."""
+
     is_commutative = False
     precedence = 50
 
@@ -36,10 +43,13 @@ class EGPrintingTerm(PrintingTerm):
 
 
 class EGRingElement(BaseRingElement):
-    pass
+    """Linear combination of ``(NilPlactic, length)`` basis keys."""
+
 
 
 class EGRing(BaseRing):
+    """The Edelman-Greene tableau ring; see the module docstring."""
+
     _id = 0
 
     def __init__(self, *_, **__):

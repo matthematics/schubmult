@@ -1,3 +1,14 @@
+"""Double (equivariant K-theoretic) Grothendieck polynomial ring: the ``DGx`` interface.
+
+`DoubleGrothendieckRing` represents ``G_w(x; y)`` with deformation parameter
+``beta``. Products go through `schubmult.mult.groth_double.grothmult_double`
+(the K-theoretic Monk/Pieri machinery) where available, with a fallback that
+expands into the underlying `DoubleSchubertRing`. The ring also exposes the
+localization/vanishing data used to convert between the Schubert and
+Grothendieck bases (``permuted_subs_dict``, ``product_of_roots``,
+``exp_root``, ``chevalley``).
+"""
+
 from functools import cache, cached_property
 
 import schubmult.mult.groth as py
@@ -22,11 +33,13 @@ class DoubleGrothendieckElement(BaseSchubertElement):
     """Element of a DoubleGrothendieckRing, stored as {Permutation: coeff}."""
 
     def as_polynomial(self):
+        """Expand to an explicit polynomial: ``sum coeff * G_w(x; y)``."""
         from schubmult.symbolic import Add
 
         return Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def perm_subs(self, perm):
+        """Localize at the torus fixed point ``perm``: substitute ``x_i -> (-) y_{perm(i)}`` (formal inverse)."""
         return self.ring.perm_subs(self, perm)
 
 
@@ -62,28 +75,36 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset and self._beta == other._beta
 
     def perm_subs(self, elem, perm):
+        """Localize ``elem`` at ``perm``: expand into double Schubert polynomials and substitute
+        ``x_i -> -y_{perm(i)} / (1 + beta y_{perm(i)})``.
+        """
         elem_schub = self._as_schub(elem)
         dct = {self.genset[i]: -self.coeff_genset[perm[i - 1]] / (S.One + self._beta * self.coeff_genset[perm[i - 1]]) for i in range(1, max([len(p) for p in elem_schub.keys()]) + 1)}
         return elem_schub.eval(dct)
 
     @property
     def double_mul(self):
+        """`schubmult.mult.groth_double.grothmult_double`."""
         return yz.grothmult_double
 
     @property
     def single_mul(self):
+        """`schubmult.mult.groth.grothmult_py`."""
         return py.grothmult_py
 
     @property
     def beta(self):
+        """The deformation parameter."""
         return self._beta
 
     @property
     def single_variable(self):
+        """`schubmult.mult.groth_double.single_variable_groth` (K-theoretic Monk rule for ``x_k``)."""
         return yz.single_variable_groth
 
     @cache
     def _as_schub_cached(self, perm):
+        """``G_perm`` expanded in the double Schubert basis (cached)."""
         ring = self._double_schubert_ring
         return grothendieck_poly_with_ring(perm, ring, self._beta, keep_as_schub=True)
 
@@ -96,10 +117,12 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
     @cached_property
     def vanish_subs_dict(self):
+        """Localization at the identity: ``x_i -> -y_i / (1 + beta y_i)`` for the first 50 variables."""
         ring = self._double_schubert_ring
         return {ring.genset[i]: -ring.coeff_genset[i] / (S.One + self._beta * ring.coeff_genset[i]) for i in range(50)}
 
     def permuted_subs_dict(self, perm, length=None):
+        """Localization at ``perm``: ``x_i -> -y_{perm(i)} / (1 + beta y_{perm(i)})`` for ``i <= length``."""
         ring = self._double_schubert_ring
         # perm[i - 1] returns i past the end of perm, so this stays correct for length > len(perm)
         if length is None:
@@ -108,10 +131,12 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
     @cache
     def _weight(self, index):
+        """The formal inverse ``(-) y_index = -y_index / (1 + beta y_index)``."""
         return -self.coeff_genset[index] / (S.One + self._beta * self.coeff_genset[index])
 
     @cache
     def product_of_roots(self, perm):
+        """``prod_{(a,b) in Inv(perm^-1)} (y_a (-) y_b)``: the localization of ``G_perm`` at itself (Euler class)."""
         roots = (~perm).inversion_set
         result = S.One
         for a, b in roots:
@@ -161,6 +186,9 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return sympify(cancel(sympify_sympy(expr)))
 
     def div_by_product_of_roots(self, expr, perm):
+        """Divide ``expr`` by ``product_of_roots(perm)`` one linear factor at a time, leaving any
+        non-exact factors in the denominator (so the result may be a rational function).
+        """
         from sympy import cancel, div, fraction
 
 
@@ -180,21 +208,29 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
     @property
     def mult_poly_double(self):
+        """`schubmult.mult.groth_double.mult_poly_groth_double`."""
         return yz.mult_poly_groth_double
 
     @property
     def mult_poly_single(self):
+        """`schubmult.mult.groth.mult_poly_groth`."""
         return py.mult_poly_groth
 
     @cache
     def schub_as_groth(self, perm):
+        """The double Schubert polynomial ``S_perm`` expanded in the Grothendieck basis (cached)."""
         return self._from_double_schubert_elem(self._double_schubert_ring(perm))
 
     def from_double_schubert_elem(self, elem):
+        """Convert a `DoubleSchubertElement` into this ring's Grothendieck basis."""
         return self._from_double_schubert_elem(elem)
         # return sum(v * self.schub_as_groth(schub) for schub, v in elem.items())
 
     def _from_double_schubert_elem(self, elem):
+        """Triangular basis change Schubert -> Grothendieck by repeated localization: pick the smallest
+        remaining permutation, evaluate at its fixed point, divide by its Euler class to read off
+        the ``G`` coefficient, subtract, and repeat.
+        """
         from sympy import cancel
 
         from schubmult.symbolic import expand
@@ -239,6 +275,9 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return final_result
 
     def _best_effort_grothmult_double(self, elem, elem2):
+        """Multiply term by term via ``double_mul``; if a term raises ``NotImplementedError`` (the K-Monk
+        rule doesn't cover it), fall back to multiplying by that term's explicit polynomial.
+        """
         ring2 = elem2.ring
         result = self.zero
 
@@ -252,6 +291,9 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return result
 
     def mul_expr(self, elem, x):
+        """Multiply by an expression: single ``x`` variables via the K-Monk rule, ``Add``/``Mul``/``Pow``
+        recursively, anything else as a coefficient.
+        """
         from schubmult.symbolic import Add, DomainElement, Mul, Pow
 
         if isinstance(x, DomainElement):
@@ -278,27 +320,32 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def mul(self, elem, other):
+        """Ring product via ``_best_effort_grothmult_double``."""
         # return self.from_double_schubert_elem(self._as_schub(elem) * other.ring._as_schub(other))
         return self._best_effort_grothmult_double(elem, other)
 
     def from_expr(self, expr):
+        """Convert a polynomial into the Grothendieck basis by multiplying the identity by it."""
         return self.mul_expr(self.one, expr)
         # self.from_double_schubert_elem(self._double_schubert_ring.from_expr(expr))
 
     @cache
     def cached_schubpoly(self, k):
+        """The explicit ``G_k(x; y)``, as a sum of `WCGraph` monomials weighted by ``beta^excess``."""
         from schubmult.combinatorics.wc_graph import WCGraph
 
         # return grothendieck_poly_with_ring(k, self._double_schubert_ring, self._beta)
         return sum([wc.polyvalue(self.genset, self.coeff_genset, beta=self._beta, prop_beta=True) for wc in WCGraph.all_wc_graphs(k)])
 
     def printing_term(self, k, prefix=""):
+        """The ``DoubleGrothendieckPoly`` display symbol for basis element ``k``."""
         return spolymod.DoubleGrothendieckPoly(k, self.genset.label, self.coeff_genset.label, prefix=prefix)
 
     def __call__(self, x):
         return self.new(x)
 
     def new(self, x):
+        """Build an element from a permutation/Lehmer list, an element of this ring, or a polynomial expression."""
         if isinstance(x, (list, tuple)):
             return self.from_dict({Permutation(x): S.One})
         if isinstance(x, Permutation):
@@ -310,6 +357,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
         return self.from_expr(x)
 
     def from_dict(self, dct):
+        """Build an element from ``{Permutation: coeff}``, dropping exact zeros."""
         dct = {k: v for k, v in dct.items() if v != S.Zero}
         return self.dtype(dct)
 
@@ -318,6 +366,9 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
 
 def DGx(x, genset=GeneratingSet("y")):
+    """Construct a double Grothendieck element in ``x`` with coefficient alphabet ``genset`` (a
+    `GeneratingSet`, a label string, or ``"0"`` for the zero alphabet).
+    """
     from schubmult.symbolic.poly.variables import ZeroGeneratingSet
 
     if isinstance(genset, str):

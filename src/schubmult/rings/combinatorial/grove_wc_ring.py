@@ -1,3 +1,8 @@
+"""`GroveWCGraphRing` / `DualGroveWCGraphRing`: `WCGraphRing` quotients modeling grove polynomials
+(the K-theoretic analogue of forest polynomials). WC graphs are snapped to canonical grove
+representatives; products factor through `BoundedWCFactorAlgebra`.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import uncode
@@ -116,6 +121,7 @@ def _snap_squash_eval(key):
 
 
 class GroveWCGraphRingElement(WCGraphRingElement):
+    """Element of `GroveWCGraphRing`."""
 
     def quasi_shift(self, i):
         result = self.ring.zero
@@ -132,9 +138,10 @@ class GroveWCGraphRingElement(WCGraphRingElement):
         return self.divdiff(i).quasi_shift(i)
 
 class DualGroveWCGraphRingElement(GroveWCGraphRingElement):
-    pass
+    """Element of `DualGroveWCGraphRing`."""
 
 class GroveWCGraphRing(WCGraphRing):
+    """`WCGraphRing` snapped to grove-class representatives; see the module docstring."""
     _id = 0
 
     def __init__(self, *_, **__):
@@ -255,6 +262,7 @@ class GroveWCGraphRing(WCGraphRing):
 
 
 class DualGroveWCGraphRing(WCGraphRing):
+    """Dual-product variant of `GroveWCGraphRing`."""
     _id = 0
 
     def __init__(self, *_, **__):

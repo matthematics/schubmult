@@ -1,3 +1,11 @@
+"""Quantum double Schubert polynomial ring: the ``QDSx`` interface.
+
+`QuantumDoubleSchubertRing` represents quantum double Schubert polynomials
+``S^q_w(x; y)`` with quantum parameters ``q_1, q_2, ...`` (the module-level
+``q_var``), dispatching products to `schubmult.mult.quantum_double`. Elements
+can be converted to/from the classical basis via ``as_classical``/``as_quantum``.
+"""
+
 from functools import cache
 
 import schubmult.mult.quantum as py
@@ -17,15 +25,21 @@ q_var = GeneratingSet("q")
 
 
 def is_fact_elem_sym(obj):
+    """Whether ``obj`` is an (unevaluated) quantum factorial elementary symmetric function."""
     return is_of_func_type(obj, QFactorialElemSym)
 
 
 class QuantumDoubleSchubertElement(BaseSchubertElement):
+    """An element of a `QuantumDoubleSchubertRing`: ``{Permutation: coeff}`` in the basis ``S^q_w(x; y)``."""
+
     def subs(self, old, new):
+        """Substitute by round-tripping through the classical basis."""
         return self.as_classical().subs(old, new).as_quantum()
 
 
 class QuantumDoubleSchubertRing(BaseSchubertRing):
+    """The ring of quantum double Schubert polynomials; ``QDSx`` is the standard constructor."""
+
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "QDBS"))
 
@@ -37,9 +51,11 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         return f"Quantum Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
 
     def printing_term(self, k):
+        """The ``QDSchubPoly`` display symbol for basis element ``k``."""
         return QDSchubPoly(k, self.genset.label, self.coeff_genset.label)
 
     def _coerce_mul(self, other):
+        """Accept quantum double elements over the same ``x``; lift quantum single elements by zeroing ``y``."""
         from .quantum_schubert_ring import QuantumSingleSchubertRing
 
         if isinstance(other, BaseSchubertElement):
@@ -54,6 +70,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         return None
 
     def _coerce_add(self, other):
+        """Accept only elements of an identical ring."""
         if isinstance(other, BaseSchubertElement):
             if type(other.ring) is type(self):
                 if self.genset == other.ring.genset and self.coeff_genset == other.ring.coeff_genset:
@@ -62,9 +79,11 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def symbol_elem_func(self):
+        """`QFactorialElemSym`."""
         return QFactorialElemSym
 
     def elem_sym_subs(self, kk):
+        """Substitution dict ``{e_p_k: elem_sym_poly_q(p, k, x)}`` for all ``1 <= p <= k <= kk``."""
         elems = []
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
@@ -73,12 +92,17 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def elem_sym(self):
+        """`QFactorialElemSym`."""
         return QFactorialElemSym
 
     def is_elem_mul_type(self, other):
+        """Whether ``other`` is a quantum factorial elementary symmetric function."""
         return is_fact_elem_sym(other)
 
     def elem_mul(self, ring_elem, elem):
+        """Multiply by a quantum factorial elementary symmetric function via the quantum positional
+        Pieri rule (``elem_sym_positional_perms_q``), each term carrying its ``q``-monomial.
+        """
         elem = sympify(elem)
         indexes = [self.genset.index(a) for a in genvars(elem)]
         ret = self.zero
@@ -92,12 +116,15 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
+        """Structure constants via ``schubmult_q_double_fast``."""
         return yz.schubmult_q_double_fast({u: S.One}, v, self.coeff_genset, basis2.coeff_genset)
 
     def in_quantum_basis(self, elem):
+        """Identity (this ring is already quantum)."""
         return elem
 
     def in_classical_basis(self, elem):
+        """Expand each ``S^q_w`` as a classical double Schubert element via ``quantum_as_classical_schubpoly``."""
         result = None
         for k, v in elem.items():
             if not result:
@@ -108,6 +135,9 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def classical_elem_func(self):
+        """Quantum elementary symmetric function valued in the classical `DoubleSchubertRing`, via the
+        recursion ``E_p(k) = (x_k - y_{k-p+1}) E_{p-1}(k-1) + E_p(k-1) + q_{k-1} E_{p-2}(k-2)``.
+        """
         basis = spr.DoubleSchubertRing(self.genset, self.coeff_genset)
         qv = yz._vars.q_var
 
@@ -122,29 +152,36 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def quantum_as_classical_schubpoly(self, perm):
+        """``S^q_perm`` expanded in the classical double Schubert basis (cached)."""
         return schubpoly_from_elems(perm, self.genset, self.coeff_genset, self.classical_elem_func)
 
     @cache
     def cached_schubpoly(self, k):
+        """The explicit quantum double Schubert polynomial ``S^q_k(x; y)`` (cached)."""
         return schubpoly_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly_q)
 
     @cache
     def cached_positive_product(self, u, v, basis2):
+        """Structure constants with (partially) positive coefficients via ``schubmult_q_generic_partial_posify``."""
         return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_q_generic_partial_posify(u, v).items()}
 
     @property
     def double_mul(self):
+        """`schubmult.mult.quantum_double.schubmult_q_double_fast`."""
         return yz.schubmult_q_double_fast
 
     @property
     def single_mul(self):
+        """`schubmult.mult.quantum.schubmult_q_fast`."""
         return py.schubmult_q_fast
 
     @property
     def mult_poly_single(self):
+        """`schubmult.mult.quantum.mult_poly_q`."""
         return py.mult_poly_q
 
     def positive_elem_sym_rep(self, perm, index=1):
+        """Manifestly positive expansion of ``S^q_perm`` in quantum factorial elementary symmetric functions (forward)."""
         if perm.inv == 0:
             return S.One
         ret = S.Zero
@@ -154,6 +191,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def positive_elem_sym_rep_backward(self, perm):
+        """Like ``positive_elem_sym_rep`` but peeling from the last descent backward."""
         if perm.inv == 0:
             return S.One
         ret = S.Zero
@@ -165,9 +203,13 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def mult_poly_double(self):
+        """`schubmult.mult.quantum_double.mult_poly_q_double`."""
         return yz.mult_poly_q_double
 
     def from_expr(self, expr):
+        """Convert a polynomial to the quantum basis by repeatedly peeling off the leading monomial's
+        Schubert term; falls back to ``mul_expr`` on the identity if that fails.
+        """
         ret = self.zero
         try:
             expr = sympify(expr)
@@ -183,9 +225,13 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
             return self.mul_expr(self.one, expr)
 
     def handle_sympoly(self, other):
+        """Evaluate symmetric-function coefficients to polynomials."""
         return expand_func(other)
 
     def mul_expr(self, elem, x):
+        """Multiply by an expression: single ``x`` variables via ``mult_poly_q_double``, quantum factorial
+        elementary symmetric functions via ``elem_mul``, ``Add``/``Mul``/``Pow`` recursively, else as a coefficient.
+        """
         x = sympify(x)
         _Add = Add
         _Mul = Mul
@@ -221,6 +267,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def new(self, x):
+        """Build an element from a permutation/Lehmer list or a polynomial expression."""
         genset = self.genset
         if not genset:
             genset = self.genset
@@ -236,6 +283,9 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
 
 def QDSx(x, genset=GeneratingSet("y")):
+    """Construct a quantum double Schubert element in ``x`` with coefficient alphabet ``genset``
+    (a `GeneratingSet` or a label string); e.g. ``QDSx([3, 1, 2])`` is ``S^q_{312}(x; y)``.
+    """
     if isinstance(genset, str):
         genset = GeneratingSet(genset)
     return QuantumDoubleSchubertRing(GeneratingSet("x"), genset)(x)

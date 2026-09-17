@@ -1,3 +1,13 @@
+"""Scaffold for a beta-deformed (Grothendieck / 0-Hecke) Coxeter operator ring.
+
+Intended to model the beta-isobaric divided differences ``pi_i = partial_i + beta (x_i partial_i - 1)``
+and their relations with the simple reflections (see the commented-out relations above
+`BetaCoxeterRing`). At present the implementation is an unmodified copy of
+`schubmult.rings.schubert.nil_hecke` -- `BetaCoxeterRing`/`BetaCoxeterElement` behave
+identically to `NilHeckeRing`/`NilHeckeElement`, and the deformation has not been wired in.
+Prefer `nil_hecke` for actual use; this module is kept as a starting point for that work.
+"""
+
 from sympy import Expr
 
 from schubmult.combinatorics.permutation import Permutation
@@ -33,6 +43,8 @@ logger = get_logger(__name__)
 
 
 class BetaCoxeterElement(DomainElement, DefaultPrinting, dict):
+    """An element of a `BetaCoxeterRing`; currently identical in behavior to `NilHeckeElement`."""
+
     _op_priority = 1e200
     precedence = 40
 
@@ -190,6 +202,8 @@ class BetaCoxeterElement(DomainElement, DefaultPrinting, dict):
 # = beta(x_i - x_{i+1})partial^i + beta - (1+x_i)\partial^i
 
 class BetaCoxeterRing(Ring, CompositeDomain):
+    """Scaffold ring; currently identical in behavior to `NilHeckeRing` (see module docstring)."""
+
     def __str__(self):
         return self.__class__.__name__
 

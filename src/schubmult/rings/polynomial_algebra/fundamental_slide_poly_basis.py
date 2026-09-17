@@ -1,3 +1,5 @@
+"""`FundamentalSlidePolyBasis`: the fundamental slide polynomial basis (Assaf-Searles) of `PolynomialAlgebra`, indexed by weak compositions."""
+
 from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S

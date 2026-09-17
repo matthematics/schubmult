@@ -1,3 +1,5 @@
+"""`LascouxPolyBasis`: the Lascoux polynomial (K-theoretic key polynomial) basis of `PolynomialAlgebra`."""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import uncode

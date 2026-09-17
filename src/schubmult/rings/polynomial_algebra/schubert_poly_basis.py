@@ -1,3 +1,5 @@
+"""`SchubertPolyBasis`: the Schubert polynomial basis of `PolynomialAlgebra`, indexed by permutations."""
+
 from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
