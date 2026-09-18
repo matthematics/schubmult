@@ -50,6 +50,14 @@
       white-space: pre-wrap; word-break: break-word;
       font-size: 13px;
     }
+    /* Result/errors can be arbitrarily long; cap them and scroll internally
+       instead of growing the iframe to match (the command line stays
+       uncapped since it's always short). */
+    .schubmult-widget #sm-out,
+    .schubmult-widget #sm-err {
+      max-height: 480px;
+      overflow: auto;
+    }
     .schubmult-widget .err { color: #b00020; }
     .schubmult-widget .hint { color: #555; font-size: 12px; margin-top: 4px; }
     /* Override any inline `color: #555` set on the status span. */
