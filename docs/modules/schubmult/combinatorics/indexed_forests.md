@@ -4,7 +4,7 @@
 
 Indexed forests: binary-search-tree forests indexed by a composition (via the Thompson
 monoid factorization), used for the forest basis / forest Schubert-polynomial model
-(``schubmult._scripts.forest_*`` research scripts and `schubmult.rings.free_algebra.forest_basis`).
+(the ``forest_*`` research scripts in ``_lscripts`` and `schubmult.rings.free_algebra.forest_basis`).
 
 Includes `Node`/`IndexedForest` (the forests themselves), `ParallelInjLetter`/`letterpair`
 (parallel-injection alphabet used by omega-insertion), and `LabeledForest`/`DecLabeling`/`LBS`

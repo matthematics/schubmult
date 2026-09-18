@@ -11,8 +11,6 @@ processors:
     # every package's __init__.py page (combinatorics/, mult/, rings/, ...)
     # since those often re-export without adding new documented functions.
     skip_empty_modules: false
-    # _scripts/unlinted is research scratch space, not public API
-    expression: "not name.startswith('schubmult._scripts.unlinted') and default()"
   - type: smart
   - type: crossref
 

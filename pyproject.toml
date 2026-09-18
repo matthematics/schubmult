@@ -146,7 +146,6 @@ unfixable = ["F841"]
 [tool.coverage.run]
 source = ["src/schubmult"]
 omit = [
-    "*/schubmult/_scripts/unlinted/*",
     "*/tests/*",
     "tests/*",
     "test_*.py",
@@ -198,14 +197,10 @@ schubmult_q = "schubmult._scripts.schubmult_q:main"
 schubmult_q_double = "schubmult._scripts.schubmult_q_double:main"
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 addopts = [
     "--import-mode=importlib",
     "-vv",
     "--capture=tee-sys",
     "--ignore=src/schubmult/utils/test_utils.py",
-    "--ignore=src/schubmult/_scripts/unlinted/assoc_test.py",
-    "--ignore=src/schubmult/_scripts/unlinted/test_inverse_crystal_product.py",
-    "--ignore=src/schubmult/_scripts/unlinted/jdt_test.py",
-    "--ignore=src/schubmult/_scripts/unlinted/pull_pull_test.py",
-    "--ignore=src/schubmult/_scripts/unlinted/mixed_algebra_hom_test.py"
 ]
