@@ -11,7 +11,7 @@ from functools import cache
 import schubmult.rings.printing as spolymod
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S, Symbol
-from schubmult.symbolic.common_polys import groth_mul_full_with_ring, grothendieck_poly_with_ring
+from schubmult.symbolic.common_polys import grothendieck_poly_with_ring
 from schubmult.symbolic.poly.variables import GeneratingSet
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -119,9 +119,11 @@ class GrothendieckRing(BaseSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
-        """Structure constants ``c^w_{u,v}(beta)`` via ``groth_mul_full_with_ring``; only same-ring products supported."""
+        """Structure constants ``c^w_{u,v}(beta)`` via `schubmult.mult.groth.grothmult_py`; only same-ring products supported."""
         if self == basis2:
-            return groth_mul_full_with_ring({u: S.One}, v, self._schubert_ring, self._beta)
+            from schubmult.mult.groth import grothmult_py
+
+            return grothmult_py({u: S.One}, v, self._beta)
         raise ValueError(f"Cannot multiply elements from different rings: {self} and {basis2}")
 
     @cache

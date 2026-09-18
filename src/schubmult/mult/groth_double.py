@@ -54,6 +54,7 @@ reflections in type ``A_{n-1}`` is
 """
 
 from fractions import Fraction
+from functools import cache
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
@@ -363,8 +364,9 @@ def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, b
     return acc[p]
 
 
+@cache
 def _top_block_support(u, k):
-    """Support of ``prod_{i<=k}(x_i + z) G_u``: endpoints of the marked K-Pieri chains.
+    """Support of ``prod_{i<=k}(x_i + z) G_u``: endpoints of the marked K-Pieri chains (cached frozenset).
 
     Equals ``union_{p=0..k} supp(e_p^beta(x_1..x_k) G_u)``.  A marked chain from
     ``elem_sym_chains_groth`` contributes to degree ``p`` iff
@@ -380,7 +382,7 @@ def _top_block_support(u, k):
     for perms, markings in elem_sym_chains_groth(u, 0, k):
         if sum(1 for m in markings if m == 1) <= k:
             support.add(perms[-1])
-    return support
+    return frozenset(support)
 
 
 def _top_block_coeff(u, w, k, zvar, var2, beta):

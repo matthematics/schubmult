@@ -1,18 +1,22 @@
-"""beta-Grothendieck Chevalley formula: multiplication of a (single) Grothendieck
-polynomial by a bare x_k variable, i.e. x_k * G_w^(beta).
+"""Multiplication kernels for (single) beta-Grothendieck polynomials.
 
-Non-equivariant (y=0) for now; ``GrothendieckRing`` has no coefficient/y genset yet.
+* ``grothmult_py``: the product ``G_u * G_v`` in the ``G`` basis, by the same route as
+  ``groth_double.grothmult_double`` specialized to ``y = z = 0`` -- expand ``G_v`` into
+  Schubert polynomials via WC graphs, then push each ``S_{v'}`` through the v-path layers
+  of ``theta(v'^{-1})`` with the closed-form K-Pieri coefficient ``groth_elem_sym_coeff``
+  (a binomial times a power of ``beta``).
+* ``single_variable_groth`` / ``mult_poly_groth``: multiplication by ``x_k`` (the
+  non-equivariant K-theoretic Chevalley formula) and by arbitrary polynomials in ``x``.
 
-Derived from M. Willems, "A Chevalley formula in equivariant K-theory"
-(arXiv:math/0603220), Theorem 5 (the ordinary, non-equivariant specialization of
-his equivariant Chevalley formula, Theorem 4). Willems indexes K-theory classes
-O_w by the *dimension* of the Schubert variety, dual to the *codimension*
-indexing used by Schubert/Grothendieck polynomials S_w/G_w; the w0-conjugation
-below (``hat_w = w0*w`` going in, ``w0*v`` coming out) translates between the two
-conventions. The beta-grading (beta^(d-1) per length difference d = l(v)-l(w))
-matches this codebase's beta-deformed Grothendieck polynomial normalization
-(beta=0 recovers the classical double Schubert Monk formula). Calibrated against
-grothendieck_poly()/to_groth() (see session notes).
+The Chevalley coefficients are derived from M. Willems, "A Chevalley formula in
+equivariant K-theory" (arXiv:math/0603220), Theorem 5 (the ordinary, non-equivariant
+specialization of his equivariant Chevalley formula, Theorem 4). Willems indexes K-theory
+classes O_w by the *dimension* of the Schubert variety, dual to the *codimension* indexing
+used by Schubert/Grothendieck polynomials S_w/G_w; the w0-conjugation in
+``_chevalley_ev_weights`` (``hat_w = w0*w`` going in, ``w0*v`` coming out) translates
+between the two conventions. The beta-grading (beta^(d-1) per length difference
+d = l(v)-l(w)) matches this codebase's beta-deformed Grothendieck polynomial
+normalization (beta=0 recovers the classical Monk formula).
 """
 
 from schubmult.combinatorics.permutation import Permutation
@@ -126,3 +130,115 @@ def mult_poly_groth(coeff_dict, poly, var_x, beta):
     for perm in coeff_dict:
         ret[perm] = poly * coeff_dict[perm]
     return ret
+
+
+def groth_elem_sym_coeff(k, u1, u2, vdiff, beta):
+    r"""Coefficient of ``G_{u2}`` in ``E_{k - vdiff, k}(x; 0) G_{u1} = e_{k - vdiff}(x_1..x_k) G_{u1}``.
+
+    The ``y = z = 0`` specialization of ``groth_double._groth_elem_sym_frac``.  Sort the
+    window positions ``j <= k`` by the fate of ``u1(j)`` in ``u2``: *fixed*, *left*
+    (reappears at an earlier window position) or *out* (leaves the window or moves
+    right); with ``F = #fixed``, ``L = #left``, ``m = L + #out`` movers and
+    ``d = l(u2) - l(u1)`` the closed form
+
+        beta^(d - m) (-beta)^L E_{n - q, n}( (-)y_fixed, (-1/beta)^L ; z ),   n = F + L, q = vdiff,
+
+    collapses at ``y = z = 0`` (the fixed alphabet entries become ``0``) to
+
+        beta^(d - m) (-beta)^(L - p) binom(L, p),   p = n - q,   0 <= p <= L,
+
+    and to ``0`` otherwise.  At ``beta = 0`` only ``d = m``, ``p = L`` survive, i.e. the
+    classical Pieri rule ``e_p(x_1..x_k) S_u = sum_{u ->_k w} S_w`` with ``p = k - d``
+    (there ``L = 0`` for chains with distinct lower indices, so ``p = F = k - d``).
+    """
+    from math import comb
+
+    d = u2.inv - u1.inv
+    window2 = [u2[j] for j in range(k)]
+    fixed = left = 0
+    for j in range(k):
+        value = u1[j]
+        if window2[j] == value:
+            fixed += 1
+        elif value in window2 and window2.index(value) < j:
+            left += 1
+    movers = k - fixed
+    if d < movers:
+        return 0
+    p = fixed + left - vdiff
+    if p < 0 or p > left:
+        return 0
+    return beta ** (d - movers) * (-beta) ** (left - p) * comb(left, p)
+
+
+def _groth_schub_vpath_mul(perm_dict, v, beta):
+    """``sum_u coeff_u G_u(x) * S_v(x)`` in the ``G`` basis: the ``y = z = 0`` case of
+    ``groth_double._groth_schub_vpath_mul``, with the same v-path layers and the same
+    marked-chain supports, but integer/``beta``-polynomial coefficients throughout.
+    """
+    from schubmult.combinatorics.permutation import uncode
+    from schubmult.mult.groth_double import _top_block_support
+    from schubmult.utils.schub_lib import compute_vpathdicts
+
+    v = Permutation(v)
+    th = list((~v).theta())
+    while th and th[-1] == 0:
+        th.pop()
+    if not th:
+        return dict(perm_dict)
+    vmu = v * uncode(th)
+    vpathdicts = compute_vpathdicts(tuple(th), vmu)
+    ret_dict = {}
+    for u, val in perm_dict.items():
+        u = Permutation(u)
+        vpathsums = {u: {Permutation([1, 2]): val}}
+        for index in range(len(th)):
+            k = th[index]
+            newpathsums = {}
+            for up, sums in vpathsums.items():
+                for up2 in _top_block_support(up, k) | {up}:
+                    for v_iter, steps in vpathdicts[index].items():
+                        sumval = sums.get(v_iter)
+                        if sumval is None or sumval == 0:
+                            continue
+                        for v2, vdiff, s in steps:
+                            coeff = groth_elem_sym_coeff(k, up, up2, vdiff, beta)
+                            if coeff == 0:
+                                continue
+                            bucket = newpathsums.setdefault(up2, {})
+                            bucket[v2] = bucket.get(v2, 0) + s * sumval * coeff
+            vpathsums = newpathsums
+        for ep, sums in vpathsums.items():
+            value = sums.get(vmu)
+            if value is not None and value != 0:
+                ret_dict[ep] = ret_dict.get(ep, 0) + value
+    return {w: c for w, c in ret_dict.items() if c != 0}
+
+
+def grothmult_py(perm_dict, v, beta=None):
+    r"""Multiply (single) Grothendieck polynomials, mirroring ``schubmult_py``.
+
+    Computes the expansion of ``sum_u coeff_u G_u(x) * G_v(x)`` in the basis ``{G_w(x)}``
+    and returns it as ``{w: coeff_w}`` with coefficients polynomial in ``beta``.
+
+    Same method as ``groth_double.grothmult_double`` specialized to ``y = z = 0``: expand
+    ``G_v`` into Schubert polynomials (``groth_elem_as_schub_dict``, via WC graphs) and
+    push each ``S_{v'}`` through the v-path kernel ``_groth_schub_vpath_mul``, whose
+    per-layer coefficients are the binomial closed form ``groth_elem_sym_coeff``.
+    """
+    from schubmult.abc import beta as default_beta
+    from schubmult.symbolic.poly.schub_poly import groth_elem_as_schub_dict
+
+    if beta is None:
+        beta = default_beta
+    v = Permutation(v)
+    perm_dict = {Permutation(key): value for key, value in perm_dict.items()}
+    if v.inv == 0:
+        return perm_dict
+    ret = {}
+    for vprime, coeff in groth_elem_as_schub_dict(v, beta).items():
+        for w, value in _groth_schub_vpath_mul(perm_dict, vprime, beta).items():
+            ret[w] = ret.get(w, 0) + coeff * value
+    from schubmult.symbolic import expand
+
+    return {w: expand(c) for w, c in ret.items() if expand(c) != 0}
