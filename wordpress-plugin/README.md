@@ -6,9 +6,18 @@ Adds a `[schubmult]` shortcode that embeds the schubmult Flask web widget
 ## Install
 
 1. ZIP this folder so the archive contains `schubmult-embed/schubmult-embed.php`
-   at its root, or just upload the `.php` file directly.
-2. In WordPress admin: **Plugins → Add New → Upload Plugin**, choose the file,
-   click **Install Now**, then **Activate**.
+   at its root (WordPress's **Upload Plugin** button only accepts `.zip`, not a
+   bare `.php` file):
+
+   ```bash
+   cd wordpress-plugin
+   mkdir -p /tmp/schubmult-embed/schubmult-embed
+   cp schubmult-embed.php /tmp/schubmult-embed/schubmult-embed/
+   (cd /tmp/schubmult-embed && zip -r /path/to/wordpress-plugin/schubmult-embed.zip schubmult-embed)
+   ```
+
+2. In WordPress admin: **Plugins → Add New → Upload Plugin**, choose
+   `schubmult-embed.zip`, click **Install Now**, then **Activate**.
 3. Go to **Settings → Schubmult Embed** and paste your hosted app URL,
    e.g. `https://yourname.pythonanywhere.com/embed`.
 

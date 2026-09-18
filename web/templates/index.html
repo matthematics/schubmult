@@ -47,8 +47,8 @@
     .schubmult-widget pre {
       background: #f6f8fa; color: #1a1a1a;
       padding: 0.8em; border-radius: 4px;
-      white-space: pre-wrap; word-break: break-word; max-height: 400px;
-      overflow: auto; font-size: 13px;
+      white-space: pre-wrap; word-break: break-word;
+      font-size: 13px;
     }
     .schubmult-widget .err { color: #b00020; }
     .schubmult-widget .hint { color: #555; font-size: 12px; margin-top: 4px; }
@@ -224,19 +224,30 @@
   // ignore it safely.
   if (window.parent && window.parent !== window) {
     let lastH = 0;
-    const sendHeight = () => {
+    let pending = false;
+    const measureAndSend = () => {
+      pending = false;
       // scrollHeight of <html> includes margins; add a small fudge so a
       // descender or focus ring never produces a scrollbar.
       const h = Math.max(
         document.documentElement.scrollHeight,
         document.body ? document.body.scrollHeight : 0
       ) + 8;
-      if (h !== lastH) {
-        lastH = h;
-        try {
-          window.parent.postMessage({type: 'schubmult-resize', height: h}, '*');
-        } catch (_) { /* ignore */ }
-      }
+      // Ignore tiny deltas so mobile browsers toggling their chrome (which
+      // fires spurious window 'resize' events while the page is scrolled)
+      // don't cause the frame to visibly grow/shrink.
+      if (Math.abs(h - lastH) < 4) return;
+      lastH = h;
+      try {
+        window.parent.postMessage({type: 'schubmult-resize', height: h}, '*');
+      } catch (_) { /* ignore */ }
+    };
+    // Coalesce bursts of events (resize, ResizeObserver) into one measurement
+    // per frame instead of resizing repeatedly while they fire.
+    const sendHeight = () => {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(measureAndSend);
     };
     sendHeight();
     window.addEventListener('load', sendHeight);

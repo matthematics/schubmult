@@ -76,11 +76,18 @@ function schubmult_embed_shortcode($atts) {
     $counter++;
     $id = 'schubmult-embed-' . $counter;
 
+    // Lazy-loading a fixed-height iframe is harmless, but it's a bad fit for
+    // auto-resize: the browser defers loading until the frame nears the
+    // viewport, so the box visibly snaps from the small placeholder height to
+    // its real size right as the user scrolls to it. Load auto-resize frames
+    // eagerly instead.
+    $loading_attr = $auto ? '' : 'loading="lazy" ';
+
     $iframe = sprintf(
-        '<iframe id="%s" src="%s" width="%s" height="%s" loading="lazy" '
+        '<iframe id="%s" src="%s" width="%s" height="%s" %s'
         . 'style="border: 1px solid #ddd; border-radius: 6px; display: block;" '
         . 'sandbox="allow-scripts allow-same-origin allow-forms"></iframe>',
-        esc_attr($id), $src, $width, esc_attr($height)
+        esc_attr($id), $src, $width, esc_attr($height), $loading_attr
     );
 
     if (!$auto) {
@@ -92,13 +99,20 @@ function schubmult_embed_shortcode($atts) {
         '<script>(function(){'
         . 'var f=document.getElementById(%s);'
         . 'var origin=%s;'
+        . 'var lastH=0;'
         . 'if(!f)return;'
         . 'window.addEventListener("message",function(ev){'
         .   'if(origin&&ev.origin!==origin)return;'
         .   'var d=ev.data;'
         .   'if(!d||d.type!=="schubmult-resize")return;'
         .   'var h=parseInt(d.height,10);'
-        .   'if(h>0&&h<5000)f.style.height=h+"px";'
+        .   'if(!(h>0&&h<20000)||Math.abs(h-lastH)<4)return;'
+        .   'lastH=h;'
+        // !important guards against theme/plugin CSS that forces
+        // `iframe { height: auto }` for responsiveness, which would
+        // otherwise silently swallow the resize and leave the frame
+        // clipped with its own scrollbar.
+        .   'f.style.setProperty("height",h+"px","important");'
         . '});'
         . '})();</script>',
         wp_json_encode($id),
