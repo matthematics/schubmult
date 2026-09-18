@@ -223,19 +223,21 @@
   // with schubmult listens for this and resizes accordingly. Other hosts can
   // ignore it safely.
   if (window.parent && window.parent !== window) {
+    // Measure the widget's own rendered box, not document.documentElement's
+    // scrollHeight. scrollHeight is defined as max(content size, viewport
+    // size), so once the parent grows the iframe to h, the *viewport* is now
+    // h tall and scrollHeight reports back >= h even though content didn't
+    // grow -- feeding right back into another (bigger) resize forever.
+    // getBoundingClientRect() reflects only the actual content, so it can't
+    // runaway like that.
+    const target = document.querySelector('.schubmult-widget') || document.body;
     let lastH = 0;
     let pending = false;
     const measureAndSend = () => {
       pending = false;
-      // scrollHeight of <html> includes margins; add a small fudge so a
-      // descender or focus ring never produces a scrollbar.
-      const h = Math.max(
-        document.documentElement.scrollHeight,
-        document.body ? document.body.scrollHeight : 0
-      ) + 8;
-      // Ignore tiny deltas so mobile browsers toggling their chrome (which
-      // fires spurious window 'resize' events while the page is scrolled)
-      // don't cause the frame to visibly grow/shrink.
+      // +16 covers the default body margin plus a little slack for a
+      // descender or focus ring so it never produces a scrollbar.
+      const h = Math.ceil(target.getBoundingClientRect().height) + 16;
       if (Math.abs(h - lastH) < 4) return;
       lastH = h;
       try {
@@ -251,10 +253,12 @@
     };
     sendHeight();
     window.addEventListener('load', sendHeight);
-    window.addEventListener('resize', sendHeight);
     if (typeof ResizeObserver !== 'undefined') {
-      new ResizeObserver(sendHeight).observe(document.documentElement);
+      new ResizeObserver(sendHeight).observe(target);
     } else {
+      // No ResizeObserver: fall back to polling plus window resize, since
+      // there's no other way to notice content-driven size changes.
+      window.addEventListener('resize', sendHeight);
       setInterval(sendHeight, 500);
     }
   }
