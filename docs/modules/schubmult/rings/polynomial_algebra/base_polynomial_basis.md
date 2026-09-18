@@ -2,6 +2,13 @@
 
 # schubmult.rings.polynomial\_algebra.base\_polynomial\_basis
 
+`PolynomialBasis`: the abstract interface a basis must implement to plug into `PolynomialAlgebra`.
+
+A basis defines its key type (``is_key``/``as_key``/``zero_monom``), how to print a
+key, and ``transition(other_basis)`` -- a function converting coefficient dicts
+into another basis. Products, coproducts, expansion, and parsing from expressions
+all have default implementations that route through the `MonomialBasis`.
+
 <a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis"></a>
 
 ## PolynomialBasis Objects
@@ -15,6 +22,17 @@ Abstract base class for polynomial algebra bases.
 Subclasses define how keys are represented, how to transition between
 bases, and how to expand elements into explicit polynomials. Default
 implementations delegate through the :class:`MonomialBasis`.
+
+<a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.genset"></a>
+
+#### genset
+
+```python
+@property
+def genset()
+```
+
+The generating set (variable alphabet).
 
 <a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.is_key"></a>
 
@@ -47,6 +65,29 @@ def attach_key(dct)
 ```
 
 Normalize all keys in *dct* via :meth:`as_key`.
+
+<a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.zero_monom"></a>
+
+#### zero\_monom
+
+```python
+@property
+@abstractmethod
+def zero_monom()
+```
+
+The key of the multiplicative identity.
+
+<a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.monomial_basis"></a>
+
+#### monomial\_basis
+
+```python
+@property
+def monomial_basis()
+```
+
+The `MonomialBasis` over the same generating set (the hub for default transitions).
 
 <a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.transition"></a>
 

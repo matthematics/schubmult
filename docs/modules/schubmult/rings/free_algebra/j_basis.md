@@ -2,6 +2,11 @@
 
 # schubmult.rings.free\_algebra.j\_basis
 
+`JBasis`: free-algebra basis indexed by compositions with no zeros.
+
+A Schubert key ``(perm, n)`` whose padded code has no zeros is itself a J key; zeros are
+handled by the transitions in `SchubertBasis.transition_jbasis` and `WordBasis.transition_jbasis`.
+
 <a id="schubmult.rings.free_algebra.j_basis.JBasis"></a>
 
 ## JBasis Objects

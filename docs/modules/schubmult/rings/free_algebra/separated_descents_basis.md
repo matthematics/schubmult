@@ -2,6 +2,15 @@
 
 # schubmult.rings.free\_algebra.separated\_descents\_basis
 
+`SeparatedDescentsBasis(k)`: level-``k`` refinements of `SchubertBasis` in which a key
+``(u, v, numvars)`` splits the Schubert index into a factor ``u`` and a factor ``v`` whose
+descents are separated at ``k`` (the basis dual to the separated-descents factorization of
+`schubmult.rings.schubert.separated_descents`).
+
+`SeparatedDescentsBasis` is a factory producing a ``_SeparatedDescentsBasis`` subclass with
+class attribute ``k``; products go through `SchubertBasis`, and `SchubertBasis` expands into
+this basis via `SchubertBasis.transition_separated_descents`.
+
 <a id="schubmult.rings.free_algebra.separated_descents_basis._SeparatedDescentsBasis"></a>
 
 ## \_SeparatedDescentsBasis Objects

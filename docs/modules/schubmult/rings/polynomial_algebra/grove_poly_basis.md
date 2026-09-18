@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.grove\_poly\_basis
 
+`GrovePolyBasis`: the grove polynomial basis (K-theoretic analogue of forest polynomials) of `PolynomialAlgebra`.
+
 <a id="schubmult.rings.polynomial_algebra.grove_poly_basis.GrovePolyBasis"></a>
 
 ## GrovePolyBasis Objects

@@ -2,6 +2,10 @@
 
 # schubmult.rings.free\_algebra.fundamental\_slide\_basis
 
+`FundamentalSlideBasis`: the free-algebra basis dual to fundamental slide polynomials
+(``FundamentalSlidePolyBasis``). Keys are weak compositions; transitions are transposed from
+the polynomial-side slide expansions.
+
 <a id="schubmult.rings.free_algebra.fundamental_slide_basis.FundamentalSlideBasis"></a>
 
 ## FundamentalSlideBasis Objects

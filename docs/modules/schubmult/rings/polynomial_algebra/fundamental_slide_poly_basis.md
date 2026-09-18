@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.fundamental\_slide\_poly\_basis
 
+`FundamentalSlidePolyBasis`: the fundamental slide polynomial basis (Assaf-Searles) of `PolynomialAlgebra`, indexed by weak compositions.
+
 <a id="schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis.get_descent_composition"></a>
 
 #### get\_descent\_composition

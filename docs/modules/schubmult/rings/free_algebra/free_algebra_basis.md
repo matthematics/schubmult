@@ -2,6 +2,15 @@
 
 # schubmult.rings.free\_algebra.free\_algebra\_basis
 
+`FreeAlgebraBasis`: the interface a basis must implement to plug into `FreeAlgebra`.
+
+A basis is a *class* (its methods are classmethods) defining a key type (``is_key``/
+``as_key``/``zero_monom``), how to print a key, ``transition(other_basis)`` returning a
+key -> ``{key: coeff}`` function into another basis, and ``dual_basis()`` naming the
+`schubmult.rings.polynomial_algebra` basis it is dual to. Products, coproducts, and
+the word-level operations all have default implementations that route through the
+`WordBasis` via ``compose_transition``.
+
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis"></a>
 
 ## FreeAlgebraBasis Objects
@@ -10,11 +19,12 @@
 class FreeAlgebraBasis()
 ```
 
-Abstract base class for free algebra bases.
+Abstract base for free-algebra bases; see the module docstring.
 
-Subclasses define how keys are represented, how products and coproducts
-are computed, and how to transition between bases.  Default implementations
-delegate through the :class:`WordBasis` via ``compose_transition``.
+Subclasses override the key methods (``is_key``, ``as_key``, ``zero_monom``,
+``printing_term``, ``transition``, ``dual_basis``) and may override ``product``/
+``coproduct`` with a direct rule; otherwise everything is computed in the `WordBasis`
+and transported back.
 
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis.is_key"></a>
 
@@ -104,7 +114,7 @@ accumulates the results weighted by *v*.
 def dual_basis(cls)
 ```
 
-Return the dual basis class (for polynomial algebra pairing).
+The `schubmult.rings.polynomial_algebra` basis this basis is dual to under the word/monomial pairing.
 
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis.change_tensor_basis"></a>
 
@@ -173,7 +183,7 @@ Multiply two keys by transitioning to WordBasis and back.
 def internal_product(cls, key1, key2, coeff=S.One)
 ```
 
-Compute the internal product of two keys by delegating through WordBasis.
+The internal (Kronecker) product of NSym (see `WordBasis.internal_product`), computed via the word basis.
 
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis.inject"></a>
 
@@ -218,4 +228,14 @@ def interval(cls, key, start, stop, coeff=S.One)
 ```
 
 Extract a subword from *start* to *stop* by delegating through WordBasis.
+
+<a id="schubmult.rings.free_algebra.free_algebra_basis.__getattr__"></a>
+
+#### \_\_getattr\_\_
+
+```python
+def __getattr__(name)
+```
+
+Lazily resolve basis classes to avoid circular imports between basis modules.
 

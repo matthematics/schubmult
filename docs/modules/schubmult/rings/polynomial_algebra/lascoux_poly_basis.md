@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.lascoux\_poly\_basis
 
+`LascouxPolyBasis`: the Lascoux polynomial (K-theoretic key polynomial) basis of `PolynomialAlgebra`.
+
 <a id="schubmult.rings.polynomial_algebra.lascoux_poly_basis.LascouxPolyBasis"></a>
 
 ## LascouxPolyBasis Objects

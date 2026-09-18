@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.elem\_sym\_poly\_basis
 
+`ElemSymPolyBasis`: the basis of products of elementary symmetric polynomials ``e_p(x_1..x_k)`` for `PolynomialAlgebra`.
+
 <a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis"></a>
 
 ## ElemSymPolyBasis Objects

@@ -1,7 +1,15 @@
+"""Low-level helpers on permutations given as lists/tuples, plus composition and reduced-word utilities.
+
+Most functions here are used by the multiplication kernels in `schubmult.mult` and by
+`schubmult.combinatorics.permutation.Permutation`; `add_perm_dict` is the standard way to merge
+``{key: coeff}`` expansions.
+"""
+
 from bisect import bisect_left
 
 
 def permtrim_list(perm):
+    """Strip trailing fixed points ``perm[L-1] == L`` from a list in place and return it."""
     L = len(perm)
     while L > 0 and perm[-1] == L:
         L = perm.pop() - 1
@@ -26,6 +34,7 @@ def has_bruhat_descent(perm, i, j):
 
 
 def count_bruhat(perm, i, j):
+    """Signed length change ``inv(perm * t_{ij}) - inv(perm)`` for the transposition of positions ``i < j``."""
     up_amount = 0
     if perm[i] < perm[j]:
         up_amount = 1
@@ -57,6 +66,10 @@ def has_bruhat_ascent(perm, i, j):
 
 
 def omega(i, qv):
+    """``i``-th entry (1-indexed) of the Cartan-matrix image of the q-exponent vector ``qv``:
+    ``2 qv[i] - qv[i-1] - qv[i+1]`` with boundary conventions. Used to convert quantum ``q``
+    monomials to weights in the parabolic quantum product.
+    """
     i = i - 1
     if len(qv) == 0 or i > len(qv):
         return 0
@@ -72,12 +85,14 @@ def omega(i, qv):
 
 
 def sg(i, w):
+    """1 if ``w`` has a descent at 0-indexed position ``i``, else 0."""
     if i >= len(w) - 1 or w[i] < w[i + 1]:
         return 0
     return 1
 
 
 def count_less_than(arr, val):
+    """Number of leading entries of the sorted list ``arr`` that are ``< val``."""
     ct = 0
     i = 0
     while i < len(arr) and arr[i] < val:
@@ -87,6 +102,7 @@ def count_less_than(arr, val):
 
 
 def artin_sequences(n):
+    """All tuples ``(a_1, ..., a_n)`` with ``0 <= a_i <= n + 1 - i`` (Lehmer codes of ``S_{n+1}``)."""
     if n == 0:
         return {()}
     old_seqs = artin_sequences(n - 1)
@@ -99,6 +115,7 @@ def artin_sequences(n):
 
 
 def weak_compositions(length, max_degree):
+    """All tuples of the given ``length`` with entries in ``0..max_degree``."""
     if length == 0:
         return {()}
     old_seqs = weak_compositions(length - 1, max_degree)
@@ -111,6 +128,7 @@ def weak_compositions(length, max_degree):
 
 
 def is_parabolic(w, parabolic_index):
+    """Whether ``w`` has no descent at any of the (1-indexed) positions in ``parabolic_index``."""
     for i in parabolic_index:
         if sg(i - 1, w) == 1:
             return False
@@ -118,6 +136,7 @@ def is_parabolic(w, parabolic_index):
 
 
 def add_perm_dict(d1, d2):
+    """Return ``d1 + d2`` as coefficient dicts (keys merged, values added)."""
     d_ret = {**d1}
     for k, v in d2.items():
         d_ret[k] = d_ret.get(k, 0) + v
@@ -125,6 +144,7 @@ def add_perm_dict(d1, d2):
 
 
 def add_perm_dict_with_coeff(d1, d2, coeff):
+    """Return ``d1 + coeff * d2`` as coefficient dicts."""
     d_ret = {**d1}
     for k, v in d2.items():
         d_ret[k] = d_ret.get(k, 0) + v * coeff
@@ -132,6 +152,7 @@ def add_perm_dict_with_coeff(d1, d2, coeff):
 
 
 def p_trans(part):
+    """Conjugate (transpose) of a partition given as a weakly decreasing list; ``[0]`` for the empty partition."""
     newpart = []
     if len(part) == 0 or part[0] == 0:
         return [0]
@@ -147,6 +168,7 @@ def p_trans(part):
 
 
 def mu_A(mu, A):
+    """The partition whose conjugate consists of the columns of ``mu`` indexed by ``A`` (0-indexed)."""
     mu_t = p_trans(mu)
     mu_A_t = []
     for i in range(len(A)):
@@ -156,10 +178,12 @@ def mu_A(mu, A):
 
 
 def get_cycles(perm):
+    """``perm.get_cycles()``."""
     return perm.get_cycles()
 
 
 def old_code(perm):
+    """Lehmer code of a permutation list computed by successive deletion from ``[1..L]``."""
     L = len(perm)
     ret = []
     v = list(range(1, L + 1))
@@ -171,18 +195,21 @@ def old_code(perm):
 
 
 def cyclic_sort(L):
+    """Rotate the list so its maximum is last."""
     m = max(L)
     i = L.index(m)
     return L[i + 1 :] + L[: i + 1]
 
 
 def cyclic_sort_min(L):
+    """Rotate the list so its minimum is first."""
     m = min(L)
     i = L.index(m)
     return L[i:] + L[:i]
 
 
 def h_vector(q_vector):
+    """Positions (1-indexed) where the vector strictly increases, up to its first decrease."""
     h = []
     val = 0
     for i in range(len(q_vector)):
@@ -209,6 +236,9 @@ def l_vector(q_vector):
 
 
 def tau_d(d):
+    """Partial permutation built from `h_vector`/`l_vector` of ``d`` (``tau[l_i - i] = h_i``), completed by
+    ``Permutation.from_partial``.
+    """
     from schubmult.combinatorics.permutation import Permutation
 
     lv = l_vector(d)
@@ -223,6 +253,7 @@ def tau_d(d):
 
 
 def phi_d(d):
+    """Companion of `tau_d` with the shifted placement ``phi[l_i - 1 - i] = h_i``."""
     from schubmult.combinatorics.permutation import Permutation
 
     hv = h_vector(d)
@@ -277,6 +308,9 @@ def conjugate_weak_composition(comp):
 
 
 def find_reduced_fail(word, inserted):
+    """After changing letter ``inserted`` of a word, find the other position carrying the same root
+    (the letter whose deletion would make the word reduced again), or ``None``.
+    """
     from schubmult.combinatorics.permutation import Permutation
 
     perm = Permutation.ref_product(*word)
@@ -297,13 +331,16 @@ def find_reduced_fail(word, inserted):
 
 
 def is_reduced(word):
+    """Whether the word of simple reflections is reduced (``inv`` of its product equals its length)."""
     from schubmult.combinatorics.permutation import Permutation
 
     return Permutation.ref_product(*word).inv == len(word)
 
 
 def little_bump_pos(word, index):
-    """Perform a Little bump on a reduced word at the inversion (i, j)."""
+    """Little bump at position ``index``: decrement that letter (increment if it is 1), and while the
+    word is not reduced, repeat at the letter found by `find_reduced_fail`.
+    """
 
     if not is_reduced(word):
         raise ValueError(f"Word {word} is not reduced, cannot perform Little bump.")
@@ -322,7 +359,7 @@ def little_bump_pos(word, index):
 
 
 def little_bump(word, i, j):
-    """Perform a Little bump on a reduced word at the inversion (i, j)."""
+    """Little bump of a reduced word at the letter whose right root is the inversion ``(i, j)``."""
     from schubmult.combinatorics.permutation import Permutation
 
     if not is_reduced(word):
@@ -336,6 +373,9 @@ def little_bump(word, i, j):
 
 
 def little_zero(word, length):
+    """Repeatedly Little-bump at the last descent until the product's code has fewer than ``length``
+    entries (Little's map toward a smaller permutation).
+    """
     from schubmult import Permutation
 
     perm = Permutation.ref_product(*word)

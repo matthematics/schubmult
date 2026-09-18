@@ -1,7 +1,10 @@
+"""Helpers for the test suite: locating JSON test data and inspecting SymPy/SymEngine expression trees."""
+
 import symengine
 
 
 def generate_all(module, filename):
+    """Print an import block and ``__all__`` list for the public names defined in ``filename`` (dev helper)."""
     D = dir(module)
     print(f"{D=}")
     file_data = ""
@@ -41,6 +44,7 @@ def _data_dir():
 
 
 def get_json(file: str):
+    """Load ``<file>.json`` from the test data directory."""
     import json
     import os
 
@@ -49,6 +53,7 @@ def get_json(file: str):
 
 
 def load_json_test_names(this_dir):
+    """Names (without ``.json``) of all test case files in the data subdirectory ``this_dir``."""
     import os
 
     files = os.listdir(os.path.join(_data_dir(), this_dir))
@@ -61,6 +66,7 @@ def load_json_test_names(this_dir):
 
 
 def print_args(poly):
+    """Nested string of the argument types of an expression tree (for debugging printing issues)."""
     def _pr(ag):
         if hasattr(ag, "__sympy__") and not ag.is_Atom:
             return f"({type(ag)},{print_args(ag)})"
@@ -70,6 +76,9 @@ def print_args(poly):
 
 
 def sympify_args(poly):
+    """Convert a SymPy expression to SymEngine, recursing into ``Mul``/``Pow``/``Add`` when direct
+    conversion fails.
+    """
     try:
         return symengine.sympify(poly)
     except Exception:

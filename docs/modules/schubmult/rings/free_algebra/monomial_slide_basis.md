@@ -2,6 +2,9 @@
 
 # schubmult.rings.free\_algebra.monomial\_slide\_basis
 
+`MonomialSlideBasis`: the free-algebra basis dual to monomial slide polynomials. Keys are
+weak compositions; transitions use coarsenings of compositions.
+
 <a id="schubmult.rings.free_algebra.monomial_slide_basis.MonomialSlideBasis"></a>
 
 ## MonomialSlideBasis Objects

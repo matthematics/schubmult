@@ -2,6 +2,10 @@
 
 # schubmult.rings.free\_algebra.glide\_basis
 
+`GlideBasis`: the free-algebra basis dual to glide polynomials (``GlidePolyBasis``), the
+K-theoretic analogue of `FundamentalSlideBasis`. Keys are weak compositions. ``GlideDual`` is
+the standard instance.
+
 <a id="schubmult.rings.free_algebra.glide_basis.GlideBasis"></a>
 
 ## GlideBasis Objects

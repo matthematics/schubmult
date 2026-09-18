@@ -1,3 +1,14 @@
+"""Explicit symbolic formulas for (double) Schubert and Grothendieck polynomials.
+
+The main entry points are `schubpoly` (double Schubert polynomial by the ``pull_out_var``
+recursion), `schubpoly_from_elems` (Schubert polynomial as a sum of products of elementary
+symmetric polynomials along theta-code v-paths, with a pluggable ``elem_func``),
+`grothendieck_poly` (via isobaric divided differences), and the divided-difference operators
+`div_diff`/`divide_out_diff`. ``_vars`` holds the default generating sets ``x``, ``y``, ``z``,
+``q``. Everything here works on raw SymEngine/SymPy expressions; the ring classes in
+`schubmult.rings` call these to expand basis elements.
+"""
+
 from functools import cache, cached_property
 
 import schubmult.combinatorics.permutation as pl
@@ -8,6 +19,8 @@ from . import variables as vv
 
 
 class _gvars:
+    """Lazily created default generating sets: ``var1 = x``, ``var2 = y``, ``var3 = z``, ``q_var = q``."""
+
     @cached_property
     def n(self):
         return 100
@@ -48,6 +61,10 @@ _vars = _gvars()
 
 
 def sv_posify(val, var2):
+    """Rewrite ``val`` in the differences ``var2[i+1] - var2[i]`` of consecutive variables (a
+    positivity-revealing form), by substituting ``var2[i] = var2[1] + r_1 + ... + r_{i-1}``,
+    simplifying, and mapping the ``r`` variables back.
+    """
     var_r = vv.GeneratingSet("r")
     subs_dict = {}
     for i in range(1, 100):
@@ -63,6 +80,7 @@ def sv_posify(val, var2):
 
 
 def act(w, poly, genset):
+    """Permute the variables of ``poly``: ``genset[i] -> genset[w(i)]``."""
     if not isinstance(w, pl.Permutation):
         w = pl.Permutation(w)
     subs_dict = {}
@@ -75,6 +93,10 @@ def act(w, poly, genset):
 
 
 def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
+    """The double elementary symmetric factor attached to one step of the ``schubmult_double`` v-path
+    recursion: ``e_{k - udiff - vdiff}`` in the ``y`` variables fixed by ``u1 -> u2`` and the ``z``
+    variables selected by `call_zvars` for ``v1 -> v2``.
+    """
     newk = k - udiff
     if newk < vdiff:
         return zero
@@ -94,6 +116,7 @@ def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
 
 
 def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
+    """Quantum-double variant of `elem_sym_func` (all ``k`` positions of ``u1``/``u2`` are compared)."""
     newk = k - udiff
     if newk < vdiff:
         return zero
@@ -108,6 +131,9 @@ def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
 
 
 def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
+    """Quantum double elementary symmetric polynomial ``E_p^q(x_1..x_k; y)``: the usual recursion
+    plus the term ``q_{k-1} E_{p-2}(x_1..x_{k-2})``.
+    """
     if p == 0 and k >= 0:
         return S.One
     if p < 0 or p > k:
@@ -120,6 +146,9 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
 
 
 def complete_sym_poly(p, k, vrs, vrs2):
+    """Factorial complete homogeneous symmetric polynomial ``h_p(vrs[0..k-1] | vrs2)``, computed by
+    splitting the variable set in half.
+    """
     if p == 0 and k >= 0:
         return S.One
     if p != 0 and k == 0:
@@ -136,6 +165,10 @@ def complete_sym_poly(p, k, vrs, vrs2):
 
 
 def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
+    """Factorial elementary symmetric polynomial ``e_p(x_1 - y_1, ..., x_k - y_k)`` style sum over
+    ``varl1[xstart:xstart+k]`` and ``varl2[ystart:]``, computed by a divide-and-conquer split of the
+    variables (the ``y`` offset shifts by the degree taken from the first half).
+    """
     if p > k:
         return zero
     if p == 0:
@@ -176,12 +209,18 @@ def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
 
 @cache
 def call_zvars(v1, v2, k, i, min_size=10):  # noqa: ARG001
+    """Indices of the ``z`` variables entering the elementary symmetric factor for the v-path step
+    ``v1 -> v2`` at position ``i`` with ``k`` variables (cached).
+    """
     return (
         [v2[i - 1]] + [v2[j] for j in range(len(v1), len(v2) + max(0, i - len(v2))) if v2[j] != j + 1 and j != i - 1] + [v2[j] for j in range(max(len(v1), min_size)) if v1[j] != v2[j] and j != i - 1]
     )
 
 
 def q_vector(q_exp, q_var=_vars.q_var):
+    """Exponent vector of a monomial in the ``q`` variables (``q_1^a q_2^b -> [a, b]``); ``[]`` for 1,
+    ``None`` if ``q_exp`` is not a ``q`` monomial.
+    """
     ret = []
 
     if q_exp == 1:
@@ -208,6 +247,7 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
 
 def monom_sym(partition, numvars, genset):
+    """Monomial symmetric polynomial ``m_partition(genset[1..numvars])``."""
     if numvars == 0:
         return S.One
     if numvars < 0:
@@ -224,6 +264,7 @@ def monom_sym(partition, numvars, genset):
 
 
 def xreplace_genvars(poly, vars1, vars2):
+    """Replace the internal placeholder generating sets ``_vars.var_g1``/``var_g2`` with ``vars1``/``vars2``."""
     subs_dict = {}
     for s in sympify(poly).free_symbols:
         if _vars.var_g1.index(s) != -1:
@@ -234,6 +275,10 @@ def xreplace_genvars(poly, vars1, vars2):
 
 
 def divide_out_diff(poly, v1, v2):
+    """The quotient ``(poly - poly|_{v1 -> v2}) / (v1 - v2)``, computed structurally on the expression
+    tree (so it is exact and needs no polynomial division). Objects may override via
+    ``_eval_divide_out_diff``.
+    """
     if hasattr(poly, "_eval_divide_out_diff"):
         return poly._eval_divide_out_diff(v1, v2)
     Mul_local = Mul
@@ -275,6 +320,7 @@ def divide_out_diff(poly, v1, v2):
 
 
 def split_up(poly, v1, v2):
+    """Write ``poly = a + (v1 - v2) * b`` with ``a = poly|_{v1 -> v2}``; returns ``(a, (v1 - v2, b))``."""
     try:
         return (sympify(poly).xreplace({sympify(v1): sympify(v2)}), (sympify(v1 - v2), divide_out_diff(poly, v1, v2)))
     except Exception:
@@ -282,11 +328,15 @@ def split_up(poly, v1, v2):
 
 
 def perm_act(val, i, var2=None):
+    """Swap ``var2[i]`` and ``var2[i+1]`` in ``val`` (the simple transposition ``s_i`` acting on variables)."""
     subsdict = {var2[i]: var2[i + 1], var2[i + 1]: var2[i]}
     return sympify(val).subs(subsdict)
 
 
 def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
+    """Single-sided version of `elem_sym_func` with a pluggable ``elem_func(p, k, xvars, zvars)``,
+    used by `schubpoly_from_elems`.
+    """
     newk = k
     if newk < vdiff:
         return 0
@@ -297,6 +347,7 @@ def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
 
 
 def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_func):
+    """`elem_sym_func` with a pluggable ``elem_func`` in place of `elem_sym_poly`."""
     newk = k - udiff
     if newk < vdiff:
         return 0
@@ -316,6 +367,14 @@ def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_fu
 
 
 def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
+    """Schubert polynomial of ``v`` as a sum over v-paths of products of ``elem_func`` factors.
+
+    Uses the strict theta code of ``v^{-1}`` (or the code of the dominant ``mumu`` if given) and
+    the v-path dictionaries of `schubmult.utils.schub_lib.compute_vpathdicts`; each step
+    contributes ``elem_func(p, k, xvars, zvars)``. With ``elem_func = elem_sym_poly`` this is the
+    double Schubert polynomial; other choices give the SEM-basis expansion or, as in
+    `SchubertBasis.transition_word`, an encoding of the factors.
+    """
     if mumu:
         th = mumu.code
         mu = mumu
@@ -358,6 +417,7 @@ def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
 
 
 def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None):
+    """`schubpoly_from_elems` using the ordinary (non-strict) theta code of ``v^{-1}``."""
     th = (~pl.Permutation(v)).theta()
     mu = pl.uncode(th)
     vmu = pl.Permutation(v) * mu
@@ -396,6 +456,10 @@ def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None):
 
 
 def schubpoly(v, var2=None, var3=None, start_var=1):
+    """Double Schubert polynomial ``S_v(var2; var3)`` by recursion on the last descent: pull out the
+    variable ``var2[n]`` (``n`` the last descent) via ``pull_out_var``, multiplying by factors
+    ``(var2[n] - var3[p])``.
+    """
     n = 0
     for j in range(len(v) - 2, -1, -1):
         if v[j] > v[j + 1]:
@@ -417,6 +481,9 @@ _s = Symbol("_s")
 
 
 def div_diff(poly, v1, v2):
+    """Divided difference ``(poly - s(poly)) / (v1 - v2)`` where ``s`` swaps ``v1`` and ``v2``, computed
+    structurally on the expression tree. Objects may override via ``_eval_div_diff``.
+    """
     if hasattr(poly, "_eval_div_diff"):
         return poly._eval_div_diff(v1, v2)
     poly = sympify(poly)
@@ -453,10 +520,12 @@ def div_diff(poly, v1, v2):
 
 
 def _groth_plus(x1, y1, beta):
+    """``x (+) y = x + y + beta x y``, the K-theoretic sum."""
     return x1 + y1 + beta * x1 * y1
 
 
 def _groth_minus(x1, y1, beta, keep_as_schub=False):
+    """``x - y - beta x y``, optionally as a Schubert ring element."""
     from schubmult import Sx
 
     if keep_as_schub:
@@ -465,6 +534,9 @@ def _groth_minus(x1, y1, beta, keep_as_schub=False):
 
 
 def _groth_div_diff(val, index, x, beta):
+    """Isobaric divided difference ``pi_index`` on a Schubert expansion: multiply by
+    ``1 + beta x_{index+1}``, then apply ``partial_index`` (Monk-style descent swap on each term).
+    """
     from schubmult.rings.schubert.schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
     ring = SingleSchubertRing(x)
@@ -478,6 +550,7 @@ def _groth_div_diff(val, index, x, beta):
 
 
 def _groth_div_diff_with_y(val, index, x, y, beta):
+    """`_groth_div_diff` in the double Schubert ring ``DoubleSchubertRing(x, y)``."""
     from schubmult.rings.schubert.schubert_ring import DoubleSchubertElement, DoubleSchubertRing
 
     ring = DoubleSchubertRing(x, y)
@@ -490,6 +563,7 @@ def _groth_div_diff_with_y(val, index, x, y, beta):
 
 
 def _groth_div_diff_with_ring(val, index, ring, beta):
+    """`_groth_div_diff` for an element already in ``ring``."""
     up_val = (S.One + beta * ring.genset[index + 1]) * val
     rval = ring.from_dict({w.swap(index - 1, index): coeff for w, coeff in up_val.items() if w[index - 1] > w[index]})
     return rval
@@ -497,6 +571,9 @@ def _groth_div_diff_with_ring(val, index, ring, beta):
 
 @cache
 def grothendieck_poly_legacy(perm, x, y, beta, keep_as_schub=False):
+    """Double Grothendieck polynomial by descending from ``w0`` (product of ``x (+) y`` factors) with
+    isobaric divided differences. Superseded by `grothendieck_poly`.
+    """
     from schubmult.combinatorics.permutation import Permutation
 
     if perm.inv == 0:
@@ -514,6 +591,9 @@ def grothendieck_poly_legacy(perm, x, y, beta, keep_as_schub=False):
 
 @cache
 def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
+    """Double Grothendieck polynomial ``G_perm(x; y)`` with parameter ``beta``, as an expression or
+    (``keep_as_schub``) as its double Schubert expansion. See `grothendieck_poly_with_ring`.
+    """
     from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
     from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
 
@@ -527,6 +607,7 @@ def grothendieck_poly(perm, x, y, beta, keep_as_schub=False):
 
 @cache
 def _elem_sym_perms(perm, k):
+    """Cached ``elem_sym_perms(perm, k, k)``."""
     from schubmult.utils.schub_lib import elem_sym_perms
 
     return elem_sym_perms(perm, k, k)
@@ -534,6 +615,10 @@ def _elem_sym_perms(perm, k):
 
 @cache
 def dom_groth(dom_perm, ring, beta):
+    """Double Schubert expansion of the Grothendieck polynomial of a dominant permutation: builds
+    the product of factorial elementary symmetric factors row by row (from the code of
+    ``dom_perm^{-1}``) with the ``1 + beta y`` twists.
+    """
     coeff_genset = ring.coeff_genset
     start_dict = {pl.Permutation([]): S.One}
     lengths = (~dom_perm).trimcode
@@ -553,6 +638,9 @@ def dom_groth(dom_perm, ring, beta):
 
 
 def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
+    """Apply a strip of ``length`` consecutive isobaric divided differences starting at ``index``, realized
+    as a nil-Hecke operator on ``elem * E(length, length, x_{index+1..})``.
+    """
     from schubmult import uncode
     from schubmult.abc import E
     from schubmult.rings.schubert.nil_hecke import NilHeckeRing
@@ -586,6 +674,7 @@ def isobaric_strip_on_dschub_dict(start, length, perm_dict, coeff_genset, beta):
 
 
 def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta):
+    """`isobaric_strip_on_dschub_dict` on a single basis element, returned as a ring element."""
     return ring.from_dict(isobaric_strip_on_dschub_dict(start, length, {schub_perm: S.One}, ring.coeff_genset, beta))
 
 
@@ -601,11 +690,16 @@ def apply_isobaric_to_schub_dict(diff_perm, perm_dict, coeff_genset, beta):
 
 @cache
 def apply_isobaric_to_schub(diff_perm, schub_perm, ring, beta):
+    """`apply_isobaric_to_schub_dict` on a single basis element, returned as a ring element."""
     return ring.from_dict(apply_isobaric_to_schub_dict(diff_perm, {schub_perm: S.One}, ring.coeff_genset, beta))
 
 
 @cache
 def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False):
+    """Double Grothendieck polynomial via the minimal dominant permutation above ``perm``: start
+    from `dom_groth` and apply the isobaric divided differences of ``perm^{-1} * dom_perm`` strip
+    by strip (`apply_isobaric_to_schub_dict`).
+    """
     dom_perm = perm.minimal_dominant_above()
     diff_perm = (~perm) * dom_perm
     first_potato = dom_groth(dom_perm, ring, beta=beta)
@@ -618,6 +712,7 @@ def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False):
 
 @cache
 def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False):
+    """Variant of `grothendieck_poly_legacy` with ``x - y - beta x y`` factors for ``w0``."""
     from schubmult.combinatorics.permutation import Permutation
 
     if perm.inv == 0:
@@ -634,6 +729,10 @@ def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False):
 
 
 def to_groth(val, x, y, beta):
+    """Expand a polynomial in the double Grothendieck basis ``{perm: coeff}`` by triangular
+    elimination on monomials: peel off the lowest monomial ``x^c`` (lowest total degree, then lex),
+    subtract ``coeff * G_{uncode(c)}``, and recurse.
+    """
     from schubmult import uncode
     from schubmult.rings.polynomial_algebra import MonomialBasis, PolynomialAlgebra
     from schubmult.symbolic import expand
@@ -697,6 +796,13 @@ def _coeff_degree_component(v, degree, beta):
 
 
 def to_groth_with_ring(_val, ring, beta):
+    """Expand a double Schubert ring element in the double Grothendieck basis.
+
+    Triangular elimination by length: for the smallest remaining permutation ``w``, apply the
+    isobaric divided differences of ``w`` and evaluate at ``x_i = -y_i / (1 + beta y_i)`` (the
+    point where all nontrivial Grothendieck polynomials vanish) to read off the coefficient of
+    ``G_w``, then subtract ``coeff * G_w`` and repeat. Coefficients are simplified with SymPy.
+    """
     import sympy
 
     from schubmult.symbolic import expand, sympify
@@ -757,6 +863,7 @@ def to_groth_with_ring(_val, ring, beta):
 
 
 def to_groth_with_ring_functional(_val, ring, beta):
+    """`to_groth_with_ring` using the ring element's own ``isobaric_perm`` method."""
     import sympy
 
     from schubmult.symbolic import expand, sympify
@@ -802,6 +909,7 @@ def to_groth_with_ring_functional(_val, ring, beta):
 
 
 def groth_dict_to_poly(groth_dict, x, zz, beta):
+    """Sum ``coeff * G_perm(x; zz)`` over a ``{perm: coeff}`` dict."""
     ret = S.Zero
     for perm, coeff in groth_dict.items():
         ret += coeff * grothendieck_poly(perm, x, zz, beta)
@@ -810,6 +918,10 @@ def groth_dict_to_poly(groth_dict, x, zz, beta):
 
 @cache
 def schub_elem_to_groth_elem_dict(the_perm, beta):
+    """Signed count, by ``(inv, max_descent)``, of the permutations ``co_pipe_dream(rc).perm * w0`` over
+    RC graphs of ``the_perm``, weighted ``(-beta)^(inv difference)``: the Grothendieck-side image of a
+    Schubert basis element.
+    """
     from schubmult import RCGraph
     from schubmult.combinatorics.pipe_dream import PipeDream
 
@@ -823,6 +935,9 @@ def schub_elem_to_groth_elem_dict(the_perm, beta):
 
 @cache
 def schub_elem_sym_to_groth_elem_sym_dict(p, k, beta):
+    """`schub_elem_to_groth_elem_dict` for the Grassmannian permutation of ``e_p(x_1..x_k)``, i.e. the
+    expansion of the elementary symmetric polynomial into Grothendieck-Pieri pieces ``(inv, numvars)``.
+    """
     from schubmult import RCGraph, uncode
     from schubmult.combinatorics.pipe_dream import PipeDream
 
@@ -838,6 +953,7 @@ def schub_elem_sym_to_groth_elem_sym_dict(p, k, beta):
 
 # @cache
 def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
+    """`_strip_isobaric_with_ring` in the single Schubert ring on ``genset``."""
     from schubmult import uncode
     from schubmult.abc import E
     from schubmult.rings.schubert.nil_hecke import NilHeckeRing
@@ -875,6 +991,9 @@ def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
 
 
 def isobar_it(i, genset, elem):
+    """K-theoretic isobaric operator ``pi_i`` on a Schubert element: ``partial_i((1 + x_{i+1}) x_i * elem)``
+    via the nil-Hecke ring (``beta = 1``).
+    """
     from schubmult import Permutation
     from schubmult.rings.schubert.nil_hecke import NilHeckeRing
     from schubmult.rings.schubert.schubert_ring import SingleSchubertRing
@@ -888,6 +1007,7 @@ def isobar_it(i, genset, elem):
 
 
 def lascoux_poly(composition, genset):
+    """Lascoux polynomial of a weak composition (``beta = 1``), expanded."""
     from .. import expand
 
     return expand(_lascoux_poly(tuple(composition), genset))
@@ -895,6 +1015,9 @@ def lascoux_poly(composition, genset):
 
 @cache
 def _lascoux_poly(composition, genset):
+    """Recursive Lascoux polynomial: a partition gives the monomial ``x^composition``; otherwise apply
+    `isobar_it` at the first ascent to the polynomial of the composition with that pair swapped.
+    """
     if all(composition[i] >= composition[i + 1] for i in range(len(composition) - 1)):
         return prod([genset[i + 1] ** composition[i] for i in range(len(composition)) if composition[i] > 0])
     for i in range(len(composition) - 1):
@@ -905,10 +1028,8 @@ def _lascoux_poly(composition, genset):
 
 @cache
 def groth_elem_as_schub_dict(perm, beta):
-    """Expand a Grothendieck basis element G_perm into Schubert basis terms.
-
-    Uses the strip-isobaric construction from the groth_elem_as_schub method.
-    Returns ``{Permutation: coeff}``.
+    """Schubert expansion ``{perm': coeff}`` of the Grothendieck polynomial ``G_perm`` (via
+    ``WCGraph.groth_to_schub``).
     """
     from schubmult import WCGraph
 
@@ -928,16 +1049,27 @@ def groth_elem_as_schub_dict(perm, beta):
 
 
 def groth_mul_full(perm_dict, p2, _x, _zz, beta):
+    """Multiply a Grothendieck expansion ``perm_dict`` by ``G_p2``: expand ``G_p2`` in Schubert
+    polynomials and push each through `schub_dict_to_groth_dict`.
+    """
     p2 = pl.Permutation(p2)
     return schub_dict_to_groth_dict(perm_dict, groth_elem_as_schub_dict(p2, beta), beta)
 
 
 def groth_mul_full_with_ring(perm_dict, p2, ring, beta):
+    """`groth_mul_full` using the ring-aware `schub_dict_to_groth_dict_with_ring`."""
     p2 = pl.Permutation(p2)
     return schub_dict_to_groth_dict_with_ring(perm_dict, groth_elem_as_schub_dict(p2, beta), ring, beta)
 
 
 def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
+    """Multiply the Grothendieck expansion ``base_groth`` by the Schubert polynomial with expansion
+    ``schub_dict``, returning a Grothendieck expansion.
+
+    Writes the Schubert polynomial in the CEM (elementary symmetric) basis, converts each
+    ``e_p(x_1..x_k)`` factor to Grothendieck-Pieri pieces with
+    `schub_elem_sym_to_groth_elem_sym_dict`, and applies ``groth_pieri_mul`` factor by factor.
+    """
     # schub_elem_sym_as_groth_elem_sym_dict
 
     import sympy
@@ -1066,6 +1198,9 @@ def schub_dict_to_groth_dict(base_groth, schub_dict, beta):
 
 
 def schub_dict_to_groth_dict_with_ring(base_groth, schub_dict, ring, beta):
+    """`schub_dict_to_groth_dict` for a specific ``ring`` (uses ``ring.in_CEM_basis`` and
+    ``ring.is_elem_mul_type`` to recognize elementary symmetric factors).
+    """
     # schub_elem_sym_as_groth_elem_sym_dict
 
     import sympy

@@ -135,19 +135,212 @@ Generate TikZ code for a pipe dream visualization of an RC graph.
 
 # schubmult.rings.nsym
 
-Noncommutative symmetric functions (NSym) ring implementation.
+`NSym`: a `FreeAlgebra` indexed by compositions, multiplied through the separated-descents Schubert ring.
+
+A key is a composition ``alpha`` (a tuple of positive integers), printed ``N(alpha)``, and is
+identified with the Schubert key ``(uncode(alpha - 1), len(alpha))`` of
+`schubmult.rings.schubert.separated_descents.SeparatedDescentsRing` via `NSym.sepify` /
+`NSym.from_sep`. The product is the separated-descents product transported back to
+compositions; when ``FreeAlgebra.CAP`` is set the result is truncated to keys of at most that
+length. Right multiplication by a Schubert element acts by the skew operation ``/``.
+
+<a id="schubmult.rings.nsym.NSym"></a>
+
+## NSym Objects
+
+```python
+class NSym(FreeAlgebra)
+```
+
+Free algebra on compositions with the separated-descents product. See the module docstring.
+
+<a id="schubmult.rings.nsym.NSym.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(domain=None)
+```
+
+Create the ring over ``domain`` (default ``EXRAW``); the empty composition is the identity.
+
+<a id="schubmult.rings.nsym.NSym.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k)
+```
+
+Display as ``N(alpha)``.
+
+<a id="schubmult.rings.nsym.NSym.rmul"></a>
+
+#### rmul
+
+```python
+def rmul(elem, other)
+```
+
+Scale coefficients by the scalar ``other``.
+
+<a id="schubmult.rings.nsym.NSym.sepify"></a>
+
+#### sepify
+
+```python
+def sepify(elem)
+```
+
+Map ``alpha -> (uncode(alpha - 1), len(alpha))`` into the separated-descents Schubert ring.
+
+<a id="schubmult.rings.nsym.NSym.from_sep"></a>
+
+#### from\_sep
+
+```python
+def from_sep(elem)
+```
+
+Inverse of `sepify`: pad or cut the code of ``perm`` to length ``n`` and add 1 to each entry.
+
+<a id="schubmult.rings.nsym.NSym.mul"></a>
+
+#### mul
+
+```python
+def mul(elem, other)
+```
+
+Scalar multiplication, or the separated-descents product of two elements (truncated by
+``FreeAlgebra.CAP`` if set).
+
+<a id="schubmult.rings.nsym.NSymElement"></a>
+
+## NSymElement Objects
+
+```python
+class NSymElement(FreeAlgebraElement)
+```
+
+Element of `NSym`: a dict from compositions to coefficients with SymPy-compatible printing.
+
+<a id="schubmult.rings.nsym.NSymElement.__rmul__"></a>
+
+#### \_\_rmul\_\_
+
+```python
+def __rmul__(other)
+```
+
+Scalar on the left, or a Schubert element acting by the skew operation ``self / perm``.
 
 <a id="schubmult.rings"></a>
 
 # schubmult.rings
 
+Ring structures built on combinatorial bases.
+
+Subpackages:
+
+- `schubert`: the Schubert-family rings (``Sx``, ``DSx``, ``Gx``, ``QSx``, ...) -- the
+  main user-facing algebra interface.
+- `polynomial_algebra`: the polynomial ring ``Z[x_1, x_2, ...]`` with pluggable bases
+  (monomial, Schubert, key, slide, Grothendieck, ...).
+- `free_algebra`: noncommutative free algebras with combinatorial bases.
+- `combinatorial`: rings whose basis elements are combinatorial objects (RC graphs,
+  BPDs, plactic classes, ...) rather than permutations.
+
+Modules here: `base_ring` (the shared dict-based ring/element machinery), `tensor_ring`,
+`product_ring`, `direct_product_ring`, `printing` (display symbols), `nsym`,
+`quasisymmetric_functions`, `thompson_algebra`.
+
+This ``__init__`` re-exports nothing (the commented-out block below is legacy);
+import from the subpackages directly.
+
 <a id="schubmult.rings.thompson_algebra"></a>
 
 # schubmult.rings.thompson\_algebra
 
+`ThompsonAlgebra`: a noncommutative algebra on words in generators ``T_i`` and ``R_i``.
+
+A monomial is a tuple of nonzero integers: ``i > 0`` stands for ``T_i`` and ``i < 0`` for
+``R_{-i}``. Products are rewritten to a normal form by the rules in `ThompsonAlgebra._commute_pair`:
+``T_i T_j = T_j T_{i+1}`` for ``i > j`` (the Thompson monoid relation), and ``T_i R_j`` moves
+``R`` to the left with the index shifts (and one two-term case) given there.
+
+<a id="schubmult.rings.thompson_algebra.ThompsonAlgebraElement"></a>
+
+## ThompsonAlgebraElement Objects
+
+```python
+class ThompsonAlgebraElement(BaseRingElement)
+```
+
+Element of `ThompsonAlgebra`: a dict from normal-form words to coefficients.
+
+<a id="schubmult.rings.thompson_algebra.ThompsonAlgebra"></a>
+
+## ThompsonAlgebra Objects
+
+```python
+class ThompsonAlgebra(BaseRing)
+```
+
+Algebra on words in ``T_i`` (positive index) and ``R_i`` (negative index). See the module docstring.
+
+<a id="schubmult.rings.thompson_algebra.ThompsonAlgebra.printing_term"></a>
+
+#### printing\_term
+
+```python
+@cache
+def printing_term(monomial)
+```
+
+Noncommutative product of the ``T_i``/``R_i`` symbols for the word.
+
+<a id="schubmult.rings.thompson_algebra.ThompsonAlgebra.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a word (normalized via `_mul_monomials`), a number, or an existing element.
+
+<a id="schubmult.rings.thompson_algebra.ThompsonAlgebra.mul"></a>
+
+#### mul
+
+```python
+def mul(elem, other)
+```
+
+Scalar multiplication, or the bilinear extension of `_mul_monomials`.
+
 <a id="schubmult.rings.quasisymmetric_functions"></a>
 
 # schubmult.rings.quasisymmetric\_functions
+
+`QSym`: quasisymmetric functions in the monomial basis ``M_alpha``.
+
+Keys are compositions; the product is the quasi-shuffle (stuffle) of compositions, and
+``expand(n)`` gives the monomial quasisymmetric polynomial in ``n`` variables. `QSym.quasi_schur`
+builds quasi-Schur functions by enumerating standard composition tableaux.
+
+<a id="schubmult.rings.quasisymmetric_functions.monomial_quasisym"></a>
+
+#### monomial\_quasisym
+
+```python
+def monomial_quasisym(comp, length, genset)
+```
+
+The monomial quasisymmetric polynomial ``M_comp(x_1, ..., x_length)``: the sum of
+``x_{i_1}^{c_1} ... x_{i_k}^{c_k}`` over ``i_1 < ... < i_k <= length``, built by recursion on
+whether ``x_length`` is used. Zero if ``comp`` contains a zero part.
 
 <a id="schubmult.rings.quasisymmetric_functions.stuffle"></a>
 
@@ -157,9 +350,9 @@ Noncommutative symmetric functions (NSym) ring implementation.
 def stuffle(alpha, beta)
 ```
 
-Computes the stuffle product of two compositions alpha and beta.
-Returns a dictionary where keys are resulting compositions (tuples)
-and values are their coefficients.
+The quasi-shuffle (stuffle) product of two compositions: at each step take the first part
+of ``alpha``, the first part of ``beta``, or their sum. Returns ``{composition: coeff}``;
+this is the product rule of the monomial basis ``M_alpha M_beta``.
 
 <a id="schubmult.rings.quasisymmetric_functions.quasi_schur_to_monomial"></a>
 
@@ -169,11 +362,10 @@ and values are their coefficients.
 def quasi_schur_to_monomial(comp)
 ```
 
-Computes the quasi-Schur function for composition comp in the monomial basis.
-Returns a dictionary where keys are compositions (tuples) and values are coefficients.
-
-Uses the standard composition tableau definition: sum over all descent compositions
-of standard composition tableaux of the given shape.
+Monomial-basis expansion of the quasi-Schur function of shape ``comp``: counts standard
+composition tableaux (rows strictly increasing, columns weakly increasing) of that shape by
+the descent composition of their row reading word. Enumerates all ``n!`` fillings, so only
+small shapes are practical.
 
 <a id="schubmult.rings.quasisymmetric_functions.QSymElement"></a>
 
@@ -183,6 +375,8 @@ of standard composition tableaux of the given shape.
 class QSymElement(BaseSchubertElement)
 ```
 
+Element of `QSym`: a dict from compositions to coefficients in the monomial basis.
+
 <a id="schubmult.rings.quasisymmetric_functions.QSymElement.expand"></a>
 
 #### expand
@@ -191,7 +385,7 @@ class QSymElement(BaseSchubertElement)
 def expand(num_vars)
 ```
 
-Expand the quasi-symmetric function in the given number of variables.
+The quasisymmetric polynomial in ``num_vars`` variables of the ring's generating set.
 
 <a id="schubmult.rings.quasisymmetric_functions.QSym"></a>
 
@@ -201,6 +395,48 @@ Expand the quasi-symmetric function in the given number of variables.
 class QSym(BaseSchubertRing)
 ```
 
+Quasisymmetric functions in the monomial basis; ``QSym()(2, 1)`` is ``M_(2,1)``. See the module docstring.
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.mul_pair"></a>
+
+#### mul\_pair
+
+```python
+def mul_pair(a, b)
+```
+
+Product of two basis compositions: the `stuffle`.
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.mul"></a>
+
+#### mul
+
+```python
+def mul(a, b)
+```
+
+Bilinear extension of `mul_pair`.
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(comp)
+```
+
+Display as ``Mx(alpha)`` (label from the generating set).
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.new"></a>
+
+#### new
+
+```python
+def new(*x)
+```
+
+The basis element ``M_x`` for the composition given as positional parts.
+
 <a id="schubmult.rings.quasisymmetric_functions.QSym.quasi_schur"></a>
 
 #### quasi\_schur
@@ -209,27 +445,17 @@ class QSym(BaseSchubertRing)
 def quasi_schur(*comp)
 ```
 
-Returns the quasi-Schur function for the given composition
-expressed in the monomial basis.
+The quasi-Schur function of shape ``comp`` in the monomial basis (see `quasi_schur_to_monomial`).
 
-**Arguments**:
-
-- ```*comp``` - A composition (tuple or sequence of positive integers)
-  
-
-**Returns**:
-
-  QSymElement representing the quasi-Schur function in monomial basis
-  
-
-**Example**:
-
-  >>> QS = QSym()
-  >>> QS.quasi_schur(2, 1)  # quasi-Schur function for composition (2,1)
+>>> QS = QSym()
+>>> QS.quasi_schur(2, 1)
 
 <a id="schubmult.rings.free_algebra.schur_elementary_basis"></a>
 
 # schubmult.rings.free\_algebra.schur\_elementary\_basis
+
+`SchurElementaryBasis`: free-algebra basis dual to products of a nested elementary monomial
+(as in `ElementaryBasis`) with a Schur polynomial. Keys are ``(elementary_tuple, partition)``.
 
 <a id="schubmult.rings.free_algebra.schur_elementary_basis.SchurElementaryBasis"></a>
 
@@ -328,6 +554,15 @@ Return an ``SE``-prefixed symbol for key *k*.
 
 # schubmult.rings.free\_algebra.free\_algebra\_basis
 
+`FreeAlgebraBasis`: the interface a basis must implement to plug into `FreeAlgebra`.
+
+A basis is a *class* (its methods are classmethods) defining a key type (``is_key``/
+``as_key``/``zero_monom``), how to print a key, ``transition(other_basis)`` returning a
+key -> ``{key: coeff}`` function into another basis, and ``dual_basis()`` naming the
+`schubmult.rings.polynomial_algebra` basis it is dual to. Products, coproducts, and
+the word-level operations all have default implementations that route through the
+`WordBasis` via ``compose_transition``.
+
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis"></a>
 
 ## FreeAlgebraBasis Objects
@@ -336,11 +571,12 @@ Return an ``SE``-prefixed symbol for key *k*.
 class FreeAlgebraBasis()
 ```
 
-Abstract base class for free algebra bases.
+Abstract base for free-algebra bases; see the module docstring.
 
-Subclasses define how keys are represented, how products and coproducts
-are computed, and how to transition between bases.  Default implementations
-delegate through the :class:`WordBasis` via ``compose_transition``.
+Subclasses override the key methods (``is_key``, ``as_key``, ``zero_monom``,
+``printing_term``, ``transition``, ``dual_basis``) and may override ``product``/
+``coproduct`` with a direct rule; otherwise everything is computed in the `WordBasis`
+and transported back.
 
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis.is_key"></a>
 
@@ -430,7 +666,7 @@ accumulates the results weighted by *v*.
 def dual_basis(cls)
 ```
 
-Return the dual basis class (for polynomial algebra pairing).
+The `schubmult.rings.polynomial_algebra` basis this basis is dual to under the word/monomial pairing.
 
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis.change_tensor_basis"></a>
 
@@ -499,7 +735,7 @@ Multiply two keys by transitioning to WordBasis and back.
 def internal_product(cls, key1, key2, coeff=S.One)
 ```
 
-Compute the internal product of two keys by delegating through WordBasis.
+The internal (Kronecker) product of NSym (see `WordBasis.internal_product`), computed via the word basis.
 
 <a id="schubmult.rings.free_algebra.free_algebra_basis.FreeAlgebraBasis.inject"></a>
 
@@ -545,9 +781,28 @@ def interval(cls, key, start, stop, coeff=S.One)
 
 Extract a subword from *start* to *stop* by delegating through WordBasis.
 
+<a id="schubmult.rings.free_algebra.free_algebra_basis.__getattr__"></a>
+
+#### \_\_getattr\_\_
+
+```python
+def __getattr__(name)
+```
+
+Lazily resolve basis classes to avoid circular imports between basis modules.
+
 <a id="schubmult.rings.free_algebra.separated_descents_basis"></a>
 
 # schubmult.rings.free\_algebra.separated\_descents\_basis
+
+`SeparatedDescentsBasis(k)`: level-``k`` refinements of `SchubertBasis` in which a key
+``(u, v, numvars)`` splits the Schubert index into a factor ``u`` and a factor ``v`` whose
+descents are separated at ``k`` (the basis dual to the separated-descents factorization of
+`schubmult.rings.schubert.separated_descents`).
+
+`SeparatedDescentsBasis` is a factory producing a ``_SeparatedDescentsBasis`` subclass with
+class attribute ``k``; products go through `SchubertBasis`, and `SchubertBasis` expands into
+this basis via `SchubertBasis.transition_separated_descents`.
 
 <a id="schubmult.rings.free_algebra.separated_descents_basis._SeparatedDescentsBasis"></a>
 
@@ -654,27 +909,55 @@ Factory that creates a separated descents basis class for level *k*.
 
 # schubmult.rings.free\_algebra
 
-Free algebra module providing multiple bases for Schubert calculus.
+The free algebra: the graded dual of `schubmult.rings.polynomial_algebra`.
 
-The core classes are :class:`FreeAlgebra` (the ring) and
-:class:`FreeAlgebraElement` (its elements).  Elements can be expressed in
-any of the available bases and converted between them via ``change_basis``.
+The free (noncommutative) algebra on generators indexed by nonnegative integers is
+the graded dual of the polynomial ring ``Z[x_1, x_2, ...]``, under the pairing in
+which the word ``(a_1, ..., a_n)`` is dual to the monomial
+``x_1^{a_1} x_2^{a_2} ... x_n^{a_n}`` (i.e. a word is the exponent vector of its dual
+monomial). Concretely, ``FreeAlgebraElement.pairing(poly_elem)`` /
+``PolynomialAlgebraElement.apply_dual_element(free_elem)`` sum the products of
+matching coefficients once both sides are in the word / monomial basis.
+
+Under this duality:
+
+- concatenation of words (the `WordBasis` product) is dual to the variable-splitting
+  coproduct on polynomials (`PolynomialAlgebraElement.branch`/``coproduct``), and the
+  free algebra's coproduct is dual to polynomial multiplication;
+- every free-algebra basis is the dual of a polynomial-algebra basis, exposed via
+  ``Basis.dual_basis()``: `SchubertBasis` <-> ``SchubertPolyBasis``, `KeyBasis` <->
+  ``KeyPolyBasis``, `ForestBasis` <-> ``ForestPolyBasis``, `FundamentalSlideBasis` <->
+  ``FundamentalSlidePolyBasis``, `GrothendieckBasis` <-> ``GrothendieckPolyBasis``, and
+  so on, with `WordBasis` <-> ``MonomialBasis`` as the pair everything is computed through.
+
+Basis keys carry a *length* (number of variables) alongside the combinatorial index,
+e.g. a `SchubertBasis` key is ``(perm, numvars)``: the dual of ``S_perm`` regarded as
+a polynomial in exactly ``numvars`` variables. This grading by number of variables is
+what makes the duality with words of a fixed length work.
+
+The core classes are `FreeAlgebra` (the ring, parametrized by a `FreeAlgebraBasis`
+class) and `FreeAlgebraElement`; ``change_basis`` converts between bases.
 
 Pre-built instances:
-    - ``FA``: FreeAlgebra with WordBasis (default)
-    - ``ASx``: FreeAlgebra with SchubertBasis
-    - ``AGx``: FreeAlgebra with GrothendieckBasis
-    - ``ADSx``: FreeAlgebra with double Schubert basis
+    - ``FA``: `WordBasis` (the default)
+    - ``ASx``: `SchubertBasis`
+    - ``AGx``: `GrothendieckBasis`
+    - ``ADSx``: the double Schubert separated-descents ring used for expansion
+    - ``ForestDual``, ``GroveDual``, ``GlideDual``: the corresponding bases
 
 Available bases:
     WordBasis, SchubertBasis, CompositionSchubertBasis, ElementaryBasis,
-    ForestBasis, FundamentalSlideBasis, JBasis, JTBasis, KeyBasis,
-    MonomialSlideBasis, NElementaryBasis, SchubertSchurBasis,
-    SchurElementaryBasis, SeparatedDescentsBasis, ZBasis.
+    ForestBasis, FundamentalSlideBasis, GlideBasis, GrothendieckBasis, GroveBasis,
+    JBasis, JTBasis, KeyBasis, LascouxBasis, MonomialSlideBasis, NElementaryBasis,
+    SchubertSchurBasis, SchurElementaryBasis, SeparatedDescentsBasis, ZBasis.
 
 <a id="schubmult.rings.free_algebra.composition_schubert_basis"></a>
 
 # schubmult.rings.free\_algebra.composition\_schubert\_basis
+
+`CompositionSchubertBasis`: `SchubertBasis` re-indexed by compositions. The key ``c`` (a code
+padded with zeros to length ``numvars``) stands for the Schubert key ``(uncode(c), len(c))``,
+so the dual polynomial basis is again Schubert polynomials.
 
 <a id="schubmult.rings.free_algebra.composition_schubert_basis.CompositionSchubertBasis"></a>
 
@@ -838,6 +1121,18 @@ Return a ``CompSchub``-labelled display object for the composition key *k*.
 
 # schubmult.rings.free\_algebra.schubert\_basis
 
+`SchubertBasis`: the free-algebra basis dual to Schubert polynomials.
+
+A key is ``(perm, numvars)``: the element dual to ``S_perm`` viewed as a polynomial in
+exactly ``numvars`` variables (so ``numvars >= max_descent(perm)``). Under the
+word/monomial pairing this is the ``SchubertPolyBasis`` of the polynomial algebra.
+
+The product is the separated-descents product (`SeparatedDescentsRing`): ``(u, p) * (v, q)``
+places ``u`` in the first ``p`` variables and ``v`` in the next ``q``, giving a ``(w, p + q)``
+expansion. ``transition_word`` expands a key into words via the SEM (elementary symmetric)
+factorization of ``S_perm``, and the other ``transition_*`` methods reach the remaining
+bases either directly or by way of the word basis. ``ASx`` is the standard instance.
+
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis"></a>
 
 ## SchubertBasis Objects
@@ -846,12 +1141,11 @@ Return a ``CompSchub``-labelled display object for the composition key *k*.
 class SchubertBasis(FreeAlgebraBasis)
 ```
 
-Schubert basis of the free algebra.
+Free-algebra basis dual to Schubert polynomials; keys are ``(Permutation, numvars)``.
 
-Keys are ``(Permutation, int)`` pairs where the integer records the
-number of variables.  Products use the separated-descents Schubert
-ring, and transitions to the word basis go through elementary
-symmetric function decompositions.
+See the module docstring. Products go through the separated-descents Schubert ring,
+and transitions to the word basis go through elementary symmetric function
+decompositions.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.is_key"></a>
 
@@ -862,7 +1156,7 @@ symmetric function decompositions.
 def is_key(cls, x)
 ```
 
-Return True if *x* is a valid Schubert basis key.
+Whether ``x`` is ``(perm,)`` or ``(perm, numvars)`` with ``perm`` a permutation/list/tuple.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.from_rc_graph"></a>
 
@@ -873,7 +1167,7 @@ Return True if *x* is a valid Schubert basis key.
 def from_rc_graph(cls, rc_graph)
 ```
 
-Return the Schubert key ``(perm, length)`` for the given RC graph.
+The key ``(rc_graph.perm, len(rc_graph))``: an RC graph's permutation with its row count as ``numvars``.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.as_key"></a>
 
@@ -884,7 +1178,7 @@ Return the Schubert key ``(perm, length)`` for the given RC graph.
 def as_key(cls, x)
 ```
 
-Normalize *x* into a ``(Permutation, numvars)`` key.
+Normalize to ``(Permutation, numvars)``; if ``numvars`` is omitted it defaults to the last descent.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.product"></a>
 
@@ -896,7 +1190,8 @@ Normalize *x* into a ``(Permutation, numvars)`` key.
 def product(cls, key1, key2, coeff=S.One)
 ```
 
-Multiply two Schubert basis keys via the separated-descents ring.
+Separated-descents product: ``(u, p) * (v, q)`` with ``u`` in the first ``p`` variables and
+``v`` in the next ``q``, computed in `SeparatedDescentsRing`.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.skew_element"></a>
 
@@ -907,7 +1202,9 @@ Multiply two Schubert basis keys via the separated-descents ring.
 def skew_element(cls, w, u, n)
 ```
 
-Compute the skew Schubert element S_w / S_u truncated to *n* variables.
+The skew element ``S_w / S_u`` in ``n`` variables: the dual of multiplying by ``S_u``,
+computed with the descent-side kernel ``schubmult_py_down`` and truncated to permutations
+fitting in ``n`` variables.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.coproduct"></a>
 
@@ -919,7 +1216,8 @@ Compute the skew Schubert element S_w / S_u truncated to *n* variables.
 def coproduct(cls, key)
 ```
 
-Compute the coproduct of a Schubert key in the tensor ring.
+Coproduct of ``(perm, numvars)`` (dual to polynomial multiplication): expand to words,
+apply the word coproduct, and convert each tensor factor back to Schubert keys.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_grothendieck"></a>
 
@@ -931,7 +1229,8 @@ Compute the coproduct of a Schubert key in the tensor ring.
 def transition_grothendieck(cls, perm, numvars)
 ```
 
-Transition a Schubert key to the Grothendieck basis.
+Expand ``(perm, numvars)`` in the `GrothendieckBasis`, by taking the co-BPD of every RC graph
+of ``perm * w0`` and collecting the resulting permutations.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_schubert_schur"></a>
 
@@ -942,7 +1241,9 @@ Transition a Schubert key to the Grothendieck basis.
 def transition_schubert_schur(cls, *x)
 ```
 
-Transition a Schubert key to the Schubert-Schur basis.
+Expand ``(perm, numvars)`` in the `SchubertSchurBasis`: split off the variables beyond
+``numvars`` via a Schubert coproduct against a dominant permutation, yielding
+``(partition, perm', numvars)`` keys.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_schur_elementary"></a>
 
@@ -953,7 +1254,7 @@ Transition a Schubert key to the Schubert-Schur basis.
 def transition_schur_elementary(cls, *x)
 ```
 
-Transition a Schubert key to the Schur-Elementary basis.
+Expand ``(perm, numvars)`` in the `SchurElementaryBasis` (a word-like tuple paired with a partition).
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_elementary"></a>
 
@@ -964,7 +1265,8 @@ Transition a Schubert key to the Schur-Elementary basis.
 def transition_elementary(cls, perm, numvars)
 ```
 
-Transition a Schubert key to the elementary basis.
+Expand ``(perm, numvars)`` in the `ElementaryBasis`: read the monomials of ``S_{perm * w0}``
+and complement each exponent against the staircase to get elementary-symmetric indices.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_separated_descents"></a>
 
@@ -975,7 +1277,8 @@ Transition a Schubert key to the elementary basis.
 def transition_separated_descents(cls, k, *x)
 ```
 
-Transition a Schubert key to the separated descents basis of level *k*.
+Expand ``(perm, numvars)`` in the level-``k`` `SeparatedDescentsBasis` via a Schubert coproduct
+splitting the last ``k - 1`` variables, yielding ``(perm_left, perm_right, numvars)`` keys.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_jbasis"></a>
 
@@ -986,7 +1289,8 @@ Transition a Schubert key to the separated descents basis of level *k*.
 def transition_jbasis(cls, perm, n)
 ```
 
-Transition a Schubert key ``(perm, n)`` to the J basis.
+Expand ``(perm, n)`` in the `JBasis`: a code with no zeros is already a J key; leading zeros are
+peeled off (each contributing a factor ``t``, currently ``1``), and anything else goes via words.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.dual_basis"></a>
 
@@ -997,7 +1301,7 @@ Transition a Schubert key ``(perm, n)`` to the J basis.
 def dual_basis(cls)
 ```
 
-Return the SchubertPolyBasis as the dual of SchubertBasis.
+``SchubertPolyBasis``: Schubert polynomials are the dual basis under the word/monomial pairing.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition"></a>
 
@@ -1009,7 +1313,11 @@ Return the SchubertPolyBasis as the dual of SchubertBasis.
 def transition(cls, other_basis)
 ```
 
-Return a transition function from SchubertBasis to *other_basis*.
+Return the key -> ``{key: coeff}`` function into ``other_basis``.
+
+Direct routes exist for the word, elementary, Schubert-Schur, Schur-elementary,
+composition-Schubert, separated-descents, and Grothendieck bases; everything else
+is reached by going through the word basis first.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.old_transition_word"></a>
 
@@ -1033,7 +1341,13 @@ Transition to WordBasis via SEM basis (legacy implementation).
 def transition_word(cls, perm, numvars)
 ```
 
-Transition a Schubert key to the word basis via SEM factorization.
+Expand ``(perm, numvars)`` in the word basis.
+
+Multiplies ``perm`` by the inverse of the dominant permutation with code
+``(inv + numvars, ..., inv + 1)`` (``inv = perm.inv``) and writes the result in the SEM
+basis with a custom ``elem_func`` that records each factor ``e_p(x_1..x_k)`` as the word
+with ``k - p`` in position ``numvars - k + inv``. Products of such words in the monomial
+polynomial algebra add letterwise, so the resulting polynomial *is* the word expansion.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.printing_term"></a>
 
@@ -1044,11 +1358,22 @@ Transition a Schubert key to the word basis via SEM factorization.
 def printing_term(cls, k)
 ```
 
-Return a Xi-notation display object for key *k*.
+Display symbol for ``(perm, numvars)`` (the separated-descents ``SepDescSchubPoly`` form).
 
 <a id="schubmult.rings.free_algebra.grothendieck_basis"></a>
 
 # schubmult.rings.free\_algebra.grothendieck\_basis
+
+`GrothendieckBasis`: the free-algebra basis dual to Grothendieck polynomials.
+
+Keys are ``(perm, numvars)`` as in `SchubertBasis`; the key is dual to ``G_perm`` in ``numvars``
+variables (``GrothendieckPolyBasis`` on the polynomial side). Grothendieck polynomials are
+taken at ``beta = 1``, which is without loss of generality: ``beta`` is recovered by grading
+(a term of ``G_w`` in degree ``inv(w) + d`` carries ``beta^d``). The change of
+basis to `SchubertBasis` is the transpose of the Grothendieck-to-Schubert expansion and is
+computed combinatorially: enumerate unreduced BPDs of ``perm * w0``, take the co-BPD, and keep
+the reduced ones, with sign ``(-1)^(inv(perm) - inv(result))``. Products and all other
+transitions route through `SchubertBasis`. ``AGx`` is the standard instance.
 
 <a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis"></a>
 
@@ -1058,11 +1383,69 @@ Return a Xi-notation display object for key *k*.
 class GrothendieckBasis(FreeAlgebraBasis)
 ```
 
-Grothendieck basis for FreeAlgebra.
+Free-algebra basis dual to Grothendieck polynomials (``beta = 1``); keys are ``(Permutation, numvars)``.
 
-Keys match the Schubert basis shape: ``(Permutation, numvars)``.
-The deformation parameter ``beta`` is a class variable so the class can be
-passed directly to ``FreeAlgebra`` without requiring a basis constructor.
+See the module docstring. Products and transitions go through `SchubertBasis`.
+
+<a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis.is_key"></a>
+
+#### is\_key
+
+```python
+@classmethod
+def is_key(cls, x)
+```
+
+Whether ``x`` is ``(perm,)`` or ``(perm, numvars)``.
+
+<a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis.as_key"></a>
+
+#### as\_key
+
+```python
+@classmethod
+def as_key(cls, x)
+```
+
+Normalize to ``(Permutation, numvars)``; ``numvars`` defaults to the last descent.
+
+<a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis.transition_schubert"></a>
+
+#### transition\_schubert
+
+```python
+@classmethod
+@cache
+def transition_schubert(cls, perm, numvars)
+```
+
+Expand ``(perm, numvars)`` in `SchubertBasis`.
+
+For each unreduced BPD of ``perm * w0`` whose co-BPD is reduced with permutation ``u``
+fitting in ``numvars`` variables, contributes ``(-1)^(inv(perm) - inv(u))`` to ``(u, numvars)``.
+
+<a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis.transition"></a>
+
+#### transition
+
+```python
+@classmethod
+def transition(cls, other_basis)
+```
+
+Key -> ``{key: coeff}`` function into ``other_basis``: identity on Grothendieck subclasses,
+`transition_schubert` for `SchubertBasis`, and Schubert-then-onward for everything else.
+
+<a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis.printing_term"></a>
+
+#### printing\_term
+
+```python
+@classmethod
+def printing_term(cls, k)
+```
+
+Display as ``AGx(perm, numvars)``.
 
 <a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis.product"></a>
 
@@ -1074,11 +1457,27 @@ passed directly to ``FreeAlgebra`` without requiring a basis constructor.
 def product(cls, key1, key2, coeff=S.One)
 ```
 
-Multiply two keys by transitioning to WordBasis and back.
+Multiply by expanding both keys in `SchubertBasis`, using its separated-descents product,
+and converting the result back.
+
+<a id="schubmult.rings.free_algebra.grothendieck_basis.GrothendieckBasis.dual_basis"></a>
+
+#### dual\_basis
+
+```python
+@classmethod
+def dual_basis(cls)
+```
+
+``GrothendieckPolyBasis``: Grothendieck polynomials are the dual basis.
 
 <a id="schubmult.rings.free_algebra.schubert_schur_basis"></a>
 
 # schubmult.rings.free\_algebra.schubert\_schur\_basis
+
+`SchubertSchurBasis`: free-algebra basis dual to products ``s_lambda(x_1..x_n) * S_perm``
+of a Schur polynomial in the first ``n`` variables with a Schubert polynomial. Keys are
+``(partition, perm, numvars)``.
 
 <a id="schubmult.rings.free_algebra.schubert_schur_basis.SchubertSchurBasis"></a>
 
@@ -1175,6 +1574,9 @@ Return an ``SS``-prefixed symbol for key *k*.
 
 # schubmult.rings.free\_algebra.monomial\_slide\_basis
 
+`MonomialSlideBasis`: the free-algebra basis dual to monomial slide polynomials. Keys are
+weak compositions; transitions use coarsenings of compositions.
+
 <a id="schubmult.rings.free_algebra.monomial_slide_basis.MonomialSlideBasis"></a>
 
 ## MonomialSlideBasis Objects
@@ -1260,6 +1662,15 @@ Transition a monomial slide key to the word basis.
 
 # schubmult.rings.free\_algebra.word\_basis
 
+`WordBasis`: the word (concatenation) basis of the free algebra, dual to the monomial basis.
+
+A key is a word ``(a_1, ..., a_n)`` of nonnegative integers, dual to the monomial
+``x_1^{a_1} ... x_n^{a_n}``. The product is concatenation; the coproduct splits each
+letter ``a`` into ``(i, a - i)`` (dual to polynomial multiplication). This is the hub
+basis: every other `FreeAlgebraBasis` implements its operations by transitioning to
+words and back, and this module holds the ``transition_*`` routines from words into
+each of the other bases.
+
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis"></a>
 
 ## WordBasis Objects
@@ -1268,11 +1679,9 @@ Transition a monomial slide key to the word basis.
 class WordBasis(FreeAlgebraBasis)
 ```
 
-Word basis of the free algebra.
-
-Keys are tuples of nonnegative integers representing words. This is the
-fundamental basis through which all other bases perform their operations
-via basis transitions.
+Word basis of the free algebra: keys are tuples of nonnegative integers (words), each
+dual to the monomial whose exponent vector is that word. Product is concatenation.
+See the module docstring.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.is_key"></a>
 
@@ -1316,7 +1725,7 @@ Return the length vector of the RC graph as a word key.
 def product(cls, key1, key2, coeff=S.One)
 ```
 
-Concatenate two words.
+Concatenate two words (dual to the variable-splitting coproduct on polynomials).
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.inject"></a>
 
@@ -1372,10 +1781,11 @@ Return the subword ``key[start:stop]``.
 def coproduct(cls, key, coeff=S.One)
 ```
 
-Compute the additive coproduct of a word.
+The coproduct of a word, dual to polynomial multiplication.
 
-Decomposes each letter into all (i, key-i) splittings and combines
-via a divide-and-conquer tensor product.
+Each letter ``a`` splits into all ``(i, a - i)`` pairs (``x_j^a`` is the sum over
+ways to write it as ``x_j^i * x_j^{a-i}``); the pieces are combined letterwise
+by a divide-and-conquer tensor product.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.bcoproduct"></a>
 
@@ -1387,10 +1797,8 @@ via a divide-and-conquer tensor product.
 def bcoproduct(cls, key, coeff=S.One)
 ```
 
-Compute the bar-coproduct of a word.
-
-Like :meth:`coproduct` but drops empty factors (zeros map to
-the empty tuple).
+The "bar" coproduct: like `coproduct` but a zero letter is dropped rather than kept as
+a ``0`` in the word, so word lengths are not preserved.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.try_internal_product"></a>
 
@@ -1414,10 +1822,10 @@ Uses shifted keys (incremented by 1) with ``IntegerMatrices``.
 def internal_product(cls, key1, key2, coeff=S.One)
 ```
 
-Compute the internal product of two words via integer matrices (requires SageMath).
-
-Words must not contain zeros. Returns the dict of result
-words weighted by *coeff*.
+The internal (Kronecker) product of two compositions (words without zeros), as in
+noncommutative symmetric functions: sum over nonnegative integer matrices with row
+sums ``key1`` and column sums ``key2`` of the word read off the nonzero entries.
+Requires SageMath's ``IntegerMatrices``.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.printing_term"></a>
 
@@ -1531,6 +1939,79 @@ def transition_monomial_slide(cls, key)
 
 Transition a word key to the monomial slide basis.
 
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_zbasis"></a>
+
+#### transition\_zbasis
+
+```python
+@classmethod
+def transition_zbasis(cls, key)
+```
+
+Expand a word in `ZBasis` by triangular elimination: repeatedly peel off the smallest
+remaining word, subtracting the word expansion of the corresponding Z element.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_nelementary"></a>
+
+#### transition\_nelementary
+
+```python
+@classmethod
+def transition_nelementary(cls, tup)
+```
+
+Expand a composition in `NElementaryBasis`: signed sum over its refinements
+(``(-1)^(|tup| - len(beta))``), via SageMath's ``Composition.finer``.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_key"></a>
+
+#### transition\_key
+
+```python
+@classmethod
+def transition_key(cls, key)
+```
+
+Expand a word in `KeyBasis`: count RC graphs of length vector ``key`` whose extremal
+weight equals their permutation's padded code (the dual of the key-to-monomial expansion).
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_lascoux"></a>
+
+#### transition\_lascoux
+
+```python
+@classmethod
+def transition_lascoux(cls, key)
+```
+
+Expand a word in `LascouxBasis`: the K-theoretic analogue of `transition_key` using WC graphs.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_glide"></a>
+
+#### transition\_glide
+
+```python
+@classmethod
+def transition_glide(cls, key)
+```
+
+Expand a word in `GlideBasis`: for each WC graph of weight ``key``, take the length vector of
+its ``dst`` (destandardization); the first graph seen at each weight is the representative
+and only graphs with that same ``dst`` contribute.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_fundamental_slide"></a>
+
+#### transition\_fundamental\_slide
+
+```python
+@classmethod
+def transition_fundamental_slide(cls, key)
+```
+
+Expand a word in `FundamentalSlideBasis` as the transpose of the polynomial side: the
+coefficient of ``candidate`` is the coefficient of the monomial ``x^key`` in the fundamental
+slide polynomial of ``candidate``, over all weak compositions of the same length and size.
+
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_grothendieck"></a>
 
 #### transition\_grothendieck
@@ -1546,9 +2027,26 @@ Transition a word key (composition) to the Grothendieck basis.
 Coefficient of ``G_w`` is the number of WC graphs of permutation ``w``
 and weight ``key``, multiplied by ``beta^(|key|-inv(w))``.
 
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition"></a>
+
+#### transition
+
+```python
+@classmethod
+@cache
+def transition(cls, other_basis)
+```
+
+Key -> ``{key: coeff}`` function into ``other_basis``; dispatches to the ``transition_*``
+method for each directly supported basis and otherwise goes through `SchubertBasis`.
+
 <a id="schubmult.rings.free_algebra.elementary_basis"></a>
 
 # schubmult.rings.free\_algebra.elementary\_basis
+
+`ElementaryBasis`: free-algebra basis indexed by ``(composition, numvars)``, dual to products of
+elementary symmetric polynomials ``e_{c_1}(x_1..x_k) e_{c_2}(x_1..x_{k-1}) ...`` in nested
+variable sets. `SchubertBasis` expands into it via the monomials of ``S_{perm * w0}``.
 
 <a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis"></a>
 
@@ -1621,6 +2119,12 @@ Return an ``Elem``-labelled display object for key *k*.
 <a id="schubmult.rings.free_algebra.forest_basis"></a>
 
 # schubmult.rings.free\_algebra.forest\_basis
+
+`ForestBasis`: the free-algebra basis dual to forest polynomials (``ForestPolyBasis``).
+
+Keys are weak compositions (indexed-forest weights). Expansion into `SchubertBasis`
+enumerates RC graphs and keeps those whose forest weight is the key. ``ForestDual`` is the
+standard instance.
 
 <a id="schubmult.rings.free_algebra.forest_basis.ForestBasis"></a>
 
@@ -1706,6 +2210,11 @@ Return a transition function from ForestBasis to *other_basis*.
 
 # schubmult.rings.free\_algebra.grove\_basis
 
+`GroveBasis`: the free-algebra basis dual to grove polynomials (``GrovePolyBasis``), the
+K-theoretic analogue of `ForestBasis`. Keys are weak compositions (grove weights); expansion
+into `GrothendieckBasis` enumerates WC graphs by grove weight. ``GroveDual`` is the standard
+instance.
+
 <a id="schubmult.rings.free_algebra.grove_basis.GroveBasis"></a>
 
 ## GroveBasis Objects
@@ -1789,6 +2298,9 @@ Return a transition function from GroveBasis to *other_basis*.
 <a id="schubmult.rings.free_algebra.z_basis"></a>
 
 # schubmult.rings.free\_algebra.z\_basis
+
+`ZBasis`: free-algebra basis indexed by compositions with no zeros, related to `SchubertBasis`
+by shifting code entries by one and dropping zeros.
 
 <a id="schubmult.rings.free_algebra.z_basis.ZBasis"></a>
 
@@ -1885,6 +2397,12 @@ Return a transition function from ZBasis to *other_basis*.
 
 # schubmult.rings.free\_algebra.nelementary\_basis
 
+`NElementaryBasis`: the noncommutative elementary basis ``L`` of NSym inside the free algebra.
+
+Keys are compositions (positive integers). ``L_alpha`` expands in words as the signed sum
+``sum_{beta refines alpha} (-1)^(|alpha| - len(beta)) beta`` (refinements via SageMath), and the
+product is concatenation.
+
 <a id="schubmult.rings.free_algebra.nelementary_basis.NElementaryBasis"></a>
 
 ## NElementaryBasis Objects
@@ -1967,6 +2485,9 @@ Return a transition function from NElementaryBasis to *other_basis*.
 <a id="schubmult.rings.free_algebra.jt_basis"></a>
 
 # schubmult.rings.free\_algebra.jt\_basis
+
+`JTBasis`: `JBasis` with a formal parameter ``t`` recording the number of stripped zeros.
+Keys are ``(composition, power_of_t)``.
 
 <a id="schubmult.rings.free_algebra.jt_basis.JTBasis"></a>
 
@@ -2062,6 +2583,11 @@ Return a transition function from JTBasis to *other_basis*.
 
 # schubmult.rings.free\_algebra.j\_basis
 
+`JBasis`: free-algebra basis indexed by compositions with no zeros.
+
+A Schubert key ``(perm, n)`` whose padded code has no zeros is itself a J key; zeros are
+handled by the transitions in `SchubertBasis.transition_jbasis` and `WordBasis.transition_jbasis`.
+
 <a id="schubmult.rings.free_algebra.j_basis.JBasis"></a>
 
 ## JBasis Objects
@@ -2146,6 +2672,13 @@ Return a transition function from JBasis to *other_basis*.
 
 # schubmult.rings.free\_algebra.\_core
 
+`FreeAlgebra` and `FreeAlgebraElement`: the graded dual of the polynomial algebra.
+
+See the package docstring (`schubmult.rings.free_algebra`) for the duality. This module
+holds the ring and element classes; the individual bases live in sibling modules and
+plug in through the `FreeAlgebraBasis` interface. ``FA``, ``ASx``, ``AGx`` are the
+standard instances.
+
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement"></a>
 
 ## FreeAlgebraElement Objects
@@ -2154,12 +2687,16 @@ Return a transition function from JBasis to *other_basis*.
 class FreeAlgebraElement(BaseRingElement)
 ```
 
-Element of a free algebra, stored as a dict mapping basis keys to coefficients.
+An element of a `FreeAlgebra`: ``{basis_key: coefficient}``.
 
-Keys are tuples of nonnegative integers (words in the word basis) or
-basis-specific keys depending on the parent ring's basis. Supports
-arithmetic operations, basis changes, and word-level operations like
-injection, prefix, suffix, and interval extraction.
+In the `WordBasis` a key is a word -- a tuple of nonnegative integers -- dual to
+the monomial with that exponent vector. In other bases the key is that basis's
+combinatorial index together with a number of variables (e.g. ``(perm, numvars)``
+for `SchubertBasis`). Beyond ring arithmetic, elements support basis changes
+(``change_basis``), the duality pairing with polynomials (``pairing``,
+``poly_inner_product``), expansion into Schubert rings (``schub_expand``), and
+word-level operations (``inject``, ``prefix``, ``suffix``, ``interval``, ``split``,
+``factorize``) that are computed in the word basis and transported back.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.interleave"></a>
 
@@ -2279,10 +2816,12 @@ Delegates to the current basis's ``interval`` classmethod.
 def poly_inner_product(poly, genset, n)
 ```
 
-Compute the inner product of this element with a polynomial.
+The duality pairing of this element with a polynomial expression.
 
-Converts to WordBasis and pairs coefficient-by-coefficient with
-the monomial expansion of *poly* in *genset*.
+Expands ``poly`` into monomials in ``genset`` (exponent vectors padded/truncated to
+``n`` variables, or trailing zeros stripped if ``n`` is ``None``), converts ``self``
+to the word basis, and sums ``coeff_word * coeff_monomial`` over matching
+word/exponent-vector pairs.
 
 **Arguments**:
 
@@ -2347,14 +2886,15 @@ Expand all coefficients symbolically.
 def pairing(other)
 ```
 
-Compute the pairing of this element with *other* via the monomial basis.
+The duality pairing with a `PolynomialAlgebraElement`.
 
-Converts *self* to WordBasis and *other* to MonomialBasis, then
-sums products of matching coefficients.
+Converts ``self`` to the word basis and ``other`` to the monomial basis, then sums
+``coeff_word * coeff_monomial`` over words equal to exponent vectors. This is the
+pairing under which the free algebra is the graded dual of the polynomial algebra.
 
 **Arguments**:
 
-- `other` - Another element to pair with.
+- `other` - A polynomial algebra element to pair with.
   
 
 **Returns**:
@@ -2384,7 +2924,8 @@ and returns the result in the original basis.
 def tup_double_expand(tup)
 ```
 
-Expand a word tuple into the double Schubert basis via Pieri products.
+Realize the word ``tup`` as a double Schubert (separated-descents) ring element: the
+product ``prod_i S_{uncode([tup[i]])}`` with each factor in its own variable.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.tup_expand"></a>
 
@@ -2396,7 +2937,10 @@ Expand a word tuple into the double Schubert basis via Pieri products.
 def tup_expand(tup)
 ```
 
-Expand a word tuple into the single Schubert basis via divide-and-conquer Pieri products.
+Realize the word ``tup`` as a single Schubert (separated-descents) ring element: the
+product ``prod_i S_{uncode([tup[i]])}`` with each factor in its own variable, computed
+by divide-and-conquer. This is the map word -> ``h_{a_1}(x_1) h_{a_2}(x_2) ...`` that
+sends the word basis onto complete-symmetric-in-one-variable products.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.change_basis"></a>
 
@@ -2406,7 +2950,10 @@ Expand a word tuple into the single Schubert basis via divide-and-conquer Pieri 
 def change_basis(other_basis)
 ```
 
-Convert this element to another basis.
+Re-express this element in another `FreeAlgebraBasis`.
+
+Uses ``self.ring._basis.transition(other_basis)``, which most bases implement by
+routing through the `WordBasis`.
 
 **Arguments**:
 
@@ -2425,7 +2972,8 @@ Convert this element to another basis.
 def schub_expand()
 ```
 
-Expand this element into a single Schubert polynomial ring element.
+Realize this element in the single Schubert separated-descents ring via ``tup_expand``
+(each word becomes a product of one-variable complete symmetric functions).
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.schub_double_expand"></a>
 
@@ -2435,7 +2983,7 @@ Expand this element into a single Schubert polynomial ring element.
 def schub_double_expand()
 ```
 
-Expand this element into a double Schubert polynomial ring element.
+Double-alphabet analogue of ``schub_expand`` via ``tup_double_expand``.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.bcoproduct"></a>
 
@@ -2445,7 +2993,7 @@ Expand this element into a double Schubert polynomial ring element.
 def bcoproduct()
 ```
 
-Compute the bar-coproduct of this element in the tensor ring.
+The "bar" coproduct (see `WordBasis.bcoproduct`) in the tensor square ring.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.factorize"></a>
 
@@ -2487,6 +3035,17 @@ Remove zero entries from each key, weighting by *inserter* per zero removed.
 **Returns**:
 
   A new element with zeros stripped from keys.
+
+<a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.__truediv__"></a>
+
+#### \_\_truediv\_\_
+
+```python
+def __truediv__(other)
+```
+
+Skew by a permutation: ``elem / u`` applies ``skew_element(w, u, n)`` to each ``(w, n)`` key
+(the dual of multiplying by ``S_u`` on the polynomial side).
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.split"></a>
 
@@ -2536,11 +3095,13 @@ Convert to a Schubert ring element via ``tup_to_schub``.
 class FreeAlgebra(BaseRing)
 ```
 
-Free algebra ring with a configurable basis.
+The free algebra on generators indexed by nonnegative integers, in a chosen basis.
 
-The algebra operates on :class:`FreeAlgebraElement` instances whose keys
-are determined by the chosen basis (default :class:`WordBasis`). Supports
-multiplication, tensor products, coproducts, and basis changes.
+The ring is basis-agnostic; a `FreeAlgebraBasis` *class* (not instance) supplies the
+key type, product, coproduct, and transitions. ``FreeAlgebra(WordBasis)`` is the
+concatenation algebra on words; ``FreeAlgebra(SchubertBasis)`` is the same algebra
+written in the basis dual to Schubert polynomials. See the package docstring for
+the duality with the polynomial algebra.
 
 **Arguments**:
 
@@ -2638,10 +3199,13 @@ Create an element from an RC graph.
 def matmul(elem, other)
 ```
 
-Internal product (``@`` operator) or scalar multiplication.
+Internal (Kronecker) product (``@`` operator) or scalar multiplication.
 
-If *other* is a scalar, multiplies all coefficients. If *other* is
-a FreeAlgebraElement, computes the internal product via the basis.
+If ``other`` is a scalar, multiplies all coefficients. If it is a `FreeAlgebraElement`,
+computes the basis's ``internal_product`` -- essentially the Kronecker product of
+noncommutative symmetric functions, enumerated in the word basis by nonnegative
+integer matrices with prescribed row/column sums (see `WordBasis.internal_product`;
+requires SageMath).
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebra.new"></a>
 
@@ -2681,7 +3245,7 @@ Construct an element from a dict of ``{key: coefficient}`` pairs.
 def skew_element(w, u, n)
 ```
 
-Skew schubert by elem sym
+The skew element ``S_w / S_u`` in ``n`` variables (dual to multiplication by ``S_u``); see `SchubertBasis.skew_element`.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebra.domain_new"></a>
 
@@ -2706,6 +3270,9 @@ Create a Grothendieck-basis free algebra, optionally with custom beta.
 <a id="schubmult.rings.free_algebra.lascoux_basis"></a>
 
 # schubmult.rings.free\_algebra.lascoux\_basis
+
+`LascouxBasis`: the free-algebra basis dual to Lascoux polynomials (``LascouxPolyBasis``),
+the K-theoretic analogue of `KeyBasis`. Keys are weak compositions.
 
 <a id="schubmult.rings.free_algebra.lascoux_basis.LascouxBasis"></a>
 
@@ -2790,6 +3357,10 @@ Return a transition function from LascouxBasis to *other_basis*.
 
 # schubmult.rings.free\_algebra.glide\_basis
 
+`GlideBasis`: the free-algebra basis dual to glide polynomials (``GlidePolyBasis``), the
+K-theoretic analogue of `FundamentalSlideBasis`. Keys are weak compositions. ``GlideDual`` is
+the standard instance.
+
 <a id="schubmult.rings.free_algebra.glide_basis.GlideBasis"></a>
 
 ## GlideBasis Objects
@@ -2872,6 +3443,12 @@ Return a transition function from GlideBasis to *other_basis*.
 <a id="schubmult.rings.free_algebra.key_basis"></a>
 
 # schubmult.rings.free\_algebra.key\_basis
+
+`KeyBasis`: the free-algebra basis dual to key polynomials (Demazure characters).
+
+Keys are weak compositions; the element is dual to the key polynomial with that weight
+(``KeyPolyBasis``). Expansion into `SchubertBasis` enumerates RC graphs and keeps those whose
+length vector is the extremal weight.
 
 <a id="schubmult.rings.free_algebra.key_basis.KeyBasis"></a>
 
@@ -2968,6 +3545,10 @@ Return a transition function from KeyBasis to *other_basis*.
 
 # schubmult.rings.free\_algebra.fundamental\_slide\_basis
 
+`FundamentalSlideBasis`: the free-algebra basis dual to fundamental slide polynomials
+(``FundamentalSlidePolyBasis``). Keys are weak compositions; transitions are transposed from
+the polynomial-side slide expansions.
+
 <a id="schubmult.rings.free_algebra.fundamental_slide_basis.FundamentalSlideBasis"></a>
 
 ## FundamentalSlideBasis Objects
@@ -3063,25 +3644,1058 @@ Return a transition function from FundamentalSlideBasis to *other_basis*.
 
 # schubmult.rings.schubert.parabolic\_quantum\_schubert\_ring
 
+Parabolic quantum (single) Schubert polynomial ring: the ``QPSx`` interface.
+
+`ParabolicQuantumSingleSchubertRing` is a `ParabolicQuantumDoubleSchubertRing`
+with a zero coefficient alphabet, indexed by a composition ``index_comp``
+specifying the parabolic subgroup's block sizes.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.ParabolicQuantumSingleSchubertRing"></a>
+
+## ParabolicQuantumSingleSchubertRing Objects
+
+```python
+class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing)
+```
+
+Quantum Schubert polynomials for the partial flag variety with block sizes ``index_comp``.
+Construct via ``QPSx(*index_comp)``; basis permutations must be parabolic for the given blocks.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.ParabolicQuantumSingleSchubertRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+@cache
+def cached_schubpoly(k)
+```
+
+The explicit parabolic quantum Schubert polynomial for ``k``, expanded against the appropriate
+longest element (extended if ``k`` is larger than the ring's default).
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.ParabolicQuantumSingleSchubertRing.elem_sym"></a>
+
+#### elem\_sym
+
+```python
+def elem_sym(p, k, varl1, varl2)
+```
+
+Parabolic quantum elementary symmetric polynomial ``E_p(x_1..x_k)``: classical below the first
+block boundary, with a ``q``-correction term at each block boundary ``N_j``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.ParabolicQuantumSingleSchubertRing.coeff_genset"></a>
+
+#### coeff\_genset
+
+```python
+@property
+def coeff_genset()
+```
+
+Always the zero alphabet.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.ParabolicQuantumSingleSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Full-flag quantum product (``schubmult_q_fast`` or the generic double kernel), then projected
+to the parabolic ring via ``process_coeff_dict`` (Peterson-Woodward).
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.ParabolicQuantumSingleSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Same as ``cached_product``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.ParabolicQuantumSingleSchubertRing.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(x)
+```
+
+Build an element from a parabolic permutation/Lehmer list or an expression; raises ``ValueError``
+if the permutation is not parabolic for this ring's blocks.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.make_single_parabolic_quantum_basis"></a>
+
+#### make\_single\_parabolic\_quantum\_basis
+
+```python
+def make_single_parabolic_quantum_basis(index_comp)
+```
+
+The `ParabolicQuantumSingleSchubertRing` in ``x`` for block sizes ``index_comp``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_schubert_ring.QPSx"></a>
+
+#### QPSx
+
+```python
+@cache
+def QPSx(*args)
+```
+
+Cached `ParabolicQuantumSingleSchubertRing` for block sizes ``args``, e.g. ``QPSx(2, 1)([2, 1, 3])``.
+
 <a id="schubmult.rings.schubert"></a>
 
 # schubmult.rings.schubert
+
+Schubert-family rings: the main user-facing algebra interface.
+
+The most commonly used entry points are the ring *instances*:
+
+- ``Sx``: ordinary (single) Schubert polynomials, ``Sx([3, 1, 2]) * Sx([2, 1, 3])``.
+- ``DSx``: double Schubert polynomials (second alphabet ``y``).
+- ``Gx`` / ``DGx``: (double) Grothendieck polynomials.
+- ``QSx`` / ``QDSx``: quantum (double) Schubert polynomials.
+- ``QPSx`` / ``QPDSx``: parabolic quantum (double) Schubert polynomials.
+
+Each instance is an object of the corresponding ``*Ring`` class; calling it with
+a permutation (or Lehmer code, or a polynomial expression) yields a ``*Element``
+that supports ``+``, ``*``, ``.expand()``, and conversion between bases. All ring
+classes derive from `BaseSchubertRing` and dispatch their products to the kernels
+in `schubmult.mult`.
+
+Everything here is imported lazily (see ``__getattr__``) so ``import schubmult``
+stays fast.
+
+<a id="schubmult.rings.schubert.__getattr__"></a>
+
+#### \_\_getattr\_\_
+
+```python
+def __getattr__(name: str)
+```
+
+Lazily import and cache the requested export from its defining submodule.
+
+<a id="schubmult.rings.schubert.__dir__"></a>
+
+#### \_\_dir\_\_
+
+```python
+def __dir__()
+```
+
+Include lazily-exported names in ``dir()``.
 
 <a id="schubmult.rings.schubert.separated_descents"></a>
 
 # schubmult.rings.schubert.separated\_descents
 
+Separated-descents ring: Schubert polynomials graded by an explicit number of variables.
+
+`SeparatedDescentsRing` wraps a Schubert-family ring and indexes basis elements by
+``(perm, num_vars)`` with ``num_vars >= max_descent(perm)``. The product of
+``(u, p)`` and ``(v, q)`` places ``u`` in the first ``p`` variables and ``v`` in the
+next ``q``, so descents of the two factors are separated. ``_sep_desc_mul`` computes
+this (Samuel) as a twisted ordinary Schubert product by a dominant permutation. Also
+carries experimental Pieri/coproduct routines (``pieri_formula``, ``coproduct_test``).
+
+Not to be confused with `schubmult.mult.separated_descents`, which implements the
+Fan-Guo-Xiong pipe-puzzle rule for double Grothendieck polynomials.
+
+<a id="schubmult.rings.schubert.separated_descents.complete_sym_positional_perms_down"></a>
+
+#### complete\_sym\_positional\_perms\_down
+
+```python
+def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None)
+```
+
+Descent-side analogue of ``complete_sym_positional_perms``: all ``(perm, degree, sign)`` reachable
+from ``orig_perm`` by up to ``p`` Bruhat *descents* swapping a fixed position in ``k`` (1-indexed)
+with a still-untouched position. ``hack_off`` bounds the positions considered.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing"></a>
+
+## SeparatedDescentsRing Objects
+
+```python
+class SeparatedDescentsRing(BaseSchubertRing)
+```
+
+Ring with basis ``(perm, num_vars)``; construct with ``SeparatedDescentsRing(Sx.ring)`` and call
+as ``ring(perm, num_vars)``. See the module docstring.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing.schub_ring"></a>
+
+#### schub\_ring
+
+```python
+@property
+def schub_ring()
+```
+
+The underlying Schubert-family ring used for products.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing.pieri_formula"></a>
+
+#### pieri\_formula
+
+```python
+def pieri_formula(p, elem)
+```
+
+Multiply ``elem`` by the single-row element ``(uncode([p]), 1)`` (adds one variable), via
+``complete_sym_positional_perms_down``.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(ring)
+```
+
+Wrap the Schubert-family ``ring`` (inherits its alphabets).
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing.coproduct_test"></a>
+
+#### coproduct\_test
+
+```python
+def coproduct_test(key)
+```
+
+Experimental coproduct of the basis element ``key = (perm, num_vars)``, computed by
+triangular peeling of the leading code entry via ``pieri_formula``/``_single_coprod_test``.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing.mul"></a>
+
+#### mul
+
+```python
+def mul(elem1, elem2)
+```
+
+Ring product: scalars scale; otherwise each pair of basis elements multiplies via ``_sep_desc_mul``
+and lands in degree ``deg1 + deg2`` (terms whose descents exceed that are dropped).
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k)
+```
+
+The ``SepDescSchubPoly`` display symbol for ``k = (perm, num_vars)``.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRing.new"></a>
+
+#### new
+
+```python
+def new(perm, deg=0)
+```
+
+Build ``(perm, deg)`` with ``deg`` raised to at least ``perm``'s last descent; a non-permutation
+``perm`` is expanded in the underlying ring and each term given its minimal degree.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRingElement"></a>
+
+## SeparatedDescentsRingElement Objects
+
+```python
+class SeparatedDescentsRingElement(BaseSchubertElement)
+```
+
+An element of a `SeparatedDescentsRing`: ``{(perm, num_vars): coeff}``.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRingElement.coproduct_test"></a>
+
+#### coproduct\_test
+
+```python
+def coproduct_test()
+```
+
+Experimental coproduct; see `SeparatedDescentsRing.coproduct_test`.
+
+<a id="schubmult.rings.schubert.separated_descents.SeparatedDescentsRingElement.as_ordered_terms"></a>
+
+#### as\_ordered\_terms
+
+```python
+def as_ordered_terms(*_, **__)
+```
+
+Terms sorted by permutation length, permutation, then ``num_vars`` (sympy printing hook).
+
 <a id="schubmult.rings.schubert.quantum_double_schubert_ring"></a>
 
 # schubmult.rings.schubert.quantum\_double\_schubert\_ring
+
+Quantum double Schubert polynomial ring: the ``QDSx`` interface.
+
+`QuantumDoubleSchubertRing` represents quantum double Schubert polynomials
+``S^q_w(x; y)`` with quantum parameters ``q_1, q_2, ...`` (the module-level
+``q_var``), dispatching products to `schubmult.mult.quantum_double`. Elements
+can be converted to/from the classical basis via ``as_classical``/``as_quantum``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.is_fact_elem_sym"></a>
+
+#### is\_fact\_elem\_sym
+
+```python
+def is_fact_elem_sym(obj)
+```
+
+Whether ``obj`` is an (unevaluated) quantum factorial elementary symmetric function.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertElement"></a>
+
+## QuantumDoubleSchubertElement Objects
+
+```python
+class QuantumDoubleSchubertElement(BaseSchubertElement)
+```
+
+An element of a `QuantumDoubleSchubertRing`: ``{Permutation: coeff}`` in the basis ``S^q_w(x; y)``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertElement.subs"></a>
+
+#### subs
+
+```python
+def subs(old, new)
+```
+
+Substitute by round-tripping through the classical basis.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing"></a>
+
+## QuantumDoubleSchubertRing Objects
+
+```python
+class QuantumDoubleSchubertRing(BaseSchubertRing)
+```
+
+The ring of quantum double Schubert polynomials; ``QDSx`` is the standard constructor.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k)
+```
+
+The ``QDSchubPoly`` display symbol for basis element ``k``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.symbol_elem_func"></a>
+
+#### symbol\_elem\_func
+
+```python
+@property
+def symbol_elem_func()
+```
+
+`QFactorialElemSym`.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.elem_sym_subs"></a>
+
+#### elem\_sym\_subs
+
+```python
+def elem_sym_subs(kk)
+```
+
+Substitution dict ``{e_p_k: elem_sym_poly_q(p, k, x)}`` for all ``1 <= p <= k <= kk``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.elem_sym"></a>
+
+#### elem\_sym
+
+```python
+@property
+def elem_sym()
+```
+
+`QFactorialElemSym`.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.is_elem_mul_type"></a>
+
+#### is\_elem\_mul\_type
+
+```python
+def is_elem_mul_type(other)
+```
+
+Whether ``other`` is a quantum factorial elementary symmetric function.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.elem_mul"></a>
+
+#### elem\_mul
+
+```python
+def elem_mul(ring_elem, elem)
+```
+
+Multiply by a quantum factorial elementary symmetric function via the quantum positional
+Pieri rule (``elem_sym_positional_perms_q``), each term carrying its ``q``-monomial.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Structure constants via ``schubmult_q_double_fast``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.in_quantum_basis"></a>
+
+#### in\_quantum\_basis
+
+```python
+def in_quantum_basis(elem)
+```
+
+Identity (this ring is already quantum).
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.in_classical_basis"></a>
+
+#### in\_classical\_basis
+
+```python
+def in_classical_basis(elem)
+```
+
+Expand each ``S^q_w`` as a classical double Schubert element via ``quantum_as_classical_schubpoly``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.classical_elem_func"></a>
+
+#### classical\_elem\_func
+
+```python
+@property
+def classical_elem_func()
+```
+
+Quantum elementary symmetric function valued in the classical `DoubleSchubertRing`, via the
+recursion ``E_p(k) = (x_k - y_{k-p+1}) E_{p-1}(k-1) + E_p(k-1) + q_{k-1} E_{p-2}(k-2)``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.quantum_as_classical_schubpoly"></a>
+
+#### quantum\_as\_classical\_schubpoly
+
+```python
+@cache
+def quantum_as_classical_schubpoly(perm)
+```
+
+``S^q_perm`` expanded in the classical double Schubert basis (cached).
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+@cache
+def cached_schubpoly(k)
+```
+
+The explicit quantum double Schubert polynomial ``S^q_k(x; y)`` (cached).
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Structure constants with (partially) positive coefficients via ``schubmult_q_generic_partial_posify``.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.double_mul"></a>
+
+#### double\_mul
+
+```python
+@property
+def double_mul()
+```
+
+`schubmult.mult.quantum_double.schubmult_q_double_fast`.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.single_mul"></a>
+
+#### single\_mul
+
+```python
+@property
+def single_mul()
+```
+
+`schubmult.mult.quantum.schubmult_q_fast`.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.mult_poly_single"></a>
+
+#### mult\_poly\_single
+
+```python
+@property
+def mult_poly_single()
+```
+
+`schubmult.mult.quantum.mult_poly_q`.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.positive_elem_sym_rep"></a>
+
+#### positive\_elem\_sym\_rep
+
+```python
+def positive_elem_sym_rep(perm, index=1)
+```
+
+Manifestly positive expansion of ``S^q_perm`` in quantum factorial elementary symmetric functions (forward).
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.positive_elem_sym_rep_backward"></a>
+
+#### positive\_elem\_sym\_rep\_backward
+
+```python
+def positive_elem_sym_rep_backward(perm)
+```
+
+Like ``positive_elem_sym_rep`` but peeling from the last descent backward.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.mult_poly_double"></a>
+
+#### mult\_poly\_double
+
+```python
+@property
+def mult_poly_double()
+```
+
+`schubmult.mult.quantum_double.mult_poly_q_double`.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.from_expr"></a>
+
+#### from\_expr
+
+```python
+def from_expr(expr)
+```
+
+Convert a polynomial to the quantum basis by repeatedly peeling off the leading monomial's
+Schubert term; falls back to ``mul_expr`` on the identity if that fails.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.handle_sympoly"></a>
+
+#### handle\_sympoly
+
+```python
+def handle_sympoly(other)
+```
+
+Evaluate symmetric-function coefficients to polynomials.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, x)
+```
+
+Multiply by an expression: single ``x`` variables via ``mult_poly_q_double``, quantum factorial
+elementary symmetric functions via ``elem_mul``, ``Add``/``Mul``/``Pow`` recursively, else as a coefficient.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list or a polynomial expression.
+
+<a id="schubmult.rings.schubert.quantum_double_schubert_ring.QDSx"></a>
+
+#### QDSx
+
+```python
+def QDSx(x, genset=GeneratingSet("y"))
+```
+
+Construct a quantum double Schubert element in ``x`` with coefficient alphabet ``genset``
+(a `GeneratingSet` or a label string); e.g. ``QDSx([3, 1, 2])`` is ``S^q_{312}(x; y)``.
 
 <a id="schubmult.rings.schubert.base_schubert_ring"></a>
 
 # schubmult.rings.schubert.base\_schubert\_ring
 
+Abstract base classes shared by every Schubert-family ring.
+
+`BaseSchubertRing` holds a primary generating set (``genset``, the ``x`` variables)
+and a coefficient generating set (``coeff_genset``, the ``y``/``z`` variables, or
+``None`` for single Schubert polynomials), and defines the ring-level hooks that
+concrete rings fill in: which multiplication kernel to use, how to expand a basis
+element to a polynomial, how to print it, and how to change basis. `BaseSchubertElement`
+is the corresponding dict-like element type (``{Permutation: coefficient}``).
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement"></a>
+
+## BaseSchubertElement Objects
+
+```python
+class BaseSchubertElement(BaseRingElement)
+```
+
+A linear combination of Schubert-family basis elements, stored as ``{Permutation: coeff}``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.mult_poly"></a>
+
+#### mult\_poly
+
+```python
+def mult_poly(poly)
+```
+
+Multiply this element by an arbitrary polynomial ``poly`` in the ring's ``genset`` variables.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.in_schubert_schur_basis"></a>
+
+#### in\_schubert\_schur\_basis
+
+```python
+def in_schubert_schur_basis(numvars)
+```
+
+Expand into the Schubert-tensor-Schur basis of the tensor square ring, splitting off the
+symmetric part in the last ``numvars`` variables.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.in_SEM_basis"></a>
+
+#### in\_SEM\_basis
+
+```python
+def in_SEM_basis(elem_func=None)
+```
+
+Expand as a polynomial in elementary symmetric functions (the "SEM" presentation), using
+``elem_func`` (default: the ring's symbolic ``symbol_elem_func``) as the elementary symmetric symbol.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.as_ordered_terms"></a>
+
+#### as\_ordered\_terms
+
+```python
+def as_ordered_terms(*_, **__)
+```
+
+Terms ``coeff * basis_symbol`` sorted by permutation length then lexicographically (sympy printing hook).
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.expand"></a>
+
+#### expand
+
+```python
+def expand(deep=True, *args, **kwargs)
+```
+
+With ``deep=True`` (default) expand to an explicit polynomial in the variables; with
+``deep=False`` only expand each coefficient, keeping the Schubert basis.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.as_expr"></a>
+
+#### as\_expr
+
+```python
+def as_expr()
+```
+
+Sum of the ``as_terms()`` as a sympy ``Add``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.as_polynomial"></a>
+
+#### as\_polynomial
+
+```python
+def as_polynomial()
+```
+
+Expand to an explicit polynomial: ``sum coeff * SchubertPoly(perm)``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.as_classical"></a>
+
+#### as\_classical
+
+```python
+def as_classical()
+```
+
+Re-express in the classical (non-quantum) Schubert basis.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.as_quantum"></a>
+
+#### as\_quantum
+
+```python
+def as_quantum()
+```
+
+Re-express in the quantum Schubert basis.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.almosteq"></a>
+
+#### almosteq
+
+```python
+def almosteq(other)
+```
+
+Equality up to coefficient expansion (handles elements of different but compatible rings).
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.strip_zeros"></a>
+
+#### strip\_zeros
+
+```python
+def strip_zeros()
+```
+
+Drop basis elements whose coefficient is exactly zero.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing"></a>
+
+## BaseSchubertRing Objects
+
+```python
+class BaseSchubertRing(BaseRing)
+```
+
+Abstract base ring for Schubert-family polynomials.
+
+Concrete subclasses supply the multiplication kernels (``double_mul``/``single_mul``,
+``mult_poly_single``/``mult_poly_double``), the basis-element expansion
+(``cached_schubpoly``), printing (``printing_term``), coercion, and basis changes.
+Two rings compare equal iff they have the same type and generating sets.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(genset, coeff_genset, domain=None)
+```
+
+**Arguments**:
+
+- `genset` - Primary generating set (the ``x`` variables).
+- `coeff_genset` - Coefficient generating set (``y``/``z``), or a set with ``label=None`` for single rings.
+- `domain` - Optional coefficient domain passed to `BaseRing`.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.mul"></a>
+
+#### mul
+
+```python
+def mul(elem, other)
+```
+
+Multiply two elements via `_mul_schub_dicts`, which dispatches to the appropriate
+`schubmult.mult` kernel based on both rings' generating sets; scalars go through `BaseRing.mul`.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Hook: build an element from ``x`` (permutation, code, or expression).
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k)
+```
+
+Hook: the sympy symbol displayed for basis element ``k``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.coproduct_on_basis"></a>
+
+#### coproduct\_on\_basis
+
+```python
+def coproduct_on_basis(k)
+```
+
+Hook: coproduct of basis element ``k`` in the tensor square ring.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.is_elem_mul_type"></a>
+
+#### is\_elem\_mul\_type
+
+```python
+def is_elem_mul_type(elem)
+```
+
+Hook: whether ``elem`` should be multiplied via the elementary-symmetric fast path.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.elem_mul"></a>
+
+#### elem\_mul
+
+```python
+def elem_mul(ring_elem, elem)
+```
+
+Hook: elementary-symmetric fast-path multiplication.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.elem_sym"></a>
+
+#### elem\_sym
+
+```python
+@property
+def elem_sym()
+```
+
+Hook: the elementary symmetric polynomial function used by this ring.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.symbol_elem_func"></a>
+
+#### symbol\_elem\_func
+
+```python
+@property
+def symbol_elem_func()
+```
+
+Hook: symbolic (unevaluated) elementary symmetric function for ``in_SEM_basis``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.elem_sym_subs"></a>
+
+#### elem\_sym\_subs
+
+```python
+def elem_sym_subs(kk)
+```
+
+Hook: substitution dict turning the symbolic elementary symmetric symbols back into polynomials.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.domain_new"></a>
+
+#### domain\_new
+
+```python
+def domain_new(element, orig_domain=None)
+```
+
+Coerce ``element`` into the coefficient domain, refusing anything containing a ``genset`` variable.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.genset"></a>
+
+#### genset
+
+```python
+@property
+def genset()
+```
+
+Primary generating set (the ``x`` variables).
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.coeff_genset"></a>
+
+#### coeff\_genset
+
+```python
+@property
+def coeff_genset()
+```
+
+Coefficient generating set (``y``/``z`` variables); ``label`` is ``None`` for single rings.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.in_quantum_basis"></a>
+
+#### in\_quantum\_basis
+
+```python
+def in_quantum_basis(elem)
+```
+
+Hook: re-express ``elem`` in the quantum Schubert basis.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.in_classical_basis"></a>
+
+#### in\_classical\_basis
+
+```python
+def in_classical_basis(elem)
+```
+
+Hook: re-express ``elem`` in the classical Schubert basis.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.quantum_schubpoly"></a>
+
+#### quantum\_schubpoly
+
+```python
+def quantum_schubpoly(perm)
+```
+
+Hook: the quantum Schubert polynomial for ``perm``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+def cached_product(u, v, basis2)
+```
+
+Hook: cached structure constants of ``S_u * S_v`` with ``v`` in ``basis2``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+def cached_positive_product(u, v, basis2)
+```
+
+Hook: like ``cached_product`` but with manifestly positive coefficients.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, x)
+```
+
+Hook: multiply ``elem`` by a symbolic expression ``x``.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.double_mul"></a>
+
+#### double\_mul
+
+```python
+@property
+def double_mul()
+```
+
+Hook: the double-Schubert multiplication kernel (e.g. ``schubmult_double``).
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.single_mul"></a>
+
+#### single\_mul
+
+```python
+@property
+def single_mul()
+```
+
+Hook: the single-Schubert multiplication kernel (e.g. ``schubmult_py``).
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.mult_poly_single"></a>
+
+#### mult\_poly\_single
+
+```python
+@property
+def mult_poly_single()
+```
+
+Hook: the single-variant multiply-by-polynomial kernel.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.mult_poly_double"></a>
+
+#### mult\_poly\_double
+
+```python
+@property
+def mult_poly_double()
+```
+
+Hook: the double-variant multiply-by-polynomial kernel.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.quantum_elem_func"></a>
+
+#### quantum\_elem\_func
+
+```python
+@property
+def quantum_elem_func()
+```
+
+Hook: the quantum elementary symmetric function.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+def cached_schubpoly(k)
+```
+
+Hook: the (cached) explicit polynomial for basis element ``k``.
+
 <a id="schubmult.rings.schubert.double_schubert_ring"></a>
 
 # schubmult.rings.schubert.double\_schubert\_ring
+
+Double Schubert polynomial ring: the ``DSx`` interface.
+
+`DoubleSchubertRing` represents ``Z[y][x]`` in the basis of double Schubert
+polynomials ``S_w(x; y)``, dispatching products to `schubmult.mult.double`.
+It is also the workhorse behind the single ring (`schubert_ring.SingleSchubertRing`
+is a `DoubleSchubertRing` with an all-zero coefficient alphabet). Beyond ring
+arithmetic, `DoubleSchubertElement` supports divided differences, isobaric
+divided differences, variable substitution/evaluation, coproducts, and
+expansion into elementary-symmetric ("CEM"/"SEM") bases.
+
+Variants: `ElemDoubleSchubertRing` keeps coefficients as unevaluated factorial
+elementary symmetric functions; `DoubleSchubertRingDown` uses the descent-side
+("down") kernels.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.is_fact_elem_sym"></a>
+
+#### is\_fact\_elem\_sym
+
+```python
+def is_fact_elem_sym(obj)
+```
+
+Whether ``obj`` is an (unevaluated) factorial elementary symmetric function.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.is_fact_complete_sym"></a>
+
+#### is\_fact\_complete\_sym
+
+```python
+def is_fact_complete_sym(obj)
+```
+
+Whether ``obj`` is an (unevaluated) factorial complete homogeneous symmetric function.
 
 <a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement"></a>
 
@@ -3091,16 +4705,876 @@ Return a transition function from FundamentalSlideBasis to *other_basis*.
 class DoubleSchubertElement(BaseSchubertElement)
 ```
 
-Algebra with sympy coefficients
-and a dict basis
+An element of a `DoubleSchubertRing`: ``{Permutation: coefficient}`` in the
+double Schubert basis ``S_w(x; y)``, with sympy coefficients in ``y``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.to_genset_dict"></a>
+
+#### to\_genset\_dict
+
+```python
+def to_genset_dict(trim=False)
+```
+
+Expand to a polynomial and return ``{exponent_tuple: coeff}`` over the ``x`` variables;
+``trim=True`` merges keys that differ only by trailing zeros.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.divdiff"></a>
+
+#### divdiff
+
+```python
+def divdiff(i)
+```
+
+Divided difference ``partial_i``: ``S_w -> S_{w s_i}`` when ``i`` is a descent of ``w``, else 0.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.simpleref"></a>
+
+#### simpleref
+
+```python
+def simpleref(i)
+```
+
+Action of the simple reflection ``s_i`` on the ``x`` variables: ``f + (x_{i+1} - x_i) partial_i f``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.coeff_isobaric"></a>
+
+#### coeff\_isobaric
+
+```python
+def coeff_isobaric(i, beta)
+```
+
+Isobaric divided difference acting on the ``y`` (coefficient) alphabet, transported through
+the basis via the antipode-style inversion ``S_w -> (-1)^{l(w)} S_{w^{-1}}``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.isobaric"></a>
+
+#### isobaric
+
+```python
+def isobaric(i, beta)
+```
+
+Beta-deformed isobaric divided difference ``pi_i = partial_i + beta (x_i partial_i - 1)``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.divdiff_perm"></a>
+
+#### divdiff\_perm
+
+```python
+def divdiff_perm(perm)
+```
+
+Apply ``partial_w`` for ``w = perm``, peeling simple reflections from the last descent.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.isobaric_perm"></a>
+
+#### isobaric\_perm
+
+```python
+def isobaric_perm(perm, beta)
+```
+
+Apply the beta-isobaric ``pi_w`` for ``w = perm``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.isobaric_plus_beta"></a>
+
+#### isobaric\_plus\_beta
+
+```python
+def isobaric_plus_beta(i, beta)
+```
+
+The variant ``partial_i + beta x_i partial_i`` (isobaric without the ``-beta`` identity term).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.act"></a>
+
+#### act
+
+```python
+def act(perm)
+```
+
+Permute the ``x`` variables by ``perm``, as a composition of ``simpleref``s.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.max_index"></a>
+
+#### max\_index
+
+```python
+def max_index()
+```
+
+The largest ``x`` index (1-indexed) any basis permutation actually depends on.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.eval"></a>
+
+#### eval
+
+```python
+def eval(x)
+```
+
+Substitute ``{generator: value}`` pairs one at a time (via ``pull_out_gen``); returns a
+scalar if the result collapses to the identity basis element.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.subs"></a>
+
+#### subs
+
+```python
+def subs(old, new)
+```
+
+Substitute ``old -> new`` where ``old`` is an ``x`` variable (moved to the last position and
+pulled out via ``pull_out_var``), a ``y`` variable (transported through the basis), or a plain
+coefficient symbol.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.free_symbols"></a>
+
+#### free\_symbols
+
+```python
+@property
+def free_symbols()
+```
+
+Coefficient symbols plus the ``x``/``y`` variables the basis permutations actually depend on.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.pull_out_gen"></a>
+
+#### pull\_out\_gen
+
+```python
+def pull_out_gen(gen)
+```
+
+Factor out all dependence on one generator ``gen`` (an ``x`` or ``y`` variable), returning an
+element over a `MaskedGeneratingSet` ring with ``gen`` removed and explicit ``(gen - y_j)``
+(or factorial-elementary-symmetric) prefactors.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.in_CEM_basis"></a>
+
+#### in\_CEM\_basis
+
+```python
+def in_CEM_basis()
+```
+
+Expand in the complete-elementary-monomial (CEM) basis using the ring's symbolic elementary function.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.cem_rep"></a>
+
+#### cem\_rep
+
+```python
+def cem_rep(elem_func, mumu=None)
+```
+
+CEM expansion with a custom ``elem_func``; ``mumu`` selects a dominant permutation to expand
+against (defaults to the classical route).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.coproduct"></a>
+
+#### coproduct
+
+```python
+def coproduct(*indices,
+              alt_coeff_genset=None,
+              on_coeff_gens=False,
+              gname1=None,
+              gname2=None)
+```
+
+Coproduct splitting the ``x`` variables (or ``y`` if ``on_coeff_gens``) at the given 1-indexed
+``indices``: returns an element of the `TensorRing` of two `DoubleSchubertRing`s over the
+complementary `MaskedGeneratingSet`s, labeled ``gname1``/``gname2``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.max_gens"></a>
+
+#### max\_gens
+
+```python
+@cached_property
+def max_gens()
+```
+
+Largest 0-indexed descent over all basis permutations.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.positive_elem_sym_rep"></a>
+
+#### positive\_elem\_sym\_rep
+
+```python
+def positive_elem_sym_rep()
+```
+
+Manifestly positive expansion in factorial elementary symmetric functions (forward ``pull_out_var``).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.positive_elem_sym_rep_backward"></a>
+
+#### positive\_elem\_sym\_rep\_backward
+
+```python
+def positive_elem_sym_rep_backward()
+```
+
+Like ``positive_elem_sym_rep`` but peeling from the last descent backward.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.antipode"></a>
+
+#### antipode
+
+```python
+def antipode()
+```
+
+The antipode: swap the two alphabets and invert each basis permutation (see `DoubleSchubertRing.antipode`).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing"></a>
+
+## DoubleSchubertRing Objects
+
+```python
+class DoubleSchubertRing(BaseSchubertRing)
+```
+
+The ring of double Schubert polynomials ``S_w(x; y)`` over ``genset`` (``x``) and
+``coeff_genset`` (``y``). Call the ring with a permutation, Lehmer code, or polynomial
+expression to construct an element; the module-level ``DSx`` is the standard instance.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.coeff_ring"></a>
+
+#### coeff\_ring
+
+```python
+@cached_property
+def coeff_ring()
+```
+
+The single Schubert ring over the coefficient alphabet ``y`` (used by ``coeff_isobaric``).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.antipode_ring"></a>
+
+#### antipode\_ring
+
+```python
+@cached_property
+def antipode_ring()
+```
+
+The same ring with the two alphabets swapped.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.antipode"></a>
+
+#### antipode
+
+```python
+def antipode(elem)
+```
+
+Map ``sum c_w S_w(x; y)`` to ``sum c_w S_{w^{-1}}(y; x)`` in the swapped-alphabet ring.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.rmul"></a>
+
+#### rmul
+
+```python
+def rmul(elem, other)
+```
+
+Right-multiply by a scalar (coefficient-domain element) or, failing that, by an expression.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.positive_elem_sym_rep"></a>
+
+#### positive\_elem\_sym\_rep
+
+```python
+def positive_elem_sym_rep(perm, index=1)
+```
+
+Manifestly positive expansion of ``S_perm`` in factorial elementary symmetric functions, peeling
+the first variable of ``~perm`` at each step (``pull_out_var(1, ...)``).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.positive_elem_sym_rep_backward"></a>
+
+#### positive\_elem\_sym\_rep\_backward
+
+```python
+def positive_elem_sym_rep_backward(perm)
+```
+
+Like ``positive_elem_sym_rep`` but peeling from the last descent of ``~perm`` backward.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k, prefix="")
+```
+
+The ``DSchubPoly`` display symbol for basis element ``k``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.elem_sym"></a>
+
+#### elem\_sym
+
+```python
+@property
+def elem_sym()
+```
+
+`FactorialElemSym`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.is_elem_mul_type"></a>
+
+#### is\_elem\_mul\_type
+
+```python
+def is_elem_mul_type(other)
+```
+
+Whether ``other`` is a factorial elementary symmetric function (eligible for ``elem_mul``).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.elem_mul"></a>
+
+#### elem\_mul
+
+```python
+def elem_mul(ring_elem, elem)
+```
+
+Multiply by a factorial elementary symmetric function in ``x`` variables via the positional
+Pieri rule (``elem_sym_positional_perms``), expanding the leftover factor with ``expand_func``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.symbol_elem_func"></a>
+
+#### symbol\_elem\_func
+
+```python
+@property
+def symbol_elem_func()
+```
+
+`FactorialElemSym` (kept unevaluated for symbolic expansions).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.schubert_schur_elem_func"></a>
+
+#### schubert\_schur\_elem\_func
+
+```python
+def schubert_schur_elem_func(numvars)
+```
+
+Elementary-symmetric substitute for the Schubert-tensor-Schur expansion: ``e_p(x_1..x_k)`` maps
+to a Schubert basis element on the left factor when ``k >= numvars`` and on the right otherwise.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.in_schubert_schur_basis"></a>
+
+#### in\_schubert\_schur\_basis
+
+```python
+def in_schubert_schur_basis(perm, numvars)
+```
+
+Expand ``S_perm`` in the Schubert-tensor-Schur basis, treating the last ``numvars`` variables
+as the symmetric (Schur) part.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.in_descending_schur_basis"></a>
+
+#### in\_descending\_schur\_basis
+
+```python
+def in_descending_schur_basis(perm, numvars)
+```
+
+Iterate ``in_schubert_schur_basis`` down through ``numvars, numvars-1, ..., 1``, producing a
+nested tensor of Schur-like factors.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.elem_sym_subs"></a>
+
+#### elem\_sym\_subs
+
+```python
+def elem_sym_subs(kk)
+```
+
+Substitution dict ``{e_p_k: elem_sym_poly(p, k, x)}`` for all ``1 <= p <= k <= kk``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.flip"></a>
+
+#### flip
+
+```python
+@staticmethod
+def flip(elem)
+```
+
+Re-express a factorial elementary symmetric function with its two alphabets swapped, via the
+corresponding Grassmannian Schubert polynomial's CEM expansion.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.in_quantum_basis"></a>
+
+#### in\_quantum\_basis
+
+```python
+def in_quantum_basis(elem)
+```
+
+Expand each basis element via ``quantum_schubpoly`` (a quantum double Schubert element).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.in_classical_basis"></a>
+
+#### in\_classical\_basis
+
+```python
+def in_classical_basis(elem)
+```
+
+Identity (this ring is already classical).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.quantum_schubpoly"></a>
+
+#### quantum\_schubpoly
+
+```python
+@cache
+def quantum_schubpoly(perm)
+```
+
+The classical ``S_perm`` expressed in the quantum double Schubert basis (via ``quantum_elem_func``).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Structure constants of ``S_u(x; y) * S_v(x; z)`` (``z`` = ``basis2.coeff_genset``), via ``schubmult_double``.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Like ``cached_product`` but with manifestly positive coefficients (generic alphabets, then substituted).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.double_mul"></a>
+
+#### double\_mul
+
+```python
+@property
+def double_mul()
+```
+
+`schubmult.mult.double.schubmult_double`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.single_mul"></a>
+
+#### single\_mul
+
+```python
+@property
+def single_mul()
+```
+
+`schubmult.mult.single.schubmult_py`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.mult_poly_single"></a>
+
+#### mult\_poly\_single
+
+```python
+@property
+def mult_poly_single()
+```
+
+`schubmult.mult.single.mult_poly_py`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.mult_poly_double"></a>
+
+#### mult\_poly\_double
+
+```python
+@property
+def mult_poly_double()
+```
+
+`schubmult.mult.double.mult_poly_double`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.quantum_elem_func"></a>
+
+#### quantum\_elem\_func
+
+```python
+@property
+def quantum_elem_func()
+```
+
+Elementary symmetric function valued in the quantum double Schubert ring, computed by a
+divide-and-conquer recursion on the variable set (used by ``quantum_schubpoly``).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.monomial_schub"></a>
+
+#### monomial\_schub
+
+```python
+def monomial_schub(monom)
+```
+
+The monomial ``x^monom`` expressed in the Schubert basis (trailing zeros in ``monom`` ignored).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+@cache
+def cached_schubpoly(k)
+```
+
+The explicit polynomial ``S_k(x; y)`` (cached).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.complete_mul"></a>
+
+#### complete\_mul
+
+```python
+def complete_mul(elem, x)
+```
+
+Multiply by a factorial complete homogeneous symmetric function in ``x`` variables via
+``complete_sym_positional_perms`` (the dual Pieri rule).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.handle_sympoly"></a>
+
+#### handle\_sympoly
+
+```python
+def handle_sympoly(other)
+```
+
+How a symmetric-function coefficient is stored: evaluated to a polynomial here.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.single_variable"></a>
+
+#### single\_variable
+
+```python
+def single_variable(elem, varnum)
+```
+
+Multiply by the single variable ``x_varnum`` (equivariant Monk rule).
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.from_expr"></a>
+
+#### from\_expr
+
+```python
+def from_expr(expr)
+```
+
+Convert a polynomial expression in ``x``/``y`` into the Schubert basis.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, x)
+```
+
+Multiply ``elem`` by an arbitrary expression ``x``: single variables use the Monk rule,
+(factorial) elementary/complete symmetric functions use their Pieri rules (splitting out
+variables from the wrong alphabet as needed), and ``Add``/``Mul``/``Pow`` recurse; anything
+else is treated as a coefficient.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list, an existing element of this ring, or an expression.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRingDown"></a>
+
+## DoubleSchubertRingDown Objects
+
+```python
+class DoubleSchubertRingDown(DoubleSchubertRing)
+```
+
+`DoubleSchubertRing` using the descent-side ("down") multiplication kernels
+(``schubmult_double_down``/``schubmult_py_down``); basis symbols print with an ``op`` prefix.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRingDown.double_mul"></a>
+
+#### double\_mul
+
+```python
+@property
+def double_mul()
+```
+
+`schubmult.mult.double.schubmult_double_down`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRingDown.single_mul"></a>
+
+#### single\_mul
+
+```python
+@property
+def single_mul()
+```
+
+`schubmult.mult.single.schubmult_py_down`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRingDown.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Down-kernel structure constants over generic alphabets, substituted back to the ring's alphabets.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRingDown.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Positive variant of ``cached_product`` for the down kernel.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertRingDown.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k, prefix="op")
+```
+
+The ``DSchubPoly`` display symbol, prefixed with ``op`` by default.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing"></a>
+
+## ElemDoubleSchubertRing Objects
+
+```python
+class ElemDoubleSchubertRing(DoubleSchubertRing)
+```
+
+`DoubleSchubertRing` whose coefficients are kept as unevaluated `FactorialElemSym`
+functions instead of being expanded to polynomials; products use the ``*_from_elems`` kernels.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.replacematch"></a>
+
+#### replacematch
+
+```python
+@property
+def replacematch()
+```
+
+A ``(a, b) -> expression`` rewriter turning differences ``a - b`` into `FactorialElemSym(1, 1, ...)`
+forms, respecting which alphabet each symbol belongs to.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.elem_func"></a>
+
+#### elem\_func
+
+```python
+@property
+def elem_func()
+```
+
+`FactorialElemSym`.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.handle_sympoly"></a>
+
+#### handle\_sympoly
+
+```python
+def handle_sympoly(other)
+```
+
+Keep symmetric-function coefficients unevaluated.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.elem_mul"></a>
+
+#### elem\_mul
+
+```python
+def elem_mul(ring_elem, elem)
+```
+
+Positional Pieri rule for a factorial elementary symmetric function, keeping the leftover
+factor as an unevaluated coefficient.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.complete_mul"></a>
+
+#### complete\_mul
+
+```python
+def complete_mul(elem, x)
+```
+
+Dual Pieri rule for a factorial complete symmetric function, keeping the leftover factor unevaluated.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Structure constants via ``schubmult_double_from_elems`` with `FactorialElemSym` coefficients.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Structure constants via the positive ``schubmult_double_alt_from_elems`` route.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.ElemDoubleSchubertRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list, an element of this ring, or an expression.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DSx"></a>
+
+#### DSx
+
+```python
+def DSx(x, genset=GeneratingSet("y"), elem_sym=False, down=False)
+```
+
+Construct a double Schubert polynomial element in ``x`` with coefficient alphabet ``genset``.
+
+``DSx([3, 1, 2])`` is ``S_{312}(x; y)``. Pass ``genset="z"`` (or a `GeneratingSet`) for a
+different coefficient alphabet; ``elem_sym=True`` uses `ElemDoubleSchubertRing`, ``down=True``
+uses `DoubleSchubertRingDown`.
 
 <a id="schubmult.rings.schubert.quantum_schubert_ring"></a>
 
 # schubmult.rings.schubert.quantum\_schubert\_ring
 
+Quantum (single) Schubert polynomial ring: the ``QSx`` interface.
+
+`QuantumSingleSchubertRing` is a `QuantumDoubleSchubertRing` with a zero
+coefficient alphabet. This module also re-exports the quantum double and
+parabolic quantum rings (``QDSx``, ``QPSx``, ``QPDSx``) for convenience.
+
+<a id="schubmult.rings.schubert.quantum_schubert_ring.QuantumSingleSchubertRing"></a>
+
+## QuantumSingleSchubertRing Objects
+
+```python
+class QuantumSingleSchubertRing(QuantumDoubleSchubertRing)
+```
+
+The ring of quantum Schubert polynomials ``S^q_w(x)``; ``QSx`` is the standard instance.
+
+<a id="schubmult.rings.schubert.quantum_schubert_ring.QuantumSingleSchubertRing.quantize"></a>
+
+#### quantize
+
+```python
+def quantize(poly)
+```
+
+Quantize a polynomial: expand in classical Schubert polynomials, reinterpret each ``S_w`` as
+the quantum ``S^q_w``, and expand back to a polynomial.
+
+<a id="schubmult.rings.schubert.quantum_schubert_ring.QuantumSingleSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Structure constants: ``schubmult_q_fast`` when ``basis2`` is this ring, else ``schubmult_q_double_fast``.
+
+<a id="schubmult.rings.schubert.quantum_schubert_ring.QuantumSingleSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Same as ``cached_product``.
+
+<a id="schubmult.rings.schubert.quantum_schubert_ring.QuantumSingleSchubertRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, x)
+```
+
+Multiply by an expression: single ``x`` variables via ``mult_poly_q``, ``Add``/``Mul``/``Pow``
+recursively, anything else as a coefficient.
+
+<a id="schubmult.rings.schubert.quantum_schubert_ring.QuantumSingleSchubertRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list, a classical or parabolic element (converted
+to the quantum basis), or a polynomial expression.
+
 <a id="schubmult.rings.schubert.double_grothendieck_ring"></a>
 
 # schubmult.rings.schubert.double\_grothendieck\_ring
+
+Double (equivariant K-theoretic) Grothendieck polynomial ring: the ``DGx`` interface.
+
+`DoubleGrothendieckRing` represents ``G_w(x; y)`` with deformation parameter
+``beta``. Products go through `schubmult.mult.groth_double.grothmult_double`
+(the K-theoretic Monk/Pieri machinery) where available, with a fallback that
+expands into the underlying `DoubleSchubertRing`. The ring also exposes the
+localization/vanishing data used to convert between the Schubert and
+Grothendieck bases (``permuted_subs_dict``, ``product_of_roots``,
+``exp_root``, ``chevalley``).
 
 <a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckElement"></a>
 
@@ -3111,6 +5585,26 @@ class DoubleGrothendieckElement(BaseSchubertElement)
 ```
 
 Element of a DoubleGrothendieckRing, stored as {Permutation: coeff}.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckElement.as_polynomial"></a>
+
+#### as\_polynomial
+
+```python
+def as_polynomial()
+```
+
+Expand to an explicit polynomial: ``sum coeff * G_w(x; y)``.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckElement.perm_subs"></a>
+
+#### perm\_subs
+
+```python
+def perm_subs(perm)
+```
+
+Localize at the torus fixed point ``perm``: substitute ``x_i -> (-) y_{perm(i)}`` (formal inverse).
 
 <a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing"></a>
 
@@ -3127,6 +5621,93 @@ no direct structure-constant formula for the product implemented here:
 instead both factors are expanded into the underlying ``DoubleSchubertRing``
 (via ``grothendieck_poly_with_ring``), multiplied there, and the product is
 converted back to the G-basis with ``to_groth_with_ring``.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.perm_subs"></a>
+
+#### perm\_subs
+
+```python
+def perm_subs(elem, perm)
+```
+
+Localize ``elem`` at ``perm``: expand into double Schubert polynomials and substitute
+``x_i -> -y_{perm(i)} / (1 + beta y_{perm(i)})``.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.double_mul"></a>
+
+#### double\_mul
+
+```python
+@property
+def double_mul()
+```
+
+`schubmult.mult.groth_double.grothmult_double`.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.single_mul"></a>
+
+#### single\_mul
+
+```python
+@property
+def single_mul()
+```
+
+`schubmult.mult.groth.grothmult_py`.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.beta"></a>
+
+#### beta
+
+```python
+@property
+def beta()
+```
+
+The deformation parameter.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.single_variable"></a>
+
+#### single\_variable
+
+```python
+@property
+def single_variable()
+```
+
+`schubmult.mult.groth_double.single_variable_groth` (K-theoretic Monk rule for ``x_k``).
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.vanish_subs_dict"></a>
+
+#### vanish\_subs\_dict
+
+```python
+@cached_property
+def vanish_subs_dict()
+```
+
+Localization at the identity: ``x_i -> -y_i / (1 + beta y_i)`` for the first 50 variables.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.permuted_subs_dict"></a>
+
+#### permuted\_subs\_dict
+
+```python
+def permuted_subs_dict(perm, length=None)
+```
+
+Localization at ``perm``: ``x_i -> -y_{perm(i)} / (1 + beta y_{perm(i)})`` for ``i <= length``.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.product_of_roots"></a>
+
+#### product\_of\_roots
+
+```python
+@cache
+def product_of_roots(perm)
+```
+
+``prod_{(a,b) in Inv(perm^-1)} (y_a (-) y_b)``: the localization of ``G_perm`` at itself (Euler class).
 
 <a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.exp_root"></a>
 
@@ -3175,13 +5756,547 @@ Lenart--Postnikov K_T-Chevalley formula for ``e^weight * G_perm``.
 
 ``weight`` is an integer vector in the ``epsilon`` basis.
 
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.div_by_product_of_roots"></a>
+
+#### div\_by\_product\_of\_roots
+
+```python
+def div_by_product_of_roots(expr, perm)
+```
+
+Divide ``expr`` by ``product_of_roots(perm)`` one linear factor at a time, leaving any
+non-exact factors in the denominator (so the result may be a rational function).
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.mult_poly_double"></a>
+
+#### mult\_poly\_double
+
+```python
+@property
+def mult_poly_double()
+```
+
+`schubmult.mult.groth_double.mult_poly_groth_double`.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.mult_poly_single"></a>
+
+#### mult\_poly\_single
+
+```python
+@property
+def mult_poly_single()
+```
+
+`schubmult.mult.groth.mult_poly_groth`.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.schub_as_groth"></a>
+
+#### schub\_as\_groth
+
+```python
+@cache
+def schub_as_groth(perm)
+```
+
+The double Schubert polynomial ``S_perm`` expanded in the Grothendieck basis (cached).
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.from_double_schubert_elem"></a>
+
+#### from\_double\_schubert\_elem
+
+```python
+def from_double_schubert_elem(elem)
+```
+
+Convert a `DoubleSchubertElement` into this ring's Grothendieck basis.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, x)
+```
+
+Multiply by an expression: single ``x`` variables via the K-Monk rule, ``Add``/``Mul``/``Pow``
+recursively, anything else as a coefficient.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.mul"></a>
+
+#### mul
+
+```python
+def mul(elem, other)
+```
+
+Ring product via ``_best_effort_grothmult_double``.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.from_expr"></a>
+
+#### from\_expr
+
+```python
+def from_expr(expr)
+```
+
+Convert a polynomial into the Grothendieck basis by multiplying the identity by it.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+@cache
+def cached_schubpoly(k)
+```
+
+The explicit ``G_k(x; y)``, as a sum of `WCGraph` monomials weighted by ``beta^excess``.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k, prefix="")
+```
+
+The ``DoubleGrothendieckPoly`` display symbol for basis element ``k``.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list, an element of this ring, or a polynomial expression.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing.from_dict"></a>
+
+#### from\_dict
+
+```python
+def from_dict(dct)
+```
+
+Build an element from ``{Permutation: coeff}``, dropping exact zeros.
+
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DGx"></a>
+
+#### DGx
+
+```python
+def DGx(x, genset=GeneratingSet("y"))
+```
+
+Construct a double Grothendieck element in ``x`` with coefficient alphabet ``genset`` (a
+`GeneratingSet`, a label string, or ``"0"`` for the zero alphabet).
+
 <a id="schubmult.rings.schubert.beta_coxeter"></a>
 
 # schubmult.rings.schubert.beta\_coxeter
 
+Scaffold for a beta-deformed (Grothendieck / 0-Hecke) Coxeter operator ring.
+
+Intended to model the beta-isobaric divided differences ``pi_i = partial_i + beta (x_i partial_i - 1)``
+and their relations with the simple reflections (see the commented-out relations above
+`BetaCoxeterRing`). At present the implementation is an unmodified copy of
+`schubmult.rings.schubert.nil_hecke` -- `BetaCoxeterRing`/`BetaCoxeterElement` behave
+identically to `NilHeckeRing`/`NilHeckeElement`, and the deformation has not been wired in.
+Prefer `nil_hecke` for actual use; this module is kept as a starting point for that work.
+
+<a id="schubmult.rings.schubert.beta_coxeter.BetaCoxeterElement"></a>
+
+## BetaCoxeterElement Objects
+
+```python
+class BetaCoxeterElement(DomainElement, DefaultPrinting, dict)
+```
+
+An element of a `BetaCoxeterRing`; currently identical in behavior to `NilHeckeElement`.
+
+<a id="schubmult.rings.schubert.beta_coxeter.BetaCoxeterRing"></a>
+
+## BetaCoxeterRing Objects
+
+```python
+class BetaCoxeterRing(Ring, CompositeDomain)
+```
+
+Scaffold ring; currently identical in behavior to `NilHeckeRing` (see module docstring).
+
 <a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring"></a>
 
 # schubmult.rings.schubert.parabolic\_quantum\_double\_schubert\_ring
+
+Parabolic quantum double Schubert polynomial ring: the ``QPDSx`` interface.
+
+`ParabolicQuantumDoubleSchubertRing` models the quantum cohomology of a partial
+flag variety with block sizes ``index_comp``. Basis permutations must be
+parabolic (increasing within each block). Products are computed in the full
+flag quantum ring and projected down via the Peterson-Woodward comparison
+(`schubmult.mult.quantum_double.apply_peterson_woodward`, through
+``process_coeff_dict``). The parabolic quantum elementary symmetric functions
+acquire a ``q``-correction at each block boundary.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertElement"></a>
+
+## ParabolicQuantumDoubleSchubertElement Objects
+
+```python
+class ParabolicQuantumDoubleSchubertElement(BaseSchubertElement)
+```
+
+An element of a `ParabolicQuantumDoubleSchubertRing`.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertElement.index_comp"></a>
+
+#### index\_comp
+
+```python
+@property
+def index_comp()
+```
+
+The ring's block-size composition.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertElement.kill_ideal"></a>
+
+#### kill\_ideal
+
+```python
+def kill_ideal()
+```
+
+Drop basis permutations longer than ``sum(index_comp)`` (those lie in the ideal cut out by the parabolic).
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing"></a>
+
+## ParabolicQuantumDoubleSchubertRing Objects
+
+```python
+class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing)
+```
+
+Quantum double Schubert polynomials for the partial flag variety with block sizes ``index_comp``.
+Construct via ``QPDSx(*index_comp)([perm])`` or ``make_parabolic_quantum_basis``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(genset, coeff_genset, index_comp)
+```
+
+**Arguments**:
+
+- `genset` - Primary ``x`` alphabet.
+- `coeff_genset` - Coefficient ``y`` alphabet.
+- `index_comp` - Composition of block sizes; ``sum(index_comp)`` is the ambient ``n``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.symbol_elem_func"></a>
+
+#### symbol\_elem\_func
+
+```python
+@property
+def symbol_elem_func()
+```
+
+Symbolic elementary symmetric function ``e_p_k`` combined with complete symmetric corrections in ``-y``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.elem_sym_subs"></a>
+
+#### elem\_sym\_subs
+
+```python
+def elem_sym_subs(kk)
+```
+
+Substitution dict ``{e_p_k: elem_sym(p, k, x, 0)}`` for all ``1 <= p <= k <= kk``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.parabolic_index"></a>
+
+#### parabolic\_index
+
+```python
+@property
+def parabolic_index()
+```
+
+1-indexed positions of the simple reflections inside the parabolic subgroup (within-block positions).
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.quantum_basis"></a>
+
+#### quantum\_basis
+
+```python
+@property
+def quantum_basis()
+```
+
+The full-flag `QuantumDoubleSchubertRing` over the same alphabets.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.classical_basis"></a>
+
+#### classical\_basis
+
+```python
+@property
+def classical_basis()
+```
+
+The classical `DoubleSchubertRing` over the same alphabets.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.elem_sym"></a>
+
+#### elem\_sym
+
+```python
+def elem_sym(p, k, varl1, varl2)
+```
+
+Parabolic quantum double elementary symmetric polynomial ``E_p(x_1..x_k; y)``: classical below
+the first block boundary, with a ``q_j``-correction at each block boundary ``N_j``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.index_comp"></a>
+
+#### index\_comp
+
+```python
+@property
+def index_comp()
+```
+
+The block-size composition.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.process_coeff_dict"></a>
+
+#### process\_coeff\_dict
+
+```python
+def process_coeff_dict(coeff_dict)
+```
+
+Project a full-flag quantum coefficient dict onto this parabolic ring via Peterson-Woodward,
+extending the parabolic index if any permutation exceeds the ambient ``n``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Full-flag quantum double product (generic alphabets, substituted) then projected via ``process_coeff_dict``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.in_quantum_basis"></a>
+
+#### in\_quantum\_basis
+
+```python
+def in_quantum_basis(elem)
+```
+
+Expand into the full-flag quantum double Schubert basis via ``quantum_elem_func``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.in_classical_basis"></a>
+
+#### in\_classical\_basis
+
+```python
+def in_classical_basis(elem)
+```
+
+Expand into the classical double Schubert basis via ``quantum_as_classical_schubpoly``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.classical_in_basis"></a>
+
+#### classical\_in\_basis
+
+```python
+@cache
+def classical_in_basis(k)
+```
+
+Express the classical ``S_k`` in this parabolic quantum basis, by iteratively subtracting
+off lower-order corrections until the polynomials agree.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.classical_elem_func"></a>
+
+#### classical\_elem\_func
+
+```python
+@property
+def classical_elem_func()
+```
+
+Parabolic quantum elementary symmetric function valued in the classical `DoubleSchubertRing`.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.quantum_elem_func"></a>
+
+#### quantum\_elem\_func
+
+```python
+@property
+def quantum_elem_func()
+```
+
+Parabolic quantum elementary symmetric function valued in the full-flag `QuantumDoubleSchubertRing`.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k)
+```
+
+The ``PQDSchubPoly`` display symbol for basis element ``k``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.quantum_as_classical_schubpoly"></a>
+
+#### quantum\_as\_classical\_schubpoly
+
+```python
+@cache
+def quantum_as_classical_schubpoly(perm)
+```
+
+``S^{q,P}_perm`` expanded in the classical double Schubert basis, against the appropriate longest element.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+@cache
+def cached_schubpoly(k)
+```
+
+The explicit parabolic quantum double Schubert polynomial for ``k``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Positive variant of ``cached_product`` via ``schubmult_q_generic_partial_posify``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.double_mul"></a>
+
+#### double\_mul
+
+```python
+@property
+def double_mul()
+```
+
+``schubmult_q_double_fast`` followed by ``process_coeff_dict``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.single_mul"></a>
+
+#### single\_mul
+
+```python
+@property
+def single_mul()
+```
+
+``schubmult_q_fast`` followed by ``process_coeff_dict``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.mult_poly_single"></a>
+
+#### mult\_poly\_single
+
+```python
+@property
+def mult_poly_single()
+```
+
+`schubmult.mult.quantum.mult_poly_q`.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.mult_poly_double"></a>
+
+#### mult\_poly\_double
+
+```python
+@property
+def mult_poly_double()
+```
+
+`schubmult.mult.quantum_double.mult_poly_q_double`.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.from_expr"></a>
+
+#### from\_expr
+
+```python
+def from_expr(expr)
+```
+
+Convert a polynomial to this basis by peeling off leading monomials; raises ``ValueError`` if
+``expr`` lacks the within-block symmetry the parabolic ring requires.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, x)
+```
+
+Multiply by an expression by first converting it into this basis.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.ParabolicQuantumDoubleSchubertRing.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(x)
+```
+
+Build an element from a parabolic permutation/Lehmer list or an expression; raises ``ValueError``
+if the permutation is not parabolic for this ring's blocks.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.make_parabolic_quantum_basis"></a>
+
+#### make\_parabolic\_quantum\_basis
+
+```python
+def make_parabolic_quantum_basis(index_comp, coeff_genset)
+```
+
+The `ParabolicQuantumDoubleSchubertRing` in ``x`` for block sizes ``index_comp`` and coefficient alphabet ``coeff_genset``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.QPDSx_index"></a>
+
+#### QPDSx\_index
+
+```python
+def QPDSx_index(*args)
+```
+
+Return a constructor ``f(x, coeff_genset="y")`` building parabolic quantum double elements for block sizes ``args``.
+
+<a id="schubmult.rings.schubert.parabolic_quantum_double_schubert_ring.QPDSx"></a>
+
+#### QPDSx
+
+```python
+@cache
+def QPDSx(*args)
+```
+
+Cached constructor for block sizes ``args``; e.g. ``QPDSx(2, 1)([2, 1, 3])``.
 
 <a id="schubmult.rings.schubert.chevalley"></a>
 
@@ -3248,6 +6363,13 @@ Returns ``{(w, mu): coefficient}`` with ``mu`` an integer weight vector.
 
 # schubmult.rings.schubert.grothendieck\_ring
 
+Grothendieck polynomial ring (non-equivariant): the ``Gx`` interface.
+
+`GrothendieckRing` is the beta-deformation of `SingleSchubertRing`; basis
+elements ``G_w`` are the K-theoretic Schubert classes, with ``beta = 0``
+recovering ordinary Schubert polynomials. There is no coefficient alphabet yet
+(see `double_grothendieck_ring` for the equivariant version).
+
 <a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckElement"></a>
 
 ## GrothendieckElement Objects
@@ -3257,6 +6379,26 @@ class GrothendieckElement(BaseSchubertElement)
 ```
 
 Element of a GrothendieckRing, stored as {Permutation: coeff}.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckElement.as_polynomial"></a>
+
+#### as\_polynomial
+
+```python
+def as_polynomial()
+```
+
+Expand to an explicit polynomial: ``sum coeff * G_w(x)``.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckElement.mult_poly"></a>
+
+#### mult\_poly
+
+```python
+def mult_poly(poly)
+```
+
+Multiply by an arbitrary polynomial in ``x`` via the Grothendieck Chevalley rule (`mult_poly_groth`).
 
 <a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing"></a>
 
@@ -3280,17 +6422,446 @@ genset : GeneratingSet
 beta : sympy/symengine symbol, optional
     The deformation parameter. Defaults to Symbol("β").
 
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.beta"></a>
+
+#### beta
+
+```python
+@property
+def beta()
+```
+
+The deformation parameter.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.mult_poly_single"></a>
+
+#### mult\_poly\_single
+
+```python
+@property
+def mult_poly_single()
+```
+
+`mult_poly_groth` with this ring's ``beta`` bound.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.from_expr"></a>
+
+#### from\_expr
+
+```python
+def from_expr(expr)
+```
+
+Convert a polynomial to the Grothendieck basis: expand in Schubert polynomials first, then
+change basis Schubert -> Grothendieck.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, expr)
+```
+
+Multiply by an expression by first converting it into the Grothendieck basis.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Structure constants ``c^w_{u,v}(beta)`` via ``groth_mul_full_with_ring``; only same-ring products supported.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Same as ``cached_product``.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+@cache
+def cached_schubpoly(k)
+```
+
+The explicit Grothendieck polynomial ``G_k(x)`` (cached).
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k, prefix="")
+```
+
+The ``GrothendieckPoly`` display symbol for basis element ``k``.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list, an element of this ring, or a polynomial expression.
+
+<a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.from_dict"></a>
+
+#### from\_dict
+
+```python
+def from_dict(dct)
+```
+
+Build an element from ``{Permutation: coeff}``, dropping terms whose coefficient expands to zero.
+
 <a id="schubmult.rings.schubert.nil_hecke"></a>
 
 # schubmult.rings.schubert.nil\_hecke
+
+The nilHecke ring of divided-difference operators acting on Schubert polynomials.
+
+`NilHeckeRing` elements are ``{Permutation: coefficient}`` combinations of the
+divided-difference operators ``partial_w`` (printed ``df(w)``), with polynomial
+coefficients in the ``x`` variables multiplied on the left. ``partial_w`` acts on
+a `DoubleSchubertElement` via `NilHeckeElement.apply`, sending ``S_v -> S_{v w^{-1}}``
+when length-additive. Products use the descent-side kernel ``schubmult_double_down``
+to commute polynomial coefficients past operators. The module-level ``df`` is the
+standard instance in ``x``.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeElement"></a>
+
+## NilHeckeElement Objects
+
+```python
+class NilHeckeElement(DomainElement, DefaultPrinting, dict)
+```
+
+An element of a `NilHeckeRing`: ``{Permutation: coeff}`` combination of divided-difference operators.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeElement.apply"></a>
+
+#### apply
+
+```python
+def apply(other)
+```
+
+Act on a `DoubleSchubertElement`: each ``partial_w`` sends ``S_v -> S_{v w^{-1}}`` when
+``l(v w^{-1}) = l(v) - l(w)``, else kills it; coefficients multiply the result.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeElement.as_terms"></a>
+
+#### as\_terms
+
+```python
+def as_terms()
+```
+
+Terms ``coeff * df(w)`` in dict order (sympy printing hook).
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeElement.as_ordered_terms"></a>
+
+#### as\_ordered\_terms
+
+```python
+def as_ordered_terms(*_, **__)
+```
+
+Terms sorted by permutation length then lexicographically (sympy printing hook).
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeElement.as_coefficients_dict"></a>
+
+#### as\_coefficients\_dict
+
+```python
+def as_coefficients_dict()
+```
+
+``{df(w): coeff}`` mapping display symbols to coefficients.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeElement.expand"></a>
+
+#### expand
+
+```python
+def expand(deep=True, *args, **kwargs)
+```
+
+Expand each coefficient, keeping the operator basis.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeElement.as_expr"></a>
+
+#### as\_expr
+
+```python
+def as_expr()
+```
+
+Sum of the ``as_terms()`` as a sympy ``Add``.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing"></a>
+
+## NilHeckeRing Objects
+
+```python
+class NilHeckeRing(Ring, CompositeDomain)
+```
+
+The nilHecke ring in the alphabet ``genset``; see the module docstring. ``df`` is the standard instance.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.to_sympy"></a>
+
+#### to\_sympy
+
+```python
+def to_sympy(elem)
+```
+
+Convert an element to a sympy expression (``as_expr``).
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.isobaric"></a>
+
+#### isobaric
+
+```python
+def isobaric(perm, groth=False, *, groth_beta=None)
+```
+
+The isobaric divided difference ``pi_perm`` as a nilHecke element: ``pi_i = partial_i x_{i+1}``
+(or the Grothendieck version ``partial_i (1 + beta x_{i+1})`` with ``groth=True``), composed
+along a reduced word of ``perm``.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.g_isobaric"></a>
+
+#### g\_isobaric
+
+```python
+def g_isobaric(perm)
+```
+
+``isobaric(perm, groth=True)``.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.fgp_operator"></a>
+
+#### fgp\_operator
+
+```python
+def fgp_operator(k, length, q_var=GeneratingSet("q"))
+```
+
+The Fomin-Gelfand-Postnikov quantization of ``x_k`` as a nilHecke element:
+``x_k - sum_{i<k} q_i...q_{k-1} partial_{(i k)} + sum_{i>k} q_k...q_{i-1} partial_{(k i)}``.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.subs_fgp"></a>
+
+#### subs\_fgp
+
+```python
+def subs_fgp(poly, length)
+```
+
+Substitute every ``x_k`` in ``poly`` by its ``fgp_operator`` (quantize a polynomial).
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.mul_scalar"></a>
+
+#### mul\_scalar
+
+```python
+def mul_scalar(elem, other)
+```
+
+Multiply on the right by a polynomial/Schubert element, commuting it past the operators via
+``schubmult_double_down`` (Leibniz rule for divided differences).
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.mul_perm"></a>
+
+#### mul\_perm
+
+```python
+def mul_perm(elem, perm)
+```
+
+Right-multiply every operator ``partial_k`` by ``partial_perm``, keeping only length-additive products.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.rmul"></a>
+
+#### rmul
+
+```python
+def rmul(elem, other)
+```
+
+Left-multiply by a scalar/polynomial (coefficients sit on the left, so this is plain scaling).
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.mul"></a>
+
+#### mul
+
+```python
+def mul(elem, other)
+```
+
+Ring product: scalars scale, nilHecke elements combine via ``mul_scalar`` then ``mul_perm``, else ``mul_scalar``.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list (the operator ``partial_w``) or a polynomial (a scalar).
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k)
+```
+
+The display symbol ``df(w)`` / ``∂(w)`` / ``\partial^w`` for the operator indexed by ``k``.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.domain_new"></a>
+
+#### domain\_new
+
+```python
+def domain_new(element, orig_domain=None)
+```
+
+Coerce ``element`` into the coefficient domain, refusing ring elements and anything containing an ``x`` variable.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.genset"></a>
+
+#### genset
+
+```python
+@property
+def genset()
+```
+
+The ``x`` alphabet.
+
+<a id="schubmult.rings.schubert.nil_hecke.NilHeckeRing.from_expr"></a>
+
+#### from\_expr
+
+```python
+def from_expr(x)
+```
+
+Build the scalar element ``x * partial_id``.
 
 <a id="schubmult.rings.schubert.schubert_ring"></a>
 
 # schubmult.rings.schubert.schubert\_ring
 
+Ordinary (single) Schubert polynomial ring: the ``Sx`` interface.
+
+`SingleSchubertRing` is a `DoubleSchubertRing` whose coefficient alphabet is
+identically zero, so ``S_w(x; 0) = S_w(x)``. Products dispatch to the fast
+integer kernel ``schubmult_py`` when both operands are single, and to
+``schubmult_double`` when mixed with a genuinely double element.
+
+<a id="schubmult.rings.schubert.schubert_ring.SingleSchubertRing"></a>
+
+## SingleSchubertRing Objects
+
+```python
+class SingleSchubertRing(DoubleSchubertRing)
+```
+
+The ring of ordinary Schubert polynomials ``S_w(x)``; ``Sx`` is the standard instance.
+
+<a id="schubmult.rings.schubert.schubert_ring.SingleSchubertRing.cached_product"></a>
+
+#### cached\_product
+
+```python
+@cache
+def cached_product(u, v, basis2)
+```
+
+Structure constants of ``S_u * S_v``: integer ``schubmult_py`` when ``basis2`` is this ring,
+else ``schubmult_double`` with ``y = 0``.
+
+<a id="schubmult.rings.schubert.schubert_ring.SingleSchubertRing.cached_positive_product"></a>
+
+#### cached\_positive\_product
+
+```python
+@cache
+def cached_positive_product(u, v, basis2)
+```
+
+Same as ``cached_product`` (single coefficients are already nonnegative integers).
+
+<a id="schubmult.rings.schubert.schubert_ring.SingleSchubertRing.single_variable"></a>
+
+#### single\_variable
+
+```python
+def single_variable(elem, varnum)
+```
+
+Multiply by ``x_varnum`` (non-equivariant Monk rule).
+
+<a id="schubmult.rings.schubert.schubert_ring.SingleSchubertRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Build an element from a permutation/Lehmer list or a polynomial expression.
+
+<a id="schubmult.rings.schubert.schubert_ring.SingleSchubertRing.elem_func"></a>
+
+#### elem\_func
+
+```python
+@property
+def elem_func()
+```
+
+`ElemSym` (non-factorial elementary symmetric function).
+
+<a id="schubmult.rings.schubert.schubert_ring.SingleSchubertRing.divdiff"></a>
+
+#### divdiff
+
+```python
+def divdiff(v, elem)
+```
+
+Apply the divided difference ``partial_v``: ``S_u -> S_{u v^{-1}}`` when length-additive, else 0.
+
 <a id="schubmult.rings.direct_product_ring"></a>
 
 # schubmult.rings.direct\_product\_ring
+
+`DirectProductRing`: the direct product ``R_0 x R_1 x ... x R_n`` of `BaseRing` instances.
+
+Keys are ``(i, k)`` with ``i`` the component index and ``k`` a key of ``R_i``; multiplication is
+componentwise and cross-component products vanish. Use ``from_component``/``project`` to move
+elements in and out, and ``elem[i]`` to read component ``i``.
 
 <a id="schubmult.rings.direct_product_ring.DirectProductRing"></a>
 
@@ -3332,6 +6903,28 @@ def __getitem__(i)
 ```
 
 Return the *i*-th constituent ring.
+
+<a id="schubmult.rings.direct_product_ring.DirectProductRing.rings"></a>
+
+#### rings
+
+```python
+@property
+def rings()
+```
+
+The tuple of component rings.
+
+<a id="schubmult.rings.direct_product_ring.DirectProductRing.one"></a>
+
+#### one
+
+```python
+@property
+def one()
+```
+
+The identity: the sum of every component's identity.
 
 <a id="schubmult.rings.direct_product_ring.DirectProductRing.component_one"></a>
 
@@ -3389,6 +6982,16 @@ Construct an element from one element per component.
 ``D(e0, e1, ..., en)`` lifts each ``ei`` (an element of ``D[i]``)
 into the direct product and sums them.
 
+<a id="schubmult.rings.direct_product_ring.DirectProductBasisElement"></a>
+
+## DirectProductBasisElement Objects
+
+```python
+class DirectProductBasisElement(PrintingTerm)
+```
+
+Printing term for a key ``(i, k)``; renders as ``(term)_i``.
+
 <a id="schubmult.rings.direct_product_ring.DirectProductRingElement"></a>
 
 ## DirectProductRingElement Objects
@@ -3396,6 +6999,8 @@ into the direct product and sums them.
 ```python
 class DirectProductRingElement(BaseRingElement)
 ```
+
+Element of a `DirectProductRing`; ``elem[i]`` projects onto component ``i``.
 
 <a id="schubmult.rings.direct_product_ring.DirectProductRingElement.__getitem__"></a>
 
@@ -3408,11 +7013,13 @@ def __getitem__(key)
 Index by component integer or by ``(i, k)`` basis key.
 
 * ``elem[i]`` — project onto component *i* (returns a ``self.ring[i]`` element).
-* ``elem[(i, k)]`` — coefficient lookup (standard dict behaviour).
+* ``elem[(i, k)]`` — coefficient lookup (standard dict behavior).
 
 <a id="schubmult.rings.polynomial_algebra.schubert_poly_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.schubert\_poly\_basis
+
+`SchubertPolyBasis`: the Schubert polynomial basis of `PolynomialAlgebra`, indexed by permutations.
 
 <a id="schubmult.rings.polynomial_algebra.schubert_poly_basis.SchubertPolyBasis"></a>
 
@@ -3588,6 +7195,9 @@ classes as well as ready-to-use ring instances:
 
 # schubmult.rings.polynomial\_algebra.composition\_schubert\_poly\_basis
 
+`CompositionSchubertPolyBasis`: Schubert polynomials re-indexed by weak compositions (Lehmer codes)
+instead of permutations, wrapping `SchubertPolyBasis`.
+
 <a id="schubmult.rings.polynomial_algebra.composition_schubert_poly_basis.CompositionSchubertPolyBasis"></a>
 
 ## CompositionSchubertPolyBasis Objects
@@ -3605,6 +7215,8 @@ uses the same Schubert printing as the corresponding permutation key.
 <a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.elem\_sym\_poly\_basis
+
+`ElemSymPolyBasis`: the basis of products of elementary symmetric polynomials ``e_p(x_1..x_k)`` for `PolynomialAlgebra`.
 
 <a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis"></a>
 
@@ -3653,6 +7265,8 @@ Return a transition function from this basis to *other_basis*.
 <a id="schubmult.rings.polynomial_algebra.anti_schubert_poly_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.anti\_schubert\_poly\_basis
+
+`AntiSchubertPolyBasis`: the anti-Schubert (``w0``-conjugated Schubert) polynomial basis of `PolynomialAlgebra`.
 
 <a id="schubmult.rings.polynomial_algebra.anti_schubert_poly_basis.AntiSchubertPolyBasis"></a>
 
@@ -3741,6 +7355,8 @@ Return a transition function from anti-Schubert basis to *other_basis*.
 <a id="schubmult.rings.polynomial_algebra.lascoux_poly_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.lascoux\_poly\_basis
+
+`LascouxPolyBasis`: the Lascoux polynomial (K-theoretic key polynomial) basis of `PolynomialAlgebra`.
 
 <a id="schubmult.rings.polynomial_algebra.lascoux_poly_basis.LascouxPolyBasis"></a>
 
@@ -3842,6 +7458,10 @@ Multiply two Lascoux keys using the Lascoux product rule.
 
 # schubmult.rings.polynomial\_algebra.grothendieck\_poly\_basis
 
+`GrothendieckPolyBasis`: the Grothendieck polynomial basis of `PolynomialAlgebra`, at the
+specialization ``beta = 1`` (without loss of generality: ``beta`` is recovered from the grading,
+since the degree ``inv(w) + d`` part of ``G_w`` carries ``beta^d``).
+
 <a id="schubmult.rings.polynomial_algebra.grothendieck_poly_basis.GrothendieckPolyBasis"></a>
 
 ## GrothendieckPolyBasis Objects
@@ -3850,11 +7470,12 @@ Multiply two Lascoux keys using the Lascoux product rule.
 class GrothendieckPolyBasis(PolynomialBasis)
 ```
 
-Grothendieck polynomial basis.
+Grothendieck polynomial basis at ``beta = 1``.
 
 Keys are ``(Permutation, length)`` pairs. Grothendieck polynomials form
 the canonical basis for the polynomial algebra in Grothendieck calculus,
-dual to the :class:`GrothendieckBasis` of the free algebra.
+dual to the :class:`GrothendieckBasis` of the free algebra. The ``beta`` parameter
+is set to 1 without loss of generality (see the module docstring).
 
 <a id="schubmult.rings.polynomial_algebra.grothendieck_poly_basis.GrothendieckPolyBasis.product"></a>
 
@@ -3971,6 +7592,13 @@ Return a transition function from Grothendieck basis to *other_basis*.
 
 # schubmult.rings.polynomial\_algebra.base\_polynomial\_basis
 
+`PolynomialBasis`: the abstract interface a basis must implement to plug into `PolynomialAlgebra`.
+
+A basis defines its key type (``is_key``/``as_key``/``zero_monom``), how to print a
+key, and ``transition(other_basis)`` -- a function converting coefficient dicts
+into another basis. Products, coproducts, expansion, and parsing from expressions
+all have default implementations that route through the `MonomialBasis`.
+
 <a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis"></a>
 
 ## PolynomialBasis Objects
@@ -3984,6 +7612,17 @@ Abstract base class for polynomial algebra bases.
 Subclasses define how keys are represented, how to transition between
 bases, and how to expand elements into explicit polynomials. Default
 implementations delegate through the :class:`MonomialBasis`.
+
+<a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.genset"></a>
+
+#### genset
+
+```python
+@property
+def genset()
+```
+
+The generating set (variable alphabet).
 
 <a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.is_key"></a>
 
@@ -4016,6 +7655,29 @@ def attach_key(dct)
 ```
 
 Normalize all keys in *dct* via :meth:`as_key`.
+
+<a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.zero_monom"></a>
+
+#### zero\_monom
+
+```python
+@property
+@abstractmethod
+def zero_monom()
+```
+
+The key of the multiplicative identity.
+
+<a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.monomial_basis"></a>
+
+#### monomial\_basis
+
+```python
+@property
+def monomial_basis()
+```
+
+The `MonomialBasis` over the same generating set (the hub for default transitions).
 
 <a id="schubmult.rings.polynomial_algebra.base_polynomial_basis.PolynomialBasis.transition"></a>
 
@@ -4133,6 +7795,8 @@ Re-export hub for all polynomial basis classes.
 
 # schubmult.rings.polynomial\_algebra.fundamental\_slide\_poly\_basis
 
+`FundamentalSlidePolyBasis`: the fundamental slide polynomial basis (Assaf-Searles) of `PolynomialAlgebra`, indexed by weak compositions.
+
 <a id="schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis.get_descent_composition"></a>
 
 #### get\_descent\_composition
@@ -4236,6 +7900,9 @@ Multiply two fundamental slide keys using the slide product rule.
 
 # schubmult.rings.polynomial\_algebra.double\_forest\_poly\_basis
 
+`DoubleForestPolyBasis`: the double (two-alphabet) forest polynomial basis of `PolynomialAlgebra`;
+see `schubmult.combinatorics.double_forest` for the underlying polynomials.
+
 <a id="schubmult.rings.polynomial_algebra.double_forest_poly_basis.DoubleForestPolyBasis"></a>
 
 ## DoubleForestPolyBasis Objects
@@ -4273,6 +7940,15 @@ Expand one double-forest basis key into ForestPolyBasis in x.
 
 # schubmult.rings.polynomial\_algebra.\_core
 
+`PolynomialAlgebra`: the polynomial ring ``Z[x_1, x_2, ...]`` with a pluggable basis.
+
+The ring itself is basis-agnostic; a `PolynomialBasis` instance supplies the key
+type, the product rule, the coproduct, and the transitions to/from the monomial
+basis. Elements of rings with different bases are interconverted via
+``change_basis``. ``PA`` is the standard monomial-basis instance in ``x``; the
+pre-built instances for other bases (``Schub``, ``Key``, ``FSlide``, ...) live in
+the package ``__init__``.
+
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement"></a>
 
 ## PolynomialAlgebraElement Objects
@@ -4296,6 +7972,27 @@ def as_coefficients_dict()
 ```
 
 Return a dict mapping printing terms to sympified coefficients.
+
+<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.branch"></a>
+
+#### branch
+
+```python
+def branch(index)
+```
+
+Split the variables at ``index``: ``x_1..x_index`` on the left tensor factor, the rest on the
+right, returned in the tensor square of this ring's basis.
+
+<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.coproduct"></a>
+
+#### coproduct
+
+```python
+def coproduct()
+```
+
+Sum of ``branch(index)`` over every split point (the full variable-splitting coproduct).
 
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.change_basis"></a>
 
@@ -4376,6 +8073,17 @@ def __init__(basis, domain=None)
 ```
 
 Initialize a PolynomialAlgebra with the given basis and coefficient domain.
+
+<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebra.genset"></a>
+
+#### genset
+
+```python
+@property
+def genset()
+```
+
+The basis's generating set.
 
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebra.coproduct_on_basis"></a>
 
@@ -4463,6 +8171,10 @@ Coerce a raw value into the coefficient domain.
 <a id="schubmult.rings.polynomial_algebra.monomial_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.monomial\_basis
+
+`MonomialBasis`: the standard monomial basis ``x^a`` (keys are exponent tuples) of `PolynomialAlgebra`.
+
+This is the hub basis: every other `PolynomialBasis` transitions through it by default.
 
 <a id="schubmult.rings.polynomial_algebra.monomial_basis.MonomialBasis"></a>
 
@@ -4603,6 +8315,8 @@ Parse a symbolic expression into monomial-basis coefficient dict.
 
 # schubmult.rings.polynomial\_algebra.key\_poly\_basis
 
+`KeyPolyBasis`: the key polynomial (Demazure character) basis of `PolynomialAlgebra`, indexed by weak compositions.
+
 <a id="schubmult.rings.polynomial_algebra.key_poly_basis.traverse_demaz"></a>
 
 #### traverse\_demaz
@@ -4683,6 +8397,9 @@ Return a transition function from key basis to *other_basis*.
 <a id="schubmult.rings.polynomial_algebra.forest_poly_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.forest\_poly\_basis
+
+`ForestPolyBasis`: the forest polynomial basis (Nadeau-Spink-Tewari) of `PolynomialAlgebra`, indexed
+by weak compositions via indexed forests (`schubmult.combinatorics.indexed_forests`).
 
 <a id="schubmult.rings.polynomial_algebra.forest_poly_basis.ForestPolyBasis"></a>
 
@@ -4783,6 +8500,8 @@ Multiply two forest keys by transitioning through the Schubert basis.
 
 # schubmult.rings.polynomial\_algebra.monomial\_slide\_poly\_basis
 
+`MonomialSlidePolyBasis`: the monomial slide polynomial basis (Assaf-Searles) of `PolynomialAlgebra`.
+
 <a id="schubmult.rings.polynomial_algebra.monomial_slide_poly_basis.MonomialSlidePolyBasis"></a>
 
 ## MonomialSlidePolyBasis Objects
@@ -4840,6 +8559,8 @@ Return a transition function from monomial slide basis to *other_basis*.
 <a id="schubmult.rings.polynomial_algebra.grove_poly_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.grove\_poly\_basis
+
+`GrovePolyBasis`: the grove polynomial basis (K-theoretic analogue of forest polynomials) of `PolynomialAlgebra`.
 
 <a id="schubmult.rings.polynomial_algebra.grove_poly_basis.GrovePolyBasis"></a>
 
@@ -4920,6 +8641,8 @@ Return the dual free algebra basis class (:class:`GroveBasis`).
 <a id="schubmult.rings.polynomial_algebra.glide_poly_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.glide\_poly\_basis
+
+`GlidePolyBasis`: the glide polynomial basis (K-theoretic analogue of fundamental slides) of `PolynomialAlgebra`.
 
 <a id="schubmult.rings.polynomial_algebra.glide_poly_basis.glide_monomials"></a>
 
@@ -5049,6 +8772,9 @@ Multiply two glide keys using the glide product rule.
 
 # schubmult.rings.polynomial\_algebra.sepdesc\_poly\_basis
 
+`SepDescPolyBasis`: the separated-descents polynomial basis of `PolynomialAlgebra`, indexed by
+``(perm, num_vars)`` pairs (see `schubmult.rings.schubert.separated_descents`).
+
 <a id="schubmult.rings.polynomial_algebra.sepdesc_poly_basis.SepDescPolyBasis"></a>
 
 ## SepDescPolyBasis Objects
@@ -5097,6 +8823,56 @@ Return a transition function from separated descents to *other_basis*.
 
 # schubmult.rings.printing
 
+SymPy atoms used to display ring basis elements.
+
+Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert SymPy
+``Expr`` atom (``args == ()``, so SymPy never traverses into it) that knows how to render itself
+for ``str``, pretty printing, and LaTeX. Instances are interned via cached ``__xnew_cached__``
+constructors so equal keys give identical objects. The subclasses cover single/double Schubert
+(``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck (``G``/``DG``), separated
+descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+
+<a id="schubmult.rings.printing.PrintingTerm"></a>
+
+## PrintingTerm Objects
+
+```python
+class PrintingTerm(ssymb.Expr)
+```
+
+Base display atom carrying a key, generating set, coefficient generating set, and prefix.
+
+<a id="schubmult.rings.printing.GenericPrintingTerm"></a>
+
+## GenericPrintingTerm Objects
+
+```python
+class GenericPrintingTerm(PrintingTerm)
+```
+
+Displays a key as ``name(key)`` (e.g. ``AGx(perm, n)``, ``N(2, 1)``); the identity key prints as ``1``.
+
+<a id="schubmult.rings.printing.TypedPrintingTerm"></a>
+
+## TypedPrintingTerm Objects
+
+```python
+class TypedPrintingTerm(PrintingTerm)
+```
+
+Displays a key by delegating to the key's own printer (used for keys that are themselves
+printable objects such as RC graphs).
+
+<a id="schubmult.rings.printing.DSchubPoly"></a>
+
+## DSchubPoly Objects
+
+```python
+class DSchubPoly(PrintingTerm)
+```
+
+Schubert polynomial term: ``S<genset>(perm)`` or ``DS<genset>(perm, <coeff_genset>)``.
+
 <a id="schubmult.rings.printing.SepDescSchubPoly"></a>
 
 ## SepDescSchubPoly Objects
@@ -5105,7 +8881,28 @@ Return a transition function from separated descents to *other_basis*.
 class SepDescSchubPoly(PrintingTerm)
 ```
 
-Printing term for SeparatedDescentsRing: Xi_{perm}^{length}
+Separated-descents term for the key ``(perm, numvars)``: ``Xi_{perm}^{numvars}``.
+
+<a id="schubmult.rings.printing.QDSchubPoly"></a>
+
+## QDSchubPoly Objects
+
+```python
+class QDSchubPoly(PrintingTerm)
+```
+
+Quantum Schubert term: ``QS<genset>(perm)`` or ``QDS<genset>(perm, <coeff_genset>)``.
+
+<a id="schubmult.rings.printing.PQDSchubPoly"></a>
+
+## PQDSchubPoly Objects
+
+```python
+class PQDSchubPoly(PrintingTerm)
+```
+
+Parabolic quantum Schubert term, tagged with the index composition:
+``QPS<genset>(comp)(perm)`` or ``QPDS<genset>(comp)(perm, <coeff_genset>)``.
 
 <a id="schubmult.rings.printing.GrothendieckPoly"></a>
 
@@ -5115,7 +8912,7 @@ Printing term for SeparatedDescentsRing: Xi_{perm}^{length}
 class GrothendieckPoly(PrintingTerm)
 ```
 
-Printing term for GrothendieckRing: G_w(x)
+Grothendieck term ``G<genset>(perm)``, or ``G<genset>(perm, numvars)`` when the key carries a variable count.
 
 <a id="schubmult.rings.printing.DoubleGrothendieckPoly"></a>
 
@@ -5125,11 +8922,163 @@ Printing term for GrothendieckRing: G_w(x)
 class DoubleGrothendieckPoly(PrintingTerm)
 ```
 
-Printing term for DoubleGrothendieckRing: G_w(x, y)
+Double Grothendieck term ``DG<genset>(perm, <coeff_genset>)``.
 
 <a id="schubmult.rings.base_ring"></a>
 
 # schubmult.rings.base\_ring
+
+Shared machinery for every ring in `schubmult.rings`.
+
+`BaseRingElement` is a ``dict`` mapping basis keys (permutations, RC graphs, tuples,
+...) to coefficients, wired into sympy's printing and arithmetic protocols so that
+elements can be added, multiplied, and displayed. `BaseRing` provides the
+corresponding ring-level operations (``add``/``sub``/``mul``, coercion via
+``domain_new``, construction via ``from_dict``/``from_expr``) and declares the hooks
+concrete rings must implement (``new``, ``printing_term``, ``mul_expr``, ...).
+A ring's element type is created dynamically as ``self.dtype`` with ``ring`` bound.
+
+<a id="schubmult.rings.base_ring.BaseRingElement"></a>
+
+## BaseRingElement Objects
+
+```python
+class BaseRingElement(DomainElement, DefaultPrinting, dict)
+```
+
+A ring element: ``{basis_key: coefficient}`` with sympy-compatible arithmetic and printing.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.is_zero"></a>
+
+#### is\_zero
+
+```python
+@property
+def is_zero()
+```
+
+Whether every coefficient is exactly zero.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.parent"></a>
+
+#### parent
+
+```python
+def parent()
+```
+
+The ring this element belongs to (sympy domain protocol).
+
+<a id="schubmult.rings.base_ring.BaseRingElement.has_free"></a>
+
+#### has\_free
+
+```python
+def has_free(*args)
+```
+
+Whether any of the given symbols appears in ``free_symbols``.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.apply_to_keys"></a>
+
+#### apply\_to\_keys
+
+```python
+def apply_to_keys(func)
+```
+
+Map each basis key through ``func`` (dropping keys where it returns ``None``), keeping coefficients.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.as_terms"></a>
+
+#### as\_terms
+
+```python
+def as_terms()
+```
+
+Terms ``coeff * basis_symbol`` in dict order (sympy printing hook).
+
+<a id="schubmult.rings.base_ring.BaseRingElement.as_ordered_terms"></a>
+
+#### as\_ordered\_terms
+
+```python
+def as_ordered_terms(*_, **__)
+```
+
+Terms sorted by basis key (sympy printing hook).
+
+<a id="schubmult.rings.base_ring.BaseRingElement.coproduct"></a>
+
+#### coproduct
+
+```python
+def coproduct()
+```
+
+Coproduct into the tensor square ring, via ``ring.coproduct_on_basis``.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.as_coefficients_dict"></a>
+
+#### as\_coefficients\_dict
+
+```python
+def as_coefficients_dict()
+```
+
+``{basis_symbol: coeff}`` mapping display symbols to coefficients.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.expand"></a>
+
+#### expand
+
+```python
+def expand(deep=True, *args, **kwargs)
+```
+
+With ``deep=True`` expand to an explicit polynomial (``as_polynomial``); with ``deep=False`` only
+expand each coefficient, keeping the basis.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.as_expr"></a>
+
+#### as\_expr
+
+```python
+def as_expr()
+```
+
+Sum of the ``as_terms()`` as a sympy ``Add``.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.as_polynomial"></a>
+
+#### as\_polynomial
+
+```python
+def as_polynomial()
+```
+
+Hook: expand this element to an explicit polynomial expression.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.almosteq"></a>
+
+#### almosteq
+
+```python
+def almosteq(other)
+```
+
+Equality up to coefficient expansion.
+
+<a id="schubmult.rings.base_ring.BaseRingElement.__matmul__"></a>
+
+#### \_\_matmul\_\_
+
+```python
+def __matmul__(other)
+```
+
+Tensor product ``self (x) other`` in the `TensorRing` of the two rings.
 
 <a id="schubmult.rings.base_ring.BaseRing"></a>
 
@@ -5138,6 +9087,171 @@ Printing term for DoubleGrothendieckRing: G_w(x, y)
 ```python
 class BaseRing(Ring, CompositeDomain)
 ```
+
+Abstract base ring over a sympy coefficient domain (default ``EXRAW``); see the module docstring.
+
+<a id="schubmult.rings.base_ring.BaseRing.__matmul__"></a>
+
+#### \_\_matmul\_\_
+
+```python
+def __matmul__(other)
+```
+
+The `TensorRing` ``self (x) other``.
+
+<a id="schubmult.rings.base_ring.BaseRing.to_sympy"></a>
+
+#### to\_sympy
+
+```python
+def to_sympy(elem)
+```
+
+Convert an element to a sympy expression (``as_expr``).
+
+<a id="schubmult.rings.base_ring.BaseRing.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(domain=None)
+```
+
+**Arguments**:
+
+- `domain` - Coefficient domain; defaults to sympy's ``EXRAW`` (arbitrary expressions).
+
+<a id="schubmult.rings.base_ring.BaseRing.add"></a>
+
+#### add
+
+```python
+def add(elem, other)
+```
+
+Coefficient-wise sum, dropping zeros.
+
+<a id="schubmult.rings.base_ring.BaseRing.sub"></a>
+
+#### sub
+
+```python
+def sub(elem, other)
+```
+
+Coefficient-wise difference, dropping zeros.
+
+<a id="schubmult.rings.base_ring.BaseRing.neg"></a>
+
+#### neg
+
+```python
+def neg(elem)
+```
+
+Negate every coefficient.
+
+<a id="schubmult.rings.base_ring.BaseRing.rmul"></a>
+
+#### rmul
+
+```python
+def rmul(elem, other)
+```
+
+Right-multiply by a scalar (via ``domain_new``), falling back to ``mul_expr``.
+
+<a id="schubmult.rings.base_ring.BaseRing.mul"></a>
+
+#### mul
+
+```python
+def mul(elem, other)
+```
+
+Multiply by a scalar (via ``domain_new``), falling back to ``mul_expr``.
+
+<a id="schubmult.rings.base_ring.BaseRing.from_sympy"></a>
+
+#### from\_sympy
+
+```python
+def from_sympy(expr)
+```
+
+Alias for ``from_expr`` (sympy domain protocol).
+
+<a id="schubmult.rings.base_ring.BaseRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Hook: build an element from ``x``.
+
+<a id="schubmult.rings.base_ring.BaseRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(k)
+```
+
+Hook: the sympy symbol displayed for basis key ``k``.
+
+<a id="schubmult.rings.base_ring.BaseRing.coproduct_on_basis"></a>
+
+#### coproduct\_on\_basis
+
+```python
+def coproduct_on_basis(k)
+```
+
+Hook: coproduct of basis key ``k`` in the tensor square ring.
+
+<a id="schubmult.rings.base_ring.BaseRing.one"></a>
+
+#### one
+
+```python
+@property
+def one()
+```
+
+The multiplicative identity: coefficient 1 on ``zero_monom``.
+
+<a id="schubmult.rings.base_ring.BaseRing.is_elem_mul_type"></a>
+
+#### is\_elem\_mul\_type
+
+```python
+def is_elem_mul_type(elem)
+```
+
+Hook: whether ``elem`` should use the ``elem_mul`` fast path.
+
+<a id="schubmult.rings.base_ring.BaseRing.elem_mul"></a>
+
+#### elem\_mul
+
+```python
+def elem_mul(ring_elem, elem)
+```
+
+Hook: elementary-symmetric fast-path multiplication.
+
+<a id="schubmult.rings.base_ring.BaseRing.from_dict"></a>
+
+#### from\_dict
+
+```python
+def from_dict(element, orig_domain=None)
+```
+
+Build an element from ``{key: coeff}``, coercing each coefficient via ``domain_new`` and dropping zeros.
 
 <a id="schubmult.rings.base_ring.BaseRing.from_dict_unchecked"></a>
 
@@ -5149,13 +9263,140 @@ def from_dict_unchecked(element)
 
 from_dict for coefficients already known to lie in the domain (drops structural zeros only).
 
+<a id="schubmult.rings.base_ring.BaseRing.zero"></a>
+
+#### zero
+
+```python
+@property
+def zero()
+```
+
+The empty element.
+
+<a id="schubmult.rings.base_ring.BaseRing.domain_new"></a>
+
+#### domain\_new
+
+```python
+def domain_new(element, orig_domain=None)
+```
+
+Coerce ``element`` into the coefficient domain (``sympify``), refusing ring/domain elements.
+
+<a id="schubmult.rings.base_ring.BaseRing.from_expr"></a>
+
+#### from\_expr
+
+```python
+def from_expr(x)
+```
+
+Build an element from an expression by multiplying the identity by it.
+
+<a id="schubmult.rings.base_ring.BaseRing.mul_expr"></a>
+
+#### mul\_expr
+
+```python
+def mul_expr(elem, x)
+```
+
+Hook: multiply ``elem`` by a symbolic expression ``x``.
+
 <a id="schubmult.rings.product_ring"></a>
 
 # schubmult.rings.product\_ring
 
+`ProductRing`: array-backed componentwise product of Schubert-family rings (draft).
+
+An element holds a numpy object array ``_arr`` with one ring element per factor; arithmetic is
+componentwise on the array. This is an older sketch of the same idea as
+`schubmult.rings.direct_product_ring.DirectProductRing`, which is the supported implementation;
+`ProductRing` is not exported from the package.
+
+<a id="schubmult.rings.product_ring.ProductRing"></a>
+
+## ProductRing Objects
+
+```python
+class ProductRing(BaseSchubertRing)
+```
+
+Componentwise product of rings backed by a numpy array of factor elements. See the module docstring.
+
+<a id="schubmult.rings.product_ring.ProductRing.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(*rings)
+```
+
+Flatten nested product rings and pool the factors' generators and coefficient generators.
+
+<a id="schubmult.rings.product_ring.ProductRing.rings"></a>
+
+#### rings
+
+```python
+@property
+def rings()
+```
+
+The (flattened) tuple of factor rings.
+
+<a id="schubmult.rings.product_ring.ProductRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+Wrap a sequence of factor elements as an element of this ring.
+
+<a id="schubmult.rings.product_ring.ProductRing.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(*x)
+```
+
+Build an element from one input per factor (or a single sequence/element), coercing each
+input in its factor ring.
+
+<a id="schubmult.rings.product_ring.ProductBasisElement"></a>
+
+## ProductBasisElement Objects
+
+```python
+class ProductBasisElement(PrintingTerm)
+```
+
+Printing term for a `ProductRing` element; renders the factors joined by ``#``.
+
+<a id="schubmult.rings.product_ring.ProductRingElement"></a>
+
+## ProductRingElement Objects
+
+```python
+class ProductRingElement(BaseSchubertElement)
+```
+
+Element of a `ProductRing`; arithmetic operators act componentwise on ``_arr``.
+
 <a id="schubmult.rings.tensor_ring"></a>
 
 # schubmult.rings.tensor\_ring
+
+`TensorRing`: tensor products ``R_1 (x) ... (x) R_n`` of `BaseRing` instances.
+
+Built with the ``@`` operator on rings (``Sx @ Sx``) or ``TensorRing(R1, R2, ...)``; nested
+tensor rings are flattened. Keys are tuples ``(k_1, ..., k_n)`` of factor keys, multiplication
+is factorwise, and the coproduct of a ring lands in ``R @ R``. Elements print as
+``a # b``.
 
 <a id="schubmult.rings.tensor_ring.TensorRing"></a>
 
@@ -5165,6 +9406,8 @@ from_dict for coefficients already known to lie in the domain (drops structural 
 class TensorRing(BaseRing)
 ```
 
+Tensor product of rings; keys are tuples of factor keys. See the module docstring.
+
 <a id="schubmult.rings.tensor_ring.TensorRing.coproduct_on_basis"></a>
 
 #### coproduct\_on\_basis
@@ -5173,12 +9416,51 @@ class TensorRing(BaseRing)
 def coproduct_on_basis(k)
 ```
 
-Compute coproduct of a basis element in the tensor ring.
+Coproduct of the basis element ``k = (k_1, ..., k_n)`` into ``self @ self``.
 
-For k = (k_1, k_2, ..., k_n) in ring_1 ⊗ ring_2 ⊗ ... ⊗ ring_n,
-Δ(k_1 ⊗ k_2 ⊗ ... ⊗ k_n) = (⊗ Δ(k_i))
+Takes each factor's coproduct and interlaces them into flat keys
+``(k_1^L, ..., k_n^L, k_1^R, ..., k_n^R)``.
 
-This properly interlaces the individual coproducts.
+<a id="schubmult.rings.tensor_ring.TensorRing.from_rc_graph_tensor"></a>
+
+#### from\_rc\_graph\_tensor
+
+```python
+def from_rc_graph_tensor(rc_graph_tensor)
+```
+
+Pure tensor of the two factor rings' ``from_rc_graph`` images of a pair of RC graphs.
+
+<a id="schubmult.rings.tensor_ring.TensorRing.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(*rings)
+```
+
+Tensor the given rings, flattening any that are themselves tensor rings.
+
+<a id="schubmult.rings.tensor_ring.TensorRing.rings"></a>
+
+#### rings
+
+```python
+@property
+def rings()
+```
+
+The (flattened) tuple of tensor factors.
+
+<a id="schubmult.rings.tensor_ring.TensorRing.rmul"></a>
+
+#### rmul
+
+```python
+def rmul(elem1, elem2)
+```
+
+Scale every coefficient of ``elem1`` by the scalar ``elem2``.
 
 <a id="schubmult.rings.tensor_ring.TensorRing.mul"></a>
 
@@ -5188,9 +9470,60 @@ This properly interlaces the individual coproducts.
 def mul(elem1, elem2)
 ```
 
-Multiply two elements in the tensor ring.
+Factorwise product: ``(a_1 (x) ... (x) a_n) * (b_1 (x) ... (x) b_n) = (a_1 b_1) (x) ... (x) (a_n b_n)``,
+expanding each factor product in its own ring.
 
-(a1 ⊗ a2 ⊗ ... ⊗ an) * (b1 ⊗ b2 ⊗ ... ⊗ bn) = (a1*b1) ⊗ (a2*b2) ⊗ ... ⊗ (an*bn)
+<a id="schubmult.rings.tensor_ring.TensorRing.cached_schubpoly"></a>
+
+#### cached\_schubpoly
+
+```python
+@cache
+def cached_schubpoly(k)
+```
+
+Product of the factor rings' polynomials for the key tuple ``k``.
+
+<a id="schubmult.rings.tensor_ring.TensorRing.from_comp_ring"></a>
+
+#### from\_comp\_ring
+
+```python
+def from_comp_ring(t)
+```
+
+Embed an element of one factor (or of a sub-tensor of factors) into this ring, filling the
+other positions with their ``zero_monom`` (the identity).
+
+<a id="schubmult.rings.tensor_ring.TensorRing.ext_multiply"></a>
+
+#### ext\_multiply
+
+```python
+def ext_multiply(elem1, elem2)
+```
+
+External (tensor) product ``elem1 (x) elem2``: concatenates keys, flattening tensor-ring inputs.
+
+<a id="schubmult.rings.tensor_ring.TensorRing.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(x)
+```
+
+A key tuple gives the corresponding basis element; anything else is parsed via ``from_expr``.
+
+<a id="schubmult.rings.tensor_ring.TensorBasisElement"></a>
+
+## TensorBasisElement Objects
+
+```python
+class TensorBasisElement(PrintingTerm)
+```
+
+Printing term for a tensor key; renders as ``a # b`` (str) or a tensor product (pretty/LaTeX).
 
 <a id="schubmult.rings.tensor_ring.TensorRingElement"></a>
 
@@ -5200,6 +9533,8 @@ Multiply two elements in the tensor ring.
 class TensorRingElement(BaseRingElement)
 ```
 
+Element of a `TensorRing`: a dict from key tuples to coefficients.
+
 <a id="schubmult.rings.tensor_ring.TensorRingElement.coproduct"></a>
 
 #### coproduct
@@ -5208,27 +9543,132 @@ class TensorRingElement(BaseRingElement)
 def coproduct()
 ```
 
-Override coproduct to use the correct target ring.
+Coproduct into ``ring @ ring`` via `TensorRing.coproduct_on_basis`.
+
+<a id="schubmult.rings.tensor_ring.TensorRingElement.expand"></a>
+
+#### expand
+
+```python
+def expand(deep=True, *args, **kwargs)
+```
+
+Expand to a commutative polynomial by multiplying out the factors' expansions (all factors
+are assumed to live in disjoint or commuting variable sets).
 
 <a id="schubmult.rings.combinatorial.hw_rc_ring"></a>
 
 # schubmult.rings.combinatorial.hw\_rc\_ring
 
+`HWRCGraphRing`: `RCGraphRing` quotient onto crystal highest-weight RC graphs.
+
+Every product is snapped to its highest-weight representative, so basis elements
+index Demazure crystal components. ``coproduct_on_basis`` is defined on highest-weight
+elements via the free-algebra Schubert coproduct and `GrassTensorAlgebra`.
+
+<a id="schubmult.rings.combinatorial.hw_rc_ring.HWRCGraphRing"></a>
+
+## HWRCGraphRing Objects
+
+```python
+class HWRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` with products projected onto highest-weight RC graphs; see the module docstring.
+
 <a id="schubmult.rings.combinatorial.grove_wc_ring"></a>
 
 # schubmult.rings.combinatorial.grove\_wc\_ring
+
+`GroveWCGraphRing` / `DualGroveWCGraphRing`: `WCGraphRing` quotients modeling grove polynomials
+(the K-theoretic analogue of forest polynomials). WC graphs are snapped to canonical grove
+representatives; products factor through `BoundedWCFactorAlgebra`.
+
+<a id="schubmult.rings.combinatorial.grove_wc_ring.GroveWCGraphRingElement"></a>
+
+## GroveWCGraphRingElement Objects
+
+```python
+class GroveWCGraphRingElement(WCGraphRingElement)
+```
+
+Element of `GroveWCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.grove_wc_ring.DualGroveWCGraphRingElement"></a>
+
+## DualGroveWCGraphRingElement Objects
+
+```python
+class DualGroveWCGraphRingElement(GroveWCGraphRingElement)
+```
+
+Element of `DualGroveWCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.grove_wc_ring.GroveWCGraphRing"></a>
+
+## GroveWCGraphRing Objects
+
+```python
+class GroveWCGraphRing(WCGraphRing)
+```
+
+`WCGraphRing` snapped to grove-class representatives; see the module docstring.
+
+<a id="schubmult.rings.combinatorial.grove_wc_ring.DualGroveWCGraphRing"></a>
+
+## DualGroveWCGraphRing Objects
+
+```python
+class DualGroveWCGraphRing(WCGraphRing)
+```
+
+Dual-product variant of `GroveWCGraphRing`.
 
 <a id="schubmult.rings.combinatorial"></a>
 
 # schubmult.rings.combinatorial
 
+Combinatorial rings: rings whose basis elements are combinatorial objects (RC graphs, BPDs, WC graphs,
+tableaux, ...) rather than permutations.
+
+The central object is `RCGraphRing`; most other rings here are quotients or variants of it that snap
+products to canonical representatives (`HWRCGraphRing`, `KeyRCGraphRing`, `QYRCGraphRing`,
+`ForestRCGraphRing`, `SlideRCGraphRing`, ...). `BoundedRCFactorAlgebra` and `GrassTensorAlgebra`
+provide factorizations into Grassmannian pieces used to compute products and coproducts.
+
 <a id="schubmult.rings.combinatorial.forest_invariant_rc_ring"></a>
 
 # schubmult.rings.combinatorial.forest\_invariant\_rc\_ring
 
+`ForestInvariantRCGraphRing`: `RCGraphRing` quotient where every product is snapped to its crystal
+highest-weight representative (identical in behavior to `HWRCGraphRing`).
+
+<a id="schubmult.rings.combinatorial.forest_invariant_rc_ring.ForestInvariantRCGraphRing"></a>
+
+## ForestInvariantRCGraphRing Objects
+
+```python
+class ForestInvariantRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` with products projected onto highest-weight RC graphs (``_snap_highest_weight``).
+
 <a id="schubmult.rings.combinatorial.plactic_algebra"></a>
 
 # schubmult.rings.combinatorial.plactic\_algebra
+
+`PlacticAlgebra` and `NilPlacticAlgebra`: rings whose basis elements are `Plactic` /
+`NilPlactic` tableaux (plactic and nilplactic monoid algebras).
+
+<a id="schubmult.rings.combinatorial.plactic_algebra.PlacticPrintingTerm"></a>
+
+## PlacticPrintingTerm Objects
+
+```python
+class PlacticPrintingTerm(TypedPrintingTerm)
+```
+
+Display symbol for a `PlacticAlgebra` basis tableau.
 
 <a id="schubmult.rings.combinatorial.plactic_algebra.PlacticAlgebraElement"></a>
 
@@ -5240,9 +9680,45 @@ class PlacticAlgebraElement(BaseRingElement)
 
 PlacticAlgebra elements are linear combinations of Plactic basis elements.
 
+<a id="schubmult.rings.combinatorial.plactic_algebra.PlacticAlgebra"></a>
+
+## PlacticAlgebra Objects
+
+```python
+class PlacticAlgebra(BaseRing)
+```
+
+The plactic monoid algebra on `Plactic` tableaux (``op=True`` for the opposite product).
+
 <a id="schubmult.rings.combinatorial.slide_rc_ring"></a>
 
 # schubmult.rings.combinatorial.slide\_rc\_ring
+
+`SlideRCGraphRing`: `RCGraphRing` modeling fundamental slide polynomials.
+
+RC graphs are snapped to a canonical representative of their quasi-Yamanouchi class
+(``snap_qy().length_vector``), and ``slide_poly(comp)`` is the sum of RC graphs with
+quasi-Yamanouchi weight ``comp``. Products go through `BoundedRCFactorAlgebra`.
+
+<a id="schubmult.rings.combinatorial.slide_rc_ring.SlideRCGraphRingElement"></a>
+
+## SlideRCGraphRingElement Objects
+
+```python
+class SlideRCGraphRingElement(RCGraphRingElement)
+```
+
+Element of `SlideRCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.slide_rc_ring.SlideRCGraphRing"></a>
+
+## SlideRCGraphRing Objects
+
+```python
+class SlideRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` snapped to quasi-Yamanouchi-class representatives; see the module docstring.
 
 <a id="schubmult.rings.combinatorial.schubert_monomial_ring"></a>
 
@@ -5309,6 +9785,16 @@ and sum the results weighted by coefficients.
 
   Symbolic expression representing the polynomial
 
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRingElement.as_ordered_terms"></a>
+
+#### as\_ordered\_terms
+
+```python
+def as_ordered_terms(*_, **__)
+```
+
+Terms ``coeff * basis_symbol`` in dict order (sympy printing hook).
+
 <a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRingElement.to_free_algebra_element"></a>
 
 #### to\_free\_algebra\_element
@@ -5331,9 +9817,77 @@ Base class for rings whose basis elements are Schubert monomials.
 
 Inherits from BaseRing to provide standard ring operations (add, sub, mul, etc.)
 
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(key)
+```
+
+Wrap the basis key in a `SchubertMonomialPrintingTerm`.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.from_dict"></a>
+
+#### from\_dict
+
+```python
+def from_dict(dct)
+```
+
+Build an element from ``{key: coeff}`` without coefficient coercion.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.mul"></a>
+
+#### mul
+
+```python
+def mul(a, b)
+```
+
+Multiply two elements via each basis key's ``product`` method (which returns ``{key: coeff}``),
+or scale by a scalar ``b``.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.rmul"></a>
+
+#### rmul
+
+```python
+def rmul(a, b)
+```
+
+Scale by the scalar ``b``.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(key)
+```
+
+The basis element for ``key`` with coefficient 1.
+
 <a id="schubmult.rings.combinatorial.bounded_rc_factor_algebra"></a>
 
 # schubmult.rings.combinatorial.bounded\_rc\_factor\_algebra
+
+`BoundedRCFactorAlgebra`: a tensor-like algebra on tuples of full Grassmannian RC graphs of
+bounded size, factoring Schubert classes into elementary-symmetric pieces (the CEM basis).
+
+Used as the engine behind `RCGraphRing.coproduct_on_basis`, `SchubertRCGraphRing`, and
+`SlideRCGraphRing`: ``schub_elem(perm, length)`` gives the factorization of ``S_perm``,
+``key_to_rc_graph`` / ``to_rc_graph_ring_element`` squash a key's factors back into an RC graph.
+
+<a id="schubmult.rings.combinatorial.bounded_rc_factor_algebra.BoundedRCFactorPrintingTerm"></a>
+
+## BoundedRCFactorPrintingTerm Objects
+
+```python
+class BoundedRCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `BoundedRCFactorAlgebra` basis key.
 
 <a id="schubmult.rings.combinatorial.bounded_rc_factor_algebra.BoundedRCFactorAlgebraElement"></a>
 
@@ -5397,6 +9951,9 @@ Evaluate a tensor key to an RCGraph using left-to-right squash_product.
 
 # schubmult.rings.combinatorial.dual\_rc\_graph\_ring
 
+`DualRCGraphRing`: RC graph ring carrying the dual (polynomial-side) product, computed by
+expanding into the Schubert polynomial basis of `PolynomialAlgebra` and back.
+
 <a id="schubmult.rings.combinatorial.dual_rc_graph_ring.DualRCGraphRingElement"></a>
 
 ## DualRCGraphRingElement Objects
@@ -5405,15 +9962,7 @@ Evaluate a tensor key to an RCGraph using left-to-right squash_product.
 class DualRCGraphRingElement(SchubertMonomialRingElement)
 ```
 
-DualRCGraphRing elements are linear combinations of RCGraph basis elements.
-
-The product % is the polynomial product. Currently only defined when the right side
-is a dominant RC graph.
-
-The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-to do this directly.
-
-The product * is well defined for any pair of RC graphs and is the dual product.
+DualRCGraphRing elements are linear combinations of RCGraph basis elements under the dual product.
 
 <a id="schubmult.rings.combinatorial.dual_rc_graph_ring.DualRCGraphRingElement.divdiff_perm"></a>
 
@@ -5444,6 +9993,8 @@ Sequential divided difference operators.
 class DualRCGraphRing(SchubertMonomialRing)
 ```
 
+The dual RC graph ring; see the module docstring.
+
 <a id="schubmult.rings.combinatorial.dual_rc_graph_ring.DualRCGraphRing.schub"></a>
 
 #### schub
@@ -5459,6 +10010,10 @@ indexed by `perm` in `S_n` (if n is None, n = len(perm) is used).
 
 # schubmult.rings.combinatorial.wc\_graph\_ring
 
+`WCGraphRing`: the ring whose basis elements are `WCGraph`s (the K-theoretic / Grothendieck
+analogue of `RCGraphRing`). ``to_free_algebra_element`` lands in the free-algebra Grothendieck
+basis by default.
+
 <a id="schubmult.rings.combinatorial.wc_graph_ring.WCGraphRingElement"></a>
 
 ## WCGraphRingElement Objects
@@ -5469,14 +10024,6 @@ class WCGraphRingElement(SchubertMonomialRingElement)
 
 WCGraphRing elements are linear combinations of WCGraph basis elements.
 
-The product % is the polynomial product. Currently only defined when the right side
-is a dominant RC graph.
-
-The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-to do this directly.
-
-The product * is well defined for any pair of RC graphs and is the dual product.
-
 <a id="schubmult.rings.combinatorial.wc_graph_ring.WCGraphRing"></a>
 
 ## WCGraphRing Objects
@@ -5484,6 +10031,8 @@ The product * is well defined for any pair of RC graphs and is the dual product.
 ```python
 class WCGraphRing(SchubertMonomialRing)
 ```
+
+The ring of `WCGraph`s; see the module docstring.
 
 <a id="schubmult.rings.combinatorial.wc_graph_ring.WCGraphRing.groth"></a>
 
@@ -5499,6 +10048,20 @@ indexed by `perm` in `S_n` (if n is None, n = len(perm) is used).
 <a id="schubmult.rings.combinatorial.rc_schubert_ring"></a>
 
 # schubmult.rings.combinatorial.rc\_schubert\_ring
+
+Orphaned earlier variant of `bounded_rc_factor_algebra` (defines the same class names, is not
+imported anywhere, and is not exported from the package). Kept for reference; prefer
+`schubmult.rings.combinatorial.bounded_rc_factor_algebra`.
+
+<a id="schubmult.rings.combinatorial.rc_schubert_ring.BoundedRCFactorPrintingTerm"></a>
+
+## BoundedRCFactorPrintingTerm Objects
+
+```python
+class BoundedRCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a basis key (orphaned variant).
 
 <a id="schubmult.rings.combinatorial.rc_schubert_ring.BoundedRCFactorAlgebraElement"></a>
 
@@ -5562,6 +10125,19 @@ Evaluate a tensor key to an RCGraph using left-to-right squash_product.
 
 # schubmult.rings.combinatorial.rc\_graph\_ring
 
+`RCGraphRing`: the ring whose basis elements are `RCGraph`s.
+
+Two products live here. ``*`` is the dual (stacking) product from `RCGraph.product`,
+defined for every pair and compatible with the Schubert-polynomial coproduct
+(``vertical_coproduct``). ``%`` (``rc_product``) is the polynomial product,
+currently implemented only when one factor is Grassmannian with a sufficiently
+large descent (or in two-row cases via squash decomposition). Crystal operators
+and most `RCGraph` methods extend linearly to ring elements (see ``broadcast``).
+``schub(perm, n)`` is the sum of all RC graphs of ``perm`` with ``n`` rows, i.e. the
+Schubert polynomial as a ring element.
+
+`GrassRCGraphRing` restricts to Grassmannian RC graphs (single descent at the last row).
+
 <a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement"></a>
 
 ## RCGraphRingElement Objects
@@ -5575,10 +10151,52 @@ RCGraphRing elements are linear combinations of RCGraph basis elements.
 The product % is the polynomial product. Currently only defined when the right side
 is a dominant RC graph.
 
-The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-to do this directly.
+The Leibniz rule should hold for %; the approach taken is to define the ambiguous term in the Leibniz formula
+rather than compute the polynomial product directly.
 
 The product * is well defined for any pair of RC graphs and is the dual product.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.as_terms"></a>
+
+#### as\_terms
+
+```python
+def as_terms()
+```
+
+Terms ``coeff * rc`` in dict order; the empty RC graph is kept as a symbol rather than collapsing to 1.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.as_ordered_terms"></a>
+
+#### as\_ordered\_terms
+
+```python
+def as_ordered_terms(*_, **__)
+```
+
+Terms sorted by RC graph (sympy printing hook).
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.vex"></a>
+
+#### vex
+
+```python
+@property
+def vex()
+```
+
+Linear extension of `RCGraph.vex`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.grass"></a>
+
+#### grass
+
+```python
+@property
+def grass()
+```
+
+Linear extension of `RCGraph.grass`.
 
 <a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.__mod__"></a>
 
@@ -5633,6 +10251,16 @@ def vertical_coproduct()
 Coproduct of RC graphs, coincides with the coproduct on Schubert polynomials
 and induces the mul product.
 
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.coproduct"></a>
+
+#### coproduct
+
+```python
+def coproduct()
+```
+
+Coproduct via `RCGraphRing.coproduct_on_basis` (currently pattern-restricted; see there).
+
 <a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.raising_operator"></a>
 
 #### raising\_operator
@@ -5685,6 +10313,16 @@ def crystal_length()
 ```
 
 Use maximum crystal length of basis graphs in support (0 for the zero element).
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.almosteq"></a>
+
+#### almosteq
+
+```python
+def almosteq(other)
+```
+
+Whether ``self - other`` has all-zero coefficients.
 
 <a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.to_highest_weight"></a>
 
@@ -5740,6 +10378,139 @@ def crystal_reflection(index)
 Linear extension of RCGraph.crystal_reflection:
 For each basis RCGraph, apply its crystal_reflection(index) and collect results.
 
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.weight_reflection"></a>
+
+#### weight\_reflection
+
+```python
+def weight_reflection(index)
+```
+
+Linear extension of `RCGraph.weight_reflection`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.shiftup"></a>
+
+#### shiftup
+
+```python
+def shiftup(k)
+```
+
+Linear extension of `RCGraph.shiftup`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.prepend"></a>
+
+#### prepend
+
+```python
+def prepend(k)
+```
+
+Linear extension of `RCGraph.prepend`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.zero_out_last_row"></a>
+
+#### zero\_out\_last\_row
+
+```python
+def zero_out_last_row()
+```
+
+Linear extension of `RCGraph.zero_out_last_row`, dropping terms whose last row is nonempty.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.resize"></a>
+
+#### resize
+
+```python
+def resize(n)
+```
+
+Linear extension of `RCGraph.resize`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.clip"></a>
+
+#### clip
+
+```python
+def clip(n)
+```
+
+Keep the first ``n`` rows of each RC graph (left factor of `RCGraph.vertical_cut`).
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.transpose"></a>
+
+#### transpose
+
+```python
+def transpose(length)
+```
+
+Linear extension of `RCGraph.transpose`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.project"></a>
+
+#### project
+
+```python
+def project()
+```
+
+Round-trip through the free algebra: ``from_free_algebra_element(to_free_algebra_element())``
+(projects onto the sum-of-all-RC-graphs representatives).
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.trim_operator"></a>
+
+#### trim\_operator
+
+```python
+def trim_operator(i)
+```
+
+Linear extension of `RCGraphRing.trim_operator`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.double_elem_sym_squash"></a>
+
+#### double\_elem\_sym\_squash
+
+```python
+def double_elem_sym_squash(weight, yvars, zvars)
+```
+
+Linear extension of `RCGraph.double_elem_sym_squash`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.full_double_elem_sym_squash"></a>
+
+#### full\_double\_elem\_sym\_squash
+
+```python
+def full_double_elem_sym_squash(p, yvars, zvars)
+```
+
+Linear extension of `RCGraph.full_double_elem_sym_squash`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.grass_coaction"></a>
+
+#### grass\_coaction
+
+```python
+def grass_coaction()
+```
+
+Linear extension of `RCGraphRing.grass_coaction`.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRingElement.broadcast"></a>
+
+#### broadcast
+
+```python
+@property
+def broadcast()
+```
+
+Proxy that lifts any `RCGraph` method linearly: ``elem.broadcast.method(*args)`` applies
+``rc.method(*args)`` to each basis RC graph and sums the results with coefficients.
+
 <a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing"></a>
 
 ## RCGraphRing Objects
@@ -5747,6 +10518,58 @@ For each basis RCGraph, apply its crystal_reflection(index) and collect results.
 ```python
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing)
 ```
+
+The ring of `RCGraph`s; see the module docstring. Instances are distinct (hashed by an id counter).
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(x)
+```
+
+Wrap an `RCGraph` as a basis element (or re-parent an existing element).
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.new"></a>
+
+#### new
+
+```python
+def new(x)
+```
+
+The basis element for RC graph ``x`` with coefficient 1.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.monomial"></a>
+
+#### monomial
+
+```python
+def monomial(*tup)
+```
+
+The ring element for the monomial ``x^tup``: product of one-row RC graphs, split recursively.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.elem_sym"></a>
+
+#### elem\_sym
+
+```python
+def elem_sym(descent, weight)
+```
+
+Sum of all RC graphs for the elementary-symmetric permutation with the given ``weight`` and descent.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.from_free_algebra_element"></a>
+
+#### from\_free\_algebra\_element
+
+```python
+def from_free_algebra_element(elem)
+```
+
+Convert a free-algebra element (via the word basis) into a sum of ``monomial`` elements.
 
 <a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.schub"></a>
 
@@ -5771,9 +10594,132 @@ Return the RCGraphRing element corresponding to the double Schubert polynomial
 indexed by `perm` in `S_n` (if n is None, n = len(perm) is used), with `coeff_genset`
 as the set of variables for the double part.
 
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.trim_operator"></a>
+
+#### trim\_operator
+
+```python
+def trim_operator(i, rc)
+```
+
+Divided difference at ``i`` followed by pulling out row ``i`` (only for terms where that row emptied).
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.grass_coaction"></a>
+
+#### grass\_coaction
+
+```python
+def grass_coaction(elem: RCGraph)
+```
+
+Coaction of the Grassmannian ring: squash-decompose ``elem`` as ``base * grass``, coproduct
+``grass`` in `GrassRCGraphRing`, and reattach ``base`` to the left factors.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.coproduct_on_basis"></a>
+
+#### coproduct\_on\_basis
+
+```python
+@cache
+def coproduct_on_basis(rc)
+```
+
+Coproduct of a single RC graph, lifted from the free-algebra Schubert coproduct via
+`BoundedRCFactorAlgebra`; only implemented for permutations avoiding ``4132``, ``1432``, ``3142``.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.old_coproduct_on_basis"></a>
+
+#### old\_coproduct\_on\_basis
+
+```python
+def old_coproduct_on_basis(elem)
+```
+
+Earlier recursive coproduct (peel the last row, recurse, correct); superseded by ``coproduct_on_basis``.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.rc_product"></a>
+
+#### rc\_product
+
+```python
+def rc_product(elem1, elem2)
+```
+
+Polynomial product (``%``), bilinear extension of ``rc_single_product``.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.rc_single_product"></a>
+
+#### rc\_single\_product
+
+```python
+def rc_single_product(u_rc, v_rc)
+```
+
+Polynomial product of two RC graphs of equal length: handled via squash decomposition for two
+rows, and via ``squash_product``/``left_squash`` when one factor is Grassmannian with a large
+enough descent; raises ``NotImplementedError`` otherwise.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.potential_products"></a>
+
+#### potential\_products
+
+```python
+@cache
+def potential_products(left, right, length)
+```
+
+Candidate RC graphs that could appear in ``left % right``, obtained by multiplying the
+transposes with ``*`` and transposing back.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.RCGraphRing.potential_prodperms"></a>
+
+#### potential\_prodperms
+
+```python
+def potential_prodperms(left, right, length)
+```
+
+Permutations of the ``potential_products``.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.GrassRCGraphRing"></a>
+
+## GrassRCGraphRing Objects
+
+```python
+class GrassRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` restricted to Grassmannian RC graphs (``_is_valid_grass``); non-Grassmannian terms
+are filtered out of sums and products, and ``coproduct_on_basis`` is computed recursively by
+vertical cuts.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.GrassRCGraphRing.mul_pair"></a>
+
+#### mul\_pair
+
+```python
+def mul_pair(a, b)
+```
+
+Product of two Grassmannian RC graphs: stack ``b`` (shifted) below ``a`` and keep valid Grassmannian results.
+
+<a id="schubmult.rings.combinatorial.rc_graph_ring.GrassRCGraphRing.coproduct_on_basis"></a>
+
+#### coproduct\_on\_basis
+
+```python
+def coproduct_on_basis(elem)
+```
+
+Coproduct of a Grassmannian RC graph: one-row case is the standard Pieri splitting; otherwise
+cut in half vertically, coproduct each half, and keep pairs whose ``%`` product recovers ``elem``.
+
 <a id="schubmult.rings.combinatorial.alt_rc_graph_ring"></a>
 
 # schubmult.rings.combinatorial.alt\_rc\_graph\_ring
+
+`AltRCGraphRing`: an alternate `RCGraphRing` implementation exploring a different polynomial
+product (``%``) construction; the exported `RCGraphRing` is the primary one.
 
 <a id="schubmult.rings.combinatorial.alt_rc_graph_ring.AltRCGraphRingElement"></a>
 
@@ -5786,13 +10732,8 @@ class AltRCGraphRingElement(CrystalGraphRingElement,
 
 AltRCGraphRing elements are linear combinations of RCGraph basis elements.
 
-The product % is the polynomial product. Currently only defined when the right side
-is a dominant RC graph.
-
-The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-to do this directly.
-
-The product * is well defined for any pair of RC graphs and is the dual product.
+The product % is the polynomial product (only defined when the right side is a dominant RC graph);
+the product * is the dual product, defined for any pair of RC graphs.
 
 <a id="schubmult.rings.combinatorial.alt_rc_graph_ring.AltRCGraphRingElement.__mod__"></a>
 
@@ -5936,6 +10877,8 @@ For each basis RCGraph, apply its crystal_reflection(index) and collect results.
 class AltRCGraphRing(SchubertMonomialRing, CrystalGraphRing)
 ```
 
+Alternate RC graph ring; see the module docstring.
+
 <a id="schubmult.rings.combinatorial.alt_rc_graph_ring.AltRCGraphRing.schub"></a>
 
 #### schub
@@ -5950,6 +10893,19 @@ indexed by `perm` in `S_n` (if n is None, n = len(perm) is used).
 <a id="schubmult.rings.combinatorial.bounded_rc_forest_factor_algebra"></a>
 
 # schubmult.rings.combinatorial.bounded\_rc\_forest\_factor\_algebra
+
+`BoundedRCForestFactorAlgebra`: variant of `BoundedRCFactorAlgebra` whose factorizations are
+snapped to forest-class representatives (``_to_forest``), for the forest-polynomial setting.
+
+<a id="schubmult.rings.combinatorial.bounded_rc_forest_factor_algebra.BoundedRCFactorPrintingTerm"></a>
+
+## BoundedRCFactorPrintingTerm Objects
+
+```python
+class BoundedRCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `BoundedRCForestFactorAlgebra` basis key.
 
 <a id="schubmult.rings.combinatorial.bounded_rc_forest_factor_algebra.BoundedRCForestFactorAlgebraElement"></a>
 
@@ -5998,13 +10954,76 @@ Evaluate a tensor key to an RCGraph using left-to-right squash_product.
 
 # schubmult.rings.combinatorial.forest\_rc\_ring
 
+`ForestRCGraphRing` / `DualForestRCGraphRing`: `RCGraphRing` quotients modeling forest polynomials
+(Nadeau-Spink-Tewari). RC graphs are snapped to canonical representatives of their
+``forest_weight`` class; the dual variant carries the dual product.
+
+<a id="schubmult.rings.combinatorial.forest_rc_ring.ForestRCGraphRingElement"></a>
+
+## ForestRCGraphRingElement Objects
+
+```python
+class ForestRCGraphRingElement(RCGraphRingElement)
+```
+
+Element of `ForestRCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.forest_rc_ring.DualForestRCGraphRingElement"></a>
+
+## DualForestRCGraphRingElement Objects
+
+```python
+class DualForestRCGraphRingElement(ForestRCGraphRingElement)
+```
+
+Element of `DualForestRCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.forest_rc_ring.ForestRCGraphRing"></a>
+
+## ForestRCGraphRing Objects
+
+```python
+class ForestRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` snapped to forest-class representatives; see the module docstring.
+
+<a id="schubmult.rings.combinatorial.forest_rc_ring.DualForestRCGraphRing"></a>
+
+## DualForestRCGraphRing Objects
+
+```python
+class DualForestRCGraphRing(RCGraphRing)
+```
+
+Dual-product variant of `ForestRCGraphRing`.
+
 <a id="schubmult.rings.combinatorial.qy_rc_graph_ring"></a>
 
 # schubmult.rings.combinatorial.qy\_rc\_graph\_ring
 
+`QYRCGraphRing`: `RCGraphRing` quotient onto quasi-Yamanouchi RC graphs.
+
+Every product is snapped by merging mergeable adjacent rows (``_canonical_rc``, the
+same normalization as `RCGraph.snap_qy`), so basis elements are quasi-Yamanouchi.
+
+<a id="schubmult.rings.combinatorial.qy_rc_graph_ring.QYRCGraphRing"></a>
+
+## QYRCGraphRing Objects
+
+```python
+class QYRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` with products snapped to quasi-Yamanouchi form; see the module docstring.
+
 <a id="schubmult.rings.combinatorial.crystal_graph_ring"></a>
 
 # schubmult.rings.combinatorial.crystal\_graph\_ring
+
+`CrystalGraphRing`: a ring whose basis elements are crystal-graph objects, with the crystal
+operators extended linearly to ring elements. Base class for the RC graph / WC graph /
+factor-algebra rings in this package.
 
 <a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRing"></a>
 
@@ -6019,6 +11038,16 @@ Ring whose basis elements are CrystalGraph-like objects.
 We deliberately do not special-case tensor objects here: CrystalGraphTensor
 implements the same CrystalGraph API and will be handled by polymorphism.
 
+<a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRing.dtype"></a>
+
+#### dtype
+
+```python
+def dtype()
+```
+
+A fresh empty element bound to this ring.
+
 <a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRingElement"></a>
 
 ## CrystalGraphRingElement Objects
@@ -6032,6 +11061,26 @@ Element of the CrystalGraphRing.
 Keys are arbitrary objects that implement the CrystalGraph API (including
 CrystalGraphTensor). All crystal operators / statistics are lifted linearly
 by delegating to the underlying key's methods.
+
+<a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRingElement.phi"></a>
+
+#### phi
+
+```python
+def phi(index: int) -> int
+```
+
+Maximum of ``phi(index)`` over the basis keys.
+
+<a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRingElement.epsilon"></a>
+
+#### epsilon
+
+```python
+def epsilon(index: int) -> int
+```
+
+Maximum of ``epsilon(index)`` over the basis keys.
 
 <a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRingElement.raising_operator"></a>
 
@@ -6054,17 +11103,119 @@ def lowering_operator(index: int)
 
 Linearized lowering operator: delegate to each key's lowering_operator.
 
+<a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRingElement.crystal_length"></a>
+
+#### crystal\_length
+
+```python
+def crystal_length() -> int
+```
+
+Maximum of ``crystal_length()`` over the basis keys.
+
+<a id="schubmult.rings.combinatorial.crystal_graph_ring.CrystalGraphRingElement.to_highest_weight"></a>
+
+#### to\_highest\_weight
+
+```python
+def to_highest_weight() -> Tuple["CrystalGraphRingElement", Tuple[int, ...]]
+```
+
+Apply linearized raising operators until none changes the element; returns ``(element, raise_seq)``.
+
 <a id="schubmult.rings.combinatorial.bpd_ring"></a>
 
 # schubmult.rings.combinatorial.bpd\_ring
+
+`BPDRing`: a `SchubertMonomialRing` whose basis elements are bumpless pipe dreams (`BPD`),
+with conversion to `RCGraphRing` via ``to_rc_graph_ring_element``.
+
+<a id="schubmult.rings.combinatorial.bpd_ring.BPDRingElement"></a>
+
+## BPDRingElement Objects
+
+```python
+class BPDRingElement(SchubertMonomialRingElement)
+```
+
+Linear combination of `BPD` basis elements.
+
+<a id="schubmult.rings.combinatorial.bpd_ring.BPDRingElement.to_rc_graph_ring_element"></a>
+
+#### to\_rc\_graph\_ring\_element
+
+```python
+def to_rc_graph_ring_element(
+        rc_ring: RCGraphRing | None = None) -> RCGraphRingElement
+```
+
+Convert each BPD to its RC graph and re-express in an `RCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.bpd_ring.BPDRing"></a>
+
+## BPDRing Objects
+
+```python
+class BPDRing(SchubertMonomialRing)
+```
+
+The ring of bumpless pipe dreams; products use `BPD.product`.
 
 <a id="schubmult.rings.combinatorial.eg_ring"></a>
 
 # schubmult.rings.combinatorial.eg\_ring
 
+`EGRing`: a ring whose basis elements are ``(NilPlactic, length)`` pairs -- the Edelman-Greene
+insertion tableau of an RC graph's word together with its row count. ``from_rc_graph`` maps an RC
+graph to its EG class.
+
+<a id="schubmult.rings.combinatorial.eg_ring.EGPrintingTerm"></a>
+
+## EGPrintingTerm Objects
+
+```python
+class EGPrintingTerm(PrintingTerm)
+```
+
+Display symbol for an `EGRing` basis key (prints the key directly).
+
+<a id="schubmult.rings.combinatorial.eg_ring.EGRingElement"></a>
+
+## EGRingElement Objects
+
+```python
+class EGRingElement(BaseRingElement)
+```
+
+Linear combination of ``(NilPlactic, length)`` basis keys.
+
+<a id="schubmult.rings.combinatorial.eg_ring.EGRing"></a>
+
+## EGRing Objects
+
+```python
+class EGRing(BaseRing)
+```
+
+The Edelman-Greene tableau ring; see the module docstring.
+
 <a id="schubmult.rings.combinatorial.eg_plactic_ring"></a>
 
 # schubmult.rings.combinatorial.eg\_plactic\_ring
+
+`EGPlacticRing`: a `CrystalGraphRing` on pairs ``((NilPlactic, length), Plactic)`` -- an RC
+graph's Edelman-Greene insertion tableau together with its plactic recording tableau -- with
+conversion to and from `RCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticPrintingTerm"></a>
+
+## EGPlacticPrintingTerm Objects
+
+```python
+class EGPlacticPrintingTerm(PrintingTerm)
+```
+
+Display symbol for an `EGPlacticRing` basis key.
 
 <a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticRingElement"></a>
 
@@ -6074,15 +11225,7 @@ Linearized lowering operator: delegate to each key's lowering_operator.
 class EGPlacticRingElement(CrystalGraphRingElement)
 ```
 
-EGPlacticRing elements are linear combinations of RCGraph basis elements.
-
-The product % is the polynomial product. Currently only defined when the right side
-is a dominant RC graph.
-
-The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-to do this directly.
-
-The product * is well defined for any pair of RC graphs and is the dual product.
+EGPlacticRing elements are linear combinations of ``((NilPlactic, length), Plactic)`` basis keys.
 
 <a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticRingElement.__mod__"></a>
 
@@ -6191,9 +11334,32 @@ def reverse_raise_seq(raise_seq)
 Apply lowering_operator in reverse order to `raise_seq`.
 If the path dies (result is zero), return None (mirrors scalar behavior).
 
+<a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticRing"></a>
+
+## EGPlacticRing Objects
+
+```python
+class EGPlacticRing(CrystalGraphRing)
+```
+
+The EG-plactic ring; see the module docstring.
+
 <a id="schubmult.rings.combinatorial.grass_tensor_algebra"></a>
 
 # schubmult.rings.combinatorial.grass\_tensor\_algebra
+
+`GrassTensorAlgebra`: an algebra on tuples of full Grassmannian RC graphs (as `CrystalGraphTensor`
+keys), with conversion to `RCGraphRing` by squash-multiplying the factors together.
+
+<a id="schubmult.rings.combinatorial.grass_tensor_algebra.GrassTensorPrintingTerm"></a>
+
+## GrassTensorPrintingTerm Objects
+
+```python
+class GrassTensorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `GrassTensorAlgebra` basis tuple.
 
 <a id="schubmult.rings.combinatorial.grass_tensor_algebra.GrassTensorAlgebraElement"></a>
 
@@ -6242,9 +11408,38 @@ Evaluate a tensor key to an RCGraph using left-to-right squash_product.
 
 # schubmult.rings.combinatorial.schubert\_rc\_ring
 
+`SchubertRCGraphRing`: `RCGraphRing` whose product is computed through `BoundedRCFactorAlgebra`.
+
+Each RC graph is factored into elementary-symmetric RC graphs (``_factor_rc``), the factors
+are multiplied in the bounded factor algebra, and the result is converted back; ``schubert_poly``
+is the sum of all RC graphs of a permutation.
+
+<a id="schubmult.rings.combinatorial.schubert_rc_ring.SchubertRCGraphRingElement"></a>
+
+## SchubertRCGraphRingElement Objects
+
+```python
+class SchubertRCGraphRingElement(RCGraphRingElement)
+```
+
+Element of `SchubertRCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.schubert_rc_ring.SchubertRCGraphRing"></a>
+
+## SchubertRCGraphRing Objects
+
+```python
+class SchubertRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` multiplying via `BoundedRCFactorAlgebra` factorizations; see the module docstring.
+
 <a id="schubmult.rings.combinatorial.chute_move_ring"></a>
 
 # schubmult.rings.combinatorial.chute\_move\_ring
+
+`ChuteMoveRing`: a `SchubertMonomialRing` whose basis elements are `ChuteMoveElement`s
+(RC graphs marked with a set of simultaneous chute-move rows).
 
 <a id="schubmult.rings.combinatorial.chute_move_ring.ChuteMoveRingElement"></a>
 
@@ -6256,17 +11451,32 @@ class ChuteMoveRingElement(SchubertMonomialRingElement)
 
 ChuteMoveRing elements are linear combinations of ChuteMoveElement basis elements.
 
-The product % is the polynomial product. Currently only defined when the right side
-is a dominant RC graph.
+<a id="schubmult.rings.combinatorial.chute_move_ring.ChuteMoveRing"></a>
 
-The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-to do this directly.
+## ChuteMoveRing Objects
 
-The product * is well defined for any pair of RC graphs and is the dual product.
+```python
+class ChuteMoveRing(SchubertMonomialRing)
+```
+
+The ring of `ChuteMoveElement`s; products use `ChuteMoveElement.product`.
 
 <a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra"></a>
 
 # schubmult.rings.combinatorial.bounded\_wc\_factor\_algebra
+
+`BoundedWCFactorAlgebra`: the `WCGraph` (K-theoretic) analogue of `BoundedRCFactorAlgebra`,
+factoring Grothendieck classes into tuples of full Grassmannian WC graphs.
+
+<a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorPrintingTerm"></a>
+
+## BoundedWCFactorPrintingTerm Objects
+
+```python
+class BoundedWCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `BoundedWCFactorAlgebra` basis key.
 
 <a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorAlgebraElement"></a>
 
@@ -6304,6 +11514,42 @@ Evaluate a tensor key to an WCGraph using left-to-right squash_product.
 <a id="schubmult.rings.combinatorial.key_rc_ring"></a>
 
 # schubmult.rings.combinatorial.key\_rc\_ring
+
+`KeyRCGraphRing`: `RCGraphRing` quotient modeling key polynomials (Demazure characters).
+
+RC graphs are snapped to a canonical representative of their ``extremal_weight`` class
+(matching Edelman-Greene recording tableaux), and ``to_free_algebra_element`` lands in
+the dual key basis indexed by ``extremal_weight``.
+
+<a id="schubmult.rings.combinatorial.key_rc_ring.KeyRCGraphRingElement"></a>
+
+## KeyRCGraphRingElement Objects
+
+```python
+class KeyRCGraphRingElement(RCGraphRingElement)
+```
+
+Element of `KeyRCGraphRing`; converts to the free-algebra key basis via ``extremal_weight``.
+
+<a id="schubmult.rings.combinatorial.key_rc_ring.KeyRCGraphRingElement.to_free_algebra_element"></a>
+
+#### to\_free\_algebra\_element
+
+```python
+def to_free_algebra_element(basis=None)
+```
+
+Map each RC graph to the dual key basis element indexed by its ``extremal_weight``.
+
+<a id="schubmult.rings.combinatorial.key_rc_ring.KeyRCGraphRing"></a>
+
+## KeyRCGraphRing Objects
+
+```python
+class KeyRCGraphRing(RCGraphRing)
+```
+
+`RCGraphRing` with products snapped to canonical key-class representatives; see the module docstring.
 
 <a id="schubmult._version"></a>
 
@@ -10185,6 +15431,28 @@ class Node()
 A node of an indexed forest's binary search tree: an ``index`` (BST key), optional
 ``label``, and ``left``/``right`` children.
 
+<a id="schubmult.combinatorics.indexed_forests.Node.rho"></a>
+
+#### rho
+
+```python
+@property
+def rho()
+```
+
+Index of the leftmost node in this subtree (its minimum).
+
+<a id="schubmult.combinatorics.indexed_forests.Node.inorder_traversal"></a>
+
+#### inorder\_traversal
+
+```python
+@property
+def inorder_traversal()
+```
+
+Nodes of the subtree in increasing index order.
+
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest"></a>
 
 ## IndexedForest Objects
@@ -10195,6 +15463,71 @@ class IndexedForest()
 
 A forest of `Node` binary search trees, indexed by a composition (``code``) via the
 Thompson monoid factorization (see `forest_from_code`/`double_forest.forest_from_code`).
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.roots"></a>
+
+#### roots
+
+```python
+@property
+def roots()
+```
+
+The root nodes, sorted.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.inorder_traversal"></a>
+
+#### inorder\_traversal
+
+```python
+@property
+def inorder_traversal()
+```
+
+All nodes of the forest in increasing index order.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.code"></a>
+
+#### code
+
+```python
+@property
+def code()
+```
+
+The weak composition indexing this forest (cached).
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.node"></a>
+
+#### node
+
+```python
+def node(index)
+```
+
+The node with the given index, or ``None``.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.support"></a>
+
+#### support
+
+```python
+@property
+def support()
+```
+
+Sorted tuple of all node indices.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.intervals"></a>
+
+#### intervals
+
+```python
+@property
+def intervals()
+```
+
+Per-root intervals of consecutive indices; see `_forest_intervals`.
 
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest.terminal_nodes"></a>
 
@@ -10319,6 +15652,16 @@ class ParallelInjLetter()
 
 A letter ``primary[secondary]`` in the parallel-injection alphabet used by omega-insertion.
 
+<a id="schubmult.combinatorics.indexed_forests.make_parallel_injective_word"></a>
+
+#### make\_parallel\_injective\_word
+
+```python
+def make_parallel_injective_word(primary_word, secondary_word)
+```
+
+Zip two equal-length words into a word of `ParallelInjLetter` biletters.
+
 <a id="schubmult.combinatorics.indexed_forests.weak_composition_to_indfor"></a>
 
 #### weak\_composition\_to\_indfor
@@ -10402,6 +15745,27 @@ def build_balanced_tree(labels)
 
 Helper to build a tree where the in-order traversal matches the labels.
 This creates the 'canonical labeling' referenced in the paper.
+
+<a id="schubmult.combinatorics.indexed_forests.decreasing_labelings"></a>
+
+#### decreasing\_labelings
+
+```python
+def decreasing_labelings(root, max_val, used_vals=None)
+```
+
+All labelings of the tree at ``root`` by distinct values ``<= max_val`` that strictly decrease
+from each node to its children.
+
+<a id="schubmult.combinatorics.indexed_forests.word_from_labeling"></a>
+
+#### word\_from\_labeling
+
+```python
+def word_from_labeling(root, labeling)
+```
+
+Word of ``rho`` values of the tree's nodes, ordered by the inverse of the labeling permutation.
 
 <a id="schubmult.combinatorics.indexed_forests.letterpair"></a>
 
@@ -10496,6 +15860,41 @@ def is_separated(a, b)
 ```
 
 The criterion of Nadeau--Tewari Proposition 5.8 for ``ab <-> ba``.
+
+<a id="schubmult.combinatorics.indexed_forests.word_to_pair_labeled"></a>
+
+#### word\_to\_pair\_labeled
+
+```python
+def word_to_pair_labeled(word)
+```
+
+Standardize a word into `letterpair` biletters ``(letter, occurrence number)``.
+
+<a id="schubmult.combinatorics.indexed_forests.word_to_pairinj_labeled"></a>
+
+#### word\_to\_pairinj\_labeled
+
+```python
+def word_to_pairinj_labeled(word)
+```
+
+Standardize a word into `ParallelInjLetter` biletters ``(letter, occurrence number)``.
+
+<a id="schubmult.combinatorics.indexed_forests.omega_insertion"></a>
+
+#### omega\_insertion
+
+```python
+def omega_insertion(
+        word_of_pairs: tuple[letterpair,
+                             ...]) -> tuple[LBS, DecLabeling] | None
+```
+
+Forest analogue of RSK: insert a word of biletters letter by letter, returning the insertion
+forest ``P`` (an `LBS`) and the recording forest ``Q`` (a `DecLabeling`), or ``None`` if the
+word is not insertable. Each new letter becomes a root that absorbs the neighboring trees
+at ``primary - 1`` / ``primary + 1`` as children.
 
 <a id="schubmult.combinatorics.indexed_forests.omega_reduced_word_from_labelings"></a>
 
@@ -10634,6 +16033,16 @@ def tile_name(conn: frozenset, marked: bool) -> str
 
 Return the canonical tile name for a connection set / mark.
 
+<a id="schubmult.combinatorics.mbpd.is_heavy"></a>
+
+#### is\_heavy
+
+```python
+def is_heavy(conn: frozenset, marked: bool) -> bool
+```
+
+A tile is heavy iff it is blank or a marked J.
+
 <a id="schubmult.combinatorics.mbpd.MBPD"></a>
 
 ## MBPD Objects
@@ -10647,6 +16056,66 @@ A marked bumpless pipedream on an ``n x n`` grid.
 Internally we store, for every cell ``(i, j)`` (1-indexed), the connection
 set ``conn[i][j]`` (a frozenset of ``N/E/S/W``) and a boolean ``marked``.
 
+<a id="schubmult.combinatorics.mbpd.MBPD.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(n: int, conn, marked)
+```
+
+Store the ``n x n`` connection sets and marks as tuples (see `from_tiles` for the string form).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.conn"></a>
+
+#### conn
+
+```python
+def conn(i: int, j: int) -> frozenset
+```
+
+Connection set of cell ``(i, j)`` (1-indexed).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.marked"></a>
+
+#### marked
+
+```python
+def marked(i: int, j: int) -> bool
+```
+
+Whether cell ``(i, j)`` is marked.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.tile"></a>
+
+#### tile
+
+```python
+def tile(i: int, j: int) -> str
+```
+
+Tile name (``B/H/V/P/R/J/M``) of cell ``(i, j)``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.heavy"></a>
+
+#### heavy
+
+```python
+def heavy(i: int, j: int) -> bool
+```
+
+Whether cell ``(i, j)`` is heavy.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.connects"></a>
+
+#### connects
+
+```python
+def connects(i: int, j: int, d: str) -> bool
+```
+
+Whether the pipe in cell ``(i, j)`` connects in direction ``d``.
+
 <a id="schubmult.combinatorics.mbpd.MBPD.from_tiles"></a>
 
 #### from\_tiles
@@ -10657,6 +16126,16 @@ def from_tiles(cls, grid) -> MBPD
 ```
 
 Build from an ``n x n`` grid of tile-name strings.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.to_tiles"></a>
+
+#### to\_tiles
+
+```python
+def to_tiles()
+```
+
+The ``n x n`` grid of tile-name strings.
 
 <a id="schubmult.combinatorics.mbpd.MBPD.with_tile"></a>
 
@@ -10695,6 +16174,16 @@ def validity_errors()
 
 Return a list of human-readable validity problems (empty if valid).
 
+<a id="schubmult.combinatorics.mbpd.MBPD.is_valid"></a>
+
+#### is\_valid
+
+```python
+def is_valid() -> bool
+```
+
+Whether `validity_errors` is empty.
+
 <a id="schubmult.combinatorics.mbpd.MBPD.perm"></a>
 
 #### perm
@@ -10725,7 +16214,27 @@ of bump tiles stabilises; the exit columns then give ``w``.
 def weight()
 ```
 
-``wt(D) = (m_1, ..., m_n)`` with ``m_i`` = `heavy` tiles in row ``i``.
+``wt(D) = (m_1, ..., m_n)`` with ``m_i`` = [`heavy`](#schubmult.combinatorics.mbpd.MBPD.heavy) tiles in row ``i``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.num_heavy"></a>
+
+#### num\_heavy
+
+```python
+def num_heavy() -> int
+```
+
+Total number of heavy tiles.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.heavy_cells"></a>
+
+#### heavy\_cells
+
+```python
+def heavy_cells()
+```
+
+Positions ``(i, j)`` of all heavy tiles in row-major order.
 
 <a id="schubmult.combinatorics.mbpd.MBPD.is_pipe_segment"></a>
 
@@ -10778,6 +16287,77 @@ def is_doublecross(r: int, b: int, d: int) -> bool
 ``D_{[r,r+1],[b,d]}`` is a doublecross: both rows are pipe segments,
 ``D_{r,b}=R`` and ``D_{r+1,d}=J``.
 
+<a id="schubmult.combinatorics.mbpd.MBPD.admits_droop"></a>
+
+#### admits\_droop
+
+```python
+def admits_droop(r: int, b: int, d: int) -> bool
+```
+
+Whether the ``(r, [b, d])``-droop (moving a pipe segment from row ``r`` down to row ``r+1`` over
+columns ``b..d``) is admitted by the local tile configuration.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.admits_undroop"></a>
+
+#### admits\_undroop
+
+```python
+def admits_undroop(r: int, b: int, d: int) -> bool
+```
+
+Whether the inverse of the ``(r, [b, d])``-droop is admitted.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.droop"></a>
+
+#### droop
+
+```python
+def droop(r: int, b: int, d: int) -> MBPD
+```
+
+Apply the ``(r, [b, d])``-droop (raises if not admitted).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.undroop"></a>
+
+#### undroop
+
+```python
+def undroop(r: int, b: int, d: int) -> MBPD
+```
+
+Apply the ``(r, [b, d])``-undroop (raises if not admitted).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_f_target"></a>
+
+#### is\_f\_target
+
+```python
+def is_f_target(r: int, c: int) -> bool
+```
+
+Whether the heavy tile at ``(r, c)`` is a target of the ``f`` move of the bijection ``Phi``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_fstar_target"></a>
+
+#### is\_fstar\_target
+
+```python
+def is_fstar_target(r: int, c: int) -> bool
+```
+
+Whether the heavy tile at ``(r, c)`` is a target of the ``f*`` (terminal) move of ``Phi``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_F_target"></a>
+
+#### is\_F\_target
+
+```python
+def is_F_target(r: int, c: int) -> bool
+```
+
+Whether ``(r, c)`` is an ``f`` or ``f*`` target.
+
 <a id="schubmult.combinatorics.mbpd.MBPD.max_F_target"></a>
 
 #### max\_F\_target
@@ -10787,6 +16367,27 @@ def max_F_target()
 ```
 
 Bottommost then rightmost heavy tile, or ``None`` for ``D_id``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_F_terminal"></a>
+
+#### is\_F\_terminal
+
+```python
+def is_F_terminal() -> bool
+```
+
+Whether the next ``Phi`` step is terminal (no heavy tiles, or the max target is an ``f*`` target).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.F_target_info"></a>
+
+#### F\_target\_info
+
+```python
+def F_target_info(r: int, c: int) -> dict
+```
+
+Describe the ``Phi`` move at the target ``(r, c)``: its kind (``f``/``fstar``), the resulting
+MBPD, and the biletter emitted.
 
 <a id="schubmult.combinatorics.mbpd.MBPD.f_move"></a>
 
@@ -10912,6 +16513,26 @@ the order ``(i1,a1) > (i2,a2)`` iff ``i1 > i2`` or (``i1 == i2`` and
 #### biletters
 
 tuple of (i, a)
+
+<a id="schubmult.combinatorics.mbpd.RCP.is_valid"></a>
+
+#### is\_valid
+
+```python
+def is_valid() -> bool
+```
+
+Whether every biletter satisfies ``1 <= i <= a < n`` and the sequence is strictly decreasing.
+
+<a id="schubmult.combinatorics.mbpd.RCP.weight"></a>
+
+#### weight
+
+```python
+def weight()
+```
+
+Number of biletters with each first coordinate ``i``, as a length-``n`` tuple.
 
 <a id="schubmult.combinatorics.mbpd.RCP.perm"></a>
 
@@ -13616,6 +19237,138 @@ A tableau of positive roots (grid cells hold ``(root, recording_letter)`` pairs)
 implementing dual Knuth equivalence via up/down JDT slides. ``edelman_greene_invariant``
 is preserved by the crystal raising/lowering operators.
 
+<a id="schubmult.combinatorics.root_tableau.RootTableau.edelman_greene_invariant"></a>
+
+#### edelman\_greene\_invariant
+
+```python
+@property
+def edelman_greene_invariant()
+```
+
+The Edelman-Greene insertion tableau's row word of the reduced word (computed on the
+``w0``-reversed word and mapped back), as a tuple. Constant on crystal components.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.eg_root"></a>
+
+#### eg\_root
+
+```python
+def eg_root(index)
+```
+
+The ``index``-th right root of the EG-invariant reduced word.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.eg_row_word"></a>
+
+#### eg\_row\_word
+
+```python
+@property
+def eg_row_word()
+```
+
+Reduced word recovered from the row word of roots by repeatedly peeling off the last simple root.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.shape"></a>
+
+#### shape
+
+```python
+@property
+def shape()
+```
+
+Row lengths of the (possibly skew) tableau, omitting empty rows.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.root_insert_rsk"></a>
+
+#### root\_insert\_rsk
+
+```python
+@classmethod
+def root_insert_rsk(cls, reduced_word, compatible_seq)
+```
+
+Build the root tableau of a compatible pair: Edelman-Greene insert the reduced word, then
+fill each cell of the recording tableau with ``(right root of that letter, compatible letter)``.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.recording_tableau"></a>
+
+#### recording\_tableau
+
+```python
+@property
+def recording_tableau()
+```
+
+Grid of positions (in the reduced word) of each cell's root.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.from_rc_graph"></a>
+
+#### from\_rc\_graph
+
+```python
+@classmethod
+def from_rc_graph(cls, rc: RCGraph)
+```
+
+Root tableau of an RC graph (its reduced word with the row-index compatible sequence).
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.roots_before"></a>
+
+#### roots\_before
+
+```python
+def roots_before(row, col)
+```
+
+Boxes whose letter precedes that of ``(row, col)`` in the reading order.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.perm"></a>
+
+#### perm
+
+```python
+@property
+def perm()
+```
+
+The permutation of the reduced word.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.delete_box"></a>
+
+#### delete\_box
+
+```python
+def delete_box(box)
+```
+
+Remove the letter whose root sits in ``box`` (if that root is a Bruhat descent of ``perm``) and
+re-insert the shortened compatible pair; ``None`` if it is not a descent.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.rectify"></a>
+
+#### rectify
+
+```python
+def rectify(randomized=False)
+```
+
+Jeu de taquin rectification: slide into inner corners until none remain (first corner by
+default, or a random one).
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.up_jdt_slide"></a>
+
+#### up\_jdt\_slide
+
+```python
+def up_jdt_slide(row, col, check=False)
+```
+
+Reverse JDT slide into the outer corner ``(row, col)`` (grid grows if needed), moving boxes
+down/right and shifting roots accordingly; with ``check`` the EG invariant is verified.
+
 <a id="schubmult.combinatorics.root_tableau.RootTableau.down_jdt_slide"></a>
 
 #### down\_jdt\_slide
@@ -13629,6 +19382,191 @@ Perform a downward/rightward jeu-de-taquin slide starting from the given
 into the hole, preferring the smaller recording letter when both exist.
 Returns a new RootTableau (does not mutate self).
 
+<a id="schubmult.combinatorics.root_tableau.RootTableau.iter_boxes"></a>
+
+#### iter\_boxes
+
+```python
+@property
+def iter_boxes()
+```
+
+Occupied cells in row-major order.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.iter_outer_corners"></a>
+
+#### iter\_outer\_corners
+
+```python
+@property
+def iter_outer_corners()
+```
+
+Empty cells that can receive an `up_jdt_slide`.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.iter_inner_corners"></a>
+
+#### iter\_inner\_corners
+
+```python
+@property
+def iter_inner_corners()
+```
+
+Empty cells that can receive a `down_jdt_slide`.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.is_valid"></a>
+
+#### is\_valid
+
+```python
+@property
+def is_valid()
+```
+
+Whether the reconstructed RC graph is valid.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.reduced_word"></a>
+
+#### reduced\_word
+
+```python
+@property
+def reduced_word()
+```
+
+Reduced word read off the grid (see `_word_from_grid`).
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.compatible_sequence"></a>
+
+#### compatible\_sequence
+
+```python
+@property
+def compatible_sequence()
+```
+
+Compatible sequence read off the grid alongside the reduced word.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.word_grid"></a>
+
+#### word\_grid
+
+```python
+@property
+def word_grid()
+```
+
+Grid of reduced-word letters (one per occupied cell).
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.grid_word"></a>
+
+#### grid\_word
+
+```python
+@property
+def grid_word()
+```
+
+Letters of `word_grid` in row-word order.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.order_grid"></a>
+
+#### order\_grid
+
+```python
+@property
+def order_grid()
+```
+
+Grid giving each cell's position in the reduced word.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.letter_at"></a>
+
+#### letter\_at
+
+```python
+def letter_at(row, col)
+```
+
+Reduced-word letter at ``(row, col)``.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(grid, print_only=False)
+```
+
+Wrap an object grid of ``(root, letter)`` cells; unless ``print_only``, verify each cell's root
+matches the EG-invariant root of its letter.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.weight_tableau"></a>
+
+#### weight\_tableau
+
+```python
+@property
+def weight_tableau()
+```
+
+RS insertion tableau of the row word of compatible letters (the crystal weight tableau).
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.epsilon"></a>
+
+#### epsilon
+
+```python
+def epsilon(index)
+```
+
+Crystal ``epsilon_index`` of the weight tableau.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.eg_grid"></a>
+
+#### eg\_grid
+
+```python
+@property
+def eg_grid()
+```
+
+Grid of EG-invariant root indices.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.eg_index_word"></a>
+
+#### eg\_index\_word
+
+```python
+@property
+def eg_index_word()
+```
+
+For each cell in row-word order, the index of its root in the EG-invariant word.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.row_word"></a>
+
+#### row\_word
+
+```python
+@property
+def row_word()
+```
+
+Compatible letters read bottom row to top, left to right.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.root_row_word"></a>
+
+#### root\_row\_word
+
+```python
+@property
+def root_row_word()
+```
+
+Roots read in row-word order.
+
 <a id="schubmult.combinatorics.root_tableau.RootTableau.rc_graph"></a>
 
 #### rc\_graph
@@ -13640,6 +19578,27 @@ def rc_graph()
 
 Reconstruct the RC-graph from the root tableau.
 
+<a id="schubmult.combinatorics.root_tableau.RootTableau.right_root_at"></a>
+
+#### right\_root\_at
+
+```python
+def right_root_at(i)
+```
+
+EG-invariant root of the ``i``-th cell in row-word order.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.iter_boxes_row_word_order"></a>
+
+#### iter\_boxes\_row\_word\_order
+
+```python
+@property
+def iter_boxes_row_word_order()
+```
+
+Occupied cells bottom row to top, left to right.
+
 <a id="schubmult.combinatorics.root_tableau.RootTableau.raising_operator"></a>
 
 #### raising\_operator
@@ -13648,7 +19607,19 @@ Reconstruct the RC-graph from the root tableau.
 def raising_operator(i)
 ```
 
-Crystal raising operator e_i on the root tableau
+Crystal ``e_i``: apply the RC graph raising operator, rebuild the root tableau, and slide it
+back into this tableau's shape with `up_jdt_slide`; ``None`` if undefined.
+
+<a id="schubmult.combinatorics.root_tableau.RootTableau.lowering_operator"></a>
+
+#### lowering\_operator
+
+```python
+def lowering_operator(row)
+```
+
+Crystal ``f_row`` computed directly on RC graph rows ``row`` and ``row+1`` by the bracketing rule,
+then rebuilt and slid back into shape; ``None`` if undefined. Asserts the EG invariant.
 
 <a id="schubmult.combinatorics.root_tableau.RootTableau.raising_operator_direct"></a>
 
@@ -15020,6 +20991,27 @@ A (skew) semistandard Young tableau stored as a grid, with the ``gl_n`` plactic 
 structure (Knuth relations). ``inner_shape`` (a partition of leading holes per row) makes it a
 skew tableau; construct directly from a grid or via classmethods like ``Plactic.yamanouchi``.
 
+<a id="schubmult.combinatorics.plactic.Plactic.evacuation"></a>
+
+#### evacuation
+
+```python
+def evacuation(n)
+```
+
+Schutzenberger evacuation within the alphabet ``1..n``: insert the complemented row word ``n + 1 - a``.
+
+<a id="schubmult.combinatorics.plactic.Plactic.iter_boxes"></a>
+
+#### iter\_boxes
+
+```python
+@property
+def iter_boxes()
+```
+
+Filled cells in row-word order (bottom row to top, left to right).
+
 <a id="schubmult.combinatorics.plactic.Plactic.up_jdt_slide"></a>
 
 #### up\_jdt\_slide
@@ -15041,6 +21033,39 @@ def down_jdt_slide(row, col)
 
 Perform a jeu de taquin slide starting from the given (row, col)
 position (0-indexed). Returns a new Plactic tableau.
+
+<a id="schubmult.combinatorics.plactic.Plactic.iter_outer_corners"></a>
+
+#### iter\_outer\_corners
+
+```python
+@property
+def iter_outer_corners()
+```
+
+Empty cells that can receive a reverse JDT slide.
+
+<a id="schubmult.combinatorics.plactic.Plactic.iter_inner_corners"></a>
+
+#### iter\_inner\_corners
+
+```python
+@property
+def iter_inner_corners()
+```
+
+Holes of the inner shape that can receive a forward JDT slide.
+
+<a id="schubmult.combinatorics.plactic.Plactic.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(word=(), inner_shape=None)
+```
+
+Build from rows (tuple of tuples), a prebuilt grid, or empty; ``inner_shape`` gives the skew
+holes. The grid is stored with one extra border row and column so outer corners always exist.
 
 <a id="schubmult.combinatorics.plactic.Plactic.shiftup"></a>
 
@@ -15087,6 +21112,17 @@ def row_word()
 
 Return the row-reading word as a flat tuple.
 
+<a id="schubmult.combinatorics.plactic.Plactic.column_word"></a>
+
+#### column\_word
+
+```python
+@property
+def column_word()
+```
+
+Entries read column by column, each column bottom to top.
+
 <a id="schubmult.combinatorics.plactic.Plactic.transpose"></a>
 
 #### transpose
@@ -15120,6 +21156,17 @@ def __mul__(other)
 Plactic product: insert entries of `other` in row-reading order
 (top-to-bottom, left-to-right) into a copy of self.
 
+<a id="schubmult.combinatorics.plactic.Plactic.shape"></a>
+
+#### shape
+
+```python
+@property
+def shape()
+```
+
+Row lengths (filled cells per nonempty row).
+
 <a id="schubmult.combinatorics.plactic.Plactic.skew_shape"></a>
 
 #### skew\_shape
@@ -15130,6 +21177,17 @@ def skew_shape()
 ```
 
 Return the skew shape as a tuple of (row_length, left_offset) pairs.
+
+<a id="schubmult.combinatorics.plactic.Plactic.from_word"></a>
+
+#### from\_word
+
+```python
+@classmethod
+def from_word(cls, word)
+```
+
+RS insertion tableau of a word.
 
 <a id="schubmult.combinatorics.plactic.Plactic.rs_insert"></a>
 
@@ -15203,6 +21261,38 @@ def is_increasing()
 ```
 
 Check if the tableau is strictly increasing in rows and columns.
+
+<a id="schubmult.combinatorics.plactic.Plactic.rectify"></a>
+
+#### rectify
+
+```python
+def rectify()
+```
+
+Jeu de taquin rectification of a skew tableau to a straight shape.
+
+<a id="schubmult.combinatorics.plactic.Plactic.superstandard"></a>
+
+#### superstandard
+
+```python
+@classmethod
+def superstandard(cls, shape)
+```
+
+The standard tableau of the given shape filled ``1, 2, ...`` row by row, left to right.
+
+<a id="schubmult.combinatorics.plactic.Plactic.is_semistandard"></a>
+
+#### is\_semistandard
+
+```python
+@property
+def is_semistandard()
+```
+
+Rows weakly increasing and columns strictly increasing (skipping holes).
 
 <a id="schubmult.combinatorics.plactic.Plactic.reverse_rsk"></a>
 
@@ -15552,6 +21642,66 @@ C++ multiplication kernels (the ``schubmult_cpp`` extension, built from ``cpp/``
 ``*_from_elems`` kernels dispatch here. The extension is a required part of the package; the
 pure-Python kernels remain only as the fallback for permutations beyond the compiled MAXN (the
 wrappers return ``None`` in that case). Set ``SCHUBMULT_NO_CPP=1`` to force the Python kernels.
+
+<a id="schubmult.mult._accel.schubmult_py"></a>
+
+#### schubmult\_py
+
+```python
+def schubmult_py(perm_dict, v)
+```
+
+C++ ``schubmult_py``; returns ``None`` if any coefficient is non-integer or the size exceeds ``MAXN``.
+
+<a id="schubmult.mult._accel.schubmult_double"></a>
+
+#### schubmult\_double
+
+```python
+def schubmult_double(perm_dict, v, var2, var3)
+```
+
+C++ ``schubmult_double``; returns ``None`` if the size exceeds ``MAXN``.
+
+<a id="schubmult.mult._accel.schubmult_q_fast"></a>
+
+#### schubmult\_q\_fast
+
+```python
+def schubmult_q_fast(perm_dict, v, q_var)
+```
+
+C++ ``schubmult_q_fast``; non-integer coefficients are handled by linearity, one key at a time.
+
+<a id="schubmult.mult._accel.schubmult_q_double_fast"></a>
+
+#### schubmult\_q\_double\_fast
+
+```python
+def schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+```
+
+C++ ``schubmult_q_double_fast``; returns ``None`` if the size exceeds ``MAXN``.
+
+<a id="schubmult.mult._accel.schubmult_double_from_elems"></a>
+
+#### schubmult\_double\_from\_elems
+
+```python
+def schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func)
+```
+
+C++ ``schubmult_double`` with a custom elementary-symmetric ``elem_func``; ``None`` if size exceeds ``MAXN``.
+
+<a id="schubmult.mult._accel.schubmult_double_alt_from_elems"></a>
+
+#### schubmult\_double\_alt\_from\_elems
+
+```python
+def schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
+```
+
+C++ ``schubmult_double_alt_from_elems``; ``None`` if size exceeds ``MAXN``.
 
 <a id="schubmult.mult.separated_descents"></a>
 
@@ -16033,6 +22183,308 @@ is simpler but slower than ``schubmult_q_fast``. Results agree with
 <a id="schubmult.mult.quantum_double"></a>
 
 # schubmult.mult.quantum\_double
+
+Quantum double Schubert polynomial multiplication.
+
+Implements ``schubmult_q_double``/``schubmult_q_double_fast``: the product of a
+linear combination of quantum double Schubert polynomials ``S_u(x, var2)`` with
+a single ``S_v(x, var3)``, returned as a coefficient dict ``{w: coeff}``
+polynomial in ``var2``, ``var3``, and the quantum parameters ``q_1, q_2, ...``.
+Uses the same ``theta``/v-path recursion as ``schubmult.mult.double``, with the
+elementary-symmetric step generalized to the quantum moves of
+``elem_sym_perms_q`` and the coefficient function to ``elem_sym_func_q``.
+
+Also provides: ``mult_poly_q_double`` (multiply by an arbitrary polynomial),
+``apply_peterson_woodward`` (parabolic quantum via the Peterson-Woodward
+comparison theorem), ``q_posify``/``q_partial_posify_generic`` (manifestly
+positive display of quantum structure constants), ``schubpoly_quantum``
+(the quantum Schubert polynomial itself), ``nil_hecke`` (quantum nilHecke
+action), and ``factor_out_q`` (split a polynomial by its ``q``-monomials).
+
+<a id="schubmult.mult.quantum_double.single_variable"></a>
+
+#### single\_variable
+
+```python
+def single_variable(coeff_dict, varnum, var_y=None, q_var=_vars.q_var)
+```
+
+Multiply ``sum_u coeff_u S_u(x, var_y)`` by the single variable ``x_varnum`` (quantum equivariant Monk rule).
+
+The diagonal term contributes ``var_y[u(varnum)]``; the off-diagonal terms come from
+``elem_sym_positional_perms_q``, each carrying its ``q``-monomial and sign.
+
+<a id="schubmult.mult.quantum_double.mult_poly_q_double"></a>
+
+#### mult\_poly\_q\_double
+
+```python
+def mult_poly_q_double(coeff_dict,
+                       poly,
+                       var_x=None,
+                       var_y=None,
+                       q_var=_vars.q_var)
+```
+
+Multiply ``sum_u coeff_u S_u(x, var_y)`` by an arbitrary polynomial ``poly`` in ``var_x``.
+
+Recurses over the ``Add``/``Mul``/``Pow`` structure of ``poly``, dispatching
+single-variable leaves to ``single_variable``; mirrors ``mult_poly_double``.
+
+<a id="schubmult.mult.quantum_double.mult_poly_q_double_alt"></a>
+
+#### mult\_poly\_q\_double\_alt
+
+```python
+def mult_poly_q_double_alt(coeff_dict,
+                           poly,
+                           var_x=None,
+                           var_y=None,
+                           q_var=_vars.q_var)
+```
+
+Variant of ``mult_poly_q_double`` that folds each factor via ``schubmult_q_double_dict_fast``
+instead of ``single_variable``.
+
+<a id="schubmult.mult.quantum_double.nil_hecke"></a>
+
+#### nil\_hecke
+
+```python
+def nil_hecke(perm_dict, v, n, var2=None, var3=None)
+```
+
+Quantum nilHecke action: like ``schubmult_q_double`` but using the descent-side
+``elem_sym_perms_q_op`` moves (bounded by ``n``) with ``up`` and ``up2`` swapped in the
+coefficient function.
+
+<a id="schubmult.mult.quantum_double.schubmult_q_double_pair"></a>
+
+#### schubmult\_q\_double\_pair
+
+```python
+@cache
+def schubmult_q_double_pair(perm1, perm2, var2=None, var3=None, q_var=None)
+```
+
+``schubmult_q_double_fast`` specialized to a single ``perm1`` with coefficient 1, cached.
+
+<a id="schubmult.mult.quantum_double.schubmult_q_double_pair_generic"></a>
+
+#### schubmult\_q\_double\_pair\_generic
+
+```python
+@cache
+def schubmult_q_double_pair_generic(perm1, perm2)
+```
+
+``schubmult_q_double_pair`` with the fixed generic alphabets ``_vars.var_g1``/``_vars.var_g2``/``_vars.q_var``.
+
+<a id="schubmult.mult.quantum_double.schubmult_q_generic_partial_posify"></a>
+
+#### schubmult\_q\_generic\_partial\_posify
+
+```python
+@cache
+def schubmult_q_generic_partial_posify(u2, v2)
+```
+
+Manifestly positive (where possible) expansion of ``S_{u2} * S_{v2}`` over the generic alphabets,
+applying ``q_partial_posify_generic`` to each coefficient.
+
+<a id="schubmult.mult.quantum_double.q_posify"></a>
+
+#### q\_posify
+
+```python
+def q_posify(u, v, w, val, var2, var3, q_var, msg)
+```
+
+Manifestly positive representation of the quantum double structure constant ``c^w_{u,v}``.
+
+Splits ``val`` by ``q``-monomial (``factor_out_q``), then for each piece either takes it
+as-is (integer, or when ``v``'s inverse code is already in medium-theta form), reduces the
+triple ``(u, v, w)`` via ``reduce_q_coeff`` until the ``q``-monomial becomes trivial and
+delegates to the classical ``posify``, or falls back to ``compute_positive_rep``.
+Raises if the reconstruction does not equal ``val``.
+
+<a id="schubmult.mult.quantum_double.q_partial_posify_generic"></a>
+
+#### q\_partial\_posify\_generic
+
+```python
+def q_partial_posify_generic(val, u, v, w)
+```
+
+Like ``q_posify`` over the generic alphabets, but only attempts positivity when ``v`` contains
+a ``1432`` or ``312`` pattern (otherwise the raw value is already manifestly positive), and
+leaves non-reducible ``q``-pieces unchanged rather than running the LP.
+
+<a id="schubmult.mult.quantum_double.apply_peterson_woodward"></a>
+
+#### apply\_peterson\_woodward
+
+```python
+def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var)
+```
+
+Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
+
+Implements the Peterson-Woodward comparison: for each ``q``-monomial of each coefficient,
+checks the ``omega``/``check_blocks`` compatibility conditions on the exponent vector,
+multiplies the indexing permutation by the appropriate parabolic longest elements, keeps
+only the ``parabolic``-minimal results, and reindexes the surviving ``q`` variables.
+
+**Arguments**:
+
+- `coeff_dict` - Full-flag quantum coefficient dict ``{Permutation: coeff}``.
+- `parabolic_index` - Sorted list of 1-indexed positions generating the parabolic subgroup.
+- `q_var` - Quantum parameter generating set.
+  
+
+**Returns**:
+
+- `dict` - Parabolic quantum coefficient dict ``{Permutation: coeff}``.
+
+<a id="schubmult.mult.quantum_double.elem_sym_func_q_q"></a>
+
+#### elem\_sym\_func\_q\_q
+
+```python
+def elem_sym_func_q_q(k,
+                      i,
+                      u1,
+                      u2,
+                      v1,
+                      v2,
+                      udiff,
+                      vdiff,
+                      varl1,
+                      varl2,
+                      q_var=_vars.q_var)
+```
+
+Fully-quantum coefficient function for the v-path recursion (used by ``schubpoly_quantum``):
+the quantum elementary symmetric polynomial ``elem_sym_poly_q`` in the fixed-window ``y``
+variables and the ``call_zvars`` ``z`` variables.
+
+<a id="schubmult.mult.quantum_double.schubpoly_quantum"></a>
+
+#### schubpoly\_quantum
+
+```python
+def schubpoly_quantum(v, var_x=None, var_y=None, q_var=_vars.q_var, coeff=1)
+```
+
+The quantum double Schubert polynomial ``S_v(var_x, var_y)`` itself, as a symbolic expression.
+
+Runs the v-path recursion starting from the identity with ``elem_sym_func_q_q`` and reads off
+the coefficient of the identity permutation.
+
+<a id="schubmult.mult.quantum_double.schubmult_q_double"></a>
+
+#### schubmult\_q\_double
+
+```python
+def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var)
+```
+
+Multiply ``sum_u coeff_u S_u(x, var2)`` by the quantum double Schubert polynomial ``S_v(x, var3)``.
+
+Reference (non-"fast") implementation: uses ``strict_theta`` and processes every layer
+individually. Results agree with ``schubmult_q_double_fast``.
+
+**Arguments**:
+
+- `perm_dict` - Mapping ``{Permutation: coeff}``.
+- `v` - Permutation to multiply by.
+- `var2` - Secondary alphabet attached to ``perm_dict``'s permutations.
+- `var3` - Secondary alphabet attached to ``v``.
+- `q_var` - Quantum parameter generating set.
+  
+
+**Returns**:
+
+- `dict` - Coefficient dict ``{Permutation: coeff}``.
+
+<a id="schubmult.mult.quantum_double.schubmult_q_double_dict_fast"></a>
+
+#### schubmult\_q\_double\_dict\_fast
+
+```python
+def schubmult_q_double_dict_fast(perm_dict1,
+                                 perm_dict2,
+                                 var2=None,
+                                 var3=None,
+                                 q_var=_vars.q_var)
+```
+
+Multiply two coefficient dicts of quantum double Schubert polynomials together.
+
+Sums ``schubmult_q_double_fast(perm_dict1, v, ...)`` scaled by ``coeff2_v`` over ``v`` in ``perm_dict2``.
+
+<a id="schubmult.mult.quantum_double.schubmult_q_double_fast"></a>
+
+#### schubmult\_q\_double\_fast
+
+```python
+def schubmult_q_double_fast(perm_dict,
+                            v,
+                            var2=None,
+                            var3=None,
+                            q_var=_vars.q_var)
+```
+
+Multiply ``sum_u coeff_u S_u(x, var2)`` by the quantum double Schubert polynomial ``S_v(x, var3)``.
+
+Dispatches to the compiled ``schubmult_cpp`` kernel when available (and both secondary
+alphabets are given), falling back to ``_schubmult_q_double_fast_python`` (the
+``medium_theta``-based recursion with merged equal-length layers) otherwise.
+
+**Arguments**:
+
+- `perm_dict` - Mapping ``{Permutation: coeff}``.
+- `v` - Permutation to multiply by.
+- `var2` - Secondary alphabet attached to ``perm_dict``'s permutations.
+- `var3` - Secondary alphabet attached to ``v``.
+- `q_var` - Quantum parameter generating set.
+  
+
+**Returns**:
+
+- `dict` - Coefficient dict ``{Permutation: coeff}``.
+
+<a id="schubmult.mult.quantum_double.sum_q_dict"></a>
+
+#### sum\_q\_dict
+
+```python
+def sum_q_dict(q_dict1, q_dict2)
+```
+
+Add two ``{q_monomial: coeff}`` dicts.
+
+<a id="schubmult.mult.quantum_double.mul_q_dict"></a>
+
+#### mul\_q\_dict
+
+```python
+def mul_q_dict(q_dict1, q_dict2)
+```
+
+Multiply two ``{q_monomial: coeff}`` dicts (convolution over monomials).
+
+<a id="schubmult.mult.quantum_double.factor_out_q"></a>
+
+#### factor\_out\_q
+
+```python
+def factor_out_q(poly, q_var=_vars.q_var)
+```
+
+Split ``poly`` by its ``q``-monomials: return ``{q_monomial: coefficient}`` with coefficients
+free of ``q_var`` variables. Recurses over the ``Add``/``Mul``/``Pow`` structure; a polynomial
+with no ``q`` variables maps to ``{1: poly}``.
 
 <a id="schubmult.mult.groth_double"></a>
 
@@ -16685,9 +23137,49 @@ substitutes the merged alphabet back to ``var2``/``var3``.
 
 # schubmult.utils.argparse
 
+Shared command-line parsing for the ``schubmult_*`` scripts (`schub_argparse`).
+
+<a id="schubmult.utils.argparse.schub_argparse"></a>
+
+#### schub\_argparse
+
+```python
+def schub_argparse(prog_name,
+                   description,
+                   argv,
+                   quantum=False,
+                   yz=False,
+                   coprod=True)
+```
+
+Parse the common CLI of the ``schubmult_*`` scripts and return ``(args, formatter)``.
+
+Permutations are given as space-separated integers separated by ``-`` (or Lehmer codes with
+``--code``); ``quantum`` adds the ``--parabolic`` options, ``yz`` the double-variable and
+``--display-positive`` options, ``coprod`` the ``--coprod`` mode. ``--display-mode`` selects the
+``formatter`` (a callable rendering expressions as LaTeX, pretty, basic, sympy, or ``None`` for
+raw). Hidden ``-g`` dumps the parsed arguments to a JSON file for the script test suite and
+exits. Also initializes SymPy printing and logging.
+
 <a id="schubmult.utils.perm_utils"></a>
 
 # schubmult.utils.perm\_utils
+
+Low-level helpers on permutations given as lists/tuples, plus composition and reduced-word utilities.
+
+Most functions here are used by the multiplication kernels in `schubmult.mult` and by
+`schubmult.combinatorics.permutation.Permutation`; `add_perm_dict` is the standard way to merge
+``{key: coeff}`` expansions.
+
+<a id="schubmult.utils.perm_utils.permtrim_list"></a>
+
+#### permtrim\_list
+
+```python
+def permtrim_list(perm)
+```
+
+Strip trailing fixed points ``perm[L-1] == L`` from a list in place and return it.
 
 <a id="schubmult.utils.perm_utils.has_bruhat_descent"></a>
 
@@ -16701,6 +23193,16 @@ Check if perm has a Bruhat descent from position i to j.
 
 Optimized version assuming perm is a Permutation object with direct indexing.
 
+<a id="schubmult.utils.perm_utils.count_bruhat"></a>
+
+#### count\_bruhat
+
+```python
+def count_bruhat(perm, i, j)
+```
+
+Signed length change ``inv(perm * t_{ij}) - inv(perm)`` for the transposition of positions ``i < j``.
+
 <a id="schubmult.utils.perm_utils.has_bruhat_ascent"></a>
 
 #### has\_bruhat\_ascent
@@ -16713,6 +23215,158 @@ Check if perm has a Bruhat ascent from position i to j.
 
 Optimized version assuming perm is a Permutation object with direct indexing.
 
+<a id="schubmult.utils.perm_utils.omega"></a>
+
+#### omega
+
+```python
+def omega(i, qv)
+```
+
+``i``-th entry (1-indexed) of the Cartan-matrix image of the q-exponent vector ``qv``:
+``2 qv[i] - qv[i-1] - qv[i+1]`` with boundary conventions. Used to convert quantum ``q``
+monomials to weights in the parabolic quantum product.
+
+<a id="schubmult.utils.perm_utils.sg"></a>
+
+#### sg
+
+```python
+def sg(i, w)
+```
+
+1 if ``w`` has a descent at 0-indexed position ``i``, else 0.
+
+<a id="schubmult.utils.perm_utils.count_less_than"></a>
+
+#### count\_less\_than
+
+```python
+def count_less_than(arr, val)
+```
+
+Number of leading entries of the sorted list ``arr`` that are ``< val``.
+
+<a id="schubmult.utils.perm_utils.artin_sequences"></a>
+
+#### artin\_sequences
+
+```python
+def artin_sequences(n)
+```
+
+All tuples ``(a_1, ..., a_n)`` with ``0 <= a_i <= n + 1 - i`` (Lehmer codes of ``S_{n+1}``).
+
+<a id="schubmult.utils.perm_utils.weak_compositions"></a>
+
+#### weak\_compositions
+
+```python
+def weak_compositions(length, max_degree)
+```
+
+All tuples of the given ``length`` with entries in ``0..max_degree``.
+
+<a id="schubmult.utils.perm_utils.is_parabolic"></a>
+
+#### is\_parabolic
+
+```python
+def is_parabolic(w, parabolic_index)
+```
+
+Whether ``w`` has no descent at any of the (1-indexed) positions in ``parabolic_index``.
+
+<a id="schubmult.utils.perm_utils.add_perm_dict"></a>
+
+#### add\_perm\_dict
+
+```python
+def add_perm_dict(d1, d2)
+```
+
+Return ``d1 + d2`` as coefficient dicts (keys merged, values added).
+
+<a id="schubmult.utils.perm_utils.add_perm_dict_with_coeff"></a>
+
+#### add\_perm\_dict\_with\_coeff
+
+```python
+def add_perm_dict_with_coeff(d1, d2, coeff)
+```
+
+Return ``d1 + coeff * d2`` as coefficient dicts.
+
+<a id="schubmult.utils.perm_utils.p_trans"></a>
+
+#### p\_trans
+
+```python
+def p_trans(part)
+```
+
+Conjugate (transpose) of a partition given as a weakly decreasing list; ``[0]`` for the empty partition.
+
+<a id="schubmult.utils.perm_utils.mu_A"></a>
+
+#### mu\_A
+
+```python
+def mu_A(mu, A)
+```
+
+The partition whose conjugate consists of the columns of ``mu`` indexed by ``A`` (0-indexed).
+
+<a id="schubmult.utils.perm_utils.get_cycles"></a>
+
+#### get\_cycles
+
+```python
+def get_cycles(perm)
+```
+
+``perm.get_cycles()``.
+
+<a id="schubmult.utils.perm_utils.old_code"></a>
+
+#### old\_code
+
+```python
+def old_code(perm)
+```
+
+Lehmer code of a permutation list computed by successive deletion from ``[1..L]``.
+
+<a id="schubmult.utils.perm_utils.cyclic_sort"></a>
+
+#### cyclic\_sort
+
+```python
+def cyclic_sort(L)
+```
+
+Rotate the list so its maximum is last.
+
+<a id="schubmult.utils.perm_utils.cyclic_sort_min"></a>
+
+#### cyclic\_sort\_min
+
+```python
+def cyclic_sort_min(L)
+```
+
+Rotate the list so its minimum is first.
+
+<a id="schubmult.utils.perm_utils.h_vector"></a>
+
+#### h\_vector
+
+```python
+def h_vector(q_vector)
+```
+
+Positions (1-indexed) where the vector strictly increases, up to its first decrease.
+
 <a id="schubmult.utils.perm_utils.l_vector"></a>
 
 #### l\_vector
@@ -16722,6 +23376,27 @@ def l_vector(q_vector)
 ```
 
 Find l_j = last position where d equals j (where d decreases from j to j-1).
+
+<a id="schubmult.utils.perm_utils.tau_d"></a>
+
+#### tau\_d
+
+```python
+def tau_d(d)
+```
+
+Partial permutation built from `h_vector`/`l_vector` of ``d`` (``tau[l_i - i] = h_i``), completed by
+``Permutation.from_partial``.
+
+<a id="schubmult.utils.perm_utils.phi_d"></a>
+
+#### phi\_d
+
+```python
+def phi_d(d)
+```
+
+Companion of `tau_d` with the shifted placement ``phi[l_i - 1 - i] = h_i``.
 
 <a id="schubmult.utils.perm_utils.conjugate_weak_composition"></a>
 
@@ -16759,6 +23434,27 @@ This is equivalent to transposing the Ferrers diagram of the composition.
   >>> conjugate_weak_composition([0, 0, 0])
   ()
 
+<a id="schubmult.utils.perm_utils.find_reduced_fail"></a>
+
+#### find\_reduced\_fail
+
+```python
+def find_reduced_fail(word, inserted)
+```
+
+After changing letter ``inserted`` of a word, find the other position carrying the same root
+(the letter whose deletion would make the word reduced again), or ``None``.
+
+<a id="schubmult.utils.perm_utils.is_reduced"></a>
+
+#### is\_reduced
+
+```python
+def is_reduced(word)
+```
+
+Whether the word of simple reflections is reduced (``inv`` of its product equals its length).
+
 <a id="schubmult.utils.perm_utils.little_bump_pos"></a>
 
 #### little\_bump\_pos
@@ -16767,7 +23463,8 @@ This is equivalent to transposing the Ferrers diagram of the composition.
 def little_bump_pos(word, index)
 ```
 
-Perform a Little bump on a reduced word at the inversion (i, j).
+Little bump at position ``index``: decrement that letter (increment if it is 1), and while the
+word is not reduced, repeat at the letter found by `find_reduced_fail`.
 
 <a id="schubmult.utils.perm_utils.little_bump"></a>
 
@@ -16777,15 +23474,263 @@ Perform a Little bump on a reduced word at the inversion (i, j).
 def little_bump(word, i, j)
 ```
 
-Perform a Little bump on a reduced word at the inversion (i, j).
+Little bump of a reduced word at the letter whose right root is the inversion ``(i, j)``.
+
+<a id="schubmult.utils.perm_utils.little_zero"></a>
+
+#### little\_zero
+
+```python
+def little_zero(word, length)
+```
+
+Repeatedly Little-bump at the last descent until the product's code has fewer than ``length``
+entries (Little's map toward a smaller permutation).
 
 <a id="schubmult.utils"></a>
 
 # schubmult.utils
 
+Support utilities: permutation/list helpers (`perm_utils`), the multiplication kernels' combinatorial
+core (`schub_lib`), CLI argument parsing (`argparse`), coefficient parsing, logging, and grid printing.
+
 <a id="schubmult.utils.schub_lib"></a>
 
 # schubmult.utils.schub\_lib
+
+Combinatorial kernels behind the Schubert multiplication algorithms.
+
+The central objects are the *v-path dictionaries* (`compute_vpathdicts`): for a theta code
+``th`` and target permutation ``vmu`` they record, level by level, the Bruhat-descent moves
+(`kdown_perms`) along which the Schubert product is accumulated in `schubmult.mult.single` and
+its double/quantum relatives. Also here: the ``elem_sym_perms*``/``complete_sym_perms*`` families
+(Pieri-type moves for multiplying by elementary/complete symmetric polynomials, including quantum
+and Grothendieck variants), `pull_out_var` (the recursion behind `schubpoly`), coefficient
+reductions (`reduce_coeff`, `reduce_descents`, ``try_reduce_*``) that shrink a triple ``(u, v, w)``
+before computing an LR coefficient, and the parabolic ``q``-vector checks.
+
+<a id="schubmult.utils.schub_lib.double_elem_sym_q"></a>
+
+#### double\_elem\_sym\_q
+
+```python
+def double_elem_sym_q(u, p1, p2, k, q_var=q_var)
+```
+
+Pairs of consecutive quantum Pieri moves ``u -> perm1 -> perm2`` (degrees ``p1`` then ``p2`` in ``k``
+variables) whose cycles are compatible; returned as ``{(perm1, udiff1, q1): [(perm2, udiff2, q2), ...]}``.
+
+<a id="schubmult.utils.schub_lib.will_formula_work"></a>
+
+#### will\_formula\_work
+
+```python
+def will_formula_work(u, v)
+```
+
+Whether the fast dominant-descent formula applies to the pair ``(u, v)``: ``v^{-1} * mu_v`` must
+already be the identity (no descents to reduce).
+
+<a id="schubmult.utils.schub_lib.try_reduce_u"></a>
+
+#### try\_reduce\_u
+
+```python
+def try_reduce_u(u, v, w)
+```
+
+Move a zero in the code of ``u`` past a nonzero entry by swapping adjacent positions in ``(u, w)``
+or ``(u, v)`` where the LR coefficient is unchanged, aiming for ``u`` to one-dominate ``w``.
+
+<a id="schubmult.utils.schub_lib.reduce_descents"></a>
+
+#### reduce\_descents
+
+```python
+def reduce_descents(u, v, w)
+```
+
+Cancel common descents of ``w`` with ``v`` (or ``u``) by simultaneous adjacent swaps, stopping once
+one of the fast-path conditions holds.
+
+<a id="schubmult.utils.schub_lib.is_reducible"></a>
+
+#### is\_reducible
+
+```python
+def is_reducible(v)
+```
+
+Whether the code of ``v`` has no nonzero entry after a zero (so ``v`` is a shifted dominant-like shape).
+
+<a id="schubmult.utils.schub_lib.try_reduce_v"></a>
+
+#### try\_reduce\_v
+
+```python
+def try_reduce_v(u, v, w)
+```
+
+`try_reduce_u` with the roles of ``u`` and ``v`` exchanged, aiming for `is_reducible`.
+
+<a id="schubmult.utils.schub_lib.reduce_coeff"></a>
+
+#### reduce\_coeff
+
+```python
+def reduce_coeff(u, v, w)
+```
+
+Reduce the LR triple ``(u, v, w)`` by dividing out the dominant permutations of the theta codes of
+``u^{-1}`` and ``v^{-1}``: if ``w`` decomposes compatibly, return the smaller triple
+``(u mu_A, v mu_B, w')`` with the same coefficient; otherwise return the input.
+
+<a id="schubmult.utils.schub_lib.pull_out_var"></a>
+
+#### pull\_out\_var
+
+```python
+def pull_out_var(vnum, v)
+```
+
+All ways to factor the variable ``x_vnum`` out of ``S_v``: returns pairs ``(indices, v')`` such that
+``S_v = sum prod_{p in indices} (x_vnum - y_p) * S_{v'}`` with ``x_vnum`` absent from ``S_{v'}``.
+
+<a id="schubmult.utils.schub_lib.divdiffable"></a>
+
+#### divdiffable
+
+```python
+def divdiffable(v, u)
+```
+
+``v u^{-1}`` if ``u <= v`` with lengths adding (so ``partial_{u}`` can be applied), else ``[]``.
+
+<a id="schubmult.utils.schub_lib.kdown_perms"></a>
+
+#### kdown\_perms
+
+```python
+def kdown_perms(perm: Permutation, monoperm: Permutation, p: int,
+                k: int) -> list[tuple[Permutation, int, int]]
+```
+
+One level of the v-path recursion: all ``(new_perm, pp, sign)`` obtained from ``perm`` by up to ``p``
+Bruhat descents through position ``k`` (swapping position ``k-1`` with an untouched position on
+either side) such that ``new_perm * monoperm`` has the expected length.
+
+<a id="schubmult.utils.schub_lib.rc_graph_set"></a>
+
+#### rc\_graph\_set
+
+```python
+def rc_graph_set(perm)
+```
+
+All RC graphs of ``perm`` as ``(row_labels, reduced_word)`` pairs, built recursively with `pull_out_var`.
+
+<a id="schubmult.utils.schub_lib.compute_vpathdicts_cached"></a>
+
+#### compute\_vpathdicts\_cached
+
+```python
+@cache
+def compute_vpathdicts_cached(th, vmu)
+```
+
+Build the v-path dictionaries for theta code ``th`` and target ``vmu``.
+
+Working from the top level down, each level ``i`` maps a permutation to the `kdown_perms`
+moves available at that level; the result is re-indexed as
+``vpathdicts[i][source] = {(target, degree, sign), ...}`` for forward accumulation.
+
+<a id="schubmult.utils.schub_lib.compute_vpathdicts"></a>
+
+#### compute\_vpathdicts
+
+```python
+def compute_vpathdicts(th, vmu)
+```
+
+Cached `compute_vpathdicts_cached` accepting a list ``th``.
+
+<a id="schubmult.utils.schub_lib.check_blocks"></a>
+
+#### check\_blocks
+
+```python
+def check_blocks(qv, parabolic_index)
+```
+
+Parabolic admissibility of a ``q``-exponent vector: over every interval within each block of
+consecutive parabolic indices, the sum of `omega` values must be 0 or -1.
+
+<a id="schubmult.utils.schub_lib.reduce_q_coeff"></a>
+
+#### reduce\_q\_coeff
+
+```python
+def reduce_q_coeff(u, v, w, qv)
+```
+
+One quantum reduction step: find a position where swapping adjacent entries of ``v`` (or ``u``)
+together with ``w`` -- adjusting the ``q``-vector when ``w`` had no descent there -- leaves the
+quantum LR coefficient unchanged. Returns ``(u, v, w, qv, changed)``.
+
+<a id="schubmult.utils.schub_lib.reduce_q_coeff_u_only"></a>
+
+#### reduce\_q\_coeff\_u\_only
+
+```python
+def reduce_q_coeff_u_only(u, v, w, qv)
+```
+
+`reduce_q_coeff` restricted to swaps on ``u``.
+
+<a id="schubmult.utils.schub_lib.elem_sym_perms_q"></a>
+
+#### elem\_sym\_perms\_q
+
+```python
+def elem_sym_perms_q(orig_perm, p, k, q_var=q_var)
+```
+
+Quantum Pieri moves for ``E_p^q(x_1..x_k)``: all ``(perm, degree, q_monomial)`` reachable from
+``orig_perm`` by up to ``p`` transpositions ``(i, j)`` with ``i < k <= j`` on still-untouched positions
+``i``; a Bruhat *descent* (cyclic quantum move) contributes ``q_{i+1} ... q_j``.
+
+<a id="schubmult.utils.schub_lib.elem_sym_perms_q_op"></a>
+
+#### elem\_sym\_perms\_q\_op
+
+```python
+def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var)
+```
+
+Adjoint (downward) version of `elem_sym_perms_q` on permutations padded to length ``n``.
+
+<a id="schubmult.utils.schub_lib.elem_sym_perms"></a>
+
+#### elem\_sym\_perms
+
+```python
+def elem_sym_perms(orig_perm, p, k)
+```
+
+Pieri moves for ``e_p(x_1..x_k)``: all ``(perm, degree)`` reachable from ``orig_perm`` by up to ``p``
+Bruhat ascents ``(i, j)`` with ``i < k <= j``, each position ``i`` used at most once (values
+swapped in strictly decreasing order to avoid double counting).
+
+<a id="schubmult.utils.schub_lib.elem_sym_perms_groth"></a>
+
+#### elem\_sym\_perms\_groth
+
+```python
+def elem_sym_perms_groth(orig_perm, p, k)
+```
+
+Grothendieck variant of `elem_sym_perms`: positions in ``i < k`` may be reused, with ``j``
+weakly decreasing along the chain.
 
 <a id="schubmult.utils.schub_lib.elem_sym_chains_groth"></a>
 
@@ -16795,7 +23740,105 @@ Perform a Little bump on a reduced word at the inversion (i, j).
 def elem_sym_chains_groth(orig_perm, p, k)
 ```
 
-1 force mark, -1 force unmark, 0 otherwise
+Marked Bruhat chains for the Grothendieck Pieri rule: chains of ascents through position ``k``
+together with a marking vector (1 force mark, -1 force unmark, 0 free) enforcing the ordering
+conditions on consecutive covers.
+
+<a id="schubmult.utils.schub_lib.elem_sym_positional_perms"></a>
+
+#### elem\_sym\_positional\_perms
+
+```python
+def elem_sym_positional_perms(orig_perm, p, *k)
+```
+
+Pieri moves for ``e_p`` in an arbitrary set of variable positions ``k`` (1-indexed): Bruhat ascents
+swapping an untouched position in ``k`` with a position outside ``k``, returned as
+``(perm, degree, sign)`` with sign ``-1`` when the outside position is to the left.
+
+<a id="schubmult.utils.schub_lib.elem_sym_positional_perms_q"></a>
+
+#### elem\_sym\_positional\_perms\_q
+
+```python
+def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var)
+```
+
+Quantum version of `elem_sym_positional_perms`: returns ``(perm, degree, sign, q_monomial)``.
+
+<a id="schubmult.utils.schub_lib.complete_sym_perms_op"></a>
+
+#### complete\_sym\_perms\_op
+
+```python
+def complete_sym_perms_op(orig_perm, p, k)
+```
+
+Downward Pieri moves for ``h_p(x_1..x_k)``: ``{perm: [(i, j), ...]}`` recording the chain of Bruhat
+descents (position ``i < k`` with an untouched position ``j``).
+
+<a id="schubmult.utils.schub_lib.complete_sym_perms"></a>
+
+#### complete\_sym\_perms
+
+```python
+def complete_sym_perms(orig_perm, p, k)
+```
+
+Pieri moves for ``h_p(x_1..x_k)``: ``{perm: [(i, j), ...]}`` recording the chain of Bruhat ascents
+(position ``i < k`` may repeat; ``j`` untouched).
+
+<a id="schubmult.utils.schub_lib.complete_sym_positional_perms"></a>
+
+#### complete\_sym\_positional\_perms
+
+```python
+def complete_sym_positional_perms(orig_perm, p, *k)
+```
+
+`complete_sym_perms` for an arbitrary set of positions ``k`` (1-indexed), with signs as in
+`elem_sym_positional_perms`; returns ``(perm, degree, sign)`` triples.
+
+<a id="schubmult.utils.schub_lib.elem_sym_perms_op"></a>
+
+#### elem\_sym\_perms\_op
+
+```python
+def elem_sym_perms_op(orig_perm, p, k)
+```
+
+Downward (Bruhat descent) version of `elem_sym_perms`.
+
+<a id="schubmult.utils.schub_lib.is_split_two"></a>
+
+#### is\_split\_two
+
+```python
+def is_split_two(u, v, w)
+```
+
+For ``inv(w) - inv(u) == 2``: whether ``v^{-1} w`` is a product of two disjoint cycles; returns
+``(True, cycles)`` or ``(False, [])``.
+
+<a id="schubmult.utils.schub_lib.is_coeff_irreducible"></a>
+
+#### is\_coeff\_irreducible
+
+```python
+def is_coeff_irreducible(u, v, w)
+```
+
+Whether none of the fast paths / reductions applies to the LR triple ``(u, v, w)``.
+
+<a id="schubmult.utils.schub_lib.is_hook"></a>
+
+#### is\_hook
+
+```python
+def is_hook(cd)
+```
+
+Whether the code ``cd`` is a hook shape: a run of 1's optionally followed by a single larger entry, then zeros.
 
 <a id="schubmult.utils.schub_lib.all_grassmannian_rc_graphs"></a>
 
@@ -16854,9 +23897,44 @@ tuple of tuples
     One tuple (A_1, ..., A_n) per valid family; each A_i is a sorted tuple of
     ints in [1, a_i] of length c[i-1].
 
+<a id="schubmult.utils.schub_lib.fff"></a>
+
+#### fff
+
+```python
+def fff(chain)
+```
+
+Number of forced marks (``1``) in a marked chain from `elem_sym_chains_groth`.
+
+<a id="schubmult.utils.schub_lib.ppp"></a>
+
+#### ppp
+
+```python
+def ppp(chain)
+```
+
+Number of forced unmarks (``-1``) in a marked chain from `elem_sym_chains_groth`.
+
+<a id="schubmult.utils.schub_lib.groth_pieri_mul"></a>
+
+#### groth\_pieri\_mul
+
+```python
+def groth_pieri_mul(perm_dict, p, kk, beta)
+```
+
+Grothendieck Pieri rule: multiply the Grothendieck expansion ``perm_dict`` by ``G`` of the
+Grassmannian permutation of ``e_p(x_1..x_kk)``. Sums over marked chains from
+`elem_sym_chains_groth` with weight ``beta^(length - p) * C(n, k)`` where the free marks are
+chosen binomially.
+
 <a id="schubmult.utils.tuple_utils"></a>
 
 # schubmult.utils.tuple\_utils
+
+Tuple helpers.
 
 <a id="schubmult.utils.tuple_utils.pad_tuple"></a>
 
@@ -16872,21 +23950,124 @@ Pad a tuple-like with trailing zeros up to ``length``.
 
 # schubmult.utils.test\_utils
 
+Helpers for the test suite: locating JSON test data and inspecting SymPy/SymEngine expression trees.
+
+<a id="schubmult.utils.test_utils.generate_all"></a>
+
+#### generate\_all
+
+```python
+def generate_all(module, filename)
+```
+
+Print an import block and ``__all__`` list for the public names defined in ``filename`` (dev helper).
+
+<a id="schubmult.utils.test_utils.get_json"></a>
+
+#### get\_json
+
+```python
+def get_json(file: str)
+```
+
+Load ``<file>.json`` from the test data directory.
+
+<a id="schubmult.utils.test_utils.load_json_test_names"></a>
+
+#### load\_json\_test\_names
+
+```python
+def load_json_test_names(this_dir)
+```
+
+Names (without ``.json``) of all test case files in the data subdirectory ``this_dir``.
+
+<a id="schubmult.utils.test_utils.print_args"></a>
+
+#### print\_args
+
+```python
+def print_args(poly)
+```
+
+Nested string of the argument types of an expression tree (for debugging printing issues).
+
+<a id="schubmult.utils.test_utils.sympify_args"></a>
+
+#### sympify\_args
+
+```python
+def sympify_args(poly)
+```
+
+Convert a SymPy expression to SymEngine, recursing into ``Mul``/``Pow``/``Add`` when direct
+conversion fails.
+
 <a id="schubmult.utils._mul_utils"></a>
 
 # schubmult.utils.\_mul\_utils
+
+Dict-level helpers for ring multiplication and tensor products of ``{key: coeff}`` expansions.
 
 <a id="schubmult.utils.parsing"></a>
 
 # schubmult.utils.parsing
 
+Parsing of coefficient expressions from the command line.
+
+<a id="schubmult.utils.parsing.parse_coeff"></a>
+
+#### parse\_coeff
+
+```python
+def parse_coeff(coeff_str, latex=False)
+```
+
+Sympify ``coeff_str`` and map any symbol ``name_i`` to ``GeneratingSet(name)[i]`` so the result
+uses the package's interned variables. LaTeX input is not yet supported (returns ``None``).
+
 <a id="schubmult.utils.logging"></a>
 
 # schubmult.utils.logging
 
+Thin wrappers around the standard ``logging`` module.
+
+<a id="schubmult.utils.logging.init_logging"></a>
+
+#### init\_logging
+
+```python
+def init_logging(debug=False)
+```
+
+Configure root logging at DEBUG (if ``debug``) or ERROR with a timestamped ``file:line`` format.
+
+<a id="schubmult.utils.logging.get_logger"></a>
+
+#### get\_logger
+
+```python
+def get_logger(name)
+```
+
+``logging.getLogger(name)``.
+
 <a id="schubmult.utils._grid_print"></a>
 
 # schubmult.utils.\_grid\_print
+
+`GridPrint`: a SymPy ``Printable`` mixin that renders a 2-D grid (``rows``, ``cols``, ``self[i, j]``)
+as an aligned table for str/pretty/LaTeX output; used by RC graphs, BPDs and similar diagrams.
+
+<a id="schubmult.utils._grid_print.GridPrint"></a>
+
+## GridPrint Objects
+
+```python
+class GridPrint(Printable)
+```
+
+Mixin: subclasses provide ``rows``, ``cols``, ``__getitem__((i, j))`` and ``_display_name``.
 
 <a id="schubmult._scripts.forest_nowork_branch"></a>
 
@@ -17822,17 +25003,301 @@ LP.  ``beta`` is restored as ``beta**(`diffs` - d)`` with the Laurent atoms
 
 # schubmult.symbolic
 
+Symbolic computation facade: fast SymEngine arithmetic with SymPy printing and polynomial domains.
+
+Import ``Add``, ``Mul``, ``Pow``, ``S``, ``Symbol``, ``sympify``, ``expand`` from here rather than
+from ``symengine``/``sympy`` directly; the SymPy versions are available under ``sympy_``-prefixed
+names (``sympy_Add``, ``sympy_Mul``, ``sympify_sympy``, ``sympy_poly``). Also re-exports the
+Schubert-polynomial helpers of `schubmult.symbolic.poly.schub_poly` and SymPy's
+``EXRAW``/``CoercionFailed`` used by the ring domains. Generating sets live in
+`schubmult.symbolic.poly.variables` (re-exported from `schubmult.symbolic.poly`).
+
 <a id="schubmult.symbolic.common_polys"></a>
 
 # schubmult.symbolic.common\_polys
+
+Re-exports `schubmult.symbolic.poly.schub_poly` and the ``_vars``/``call_zvars``/``q_vector`` helpers.
 
 <a id="schubmult.symbolic.poly"></a>
 
 # schubmult.symbolic.poly
 
+Explicit polynomial machinery: generating sets (`variables`) and Schubert polynomial formulas (`schub_poly`).
+
 <a id="schubmult.symbolic.poly.schub_poly"></a>
 
 # schubmult.symbolic.poly.schub\_poly
+
+Explicit symbolic formulas for (double) Schubert and Grothendieck polynomials.
+
+The main entry points are `schubpoly` (double Schubert polynomial by the ``pull_out_var``
+recursion), `schubpoly_from_elems` (Schubert polynomial as a sum of products of elementary
+symmetric polynomials along theta-code v-paths, with a pluggable ``elem_func``),
+`grothendieck_poly` (via isobaric divided differences), and the divided-difference operators
+`div_diff`/`divide_out_diff`. ``_vars`` holds the default generating sets ``x``, ``y``, ``z``,
+``q``. Everything here works on raw SymEngine/SymPy expressions; the ring classes in
+`schubmult.rings` call these to expand basis elements.
+
+<a id="schubmult.symbolic.poly.schub_poly.sv_posify"></a>
+
+#### sv\_posify
+
+```python
+def sv_posify(val, var2)
+```
+
+Rewrite ``val`` in the differences ``var2[i+1] - var2[i]`` of consecutive variables (a
+positivity-revealing form), by substituting ``var2[i] = var2[1] + r_1 + ... + r_{i-1}``,
+simplifying, and mapping the ``r`` variables back.
+
+<a id="schubmult.symbolic.poly.schub_poly.act"></a>
+
+#### act
+
+```python
+def act(w, poly, genset)
+```
+
+Permute the variables of ``poly``: ``genset[i] -> genset[w(i)]``.
+
+<a id="schubmult.symbolic.poly.schub_poly.elem_sym_func"></a>
+
+#### elem\_sym\_func
+
+```python
+def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2)
+```
+
+The double elementary symmetric factor attached to one step of the ``schubmult_double`` v-path
+recursion: ``e_{k - udiff - vdiff}`` in the ``y`` variables fixed by ``u1 -> u2`` and the ``z``
+variables selected by `call_zvars` for ``v1 -> v2``.
+
+<a id="schubmult.symbolic.poly.schub_poly.elem_sym_func_q"></a>
+
+#### elem\_sym\_func\_q
+
+```python
+def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2)
+```
+
+Quantum-double variant of `elem_sym_func` (all ``k`` positions of ``u1``/``u2`` are compared).
+
+<a id="schubmult.symbolic.poly.schub_poly.elem_sym_poly_q"></a>
+
+#### elem\_sym\_poly\_q
+
+```python
+def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var)
+```
+
+Quantum double elementary symmetric polynomial ``E_p^q(x_1..x_k; y)``: the usual recursion
+plus the term ``q_{k-1} E_{p-2}(x_1..x_{k-2})``.
+
+<a id="schubmult.symbolic.poly.schub_poly.complete_sym_poly"></a>
+
+#### complete\_sym\_poly
+
+```python
+def complete_sym_poly(p, k, vrs, vrs2)
+```
+
+Factorial complete homogeneous symmetric polynomial ``h_p(vrs[0..k-1] | vrs2)``, computed by
+splitting the variable set in half.
+
+<a id="schubmult.symbolic.poly.schub_poly.elem_sym_poly"></a>
+
+#### elem\_sym\_poly
+
+```python
+def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0)
+```
+
+Factorial elementary symmetric polynomial ``e_p(x_1 - y_1, ..., x_k - y_k)`` style sum over
+``varl1[xstart:xstart+k]`` and ``varl2[ystart:]``, computed by a divide-and-conquer split of the
+variables (the ``y`` offset shifts by the degree taken from the first half).
+
+<a id="schubmult.symbolic.poly.schub_poly.call_zvars"></a>
+
+#### call\_zvars
+
+```python
+@cache
+def call_zvars(v1, v2, k, i, min_size=10)
+```
+
+Indices of the ``z`` variables entering the elementary symmetric factor for the v-path step
+``v1 -> v2`` at position ``i`` with ``k`` variables (cached).
+
+<a id="schubmult.symbolic.poly.schub_poly.q_vector"></a>
+
+#### q\_vector
+
+```python
+def q_vector(q_exp, q_var=_vars.q_var)
+```
+
+Exponent vector of a monomial in the ``q`` variables (``q_1^a q_2^b -> [a, b]``); ``[]`` for 1,
+``None`` if ``q_exp`` is not a ``q`` monomial.
+
+<a id="schubmult.symbolic.poly.schub_poly.monom_sym"></a>
+
+#### monom\_sym
+
+```python
+def monom_sym(partition, numvars, genset)
+```
+
+Monomial symmetric polynomial ``m_partition(genset[1..numvars])``.
+
+<a id="schubmult.symbolic.poly.schub_poly.xreplace_genvars"></a>
+
+#### xreplace\_genvars
+
+```python
+def xreplace_genvars(poly, vars1, vars2)
+```
+
+Replace the internal placeholder generating sets ``_vars.var_g1``/``var_g2`` with ``vars1``/``vars2``.
+
+<a id="schubmult.symbolic.poly.schub_poly.divide_out_diff"></a>
+
+#### divide\_out\_diff
+
+```python
+def divide_out_diff(poly, v1, v2)
+```
+
+The quotient ``(poly - poly|_{v1 -> v2}) / (v1 - v2)``, computed structurally on the expression
+tree (so it is exact and needs no polynomial division). Objects may override via
+``_eval_divide_out_diff``.
+
+<a id="schubmult.symbolic.poly.schub_poly.split_up"></a>
+
+#### split\_up
+
+```python
+def split_up(poly, v1, v2)
+```
+
+Write ``poly = a + (v1 - v2) * b`` with ``a = poly|_{v1 -> v2}``; returns ``(a, (v1 - v2, b))``.
+
+<a id="schubmult.symbolic.poly.schub_poly.perm_act"></a>
+
+#### perm\_act
+
+```python
+def perm_act(val, i, var2=None)
+```
+
+Swap ``var2[i]`` and ``var2[i+1]`` in ``val`` (the simple transposition ``s_i`` acting on variables).
+
+<a id="schubmult.symbolic.poly.schub_poly.elem_func_func"></a>
+
+#### elem\_func\_func
+
+```python
+def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func)
+```
+
+Single-sided version of `elem_sym_func` with a pluggable ``elem_func(p, k, xvars, zvars)``,
+used by `schubpoly_from_elems`.
+
+<a id="schubmult.symbolic.poly.schub_poly.elem_func_func_mul"></a>
+
+#### elem\_func\_func\_mul
+
+```python
+def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2,
+                       elem_func)
+```
+
+`elem_sym_func` with a pluggable ``elem_func`` in place of `elem_sym_poly`.
+
+<a id="schubmult.symbolic.poly.schub_poly.schubpoly_from_elems"></a>
+
+#### schubpoly\_from\_elems
+
+```python
+def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None)
+```
+
+Schubert polynomial of ``v`` as a sum over v-paths of products of ``elem_func`` factors.
+
+Uses the strict theta code of ``v^{-1}`` (or the code of the dominant ``mumu`` if given) and
+the v-path dictionaries of `schubmult.utils.schub_lib.compute_vpathdicts`; each step
+contributes ``elem_func(p, k, xvars, zvars)``. With ``elem_func = elem_sym_poly`` this is the
+double Schubert polynomial; other choices give the SEM-basis expansion or, as in
+`SchubertBasis.transition_word`, an encoding of the factors.
+
+<a id="schubmult.symbolic.poly.schub_poly.schubpoly_classical_from_elems"></a>
+
+#### schubpoly\_classical\_from\_elems
+
+```python
+def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None)
+```
+
+`schubpoly_from_elems` using the ordinary (non-strict) theta code of ``v^{-1}``.
+
+<a id="schubmult.symbolic.poly.schub_poly.schubpoly"></a>
+
+#### schubpoly
+
+```python
+def schubpoly(v, var2=None, var3=None, start_var=1)
+```
+
+Double Schubert polynomial ``S_v(var2; var3)`` by recursion on the last descent: pull out the
+variable ``var2[n]`` (``n`` the last descent) via ``pull_out_var``, multiplying by factors
+``(var2[n] - var3[p])``.
+
+<a id="schubmult.symbolic.poly.schub_poly.div_diff"></a>
+
+#### div\_diff
+
+```python
+def div_diff(poly, v1, v2)
+```
+
+Divided difference ``(poly - s(poly)) / (v1 - v2)`` where ``s`` swaps ``v1`` and ``v2``, computed
+structurally on the expression tree. Objects may override via ``_eval_div_diff``.
+
+<a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly_legacy"></a>
+
+#### grothendieck\_poly\_legacy
+
+```python
+@cache
+def grothendieck_poly_legacy(perm, x, y, beta, keep_as_schub=False)
+```
+
+Double Grothendieck polynomial by descending from ``w0`` (product of ``x (+) y`` factors) with
+isobaric divided differences. Superseded by `grothendieck_poly`.
+
+<a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly"></a>
+
+#### grothendieck\_poly
+
+```python
+@cache
+def grothendieck_poly(perm, x, y, beta, keep_as_schub=False)
+```
+
+Double Grothendieck polynomial ``G_perm(x; y)`` with parameter ``beta``, as an expression or
+(``keep_as_schub``) as its double Schubert expansion. See `grothendieck_poly_with_ring`.
+
+<a id="schubmult.symbolic.poly.schub_poly.dom_groth"></a>
+
+#### dom\_groth
+
+```python
+@cache
+def dom_groth(dom_perm, ring, beta)
+```
+
+Double Schubert expansion of the Grothendieck polynomial of a dominant permutation: builds
+the product of factorial elementary symmetric factors row by row (from the code of
+``dom_perm^{-1}``) with the ``1 + beta y`` twists.
 
 <a id="schubmult.symbolic.poly.schub_poly.isobaric_strip_on_dschub_dict"></a>
 
@@ -17848,6 +25313,16 @@ Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded.
 Coefficients landing on the same permutation merge at every stage instead of
 being carried per input basis element, mirroring ``compute_vpathdicts``.
 
+<a id="schubmult.symbolic.poly.schub_poly.isobaric_strip_on_dschub"></a>
+
+#### isobaric\_strip\_on\_dschub
+
+```python
+def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta)
+```
+
+`isobaric_strip_on_dschub_dict` on a single basis element, returned as a ring element.
+
 <a id="schubmult.symbolic.poly.schub_poly.apply_isobaric_to_schub_dict"></a>
 
 #### apply\_isobaric\_to\_schub\_dict
@@ -17858,6 +25333,134 @@ def apply_isobaric_to_schub_dict(diff_perm, perm_dict, coeff_genset, beta)
 
 Fold every strip of ``diff_perm`` over the whole dict, merging between strips.
 
+<a id="schubmult.symbolic.poly.schub_poly.apply_isobaric_to_schub"></a>
+
+#### apply\_isobaric\_to\_schub
+
+```python
+@cache
+def apply_isobaric_to_schub(diff_perm, schub_perm, ring, beta)
+```
+
+`apply_isobaric_to_schub_dict` on a single basis element, returned as a ring element.
+
+<a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly_with_ring"></a>
+
+#### grothendieck\_poly\_with\_ring
+
+```python
+@cache
+def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False)
+```
+
+Double Grothendieck polynomial via the minimal dominant permutation above ``perm``: start
+from `dom_groth` and apply the isobaric divided differences of ``perm^{-1} * dom_perm`` strip
+by strip (`apply_isobaric_to_schub_dict`).
+
+<a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly2"></a>
+
+#### grothendieck\_poly2
+
+```python
+@cache
+def grothendieck_poly2(perm, x, y, beta, keep_as_schub=False)
+```
+
+Variant of `grothendieck_poly_legacy` with ``x - y - beta x y`` factors for ``w0``.
+
+<a id="schubmult.symbolic.poly.schub_poly.to_groth"></a>
+
+#### to\_groth
+
+```python
+def to_groth(val, x, y, beta)
+```
+
+Expand a polynomial in the double Grothendieck basis ``{perm: coeff}`` by triangular
+elimination on monomials: peel off the lowest monomial ``x^c`` (lowest total degree, then lex),
+subtract ``coeff * G_{uncode(c)}``, and recurse.
+
+<a id="schubmult.symbolic.poly.schub_poly.to_groth_with_ring"></a>
+
+#### to\_groth\_with\_ring
+
+```python
+def to_groth_with_ring(_val, ring, beta)
+```
+
+Expand a double Schubert ring element in the double Grothendieck basis.
+
+Triangular elimination by length: for the smallest remaining permutation ``w``, apply the
+isobaric divided differences of ``w`` and evaluate at ``x_i = -y_i / (1 + beta y_i)`` (the
+point where all nontrivial Grothendieck polynomials vanish) to read off the coefficient of
+``G_w``, then subtract ``coeff * G_w`` and repeat. Coefficients are simplified with SymPy.
+
+<a id="schubmult.symbolic.poly.schub_poly.to_groth_with_ring_functional"></a>
+
+#### to\_groth\_with\_ring\_functional
+
+```python
+def to_groth_with_ring_functional(_val, ring, beta)
+```
+
+`to_groth_with_ring` using the ring element's own ``isobaric_perm`` method.
+
+<a id="schubmult.symbolic.poly.schub_poly.groth_dict_to_poly"></a>
+
+#### groth\_dict\_to\_poly
+
+```python
+def groth_dict_to_poly(groth_dict, x, zz, beta)
+```
+
+Sum ``coeff * G_perm(x; zz)`` over a ``{perm: coeff}`` dict.
+
+<a id="schubmult.symbolic.poly.schub_poly.schub_elem_to_groth_elem_dict"></a>
+
+#### schub\_elem\_to\_groth\_elem\_dict
+
+```python
+@cache
+def schub_elem_to_groth_elem_dict(the_perm, beta)
+```
+
+Signed count, by ``(inv, max_descent)``, of the permutations ``co_pipe_dream(rc).perm * w0`` over
+RC graphs of ``the_perm``, weighted ``(-beta)^(inv difference)``: the Grothendieck-side image of a
+Schubert basis element.
+
+<a id="schubmult.symbolic.poly.schub_poly.schub_elem_sym_to_groth_elem_sym_dict"></a>
+
+#### schub\_elem\_sym\_to\_groth\_elem\_sym\_dict
+
+```python
+@cache
+def schub_elem_sym_to_groth_elem_sym_dict(p, k, beta)
+```
+
+`schub_elem_to_groth_elem_dict` for the Grassmannian permutation of ``e_p(x_1..x_k)``, i.e. the
+expansion of the elementary symmetric polynomial into Grothendieck-Pieri pieces ``(inv, numvars)``.
+
+<a id="schubmult.symbolic.poly.schub_poly.isobar_it"></a>
+
+#### isobar\_it
+
+```python
+def isobar_it(i, genset, elem)
+```
+
+K-theoretic isobaric operator ``pi_i`` on a Schubert element: ``partial_i((1 + x_{i+1}) x_i * elem)``
+via the nil-Hecke ring (``beta = 1``).
+
+<a id="schubmult.symbolic.poly.schub_poly.lascoux_poly"></a>
+
+#### lascoux\_poly
+
+```python
+def lascoux_poly(composition, genset)
+```
+
+Lascoux polynomial of a weak composition (``beta = 1``), expanded.
+
 <a id="schubmult.symbolic.poly.schub_poly.groth_elem_as_schub_dict"></a>
 
 #### groth\_elem\_as\_schub\_dict
@@ -17867,14 +25470,88 @@ Fold every strip of ``diff_perm`` over the whole dict, merging between strips.
 def groth_elem_as_schub_dict(perm, beta)
 ```
 
-Expand a Grothendieck basis element G_perm into Schubert basis terms.
+Schubert expansion ``{perm': coeff}`` of the Grothendieck polynomial ``G_perm`` (via
+``WCGraph.groth_to_schub``).
 
-Uses the strip-isobaric construction from the groth_elem_as_schub method.
-Returns ``{Permutation: coeff}``.
+<a id="schubmult.symbolic.poly.schub_poly.groth_mul_full"></a>
+
+#### groth\_mul\_full
+
+```python
+def groth_mul_full(perm_dict, p2, _x, _zz, beta)
+```
+
+Multiply a Grothendieck expansion ``perm_dict`` by ``G_p2``: expand ``G_p2`` in Schubert
+polynomials and push each through `schub_dict_to_groth_dict`.
+
+<a id="schubmult.symbolic.poly.schub_poly.groth_mul_full_with_ring"></a>
+
+#### groth\_mul\_full\_with\_ring
+
+```python
+def groth_mul_full_with_ring(perm_dict, p2, ring, beta)
+```
+
+`groth_mul_full` using the ring-aware `schub_dict_to_groth_dict_with_ring`.
+
+<a id="schubmult.symbolic.poly.schub_poly.schub_dict_to_groth_dict"></a>
+
+#### schub\_dict\_to\_groth\_dict
+
+```python
+def schub_dict_to_groth_dict(base_groth, schub_dict, beta)
+```
+
+Multiply the Grothendieck expansion ``base_groth`` by the Schubert polynomial with expansion
+``schub_dict``, returning a Grothendieck expansion.
+
+Writes the Schubert polynomial in the CEM (elementary symmetric) basis, converts each
+``e_p(x_1..x_k)`` factor to Grothendieck-Pieri pieces with
+`schub_elem_sym_to_groth_elem_sym_dict`, and applies ``groth_pieri_mul`` factor by factor.
+
+<a id="schubmult.symbolic.poly.schub_poly.schub_dict_to_groth_dict_with_ring"></a>
+
+#### schub\_dict\_to\_groth\_dict\_with\_ring
+
+```python
+def schub_dict_to_groth_dict_with_ring(base_groth, schub_dict, ring, beta)
+```
+
+`schub_dict_to_groth_dict` for a specific ``ring`` (uses ``ring.in_CEM_basis`` and
+``ring.is_elem_mul_type`` to recognize elementary symmetric factors).
 
 <a id="schubmult.symbolic.poly.variables"></a>
 
 # schubmult.symbolic.poly.variables
+
+Generating sets: indexed families of variables ``x_0, x_1, x_2, ...`` used as ring generators.
+
+`GeneratingSet("x")` interns ``DEF_GENSET_SIZE`` symbols ``x_0..x_99``; ``gs[i]`` is the symbol
+``x_i``, and the polynomial variables are ``x_1, x_2, ...`` (``x_0`` is unused), so an exponent
+tuple ``(a_1, ..., a_n)`` means ``x_1^{a_1} ... x_n^{a_n}``. `MaskedGeneratingSet` hides a set of indices of a base set,
+`CustomGeneratingSet` wraps an arbitrary sequence of expressions, and `ZeroGeneratingSet`
+returns 0 for every index (used for single Schubert polynomials as a degenerate coefficient
+set). `genset_dict_from_expr` converts a polynomial expression into ``{exponent_tuple: coeff}``.
+
+<a id="schubmult.symbolic.poly.variables.GeneratingSet_base"></a>
+
+## GeneratingSet\_base Objects
+
+```python
+class GeneratingSet_base()
+```
+
+Interface for generating sets: indexing, length, ``index(symbol)`` (``-1`` if absent), and ``label``.
+
+<a id="schubmult.symbolic.poly.variables.ZeroGeneratingSet"></a>
+
+## ZeroGeneratingSet Objects
+
+```python
+class ZeroGeneratingSet(GeneratingSet_base)
+```
+
+A generating set every entry of which is ``0``; contains no symbols.
 
 <a id="schubmult.symbolic.poly.variables.GeneratingSet"></a>
 
@@ -17883,6 +25560,8 @@ Returns ``{Permutation: coeff}``.
 ```python
 class GeneratingSet(GeneratingSet_base)
 ```
+
+The interned family ``name_0, name_1, ...``; ``gs[i]`` is the symbol ``name_i`` and ``gs(i)`` is ``gs[i - 1]``.
 
 <a id="schubmult.symbolic.poly.variables.GeneratingSet.__call__"></a>
 
@@ -17894,6 +25573,27 @@ def __call__(index)
 
 1-indexed
 
+<a id="schubmult.symbolic.poly.variables.GeneratingSet.label"></a>
+
+#### label
+
+```python
+@property
+def label()
+```
+
+The variable name, e.g. ``"x"``.
+
+<a id="schubmult.symbolic.poly.variables.GeneratingSet.index"></a>
+
+#### index
+
+```python
+def index(v)
+```
+
+Position of the symbol ``v`` in this set, or ``-1``.
+
 <a id="schubmult.symbolic.poly.variables.MaskedGeneratingSet"></a>
 
 ## MaskedGeneratingSet Objects
@@ -17901,6 +25601,41 @@ def __call__(index)
 ```python
 class MaskedGeneratingSet(GeneratingSet_base)
 ```
+
+A base generating set with the (1-indexed) positions in ``index_mask`` removed and the rest
+renumbered consecutively; ``complement()`` gives the set of the masked variables instead.
+
+<a id="schubmult.symbolic.poly.variables.MaskedGeneratingSet.base_genset"></a>
+
+#### base\_genset
+
+```python
+@property
+def base_genset()
+```
+
+The underlying unmasked generating set.
+
+<a id="schubmult.symbolic.poly.variables.MaskedGeneratingSet.index_mask"></a>
+
+#### index\_mask
+
+```python
+@property
+def index_mask()
+```
+
+Sorted tuple of the hidden 1-indexed positions.
+
+<a id="schubmult.symbolic.poly.variables.MaskedGeneratingSet.complement"></a>
+
+#### complement
+
+```python
+def complement()
+```
+
+The masked set on the complementary positions.
 
 <a id="schubmult.symbolic.poly.variables.MaskedGeneratingSet.__call__"></a>
 
@@ -17920,6 +25655,8 @@ def __call__(index)
 class CustomGeneratingSet(GeneratingSet_base)
 ```
 
+A generating set over an explicit sequence of expressions (sympified on construction).
+
 <a id="schubmult.symbolic.poly.variables.CustomGeneratingSet.__call__"></a>
 
 #### \_\_call\_\_
@@ -17930,6 +25667,27 @@ def __call__(index)
 
 1-indexed
 
+<a id="schubmult.symbolic.poly.variables.NotEnoughGeneratorsError"></a>
+
+## NotEnoughGeneratorsError Objects
+
+```python
+class NotEnoughGeneratorsError(ValueError)
+```
+
+Raised when an operation needs more generators than a generating set provides.
+
+<a id="schubmult.symbolic.poly.variables.poly_genset"></a>
+
+#### poly\_genset
+
+```python
+@cache
+def poly_genset(v: str)
+```
+
+``GeneratingSet(v)``, or a `ZeroGeneratingSet` for the sentinels ``ZeroVar``/``NoneVar``.
+
 <a id="schubmult.symbolic.poly.variables.genset_dict_from_expr"></a>
 
 #### genset\_dict\_from\_expr
@@ -17938,29 +25696,535 @@ def __call__(index)
 def genset_dict_from_expr(expr, genset, length=None)
 ```
 
-Transform expressions into a multinomial form given generators.
+Write a polynomial in the generators of ``genset`` as ``{exponent_tuple: coeff}``.
+
+Exponent tuples are 0-indexed by generator position ``genset(i) -> tuple[i - 1]`` and have
+length ``length`` (default: the largest generator index present). Factors free of the
+generators go into the coefficient; a factor mixing generators with other symbols raises.
 
 <a id="schubmult.symbolic.symmetric_polynomials.elem_sym"></a>
 
 # schubmult.symbolic.symmetric\_polynomials.elem\_sym
 
+Unevaluated (factorial) elementary symmetric polynomials as SymPy function atoms.
+
+``E(p, k, xvars, yvars)`` (alias `FactorialElemSym`) is the factorial elementary symmetric
+polynomial of degree ``p`` in the ``k`` generators ``xvars`` with coefficient variables
+``yvars`` (``k + 1 - p`` of them are used); ``e(p, k, xvars)`` (alias `ElemSym`) is the ordinary
+``e_p(x_1..x_k)``. Both stay symbolic so Schubert polynomials can be manipulated in the SEM/CEM
+bases; ``expand_func`` evaluates them via `schubmult.symbolic.poly.schub_poly.elem_sym_poly`.
+They implement divided differences (`div_diff`, `divide_out_diff`), variable splitting
+(`split_out_vars`), and canonicalize on construction (``E(p, k, ...) = 0`` if ``p > k``, ``1`` if
+``p == 0``, and a shared variable between the two sets cancels).
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.ElemSym_base"></a>
+
+## ElemSym\_base Objects
+
+```python
+class ElemSym_base(Function)
+```
+
+Common behavior for `E` and `e`: substitution acts only on the variable arguments, and the
+``degree``/``numvars``/``genvars``/``coeffvars`` accessors expose the parameters.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.ElemSym_base.degree"></a>
+
+#### degree
+
+```python
+@property
+def degree()
+```
+
+``p``.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.ElemSym_base.numvars"></a>
+
+#### numvars
+
+```python
+@property
+def numvars()
+```
+
+``k``, the number of generators.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.ElemSym_base.genvars"></a>
+
+#### genvars
+
+```python
+@property
+def genvars()
+```
+
+The ``x`` variables (sorted tuple).
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.ElemSym_base.coeffvars"></a>
+
+#### coeffvars
+
+```python
+@property
+def coeffvars()
+```
+
+The ``y`` (coefficient) variables.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.E"></a>
+
+## E Objects
+
+```python
+class E(ElemSym_base)
+```
+
+Factorial elementary symmetric polynomial ``E(p, k, xvars, yvars)``; see the module docstring.
+
+Variables may be passed as two iterables or flattened (``k`` x's followed by ``k + 1 - p`` y's).
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.E.cauchy"></a>
+
+#### cauchy
+
+```python
+@staticmethod
+def cauchy(fnc, genset)
+```
+
+Rewrite ``fnc`` so its coefficient variables are the initial segment of ``genset``, using
+``E(p,k;..y..) = E(p,k;..y'..) + (y - y') E(p-1,k-1;..y'..)`` one variable at a time.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.E.split_out_vars"></a>
+
+#### split\_out\_vars
+
+```python
+def split_out_vars(vars1, vars2=None)
+```
+
+Split the generators into ``vars1`` and the rest: ``E(p, k) = sum_i E(i, k1; ..) E(p - i, k2; ..)``
+with the coefficient variables distributed accordingly. With ``vars1=None`` the split is
+made on the coefficient variables ``vars2`` instead.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.E.divide_out_diff"></a>
+
+#### divide\_out\_diff
+
+```python
+def divide_out_diff(v1, v2)
+```
+
+``(self - self|_{v1 -> v2}) / (v1 - v2)`` in closed form: removing a generator lowers ``p`` and
+``k`` by one; a coefficient variable gives the corresponding signed term.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.E.div_diff"></a>
+
+#### div\_diff
+
+```python
+def div_diff(v1, v2)
+```
+
+Divided difference ``partial_{v1, v2}`` in closed form (antisymmetric in ``v1``, ``v2``).
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.E.pull_out_vars"></a>
+
+#### pull\_out\_vars
+
+```python
+def pull_out_vars(var1, var2, min_degree=1)
+```
+
+Write ``self = self|_{var1 -> var2} + (var1 - var2) * divide_out_diff(var1, var2)`` when ``var1``
+is a generator and ``var2`` a coefficient variable (and ``p >= min_degree``).
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.e"></a>
+
+## e Objects
+
+```python
+class e(ElemSym_base)
+```
+
+Ordinary elementary symmetric polynomial ``e(p, k, xvars)``; see the module docstring.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.e.split_out_vars"></a>
+
+#### split\_out\_vars
+
+```python
+def split_out_vars(vars1, vars2=None)
+```
+
+``e_p(all) = sum_i e_i(vars1) e_{p-i}(rest)``.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.e.coeffvars"></a>
+
+#### coeffvars
+
+```python
+@property
+def coeffvars()
+```
+
+No coefficient variables: a `ZeroGeneratingSet`.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.e.divide_out_diff"></a>
+
+#### divide\_out\_diff
+
+```python
+def divide_out_diff(v1, v2)
+```
+
+``e_{p-1}`` of the remaining generators if ``v1`` is a generator, else 0.
+
+<a id="schubmult.symbolic.symmetric_polynomials.elem_sym.e.div_diff"></a>
+
+#### div\_diff
+
+```python
+def div_diff(v1, v2)
+```
+
+Divided difference: ``+/- e_{p-1}`` of the remaining generators, or 0 if neither variable is a generator.
+
 <a id="schubmult.symbolic.symmetric_polynomials"></a>
 
 # schubmult.symbolic.symmetric\_polynomials
+
+Symbolic (factorial) elementary and complete symmetric polynomials as SymPy functions.
+
+``E(p, k, *vars)``/``e`` and ``H(p, k, *vars)``/``h`` are the elementary and complete symmetric
+polynomials of degree ``p`` in the first ``k`` generators, kept unevaluated so Schubert
+expansions can be written in the SEM basis; the ``Factorial*`` variants carry a second
+variable set. `functions` holds canonicalization and variable-splitting utilities, and
+`qelem_sym` the quantum elementary symmetric polynomials.
 
 <a id="schubmult.symbolic.symmetric_polynomials.qelem_sym"></a>
 
 # schubmult.symbolic.symmetric\_polynomials.qelem\_sym
 
+Quantum factorial elementary symmetric polynomials ``E_q(p, k, xvars, yvars)`` as SymPy atoms.
+
+The quantum deformation adds ``q_i`` terms for adjacent pairs ``x_i, x_{i+1}`` of the *positional*
+generators (positions taken from ``x_var``), so the variable set need not be an initial segment.
+``expand_func`` evaluates via `elem_sym_positional_poly_q`. Alias: `QFactorialElemSym`.
+
+<a id="schubmult.symbolic.symmetric_polynomials.qelem_sym.E_q"></a>
+
+## E\_q Objects
+
+```python
+class E_q(ElemSym_base)
+```
+
+Quantum factorial elementary symmetric atom; same canonicalization as `E`, plus ``x_var``/``q_var``
+generating sets fixing the positions of the generators and the ``q`` parameters.
+
+<a id="schubmult.symbolic.symmetric_polynomials.qelem_sym.elem_sym_positional_poly_q"></a>
+
+#### elem\_sym\_positional\_poly\_q
+
+```python
+def elem_sym_positional_poly_q(p,
+                               k,
+                               varl1,
+                               varl2,
+                               x_var=GeneratingSet("x"),
+                               q_var=GeneratingSet("q"))
+```
+
+Quantum factorial elementary symmetric polynomial of degree ``p`` in the generators ``varl1[:k]``.
+
+Recursion on the last generator ``x_l``: the classical two terms plus, when ``x_{l-1}`` (resp.
+``x_{l+1}``) is also among the generators, ``q_{l-1}`` (resp. ``q_l``) times the degree ``p - 2``
+polynomial with that pair removed.
+
 <a id="schubmult.symbolic.symmetric_polynomials.functions"></a>
 
 # schubmult.symbolic.symmetric\_polynomials.functions
+
+Expression-level utilities for symbolic elementary symmetric polynomials.
+
+The accessors `genvars`/`coeffvars`/`degree`/`numvars` see through SymEngine ``PyFunction``
+wrappers; `split_out_vars`/`pull_out_vars` map the corresponding `E` methods over a whole
+expression tree; `canonicalize_elem_syms` rewrites products of ``E`` factors into a normal form
+(each factor of full degree ``p == k``, grouped by first coefficient variable).
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.genvars"></a>
+
+#### genvars
+
+```python
+def genvars(obj)
+```
+
+``obj.genvars``, unwrapping a SymEngine ``PyFunction`` if needed.
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.coeffvars"></a>
+
+#### coeffvars
+
+```python
+def coeffvars(obj)
+```
+
+``obj.coeffvars``, unwrapping a SymEngine ``PyFunction`` if needed.
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.degree"></a>
+
+#### degree
+
+```python
+def degree(obj)
+```
+
+The degree ``p`` of an elementary symmetric atom (unwrapping if needed).
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.numvars"></a>
+
+#### numvars
+
+```python
+def numvars(obj)
+```
+
+The variable count ``k`` of an elementary symmetric atom (unwrapping if needed).
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.canonicalize_elem_syms"></a>
+
+#### canonicalize\_elem\_syms
+
+```python
+def canonicalize_elem_syms(expr, combine_equal=False)
+```
+
+Normal form for expressions in `FactorialElemSym`: split every factor with ``p < k`` in half
+until all factors have ``p == k``, then within each product regroup factors sharing a first
+coefficient variable (merging them into one factor if ``combine_equal``).
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.canonicalize_elem_syms_coeff"></a>
+
+#### canonicalize\_elem\_syms\_coeff
+
+```python
+def canonicalize_elem_syms_coeff(expr, combine_equal=False)
+```
+
+`canonicalize_elem_syms` splitting on coefficient variables instead of generators.
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.split_out_vars"></a>
+
+#### split\_out\_vars
+
+```python
+def split_out_vars(expr, vars1, vars2)
+```
+
+Apply ``split_out_vars(vars1, vars2)`` to every elementary symmetric atom in ``expr``.
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.pull_out_vars"></a>
+
+#### pull\_out\_vars
+
+```python
+def pull_out_vars(expr, var1, var2, min_degree=1)
+```
+
+Apply ``pull_out_vars(var1, var2, min_degree)`` to every elementary symmetric atom in ``expr``.
+
+<a id="schubmult.symbolic.symmetric_polynomials.functions.elem_sym_unify"></a>
+
+#### elem\_sym\_unify
+
+```python
+def elem_sym_unify(expr, arg=None)
+```
+
+Recursively walk ``expr`` (currently a structural no-op; the pattern-based unification is
+commented out).
 
 <a id="schubmult.symbolic.symmetric_polynomials.complete_sym"></a>
 
 # schubmult.symbolic.symmetric\_polynomials.complete\_sym
 
+Unevaluated (factorial) complete homogeneous symmetric polynomials as SymPy function atoms.
+
+``H(p, k, xvars, yvars)`` (alias `FactorialCompleteSym`) is the factorial complete symmetric
+polynomial of degree ``p`` in ``k`` generators with ``p + k - 1`` coefficient variables;
+``h(p, k, xvars)`` (alias `CompleteSym`) is the ordinary ``h_p(x_1..x_k)``. The two families
+are related by the duality ``H(p, k; x, y) = (-1)^p E(p, k + 1 - p; y, x)`` (`H.to_elem_sym`,
+`H.from_elem_sym`), and divided differences are computed by passing through `E`.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.CompleteSym_base"></a>
+
+## CompleteSym\_base Objects
+
+```python
+class CompleteSym_base(Function)
+```
+
+Common behavior for `H` and `h`; ``expand_func`` evaluates via `complete_sym_poly`.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H"></a>
+
+## H Objects
+
+```python
+class H(CompleteSym_base)
+```
+
+Factorial complete symmetric polynomial ``H(p, k, xvars, yvars)``; see the module docstring.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H.to_elem_sym"></a>
+
+#### to\_elem\_sym
+
+```python
+def to_elem_sym()
+```
+
+``(-1)^p E(p, k + 1 - p; yvars, xvars)``: the same polynomial as a factorial elementary symmetric atom.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H.from_elem_sym"></a>
+
+#### from\_elem\_sym
+
+```python
+@classmethod
+def from_elem_sym(cls, elem, sign=False)
+```
+
+Inverse of `to_elem_sym`: the ``H`` atom equal to the `E` atom ``elem`` (with the ``(-1)^p`` if ``sign``).
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H.split_out_vars"></a>
+
+#### split\_out\_vars
+
+```python
+def split_out_vars(vars1, vars2=None)
+```
+
+``H_p(all) = sum_i H_i(vars1) H_{p-i}(rest)`` with the coefficient variables split accordingly.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H.divide_out_diff"></a>
+
+#### divide\_out\_diff
+
+```python
+def divide_out_diff(v1, v2)
+```
+
+`E.divide_out_diff` transported through `to_elem_sym`/`from_elem_sym`.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H.from_expr_elem_sym"></a>
+
+#### from\_expr\_elem\_sym
+
+```python
+@staticmethod
+def from_expr_elem_sym(expr)
+```
+
+Replace every `E` atom in ``expr`` by the equal `H` atom.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H.to_expr_elem_sym"></a>
+
+#### to\_expr\_elem\_sym
+
+```python
+@staticmethod
+def to_expr_elem_sym(expr)
+```
+
+Replace every `H` atom in ``expr`` by the equal `E` atom.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.H.div_diff"></a>
+
+#### div\_diff
+
+```python
+def div_diff(v1, v2)
+```
+
+Divided difference, computed on the `E` side and converted back.
+
+<a id="schubmult.symbolic.symmetric_polynomials.complete_sym.h"></a>
+
+## h Objects
+
+```python
+class h(CompleteSym_base)
+```
+
+Ordinary complete homogeneous symmetric polynomial ``h(p, k, xvars)``.
+
 <a id="schubmult.symbolic.functions"></a>
 
 # schubmult.symbolic.functions
+
+SymEngine-first wrappers (`expand`, `symbols`, `sympify`) that fall back to SymPy, plus small helpers.
+
+<a id="schubmult.symbolic.functions.expand"></a>
+
+#### expand
+
+```python
+def expand(obj, **kwargs)
+```
+
+Expand with SymEngine; use SymPy if keyword options are given or SymEngine fails.
+
+<a id="schubmult.symbolic.functions.symbols"></a>
+
+#### symbols
+
+```python
+def symbols(*args, **kwargs)
+```
+
+SymEngine ``symbols``.
+
+<a id="schubmult.symbolic.functions.sympify"></a>
+
+#### sympify
+
+```python
+def sympify(val)
+```
+
+SymEngine ``sympify``, falling back to SymPy for objects SymEngine cannot convert.
+
+<a id="schubmult.symbolic.functions.is_of_func_type"></a>
+
+#### is\_of\_func\_type
+
+```python
+def is_of_func_type(elem, typ)
+```
+
+``isinstance`` that also sees through SymEngine ``PyFunction`` wrappers around SymPy functions.
+
+<a id="schubmult.symbolic.functions.expand_seq"></a>
+
+#### expand\_seq
+
+```python
+def expand_seq(seq, genset)
+```
+
+The monomial ``genset[1]**seq[0] * genset[2]**seq[1] * ...`` (1-indexed generators).
+
+<a id="schubmult.symbolic.functions.efficient_subs"></a>
+
+#### efficient\_subs
+
+```python
+def efficient_subs(expr, subs_dict)
+```
+
+``expr.subs`` restricted to the entries of ``subs_dict`` that actually occur in ``expr``.
 

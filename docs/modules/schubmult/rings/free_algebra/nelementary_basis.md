@@ -2,6 +2,12 @@
 
 # schubmult.rings.free\_algebra.nelementary\_basis
 
+`NElementaryBasis`: the noncommutative elementary basis ``L`` of NSym inside the free algebra.
+
+Keys are compositions (positive integers). ``L_alpha`` expands in words as the signed sum
+``sum_{beta refines alpha} (-1)^(|alpha| - len(beta)) beta`` (refinements via SageMath), and the
+product is concatenation.
+
 <a id="schubmult.rings.free_algebra.nelementary_basis.NElementaryBasis"></a>
 
 ## NElementaryBasis Objects

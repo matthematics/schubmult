@@ -63,6 +63,16 @@ and sum the results weighted by coefficients.
 
   Symbolic expression representing the polynomial
 
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRingElement.as_ordered_terms"></a>
+
+#### as\_ordered\_terms
+
+```python
+def as_ordered_terms(*_, **__)
+```
+
+Terms ``coeff * basis_symbol`` in dict order (sympy printing hook).
+
 <a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRingElement.to_free_algebra_element"></a>
 
 #### to\_free\_algebra\_element
@@ -84,4 +94,55 @@ class SchubertMonomialRing(BaseRing)
 Base class for rings whose basis elements are Schubert monomials.
 
 Inherits from BaseRing to provide standard ring operations (add, sub, mul, etc.)
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(key)
+```
+
+Wrap the basis key in a `SchubertMonomialPrintingTerm`.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.from_dict"></a>
+
+#### from\_dict
+
+```python
+def from_dict(dct)
+```
+
+Build an element from ``{key: coeff}`` without coefficient coercion.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.mul"></a>
+
+#### mul
+
+```python
+def mul(a, b)
+```
+
+Multiply two elements via each basis key's ``product`` method (which returns ``{key: coeff}``),
+or scale by a scalar ``b``.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.rmul"></a>
+
+#### rmul
+
+```python
+def rmul(a, b)
+```
+
+Scale by the scalar ``b``.
+
+<a id="schubmult.rings.combinatorial.schubert_monomial_ring.SchubertMonomialRing.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(key)
+```
+
+The basis element for ``key`` with coefficient 1.
 

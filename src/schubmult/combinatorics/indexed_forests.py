@@ -14,6 +14,7 @@ from schubmult.symbolic import S, Symbol
 
 
 def _eq_except_trailing_zeros(cd1, cd2):
+    """Whether two codes agree after stripping trailing zeros."""
     i1 = len(cd1) - 1
     while i1 >= 0 and cd1[i1] == 0:
         i1 -= 1
@@ -39,10 +40,12 @@ class Node:
 
     @property
     def rho(self):
+        """Index of the leftmost node in this subtree (its minimum)."""
         return self.left.rho if self.left else self.index
 
     @property
     def inorder_traversal(self):
+        """Nodes of the subtree in increasing index order."""
         if self.left:
             yield from self.left.inorder_traversal
         yield self
@@ -99,15 +102,18 @@ class IndexedForest:
 
     @property
     def roots(self):
+        """The root nodes, sorted."""
         return self._roots
 
     @property
     def inorder_traversal(self):
+        """All nodes of the forest in increasing index order."""
         for root in self._roots:
             yield from root.inorder_traversal
 
     @property
     def code(self):
+        """The weak composition indexing this forest (cached)."""
         if self._code is not None:
             return self._code
         computed = self._compute_code()
@@ -136,6 +142,7 @@ class IndexedForest:
         return tuple(coeffs)
 
     def node(self, index):
+        """The node with the given index, or ``None``."""
         for node in self.inorder_traversal:
             if node.index == index:
                 return node
@@ -163,10 +170,12 @@ class IndexedForest:
 
     @property
     def support(self):
+        """Sorted tuple of all node indices."""
         return tuple(sorted(node.index for node in self.inorder_traversal))
 
     @property
     def intervals(self):
+        """Per-root intervals of consecutive indices; see `_forest_intervals`."""
         return _forest_intervals(self._roots)
 
     @property
@@ -418,10 +427,12 @@ def draw_indexed_forest(
 
 
 def _node_support(root):
+    """Indices of the subtree at ``root`` in inorder."""
     return tuple(node.index for node in root.inorder_traversal)
 
 
 def _forest_intervals(forest_roots):
+    """For each root, ``(min, max, support_set, root)``: the interval of indices its tree occupies."""
     intervals = []
     for root in forest_roots:
         support = _node_support(root)
@@ -445,12 +456,14 @@ class ParallelInjLetter:
 
 
 def make_parallel_injective_word(primary_word, secondary_word):
+    """Zip two equal-length words into a word of `ParallelInjLetter` biletters."""
     if len(primary_word) != len(secondary_word):
         raise ValueError("primary_word and secondary_word must have same length")
     return tuple(ParallelInjLetter(int(a), int(b)) for a, b in zip(primary_word, secondary_word))
 
 
 def _letter_val(letter, val_fn=None):
+    """Integer value of a letter: via ``val_fn``, its ``val`` attribute, or ``int()``."""
     if val_fn is not None:
         return int(val_fn(letter))
     if hasattr(letter, "val"):
@@ -471,6 +484,7 @@ def _letter_val(letter, val_fn=None):
 
 
 def _letter_order_key(letter):
+    """Sort key ``(primary, secondary)`` for biletters, or ``(value, 0)`` for plain letters."""
     if isinstance(letter, ParallelInjLetter):
         return (int(letter.primary), int(letter.secondary))
     if isinstance(letter, tuple | list) and len(letter) == 2:
@@ -837,6 +851,7 @@ def _lower_order_ideals(roots):
 
 
 def _full_subtree(node):
+    """Frozenset of all nodes in the subtree at ``node``."""
     if node is None:
         return frozenset()
     return frozenset({node}) | _full_subtree(node.left) | _full_subtree(node.right)
@@ -996,6 +1011,9 @@ def build_balanced_tree(labels):
 
 
 def decreasing_labelings(root, max_val, used_vals=None):
+    """All labelings of the tree at ``root`` by distinct values ``<= max_val`` that strictly decrease
+    from each node to its children.
+    """
     def _subtree_size(node):
         if node is None:
             return 0
@@ -1055,6 +1073,7 @@ def decreasing_labelings(root, max_val, used_vals=None):
 
 
 def word_from_labeling(root, labeling):
+    """Word of ``rho`` values of the tree's nodes, ordered by the inverse of the labeling permutation."""
     from schubmult import Permutation
 
     trav = list(root.inorder_traversal)
@@ -1250,6 +1269,7 @@ class LBS(LabeledForest):
         return hash((self.forest, tuple(self(node) for node in self.forest.inorder_traversal)))
 
 def word_to_pair_labeled(word):
+    """Standardize a word into `letterpair` biletters ``(letter, occurrence number)``."""
     counts = {}
     out = []
     for a in word:
@@ -1259,6 +1279,7 @@ def word_to_pair_labeled(word):
     return tuple(out)
 
 def word_to_pairinj_labeled(word):
+    """Standardize a word into `ParallelInjLetter` biletters ``(letter, occurrence number)``."""
     counts = {}
     out = []
     for a in word:
@@ -1269,6 +1290,11 @@ def word_to_pairinj_labeled(word):
 
 
 def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabeling] | None:
+    """Forest analogue of RSK: insert a word of biletters letter by letter, returning the insertion
+    forest ``P`` (an `LBS`) and the recording forest ``Q`` (a `DecLabeling`), or ``None`` if the
+    word is not insertable. Each new letter becomes a root that absorbs the neighboring trees
+    at ``primary - 1`` / ``primary + 1`` as children.
+    """
     if len(word_of_pairs) == 0:
         forest = IndexedForest()
         P, Q = LBS(forest), DecLabeling(forest)
@@ -1564,8 +1590,9 @@ def _grove_polynomial_from_indfor(indfor, genset, beta=Symbol("beta")):
 
 
 def _grove_polynomial_from_root(root, genset, min_value=1, beta=Symbol("beta")):
+    """Recursively compute one root's contribution to the set-valued grove polynomial."""
     from itertools import combinations
-    """Recursively compute one root contribution for set-valued grove polynomials."""
+
     if root.rho == 0:
         return S.One
 

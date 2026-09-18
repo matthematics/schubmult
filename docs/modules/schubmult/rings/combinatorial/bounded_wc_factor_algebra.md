@@ -2,6 +2,19 @@
 
 # schubmult.rings.combinatorial.bounded\_wc\_factor\_algebra
 
+`BoundedWCFactorAlgebra`: the `WCGraph` (K-theoretic) analogue of `BoundedRCFactorAlgebra`,
+factoring Grothendieck classes into tuples of full Grassmannian WC graphs.
+
+<a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorPrintingTerm"></a>
+
+## BoundedWCFactorPrintingTerm Objects
+
+```python
+class BoundedWCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `BoundedWCFactorAlgebra` basis key.
+
 <a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorAlgebraElement"></a>
 
 ## BoundedWCFactorAlgebraElement Objects

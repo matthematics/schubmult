@@ -2,6 +2,9 @@
 
 # schubmult.rings.polynomial\_algebra.composition\_schubert\_poly\_basis
 
+`CompositionSchubertPolyBasis`: Schubert polynomials re-indexed by weak compositions (Lehmer codes)
+instead of permutations, wrapping `SchubertPolyBasis`.
+
 <a id="schubmult.rings.polynomial_algebra.composition_schubert_poly_basis.CompositionSchubertPolyBasis"></a>
 
 ## CompositionSchubertPolyBasis Objects

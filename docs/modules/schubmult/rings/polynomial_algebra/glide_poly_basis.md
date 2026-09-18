@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.glide\_poly\_basis
 
+`GlidePolyBasis`: the glide polynomial basis (K-theoretic analogue of fundamental slides) of `PolynomialAlgebra`.
+
 <a id="schubmult.rings.polynomial_algebra.glide_poly_basis.glide_monomials"></a>
 
 #### glide\_monomials

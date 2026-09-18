@@ -2,6 +2,10 @@
 
 # schubmult.rings.polynomial\_algebra.monomial\_basis
 
+`MonomialBasis`: the standard monomial basis ``x^a`` (keys are exponent tuples) of `PolynomialAlgebra`.
+
+This is the hub basis: every other `PolynomialBasis` transitions through it by default.
+
 <a id="schubmult.rings.polynomial_algebra.monomial_basis.MonomialBasis"></a>
 
 ## MonomialBasis Objects

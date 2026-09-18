@@ -175,11 +175,13 @@ class Plactic(GridPrint, CrystalGraph):
         return self.row_word < other.row_word
 
     def evacuation(self, n):
+        """Schutzenberger evacuation within the alphabet ``1..n``: insert the complemented row word ``n + 1 - a``."""
         return self.__class__.from_word([n + 1 - a for a in self.row_word])
 
     # in order of row row
     @property
     def iter_boxes(self):
+        """Filled cells in row-word order (bottom row to top, left to right)."""
         # Iterate over non-border cells only
         for i in range(self.rows - 1, -1, -1):
             for j in range(self.cols):
@@ -275,6 +277,7 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def iter_outer_corners(self):
+        """Empty cells that can receive a reverse JDT slide."""
         # Check border positions for outer corners
         # Check positions at (i, self.cols) for all rows and (self.rows, j) for all cols
         for i in range(self._grid.shape[0]):
@@ -284,12 +287,16 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def iter_inner_corners(self):
+        """Holes of the inner shape that can receive a forward JDT slide."""
         for i in range(self.rows):
             for j in range(self.cols):
                 if _is_valid_inner_corner(self._grid, i, j, self._inner_shape):
                     yield (i, j)
 
     def __init__(self, word=(), inner_shape=None):
+        """Build from rows (tuple of tuples), a prebuilt grid, or empty; ``inner_shape`` gives the skew
+        holes. The grid is stored with one extra border row and column so outer corners always exist.
+        """
         # Convert word (tuple of tuples) to np.ndarray
         # Grid always has +1 row and +1 col as empty border (ensures outer corners exist)
         if isinstance(word, np.ndarray):
@@ -434,6 +441,7 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def column_word(self):
+        """Entries read column by column, each column bottom to top."""
         wrd = []
         # Exclude border column
         for j in range(self.cols):
@@ -528,6 +536,7 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def shape(self):
+        """Row lengths (filled cells per nonempty row)."""
         shape_list = []
         # Only count non-border rows
         for i in range(self.rows):
@@ -557,6 +566,7 @@ class Plactic(GridPrint, CrystalGraph):
 
     @classmethod
     def from_word(cls, word):
+        """RS insertion tableau of a word."""
         # accept any iterable-of-rows and normalize to tuple-of-tuples
         return cls().rs_insert(*word)
 
@@ -793,6 +803,7 @@ class Plactic(GridPrint, CrystalGraph):
         return True
 
     def rectify(self):
+        """Jeu de taquin rectification of a skew tableau to a straight shape."""
         # if self.rows == 0:
         #     return self
         # if self.cols == 0:
@@ -835,6 +846,7 @@ class Plactic(GridPrint, CrystalGraph):
 
     @classmethod
     def superstandard(cls, shape):
+        """The standard tableau of the given shape filled ``1, 2, ...`` row by row, left to right."""
         if shape is None:
             return None
         if not shape:
@@ -852,6 +864,7 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def is_semistandard(self):
+        """Rows weakly increasing and columns strictly increasing (skipping holes)."""
         # Only check non-border cells
         for i in range(self.rows):
             for j in range(self.cols):

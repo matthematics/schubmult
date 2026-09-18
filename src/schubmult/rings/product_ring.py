@@ -1,3 +1,11 @@
+"""`ProductRing`: array-backed componentwise product of Schubert-family rings (draft).
+
+An element holds a numpy object array ``_arr`` with one ring element per factor; arithmetic is
+componentwise on the array. This is an older sketch of the same idea as
+`schubmult.rings.direct_product_ring.DirectProductRing`, which is the supported implementation;
+`ProductRing` is not exported from the package.
+"""
+
 from functools import cache
 
 import numpy as np
@@ -13,7 +21,8 @@ logger = get_logger(__name__)
 
 
 class ProductRing(BaseSchubertRing):
-    # tensor ring
+    """Componentwise product of rings backed by a numpy array of factor elements. See the module docstring."""
+
     def __eq__(self, other):
         return type(self) is type(other) and self.rings == other.rings
 
@@ -31,6 +40,7 @@ class ProductRing(BaseSchubertRing):
     #     return self.from_dict(add_perm_dict(elem, {k: -v for k,v in other.items()}))
 
     def __init__(self, *rings):
+        """Flatten nested product rings and pool the factors' generators and coefficient generators."""
         self._rings = rings
         ring_list = [*self._rings]
         while any(isinstance(r, ProductRing) for r in ring_list):
@@ -71,6 +81,7 @@ class ProductRing(BaseSchubertRing):
 
     @property
     def rings(self):
+        """The (flattened) tuple of factor rings."""
         return self._rings
 
     def rmul(self, elem1, elem2):
@@ -114,11 +125,15 @@ class ProductRing(BaseSchubertRing):
 
 
     def new(self, x):
+        """Wrap a sequence of factor elements as an element of this ring."""
         elem = self.dtype()
         elem._arr = np.array(x, dtype=object)
         return elem
 
     def __call__(self, *x):
+        """Build an element from one input per factor (or a single sequence/element), coercing each
+        input in its factor ring.
+        """
         if len(x) == 1 and isinstance(x[0], self.dtype()):
             return self.new(x[0]._arr.copy())
         if len(x) == 1 and isinstance(x[0], list | tuple | np.ndarray):
@@ -128,6 +143,8 @@ class ProductRing(BaseSchubertRing):
 
 
 class ProductBasisElement(PrintingTerm):
+    """Printing term for a `ProductRing` element; renders the factors joined by ``#``."""
+
     is_commutative = False
     precedence = 50
 
@@ -148,6 +165,8 @@ class ProductBasisElement(PrintingTerm):
 
 
 class ProductRingElement(BaseSchubertElement):
+    """Element of a `ProductRing`; arithmetic operators act componentwise on ``_arr``."""
+
     def __init__(self):
         pass
 

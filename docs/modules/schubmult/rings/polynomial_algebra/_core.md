@@ -2,6 +2,15 @@
 
 # schubmult.rings.polynomial\_algebra.\_core
 
+`PolynomialAlgebra`: the polynomial ring ``Z[x_1, x_2, ...]`` with a pluggable basis.
+
+The ring itself is basis-agnostic; a `PolynomialBasis` instance supplies the key
+type, the product rule, the coproduct, and the transitions to/from the monomial
+basis. Elements of rings with different bases are interconverted via
+``change_basis``. ``PA`` is the standard monomial-basis instance in ``x``; the
+pre-built instances for other bases (``Schub``, ``Key``, ``FSlide``, ...) live in
+the package ``__init__``.
+
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement"></a>
 
 ## PolynomialAlgebraElement Objects
@@ -25,6 +34,27 @@ def as_coefficients_dict()
 ```
 
 Return a dict mapping printing terms to sympified coefficients.
+
+<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.branch"></a>
+
+#### branch
+
+```python
+def branch(index)
+```
+
+Split the variables at ``index``: ``x_1..x_index`` on the left tensor factor, the rest on the
+right, returned in the tensor square of this ring's basis.
+
+<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.coproduct"></a>
+
+#### coproduct
+
+```python
+def coproduct()
+```
+
+Sum of ``branch(index)`` over every split point (the full variable-splitting coproduct).
 
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.change_basis"></a>
 
@@ -105,6 +135,17 @@ def __init__(basis, domain=None)
 ```
 
 Initialize a PolynomialAlgebra with the given basis and coefficient domain.
+
+<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebra.genset"></a>
+
+#### genset
+
+```python
+@property
+def genset()
+```
+
+The basis's generating set.
 
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebra.coproduct_on_basis"></a>
 

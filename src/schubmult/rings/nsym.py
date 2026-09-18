@@ -1,4 +1,12 @@
-"""Noncommutative symmetric functions (NSym) ring implementation."""
+"""`NSym`: a `FreeAlgebra` indexed by compositions, multiplied through the separated-descents Schubert ring.
+
+A key is a composition ``alpha`` (a tuple of positive integers), printed ``N(alpha)``, and is
+identified with the Schubert key ``(uncode(alpha - 1), len(alpha))`` of
+`schubmult.rings.schubert.separated_descents.SeparatedDescentsRing` via `NSym.sepify` /
+`NSym.from_sep`. The product is the separated-descents product transported back to
+compositions; when ``FreeAlgebra.CAP`` is set the result is truncated to keys of at most that
+length. Right multiplication by a Schubert element acts by the skew operation ``/``.
+"""
 
 from schubmult.combinatorics.permutation import uncode
 from schubmult.symbolic import (
@@ -22,10 +30,13 @@ splugSx = SeparatedDescentsRing(Sx([]).ring)
 
 
 class NSym(FreeAlgebra):
+    """Free algebra on compositions with the separated-descents product. See the module docstring."""
+
     def __hash__(self):
         return hash((self.domain, "whatabong2"))
 
     def __init__(self, domain=None):
+        """Create the ring over ``domain`` (default ``EXRAW``); the empty composition is the identity."""
         if domain:
             self.domain = domain
         else:
@@ -35,18 +46,22 @@ class NSym(FreeAlgebra):
         self.dtype = type("NSymElement", (NSymElement,), {"ring": self})
 
     def printing_term(self, k):
+        """Display as ``N(alpha)``."""
         return GenericPrintingTerm(k, "N")
 
     def rmul(self, elem, other):
+        """Scale coefficients by the scalar ``other``."""
         # print(f"{self=} {elem=} {other=}")
         if isinstance(other, NSymElement):
             raise NotImplementedError
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def sepify(self, elem):
+        """Map ``alpha -> (uncode(alpha - 1), len(alpha))`` into the separated-descents Schubert ring."""
         return splugSx([]).ring.from_dict({(uncode([a - 1 for a in k]), len(k)): v for k, v in elem.items()})
 
     def from_sep(self, elem):
+        """Inverse of `sepify`: pad or cut the code of ``perm`` to length ``n`` and add 1 to each entry."""
         dct = {}
         for (k, n), v in elem.items():
             cd = k.code
@@ -59,6 +74,9 @@ class NSym(FreeAlgebra):
         return self.from_dict(dct)
 
     def mul(self, elem, other):
+        """Scalar multiplication, or the separated-descents product of two elements (truncated by
+        ``FreeAlgebra.CAP`` if set).
+        """
         # print(f"{self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
@@ -85,6 +103,8 @@ class NSym(FreeAlgebra):
 
 
 class NSymElement(FreeAlgebraElement):
+    """Element of `NSym`: a dict from compositions to coefficients with SymPy-compatible printing."""
+
     precedence = 40
 
     __sympy__ = True
@@ -196,6 +216,7 @@ class NSymElement(FreeAlgebraElement):
             return other.__rmul__(self)
 
     def __rmul__(self, other):
+        """Scalar on the left, or a Schubert element acting by the skew operation ``self / perm``."""
         from .schubert.schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
         if isinstance(other, DoubleSchubertElement):

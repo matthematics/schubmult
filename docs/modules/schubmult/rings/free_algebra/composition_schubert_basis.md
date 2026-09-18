@@ -2,6 +2,10 @@
 
 # schubmult.rings.free\_algebra.composition\_schubert\_basis
 
+`CompositionSchubertBasis`: `SchubertBasis` re-indexed by compositions. The key ``c`` (a code
+padded with zeros to length ``numvars``) stands for the Schubert key ``(uncode(c), len(c))``,
+so the dual polynomial basis is again Schubert polynomials.
+
 <a id="schubmult.rings.free_algebra.composition_schubert_basis.CompositionSchubertBasis"></a>
 
 ## CompositionSchubertBasis Objects

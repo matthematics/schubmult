@@ -2,6 +2,19 @@
 
 # schubmult.rings.combinatorial.grass\_tensor\_algebra
 
+`GrassTensorAlgebra`: an algebra on tuples of full Grassmannian RC graphs (as `CrystalGraphTensor`
+keys), with conversion to `RCGraphRing` by squash-multiplying the factors together.
+
+<a id="schubmult.rings.combinatorial.grass_tensor_algebra.GrassTensorPrintingTerm"></a>
+
+## GrassTensorPrintingTerm Objects
+
+```python
+class GrassTensorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `GrassTensorAlgebra` basis tuple.
+
 <a id="schubmult.rings.combinatorial.grass_tensor_algebra.GrassTensorAlgebraElement"></a>
 
 ## GrassTensorAlgebraElement Objects

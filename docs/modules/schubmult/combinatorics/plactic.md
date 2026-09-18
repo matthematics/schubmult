@@ -17,6 +17,27 @@ A (skew) semistandard Young tableau stored as a grid, with the ``gl_n`` plactic 
 structure (Knuth relations). ``inner_shape`` (a partition of leading holes per row) makes it a
 skew tableau; construct directly from a grid or via classmethods like ``Plactic.yamanouchi``.
 
+<a id="schubmult.combinatorics.plactic.Plactic.evacuation"></a>
+
+#### evacuation
+
+```python
+def evacuation(n)
+```
+
+Schutzenberger evacuation within the alphabet ``1..n``: insert the complemented row word ``n + 1 - a``.
+
+<a id="schubmult.combinatorics.plactic.Plactic.iter_boxes"></a>
+
+#### iter\_boxes
+
+```python
+@property
+def iter_boxes()
+```
+
+Filled cells in row-word order (bottom row to top, left to right).
+
 <a id="schubmult.combinatorics.plactic.Plactic.up_jdt_slide"></a>
 
 #### up\_jdt\_slide
@@ -38,6 +59,39 @@ def down_jdt_slide(row, col)
 
 Perform a jeu de taquin slide starting from the given (row, col)
 position (0-indexed). Returns a new Plactic tableau.
+
+<a id="schubmult.combinatorics.plactic.Plactic.iter_outer_corners"></a>
+
+#### iter\_outer\_corners
+
+```python
+@property
+def iter_outer_corners()
+```
+
+Empty cells that can receive a reverse JDT slide.
+
+<a id="schubmult.combinatorics.plactic.Plactic.iter_inner_corners"></a>
+
+#### iter\_inner\_corners
+
+```python
+@property
+def iter_inner_corners()
+```
+
+Holes of the inner shape that can receive a forward JDT slide.
+
+<a id="schubmult.combinatorics.plactic.Plactic.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(word=(), inner_shape=None)
+```
+
+Build from rows (tuple of tuples), a prebuilt grid, or empty; ``inner_shape`` gives the skew
+holes. The grid is stored with one extra border row and column so outer corners always exist.
 
 <a id="schubmult.combinatorics.plactic.Plactic.shiftup"></a>
 
@@ -84,6 +138,17 @@ def row_word()
 
 Return the row-reading word as a flat tuple.
 
+<a id="schubmult.combinatorics.plactic.Plactic.column_word"></a>
+
+#### column\_word
+
+```python
+@property
+def column_word()
+```
+
+Entries read column by column, each column bottom to top.
+
 <a id="schubmult.combinatorics.plactic.Plactic.transpose"></a>
 
 #### transpose
@@ -117,6 +182,17 @@ def __mul__(other)
 Plactic product: insert entries of `other` in row-reading order
 (top-to-bottom, left-to-right) into a copy of self.
 
+<a id="schubmult.combinatorics.plactic.Plactic.shape"></a>
+
+#### shape
+
+```python
+@property
+def shape()
+```
+
+Row lengths (filled cells per nonempty row).
+
 <a id="schubmult.combinatorics.plactic.Plactic.skew_shape"></a>
 
 #### skew\_shape
@@ -127,6 +203,17 @@ def skew_shape()
 ```
 
 Return the skew shape as a tuple of (row_length, left_offset) pairs.
+
+<a id="schubmult.combinatorics.plactic.Plactic.from_word"></a>
+
+#### from\_word
+
+```python
+@classmethod
+def from_word(cls, word)
+```
+
+RS insertion tableau of a word.
 
 <a id="schubmult.combinatorics.plactic.Plactic.rs_insert"></a>
 
@@ -200,6 +287,38 @@ def is_increasing()
 ```
 
 Check if the tableau is strictly increasing in rows and columns.
+
+<a id="schubmult.combinatorics.plactic.Plactic.rectify"></a>
+
+#### rectify
+
+```python
+def rectify()
+```
+
+Jeu de taquin rectification of a skew tableau to a straight shape.
+
+<a id="schubmult.combinatorics.plactic.Plactic.superstandard"></a>
+
+#### superstandard
+
+```python
+@classmethod
+def superstandard(cls, shape)
+```
+
+The standard tableau of the given shape filled ``1, 2, ...`` row by row, left to right.
+
+<a id="schubmult.combinatorics.plactic.Plactic.is_semistandard"></a>
+
+#### is\_semistandard
+
+```python
+@property
+def is_semistandard()
+```
+
+Rows weakly increasing and columns strictly increasing (skipping holes).
 
 <a id="schubmult.combinatorics.plactic.Plactic.reverse_rsk"></a>
 

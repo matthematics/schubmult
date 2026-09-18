@@ -2,6 +2,18 @@
 
 # schubmult.rings.free\_algebra.schubert\_basis
 
+`SchubertBasis`: the free-algebra basis dual to Schubert polynomials.
+
+A key is ``(perm, numvars)``: the element dual to ``S_perm`` viewed as a polynomial in
+exactly ``numvars`` variables (so ``numvars >= max_descent(perm)``). Under the
+word/monomial pairing this is the ``SchubertPolyBasis`` of the polynomial algebra.
+
+The product is the separated-descents product (`SeparatedDescentsRing`): ``(u, p) * (v, q)``
+places ``u`` in the first ``p`` variables and ``v`` in the next ``q``, giving a ``(w, p + q)``
+expansion. ``transition_word`` expands a key into words via the SEM (elementary symmetric)
+factorization of ``S_perm``, and the other ``transition_*`` methods reach the remaining
+bases either directly or by way of the word basis. ``ASx`` is the standard instance.
+
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis"></a>
 
 ## SchubertBasis Objects
@@ -10,12 +22,11 @@
 class SchubertBasis(FreeAlgebraBasis)
 ```
 
-Schubert basis of the free algebra.
+Free-algebra basis dual to Schubert polynomials; keys are ``(Permutation, numvars)``.
 
-Keys are ``(Permutation, int)`` pairs where the integer records the
-number of variables.  Products use the separated-descents Schubert
-ring, and transitions to the word basis go through elementary
-symmetric function decompositions.
+See the module docstring. Products go through the separated-descents Schubert ring,
+and transitions to the word basis go through elementary symmetric function
+decompositions.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.is_key"></a>
 
@@ -26,7 +37,7 @@ symmetric function decompositions.
 def is_key(cls, x)
 ```
 
-Return True if *x* is a valid Schubert basis key.
+Whether ``x`` is ``(perm,)`` or ``(perm, numvars)`` with ``perm`` a permutation/list/tuple.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.from_rc_graph"></a>
 
@@ -37,7 +48,7 @@ Return True if *x* is a valid Schubert basis key.
 def from_rc_graph(cls, rc_graph)
 ```
 
-Return the Schubert key ``(perm, length)`` for the given RC graph.
+The key ``(rc_graph.perm, len(rc_graph))``: an RC graph's permutation with its row count as ``numvars``.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.as_key"></a>
 
@@ -48,7 +59,7 @@ Return the Schubert key ``(perm, length)`` for the given RC graph.
 def as_key(cls, x)
 ```
 
-Normalize *x* into a ``(Permutation, numvars)`` key.
+Normalize to ``(Permutation, numvars)``; if ``numvars`` is omitted it defaults to the last descent.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.product"></a>
 
@@ -60,7 +71,8 @@ Normalize *x* into a ``(Permutation, numvars)`` key.
 def product(cls, key1, key2, coeff=S.One)
 ```
 
-Multiply two Schubert basis keys via the separated-descents ring.
+Separated-descents product: ``(u, p) * (v, q)`` with ``u`` in the first ``p`` variables and
+``v`` in the next ``q``, computed in `SeparatedDescentsRing`.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.skew_element"></a>
 
@@ -71,7 +83,9 @@ Multiply two Schubert basis keys via the separated-descents ring.
 def skew_element(cls, w, u, n)
 ```
 
-Compute the skew Schubert element S_w / S_u truncated to *n* variables.
+The skew element ``S_w / S_u`` in ``n`` variables: the dual of multiplying by ``S_u``,
+computed with the descent-side kernel ``schubmult_py_down`` and truncated to permutations
+fitting in ``n`` variables.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.coproduct"></a>
 
@@ -83,7 +97,8 @@ Compute the skew Schubert element S_w / S_u truncated to *n* variables.
 def coproduct(cls, key)
 ```
 
-Compute the coproduct of a Schubert key in the tensor ring.
+Coproduct of ``(perm, numvars)`` (dual to polynomial multiplication): expand to words,
+apply the word coproduct, and convert each tensor factor back to Schubert keys.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_grothendieck"></a>
 
@@ -95,7 +110,8 @@ Compute the coproduct of a Schubert key in the tensor ring.
 def transition_grothendieck(cls, perm, numvars)
 ```
 
-Transition a Schubert key to the Grothendieck basis.
+Expand ``(perm, numvars)`` in the `GrothendieckBasis`, by taking the co-BPD of every RC graph
+of ``perm * w0`` and collecting the resulting permutations.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_schubert_schur"></a>
 
@@ -106,7 +122,9 @@ Transition a Schubert key to the Grothendieck basis.
 def transition_schubert_schur(cls, *x)
 ```
 
-Transition a Schubert key to the Schubert-Schur basis.
+Expand ``(perm, numvars)`` in the `SchubertSchurBasis`: split off the variables beyond
+``numvars`` via a Schubert coproduct against a dominant permutation, yielding
+``(partition, perm', numvars)`` keys.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_schur_elementary"></a>
 
@@ -117,7 +135,7 @@ Transition a Schubert key to the Schubert-Schur basis.
 def transition_schur_elementary(cls, *x)
 ```
 
-Transition a Schubert key to the Schur-Elementary basis.
+Expand ``(perm, numvars)`` in the `SchurElementaryBasis` (a word-like tuple paired with a partition).
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_elementary"></a>
 
@@ -128,7 +146,8 @@ Transition a Schubert key to the Schur-Elementary basis.
 def transition_elementary(cls, perm, numvars)
 ```
 
-Transition a Schubert key to the elementary basis.
+Expand ``(perm, numvars)`` in the `ElementaryBasis`: read the monomials of ``S_{perm * w0}``
+and complement each exponent against the staircase to get elementary-symmetric indices.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_separated_descents"></a>
 
@@ -139,7 +158,8 @@ Transition a Schubert key to the elementary basis.
 def transition_separated_descents(cls, k, *x)
 ```
 
-Transition a Schubert key to the separated descents basis of level *k*.
+Expand ``(perm, numvars)`` in the level-``k`` `SeparatedDescentsBasis` via a Schubert coproduct
+splitting the last ``k - 1`` variables, yielding ``(perm_left, perm_right, numvars)`` keys.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_jbasis"></a>
 
@@ -150,7 +170,8 @@ Transition a Schubert key to the separated descents basis of level *k*.
 def transition_jbasis(cls, perm, n)
 ```
 
-Transition a Schubert key ``(perm, n)`` to the J basis.
+Expand ``(perm, n)`` in the `JBasis`: a code with no zeros is already a J key; leading zeros are
+peeled off (each contributing a factor ``t``, currently ``1``), and anything else goes via words.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.dual_basis"></a>
 
@@ -161,7 +182,7 @@ Transition a Schubert key ``(perm, n)`` to the J basis.
 def dual_basis(cls)
 ```
 
-Return the SchubertPolyBasis as the dual of SchubertBasis.
+``SchubertPolyBasis``: Schubert polynomials are the dual basis under the word/monomial pairing.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition"></a>
 
@@ -173,7 +194,11 @@ Return the SchubertPolyBasis as the dual of SchubertBasis.
 def transition(cls, other_basis)
 ```
 
-Return a transition function from SchubertBasis to *other_basis*.
+Return the key -> ``{key: coeff}`` function into ``other_basis``.
+
+Direct routes exist for the word, elementary, Schubert-Schur, Schur-elementary,
+composition-Schubert, separated-descents, and Grothendieck bases; everything else
+is reached by going through the word basis first.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.old_transition_word"></a>
 
@@ -197,7 +222,13 @@ Transition to WordBasis via SEM basis (legacy implementation).
 def transition_word(cls, perm, numvars)
 ```
 
-Transition a Schubert key to the word basis via SEM factorization.
+Expand ``(perm, numvars)`` in the word basis.
+
+Multiplies ``perm`` by the inverse of the dominant permutation with code
+``(inv + numvars, ..., inv + 1)`` (``inv = perm.inv``) and writes the result in the SEM
+basis with a custom ``elem_func`` that records each factor ``e_p(x_1..x_k)`` as the word
+with ``k - p`` in position ``numvars - k + inv``. Products of such words in the monomial
+polynomial algebra add letterwise, so the resulting polynomial *is* the word expansion.
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.printing_term"></a>
 
@@ -208,5 +239,5 @@ Transition a Schubert key to the word basis via SEM factorization.
 def printing_term(cls, k)
 ```
 
-Return a Xi-notation display object for key *k*.
+Display symbol for ``(perm, numvars)`` (the separated-descents ``SepDescSchubPoly`` form).
 

@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.monomial\_slide\_poly\_basis
 
+`MonomialSlidePolyBasis`: the monomial slide polynomial basis (Assaf-Searles) of `PolynomialAlgebra`.
+
 <a id="schubmult.rings.polynomial_algebra.monomial_slide_poly_basis.MonomialSlidePolyBasis"></a>
 
 ## MonomialSlidePolyBasis Objects

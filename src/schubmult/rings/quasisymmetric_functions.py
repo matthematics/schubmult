@@ -1,3 +1,10 @@
+"""`QSym`: quasisymmetric functions in the monomial basis ``M_alpha``.
+
+Keys are compositions; the product is the quasi-shuffle (stuffle) of compositions, and
+``expand(n)`` gives the monomial quasisymmetric polynomial in ``n`` variables. `QSym.quasi_schur`
+builds quasi-Schur functions by enumerating standard composition tableaux.
+"""
+
 from schubmult import abc
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.rings.schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -5,6 +12,10 @@ from schubmult.symbolic import S, expand_seq
 
 
 def monomial_quasisym(comp, length, genset):
+    """The monomial quasisymmetric polynomial ``M_comp(x_1, ..., x_length)``: the sum of
+    ``x_{i_1}^{c_1} ... x_{i_k}^{c_k}`` over ``i_1 < ... < i_k <= length``, built by recursion on
+    whether ``x_length`` is used. Zero if ``comp`` contains a zero part.
+    """
     if any(c == 0 for c in comp):
         return S.Zero
     if len(comp) == length:
@@ -18,10 +29,9 @@ def monomial_quasisym(comp, length, genset):
 
 
 def stuffle(alpha, beta):
-    """
-    Computes the stuffle product of two compositions alpha and beta.
-    Returns a dictionary where keys are resulting compositions (tuples)
-    and values are their coefficients.
+    """The quasi-shuffle (stuffle) product of two compositions: at each step take the first part
+    of ``alpha``, the first part of ``beta``, or their sum. Returns ``{composition: coeff}``;
+    this is the product rule of the monomial basis ``M_alpha M_beta``.
     """
     from collections import Counter
 
@@ -52,12 +62,10 @@ def stuffle(alpha, beta):
 
 
 def quasi_schur_to_monomial(comp):
-    """
-    Computes the quasi-Schur function for composition comp in the monomial basis.
-    Returns a dictionary where keys are compositions (tuples) and values are coefficients.
-
-    Uses the standard composition tableau definition: sum over all descent compositions
-    of standard composition tableaux of the given shape.
+    """Monomial-basis expansion of the quasi-Schur function of shape ``comp``: counts standard
+    composition tableaux (rows strictly increasing, columns weakly increasing) of that shape by
+    the descent composition of their row reading word. Enumerates all ``n!`` fillings, so only
+    small shapes are practical.
     """
     from itertools import permutations
 
@@ -126,22 +134,26 @@ def quasi_schur_to_monomial(comp):
 
 
 class QSymElement(BaseSchubertElement):
+    """Element of `QSym`: a dict from compositions to coefficients in the monomial basis."""
+
     def expand(self, num_vars):
-        """Expand the quasi-symmetric function in the given number of variables."""
+        """The quasisymmetric polynomial in ``num_vars`` variables of the ring's generating set."""
         return sum([coeff * monomial_quasisym(comp, num_vars, self.ring.genset) for comp, coeff in self.items()])
 
 
 class QSym(BaseSchubertRing):
+    """Quasisymmetric functions in the monomial basis; ``QSym()(2, 1)`` is ``M_(2,1)``. See the module docstring."""
+
     def __init__(self, genset=abc.x, domain=None):
         super().__init__(genset, None, domain)
         self.dtype = type("QSymElement", (QSymElement,), {"ring": self})
 
     def mul_pair(self, a, b):
-        # a and b are compositions (tuples)
+        """Product of two basis compositions: the `stuffle`."""
         return stuffle(a, b)
 
     def mul(self, a, b):
-        # a and b are QSymElements
+        """Bilinear extension of `mul_pair`."""
         result_monomials = self.zero
         for comp_a, coeff_a in a.items():
             for comp_b, coeff_b in b.items():
@@ -156,25 +168,18 @@ class QSym(BaseSchubertRing):
         return self.from_dict({comp: coeff * b for comp, coeff in a.items()})
 
     def printing_term(self, comp):
+        """Display as ``Mx(alpha)`` (label from the generating set)."""
         return GenericPrintingTerm(tuple(comp), f"M{self.genset.label}")
 
     def new(self, *x):
+        """The basis element ``M_x`` for the composition given as positional parts."""
         return self.from_dict({x: 1})
 
     def quasi_schur(self, *comp):
-        """
-        Returns the quasi-Schur function for the given composition
-        expressed in the monomial basis.
+        """The quasi-Schur function of shape ``comp`` in the monomial basis (see `quasi_schur_to_monomial`).
 
-        Args:
-            ``*comp``: A composition (tuple or sequence of positive integers)
-
-        Returns:
-            QSymElement representing the quasi-Schur function in monomial basis
-
-        Example:
-            >>> QS = QSym()
-            >>> QS.quasi_schur(2, 1)  # quasi-Schur function for composition (2,1)
+        >>> QS = QSym()
+        >>> QS.quasi_schur(2, 1)
         """
         if len(comp) == 1 and isinstance(comp[0], (tuple, list)):
             comp = comp[0]

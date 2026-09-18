@@ -2,6 +2,10 @@
 
 # schubmult.rings.polynomial\_algebra.grothendieck\_poly\_basis
 
+`GrothendieckPolyBasis`: the Grothendieck polynomial basis of `PolynomialAlgebra`, at the
+specialization ``beta = 1`` (without loss of generality: ``beta`` is recovered from the grading,
+since the degree ``inv(w) + d`` part of ``G_w`` carries ``beta^d``).
+
 <a id="schubmult.rings.polynomial_algebra.grothendieck_poly_basis.GrothendieckPolyBasis"></a>
 
 ## GrothendieckPolyBasis Objects
@@ -10,11 +14,12 @@
 class GrothendieckPolyBasis(PolynomialBasis)
 ```
 
-Grothendieck polynomial basis.
+Grothendieck polynomial basis at ``beta = 1``.
 
 Keys are ``(Permutation, length)`` pairs. Grothendieck polynomials form
 the canonical basis for the polynomial algebra in Grothendieck calculus,
-dual to the :class:`GrothendieckBasis` of the free algebra.
+dual to the :class:`GrothendieckBasis` of the free algebra. The ``beta`` parameter
+is set to 1 without loss of generality (see the module docstring).
 
 <a id="schubmult.rings.polynomial_algebra.grothendieck_poly_basis.GrothendieckPolyBasis.product"></a>
 

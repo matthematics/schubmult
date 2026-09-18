@@ -1,3 +1,5 @@
+"""Re-exports `schubmult.symbolic.poly.schub_poly` and the ``_vars``/``call_zvars``/``q_vector`` helpers."""
+
 from .poly import schub_poly as _schub_poly
 from .poly.schub_poly import *  # noqa: F403
 

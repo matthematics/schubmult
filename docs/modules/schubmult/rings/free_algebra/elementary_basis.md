@@ -2,6 +2,10 @@
 
 # schubmult.rings.free\_algebra.elementary\_basis
 
+`ElementaryBasis`: free-algebra basis indexed by ``(composition, numvars)``, dual to products of
+elementary symmetric polynomials ``e_{c_1}(x_1..x_k) e_{c_2}(x_1..x_{k-1}) ...`` in nested
+variable sets. `SchubertBasis` expands into it via the monomials of ``S_{perm * w0}``.
+
 <a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis"></a>
 
 ## ElementaryBasis Objects

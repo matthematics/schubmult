@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.schubert\_poly\_basis
 
+`SchubertPolyBasis`: the Schubert polynomial basis of `PolynomialAlgebra`, indexed by permutations.
+
 <a id="schubmult.rings.polynomial_algebra.schubert_poly_basis.SchubertPolyBasis"></a>
 
 ## SchubertPolyBasis Objects

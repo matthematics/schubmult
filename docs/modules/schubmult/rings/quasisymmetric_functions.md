@@ -2,6 +2,24 @@
 
 # schubmult.rings.quasisymmetric\_functions
 
+`QSym`: quasisymmetric functions in the monomial basis ``M_alpha``.
+
+Keys are compositions; the product is the quasi-shuffle (stuffle) of compositions, and
+``expand(n)`` gives the monomial quasisymmetric polynomial in ``n`` variables. `QSym.quasi_schur`
+builds quasi-Schur functions by enumerating standard composition tableaux.
+
+<a id="schubmult.rings.quasisymmetric_functions.monomial_quasisym"></a>
+
+#### monomial\_quasisym
+
+```python
+def monomial_quasisym(comp, length, genset)
+```
+
+The monomial quasisymmetric polynomial ``M_comp(x_1, ..., x_length)``: the sum of
+``x_{i_1}^{c_1} ... x_{i_k}^{c_k}`` over ``i_1 < ... < i_k <= length``, built by recursion on
+whether ``x_length`` is used. Zero if ``comp`` contains a zero part.
+
 <a id="schubmult.rings.quasisymmetric_functions.stuffle"></a>
 
 #### stuffle
@@ -10,9 +28,9 @@
 def stuffle(alpha, beta)
 ```
 
-Computes the stuffle product of two compositions alpha and beta.
-Returns a dictionary where keys are resulting compositions (tuples)
-and values are their coefficients.
+The quasi-shuffle (stuffle) product of two compositions: at each step take the first part
+of ``alpha``, the first part of ``beta``, or their sum. Returns ``{composition: coeff}``;
+this is the product rule of the monomial basis ``M_alpha M_beta``.
 
 <a id="schubmult.rings.quasisymmetric_functions.quasi_schur_to_monomial"></a>
 
@@ -22,11 +40,10 @@ and values are their coefficients.
 def quasi_schur_to_monomial(comp)
 ```
 
-Computes the quasi-Schur function for composition comp in the monomial basis.
-Returns a dictionary where keys are compositions (tuples) and values are coefficients.
-
-Uses the standard composition tableau definition: sum over all descent compositions
-of standard composition tableaux of the given shape.
+Monomial-basis expansion of the quasi-Schur function of shape ``comp``: counts standard
+composition tableaux (rows strictly increasing, columns weakly increasing) of that shape by
+the descent composition of their row reading word. Enumerates all ``n!`` fillings, so only
+small shapes are practical.
 
 <a id="schubmult.rings.quasisymmetric_functions.QSymElement"></a>
 
@@ -36,6 +53,8 @@ of standard composition tableaux of the given shape.
 class QSymElement(BaseSchubertElement)
 ```
 
+Element of `QSym`: a dict from compositions to coefficients in the monomial basis.
+
 <a id="schubmult.rings.quasisymmetric_functions.QSymElement.expand"></a>
 
 #### expand
@@ -44,7 +63,7 @@ class QSymElement(BaseSchubertElement)
 def expand(num_vars)
 ```
 
-Expand the quasi-symmetric function in the given number of variables.
+The quasisymmetric polynomial in ``num_vars`` variables of the ring's generating set.
 
 <a id="schubmult.rings.quasisymmetric_functions.QSym"></a>
 
@@ -54,6 +73,48 @@ Expand the quasi-symmetric function in the given number of variables.
 class QSym(BaseSchubertRing)
 ```
 
+Quasisymmetric functions in the monomial basis; ``QSym()(2, 1)`` is ``M_(2,1)``. See the module docstring.
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.mul_pair"></a>
+
+#### mul\_pair
+
+```python
+def mul_pair(a, b)
+```
+
+Product of two basis compositions: the `stuffle`.
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.mul"></a>
+
+#### mul
+
+```python
+def mul(a, b)
+```
+
+Bilinear extension of `mul_pair`.
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.printing_term"></a>
+
+#### printing\_term
+
+```python
+def printing_term(comp)
+```
+
+Display as ``Mx(alpha)`` (label from the generating set).
+
+<a id="schubmult.rings.quasisymmetric_functions.QSym.new"></a>
+
+#### new
+
+```python
+def new(*x)
+```
+
+The basis element ``M_x`` for the composition given as positional parts.
+
 <a id="schubmult.rings.quasisymmetric_functions.QSym.quasi_schur"></a>
 
 #### quasi\_schur
@@ -62,21 +123,8 @@ class QSym(BaseSchubertRing)
 def quasi_schur(*comp)
 ```
 
-Returns the quasi-Schur function for the given composition
-expressed in the monomial basis.
+The quasi-Schur function of shape ``comp`` in the monomial basis (see `quasi_schur_to_monomial`).
 
-**Arguments**:
-
-- ```*comp``` - A composition (tuple or sequence of positive integers)
-  
-
-**Returns**:
-
-  QSymElement representing the quasi-Schur function in monomial basis
-  
-
-**Example**:
-
-  >>> QS = QSym()
-  >>> QS.quasi_schur(2, 1)  # quasi-Schur function for composition (2,1)
+>>> QS = QSym()
+>>> QS.quasi_schur(2, 1)
 

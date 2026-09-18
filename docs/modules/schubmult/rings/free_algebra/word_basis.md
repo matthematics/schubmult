@@ -2,6 +2,15 @@
 
 # schubmult.rings.free\_algebra.word\_basis
 
+`WordBasis`: the word (concatenation) basis of the free algebra, dual to the monomial basis.
+
+A key is a word ``(a_1, ..., a_n)`` of nonnegative integers, dual to the monomial
+``x_1^{a_1} ... x_n^{a_n}``. The product is concatenation; the coproduct splits each
+letter ``a`` into ``(i, a - i)`` (dual to polynomial multiplication). This is the hub
+basis: every other `FreeAlgebraBasis` implements its operations by transitioning to
+words and back, and this module holds the ``transition_*`` routines from words into
+each of the other bases.
+
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis"></a>
 
 ## WordBasis Objects
@@ -10,11 +19,9 @@
 class WordBasis(FreeAlgebraBasis)
 ```
 
-Word basis of the free algebra.
-
-Keys are tuples of nonnegative integers representing words. This is the
-fundamental basis through which all other bases perform their operations
-via basis transitions.
+Word basis of the free algebra: keys are tuples of nonnegative integers (words), each
+dual to the monomial whose exponent vector is that word. Product is concatenation.
+See the module docstring.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.is_key"></a>
 
@@ -58,7 +65,7 @@ Return the length vector of the RC graph as a word key.
 def product(cls, key1, key2, coeff=S.One)
 ```
 
-Concatenate two words.
+Concatenate two words (dual to the variable-splitting coproduct on polynomials).
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.inject"></a>
 
@@ -114,10 +121,11 @@ Return the subword ``key[start:stop]``.
 def coproduct(cls, key, coeff=S.One)
 ```
 
-Compute the additive coproduct of a word.
+The coproduct of a word, dual to polynomial multiplication.
 
-Decomposes each letter into all (i, key-i) splittings and combines
-via a divide-and-conquer tensor product.
+Each letter ``a`` splits into all ``(i, a - i)`` pairs (``x_j^a`` is the sum over
+ways to write it as ``x_j^i * x_j^{a-i}``); the pieces are combined letterwise
+by a divide-and-conquer tensor product.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.bcoproduct"></a>
 
@@ -129,10 +137,8 @@ via a divide-and-conquer tensor product.
 def bcoproduct(cls, key, coeff=S.One)
 ```
 
-Compute the bar-coproduct of a word.
-
-Like :meth:`coproduct` but drops empty factors (zeros map to
-the empty tuple).
+The "bar" coproduct: like `coproduct` but a zero letter is dropped rather than kept as
+a ``0`` in the word, so word lengths are not preserved.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.try_internal_product"></a>
 
@@ -156,10 +162,10 @@ Uses shifted keys (incremented by 1) with ``IntegerMatrices``.
 def internal_product(cls, key1, key2, coeff=S.One)
 ```
 
-Compute the internal product of two words via integer matrices (requires SageMath).
-
-Words must not contain zeros. Returns the dict of result
-words weighted by *coeff*.
+The internal (Kronecker) product of two compositions (words without zeros), as in
+noncommutative symmetric functions: sum over nonnegative integer matrices with row
+sums ``key1`` and column sums ``key2`` of the word read off the nonzero entries.
+Requires SageMath's ``IntegerMatrices``.
 
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.printing_term"></a>
 
@@ -273,6 +279,79 @@ def transition_monomial_slide(cls, key)
 
 Transition a word key to the monomial slide basis.
 
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_zbasis"></a>
+
+#### transition\_zbasis
+
+```python
+@classmethod
+def transition_zbasis(cls, key)
+```
+
+Expand a word in `ZBasis` by triangular elimination: repeatedly peel off the smallest
+remaining word, subtracting the word expansion of the corresponding Z element.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_nelementary"></a>
+
+#### transition\_nelementary
+
+```python
+@classmethod
+def transition_nelementary(cls, tup)
+```
+
+Expand a composition in `NElementaryBasis`: signed sum over its refinements
+(``(-1)^(|tup| - len(beta))``), via SageMath's ``Composition.finer``.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_key"></a>
+
+#### transition\_key
+
+```python
+@classmethod
+def transition_key(cls, key)
+```
+
+Expand a word in `KeyBasis`: count RC graphs of length vector ``key`` whose extremal
+weight equals their permutation's padded code (the dual of the key-to-monomial expansion).
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_lascoux"></a>
+
+#### transition\_lascoux
+
+```python
+@classmethod
+def transition_lascoux(cls, key)
+```
+
+Expand a word in `LascouxBasis`: the K-theoretic analogue of `transition_key` using WC graphs.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_glide"></a>
+
+#### transition\_glide
+
+```python
+@classmethod
+def transition_glide(cls, key)
+```
+
+Expand a word in `GlideBasis`: for each WC graph of weight ``key``, take the length vector of
+its ``dst`` (destandardization); the first graph seen at each weight is the representative
+and only graphs with that same ``dst`` contribute.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_fundamental_slide"></a>
+
+#### transition\_fundamental\_slide
+
+```python
+@classmethod
+def transition_fundamental_slide(cls, key)
+```
+
+Expand a word in `FundamentalSlideBasis` as the transpose of the polynomial side: the
+coefficient of ``candidate`` is the coefficient of the monomial ``x^key`` in the fundamental
+slide polynomial of ``candidate``, over all weak compositions of the same length and size.
+
 <a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition_grothendieck"></a>
 
 #### transition\_grothendieck
@@ -287,4 +366,17 @@ Transition a word key (composition) to the Grothendieck basis.
 
 Coefficient of ``G_w`` is the number of WC graphs of permutation ``w``
 and weight ``key``, multiplied by ``beta^(|key|-inv(w))``.
+
+<a id="schubmult.rings.free_algebra.word_basis.WordBasis.transition"></a>
+
+#### transition
+
+```python
+@classmethod
+@cache
+def transition(cls, other_basis)
+```
+
+Key -> ``{key: coeff}`` function into ``other_basis``; dispatches to the ``transition_*``
+method for each directly supported basis and otherwise goes through `SchubertBasis`.
 

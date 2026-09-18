@@ -2,6 +2,9 @@
 
 # schubmult.rings.polynomial\_algebra.sepdesc\_poly\_basis
 
+`SepDescPolyBasis`: the separated-descents polynomial basis of `PolynomialAlgebra`, indexed by
+``(perm, num_vars)`` pairs (see `schubmult.rings.schubert.separated_descents`).
+
 <a id="schubmult.rings.polynomial_algebra.sepdesc_poly_basis.SepDescPolyBasis"></a>
 
 ## SepDescPolyBasis Objects

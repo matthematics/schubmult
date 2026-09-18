@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.anti\_schubert\_poly\_basis
 
+`AntiSchubertPolyBasis`: the anti-Schubert (``w0``-conjugated Schubert) polynomial basis of `PolynomialAlgebra`.
+
 <a id="schubmult.rings.polynomial_algebra.anti_schubert_poly_basis.AntiSchubertPolyBasis"></a>
 
 ## AntiSchubertPolyBasis Objects

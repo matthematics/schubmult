@@ -2,6 +2,9 @@
 
 # schubmult.rings.free\_algebra.schur\_elementary\_basis
 
+`SchurElementaryBasis`: free-algebra basis dual to products of a nested elementary monomial
+(as in `ElementaryBasis`) with a Schur polynomial. Keys are ``(elementary_tuple, partition)``.
+
 <a id="schubmult.rings.free_algebra.schur_elementary_basis.SchurElementaryBasis"></a>
 
 ## SchurElementaryBasis Objects

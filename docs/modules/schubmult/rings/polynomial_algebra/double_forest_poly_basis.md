@@ -2,6 +2,9 @@
 
 # schubmult.rings.polynomial\_algebra.double\_forest\_poly\_basis
 
+`DoubleForestPolyBasis`: the double (two-alphabet) forest polynomial basis of `PolynomialAlgebra`;
+see `schubmult.combinatorics.double_forest` for the underlying polynomials.
+
 <a id="schubmult.rings.polynomial_algebra.double_forest_poly_basis.DoubleForestPolyBasis"></a>
 
 ## DoubleForestPolyBasis Objects

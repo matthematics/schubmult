@@ -1,3 +1,11 @@
+"""`TensorRing`: tensor products ``R_1 (x) ... (x) R_n`` of `BaseRing` instances.
+
+Built with the ``@`` operator on rings (``Sx @ Sx``) or ``TensorRing(R1, R2, ...)``; nested
+tensor rings are flattened. Keys are tuples ``(k_1, ..., k_n)`` of factor keys, multiplication
+is factorwise, and the coproduct of a ring lands in ``R @ R``. Elements print as
+``a # b``.
+"""
+
 from functools import cache
 
 from sympy import Tuple
@@ -13,7 +21,8 @@ logger = get_logger(__name__)
 
 
 class TensorRing(BaseRing):
-    # tensor ring
+    """Tensor product of rings; keys are tuples of factor keys. See the module docstring."""
+
     def __eq__(self, other):
         return type(self) is type(other) and self.rings == other.rings
 
@@ -22,12 +31,10 @@ class TensorRing(BaseRing):
         return ()
 
     def coproduct_on_basis(self, k):
-        """Compute coproduct of a basis element in the tensor ring.
+        """Coproduct of the basis element ``k = (k_1, ..., k_n)`` into ``self @ self``.
 
-        For k = (k_1, k_2, ..., k_n) in ring_1 ⊗ ring_2 ⊗ ... ⊗ ring_n,
-        Δ(k_1 ⊗ k_2 ⊗ ... ⊗ k_n) = (⊗ Δ(k_i))
-
-        This properly interlaces the individual coproducts.
+        Takes each factor's coproduct and interlaces them into flat keys
+        ``(k_1^L, ..., k_n^L, k_1^R, ..., k_n^R)``.
         """
         tring = self @ self
         assert len(tring.rings) == len(self.rings) * 2, "Coproduct ring should have twice as many factors as original ring"
@@ -61,6 +68,7 @@ class TensorRing(BaseRing):
         return tring.from_dict(result_dict)
 
     def from_rc_graph_tensor(self, rc_graph_tensor):
+        """Pure tensor of the two factor rings' ``from_rc_graph`` images of a pair of RC graphs."""
         return self.ext_multiply(self.rings[0].from_rc_graph(rc_graph_tensor[0]), self.rings[1].from_rc_graph(rc_graph_tensor[1]))
 
     # def sub(self, elem, other):
@@ -68,6 +76,7 @@ class TensorRing(BaseRing):
     #     return self.from_dict(add_perm_dict(elem, {k: -v for k,v in other.items()}))
 
     def __init__(self, *rings):
+        """Tensor the given rings, flattening any that are themselves tensor rings."""
         self._rings = rings
         ring_list = [*self._rings]
         while any(isinstance(r, TensorRing) for r in ring_list):
@@ -109,9 +118,11 @@ class TensorRing(BaseRing):
 
     @property
     def rings(self):
+        """The (flattened) tuple of tensor factors."""
         return self._rings
 
     def rmul(self, elem1, elem2):
+        """Scale every coefficient of ``elem1`` by the scalar ``elem2``."""
         # print(f"{dict(elem1)=} {elem2=}")
         # print(f"{self.zero_monom=} {type(elem2)=}")
         # return self.from_dict({self.zero_monom: elem2}) * elem1
@@ -127,9 +138,8 @@ class TensorRing(BaseRing):
         return dct
 
     def mul(self, elem1, elem2):
-        """Multiply two elements in the tensor ring.
-
-        (a1 ⊗ a2 ⊗ ... ⊗ an) * (b1 ⊗ b2 ⊗ ... ⊗ bn) = (a1*b1) ⊗ (a2*b2) ⊗ ... ⊗ (an*bn)
+        """Factorwise product: ``(a_1 (x) ... (x) a_n) * (b_1 (x) ... (x) b_n) = (a_1 b_1) (x) ... (x) (a_n b_n)``,
+        expanding each factor product in its own ring.
         """
         ret_dict = {}
 
@@ -165,6 +175,9 @@ class TensorRing(BaseRing):
         return None
 
     def _coerce_mul(self, x):
+        """Coerce a non-tensor element with the same generators by taking its coproduct along the
+        first factor's generator positions.
+        """
         # have to pull out gens
         if not isinstance(x.ring, TensorRing):
             if set(x.ring.genset) == set(self.genset):
@@ -177,12 +190,16 @@ class TensorRing(BaseRing):
 
     @cache
     def cached_schubpoly(self, k):
+        """Product of the factor rings' polynomials for the key tuple ``k``."""
         return Mul(*[self.rings[i].cached_schubpoly(k[i]) for i in range(len(self.rings))])
 
     def printing_term(self, k):
         return TensorBasisElement(k, self)
 
     def from_comp_ring(self, t):
+        """Embed an element of one factor (or of a sub-tensor of factors) into this ring, filling the
+        other positions with their ``zero_monom`` (the identity).
+        """
         dct = {}
         for k, v in t.items():
             new_k = list(self.zero_monom)
@@ -206,6 +223,7 @@ class TensorRing(BaseRing):
     #     return self.from_dict(dct)
 
     def ext_multiply(self, elem1, elem2):
+        """External (tensor) product ``elem1 (x) elem2``: concatenates keys, flattening tensor-ring inputs."""
         ret = self.zero
 
         for key, val in elem1.items():
@@ -223,12 +241,15 @@ class TensorRing(BaseRing):
         return ret
 
     def __call__(self, x):
+        """A key tuple gives the corresponding basis element; anything else is parsed via ``from_expr``."""
         if isinstance(x, tuple):
             return self.from_dict({x: self.domain.one})
         return self.from_expr(x)
 
 
 class TensorBasisElement(PrintingTerm):
+    """Printing term for a tensor key; renders as ``a # b`` (str) or a tensor product (pretty/LaTeX)."""
+
     is_commutative = False
     precedence = 50
 
@@ -261,6 +282,8 @@ class TensorBasisElement(PrintingTerm):
 
 
 class TensorRingElement(BaseRingElement):
+    """Element of a `TensorRing`: a dict from key tuples to coefficients."""
+
     def __init__(self):
         pass
 
@@ -279,7 +302,7 @@ class TensorRingElement(BaseRingElement):
         return [sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
 
     def coproduct(self):
-        """Override coproduct to use the correct target ring."""
+        """Coproduct into ``ring @ ring`` via `TensorRing.coproduct_on_basis`."""
         tring = self.ring @ self.ring
         result = tring.zero
         for k, v in self.items():
@@ -296,5 +319,8 @@ class TensorRingElement(BaseRingElement):
         return ret
 
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+        """Expand to a commutative polynomial by multiplying out the factors' expansions (all factors
+        are assumed to live in disjoint or commuting variable sets).
+        """
         from schubmult.symbolic import prod
         return sum([coeff * prod([self.ring.rings[i](key[i]).expand() for i in range(len(key))]) for key, coeff in self.items()])

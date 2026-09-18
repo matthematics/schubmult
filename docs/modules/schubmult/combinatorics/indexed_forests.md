@@ -21,6 +21,28 @@ class Node()
 A node of an indexed forest's binary search tree: an ``index`` (BST key), optional
 ``label``, and ``left``/``right`` children.
 
+<a id="schubmult.combinatorics.indexed_forests.Node.rho"></a>
+
+#### rho
+
+```python
+@property
+def rho()
+```
+
+Index of the leftmost node in this subtree (its minimum).
+
+<a id="schubmult.combinatorics.indexed_forests.Node.inorder_traversal"></a>
+
+#### inorder\_traversal
+
+```python
+@property
+def inorder_traversal()
+```
+
+Nodes of the subtree in increasing index order.
+
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest"></a>
 
 ## IndexedForest Objects
@@ -31,6 +53,71 @@ class IndexedForest()
 
 A forest of `Node` binary search trees, indexed by a composition (``code``) via the
 Thompson monoid factorization (see `forest_from_code`/`double_forest.forest_from_code`).
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.roots"></a>
+
+#### roots
+
+```python
+@property
+def roots()
+```
+
+The root nodes, sorted.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.inorder_traversal"></a>
+
+#### inorder\_traversal
+
+```python
+@property
+def inorder_traversal()
+```
+
+All nodes of the forest in increasing index order.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.code"></a>
+
+#### code
+
+```python
+@property
+def code()
+```
+
+The weak composition indexing this forest (cached).
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.node"></a>
+
+#### node
+
+```python
+def node(index)
+```
+
+The node with the given index, or ``None``.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.support"></a>
+
+#### support
+
+```python
+@property
+def support()
+```
+
+Sorted tuple of all node indices.
+
+<a id="schubmult.combinatorics.indexed_forests.IndexedForest.intervals"></a>
+
+#### intervals
+
+```python
+@property
+def intervals()
+```
+
+Per-root intervals of consecutive indices; see `_forest_intervals`.
 
 <a id="schubmult.combinatorics.indexed_forests.IndexedForest.terminal_nodes"></a>
 
@@ -155,6 +242,16 @@ class ParallelInjLetter()
 
 A letter ``primary[secondary]`` in the parallel-injection alphabet used by omega-insertion.
 
+<a id="schubmult.combinatorics.indexed_forests.make_parallel_injective_word"></a>
+
+#### make\_parallel\_injective\_word
+
+```python
+def make_parallel_injective_word(primary_word, secondary_word)
+```
+
+Zip two equal-length words into a word of `ParallelInjLetter` biletters.
+
 <a id="schubmult.combinatorics.indexed_forests.weak_composition_to_indfor"></a>
 
 #### weak\_composition\_to\_indfor
@@ -238,6 +335,27 @@ def build_balanced_tree(labels)
 
 Helper to build a tree where the in-order traversal matches the labels.
 This creates the 'canonical labeling' referenced in the paper.
+
+<a id="schubmult.combinatorics.indexed_forests.decreasing_labelings"></a>
+
+#### decreasing\_labelings
+
+```python
+def decreasing_labelings(root, max_val, used_vals=None)
+```
+
+All labelings of the tree at ``root`` by distinct values ``<= max_val`` that strictly decrease
+from each node to its children.
+
+<a id="schubmult.combinatorics.indexed_forests.word_from_labeling"></a>
+
+#### word\_from\_labeling
+
+```python
+def word_from_labeling(root, labeling)
+```
+
+Word of ``rho`` values of the tree's nodes, ordered by the inverse of the labeling permutation.
 
 <a id="schubmult.combinatorics.indexed_forests.letterpair"></a>
 
@@ -332,6 +450,41 @@ def is_separated(a, b)
 ```
 
 The criterion of Nadeau--Tewari Proposition 5.8 for ``ab <-> ba``.
+
+<a id="schubmult.combinatorics.indexed_forests.word_to_pair_labeled"></a>
+
+#### word\_to\_pair\_labeled
+
+```python
+def word_to_pair_labeled(word)
+```
+
+Standardize a word into `letterpair` biletters ``(letter, occurrence number)``.
+
+<a id="schubmult.combinatorics.indexed_forests.word_to_pairinj_labeled"></a>
+
+#### word\_to\_pairinj\_labeled
+
+```python
+def word_to_pairinj_labeled(word)
+```
+
+Standardize a word into `ParallelInjLetter` biletters ``(letter, occurrence number)``.
+
+<a id="schubmult.combinatorics.indexed_forests.omega_insertion"></a>
+
+#### omega\_insertion
+
+```python
+def omega_insertion(
+        word_of_pairs: tuple[letterpair,
+                             ...]) -> tuple[LBS, DecLabeling] | None
+```
+
+Forest analogue of RSK: insert a word of biletters letter by letter, returning the insertion
+forest ``P`` (an `LBS`) and the recording forest ``Q`` (a `DecLabeling`), or ``None`` if the
+word is not insertable. Each new letter becomes a root that absorbs the neighboring trees
+at ``primary - 1`` / ``primary + 1`` as children.
 
 <a id="schubmult.combinatorics.indexed_forests.omega_reduced_word_from_labelings"></a>
 

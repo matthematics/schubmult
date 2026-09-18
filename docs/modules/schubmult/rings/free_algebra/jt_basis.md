@@ -2,6 +2,9 @@
 
 # schubmult.rings.free\_algebra.jt\_basis
 
+`JTBasis`: `JBasis` with a formal parameter ``t`` recording the number of stripped zeros.
+Keys are ``(composition, power_of_t)``.
+
 <a id="schubmult.rings.free_algebra.jt_basis.JTBasis"></a>
 
 ## JTBasis Objects

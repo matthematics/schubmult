@@ -2,6 +2,20 @@
 
 # schubmult.rings.combinatorial.eg\_plactic\_ring
 
+`EGPlacticRing`: a `CrystalGraphRing` on pairs ``((NilPlactic, length), Plactic)`` -- an RC
+graph's Edelman-Greene insertion tableau together with its plactic recording tableau -- with
+conversion to and from `RCGraphRing`.
+
+<a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticPrintingTerm"></a>
+
+## EGPlacticPrintingTerm Objects
+
+```python
+class EGPlacticPrintingTerm(PrintingTerm)
+```
+
+Display symbol for an `EGPlacticRing` basis key.
+
 <a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticRingElement"></a>
 
 ## EGPlacticRingElement Objects
@@ -10,15 +24,7 @@
 class EGPlacticRingElement(CrystalGraphRingElement)
 ```
 
-EGPlacticRing elements are linear combinations of RCGraph basis elements.
-
-The product % is the polynomial product. Currently only defined when the right side
-is a dominant RC graph.
-
-The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-to do this directly.
-
-The product * is well defined for any pair of RC graphs and is the dual product.
+EGPlacticRing elements are linear combinations of ``((NilPlactic, length), Plactic)`` basis keys.
 
 <a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticRingElement.__mod__"></a>
 
@@ -126,4 +132,14 @@ def reverse_raise_seq(raise_seq)
 
 Apply lowering_operator in reverse order to `raise_seq`.
 If the path dies (result is zero), return None (mirrors scalar behavior).
+
+<a id="schubmult.rings.combinatorial.eg_plactic_ring.EGPlacticRing"></a>
+
+## EGPlacticRing Objects
+
+```python
+class EGPlacticRing(CrystalGraphRing)
+```
+
+The EG-plactic ring; see the module docstring.
 

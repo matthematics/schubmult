@@ -60,6 +60,7 @@ def tile_name(conn: frozenset, marked: bool) -> str:
 
 
 def is_heavy(conn: frozenset, marked: bool) -> bool:
+    """A tile is heavy iff it is blank or a marked J."""
     return marked or len(conn) == 0
 
 
@@ -85,6 +86,7 @@ class MBPD:
     __slots__ = ("_conn", "_marked", "n")
 
     def __init__(self, n: int, conn, marked):
+        """Store the ``n x n`` connection sets and marks as tuples (see `from_tiles` for the string form)."""
         self.n = n
         # store as tuples-of-tuples for hashability; index [i-1][j-1]
         self._conn = tuple(tuple(row) for row in conn)
@@ -92,18 +94,23 @@ class MBPD:
 
     # ---- basic accessors -------------------------------------------------
     def conn(self, i: int, j: int) -> frozenset:
+        """Connection set of cell ``(i, j)`` (1-indexed)."""
         return self._conn[i - 1][j - 1]
 
     def marked(self, i: int, j: int) -> bool:
+        """Whether cell ``(i, j)`` is marked."""
         return self._marked[i - 1][j - 1]
 
     def tile(self, i: int, j: int) -> str:
+        """Tile name (``B/H/V/P/R/J/M``) of cell ``(i, j)``."""
         return tile_name(self.conn(i, j), self.marked(i, j))
 
     def heavy(self, i: int, j: int) -> bool:
+        """Whether cell ``(i, j)`` is heavy."""
         return is_heavy(self.conn(i, j), self.marked(i, j))
 
     def connects(self, i: int, j: int, d: str) -> bool:
+        """Whether the pipe in cell ``(i, j)`` connects in direction ``d``."""
         return d in self._conn[i - 1][j - 1]
 
     # ---- hashing / equality ---------------------------------------------
@@ -126,6 +133,7 @@ class MBPD:
         return cls(n, conn, marked)
 
     def to_tiles(self):
+        """The ``n x n`` grid of tile-name strings."""
         return [[self.tile(i, j) for j in range(1, self.n + 1)] for i in range(1, self.n + 1)]
 
     def with_tile(self, i: int, j: int, name: str) -> MBPD:
@@ -208,6 +216,7 @@ class MBPD:
         return errs
 
     def is_valid(self) -> bool:
+        """Whether `validity_errors` is empty."""
         return not self.validity_errors()
 
     # ---- associated permutation -----------------------------------------
@@ -313,9 +322,11 @@ class MBPD:
         )
 
     def num_heavy(self) -> int:
+        """Total number of heavy tiles."""
         return sum(self.weight())
 
     def heavy_cells(self):
+        """Positions ``(i, j)`` of all heavy tiles in row-major order."""
         return [
             (i, j)
             for i in range(1, self.n + 1)
@@ -392,6 +403,9 @@ class MBPD:
 
     # ---- droop / undroop -------------------------------------------------
     def admits_droop(self, r: int, b: int, d: int) -> bool:
+        """Whether the ``(r, [b, d])``-droop (moving a pipe segment from row ``r`` down to row ``r+1`` over
+        columns ``b..d``) is admitted by the local tile configuration.
+        """
         if not (1 <= r < self.n and 1 <= b < d <= self.n):
             return False
         for i in (r, r + 1):
@@ -418,6 +432,7 @@ class MBPD:
         return True
 
     def admits_undroop(self, r: int, b: int, d: int) -> bool:
+        """Whether the inverse of the ``(r, [b, d])``-droop is admitted."""
         if not (1 <= r < self.n and 1 <= b < d <= self.n):
             return False
         for i in (r, r + 1):
@@ -505,11 +520,13 @@ class MBPD:
         return MBPD(self.n, conn, marked)
 
     def droop(self, r: int, b: int, d: int) -> MBPD:
+        """Apply the ``(r, [b, d])``-droop (raises if not admitted)."""
         if not self.admits_droop(r, b, d):
             raise ValueError(f"({r},[{b},{d}])-droop not admitted")
         return self._swap_rows_core(r, b, d)
 
     def undroop(self, r: int, b: int, d: int) -> MBPD:
+        """Apply the ``(r, [b, d])``-undroop (raises if not admitted)."""
         if not self.admits_undroop(r, b, d):
             raise ValueError(f"({r},[{b},{d}])-undroop not admitted")
         return self._swap_rows_core(r, b, d)
@@ -525,6 +542,7 @@ class MBPD:
         return True
 
     def is_f_target(self, r: int, c: int) -> bool:
+        """Whether the heavy tile at ``(r, c)`` is a target of the ``f`` move of the bijection ``Phi``."""
         if not (1 <= r < self.n):
             return False
         if not self._f1(r, c):
@@ -542,6 +560,7 @@ class MBPD:
         return True
 
     def is_fstar_target(self, r: int, c: int) -> bool:
+        """Whether the heavy tile at ``(r, c)`` is a target of the ``f*`` (terminal) move of ``Phi``."""
         if not (1 <= r < self.n):
             return False
         if not self._f1(r, c):
@@ -563,6 +582,7 @@ class MBPD:
         return True
 
     def is_F_target(self, r: int, c: int) -> bool:
+        """Whether ``(r, c)`` is an ``f`` or ``f*`` target."""
         return self.is_f_target(r, c) or self.is_fstar_target(r, c)
 
     def max_F_target(self):
@@ -575,12 +595,16 @@ class MBPD:
         return (r, c)
 
     def is_F_terminal(self) -> bool:
+        """Whether the next ``Phi`` step is terminal (no heavy tiles, or the max target is an ``f*`` target)."""
         t = self.max_F_target()
         if t is None:
             return True
         return self.is_fstar_target(*t)
 
     def F_target_info(self, r: int, c: int) -> dict:
+        """Describe the ``Phi`` move at the target ``(r, c)``: its kind (``f``/``fstar``), the resulting
+        MBPD, and the biletter emitted.
+        """
         fstar = self.is_fstar_target(r, c)
         assert fstar or self.is_f_target(r, c), f"({r},{c}) is not an F-target"
         kind = "fstar" if fstar else "f"
@@ -733,6 +757,7 @@ class MBPD:
         return RCP(tuple(biletters), self.n)
 
     def _phi_biletters(self):
+        """The biletters of ``Phi(self)``: repeatedly take the max ``F`` target, emit its biletter, and recurse."""
         t = self.max_F_target()
         if t is None:
             return []
@@ -826,6 +851,7 @@ class RCP:
         return i1 > i2 or (i1 == i2 and a1 < a2)
 
     def is_valid(self) -> bool:
+        """Whether every biletter satisfies ``1 <= i <= a < n`` and the sequence is strictly decreasing."""
         for (i, a) in self.biletters:
             if not (1 <= i <= a < self.n):
                 return False
@@ -835,6 +861,7 @@ class RCP:
         return True
 
     def weight(self):
+        """Number of biletters with each first coordinate ``i``, as a length-``n`` tuple."""
         m = [0] * self.n
         for (i, _a) in self.biletters:
             m[i - 1] += 1

@@ -37,6 +37,16 @@ def tile_name(conn: frozenset, marked: bool) -> str
 
 Return the canonical tile name for a connection set / mark.
 
+<a id="schubmult.combinatorics.mbpd.is_heavy"></a>
+
+#### is\_heavy
+
+```python
+def is_heavy(conn: frozenset, marked: bool) -> bool
+```
+
+A tile is heavy iff it is blank or a marked J.
+
 <a id="schubmult.combinatorics.mbpd.MBPD"></a>
 
 ## MBPD Objects
@@ -50,6 +60,66 @@ A marked bumpless pipedream on an ``n x n`` grid.
 Internally we store, for every cell ``(i, j)`` (1-indexed), the connection
 set ``conn[i][j]`` (a frozenset of ``N/E/S/W``) and a boolean ``marked``.
 
+<a id="schubmult.combinatorics.mbpd.MBPD.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(n: int, conn, marked)
+```
+
+Store the ``n x n`` connection sets and marks as tuples (see `from_tiles` for the string form).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.conn"></a>
+
+#### conn
+
+```python
+def conn(i: int, j: int) -> frozenset
+```
+
+Connection set of cell ``(i, j)`` (1-indexed).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.marked"></a>
+
+#### marked
+
+```python
+def marked(i: int, j: int) -> bool
+```
+
+Whether cell ``(i, j)`` is marked.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.tile"></a>
+
+#### tile
+
+```python
+def tile(i: int, j: int) -> str
+```
+
+Tile name (``B/H/V/P/R/J/M``) of cell ``(i, j)``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.heavy"></a>
+
+#### heavy
+
+```python
+def heavy(i: int, j: int) -> bool
+```
+
+Whether cell ``(i, j)`` is heavy.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.connects"></a>
+
+#### connects
+
+```python
+def connects(i: int, j: int, d: str) -> bool
+```
+
+Whether the pipe in cell ``(i, j)`` connects in direction ``d``.
+
 <a id="schubmult.combinatorics.mbpd.MBPD.from_tiles"></a>
 
 #### from\_tiles
@@ -60,6 +130,16 @@ def from_tiles(cls, grid) -> MBPD
 ```
 
 Build from an ``n x n`` grid of tile-name strings.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.to_tiles"></a>
+
+#### to\_tiles
+
+```python
+def to_tiles()
+```
+
+The ``n x n`` grid of tile-name strings.
 
 <a id="schubmult.combinatorics.mbpd.MBPD.with_tile"></a>
 
@@ -98,6 +178,16 @@ def validity_errors()
 
 Return a list of human-readable validity problems (empty if valid).
 
+<a id="schubmult.combinatorics.mbpd.MBPD.is_valid"></a>
+
+#### is\_valid
+
+```python
+def is_valid() -> bool
+```
+
+Whether `validity_errors` is empty.
+
 <a id="schubmult.combinatorics.mbpd.MBPD.perm"></a>
 
 #### perm
@@ -128,7 +218,27 @@ of bump tiles stabilises; the exit columns then give ``w``.
 def weight()
 ```
 
-``wt(D) = (m_1, ..., m_n)`` with ``m_i`` = `heavy` tiles in row ``i``.
+``wt(D) = (m_1, ..., m_n)`` with ``m_i`` = [`heavy`](#schubmult.combinatorics.mbpd.MBPD.heavy) tiles in row ``i``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.num_heavy"></a>
+
+#### num\_heavy
+
+```python
+def num_heavy() -> int
+```
+
+Total number of heavy tiles.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.heavy_cells"></a>
+
+#### heavy\_cells
+
+```python
+def heavy_cells()
+```
+
+Positions ``(i, j)`` of all heavy tiles in row-major order.
 
 <a id="schubmult.combinatorics.mbpd.MBPD.is_pipe_segment"></a>
 
@@ -181,6 +291,77 @@ def is_doublecross(r: int, b: int, d: int) -> bool
 ``D_{[r,r+1],[b,d]}`` is a doublecross: both rows are pipe segments,
 ``D_{r,b}=R`` and ``D_{r+1,d}=J``.
 
+<a id="schubmult.combinatorics.mbpd.MBPD.admits_droop"></a>
+
+#### admits\_droop
+
+```python
+def admits_droop(r: int, b: int, d: int) -> bool
+```
+
+Whether the ``(r, [b, d])``-droop (moving a pipe segment from row ``r`` down to row ``r+1`` over
+columns ``b..d``) is admitted by the local tile configuration.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.admits_undroop"></a>
+
+#### admits\_undroop
+
+```python
+def admits_undroop(r: int, b: int, d: int) -> bool
+```
+
+Whether the inverse of the ``(r, [b, d])``-droop is admitted.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.droop"></a>
+
+#### droop
+
+```python
+def droop(r: int, b: int, d: int) -> MBPD
+```
+
+Apply the ``(r, [b, d])``-droop (raises if not admitted).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.undroop"></a>
+
+#### undroop
+
+```python
+def undroop(r: int, b: int, d: int) -> MBPD
+```
+
+Apply the ``(r, [b, d])``-undroop (raises if not admitted).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_f_target"></a>
+
+#### is\_f\_target
+
+```python
+def is_f_target(r: int, c: int) -> bool
+```
+
+Whether the heavy tile at ``(r, c)`` is a target of the ``f`` move of the bijection ``Phi``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_fstar_target"></a>
+
+#### is\_fstar\_target
+
+```python
+def is_fstar_target(r: int, c: int) -> bool
+```
+
+Whether the heavy tile at ``(r, c)`` is a target of the ``f*`` (terminal) move of ``Phi``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_F_target"></a>
+
+#### is\_F\_target
+
+```python
+def is_F_target(r: int, c: int) -> bool
+```
+
+Whether ``(r, c)`` is an ``f`` or ``f*`` target.
+
 <a id="schubmult.combinatorics.mbpd.MBPD.max_F_target"></a>
 
 #### max\_F\_target
@@ -190,6 +371,27 @@ def max_F_target()
 ```
 
 Bottommost then rightmost heavy tile, or ``None`` for ``D_id``.
+
+<a id="schubmult.combinatorics.mbpd.MBPD.is_F_terminal"></a>
+
+#### is\_F\_terminal
+
+```python
+def is_F_terminal() -> bool
+```
+
+Whether the next ``Phi`` step is terminal (no heavy tiles, or the max target is an ``f*`` target).
+
+<a id="schubmult.combinatorics.mbpd.MBPD.F_target_info"></a>
+
+#### F\_target\_info
+
+```python
+def F_target_info(r: int, c: int) -> dict
+```
+
+Describe the ``Phi`` move at the target ``(r, c)``: its kind (``f``/``fstar``), the resulting
+MBPD, and the biletter emitted.
 
 <a id="schubmult.combinatorics.mbpd.MBPD.f_move"></a>
 
@@ -315,6 +517,26 @@ the order ``(i1,a1) > (i2,a2)`` iff ``i1 > i2`` or (``i1 == i2`` and
 #### biletters
 
 tuple of (i, a)
+
+<a id="schubmult.combinatorics.mbpd.RCP.is_valid"></a>
+
+#### is\_valid
+
+```python
+def is_valid() -> bool
+```
+
+Whether every biletter satisfies ``1 <= i <= a < n`` and the sequence is strictly decreasing.
+
+<a id="schubmult.combinatorics.mbpd.RCP.weight"></a>
+
+#### weight
+
+```python
+def weight()
+```
+
+Number of biletters with each first coordinate ``i``, as a length-``n`` tuple.
 
 <a id="schubmult.combinatorics.mbpd.RCP.perm"></a>
 

@@ -1,3 +1,15 @@
+"""Combinatorial kernels behind the Schubert multiplication algorithms.
+
+The central objects are the *v-path dictionaries* (`compute_vpathdicts`): for a theta code
+``th`` and target permutation ``vmu`` they record, level by level, the Bruhat-descent moves
+(`kdown_perms`) along which the Schubert product is accumulated in `schubmult.mult.single` and
+its double/quantum relatives. Also here: the ``elem_sym_perms*``/``complete_sym_perms*`` families
+(Pieri-type moves for multiplying by elementary/complete symmetric polynomials, including quantum
+and Grothendieck variants), `pull_out_var` (the recursion behind `schubpoly`), coefficient
+reductions (`reduce_coeff`, `reduce_descents`, ``try_reduce_*``) that shrink a triple ``(u, v, w)``
+before computing an LR coefficient, and the parabolic ``q``-vector checks.
+"""
+
 from functools import cache
 
 from schubmult.combinatorics.permutation import (
@@ -20,6 +32,9 @@ from schubmult.utils.perm_utils import (
 q_var = GeneratingSet("q")
 
 def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
+    """Pairs of consecutive quantum Pieri moves ``u -> perm1 -> perm2`` (degrees ``p1`` then ``p2`` in ``k``
+    variables) whose cycles are compatible; returned as ``{(perm1, udiff1, q1): [(perm2, udiff2, q2), ...]}``.
+    """
     ret_list = {}
     perms1 = elem_sym_perms_q(u, p1, k, q_var)
     iu = ~u
@@ -57,6 +72,9 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
 
 
 def will_formula_work(u, v):
+    """Whether the fast dominant-descent formula applies to the pair ``(u, v)``: ``v^{-1} * mu_v`` must
+    already be the identity (no descents to reduce).
+    """
     u, v = Permutation(u), Permutation(v)
     muv = uncode(v.theta())
     vn1muv = (~v) * muv
@@ -76,6 +94,9 @@ def will_formula_work(u, v):
 
 
 def try_reduce_u(u, v, w):
+    """Move a zero in the code of ``u`` past a nonzero entry by swapping adjacent positions in ``(u, w)``
+    or ``(u, v)`` where the LR coefficient is unchanged, aiming for ``u`` to one-dominate ``w``.
+    """
     if u.one_dominates(w):
         return u, v, w
     u2 = u
@@ -109,6 +130,9 @@ def try_reduce_u(u, v, w):
 
 
 def reduce_descents(u, v, w):
+    """Cancel common descents of ``w`` with ``v`` (or ``u``) by simultaneous adjacent swaps, stopping once
+    one of the fast-path conditions holds.
+    """
     found_one = True
     u2 = Permutation(u)
     v2 = Permutation(v)
@@ -133,6 +157,7 @@ def reduce_descents(u, v, w):
 
 
 def is_reducible(v):
+    """Whether the code of ``v`` has no nonzero entry after a zero (so ``v`` is a shifted dominant-like shape)."""
     c03 = v.code
     found0 = False
     good = True
@@ -147,6 +172,7 @@ def is_reducible(v):
 
 #
 def try_reduce_v(u, v, w):
+    """`try_reduce_u` with the roles of ``u`` and ``v`` exchanged, aiming for `is_reducible`."""
     if is_reducible(v):
         return u, v, w
     u2 = u
@@ -177,6 +203,10 @@ def try_reduce_v(u, v, w):
 
 
 def reduce_coeff(u, v, w):
+    """Reduce the LR triple ``(u, v, w)`` by dividing out the dominant permutations of the theta codes of
+    ``u^{-1}`` and ``v^{-1}``: if ``w`` decomposes compatibly, return the smaller triple
+    ``(u mu_A, v mu_B, w')`` with the same coefficient; otherwise return the input.
+    """
     t_mu_u_t = (~u).theta()
     t_mu_v_t = (~v).theta()
 
@@ -242,6 +272,9 @@ def reduce_coeff(u, v, w):
 
 
 def pull_out_var(vnum, v):
+    """All ways to factor the variable ``x_vnum`` out of ``S_v``: returns pairs ``(indices, v')`` such that
+    ``S_v = sum prod_{p in indices} (x_vnum - y_p) * S_{v'}`` with ``x_vnum`` absent from ``S_{v'}``.
+    """
     v = Permutation(v)
     vup = v
     if vnum >= len(v):
@@ -284,6 +317,7 @@ def pull_out_var(vnum, v):
 
 
 def divdiffable(v, u):
+    """``v u^{-1}`` if ``u <= v`` with lengths adding (so ``partial_{u}`` can be applied), else ``[]``."""
     inv_v = v.inv
     inv_u = u.inv
     perm2 = v * (~u)
@@ -335,6 +369,10 @@ def divdiffable(v, u):
 
 
 def kdown_perms(perm: Permutation, monoperm: Permutation, p: int, k: int) -> list[tuple[Permutation, int, int]]:
+    """One level of the v-path recursion: all ``(new_perm, pp, sign)`` obtained from ``perm`` by up to ``p``
+    Bruhat descents through position ``k`` (swapping position ``k-1`` with an untouched position on
+    either side) such that ``new_perm * monoperm`` has the expected length.
+    """
     perm = Permutation(perm)
     monoperm = Permutation(monoperm)
     inv_m = monoperm.inv
@@ -374,6 +412,7 @@ def kdown_perms(perm: Permutation, monoperm: Permutation, p: int, k: int) -> lis
 
 
 def rc_graph_set(perm):
+    """All RC graphs of ``perm`` as ``(row_labels, reduced_word)`` pairs, built recursively with `pull_out_var`."""
     if perm.inv == 0:
         return {((), ())}
     ret = set()
@@ -390,6 +429,12 @@ def rc_graph_set(perm):
 
 @cache
 def compute_vpathdicts_cached(th, vmu):
+    """Build the v-path dictionaries for theta code ``th`` and target ``vmu``.
+
+    Working from the top level down, each level ``i`` maps a permutation to the `kdown_perms`
+    moves available at that level; the result is re-indexed as
+    ``vpathdicts[i][source] = {(target, degree, sign), ...}`` for forward accumulation.
+    """
     vpathdicts = [{} for index in range(len(th))]
     vpathdicts[-1][vmu] = None
     thL = len(th)
@@ -424,10 +469,14 @@ def compute_vpathdicts_cached(th, vmu):
 
 
 def compute_vpathdicts(th, vmu):
+    """Cached `compute_vpathdicts_cached` accepting a list ``th``."""
     return compute_vpathdicts_cached(tuple(th), vmu)
 
 
 def check_blocks(qv, parabolic_index):
+    """Parabolic admissibility of a ``q``-exponent vector: over every interval within each block of
+    consecutive parabolic indices, the sum of `omega` values must be 0 or -1.
+    """
     blocks = []
     cur_block = []
     last_val = -1
@@ -453,6 +502,10 @@ def check_blocks(qv, parabolic_index):
 
 
 def reduce_q_coeff(u, v, w, qv):
+    """One quantum reduction step: find a position where swapping adjacent entries of ``v`` (or ``u``)
+    together with ``w`` -- adjusting the ``q``-vector when ``w`` had no descent there -- leaves the
+    quantum LR coefficient unchanged. Returns ``(u, v, w, qv, changed)``.
+    """
     for i in range(len(qv)):
         if sg(i, v) == 1 and sg(i, u) == 0 and sg(i, w) + omega(i + 1, qv) == 1:
             ret_v = v.swap(i, i + 1)
@@ -472,6 +525,7 @@ def reduce_q_coeff(u, v, w, qv):
 
 
 def reduce_q_coeff_u_only(u, v, w, qv):
+    """`reduce_q_coeff` restricted to swaps on ``u``."""
     for i in range(len(qv)):
         if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
             # ret_u = [*u]
@@ -488,6 +542,10 @@ def reduce_q_coeff_u_only(u, v, w, qv):
 
 
 def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
+    """Quantum Pieri moves for ``E_p^q(x_1..x_k)``: all ``(perm, degree, q_monomial)`` reachable from
+    ``orig_perm`` by up to ``p`` transpositions ``(i, j)`` with ``i < k <= j`` on still-untouched positions
+    ``i``; a Bruhat *descent* (cyclic quantum move) contributes ``q_{i+1} ... q_j``.
+    """
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
     for pp in range(p):
@@ -510,6 +568,7 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
 
 
 def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
+    """Adjoint (downward) version of `elem_sym_perms_q` on permutations padded to length ``n``."""
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, k)]
     for pp in range(p):
@@ -537,6 +596,10 @@ def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
 
 
 def elem_sym_perms(orig_perm, p, k):
+    """Pieri moves for ``e_p(x_1..x_k)``: all ``(perm, degree)`` reachable from ``orig_perm`` by up to ``p``
+    Bruhat ascents ``(i, j)`` with ``i < k <= j``, each position ``i`` used at most once (values
+    swapped in strictly decreasing order to avoid double counting).
+    """
     orig_perm = Permutation(orig_perm)
     total_list = [(orig_perm, 0)]
     up_perm_list = [(orig_perm, 1000000000)]
@@ -557,6 +620,9 @@ def elem_sym_perms(orig_perm, p, k):
 
 
 def elem_sym_perms_groth(orig_perm, p, k):
+    """Grothendieck variant of `elem_sym_perms`: positions in ``i < k`` may be reused, with ``j``
+    weakly decreasing along the chain.
+    """
     orig_perm = Permutation(orig_perm)
     total_list = [(orig_perm, 0)]
     up_perm_list = [(orig_perm, [], len(orig_perm) + k)]
@@ -575,7 +641,10 @@ def elem_sym_perms_groth(orig_perm, p, k):
 
 
 def elem_sym_chains_groth(orig_perm, p, k):  # noqa: ARG001
-    """1 force mark, -1 force unmark, 0 otherwise"""
+    """Marked Bruhat chains for the Grothendieck Pieri rule: chains of ascents through position ``k``
+    together with a marking vector (1 force mark, -1 force unmark, 0 free) enforcing the ordering
+    conditions on consecutive covers.
+    """
     orig_perm = Permutation(orig_perm)
     total_list = {((orig_perm,), ())}
     up_perm_list = [(((orig_perm,), ()), (), len(orig_perm) + k, True)]
@@ -629,6 +698,10 @@ def elem_sym_chains_groth(orig_perm, p, k):  # noqa: ARG001
 
 
 def elem_sym_positional_perms(orig_perm, p, *k):
+    """Pieri moves for ``e_p`` in an arbitrary set of variable positions ``k`` (1-indexed): Bruhat ascents
+    swapping an untouched position in ``k`` with a position outside ``k``, returned as
+    ``(perm, degree, sign)`` with sign ``-1`` when the outside position is to the left.
+    """
     k = {i - 1 for i in k}
     orig_perm = Permutation(orig_perm)
     total_list = {(orig_perm, 0, 1)}
@@ -703,6 +776,7 @@ def elem_sym_positional_perms(orig_perm, p, *k):
 
 # this is a quantization
 def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var):
+    """Quantum version of `elem_sym_positional_perms`: returns ``(perm, degree, sign, q_monomial)``."""
     k = {i - 1 for i in k}
     # print(f"{k=}")
     # sorting perm
@@ -738,6 +812,9 @@ def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var):
 
 
 def complete_sym_perms_op(orig_perm, p, k):
+    """Downward Pieri moves for ``h_p(x_1..x_k)``: ``{perm: [(i, j), ...]}`` recording the chain of Bruhat
+    descents (position ``i < k`` with an untouched position ``j``).
+    """
     from schubmult.utils.perm_utils import has_bruhat_descent
 
     orig_perm = Permutation(orig_perm)
@@ -760,6 +837,9 @@ def complete_sym_perms_op(orig_perm, p, k):
 
 
 def complete_sym_perms(orig_perm, p, k):
+    """Pieri moves for ``h_p(x_1..x_k)``: ``{perm: [(i, j), ...]}`` recording the chain of Bruhat ascents
+    (position ``i < k`` may repeat; ``j`` untouched).
+    """
     from schubmult.utils.perm_utils import has_bruhat_ascent
 
     orig_perm = Permutation(orig_perm)
@@ -782,6 +862,9 @@ def complete_sym_perms(orig_perm, p, k):
 
 
 def complete_sym_positional_perms(orig_perm, p, *k):
+    """`complete_sym_perms` for an arbitrary set of positions ``k`` (1-indexed), with signs as in
+    `elem_sym_positional_perms`; returns ``(perm, degree, sign)`` triples.
+    """
     k = {i - 1 for i in k}
     orig_perm = Permutation(orig_perm)
     total_list = {(orig_perm, 0, 1)}
@@ -834,6 +917,7 @@ def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
 
 
 def elem_sym_perms_op(orig_perm, p, k):
+    """Downward (Bruhat descent) version of `elem_sym_perms`."""
     total_list = [(orig_perm, 0)]
     up_perm_list = [(orig_perm, k)]
     for pp in range(p):
@@ -854,6 +938,9 @@ def elem_sym_perms_op(orig_perm, p, k):
 
 
 def is_split_two(u, v, w):
+    """For ``inv(w) - inv(u) == 2``: whether ``v^{-1} w`` is a product of two disjoint cycles; returns
+    ``(True, cycles)`` or ``(False, [])``.
+    """
     if w.inv - u.inv != 2:
         return False, []
     diff_perm = (~v) * w
@@ -878,6 +965,7 @@ def is_split_two(u, v, w):
 
 
 def is_coeff_irreducible(u, v, w):
+    """Whether none of the fast paths / reductions applies to the LR triple ``(u, v, w)``."""
     return (
         not will_formula_work(u, v)
         and not will_formula_work(v, u)
@@ -890,6 +978,7 @@ def is_coeff_irreducible(u, v, w):
 
 
 def is_hook(cd):
+    """Whether the code ``cd`` is a hook shape: a run of 1's optionally followed by a single larger entry, then zeros."""
     started = False
     done = False
     found_zero_after = False
@@ -1020,14 +1109,21 @@ def hw_elementary_tensors(c, bounds=None):
 
 
 def fff(chain):
+    """Number of forced marks (``1``) in a marked chain from `elem_sym_chains_groth`."""
     return len([c for c in chain[1] if c == 1])
 
 
 def ppp(chain):
+    """Number of forced unmarks (``-1``) in a marked chain from `elem_sym_chains_groth`."""
     return len([c for c in chain[1] if c == -1])
 
 
 def groth_pieri_mul(perm_dict, p, kk, beta):
+    """Grothendieck Pieri rule: multiply the Grothendieck expansion ``perm_dict`` by ``G`` of the
+    Grassmannian permutation of ``e_p(x_1..x_kk)``. Sums over marked chains from
+    `elem_sym_chains_groth` with weight ``beta^(length - p) * C(n, k)`` where the free marks are
+    chosen binomially.
+    """
     import math
     ret = {}
     p2 = uncode([0] * (kk - p) + [1] * p)

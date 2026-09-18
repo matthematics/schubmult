@@ -2,6 +2,8 @@
 
 # schubmult.utils.tuple\_utils
 
+Tuple helpers.
+
 <a id="schubmult.utils.tuple_utils.pad_tuple"></a>
 
 #### pad\_tuple

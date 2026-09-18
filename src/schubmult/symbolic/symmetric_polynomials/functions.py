@@ -1,3 +1,11 @@
+"""Expression-level utilities for symbolic elementary symmetric polynomials.
+
+The accessors `genvars`/`coeffvars`/`degree`/`numvars` see through SymEngine ``PyFunction``
+wrappers; `split_out_vars`/`pull_out_vars` map the corresponding `E` methods over a whole
+expression tree; `canonicalize_elem_syms` rewrites products of ``E`` factors into a normal form
+(each factor of full degree ``p == k``, grouped by first coefficient variable).
+"""
+
 from schubmult.symbolic import Add, Mul, Pow, S, expand, is_of_func_type, prod, sympify
 from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError
 
@@ -5,6 +13,7 @@ from .elem_sym import FactorialElemSym
 
 
 def genvars(obj):
+    """``obj.genvars``, unwrapping a SymEngine ``PyFunction`` if needed."""
     try:
         return obj.genvars
     except AttributeError:
@@ -15,6 +24,7 @@ def genvars(obj):
 
 
 def coeffvars(obj):
+    """``obj.coeffvars``, unwrapping a SymEngine ``PyFunction`` if needed."""
     try:
         return obj.coeffvars
     except AttributeError:
@@ -25,6 +35,7 @@ def coeffvars(obj):
 
 
 def degree(obj):
+    """The degree ``p`` of an elementary symmetric atom (unwrapping if needed)."""
     try:
         return obj._p
     except AttributeError:
@@ -32,6 +43,7 @@ def degree(obj):
 
 
 def numvars(obj):
+    """The variable count ``k`` of an elementary symmetric atom (unwrapping if needed)."""
     try:
         return obj._k
     except AttributeError:
@@ -39,6 +51,10 @@ def numvars(obj):
 
 
 def canonicalize_elem_syms(expr, combine_equal=False):
+    """Normal form for expressions in `FactorialElemSym`: split every factor with ``p < k`` in half
+    until all factors have ``p == k``, then within each product regroup factors sharing a first
+    coefficient variable (merging them into one factor if ``combine_equal``).
+    """
     expr = sympify(expr)
     expr = expand(expr)
     if not expr.args:
@@ -98,6 +114,7 @@ def canonicalize_elem_syms(expr, combine_equal=False):
 
 
 def canonicalize_elem_syms_coeff(expr, combine_equal=False):
+    """`canonicalize_elem_syms` splitting on coefficient variables instead of generators."""
     expr = sympify(expr)
     expr = expand(expr)
     # print(f"farfel {expr=}")
@@ -155,6 +172,7 @@ def canonicalize_elem_syms_coeff(expr, combine_equal=False):
 
 
 def split_out_vars(expr, vars1, vars2):
+    """Apply ``split_out_vars(vars1, vars2)`` to every elementary symmetric atom in ``expr``."""
     expr = sympify(expr)
     if hasattr(expr, "split_out_vars"):
         try:
@@ -172,6 +190,7 @@ def split_out_vars(expr, vars1, vars2):
 
 
 def pull_out_vars(expr, var1, var2, min_degree=1):
+    """Apply ``pull_out_vars(var1, var2, min_degree)`` to every elementary symmetric atom in ``expr``."""
     expr = sympify(expr)
     if hasattr(expr, "pull_out_vars"):
         return expr.pull_out_vars(var1, var2, min_degree)
@@ -181,6 +200,9 @@ def pull_out_vars(expr, var1, var2, min_degree=1):
 
 
 def elem_sym_unify(expr, arg=None):
+    """Recursively walk ``expr`` (currently a structural no-op; the pattern-based unification is
+    commented out).
+    """
     expr = sympify(expr)
 
     if not expr.args:

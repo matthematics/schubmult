@@ -2,6 +2,9 @@
 
 # schubmult.rings.polynomial\_algebra.forest\_poly\_basis
 
+`ForestPolyBasis`: the forest polynomial basis (Nadeau-Spink-Tewari) of `PolynomialAlgebra`, indexed
+by weak compositions via indexed forests (`schubmult.combinatorics.indexed_forests`).
+
 <a id="schubmult.rings.polynomial_algebra.forest_poly_basis.ForestPolyBasis"></a>
 
 ## ForestPolyBasis Objects

@@ -1,3 +1,15 @@
+"""Unevaluated (factorial) elementary symmetric polynomials as SymPy function atoms.
+
+``E(p, k, xvars, yvars)`` (alias `FactorialElemSym`) is the factorial elementary symmetric
+polynomial of degree ``p`` in the ``k`` generators ``xvars`` with coefficient variables
+``yvars`` (``k + 1 - p`` of them are used); ``e(p, k, xvars)`` (alias `ElemSym`) is the ordinary
+``e_p(x_1..x_k)``. Both stay symbolic so Schubert polynomials can be manipulated in the SEM/CEM
+bases; ``expand_func`` evaluates them via `schubmult.symbolic.poly.schub_poly.elem_sym_poly`.
+They implement divided differences (`div_diff`, `divide_out_diff`), variable splitting
+(`split_out_vars`), and canonicalize on construction (``E(p, k, ...) = 0`` if ``p > k``, ``1`` if
+``p == 0``, and a shared variable between the two sets cancels).
+"""
+
 from functools import cache
 
 from schubmult.symbolic import Add, Function, Integer, S, sympify, sympify_sympy
@@ -20,6 +32,10 @@ logger = get_logger(__name__)
 
 
 class ElemSym_base(Function):
+    """Common behavior for `E` and `e`: substitution acts only on the variable arguments, and the
+    ``degree``/``numvars``/``genvars``/``coeffvars`` accessors expose the parameters.
+    """
+
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -65,18 +81,22 @@ class ElemSym_base(Function):
 
     @property
     def degree(self):
+        """``p``."""
         return self._p
 
     @property
     def numvars(self):
+        """``k``, the number of generators."""
         return self._k
 
     @property
     def genvars(self):
+        """The ``x`` variables (sorted tuple)."""
         return self._genvars
 
     @property
     def coeffvars(self):
+        """The ``y`` (coefficient) variables."""
         return self._coeffvars
 
 
@@ -86,6 +106,11 @@ class ElemSym_base(Function):
 
 
 class E(ElemSym_base):
+    """Factorial elementary symmetric polynomial ``E(p, k, xvars, yvars)``; see the module docstring.
+
+    Variables may be passed as two iterables or flattened (``k`` x's followed by ``k + 1 - p`` y's).
+    """
+
     def __new__(cls, p, k, *args):
         p = int(p)
         k = int(k)
@@ -95,6 +120,9 @@ class E(ElemSym_base):
 
     @staticmethod
     def cauchy(fnc, genset):
+        """Rewrite ``fnc`` so its coefficient variables are the initial segment of ``genset``, using
+        ``E(p,k;..y..) = E(p,k;..y'..) + (y - y') E(p-1,k-1;..y'..)`` one variable at a time.
+        """
         cauchy = E.cauchy
         if not isinstance(fnc, FactorialElemSym):
             return fnc
@@ -154,6 +182,10 @@ class E(ElemSym_base):
         return obj
 
     def split_out_vars(self, vars1, vars2=None):
+        """Split the generators into ``vars1`` and the rest: ``E(p, k) = sum_i E(i, k1; ..) E(p - i, k2; ..)``
+        with the coefficient variables distributed accordingly. With ``vars1=None`` the split is
+        made on the coefficient variables ``vars2`` instead.
+        """
         if vars1 is None:
             first_vars = [sympify(v) for v in vars2 if v in self.coeffvars]
             second_vars = [a for a in self.coeffvars if a not in vars2]
@@ -198,6 +230,9 @@ class E(ElemSym_base):
         return ret
 
     def divide_out_diff(self, v1, v2):
+        """``(self - self|_{v1 -> v2}) / (v1 - v2)`` in closed form: removing a generator lowers ``p`` and
+        ``k`` by one; a coefficient variable gives the corresponding signed term.
+        """
         if v1 == v2:
             return S.Zero
         if v1 in self.genvars:
@@ -221,6 +256,7 @@ class E(ElemSym_base):
         return self.divide_out_diff(v1, v2)
 
     def div_diff(self, v1, v2):
+        """Divided difference ``partial_{v1, v2}`` in closed form (antisymmetric in ``v1``, ``v2``)."""
         if v1 == v2:
             return S.Zero
         if v1 in self.genvars:
@@ -250,6 +286,9 @@ class E(ElemSym_base):
         return S.Zero
 
     def pull_out_vars(self, var1, var2, min_degree=1):
+        """Write ``self = self|_{var1 -> var2} + (var1 - var2) * divide_out_diff(var1, var2)`` when ``var1``
+        is a generator and ``var2`` a coefficient variable (and ``p >= min_degree``).
+        """
         if self._p < min_degree:
             return self
         if var1 in self.genvars and var2 in self.coeffvars:
@@ -262,6 +301,8 @@ class E(ElemSym_base):
 
 
 class e(ElemSym_base):
+    """Ordinary elementary symmetric polynomial ``e(p, k, xvars)``; see the module docstring."""
+
     def __new__(cls, p, k, *args):
         p = int(p)
         k = int(k)
@@ -301,6 +342,7 @@ class e(ElemSym_base):
         return set(self.genvars)
 
     def split_out_vars(self, vars1, vars2=None):
+        """``e_p(all) = sum_i e_i(vars1) e_{p-i}(rest)``."""
         vars1 = [sympify(v) for v in vars1]
         if vars2 is not None:
             raise ValueError(f"There are no coeffvars for {self}")
@@ -324,9 +366,11 @@ class e(ElemSym_base):
 
     @property
     def coeffvars(self):
+        """No coefficient variables: a `ZeroGeneratingSet`."""
         return ZeroGeneratingSet()
 
     def divide_out_diff(self, v1, v2):
+        """``e_{p-1}`` of the remaining generators if ``v1`` is a generator, else 0."""
         if v1 == v2:
             return S.Zero
         if v1 in self.genvars:
@@ -342,6 +386,7 @@ class e(ElemSym_base):
         return self.divide_out_diff(v1, v2)
 
     def div_diff(self, v1, v2):
+        """Divided difference: ``+/- e_{p-1}`` of the remaining generators, or 0 if neither variable is a generator."""
         if v1 == v2:
             return S.Zero
         if v1 in self.genvars:

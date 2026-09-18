@@ -2,6 +2,8 @@
 
 # schubmult.rings.polynomial\_algebra.key\_poly\_basis
 
+`KeyPolyBasis`: the key polynomial (Demazure character) basis of `PolynomialAlgebra`, indexed by weak compositions.
+
 <a id="schubmult.rings.polynomial_algebra.key_poly_basis.traverse_demaz"></a>
 
 #### traverse\_demaz

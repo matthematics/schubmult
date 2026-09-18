@@ -1,7 +1,9 @@
 """`GrothendieckBasis`: the free-algebra basis dual to Grothendieck polynomials.
 
 Keys are ``(perm, numvars)`` as in `SchubertBasis`; the key is dual to ``G_perm`` in ``numvars``
-variables (``GrothendieckPolyBasis`` on the polynomial side). The change of
+variables (``GrothendieckPolyBasis`` on the polynomial side). Grothendieck polynomials are
+taken at ``beta = 1``, which is without loss of generality: ``beta`` is recovered by grading
+(a term of ``G_w`` in degree ``inv(w) + d`` carries ``beta^d``). The change of
 basis to `SchubertBasis` is the transpose of the Grothendieck-to-Schubert expansion and is
 computed combinatorially: enumerate unreduced BPDs of ``perm * w0``, take the co-BPD, and keep
 the reduced ones, with sign ``(-1)^(inv(perm) - inv(result))``. Products and all other
@@ -18,7 +20,7 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class GrothendieckBasis(FreeAlgebraBasis):
-    """Free-algebra basis dual to Grothendieck polynomials; keys are ``(Permutation, numvars)``.
+    """Free-algebra basis dual to Grothendieck polynomials (``beta = 1``); keys are ``(Permutation, numvars)``.
 
     See the module docstring. Products and transitions go through `SchubertBasis`.
     """

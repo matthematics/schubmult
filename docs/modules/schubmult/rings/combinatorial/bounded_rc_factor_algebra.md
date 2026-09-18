@@ -2,6 +2,23 @@
 
 # schubmult.rings.combinatorial.bounded\_rc\_factor\_algebra
 
+`BoundedRCFactorAlgebra`: a tensor-like algebra on tuples of full Grassmannian RC graphs of
+bounded size, factoring Schubert classes into elementary-symmetric pieces (the CEM basis).
+
+Used as the engine behind `RCGraphRing.coproduct_on_basis`, `SchubertRCGraphRing`, and
+`SlideRCGraphRing`: ``schub_elem(perm, length)`` gives the factorization of ``S_perm``,
+``key_to_rc_graph`` / ``to_rc_graph_ring_element`` squash a key's factors back into an RC graph.
+
+<a id="schubmult.rings.combinatorial.bounded_rc_factor_algebra.BoundedRCFactorPrintingTerm"></a>
+
+## BoundedRCFactorPrintingTerm Objects
+
+```python
+class BoundedRCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `BoundedRCFactorAlgebra` basis key.
+
 <a id="schubmult.rings.combinatorial.bounded_rc_factor_algebra.BoundedRCFactorAlgebraElement"></a>
 
 ## BoundedRCFactorAlgebraElement Objects

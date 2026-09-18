@@ -1,3 +1,10 @@
+"""Quantum factorial elementary symmetric polynomials ``E_q(p, k, xvars, yvars)`` as SymPy atoms.
+
+The quantum deformation adds ``q_i`` terms for adjacent pairs ``x_i, x_{i+1}`` of the *positional*
+generators (positions taken from ``x_var``), so the variable set need not be an initial segment.
+``expand_func`` evaluates via `elem_sym_positional_poly_q`. Alias: `QFactorialElemSym`.
+"""
+
 from functools import cache
 
 from schubmult.symbolic import Integer, S, sympify_sympy
@@ -9,6 +16,10 @@ from .elem_sym import ElemSym_base
 
 
 class E_q(ElemSym_base):
+    """Quantum factorial elementary symmetric atom; same canonicalization as `E`, plus ``x_var``/``q_var``
+    generating sets fixing the positions of the generators and the ``q`` parameters.
+    """
+
     def __new__(cls, p, k, *args, x_var=None, q_var=None):
         p = int(p)
         k = int(k)
@@ -78,6 +89,12 @@ class E_q(ElemSym_base):
 
 
 def elem_sym_positional_poly_q(p, k, varl1, varl2, x_var=GeneratingSet("x"), q_var=GeneratingSet("q")):
+    """Quantum factorial elementary symmetric polynomial of degree ``p`` in the generators ``varl1[:k]``.
+
+    Recursion on the last generator ``x_l``: the classical two terms plus, when ``x_{l-1}`` (resp.
+    ``x_{l+1}``) is also among the generators, ``q_{l-1}`` (resp. ``q_l``) times the degree ``p - 2``
+    polynomial with that pair removed.
+    """
     if p == 0 and k >= 0:
         return S.One
     if p<0 or k < 0 or p > k:

@@ -2,6 +2,12 @@
 
 # schubmult.rings.direct\_product\_ring
 
+`DirectProductRing`: the direct product ``R_0 x R_1 x ... x R_n`` of `BaseRing` instances.
+
+Keys are ``(i, k)`` with ``i`` the component index and ``k`` a key of ``R_i``; multiplication is
+componentwise and cross-component products vanish. Use ``from_component``/``project`` to move
+elements in and out, and ``elem[i]`` to read component ``i``.
+
 <a id="schubmult.rings.direct_product_ring.DirectProductRing"></a>
 
 ## DirectProductRing Objects
@@ -42,6 +48,28 @@ def __getitem__(i)
 ```
 
 Return the *i*-th constituent ring.
+
+<a id="schubmult.rings.direct_product_ring.DirectProductRing.rings"></a>
+
+#### rings
+
+```python
+@property
+def rings()
+```
+
+The tuple of component rings.
+
+<a id="schubmult.rings.direct_product_ring.DirectProductRing.one"></a>
+
+#### one
+
+```python
+@property
+def one()
+```
+
+The identity: the sum of every component's identity.
 
 <a id="schubmult.rings.direct_product_ring.DirectProductRing.component_one"></a>
 
@@ -99,6 +127,16 @@ Construct an element from one element per component.
 ``D(e0, e1, ..., en)`` lifts each ``ei`` (an element of ``D[i]``)
 into the direct product and sums them.
 
+<a id="schubmult.rings.direct_product_ring.DirectProductBasisElement"></a>
+
+## DirectProductBasisElement Objects
+
+```python
+class DirectProductBasisElement(PrintingTerm)
+```
+
+Printing term for a key ``(i, k)``; renders as ``(term)_i``.
+
 <a id="schubmult.rings.direct_product_ring.DirectProductRingElement"></a>
 
 ## DirectProductRingElement Objects
@@ -106,6 +144,8 @@ into the direct product and sums them.
 ```python
 class DirectProductRingElement(BaseRingElement)
 ```
+
+Element of a `DirectProductRing`; ``elem[i]`` projects onto component ``i``.
 
 <a id="schubmult.rings.direct_product_ring.DirectProductRingElement.__getitem__"></a>
 
@@ -118,5 +158,5 @@ def __getitem__(key)
 Index by component integer or by ``(i, k)`` basis key.
 
 * ``elem[i]`` — project onto component *i* (returns a ``self.ring[i]`` element).
-* ``elem[(i, k)]`` — coefficient lookup (standard dict behaviour).
+* ``elem[(i, k)]`` — coefficient lookup (standard dict behavior).
 

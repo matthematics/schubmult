@@ -2,6 +2,20 @@
 
 # schubmult.rings.combinatorial.rc\_schubert\_ring
 
+Orphaned earlier variant of `bounded_rc_factor_algebra` (defines the same class names, is not
+imported anywhere, and is not exported from the package). Kept for reference; prefer
+`schubmult.rings.combinatorial.bounded_rc_factor_algebra`.
+
+<a id="schubmult.rings.combinatorial.rc_schubert_ring.BoundedRCFactorPrintingTerm"></a>
+
+## BoundedRCFactorPrintingTerm Objects
+
+```python
+class BoundedRCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a basis key (orphaned variant).
+
 <a id="schubmult.rings.combinatorial.rc_schubert_ring.BoundedRCFactorAlgebraElement"></a>
 
 ## BoundedRCFactorAlgebraElement Objects

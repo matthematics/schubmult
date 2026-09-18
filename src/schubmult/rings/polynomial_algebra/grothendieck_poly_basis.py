@@ -1,4 +1,7 @@
-"""`GrothendieckPolyBasis`: the (beta-deformed) Grothendieck polynomial basis of `PolynomialAlgebra`."""
+"""`GrothendieckPolyBasis`: the Grothendieck polynomial basis of `PolynomialAlgebra`, at the
+specialization ``beta = 1`` (without loss of generality: ``beta`` is recovered from the grading,
+since the degree ``inv(w) + d`` part of ``G_w`` carries ``beta^d``).
+"""
 
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
@@ -9,11 +12,12 @@ from .base_polynomial_basis import PolynomialBasis
 
 
 class GrothendieckPolyBasis(PolynomialBasis):
-    """Grothendieck polynomial basis.
+    """Grothendieck polynomial basis at ``beta = 1``.
 
     Keys are ``(Permutation, length)`` pairs. Grothendieck polynomials form
     the canonical basis for the polynomial algebra in Grothendieck calculus,
-    dual to the :class:`GrothendieckBasis` of the free algebra.
+    dual to the :class:`GrothendieckBasis` of the free algebra. The ``beta`` parameter
+    is set to 1 without loss of generality (see the module docstring).
     """
     def __hash__(self):
         return hash(("schoobooponk", self.ring))

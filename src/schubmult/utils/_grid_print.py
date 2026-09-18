@@ -1,7 +1,12 @@
+"""`GridPrint`: a SymPy ``Printable`` mixin that renders a 2-D grid (``rows``, ``cols``, ``self[i, j]``)
+as an aligned table for str/pretty/LaTeX output; used by RC graphs, BPDs and similar diagrams.
+"""
+
 from sympy.printing.defaults import Printable
 
 
 class GridPrint(Printable):
+    """Mixin: subclasses provide ``rows``, ``cols``, ``__getitem__((i, j))`` and ``_display_name``."""
 
     @property
     def rows(self) -> int: ...

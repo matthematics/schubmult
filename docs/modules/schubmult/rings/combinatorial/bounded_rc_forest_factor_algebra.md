@@ -2,6 +2,19 @@
 
 # schubmult.rings.combinatorial.bounded\_rc\_forest\_factor\_algebra
 
+`BoundedRCForestFactorAlgebra`: variant of `BoundedRCFactorAlgebra` whose factorizations are
+snapped to forest-class representatives (``_to_forest``), for the forest-polynomial setting.
+
+<a id="schubmult.rings.combinatorial.bounded_rc_forest_factor_algebra.BoundedRCFactorPrintingTerm"></a>
+
+## BoundedRCFactorPrintingTerm Objects
+
+```python
+class BoundedRCFactorPrintingTerm(PrintingTerm)
+```
+
+Display symbol for a `BoundedRCForestFactorAlgebra` basis key.
+
 <a id="schubmult.rings.combinatorial.bounded_rc_forest_factor_algebra.BoundedRCForestFactorAlgebraElement"></a>
 
 ## BoundedRCForestFactorAlgebraElement Objects

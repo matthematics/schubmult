@@ -1,3 +1,13 @@
+"""SymPy atoms used to display ring basis elements.
+
+Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert SymPy
+``Expr`` atom (``args == ()``, so SymPy never traverses into it) that knows how to render itself
+for ``str``, pretty printing, and LaTeX. Instances are interned via cached ``__xnew_cached__``
+constructors so equal keys give identical objects. The subclasses cover single/double Schubert
+(``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck (``G``/``DG``), separated
+descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+"""
+
 from functools import cache
 
 import schubmult.symbolic as ssymb
@@ -9,6 +19,8 @@ from schubmult.combinatorics.permutation import Permutation
 
 # Atomic Schubert polynomial
 class PrintingTerm(ssymb.Expr):
+    """Base display atom carrying a key, generating set, coefficient generating set, and prefix."""
+
     is_Atom = True
     is_number = False
 
@@ -60,6 +72,8 @@ class PrintingTerm(ssymb.Expr):
 
 
 class GenericPrintingTerm(PrintingTerm):
+    """Displays a key as ``name(key)`` (e.g. ``AGx(perm, n)``, ``N(2, 1)``); the identity key prints as ``1``."""
+
     is_Atom = True
 
     _pretty_schub_char = "𝔖"
@@ -92,6 +106,10 @@ class GenericPrintingTerm(PrintingTerm):
 
 
 class TypedPrintingTerm(PrintingTerm):
+    """Displays a key by delegating to the key's own printer (used for keys that are themselves
+    printable objects such as RC graphs).
+    """
+
     is_Atom = True
 
     _pretty_schub_char = "𝔖"
@@ -133,6 +151,8 @@ class TypedPrintingTerm(PrintingTerm):
 
 
 class DSchubPoly(PrintingTerm):
+    """Schubert polynomial term: ``S<genset>(perm)`` or ``DS<genset>(perm, <coeff_genset>)``."""
+
     is_Atom = True
 
     _pretty_schub_char = "𝔖"
@@ -185,7 +205,8 @@ class DSchubPoly(PrintingTerm):
 
 
 class SepDescSchubPoly(PrintingTerm):
-    """Printing term for SeparatedDescentsRing: Xi_{perm}^{length}"""
+    """Separated-descents term for the key ``(perm, numvars)``: ``Xi_{perm}^{numvars}``."""
+
     is_Atom = True
 
     _pretty_schub_char = "Ξ"
@@ -238,6 +259,8 @@ class SepDescSchubPoly(PrintingTerm):
 
 
 class QDSchubPoly(PrintingTerm):
+    """Quantum Schubert term: ``QS<genset>(perm)`` or ``QDS<genset>(perm, <coeff_genset>)``."""
+
     is_Atom = True
 
     def __hash__(self):
@@ -283,6 +306,10 @@ class QDSchubPoly(PrintingTerm):
 
 
 class PQDSchubPoly(PrintingTerm):
+    """Parabolic quantum Schubert term, tagged with the index composition:
+    ``QPS<genset>(comp)(perm)`` or ``QPDS<genset>(comp)(perm, <coeff_genset>)``.
+    """
+
     is_Atom = True
 
     def __hash__(self):
@@ -340,7 +367,8 @@ class PQDSchubPoly(PrintingTerm):
 
 
 class GrothendieckPoly(PrintingTerm):
-    """Printing term for GrothendieckRing: G_w(x)"""
+    """Grothendieck term ``G<genset>(perm)``, or ``G<genset>(perm, numvars)`` when the key carries a variable count."""
+
     is_Atom = True
 
     _pretty_schub_char = "𝔊"
@@ -396,7 +424,8 @@ class GrothendieckPoly(PrintingTerm):
 
 
 class DoubleGrothendieckPoly(PrintingTerm):
-    """Printing term for DoubleGrothendieckRing: G_w(x, y)"""
+    """Double Grothendieck term ``DG<genset>(perm, <coeff_genset>)``."""
+
     is_Atom = True
 
     _pretty_schub_char = "𝔊"

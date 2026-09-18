@@ -1,3 +1,10 @@
+"""`DirectProductRing`: the direct product ``R_0 x R_1 x ... x R_n`` of `BaseRing` instances.
+
+Keys are ``(i, k)`` with ``i`` the component index and ``k`` a key of ``R_i``; multiplication is
+componentwise and cross-component products vanish. Use ``from_component``/``project`` to move
+elements in and out, and ``elem[i]`` to read component ``i``.
+"""
+
 from schubmult.symbolic import CoercionFailed, S, sympify, sympy_Mul
 
 from .base_ring import BaseRing, BaseRingElement
@@ -56,10 +63,12 @@ class DirectProductRing(BaseRing):
 
     @property
     def rings(self):
+        """The tuple of component rings."""
         return self._rings
 
     @property
     def one(self):
+        """The identity: the sum of every component's identity."""
         dct = {}
         for i, ring_i in enumerate(self._rings):
             dct[(i, ring_i.zero_monom)] = S.One
@@ -132,6 +141,8 @@ class DirectProductRing(BaseRing):
 
 
 class DirectProductBasisElement(PrintingTerm):
+    """Printing term for a key ``(i, k)``; renders as ``(term)_i``."""
+
     is_commutative = False
     precedence = 50
 
@@ -165,6 +176,8 @@ class DirectProductBasisElement(PrintingTerm):
 
 
 class DirectProductRingElement(BaseRingElement):
+    """Element of a `DirectProductRing`; ``elem[i]`` projects onto component ``i``."""
+
     def __init__(self):
         pass
 
@@ -172,7 +185,7 @@ class DirectProductRingElement(BaseRingElement):
         """Index by component integer or by ``(i, k)`` basis key.
 
         * ``elem[i]`` — project onto component *i* (returns a ``self.ring[i]`` element).
-        * ``elem[(i, k)]`` — coefficient lookup (standard dict behaviour).
+        * ``elem[(i, k)]`` — coefficient lookup (standard dict behavior).
         """
         if isinstance(key, int):
             return self.ring.project(self, key)

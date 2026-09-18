@@ -2,6 +2,9 @@
 
 # schubmult.rings.free\_algebra.z\_basis
 
+`ZBasis`: free-algebra basis indexed by compositions with no zeros, related to `SchubertBasis`
+by shifting code entries by one and dropping zeros.
+
 <a id="schubmult.rings.free_algebra.z_basis.ZBasis"></a>
 
 ## ZBasis Objects

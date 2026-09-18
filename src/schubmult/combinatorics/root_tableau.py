@@ -31,6 +31,7 @@ from .rc_graph import RCGraph
 
 # we can do crazy crystal stuff
 def _plactic_raising_operator(word, i):
+    """Classical e_i on a word: change the rightmost unmatched ``i+1`` to ``i`` (``None`` if none)."""
     word = [*word]
     opening_stack = []
     closing_stack = []
@@ -113,10 +114,12 @@ def _is_valid_inner_corner(grid: np.ndarray, i: int, j: int) -> bool:
 
 
 def _length_of_row(grid, row):
+    """Number of occupied cells in ``row``."""
     return len([c for c in grid[row, :] if c is not None])
 
 
 def _count_boxes(grid):
+    """Number of occupied cells in the grid."""
     count = 0
     for i in range(grid.shape[0]):
         for j in range(grid.shape[1]):
@@ -127,6 +130,9 @@ def _count_boxes(grid):
 
 
 def _root_compare(root1, root2):
+    """Relation between two positive roots ``(a, b)``: 2 if equal, 1 if they share an endpoint on the
+    same side, -1 if one's end is the other's start (they compose), 0 if disjoint.
+    """
     if root1 == root2:
         return 2
     if root1[1] == root2[1] and root1[0] != root2[0]:
@@ -412,6 +418,7 @@ def _snap_grid(grid: np.ndarray):
 
 
 def _root_map(rc1, rc2):
+    """For two reduced words of the same permutation, the map ``right root in rc1 at i -> right root in rc2 at i``."""
     # takes roots of rc1 return roots of rc2 (dct)
 
     rw1 = rc1
@@ -436,6 +443,9 @@ class RootTableau(CrystalGraph, GridPrint):
     # preserved by the crystal operators
     @property
     def edelman_greene_invariant(self):
+        """The Edelman-Greene insertion tableau's row word of the reduced word (computed on the
+        ``w0``-reversed word and mapped back), as a tuple. Constant on crystal components.
+        """
         w0 = Permutation.w0(max(self.reduced_word, default=0) + 1)
         rev_word = [len(w0) - r for r in self.reduced_word]
         np_word = list(NilPlactic().ed_insert(*rev_word).row_word)
@@ -446,11 +456,13 @@ class RootTableau(CrystalGraph, GridPrint):
         return tuple(np_word)
 
     def eg_root(self, index):
+        """The ``index``-th right root of the EG-invariant reduced word."""
         eg_inv = self.edelman_greene_invariant
         return self.perm.right_root_at(index, word=eg_inv)
 
     @property
     def eg_row_word(self):
+        """Reduced word recovered from the row word of roots by repeatedly peeling off the last simple root."""
         roots = self.root_row_word
 
         def _word_from_right_roots(right_roots):
@@ -473,10 +485,14 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def shape(self):
+        """Row lengths of the (possibly skew) tableau, omitting empty rows."""
         return tuple(_length_of_row(self._root_grid, r) for r in range(self._root_grid.shape[0]) if _length_of_row(self._root_grid, r) > 0)
 
     @classmethod
     def root_insert_rsk(cls, reduced_word, compatible_seq):
+        """Build the root tableau of a compatible pair: Edelman-Greene insert the reduced word, then
+        fill each cell of the recording tableau with ``(right root of that letter, compatible letter)``.
+        """
         _perm = Permutation.ref_product(*reduced_word)
         # word, word2 = (), ()
         spunkle = len(_perm)
@@ -500,6 +516,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def recording_tableau(self):
+        """Grid of positions (in the reduced word) of each cell's root."""
         reduced_word = self.reduced_word
         word_roots = [self.perm.right_root_at(i, word=reduced_word) for i in range(len(reduced_word))]
         try_grid = copy.deepcopy(self._root_grid)
@@ -509,6 +526,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @classmethod
     def from_rc_graph(cls, rc: RCGraph):
+        """Root tableau of an RC graph (its reduced word with the row-index compatible sequence)."""
         reduced_word = rc.perm_word
         compatible_seq = []
         for i in range(len(rc)):
@@ -519,14 +537,19 @@ class RootTableau(CrystalGraph, GridPrint):
         return sum(self.length_of_row(r) for r in range(row)) + col
 
     def roots_before(self, row, col):
+        """Boxes whose letter precedes that of ``(row, col)`` in the reading order."""
         order_grid = _word_from_grid(self._root_grid, as_ordering=True, as_grid=True)
         return [(i, j) for (i, j) in np.ndindex(order_grid.shape) if order_grid[i, j] is not None and order_grid[i, j] < order_grid[row, col]]
 
     @property
     def perm(self):
+        """The permutation of the reduced word."""
         return Permutation.ref_product(*self.reduced_word)
 
     def delete_box(self, box):
+        """Remove the letter whose root sits in ``box`` (if that root is a Bruhat descent of ``perm``) and
+        re-insert the shortened compatible pair; ``None`` if it is not a descent.
+        """
         from schubmult.utils.perm_utils import has_bruhat_descent
 
         if self[box] is None:
@@ -593,6 +616,9 @@ class RootTableau(CrystalGraph, GridPrint):
     #     return working_tab
 
     def rectify(self, randomized=False):
+        """Jeu de taquin rectification: slide into inner corners until none remain (first corner by
+        default, or a random one).
+        """
         import random
 
         cur = self
@@ -631,6 +657,9 @@ class RootTableau(CrystalGraph, GridPrint):
     #     return cur
 
     def up_jdt_slide(self, row, col, check=False):
+        """Reverse JDT slide into the outer corner ``(row, col)`` (grid grows if needed), moving boxes
+        down/right and shifting roots accordingly; with ``check`` the EG invariant is verified.
+        """
         new_grid = copy.deepcopy(self._root_grid)
         if self.rows <= row or self.cols <= col:
             new_grid.resize((max(self.rows, row + 1), max(self.cols, col + 1)), refcheck=False)
@@ -765,6 +794,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def iter_boxes(self):
+        """Occupied cells in row-major order."""
         for i in range(self.rows):
             for j in range(self.cols):
                 cell = self._root_grid[i, j]
@@ -773,6 +803,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def iter_outer_corners(self):
+        """Empty cells that can receive an `up_jdt_slide`."""
         new_grid = copy.deepcopy(self._root_grid)
         for i in range(self.rows):
             for j in range(self.cols):
@@ -781,6 +812,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def iter_inner_corners(self):
+        """Empty cells that can receive a `down_jdt_slide`."""
         for i in range(self.rows):
             for j in range(self.cols):
                 if _is_valid_inner_corner(self._root_grid, i, j):
@@ -788,29 +820,36 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def is_valid(self):
+        """Whether the reconstructed RC graph is valid."""
         return self.rc_graph.is_valid
 
     @property
     def reduced_word(self):
+        """Reduced word read off the grid (see `_word_from_grid`)."""
         return _word_from_grid(self._root_grid)
 
     @property
     def compatible_sequence(self):
+        """Compatible sequence read off the grid alongside the reduced word."""
         return _word_from_grid(self._root_grid, with_compatible_seq=True)[1]
 
     @property
     def word_grid(self):
+        """Grid of reduced-word letters (one per occupied cell)."""
         return _word_from_grid(self._root_grid, as_grid=True)
 
     @property
     def grid_word(self):
+        """Letters of `word_grid` in row-word order."""
         return tuple([self.word_grid[box] for box in self.iter_boxes_row_word_order])
 
     @property
     def order_grid(self):
+        """Grid giving each cell's position in the reduced word."""
         return _word_from_grid(self._root_grid, as_grid=True, as_ordering=True)
 
     def letter_at(self, row, col):
+        """Reduced-word letter at ``(row, col)``."""
         return self.word_grid[row, col]
 
     # @property
@@ -828,6 +867,9 @@ class RootTableau(CrystalGraph, GridPrint):
     #     return RootTableau(_printing_grid, print_only=True)
 
     def __init__(self, grid, print_only=False):
+        """Wrap an object grid of ``(root, letter)`` cells; unless ``print_only``, verify each cell's root
+        matches the EG-invariant root of its letter.
+        """
         self._root_grid = copy.deepcopy(grid)
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
         if not print_only:
@@ -839,6 +881,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def weight_tableau(self):
+        """RS insertion tableau of the row word of compatible letters (the crystal weight tableau)."""
         # rows = []
         # for row in self._root_grid:
         #     rows.append([])
@@ -851,10 +894,12 @@ class RootTableau(CrystalGraph, GridPrint):
         return Plactic().rs_insert(*self.row_word)
 
     def epsilon(self, index):
+        """Crystal ``epsilon_index`` of the weight tableau."""
         return self._weight_tableau.epsilon(index)
 
     @property
     def eg_grid(self):
+        """Grid of EG-invariant root indices."""
         boxes = {box: self.eg_index_word[index] for index, box in enumerate(self.iter_boxes_row_word_order)}
         eg_grid = np.full(self._root_grid.shape, None, dtype=object)
         for box in boxes:
@@ -863,11 +908,13 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def eg_index_word(self):
+        """For each cell in row-word order, the index of its root in the EG-invariant word."""
         eg_roots = [self.eg_root(i) for i in range(len(self.reduced_word))]
         return tuple([eg_roots.index(self[box][0]) for box in self.iter_boxes_row_word_order])
 
     @property
     def row_word(self):
+        """Compatible letters read bottom row to top, left to right."""
         word = []
         for r in range(self.rows - 1, -1, -1):
             for c in range(self.cols):
@@ -878,6 +925,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def root_row_word(self):
+        """Roots read in row-word order."""
         word = []
         for box in self.iter_boxes_row_word_order:
             word.append(self[box][0])
@@ -899,10 +947,12 @@ class RootTableau(CrystalGraph, GridPrint):
         return RCGraph(rows)
 
     def right_root_at(self, i):
+        """EG-invariant root of the ``i``-th cell in row-word order."""
         return self.eg_root(self.eg_index_word[i])
 
     @property
     def iter_boxes_row_word_order(self):
+        """Occupied cells bottom row to top, left to right."""
         for i in range(self._root_grid.shape[0] - 1, -1, -1):
             for j in range(self._root_grid.shape[1]):
                 if self[i, j] is not None:
@@ -916,7 +966,9 @@ class RootTableau(CrystalGraph, GridPrint):
     #                 yield (i, j)
 
     def raising_operator(self, i):
-        """Crystal raising operator e_i on the root tableau"""
+        """Crystal ``e_i``: apply the RC graph raising operator, rebuild the root tableau, and slide it
+        back into this tableau's shape with `up_jdt_slide`; ``None`` if undefined.
+        """
         rc = self.rc_graph
         # if row >= len(rc):
         #     return None
@@ -963,6 +1015,9 @@ class RootTableau(CrystalGraph, GridPrint):
         return ret
 
     def lowering_operator(self, row):
+        """Crystal ``f_row`` computed directly on RC graph rows ``row`` and ``row+1`` by the bracketing rule,
+        then rebuilt and slid back into shape; ``None`` if undefined. Asserts the EG invariant.
+        """
         # RF word is just the RC word backwards
         rc = self.rc_graph
         if row >= len(rc):

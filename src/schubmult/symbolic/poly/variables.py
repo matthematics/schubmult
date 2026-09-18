@@ -1,3 +1,13 @@
+"""Generating sets: indexed families of variables ``x_0, x_1, x_2, ...`` used as ring generators.
+
+`GeneratingSet("x")` interns ``DEF_GENSET_SIZE`` symbols ``x_0..x_99``; ``gs[i]`` is the symbol
+``x_i``, and the polynomial variables are ``x_1, x_2, ...`` (``x_0`` is unused), so an exponent
+tuple ``(a_1, ..., a_n)`` means ``x_1^{a_1} ... x_n^{a_n}``. `MaskedGeneratingSet` hides a set of indices of a base set,
+`CustomGeneratingSet` wraps an arbitrary sequence of expressions, and `ZeroGeneratingSet`
+returns 0 for every index (used for single Schubert polynomials as a degenerate coefficient
+set). `genset_dict_from_expr` converts a polynomial expression into ``{exponent_tuple: coeff}``.
+"""
+
 # class generators with base
 # symbols cls argument!
 
@@ -15,6 +25,8 @@ DEF_GENSET_SIZE = 100
 
 
 class GeneratingSet_base:
+    """Interface for generating sets: indexing, length, ``index(symbol)`` (``-1`` if absent), and ``label``."""
+
     def __new__(cls, *args):
         obj = object.__new__(cls)
         obj._args = args
@@ -41,6 +53,8 @@ class GeneratingSet_base:
 
 
 class ZeroGeneratingSet(GeneratingSet_base):
+    """A generating set every entry of which is ``0``; contains no symbols."""
+
     def __getitem__(self, index):
         if isinstance(index, slice):
             if index.stop is None:
@@ -65,6 +79,8 @@ class ZeroGeneratingSet(GeneratingSet_base):
 # TODO: ensure sympifies
 # TODO: masked generating set
 class GeneratingSet(GeneratingSet_base):
+    """The interned family ``name_0, name_1, ...``; ``gs[i]`` is the symbol ``name_i`` and ``gs(i)`` is ``gs[i - 1]``."""
+
     def __new__(cls, name):
         return GeneratingSet.__xnew_cached__(cls, name)
 
@@ -96,10 +112,12 @@ class GeneratingSet(GeneratingSet_base):
 
     @property
     def label(self):
+        """The variable name, e.g. ``"x"``."""
         return str(self.args[0])
 
     # index of v in the genset
     def index(self, v):
+        """Position of the symbol ``v`` in this set, or ``-1``."""
         try:
             return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
         except SympifyError:
@@ -136,6 +154,10 @@ class GeneratingSet(GeneratingSet_base):
 
 
 class MaskedGeneratingSet(GeneratingSet_base):
+    """A base generating set with the (1-indexed) positions in ``index_mask`` removed and the rest
+    renumbered consecutively; ``complement()`` gives the set of the masked variables instead.
+    """
+
     def __new__(cls, gset, index_mask):
         return MaskedGeneratingSet.__xnew_cached__(cls, gset, tuple(sorted(index_mask)))
 
@@ -169,6 +191,7 @@ class MaskedGeneratingSet(GeneratingSet_base):
 
     @property
     def base_genset(self):
+        """The underlying unmasked generating set."""
         return self.args[0]
 
     @property
@@ -180,9 +203,11 @@ class MaskedGeneratingSet(GeneratingSet_base):
 
     @property
     def index_mask(self):
+        """Sorted tuple of the hidden 1-indexed positions."""
         return tuple(self.args[1])
 
     def complement(self):
+        """The masked set on the complementary positions."""
         return MaskedGeneratingSet(self.base_genset, [i for i in range(1, len(self.base_genset)) if i not in set(self.index_mask)])
 
     def __call__(self, index):
@@ -218,6 +243,8 @@ class MaskedGeneratingSet(GeneratingSet_base):
 
 
 class CustomGeneratingSet(GeneratingSet_base):
+    """A generating set over an explicit sequence of expressions (sympified on construction)."""
+
     def __new__(cls, gens):
         return CustomGeneratingSet.__xnew_cached__(cls, tuple(gens))
 
@@ -266,11 +293,12 @@ ZeroVar = 0
 
 
 class NotEnoughGeneratorsError(ValueError):
-    pass
+    """Raised when an operation needs more generators than a generating set provides."""
 
 
 @cache
 def poly_genset(v: str):
+    """``GeneratingSet(v)``, or a `ZeroGeneratingSet` for the sentinels ``ZeroVar``/``NoneVar``."""
     if v == ZeroVar:
         return ZeroGeneratingSet(tuple([sympify(0) for i in range(DEF_GENSET_SIZE)]))
     if v == NoneVar:
@@ -279,7 +307,12 @@ def poly_genset(v: str):
 
 
 def genset_dict_from_expr(expr, genset, length=None):
-    """Transform expressions into a multinomial form given generators. """
+    """Write a polynomial in the generators of ``genset`` as ``{exponent_tuple: coeff}``.
+
+    Exponent tuples are 0-indexed by generator position ``genset(i) -> tuple[i - 1]`` and have
+    length ``length`` (default: the largest generator index present). Factors free of the
+    generators go into the coefficient; a factor mixing generators with other symbols raises.
+    """
     try:
         k = max([genset.index(a) for a in expr.free_symbols])
     except Exception:

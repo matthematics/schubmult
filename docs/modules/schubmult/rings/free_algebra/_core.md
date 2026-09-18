@@ -2,6 +2,13 @@
 
 # schubmult.rings.free\_algebra.\_core
 
+`FreeAlgebra` and `FreeAlgebraElement`: the graded dual of the polynomial algebra.
+
+See the package docstring (`schubmult.rings.free_algebra`) for the duality. This module
+holds the ring and element classes; the individual bases live in sibling modules and
+plug in through the `FreeAlgebraBasis` interface. ``FA``, ``ASx``, ``AGx`` are the
+standard instances.
+
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement"></a>
 
 ## FreeAlgebraElement Objects
@@ -10,12 +17,16 @@
 class FreeAlgebraElement(BaseRingElement)
 ```
 
-Element of a free algebra, stored as a dict mapping basis keys to coefficients.
+An element of a `FreeAlgebra`: ``{basis_key: coefficient}``.
 
-Keys are tuples of nonnegative integers (words in the word basis) or
-basis-specific keys depending on the parent ring's basis. Supports
-arithmetic operations, basis changes, and word-level operations like
-injection, prefix, suffix, and interval extraction.
+In the `WordBasis` a key is a word -- a tuple of nonnegative integers -- dual to
+the monomial with that exponent vector. In other bases the key is that basis's
+combinatorial index together with a number of variables (e.g. ``(perm, numvars)``
+for `SchubertBasis`). Beyond ring arithmetic, elements support basis changes
+(``change_basis``), the duality pairing with polynomials (``pairing``,
+``poly_inner_product``), expansion into Schubert rings (``schub_expand``), and
+word-level operations (``inject``, ``prefix``, ``suffix``, ``interval``, ``split``,
+``factorize``) that are computed in the word basis and transported back.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.interleave"></a>
 
@@ -135,10 +146,12 @@ Delegates to the current basis's ``interval`` classmethod.
 def poly_inner_product(poly, genset, n)
 ```
 
-Compute the inner product of this element with a polynomial.
+The duality pairing of this element with a polynomial expression.
 
-Converts to WordBasis and pairs coefficient-by-coefficient with
-the monomial expansion of *poly* in *genset*.
+Expands ``poly`` into monomials in ``genset`` (exponent vectors padded/truncated to
+``n`` variables, or trailing zeros stripped if ``n`` is ``None``), converts ``self``
+to the word basis, and sums ``coeff_word * coeff_monomial`` over matching
+word/exponent-vector pairs.
 
 **Arguments**:
 
@@ -203,14 +216,15 @@ Expand all coefficients symbolically.
 def pairing(other)
 ```
 
-Compute the pairing of this element with *other* via the monomial basis.
+The duality pairing with a `PolynomialAlgebraElement`.
 
-Converts *self* to WordBasis and *other* to MonomialBasis, then
-sums products of matching coefficients.
+Converts ``self`` to the word basis and ``other`` to the monomial basis, then sums
+``coeff_word * coeff_monomial`` over words equal to exponent vectors. This is the
+pairing under which the free algebra is the graded dual of the polynomial algebra.
 
 **Arguments**:
 
-- `other` - Another element to pair with.
+- `other` - A polynomial algebra element to pair with.
   
 
 **Returns**:
@@ -240,7 +254,8 @@ and returns the result in the original basis.
 def tup_double_expand(tup)
 ```
 
-Expand a word tuple into the double Schubert basis via Pieri products.
+Realize the word ``tup`` as a double Schubert (separated-descents) ring element: the
+product ``prod_i S_{uncode([tup[i]])}`` with each factor in its own variable.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.tup_expand"></a>
 
@@ -252,7 +267,10 @@ Expand a word tuple into the double Schubert basis via Pieri products.
 def tup_expand(tup)
 ```
 
-Expand a word tuple into the single Schubert basis via divide-and-conquer Pieri products.
+Realize the word ``tup`` as a single Schubert (separated-descents) ring element: the
+product ``prod_i S_{uncode([tup[i]])}`` with each factor in its own variable, computed
+by divide-and-conquer. This is the map word -> ``h_{a_1}(x_1) h_{a_2}(x_2) ...`` that
+sends the word basis onto complete-symmetric-in-one-variable products.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.change_basis"></a>
 
@@ -262,7 +280,10 @@ Expand a word tuple into the single Schubert basis via divide-and-conquer Pieri 
 def change_basis(other_basis)
 ```
 
-Convert this element to another basis.
+Re-express this element in another `FreeAlgebraBasis`.
+
+Uses ``self.ring._basis.transition(other_basis)``, which most bases implement by
+routing through the `WordBasis`.
 
 **Arguments**:
 
@@ -281,7 +302,8 @@ Convert this element to another basis.
 def schub_expand()
 ```
 
-Expand this element into a single Schubert polynomial ring element.
+Realize this element in the single Schubert separated-descents ring via ``tup_expand``
+(each word becomes a product of one-variable complete symmetric functions).
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.schub_double_expand"></a>
 
@@ -291,7 +313,7 @@ Expand this element into a single Schubert polynomial ring element.
 def schub_double_expand()
 ```
 
-Expand this element into a double Schubert polynomial ring element.
+Double-alphabet analogue of ``schub_expand`` via ``tup_double_expand``.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.bcoproduct"></a>
 
@@ -301,7 +323,7 @@ Expand this element into a double Schubert polynomial ring element.
 def bcoproduct()
 ```
 
-Compute the bar-coproduct of this element in the tensor ring.
+The "bar" coproduct (see `WordBasis.bcoproduct`) in the tensor square ring.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.factorize"></a>
 
@@ -343,6 +365,17 @@ Remove zero entries from each key, weighting by *inserter* per zero removed.
 **Returns**:
 
   A new element with zeros stripped from keys.
+
+<a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.__truediv__"></a>
+
+#### \_\_truediv\_\_
+
+```python
+def __truediv__(other)
+```
+
+Skew by a permutation: ``elem / u`` applies ``skew_element(w, u, n)`` to each ``(w, n)`` key
+(the dual of multiplying by ``S_u`` on the polynomial side).
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebraElement.split"></a>
 
@@ -392,11 +425,13 @@ Convert to a Schubert ring element via ``tup_to_schub``.
 class FreeAlgebra(BaseRing)
 ```
 
-Free algebra ring with a configurable basis.
+The free algebra on generators indexed by nonnegative integers, in a chosen basis.
 
-The algebra operates on :class:`FreeAlgebraElement` instances whose keys
-are determined by the chosen basis (default :class:`WordBasis`). Supports
-multiplication, tensor products, coproducts, and basis changes.
+The ring is basis-agnostic; a `FreeAlgebraBasis` *class* (not instance) supplies the
+key type, product, coproduct, and transitions. ``FreeAlgebra(WordBasis)`` is the
+concatenation algebra on words; ``FreeAlgebra(SchubertBasis)`` is the same algebra
+written in the basis dual to Schubert polynomials. See the package docstring for
+the duality with the polynomial algebra.
 
 **Arguments**:
 
@@ -494,10 +529,13 @@ Create an element from an RC graph.
 def matmul(elem, other)
 ```
 
-Internal product (``@`` operator) or scalar multiplication.
+Internal (Kronecker) product (``@`` operator) or scalar multiplication.
 
-If *other* is a scalar, multiplies all coefficients. If *other* is
-a FreeAlgebraElement, computes the internal product via the basis.
+If ``other`` is a scalar, multiplies all coefficients. If it is a `FreeAlgebraElement`,
+computes the basis's ``internal_product`` -- essentially the Kronecker product of
+noncommutative symmetric functions, enumerated in the word basis by nonnegative
+integer matrices with prescribed row/column sums (see `WordBasis.internal_product`;
+requires SageMath).
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebra.new"></a>
 
@@ -537,7 +575,7 @@ Construct an element from a dict of ``{key: coefficient}`` pairs.
 def skew_element(w, u, n)
 ```
 
-Skew schubert by elem sym
+The skew element ``S_w / S_u`` in ``n`` variables (dual to multiplication by ``S_u``); see `SchubertBasis.skew_element`.
 
 <a id="schubmult.rings.free_algebra._core.FreeAlgebra.domain_new"></a>
 

@@ -1,3 +1,12 @@
+"""Unevaluated (factorial) complete homogeneous symmetric polynomials as SymPy function atoms.
+
+``H(p, k, xvars, yvars)`` (alias `FactorialCompleteSym`) is the factorial complete symmetric
+polynomial of degree ``p`` in ``k`` generators with ``p + k - 1`` coefficient variables;
+``h(p, k, xvars)`` (alias `CompleteSym`) is the ordinary ``h_p(x_1..x_k)``. The two families
+are related by the duality ``H(p, k; x, y) = (-1)^p E(p, k + 1 - p; y, x)`` (`H.to_elem_sym`,
+`H.from_elem_sym`), and divided differences are computed by passing through `E`.
+"""
+
 from functools import cache
 
 from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, sympify, sympify_sympy
@@ -12,6 +21,8 @@ logger = get_logger(__name__)
 
 
 class CompleteSym_base(Function):
+    """Common behavior for `H` and `h`; ``expand_func`` evaluates via `complete_sym_poly`."""
+
     def _eval_subs(self, rule):
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
@@ -55,6 +66,8 @@ class CompleteSym_base(Function):
 
 
 class H(CompleteSym_base):
+    """Factorial complete symmetric polynomial ``H(p, k, xvars, yvars)``; see the module docstring."""
+
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -90,6 +103,7 @@ class H(CompleteSym_base):
         return FactorialCompleteSym.__xnew__(_class, p, k, var1, var2)
 
     def to_elem_sym(self):
+        """``(-1)^p E(p, k + 1 - p; yvars, xvars)``: the same polynomial as a factorial elementary symmetric atom."""
         return (S.NegativeOne ** (self._p % 2)) * FactorialElemSym(self._p, self._k + 1 - self._p, self.coeffvars, self.genvars)
 
     @staticmethod
@@ -127,6 +141,7 @@ class H(CompleteSym_base):
 
     @classmethod
     def from_elem_sym(cls, elem, sign=False):
+        """Inverse of `to_elem_sym`: the ``H`` atom equal to the `E` atom ``elem`` (with the ``(-1)^p`` if ``sign``)."""
         if sign:
             return (S.NegativeOne ** degree(elem)) * cls(degree(elem), numvars(elem) + 1 - degree(elem), *coeffvars(elem), *genvars(elem))
         return cls(degree(elem), numvars(elem) + 1 - degree(elem), *coeffvars(elem), *genvars(elem))
@@ -136,6 +151,7 @@ class H(CompleteSym_base):
         return set(self.genvars).union(set(self.coeffvars))
 
     def split_out_vars(self, vars1, vars2=None):  # noqa: ARG002
+        """``H_p(all) = sum_i H_i(vars1) H_{p-i}(rest)`` with the coefficient variables split accordingly."""
         first_vars = [sympify(v) for v in vars1 if v in self.genvars]
         second_vars = [a for a in self.genvars if a not in vars1]
         if len(second_vars) == 0 or len(first_vars) == 0:
@@ -154,11 +170,13 @@ class H(CompleteSym_base):
         return self.__class__
 
     def divide_out_diff(self, v1, v2):
+        """`E.divide_out_diff` transported through `to_elem_sym`/`from_elem_sym`."""
         new_obj = self.to_elem_sym().divide_out_diff(v1, v2)
         return new_obj.replace(FactorialElemSym, lambda x: FactorialCompleteSym.from_elem_sym(x))
 
     @staticmethod
     def from_expr_elem_sym(expr):
+        """Replace every `E` atom in ``expr`` by the equal `H` atom."""
         # return expr.replace(FactorialElemSym, lambda *x: (S.NegativeOne**int(x[0]))*FactorialCompleteSym.from_elem_sym(FactorialElemSym(*x)))
         if not expr.args:
             return expr
@@ -174,6 +192,7 @@ class H(CompleteSym_base):
 
     @staticmethod
     def to_expr_elem_sym(expr):
+        """Replace every `H` atom in ``expr`` by the equal `E` atom."""
         # return expr.replace(FactorialElemSym, lambda *x: (S.NegativeOne**int(x[0]))*FactorialCompleteSym.from_elem_sym(FactorialElemSym(*x)))
         if not expr.args:
             return expr
@@ -194,10 +213,13 @@ class H(CompleteSym_base):
         return FactorialCompleteSym.from_expr_elem_sym(self.to_elem_sym().divide_out_diff(v1, v2))
 
     def div_diff(self, v1, v2):
+        """Divided difference, computed on the `E` side and converted back."""
         return FactorialCompleteSym.from_expr_elem_sym(self.to_elem_sym().div_diff(v1, v2))
 
 
 class h(CompleteSym_base):
+    """Ordinary complete homogeneous symmetric polynomial ``h(p, k, xvars)``."""
+
     is_commutative = True
     is_Atom = False
     is_polynomial = True
