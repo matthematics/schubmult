@@ -18,10 +18,11 @@ _MAX_CANDIDATES = 1_000_000
 
 def _limit_memory():
     """Cap this process's address space so runaway cases die with MemoryError
-    instead of taking down the host (WSL is especially fragile under OOM)."""
-    import resource
-
+    instead of taking down the host (WSL is especially fragile under OOM).
+    No-op where ``resource`` is unavailable (Windows)."""
     try:
+        import resource
+
         import psutil
 
         cap = max(int(psutil.virtual_memory().available * 0.7), 1024**3)
