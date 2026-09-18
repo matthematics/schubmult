@@ -23,8 +23,9 @@ SRC = ROOT / "src"
 DOCS = ROOT / "docs"
 CONFIG_FILE = ROOT / "pydoc-markdown.yml"
 
-# Path components that mark research scratch space rather than public API.
-EXCLUDED_PARTS = {"unlinted", "__pycache__"}
+# Path components that mark research scratch space rather than public API, plus the
+# vcs-versioning generated _version.py (no documentable content).
+EXCLUDED_PARTS = {"unlinted", "__pycache__", "_version.py"}
 
 # Dotted module names backed by an __init__.py (i.e. packages), filled in by discover_modules().
 PACKAGE_MODULES: set[str] = set()
@@ -73,8 +74,8 @@ def render_module(modname: str, filename: Path) -> None:
     session.render(modules, run_hooks=False)
 
 
-def render_consolidated(filename: Path) -> None:
-    session = new_session(PythonLoader(search_path=["src"], packages=["schubmult"]))
+def render_consolidated(filename: Path, module_names: list[str]) -> None:
+    session = new_session(PythonLoader(search_path=["src"], modules=module_names))
     session.renderer.filename = str(filename)
     modules = session.load_modules()
     session.process(modules)
@@ -113,7 +114,7 @@ def main() -> None:
         render_module(name, DOCS / "modules" / module_rel_path(name))
     write_index(module_names)
     print("Rendering consolidated docs/API.md ...")
-    render_consolidated(DOCS / "API.md")
+    render_consolidated(DOCS / "API.md", module_names)
     print("Done.")
 
 
