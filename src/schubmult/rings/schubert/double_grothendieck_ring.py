@@ -42,6 +42,27 @@ class DoubleGrothendieckElement(BaseSchubertElement):
         """Localize at the torus fixed point ``perm``: substitute ``x_i -> (-) y_{perm(i)}`` (formal inverse)."""
         return self.ring.perm_subs(self, perm)
 
+    def simplify(self, factor=True):
+        """Return a copy with each coefficient put in cancelled (and, by default, factored) rational
+        normal form in ``y`` and ``beta``, dropping terms whose coefficient simplifies to zero.
+
+        Products in this ring leave coefficients as unsimplified rational expressions; this
+        makes them readable, e.g. ``(y_1 - y_2)/(1 + beta*y_2)``.
+        """
+        import sympy
+
+        from schubmult.symbolic import sympify_sympy
+
+        new_dict = {}
+        for perm, coeff in self.items():
+            expr = sympy.cancel(sympify_sympy(coeff))
+            if expr == 0:
+                continue
+            if factor:
+                expr = sympy.factor(expr)
+            new_dict[perm] = sympify(expr)
+        return self.ring.from_dict(new_dict)
+
 
 class DoubleGrothendieckRing(BaseSchubertRing):
     """
