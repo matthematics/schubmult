@@ -421,9 +421,15 @@ def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
     where the factor ``f_i`` depends on the fate of the window value ``u(i)``:
 
     * ``u(i) = w(i)`` (the set ``Q``):  ``(z(1 + beta*y_{u(i)}) - y_{u(i)}) / (1 + beta*y_{u(i)})``,
-      i.e. ``z (+) (-)y_{u(i)}``, the K-theoretic analogue of ``z - y_{u(i)}``;
+      i.e. ``z + (-)y_{u(i)}`` with ``(-)y = -y/(1 + beta*y)`` the formal inverse, the
+      K-theoretic analogue of ``z - y_{u(i)}``;
     * ``u(i)`` stays in the window but moves left:  ``1 - beta*zvar``;
     * ``u(i)`` exits the window or moves right within it:  ``1/(1 + beta*y_{u(i)})``.
+
+    Equivalently the coefficient is
+    ``beta^(d - m) (-beta)^#left prod_{out}(1 + beta*y)^{-1} E_{n,n}((-)y_Q, (-1/beta)^#left; -z)``
+    with ``n = |Q| + #left`` -- a factorial elementary symmetric polynomial, which is what
+    lets ``_groth_elem_sym_frac`` write the ``E_{p,k}`` coefficients in closed form.
 
     The sum runs over the marked-chain K-Pieri support (``_top_block_support``).
     At ``beta = 0`` this collapses to the ``p = k`` Pieri formula for double
@@ -524,26 +530,6 @@ def dgroth_to_dschub(v, var3, beta=None):
     return {Permutation(key): value for key, value in elem.items() if value != S.Zero}
 
 
-def _mul_linear(coeffs, c0, c1):
-    """Multiply the polynomial ``sum_m coeffs[m] t^m`` by ``c0 + c1*t``."""
-    out = [S.Zero] * (len(coeffs) + 1)
-    for m, c in enumerate(coeffs):
-        out[m] += c * c0
-        out[m + 1] += c * c1
-    return out
-
-
-def _complete_homog(p, vrs):
-    """Complete homogeneous symmetric polynomial ``h_p`` of ``vrs``; ``h_{<0} = 0``."""
-    if p < 0:
-        return S.Zero
-    acc = [S.One] + [S.Zero] * p
-    for v in vrs:
-        for q in range(1, p + 1):
-            acc[q] = acc[q] + v * acc[q - 1]
-    return acc[p]
-
-
 def _frac_mul(f1, f2):
     """Multiply two flat fractions ``(numer, {atom: exp})``; denominators multiply by adding exponents."""
     n1, d1 = f1
@@ -588,62 +574,88 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
     r"""K-analogue of ``elem_sym_func`` for the vpath iteration.
 
     Coefficient of ``G_{u2}(x, varl1)`` contributed when layer ``i`` (block size
-    ``k``) multiplies ``G_{u1}(x, varl1)`` while the v-path steps ``v1 -> v2``
-    consuming ``vdiff`` of the block degree.
+    ``k``) multiplies ``G_{u1}(x, varl1)`` by ``E_{k - vdiff, k}(x; z)`` while the
+    v-path steps ``v1 -> v2`` consuming ``vdiff`` of the block degree.
 
-    Method (Molev--Sagan route): the verified top-block rule for
-    ``prod_{j<=k}(x_j - t) G_{u1}`` gives a coefficient that is polynomial in the
-    layer variable ``t``,
+    Closed form.  Sort the window positions ``j <= k`` by the fate of ``u1(j)`` in
+    ``u2``: *fixed* (``u2(j) = u1(j)``), *left* (``u1(j)`` reappears at an earlier
+    window position), *out* (leaves the window or moves right).  With
+    ``m = #left + #out`` movers, ``n = #fixed + #left``, ``d = l(u2) - l(u1)`` and
+    ``q = vdiff``,
 
-        ``C(t) = beta^(d - m) * prod_j f_j(t)``,   d = l(u2) - l(u1),
+        kappa = beta^(d - m) (-beta)^#left prod_{out} (1 + beta*y_{u1(j)})^{-1}
+                * E_{n - q, n}( (-)y_{fixed}, (-1/beta)^#left ; z_1, ..., z_{q+1} ),
 
-    with per-window-position factors ``f_j``: fixed value ``y`` ->
-    ``(-y - t(1 + beta*y))/(1 + beta*y)``, left-moving persister -> ``1 + beta*t``,
-    exit or right-mover -> ``1/(1 + beta*y)`` (``m`` = number of movers).  Since
-    ``prod_{j<=k}(x_j - t) = sum_p e_p(x_1..x_k) (-t)^{k-p}``, extracting
-    ``t``-coefficients of ``C`` gives the rule for each ``e_p``.  A v-path step of
-    size ``vdiff`` is the z-side divided difference ``d_{vdiff} ... d_1``, which
-    sends ``t^m`` to ``(-1)^vdiff h_{m - vdiff}`` in the ``vdiff + 1`` z-variables
-    selected by ``call_zvars(v1, v2, k, i)`` (the same "screwed up" alphabet as
-    the classical ``elem_sym_func``).  At ``vdiff = 0`` this is ``C(z_{v2(i)})``;
-    at ``beta = 0`` it collapses to the classical ``elem_sym_func`` via
-    ``E_{q,n}(y; z) = sum_j (-1)^j e_{q-j}(y) h_j(z)``.
+    a factorial elementary symmetric polynomial in the alphabet of formal inverses
+    ``(-)y = -y/(1 + beta*y)`` of the fixed values padded with one ``-1/beta`` per
+    left-mover, over the ``z`` alphabet selected by ``call_zvars(v1, v2, k, i)``
+    (the same one as the classical ``elem_sym_func``).  At ``q = 0`` this is the
+    top-block rule ``prod_{j<=k}(x_j - z_1) G_{u1}`` (``E_{n,n}(Y; z_1) = prod (Y - z_1)``,
+    with ``(-beta)(-1/beta - z_1) = 1 + beta*z_1``); the general ``q`` follows by applying
+    ``(-1)^q d_q ... d_1`` in ``z`` to both sides, since that operator turns ``E_{n,n}``
+    into ``E_{n-q,n}`` for *any* first alphabet.  At ``beta = 0`` only the terms using all
+    ``#left`` copies of ``-1/beta`` survive and the expression collapses to the classical
+    ``E_{p - m, k - m}(y_fixed; z)`` of Samuel's Theorem 7.1.
 
     Returns a flat fraction ``(numer, {a: exp})`` with denominator
-    ``prod_a (1 + beta*varl1[a])**exp``: the per-position factors are distributed
-    so the numerator stays polynomial and the denominator is tracked as atom
-    exponents, never as nested symbolic fractions.
+    ``prod_a (1 + beta*varl1[a])**exp``.  The ``E`` is evaluated by the subset DP
+    ``E_{p,n}(Y; z) = sum_{i_1<..<i_p} prod_j (Y_{i_j} - z_{i_j - j + 1})`` with the
+    denominators of the ``(-)y`` entries cleared per entry: a chosen fixed entry
+    contributes ``-y - z(1 + beta*y)`` and bumps the atom ``y``, an unchosen one
+    contributes ``1 + beta*y`` to the numerator and bumps the same atom, a chosen
+    left entry contributes ``1 + beta*z`` and an unchosen one ``-beta``.  The
+    numerator therefore stays polynomial and no symbolic cancellation is needed.
     """
     from schubmult.symbolic.poly.schub_poly import call_zvars
 
     d = u2.inv - u1.inv
     window2 = [u2[j] for j in range(k)]
-    coeffs = [S.One]
+    # alphabet entries: ("fixed", value) or ("left", None); out values only feed the denominator
+    alphabet = []
     denom = {}
     movers = 0
     for j in range(k):
         value = u1[j]
         if window2[j] == value:
-            y = varl1[value]
-            # (-y/(1+by) - t) = (-y - t(1+by)) / (1+by): polynomial numerator, atom bump.
-            coeffs = _mul_linear(coeffs, -y, -(S.One + beta * y))
+            alphabet.append(value)
             denom[value] = denom.get(value, 0) + 1
         else:
             movers += 1
             if value in window2 and window2.index(value) < j:
-                coeffs = _mul_linear(coeffs, S.One, beta)
+                alphabet.append(None)
             else:
                 denom[value] = denom.get(value, 0) + 1
     if d < movers:
         return (S.Zero, {})
+    n = len(alphabet)
+    p = n - vdiff
+    if p < 0:
+        return (S.Zero, {})
     zvars = [varl2[a] for a in call_zvars(v1, v2, k, i)][: vdiff + 1]
-    total = S.Zero
-    for m in range(vdiff, len(coeffs)):
-        if coeffs[m] == S.Zero:
-            continue
-        total += coeffs[m] * _complete_homog(m - vdiff, zvars)
-    sign = S.One if vdiff % 2 == 0 else -S.One
-    return (sign * beta ** (d - movers) * total, denom)
+
+    # state[c] = sum over ways to have chosen c entries among those processed so far;
+    # a state with more than q = n - p skips can never reach p and is dropped
+    state = [S.One] + [S.Zero] * p
+    for idx, value in enumerate(alphabet, start=1):
+        new_state = [S.Zero] * (p + 1)
+        for c in range(max(0, idx - 1 - vdiff), min(idx - 1, p) + 1):
+            acc = state[c]
+            if acc == S.Zero:
+                continue
+            # the c-th chosen entry (0-indexed) sitting at position idx pairs with z_{idx - c}
+            if value is None:
+                if idx - 1 - c < vdiff:
+                    new_state[c] += acc * (-beta)
+                if c < p:
+                    new_state[c + 1] += acc * (S.One + beta * zvars[idx - c - 1])
+            else:
+                y = varl1[value]
+                if idx - 1 - c < vdiff:
+                    new_state[c] += acc * (S.One + beta * y)
+                if c < p:
+                    new_state[c + 1] += acc * (-y - zvars[idx - c - 1] * (S.One + beta * y))
+        state = new_state
+    return (beta ** (d - movers) * state[p], denom)
 
 
 def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):

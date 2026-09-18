@@ -1,0 +1,30 @@
+{
+ "perms": [
+  [
+   1,
+   0,
+   1
+  ],
+  [
+   0,
+   1
+  ]
+ ],
+ "pr": true,
+ "ascode": true,
+ "mult": false,
+ "disp_mode": "basic",
+ "debug": false,
+ "secret": false,
+ "mulstring": "",
+ "cmd_line": [
+  "grothmult_py",
+  "--code",
+  "1",
+  "0",
+  "1",
+  "-",
+  "0",
+  "1"
+ ]
+}
