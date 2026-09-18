@@ -31,12 +31,12 @@ frame-ancestors` header on the server).
 
 | Field              | Type    | Default | Description                                                             |
 |--------------------|---------|---------|-------------------------------------------------------------------------|
-| `flavor`           | string  | `"py"`  | Which kernel: `py`, `groth`, `double`, `q`, or `q_double`. See below.   |
+| `flavor`           | string  | `"py"`  | Which kernel: `py`, `groth`, `double`, `groth_double`, `q`, `groth_q`, `q_double`, or `groth_q_double`. See below. |
 | `perms`            | string  | `""`    | One-line permutations separated by `-`. E.g. `"3 1 2 - 2 1 3"`. With `ascode=true`, these are Lehmer codes instead. |
 | `ascode`           | boolean | `false` | Treat each token sequence as a Lehmer code rather than a permutation.   |
 | `coprod`           | boolean | `false` | Compute the coproduct of a single permutation along a split index list. Only honoured for `py`/`double`. With `coprod=true`, `perms` is one permutation followed by `-` followed by the split indices, e.g. `"1 4 2 3 - 1 2"`. |
 | `display_positive` | boolean | `false` | (`double`/`q_double` only) Solve a MILP to display coefficients in the root-positive form. Slower. |
-| `mixed_var`        | boolean | `false` | (`double`/`q_double` only) Use two variable sets `y`, `z` instead of just `y`. |
+| `mixed_var`        | boolean | `false` | (`double`/`groth_double`/`q_double`/`groth_q_double` only) Use two variable sets `y`, `z` instead of just `y`. |
 | `parabolic`        | string  | `""`    | (`q`/`q_double` only) Space-separated positive integers giving the simple-reflection generators of the parabolic subgroup, e.g. `"1 3"`. Empty = non-parabolic. |
 | `mult`             | string  | `""`    | (Disabled by default on this host for security.) Polynomial factor parsed by SymPy. |
 
@@ -49,14 +49,17 @@ a Lehmer code (which has no such constraint), set `ascode=true`.
 
 ### Flavor / option compatibility matrix
 
-| Option             | `py` | `groth` | `double` | `q` | `q_double` |
-|--------------------|:----:|:-------:|:--------:|:---:|:----------:|
-| `coprod`           |  ✓   |    —    |    ✓     |  —  |     —      |
-| `display_positive` |  —   |    —    |    ✓     |  —  |     ✓      |
-| `mixed_var`        |  —   |    —    |    ✓     |  —  |     ✓      |
-| `parabolic`        |  —   |    —    |    —     |  ✓  |     ✓      |
+| Option             | `py` | `groth` | `double` | `groth_double` | `q` | `groth_q` | `q_double` | `groth_q_double` |
+|--------------------|:----:|:-------:|:--------:|:--------------:|:---:|:---------:|:----------:|:----------------:|
+| `coprod`           |  ✓   |    —    |    ✓     |       —        |  —  |     —     |     —      |        —         |
+| `display_positive` |  —   |    —    |    ✓     |       —        |  —  |     —     |     ✓      |        —         |
+| `mixed_var`        |  —   |    —    |    ✓     |       ✓        |  —  |     —     |     ✓      |        ✓         |
+| `parabolic`        |  —   |    —    |    —     |       —        |  ✓  |     —     |     ✓      |        —         |
 
-Unsupported options are silently ignored for that flavor.
+Unsupported options are silently ignored for that flavor.  The `groth_q` and `groth_q_double`
+flavors (quantum Grothendieck polynomials) use a conjectural quantum K-theoretic Pieri rule; their
+coefficients are polynomials in the quantum parameters `q_i` and `β` (and rational in `y` for
+`groth_q_double`).
 
 ### Limits
 
@@ -145,6 +148,13 @@ curl -X POST https://schubmult.pythonanywhere.com/api/compute \
   -d '{"flavor":"q","perms":"3 1 2 - 2 1 3","parabolic":"1"}'
 ```
 
+### Quantum Grothendieck product
+```bash
+curl -X POST https://schubmult.pythonanywhere.com/api/compute \
+  -H 'Content-Type: application/json' \
+  -d '{"flavor":"groth_q","perms":"2 1 - 2 1"}'
+```
+
 ### Lehmer-code input
 ```bash
 curl -X POST https://schubmult.pythonanywhere.com/api/compute \
@@ -216,5 +226,5 @@ deployment guide.
 
 The web wrapper lives in [`web/app.py`](https://github.com/matthematics/schubmult/blob/main/web/app.py)
 of the [schubmult repository](https://github.com/matthematics/schubmult).
-The underlying CLI tools `schubmult_py`, `grothmult_py`, `schubmult_double`,
-`schubmult_q`, `schubmult_q_double` are documented in the project README.
+The underlying CLI tools `schubmult_py`, `grothmult_py`, `schubmult_double`, `grothmult_double`,
+`schubmult_q`, `grothmult_q`, `schubmult_q_double`, `grothmult_q_double` are documented in the project README.

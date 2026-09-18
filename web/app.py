@@ -1,4 +1,4 @@
-"""Embeddable web wrapper around schubmult_py and schubmult_double.
+"""Embeddable web wrapper around the schubmult_* / grothmult_* CLI scripts.
 
 Run with:
 
@@ -85,6 +85,26 @@ def _log_access(flavor: str, argv: list[str] | None, *, status: str,
     access_logger.info(msg)
 
 PERM_TOKEN_RE = re.compile(r"^-?\d+$")
+
+# flavor -> (module name under schubmult._scripts, program name)
+FLAVORS = {
+    "py": ("schubmult_py", "schubmult_py"),
+    "groth": ("grothmult_py", "grothmult_py"),
+    "double": ("schubmult_double", "schubmult_double"),
+    "groth_double": ("grothmult_double", "grothmult_double"),
+    "q": ("schubmult_q", "schubmult_q"),
+    "groth_q": ("grothmult_q", "grothmult_q"),
+    "q_double": ("schubmult_q_double", "schubmult_q_double"),
+    "groth_q_double": ("grothmult_q_double", "grothmult_q_double"),
+}
+
+
+def _script_module(flavor: str):
+    import importlib
+
+    if flavor not in FLAVORS:
+        raise ValueError(f"Unknown flavor {flavor!r}")
+    return importlib.import_module(f"schubmult._scripts.{FLAVORS[flavor][0]}")
 
 # ---------- config ----------
 ALLOWED_ORIGINS = [
@@ -230,20 +250,7 @@ def _worker(flavor: str, argv: list[str], q) -> None:
     """Subprocess entrypoint: run the script's main() and ship back its stdio."""
     out, err = _CappedBuffer(MAX_OUTPUT_BYTES), _CappedBuffer(MAX_OUTPUT_BYTES)
     try:
-        if flavor == "py":
-            from schubmult._scripts import schubmult_py as mod
-        elif flavor == "groth":
-            from schubmult._scripts import grothmult_py as mod
-        elif flavor == "double":
-            from schubmult._scripts import schubmult_double as mod
-        elif flavor == "groth_double":
-            from schubmult._scripts import grothmult_double as mod
-        elif flavor == "q":
-            from schubmult._scripts import schubmult_q as mod
-        elif flavor == "q_double":
-            from schubmult._scripts import schubmult_q_double as mod
-        else:
-            raise ValueError(f"Unknown flavor {flavor!r}")
+        mod = _script_module(flavor)
         with redirect_stdout(out), redirect_stderr(err):
             try:
                 mod.main(argv)
@@ -259,20 +266,10 @@ def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
     """Fallback: run in-process (no timeout). Used when multiprocessing fails."""
     out, err = _CappedBuffer(MAX_OUTPUT_BYTES), _CappedBuffer(MAX_OUTPUT_BYTES)
     try:
-        if flavor == "py":
-            from schubmult._scripts import schubmult_py as mod
-        elif flavor == "groth":
-            from schubmult._scripts import grothmult_py as mod
-        elif flavor == "double":
-            from schubmult._scripts import schubmult_double as mod
-        elif flavor == "groth_double":
-            from schubmult._scripts import grothmult_double as mod
-        elif flavor == "q":
-            from schubmult._scripts import schubmult_q as mod
-        elif flavor == "q_double":
-            from schubmult._scripts import schubmult_q_double as mod
-        else:
-            return ("", f"Unknown flavor {flavor!r}\n", False)
+        try:
+            mod = _script_module(flavor)
+        except ValueError as e:
+            return ("", f"{e}\n", False)
         with redirect_stdout(out), redirect_stderr(err):
             try:
                 mod.main(argv)
@@ -361,35 +358,43 @@ def compute():
     parabolic = (data.get("parabolic") or "").strip() or None
     mult = (data.get("mult") or "").strip() or None
 
+    if flavor not in FLAVORS:
+        return jsonify({"ok": False, "error": f"Unknown flavor {flavor!r}"}), 400
+    prog = FLAVORS[flavor][1]
+
+    # drop options the flavor does not support (the frontend greys them out too)
     if flavor == "py":
-        prog = "schubmult_py"
         display_positive = False
         mixed_var = False
         parabolic = None
     elif flavor == "groth":
-        prog = "grothmult_py"
         coprod = False
         display_positive = False
         mixed_var = False
         parabolic = None
     elif flavor == "double":
-        prog = "schubmult_double"
         parabolic = None
     elif flavor == "groth_double":
-        prog = "grothmult_double"
         coprod = False
         parabolic = None
         display_positive = False  # not yet ready for general use
     elif flavor == "q":
-        prog = "schubmult_q"
         display_positive = False
         mixed_var = False
         coprod = False
-    elif flavor == "q_double":
-        prog = "schubmult_q_double"
+    elif flavor == "groth_q":
+        display_positive = False
+        mixed_var = False
         coprod = False
-    else:
-        return jsonify({"ok": False, "error": f"Unknown flavor {flavor!r}"}), 400
+        parabolic = None  # not supported by grothmult_q yet
+        mult = None
+    elif flavor == "q_double":
+        coprod = False
+    elif flavor == "groth_q_double":
+        coprod = False
+        display_positive = False  # not supported by grothmult_q_double yet
+        parabolic = None
+        mult = None
 
     try:
         argv = _build_argv(prog, perms_raw, ascode=ascode, coprod=coprod,

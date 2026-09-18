@@ -37,7 +37,7 @@ function schubmult_embed_shortcode($atts) {
     $atts = shortcode_atts(array(
         'height' => 'auto',  // 'auto' = grow to fit content via postMessage
         'width'  => '100%',
-        'flavor' => '',     // optional: py | groth | double | q | q_double; appended as ?flavor=...
+        'flavor' => '',     // optional: py | groth | double | groth_double | q | groth_q | q_double | groth_q_double; appended as ?flavor=...
     ), $atts, 'schubmult');
 
     $url = schubmult_get_embed_url();
@@ -46,7 +46,7 @@ function schubmult_embed_shortcode($atts) {
     }
 
     $src = esc_url($url);
-    if (!empty($atts['flavor']) && in_array($atts['flavor'], array('py', 'groth', 'double', 'q', 'q_double'), true)) {
+    if (!empty($atts['flavor']) && in_array($atts['flavor'], array('py', 'groth', 'double', 'groth_double', 'q', 'groth_q', 'q_double', 'groth_q_double'), true)) {
         $sep = (strpos($src, '?') === false) ? '?' : '&';
         $src .= $sep . 'flavor=' . rawurlencode($atts['flavor']);
     }
@@ -166,7 +166,9 @@ function schubmult_embed_settings_page() {
 [schubmult height="500"]          (fixed pixel height, no auto-resize)
     [schubmult flavor="groth"]
 [schubmult flavor="double"]
-[schubmult flavor="q_double"]</pre>
+[schubmult flavor="q_double"]
+[schubmult flavor="groth_q_double"]</pre>
+        <p>Flavors: py, groth, double, groth_double, q, groth_q, q_double, groth_q_double.</p>
         <p>By default the iframe reports its content height back to the page
            and grows/shrinks to fit. Pass an explicit numeric <code>height</code>
            to disable auto-resize.</p>

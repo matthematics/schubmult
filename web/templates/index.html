@@ -64,7 +64,9 @@
         <option value="double">schubmult_double (double)</option>
         <option value="groth_double">grothmult_double (Grothendieck double)</option>
         <option value="q">schubmult_q (quantum)</option>
+        <option value="groth_q">grothmult_q (Grothendieck quantum)</option>
         <option value="q_double">schubmult_q_double (quantum double)</option>
+        <option value="groth_q_double">grothmult_q_double (Grothendieck quantum double)</option>
       </select>
     </label>
   </div>
@@ -81,11 +83,11 @@
     <label id="sm-ascode-label"><input type="checkbox" id="sm-ascode"> Lehmer code input</label>
     <label id="sm-coprod-label"><input type="checkbox" id="sm-coprod"> Coproduct (one perm + split index list)</label>
     <label id="sm-positive-label"><input type="checkbox" id="sm-positive"> Display positive (double / q_double)</label>
-    <label id="sm-mixedvar-label"><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double / q_double / groth_double)</label>
+    <label id="sm-mixedvar-label"><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double / q_double / groth_double / groth_q_double)</label>
   </div>
 
   <div class="row" id="sm-parabolic-row">
-    <label for="sm-parabolic">Parabolic generators (quantum only):</label>
+    <label for="sm-parabolic">Parabolic generators (schubmult_q / schubmult_q_double only):</label>
     <input type="text" id="sm-parabolic" placeholder="e.g. 1 3">
     <div class="hint">Space-separated positive integers. Leave blank for non-parabolic.</div>
   </div>
@@ -136,7 +138,9 @@
     double:       { ascode: true, coprod: true,  display_positive: true,  mixed_var: true,  parabolic: false },
     groth_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false },
     q:            { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true },
+    groth_q:      { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: false },
     q_double:     { ascode: true, coprod: false, display_positive: true,  mixed_var: true,  parabolic: true },
+    groth_q_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false },
   };
 
   function setEnabled(input, label, enabled) {
@@ -159,6 +163,9 @@
 
   $('sm-flavor').addEventListener('change', applyFlavorCaps);
   $('sm-mixedvar').addEventListener('change', applyFlavorCaps);
+  // ?flavor=... (appended by the WordPress shortcode) preselects a flavor
+  const wanted = new URLSearchParams(window.location.search).get('flavor');
+  if (wanted && FLAVOR_CAPS[wanted]) $('sm-flavor').value = wanted;
   applyFlavorCaps();
 
   $('sm-go').addEventListener('click', async () => {

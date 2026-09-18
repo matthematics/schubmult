@@ -27,7 +27,11 @@ Optional attributes:
 [schubmult flavor="groth"]
 [schubmult flavor="py" height="640" width="100%"]
 [schubmult flavor="double"]
+[schubmult flavor="groth_q_double"]
 ```
+
+`flavor` preselects the kernel: `py`, `groth`, `double`, `groth_double`, `q`, `groth_q`,
+`q_double`, `groth_q_double`.
 
 ## Server-side configuration
 

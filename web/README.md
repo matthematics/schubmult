@@ -1,7 +1,8 @@
 # schubmult web wrapper
 
-A small Flask app that exposes `schubmult_py`, `grothmult_py`, and `schubmult_double` through a
-web form. Designed to be embeddable in another page via `<iframe>`.
+A small Flask app that exposes the `schubmult_*` and `grothmult_*` CLI scripts (ordinary, double,
+quantum and quantum double Schubert and Grothendieck products) through a web form. Designed to be
+embeddable in another page via `<iframe>`.
 
 ## Run
 
@@ -29,7 +30,7 @@ Then visit:
 
 ```json
 {
-  "flavor": "py" | "groth" | "double" | "q" | "q_double",
+  "flavor": "py" | "groth" | "double" | "groth_double" | "q" | "groth_q" | "q_double" | "groth_q_double",
   "perms": "3 1 2 - 2 1 3",
   "ascode": false,
   "coprod": false,
