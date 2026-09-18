@@ -194,7 +194,9 @@ grothmult_py = "schubmult._scripts.grothmult_py:main"
 schubmult_double = "schubmult._scripts.schubmult_double:main"
 grothmult_double = "schubmult._scripts.grothmult_double:main"
 schubmult_q = "schubmult._scripts.schubmult_q:main"
+grothmult_q = "schubmult._scripts.grothmult_q:main"
 schubmult_q_double = "schubmult._scripts.schubmult_q_double:main"
+grothmult_q_double = "schubmult._scripts.grothmult_q_double:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

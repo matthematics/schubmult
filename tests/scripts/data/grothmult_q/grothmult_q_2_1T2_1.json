@@ -1,0 +1,29 @@
+{
+ "perms": [
+  [
+   2,
+   1
+  ],
+  [
+   2,
+   1
+  ]
+ ],
+ "pr": true,
+ "ascode": false,
+ "mult": false,
+ "parabolic": [],
+ "slow": false,
+ "disp_mode": "basic",
+ "debug": false,
+ "secret": false,
+ "mulstring": "",
+ "cmd_line": [
+  "grothmult_q",
+  "2",
+  "1",
+  "-",
+  "2",
+  "1"
+ ]
+}

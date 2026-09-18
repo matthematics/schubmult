@@ -87,6 +87,8 @@ schubmult_q 2 1 3 - 2 1 3                          # quantum
 schubmult_q_double 2 1 3 - 2 1 3 --parabolic 1     # parabolic quantum double
 grothmult_py 2 1 3 - 2 1 3                         # Grothendieck
 grothmult_double 2 1 3 - 2 1 3                     # double Grothendieck (coefficients in y and β)
+grothmult_q 2 1 - 2 1                              # quantum Grothendieck (conjectural quantum K-Pieri rule; coefficients in q and β)
+grothmult_q_double 2 1 - 2 1 --mixed-var           # quantum double Grothendieck (coefficients in y, z, q and β)
 ```
 
 `--display-positive` writes double and quantum double coefficients as manifestly positive expressions in the differences `y_i - z_j` (Graham positivity), using integer programming to find a positive representative. Run any script with `--help` for the full option list.

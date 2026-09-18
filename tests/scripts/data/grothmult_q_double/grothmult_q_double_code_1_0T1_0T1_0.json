@@ -1,0 +1,45 @@
+{
+ "perms": [
+  [
+   1,
+   0
+  ],
+  [
+   1,
+   0
+  ],
+  [
+   1,
+   0
+  ]
+ ],
+ "pr": true,
+ "ascode": true,
+ "mult": false,
+ "display_positive": false,
+ "msg": false,
+ "down": false,
+ "check": true,
+ "same": true,
+ "expa": false,
+ "parabolic": [],
+ "slow": false,
+ "nilhecke": null,
+ "nilhecke_apply": null,
+ "disp_mode": "basic",
+ "debug": false,
+ "secret": false,
+ "mulstring": "",
+ "cmd_line": [
+  "grothmult_q_double",
+  "--code",
+  "1",
+  "0",
+  "-",
+  "1",
+  "0",
+  "-",
+  "1",
+  "0"
+ ]
+}
