@@ -385,8 +385,12 @@ def _top_block_support(u, k):
     return frozenset(support)
 
 
-def _top_block_coeff(u, w, k, zvar, var2, beta):
-    """Coefficient of ``G_w`` in ``prod_{i<=k}(x_i + zvar) G_u``: one factor per window position."""
+def _top_block_coeff(u, w, k, zvar, var2, beta, length=None):
+    """Coefficient of ``G_w`` in ``prod_{i<=k}(x_i + zvar) G_u``: one factor per window position.
+
+    ``length`` overrides the chain length ``l(w) - l(u)`` (the quantum kernel passes the
+    length of the quantum Bruhat chain, which differs by twice the ``q``-degree).
+    """
     window = [w[i] for i in range(k)]
     fixed = 0
     value = S.One
@@ -400,7 +404,8 @@ def _top_block_coeff(u, w, k, zvar, var2, beta):
             value *= S.One - beta * zvar
         else:
             value *= S.One / (S.One + beta * y)
-    power = (w.inv - u.inv) - (k - fixed)
+    d = w.inv - u.inv if length is None else length
+    power = d - (k - fixed)
     if power < 0:
         raise ValueError(f"negative beta power on support element: u={list(u)}, w={list(w)}, k={k}")
     return beta**power * value
@@ -572,7 +577,7 @@ def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
     return _frac_to_expr(_groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta), varl1, beta)
 
 
-def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
+def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length=None):
     r"""K-analogue of ``elem_sym_func`` for the vpath iteration.
 
     Coefficient of ``G_{u2}(x, varl1)`` contributed when layer ``i`` (block size
@@ -607,10 +612,13 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
     contributes ``1 + beta*y`` to the numerator and bumps the same atom, a chosen
     left entry contributes ``1 + beta*z`` and an unchosen one ``-beta``.  The
     numerator therefore stays polynomial and no symbolic cancellation is needed.
+
+    ``length`` overrides ``d = l(u2) - l(u1)``; the quantum kernel passes the length of
+    the quantum Bruhat chain instead.
     """
     from schubmult.symbolic.poly.schub_poly import call_zvars
 
-    d = u2.inv - u1.inv
+    d = u2.inv - u1.inv if length is None else length
     window2 = [u2[j] for j in range(k)]
     # alphabet entries: ("fixed", value) or ("left", None); out values only feed the denominator
     alphabet = []

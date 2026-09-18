@@ -132,7 +132,7 @@ def mult_poly_groth(coeff_dict, poly, var_x, beta):
     return ret
 
 
-def groth_elem_sym_coeff(k, u1, u2, vdiff, beta):
+def groth_elem_sym_coeff(k, u1, u2, vdiff, beta, length=None):
     r"""Coefficient of ``G_{u2}`` in ``E_{k - vdiff, k}(x; 0) G_{u1} = e_{k - vdiff}(x_1..x_k) G_{u1}``.
 
     The ``y = z = 0`` specialization of ``groth_double._groth_elem_sym_frac``.  Sort the
@@ -150,10 +150,12 @@ def groth_elem_sym_coeff(k, u1, u2, vdiff, beta):
     and to ``0`` otherwise.  At ``beta = 0`` only ``d = m``, ``p = L`` survive, i.e. the
     classical Pieri rule ``e_p(x_1..x_k) S_u = sum_{u ->_k w} S_w`` with ``p = k - d``
     (there ``L = 0`` for chains with distinct lower indices, so ``p = F = k - d``).
+
+    ``length`` overrides ``d``; the quantum kernel passes the quantum Bruhat chain length.
     """
     from math import comb
 
-    d = u2.inv - u1.inv
+    d = u2.inv - u1.inv if length is None else length
     window2 = [u2[j] for j in range(k)]
     fixed = left = 0
     for j in range(k):
