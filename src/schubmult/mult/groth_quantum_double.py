@@ -67,11 +67,16 @@ from math import comb
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.mult.groth_double import (
+    _ZERO_FRAC,
     _frac_add,
+    _frac_const,
+    _frac_is_zero,
     _frac_mul,
+    _frac_scale,
     _frac_to_expr,
     _genset,
     _groth_elem_sym_frac,
+    _probe_vals,
     _rank,
     _top_block_coeff,
     dgroth_to_dschub,
@@ -154,6 +159,12 @@ def quantum_pieri_chains(u, k):
 def _qmon(dvec, q_var):
     """``prod q_j ** D[j - 1]`` for an exponent tuple ``D`` (memoized)."""
     return prod([q_var[j + 1] ** e for j, e in enumerate(dvec) if e])
+
+
+@cache
+def _qmon_probed(dvec, q_var):
+    m = _qmon(dvec, q_var)
+    return m, _probe_vals(m)
 
 
 def _fate(u, w, k):
@@ -286,7 +297,7 @@ def _qgroth_schub_vpath_mul(perm_dict, v, var2, var3, beta, q_var, as_frac=False
         th.pop()
     if not th:
         if as_frac:
-            return {Permutation(w): (sympify(val), {}) for w, val in perm_dict.items()}
+            return {Permutation(w): _frac_const(val) for w, val in perm_dict.items()}
         return dict(perm_dict)
     mu = uncode(th)
     vmu = v * mu
@@ -294,34 +305,35 @@ def _qgroth_schub_vpath_mul(perm_dict, v, var2, var3, beta, q_var, as_frac=False
     ret_dict = {}
     for u, val in perm_dict.items():
         u = Permutation(u)
-        vpathsums = {u: {Permutation([1, 2]): (sympify(val), {})}}
+        vpathsums = {u: {Permutation([1, 2]): _frac_const(val)}}
         for index, k in enumerate(th):
             layer = vpathdicts[index]
             i = index + 1
             newpathsums = {}
             for up, sums in vpathsums.items():
-                live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if sumval[0] != S.Zero and v_iter in layer]
+                live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if v_iter in layer and not _frac_is_zero(sumval)]
                 if not live:
                     continue
                 for up2, (length, dvec) in quantum_pieri_chains(up, k).items():
-                    qmon = _qmon(dvec, q_var)
+                    qmon, qprobe = _qmon_probed(dvec, q_var)
                     bucket = None
                     for v_iter, sumval, steps in live:
                         for v2, vdiff, s in steps:
                             coeff = _groth_elem_sym_frac(k, i, up, up2, v_iter, v2, vdiff, var2, var3, beta, length=length)
-                            if coeff[0] == S.Zero:
+                            if coeff is _ZERO_FRAC:
                                 continue
-                            contrib = _frac_mul(sumval, (s * qmon * coeff[0], coeff[1]))
+                            sq = s * qmon
+                            contrib = _frac_mul(sumval, _frac_scale(coeff, sq, (s * qprobe[0], s * qprobe[1])))
                             if bucket is None:
                                 bucket = newpathsums.setdefault(up2, {})
                             bucket[v2] = _frac_add(bucket.get(v2), contrib, var2, beta)
             vpathsums = newpathsums
         for ep, sums in vpathsums.items():
             pair = sums.get(vmu)
-            if pair is not None and pair[0] != S.Zero:
+            if pair is not None and not _frac_is_zero(pair):
                 ret_dict[ep] = _frac_add(ret_dict.get(ep), pair, var2, beta)
     if as_frac:
-        return {w: f for w, f in ret_dict.items() if f[0] != S.Zero}
+        return {w: f for w, f in ret_dict.items() if not _frac_is_zero(f)}
     out = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
     return {w: coeff for w, coeff in out.items() if coeff != S.Zero}
 
@@ -350,8 +362,9 @@ def grothmult_q_double(perm_dict, v, var2=None, var3=None, beta=None, q_var=None
         return perm_dict
     ret = {}
     for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
+        cprobe = _probe_vals(coeff)
         for w, value in _qgroth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, q_var, as_frac=True).items():
-            ret[w] = _frac_add(ret.get(w), (coeff * value[0], value[1]), var2, beta)
+            ret[w] = _frac_add(ret.get(w), _frac_scale(value, coeff, cprobe), var2, beta)
     out = {w: _frac_to_expr(f, var2, beta) for w, f in ret.items()}
     return {w: coeff for w, coeff in out.items() if coeff != S.Zero}
 

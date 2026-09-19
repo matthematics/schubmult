@@ -538,18 +538,67 @@ def dgroth_to_dschub(v, var3, beta=None):
     return {Permutation(key): value for key, value in elem.items() if value != S.Zero}
 
 
+# Flat fractions are ``(numer, {atom: exp}, probes)`` with ``probes`` the exact values of ``numer``
+# at two fixed integer points (Schwartz--Zippel shadows), held as Python ints/Fractions so the
+# shadow arithmetic bypasses symengine's per-op dispatch.  Carrying the shadows through every
+# multiplication/addition makes the hidden-zero test free, and lets dead path sums be pruned
+# mid-recursion, without ever expanding or re-evaluating the (large, unexpanded) numerators.
+_PROBE_POINTS = ((1000003, 7919), (999983, 104729))
+_probe_index = {}
+
+
+def _to_py_number(v):
+    if isinstance(v, (int, Fraction)):
+        return v
+    if v.is_Integer:
+        return int(v)
+    if v.is_Rational:
+        num, den = v.get_num_den()
+        return Fraction(int(num), int(den))
+    raise TypeError(f"probe evaluation did not produce a rational number: {v!r}")
+
+
+def _probe_vals(expr):
+    """Exact values of ``expr`` at the two probe points; symbols are assigned coordinates on first sight."""
+    syms = getattr(expr, "free_symbols", None)
+    if not syms:
+        v = _to_py_number(expr)
+        return (v, v)
+    for s in syms:
+        _probe_index.setdefault(s, len(_probe_index))
+    return tuple(_to_py_number(expr.xreplace({s: base + step * _probe_index[s] for s in syms})) for base, step in _PROBE_POINTS)
+
+
+def _frac_is_zero(f):
+    p = f[2]
+    return p[0] == 0 and p[1] == 0
+
+
+def _frac_const(val):
+    """Flat fraction for a scalar (denominator-free) coefficient."""
+    val = sympify(val)
+    return (val, {}, _probe_vals(val))
+
+
+def _frac_scale(f, c, c_probes):
+    """``c * f`` for a scalar ``c`` with known probe values."""
+    n, d, p = f
+    return (c * n, d, (c_probes[0] * p[0], c_probes[1] * p[1]))
+
+
 def _frac_mul(f1, f2):
-    """Multiply two flat fractions ``(numer, {atom: exp})``; denominators multiply by adding exponents."""
-    n1, d1 = f1
-    n2, d2 = f2
+    """Multiply two flat fractions; denominators multiply by adding exponents."""
+    n1, d1, p1 = f1
+    n2, d2, p2 = f2
+    p = (p1[0] * p2[0], p1[1] * p2[1])
     if not d2:
-        return (n1 * n2, d1)
+        return (n1 * n2, d1, p)
     if not d1:
-        return (n1 * n2, d2)
+        return (n1 * n2, d2, p)
     d = dict(d1)
     for a, e in d2.items():
         d[a] = d.get(a, 0) + e
-    return (n1 * n2, d)
+    return (n1 * n2, d, p)
 
 
 @cache
@@ -558,62 +607,58 @@ def _atom_pow(varl1, beta, a, e):
     return (S.One + beta * varl1[a]) ** e
 
 
+@cache
+def _atom_probe(varl1, beta, a, e):
+    return _probe_vals(_atom_pow(varl1, beta, a, e))
+
+
 def _frac_add(f1, f2, varl1, beta):
     """Add two flat fractions over the LCM denominator.
 
     Each side is only scaled by the *missing* atoms ``(1 + beta*varl1[a])``, so the
     result stays a single-level fraction with a canonical atom-exponent denominator.
-    The numerator is left unexpanded (small, but possibly a hidden zero).
+    The numerator is left unexpanded.
     """
     if f1 is None:
         return f2
-    n1, d1 = f1
-    n2, d2 = f2
+    n1, d1, p1 = f1
+    n2, d2, p2 = f2
     if d1 == d2:
-        return (n1 + n2, d1)
+        return (n1 + n2, d1, (p1[0] + p2[0], p1[1] + p2[1]))
     d = dict(d1)
     for a, e in d2.items():
         if e > d.get(a, 0):
             d[a] = e
     m1 = S.One
     m2 = S.One
+    q1a = q1b = 1
+    q2a = q2b = 1
     for a, e in d.items():
         e1 = d1.get(a, 0)
         if e1 < e:
             m1 = m1 * _atom_pow(varl1, beta, a, e - e1)
+            pa, pb = _atom_probe(varl1, beta, a, e - e1)
+            q1a *= pa
+            q1b *= pb
         e2 = d2.get(a, 0)
         if e2 < e:
             m2 = m2 * _atom_pow(varl1, beta, a, e - e2)
-    return (n1 * m1 + n2 * m2, d)
-
-
-def _is_numerically_zero(expr):
-    """Cheap zero test for an unexpanded polynomial numerator: evaluate exactly at two fixed
-    integer points (Schwartz--Zippel); a nonzero polynomial vanishing at both is astronomically
-    unlikely, and this avoids the exponential cost of ``expand``.
-    """
-    syms = sorted(expr.free_symbols, key=str)
-    if not syms:
-        return expr == S.Zero
-    for base, step in ((1000003, 7919), (999983, 104729)):
-        if expr.xreplace({s: base + step * i for i, s in enumerate(syms)}) != 0:
-            return False
-    return True
+            pa, pb = _atom_probe(varl1, beta, a, e - e2)
+            q2a *= pa
+            q2b *= pb
+    return (n1 * m1 + n2 * m2, d, (p1[0] * q1a + p2[0] * q2a, p1[1] * q1b + p2[1] * q2b))
 
 
 def _frac_to_expr(f, varl1, beta):
-    """Reconstitute a flat fraction ``(numer, {atom: exp})`` as ``numer / prod (1 + beta*varl1[a])**exp``.
-
-    Returns ``S.Zero`` when the (unexpanded) numerator is a hidden zero, detected by
-    ``_is_numerically_zero`` rather than by expanding.
-    """
-    n, d = f
-    if n == S.Zero or _is_numerically_zero(n):
+    """Reconstitute a flat fraction as ``numer / prod (1 + beta*varl1[a])**exp``; ``S.Zero`` if the probes vanish."""
+    if _frac_is_zero(f):
         return S.Zero
+    n, d, _ = f
     den = S.One
     for a, e in d.items():
         if e:
             den = den * _atom_pow(varl1, beta, a, e)
+    return n / den
     return n / den
 
 
@@ -677,18 +722,26 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length
     if p < 0:
         return _ZERO_FRAC
     zidx = tuple(call_zvars(v1, v2, k, i)[: vdiff + 1])
-    value = _elem_sym_dp(alphabet, zidx, vdiff, varl1, varl2, beta)
-    if value == S.Zero:
+    value, vprobe = _elem_sym_dp_probed(alphabet, zidx, vdiff, varl1, varl2, beta)
+    if vprobe[0] == 0 and vprobe[1] == 0:
         return _ZERO_FRAC
-    return (_beta_pow(beta, d - movers) * value, denom)
+    bpow, bprobe = _beta_pow_probed(beta, d - movers)
+    return (bpow * value, denom, (bprobe[0] * vprobe[0], bprobe[1] * vprobe[1]))
 
 
-_ZERO_FRAC = (S.Zero, {})
+_ZERO_FRAC = (S.Zero, {}, (0, 0))
 
 
 @cache
-def _beta_pow(beta, e):
-    return beta**e
+def _beta_pow_probed(beta, e):
+    v = beta**e
+    return v, _probe_vals(v)
+
+
+@cache
+def _elem_sym_dp_probed(alphabet, zidx, vdiff, varl1, varl2, beta):
+    v = _elem_sym_dp(alphabet, zidx, vdiff, varl1, varl2, beta)
+    return v, _probe_vals(v)
 
 
 @cache
@@ -765,7 +818,7 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
         th.pop()
     if not th:
         if as_frac:
-            return {Permutation(w): (sympify(val), {}) for w, val in perm_dict.items()}
+            return {Permutation(w): _frac_const(val) for w, val in perm_dict.items()}
         return dict(perm_dict)
     mu = uncode(th)
     vmu = v * mu
@@ -773,14 +826,14 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
     ret_dict = {}
     for u, val in perm_dict.items():
         u = Permutation(u)
-        vpathsums = {u: {Permutation([1, 2]): (sympify(val), {})}}
+        vpathsums = {u: {Permutation([1, 2]): _frac_const(val)}}
         for index in range(len(th)):
             k = th[index]
             layer = vpathdicts[index]
             i = index + 1
             newpathsums = {}
             for up, sums in vpathsums.items():
-                live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if sumval[0] != S.Zero and v_iter in layer]
+                live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if v_iter in layer and not _frac_is_zero(sumval)]
                 if not live:
                     continue
                 for up2 in _top_block_support(up, k) | {up}:
@@ -788,21 +841,21 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
                     for v_iter, sumval, steps in live:
                         for v2, vdiff, s in steps:
                             coeff = _groth_elem_sym_frac(k, i, up, up2, v_iter, v2, vdiff, var2, var3, beta)
-                            if coeff[0] == S.Zero:
+                            if coeff is _ZERO_FRAC:
                                 continue
                             contrib = _frac_mul(sumval, coeff)
                             if s != 1:
-                                contrib = (s * contrib[0], contrib[1])
+                                contrib = _frac_scale(contrib, s, (s, s))
                             if bucket is None:
                                 bucket = newpathsums.setdefault(up2, {})
                             bucket[v2] = _frac_add(bucket.get(v2), contrib, var2, beta)
             vpathsums = newpathsums
         for ep, sums in vpathsums.items():
             pair = sums.get(vmu)
-            if pair is not None and pair[0] != S.Zero:
+            if pair is not None and not _frac_is_zero(pair):
                 ret_dict[ep] = _frac_add(ret_dict.get(ep), pair, var2, beta)
     if as_frac:
-        return {w: f for w, f in ret_dict.items() if f[0] != S.Zero}
+        return {w: f for w, f in ret_dict.items() if not _frac_is_zero(f)}
     ret = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
     return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
 
@@ -832,7 +885,8 @@ def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
         return perm_dict
     ret = {}
     for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
+        cprobe = _probe_vals(coeff)
         for w, value in _groth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, as_frac=True).items():
-            ret[w] = _frac_add(ret.get(w), (coeff * value[0], value[1]), var2, beta)
+            ret[w] = _frac_add(ret.get(w), _frac_scale(value, coeff, cprobe), var2, beta)
     out = {w: _frac_to_expr(f, var2, beta) for w, f in ret.items()}
     return {w: value for w, value in out.items() if value != S.Zero}
