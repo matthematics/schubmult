@@ -17,12 +17,8 @@ from schubmult.symbolic import (
     EXRAW,
     Add,
     CoercionFailed,
-    CompositeDomain,
-    DefaultPrinting,
-    DomainElement,
     Mul,
     Pow,
-    Ring,
     S,
     Symbol,
     expand,
@@ -37,13 +33,14 @@ from schubmult.symbolic.poly.variables import GeneratingSet
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
+from ..base_ring import BaseRing, BaseRingElement
 from .base_schubert_ring import BaseSchubertElement
 from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
 logger = get_logger(__name__)
 
 
-class NilHeckeElement(DomainElement, DefaultPrinting, dict):
+class NilHeckeElement(BaseRingElement):
     """An element of a `NilHeckeRing`: ``{Permutation: coeff}`` combination of divided-difference operators."""
 
     _op_priority = 1e200
@@ -205,7 +202,7 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
         return sstr(self)
 
 
-class NilHeckeRing(Ring, CompositeDomain):
+class NilHeckeRing(BaseRing):
     """The nilHecke ring in the alphabet ``genset``; see the module docstring. ``df`` is the standard instance."""
 
     def __str__(self):
@@ -218,7 +215,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         """Convert an element to a sympy expression (``as_expr``)."""
         return elem.as_expr()
 
-    def isobaric(self, perm, groth=False, *, groth_beta = None):
+    def isobaric(self, perm, groth=False, *, groth_beta = None, neg=False):
         """The isobaric divided difference ``pi_perm`` as a nilHecke element: ``pi_i = partial_i x_{i+1}``
         (or the Grothendieck version ``partial_i (1 + beta x_{i+1})`` with ``groth=True``), composed
         along a reduced word of ``perm``.
@@ -227,18 +224,20 @@ class NilHeckeRing(Ring, CompositeDomain):
         if perm.inv == 0:
             return self.one
         index = max(perm.descents())
-        elem = self.isobaric(perm.swap(index, index + 1), groth=groth)
-        elem = elem * self.from_dict({Permutation([]).swap(index, index + 1): S.One})
+        elem = self.isobaric(perm.swap(index, index + 1), groth=groth, neg=neg)
+        elem = elem * self(Permutation.ref_product(index + 1))
         if groth:
             if groth_beta is None:
                 from schubmult import Gx
                 groth_beta = Gx._beta
+            if neg:
+                return self.mul(elem, (1 - groth_beta*self.genset[index + 2]))
             return self.mul(elem, (1 + groth_beta*self.genset[index + 2]))
         return self.mul(elem, self.genset[index + 1])
 
-    def g_isobaric(self, perm):
+    def g_isobaric(self, perm, neg=False):
         """``isobaric(perm, groth=True)``."""
-        return self.isobaric(perm, groth=True)
+        return self.isobaric(perm, groth=True, neg=neg)
 
     def fgp_operator(self, k, length, q_var=GeneratingSet("q")):
         """The Fomin-Gelfand-Postnikov quantization of ``x_k`` as a nilHecke element:

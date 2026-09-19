@@ -50,6 +50,17 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
     def eval(self, *args):
         pass
 
+    def simplify(self):
+        """Simplify the coefficients of the elements of this ring."""
+        new_elem = self.__class__(self)
+        for key in self:
+            try:
+                new_elem[key] = new_elem[key].simplify()
+            except AttributeError:
+                pass
+        return new_elem
+
+
     def _sympystr(self, printer):
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
