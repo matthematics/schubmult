@@ -58,7 +58,7 @@ from functools import cache
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
-from schubmult.symbolic import Add, Mul, Pow, S, prod, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, sympify
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
 from schubmult.utils.perm_utils import add_perm_dict
 
