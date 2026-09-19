@@ -7,9 +7,16 @@ wrappers return ``None`` in that case). Set ``SCHUBMULT_NO_CPP=1`` to force the 
 """
 
 import os
+import warnings
 
 if os.environ.get("SCHUBMULT_NO_CPP"):
     _cpp = None
+    warnings.warn(
+        "schubmult: SCHUBMULT_NO_CPP is set; schubmult_py/schubmult_double/schubmult_q_fast/"
+        "schubmult_q_double_fast will use the (much slower) pure-Python kernels.",
+        RuntimeWarning,
+        stacklevel=2,
+    )
 else:
     try:
         from schubmult import schubmult_cpp as _cpp

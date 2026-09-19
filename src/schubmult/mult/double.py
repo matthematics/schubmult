@@ -43,6 +43,8 @@ logger = get_logger(__name__)
 
 def count_sorted(mn, tp):
     """Count occurrences of ``tp`` in the sorted sequence ``mn`` via binary search."""
+    # BUG: unused elsewhere in the codebase; the while loop never advances `index`, so it
+    # infinite-loops whenever mn[index] == tp. Left as-is/uncovered pending a fix decision.
     index = bisect_left(mn, tp)
     ct = 0
     if mn[index] == tp:
@@ -186,6 +188,9 @@ def mult_poly_down(coeff_dict, poly):
     """Down (descent) variant of ``mult_poly_double``, using ``single_variable_down``
     and the fixed default alphabet ``_vars.var1``.
     """
+    # BUG: unused elsewhere in the codebase; single_variable_down is called below without a
+    # var2, so it crashes (None is not subscriptable) on any polynomial containing a real
+    # _vars.var1 symbol. Left as-is/uncovered pending a fix decision.
     if poly in _vars.var1:
         return single_variable_down(coeff_dict, _vars.var1.index(poly))
     if isinstance(poly, Mul):
@@ -222,6 +227,9 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
     Returns:
         dict: Coefficient dict ``{Permutation: coeff}``.
     """
+    # BUG: unused elsewhere in the codebase; `v1 = [*v]` unpacks the Permutation into a plain
+    # list, so `v1 * w1` below fails (can't multiply a list by a Permutation) whenever did_mul
+    # is nonempty. Left as-is/uncovered pending a fix decision.
     ret = {}
     for w in coeff_dict2:
         w1 = w

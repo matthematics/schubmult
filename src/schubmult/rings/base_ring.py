@@ -318,24 +318,18 @@ class BaseRing(Ring, CompositeDomain):
         """Hook: coerce ``other`` for addition, or ``None``."""
         return
 
-    def from_dict(self, element, orig_domain=None):
+    def from_dict(self, element):
         """Build an element from ``{key: coeff}``, coercing each coefficient via ``domain_new`` and dropping zeros."""
-        domain_new = self.domain_new
-        poly = self.zero
-
-        for monom, coeff in element.items():
-            coeff = domain_new(coeff, orig_domain)
-            if coeff != self.domain.zero:
-                poly[monom] = coeff
+        zero = self.domain.zero
+        poly = self.zero.__class__({k: sympify(v) for k, v in element.items() if v != zero})
+        poly.ring = self
         return poly
 
     def from_dict_unchecked(self, element):
         """from_dict for coefficients already known to lie in the domain (drops structural zeros only)."""
-        poly = self.zero
         zero = self.domain.zero
-        for monom, coeff in element.items():
-            if coeff != zero:
-                poly[monom] = coeff
+        poly = self.zero.__class__({k: v for k, v in element.items() if v != zero})
+        poly.ring = self
         return poly
 
     @property
