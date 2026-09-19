@@ -845,7 +845,8 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
                                 continue
                             contrib = _frac_mul(sumval, coeff)
                             if s != 1:
-                                contrib = _frac_scale(contrib, s, (s, s))
+                                si = int(s)
+                                contrib = _frac_scale(contrib, si, (si, si))
                             if bucket is None:
                                 bucket = newpathsums.setdefault(up2, {})
                             bucket[v2] = _frac_add(bucket.get(v2), contrib, var2, beta)

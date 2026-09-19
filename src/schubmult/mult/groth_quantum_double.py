@@ -322,8 +322,8 @@ def _qgroth_schub_vpath_mul(perm_dict, v, var2, var3, beta, q_var, as_frac=False
                             coeff = _groth_elem_sym_frac(k, i, up, up2, v_iter, v2, vdiff, var2, var3, beta, length=length)
                             if coeff is _ZERO_FRAC:
                                 continue
-                            sq = s * qmon
-                            contrib = _frac_mul(sumval, _frac_scale(coeff, sq, (s * qprobe[0], s * qprobe[1])))
+                            si = int(s)
+                            contrib = _frac_mul(sumval, _frac_scale(coeff, si * qmon, (si * qprobe[0], si * qprobe[1])))
                             if bucket is None:
                                 bucket = newpathsums.setdefault(up2, {})
                             bucket[v2] = _frac_add(bucket.get(v2), contrib, var2, beta)
