@@ -520,12 +520,13 @@ def _genset(var):
     return CustomGeneratingSet(var)
 
 
+@cache
 def dgroth_to_dschub(v, var3, beta=None):
     """Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
 
     ``sum_{v'} coeff_{v'} S_{v'}(x, var3) = G_v(x, var3)`` with coefficients in
     ``var3`` and ``beta``.  Exact but slow; delegates to ``grothendieck_poly``
-    with ``keep_as_schub=True``.
+    with ``keep_as_schub=True``.  Memoized; callers must not mutate the result.
     """
     from schubmult.symbolic.poly.schub_poly import grothendieck_poly
     from schubmult.symbolic.poly.variables import GeneratingSet
@@ -541,10 +542,20 @@ def _frac_mul(f1, f2):
     """Multiply two flat fractions ``(numer, {atom: exp})``; denominators multiply by adding exponents."""
     n1, d1 = f1
     n2, d2 = f2
+    if not d2:
+        return (n1 * n2, d1)
+    if not d1:
+        return (n1 * n2, d2)
     d = dict(d1)
     for a, e in d2.items():
         d[a] = d.get(a, 0) + e
     return (n1 * n2, d)
+
+
+@cache
+def _atom_pow(varl1, beta, a, e):
+    """``(1 + beta*varl1[a]) ** e``, memoized: these atoms are rebuilt constantly by the fraction helpers."""
+    return (S.One + beta * varl1[a]) ** e
 
 
 def _frac_add(f1, f2, varl1, beta):
@@ -558,18 +569,52 @@ def _frac_add(f1, f2, varl1, beta):
         return f2
     n1, d1 = f1
     n2, d2 = f2
-    d = {a: max(d1.get(a, 0), d2.get(a, 0)) for a in set(d1) | set(d2)}
-    m1 = prod([(S.One + beta * varl1[a]) ** (d[a] - d1.get(a, 0)) for a in d])
-    m2 = prod([(S.One + beta * varl1[a]) ** (d[a] - d2.get(a, 0)) for a in d])
+    if d1 == d2:
+        return (n1 + n2, d1)
+    d = dict(d1)
+    for a, e in d2.items():
+        if e > d.get(a, 0):
+            d[a] = e
+    m1 = S.One
+    m2 = S.One
+    for a, e in d.items():
+        e1 = d1.get(a, 0)
+        if e1 < e:
+            m1 = m1 * _atom_pow(varl1, beta, a, e - e1)
+        e2 = d2.get(a, 0)
+        if e2 < e:
+            m2 = m2 * _atom_pow(varl1, beta, a, e - e2)
     return (n1 * m1 + n2 * m2, d)
 
 
+def _is_numerically_zero(expr):
+    """Cheap zero test for an unexpanded polynomial numerator: evaluate exactly at two fixed
+    integer points (Schwartz--Zippel); a nonzero polynomial vanishing at both is astronomically
+    unlikely, and this avoids the exponential cost of ``expand``.
+    """
+    syms = sorted(expr.free_symbols, key=str)
+    if not syms:
+        return expr == S.Zero
+    for base, step in ((1000003, 7919), (999983, 104729)):
+        if expr.subs({s: base + step * i for i, s in enumerate(syms)}) != 0:
+            return False
+    return True
+
+
 def _frac_to_expr(f, varl1, beta):
-    """Reconstitute a flat fraction ``(numer, {atom: exp})`` as ``numer / prod (1 + beta*varl1[a])**exp``."""
+    """Reconstitute a flat fraction ``(numer, {atom: exp})`` as ``numer / prod (1 + beta*varl1[a])**exp``.
+
+    Returns ``S.Zero`` when the (unexpanded) numerator is a hidden zero, detected by
+    ``_is_numerically_zero`` rather than by expanding.
+    """
     n, d = f
-    if n == S.Zero:
+    if n == S.Zero or _is_numerically_zero(n):
         return S.Zero
-    return n / prod([(S.One + beta * varl1[a]) ** e for a, e in d.items() if e])
+    den = S.One
+    for a, e in d.items():
+        if e:
+            den = den * _atom_pow(varl1, beta, a, e)
+    return n / den
 
 
 def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
@@ -577,6 +622,7 @@ def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
     return _frac_to_expr(_groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta), varl1, beta)
 
 
+@cache
 def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length=None):
     r"""K-analogue of ``elem_sym_func`` for the vpath iteration.
 
@@ -615,12 +661,41 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length
 
     ``length`` overrides ``d = l(u2) - l(u1)``; the quantum kernel passes the length of
     the quantum Bruhat chain instead.
+
+    Memoized in two layers: the window fate ``(alphabet, denom, movers)`` on ``(k, u1, u2)``
+    and the symbolic DP on ``(alphabet, z-indices, vdiff)``, so distinct ``(u1, u2)`` pairs
+    with the same fate pattern and distinct ``(v1, v2)`` with the same ``z`` selection share
+    work.  The returned denominator dict is shared and must not be mutated.
     """
     from schubmult.symbolic.poly.schub_poly import call_zvars
 
+    alphabet, denom, movers = _window_fate(k, u1, u2)
     d = u2.inv - u1.inv if length is None else length
+    if d < movers:
+        return _ZERO_FRAC
+    p = len(alphabet) - vdiff
+    if p < 0:
+        return _ZERO_FRAC
+    zidx = tuple(call_zvars(v1, v2, k, i)[: vdiff + 1])
+    value = _elem_sym_dp(alphabet, zidx, vdiff, varl1, varl2, beta)
+    if value == S.Zero:
+        return _ZERO_FRAC
+    return (_beta_pow(beta, d - movers) * value, denom)
+
+
+_ZERO_FRAC = (S.Zero, {})
+
+
+@cache
+def _beta_pow(beta, e):
+    return beta**e
+
+
+@cache
+def _window_fate(k, u1, u2):
+    """``(alphabet, denom, movers)`` for the window ``u1(1..k) -> u2``; see ``_groth_elem_sym_frac``."""
     window2 = [u2[j] for j in range(k)]
-    # alphabet entries: ("fixed", value) or ("left", None); out values only feed the denominator
+    # alphabet entries: fixed value, or None for a left-mover; out values only feed the denominator
     alphabet = []
     denom = {}
     movers = 0
@@ -635,13 +710,15 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length
                 alphabet.append(None)
             else:
                 denom[value] = denom.get(value, 0) + 1
-    if d < movers:
-        return (S.Zero, {})
-    n = len(alphabet)
-    p = n - vdiff
-    if p < 0:
-        return (S.Zero, {})
-    zvars = [varl2[a] for a in call_zvars(v1, v2, k, i)][: vdiff + 1]
+    return tuple(alphabet), denom, movers
+
+
+@cache
+def _elem_sym_dp(alphabet, zidx, vdiff, varl1, varl2, beta):
+    """``E_{n - vdiff, n}(alphabet; z)`` numerator by subset DP; see ``_groth_elem_sym_frac``."""
+    p = len(alphabet) - vdiff
+    zvars = [varl2[a] for a in zidx]
+    neg_beta = -beta
 
     # state[c] = sum over ways to have chosen c entries among those processed so far;
     # a state with more than q = n - p skips can never reach p and is dropped
@@ -655,17 +732,17 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length
             # the c-th chosen entry (0-indexed) sitting at position idx pairs with z_{idx - c}
             if value is None:
                 if idx - 1 - c < vdiff:
-                    new_state[c] += acc * (-beta)
+                    new_state[c] += acc * neg_beta
                 if c < p:
                     new_state[c + 1] += acc * (S.One + beta * zvars[idx - c - 1])
             else:
-                y = varl1[value]
+                one_plus = _atom_pow(varl1, beta, value, 1)
                 if idx - 1 - c < vdiff:
-                    new_state[c] += acc * (S.One + beta * y)
+                    new_state[c] += acc * one_plus
                 if c < p:
-                    new_state[c + 1] += acc * (-y - zvars[idx - c - 1] * (S.One + beta * y))
+                    new_state[c + 1] += acc * (-varl1[value] - zvars[idx - c - 1] * one_plus)
         state = new_state
-    return (beta ** (d - movers) * state[p], denom)
+    return state[p]
 
 
 def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
@@ -699,21 +776,25 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
         vpathsums = {u: {Permutation([1, 2]): (sympify(val), {})}}
         for index in range(len(th)):
             k = th[index]
+            layer = vpathdicts[index]
+            i = index + 1
             newpathsums = {}
             for up, sums in vpathsums.items():
+                live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if sumval[0] != S.Zero and v_iter in layer]
+                if not live:
+                    continue
                 for up2 in _top_block_support(up, k) | {up}:
-                    for v_iter, steps in vpathdicts[index].items():
-                        sumval = sums.get(v_iter)
-                        if sumval is None or sumval[0] == S.Zero:
-                            continue
+                    bucket = None
+                    for v_iter, sumval, steps in live:
                         for v2, vdiff, s in steps:
-                            coeff = _groth_elem_sym_frac(k, index + 1, up, up2, v_iter, v2, vdiff, var2, var3, beta)
+                            coeff = _groth_elem_sym_frac(k, i, up, up2, v_iter, v2, vdiff, var2, var3, beta)
                             if coeff[0] == S.Zero:
                                 continue
                             contrib = _frac_mul(sumval, coeff)
                             if s != 1:
                                 contrib = (s * contrib[0], contrib[1])
-                            bucket = newpathsums.setdefault(up2, {})
+                            if bucket is None:
+                                bucket = newpathsums.setdefault(up2, {})
                             bucket[v2] = _frac_add(bucket.get(v2), contrib, var2, beta)
             vpathsums = newpathsums
         for ep, sums in vpathsums.items():

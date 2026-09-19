@@ -101,6 +101,7 @@ class GeneratingSet(GeneratingSet_base):
         obj = GeneratingSet_base.__new__(_class, name)
         obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(DEF_GENSET_SIZE)])
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
+        obj._hash = hash(name)
         return obj
 
     # def shift(self, index):
@@ -144,13 +145,13 @@ class GeneratingSet(GeneratingSet_base):
         return len(self._symbols_arr)
 
     def __hash__(self):
-        return hash(self.label)
+        return self._hash
 
     def __iter__(self):
         yield from [self[i] for i in range(len(self))]
 
     def __eq__(self, other):
-        return isinstance(other, GeneratingSet) and self.label == other.label
+        return self is other or (isinstance(other, GeneratingSet) and self.label == other.label)
 
 
 class MaskedGeneratingSet(GeneratingSet_base):

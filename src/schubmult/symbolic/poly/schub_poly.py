@@ -704,7 +704,7 @@ def grothendieck_poly_with_ring(perm, ring, beta, keep_as_schub=False):
     diff_perm = (~perm) * dom_perm
     first_potato = dom_groth(dom_perm, ring, beta=beta)
     schub_dict = apply_isobaric_to_schub_dict(diff_perm, dict(first_potato.items()), ring.coeff_genset, beta)
-    result = ring.from_dict({k: v.expand() for k, v in schub_dict.items()})
+    result = ring.from_dict(schub_dict)
     if keep_as_schub:
         return result
     return result.as_polynomial()
