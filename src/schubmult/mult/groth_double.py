@@ -596,7 +596,7 @@ def _is_numerically_zero(expr):
     if not syms:
         return expr == S.Zero
     for base, step in ((1000003, 7919), (999983, 104729)):
-        if expr.subs({s: base + step * i for i, s in enumerate(syms)}) != 0:
+        if expr.xreplace({s: base + step * i for i, s in enumerate(syms)}) != 0:
             return False
     return True
 
