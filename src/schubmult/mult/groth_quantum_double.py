@@ -77,7 +77,7 @@ from schubmult.mult.groth_double import (
     dgroth_to_dschub,
     groth_elem_sym_poly,
 )
-from schubmult.symbolic import S, expand, prod, sympify, sympify_sympy
+from schubmult.symbolic import S, prod, sympify, sympify_sympy
 from schubmult.symbolic.poly.schub_poly import _vars
 from schubmult.utils.perm_utils import add_perm_dict
 from schubmult.utils.schub_lib import compute_vpathdicts
@@ -317,8 +317,7 @@ def _qgroth_schub_vpath_mul(perm_dict, v, var2, var3, beta, q_var, as_frac=False
                 ret_dict[ep] = _frac_add(ret_dict.get(ep), pair, var2, beta)
     if as_frac:
         return {w: f for w, f in ret_dict.items() if f[0] != S.Zero}
-    ret = {w: _frac_to_expr((expand(f[0]), f[1]), var2, beta) for w, f in ret_dict.items()}
-    return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
+    return {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items() if f[0] != S.Zero}
 
 
 def grothmult_q_double(perm_dict, v, var2=None, var3=None, beta=None, q_var=None):
@@ -347,9 +346,7 @@ def grothmult_q_double(perm_dict, v, var2=None, var3=None, beta=None, q_var=None
     for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
         for w, value in _qgroth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, q_var, as_frac=True).items():
             ret[w] = _frac_add(ret.get(w), (coeff * value[0], value[1]), var2, beta)
-    # expand the numerators so structurally hidden zeros are dropped
-    out = {w: _frac_to_expr((expand(f[0]), f[1]), var2, beta) for w, f in ret.items()}
-    return {w: value for w, value in out.items() if value != S.Zero}
+    return {w: _frac_to_expr(f, var2, beta) for w, f in ret.items() if f[0] != S.Zero}
 
 
 def grothmult_q_double_dict(perm_dict1, perm_dict2, var2=None, var3=None, beta=None, q_var=None):
