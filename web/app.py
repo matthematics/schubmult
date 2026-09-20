@@ -23,6 +23,12 @@ Configuration via environment variables:
     SCHUBMULT_ENABLE_MULT       Set to "1" to enable the --mult polynomial
                                 factor (passes through sympify; treat as
                                 untrusted). Default: disabled.
+    SCHUBMULT_MP_START_METHOD  multiprocessing start method for per-request
+                                workers: "fork" or "spawn". Default: "fork"
+                                on Linux (reuses this process's already-
+                                imported sympy/symengine/schubmult via
+                                copy-on-write, avoiding per-request re-import
+                                cost), "spawn" elsewhere.
 """
 
 import io
@@ -32,6 +38,7 @@ import multiprocessing as mp
 import os
 import re
 import shlex
+import sys
 import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
@@ -107,6 +114,22 @@ def _script_module(flavor: str):
         raise ValueError(f"Unknown flavor {flavor!r}")
     return importlib.import_module(f"schubmult._scripts.{FLAVORS[flavor][0]}")
 
+
+def _warm_up() -> None:
+    """Import every script module (and the sympy/symengine/schubmult stack
+    they drag in) once, right now, in this process. Per-request computation
+    runs in a forked child that inherits this already-imported memory via
+    copy-on-write, so the multi-second cold-import cost is paid once at
+    startup instead of on every user's first request per flavor."""
+    for flavor in FLAVORS:
+        try:
+            _script_module(flavor)
+        except Exception:
+            pass  # missing optional deps (e.g. pulp) shouldn't block startup
+
+
+_warm_up()
+
 # ---------- config ----------
 ALLOWED_ORIGINS = [
     o.strip() for o in os.environ.get("SCHUBMULT_ALLOWED_ORIGINS", "").split(",")
@@ -119,6 +142,15 @@ MAX_INT_VALUE = 64  # reject permutation entries above this
 # Some inputs blow up combinatorially and can print gigabytes; cap captured
 # stdout/stderr so a runaway script can't exhaust memory or the response body.
 MAX_OUTPUT_BYTES = int(os.environ.get("SCHUBMULT_MAX_OUTPUT_BYTES", str(1024 * 1024)))
+# fork() lets each request's child process reuse this (already warmed-up)
+# process's imported sympy/symengine/schubmult modules via copy-on-write,
+# instead of re-importing them from scratch (the ~seconds-long "warmup").
+# fork is only safe/available on Linux (which is what PythonAnywhere runs);
+# elsewhere fall back to spawn.
+MP_START_METHOD = os.environ.get(
+    "SCHUBMULT_MP_START_METHOD",
+    "fork" if sys.platform.startswith("linux") else "spawn",
+)
 
 
 class _CappedBuffer(io.StringIO):
@@ -310,7 +342,7 @@ def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
     if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") == "1":
         return _run_inline(flavor, argv)
     try:
-        ctx = mp.get_context("spawn")
+        ctx = mp.get_context(MP_START_METHOD)
         q = ctx.Queue()
         p = ctx.Process(target=_worker, args=(flavor, argv, q), daemon=True)
         p.start()
