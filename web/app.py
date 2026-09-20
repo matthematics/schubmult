@@ -32,6 +32,7 @@ import multiprocessing as mp
 import os
 import re
 import shlex
+import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 
@@ -261,6 +262,8 @@ def _worker(flavor: str, argv: list[str], q) -> None:
     """Subprocess entrypoint: run the script's main() and ship back its stdio."""
     out = _CappedBuffer(MAX_OUTPUT_BYTES, stop_on_cap=True)
     err = _CappedBuffer(MAX_OUTPUT_BYTES)
+    start = time.perf_counter()
+    elapsed = 0.0
     try:
         mod = _script_module(flavor)
         with redirect_stdout(out), redirect_stderr(err):
@@ -271,18 +274,20 @@ def _worker(flavor: str, argv: list[str], q) -> None:
             except Exception:
                 err.write(traceback.format_exc())
     finally:
-        q.put((out.getvalue(), err.getvalue()))
+        elapsed = time.perf_counter() - start
+        q.put((out.getvalue(), err.getvalue(), elapsed))
 
 
-def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
+def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
     """Fallback: run in-process (no timeout). Used when multiprocessing fails."""
     out = _CappedBuffer(MAX_OUTPUT_BYTES, stop_on_cap=True)
     err = _CappedBuffer(MAX_OUTPUT_BYTES)
+    start = time.perf_counter()
     try:
         try:
             mod = _script_module(flavor)
         except ValueError as e:
-            return ("", f"{e}\n", False)
+            return ("", f"{e}\n", False, 0.0)
         with redirect_stdout(out), redirect_stderr(err):
             try:
                 mod.main(argv)
@@ -292,14 +297,15 @@ def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
                 err.write(traceback.format_exc())
     except Exception:
         err.write(traceback.format_exc())
-    return (out.getvalue(), err.getvalue(), False)
+    return (out.getvalue(), err.getvalue(), False, time.perf_counter() - start)
 
 
-def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
+def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
     """Run the script in a child process with a hard timeout, falling back
     to in-process execution if multiprocessing isn't available.
 
-    Returns (stdout, stderr, timed_out).
+    Returns (stdout, stderr, timed_out, elapsed_seconds). elapsed_seconds
+    times only the script's main() call, not process spawn/import overhead.
     """
     if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") == "1":
         return _run_inline(flavor, argv)
@@ -318,12 +324,12 @@ def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
         p.join(1.0)
         if p.is_alive():
             p.kill()
-        return ("", f"Computation exceeded {COMPUTE_TIMEOUT}s timeout.\n", True)
+        return ("", f"Computation exceeded {COMPUTE_TIMEOUT}s timeout.\n", True, COMPUTE_TIMEOUT)
     if q.empty():
         return ("", "Worker exited without producing output. "
-                    "Set SCHUBMULT_DISABLE_SUBPROCESS=1 to run inline.\n", False)
-    out, err = q.get()
-    return (out, err, False)
+                    "Set SCHUBMULT_DISABLE_SUBPROCESS=1 to run inline.\n", False, 0.0)
+    out, err, elapsed = q.get()
+    return (out, err, False, elapsed)
 
 
 # ---------- routes ----------
@@ -418,7 +424,7 @@ def compute():
         return jsonify({"ok": False, "error": str(e)}), 400
 
     _log_access(flavor, argv, status="run")
-    stdout, stderr, timed_out = _run_script(flavor, argv)
+    stdout, stderr, timed_out, elapsed_seconds = _run_script(flavor, argv)
     if timed_out:
         _log_access(flavor, argv, status="timeout")
     return jsonify({
@@ -427,6 +433,7 @@ def compute():
         "stdout": stdout,
         "stderr": stderr,
         "timed_out": timed_out,
+        "elapsed_seconds": round(elapsed_seconds, 3),
     })
 
 

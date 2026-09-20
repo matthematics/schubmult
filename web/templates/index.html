@@ -208,6 +208,9 @@
         return;
       }
       status.textContent = 'done';
+      if (typeof j.elapsed_seconds === 'number') {
+        status.textContent += ` (computed in ${j.elapsed_seconds.toFixed(3)}s)`;
+      }
       argvEl.textContent = (j.argv || []).join(' ');
       outEl.textContent = j.stdout || '(no output)';
       if (j.stderr && j.stderr.trim()) {
