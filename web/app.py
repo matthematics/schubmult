@@ -121,25 +121,36 @@ MAX_OUTPUT_BYTES = int(os.environ.get("SCHUBMULT_MAX_OUTPUT_BYTES", str(1024 * 1
 
 
 class _CappedBuffer(io.StringIO):
-    """StringIO that discards writes past a size cap instead of growing forever."""
+    """StringIO that discards writes past a size cap instead of growing forever.
 
-    def __init__(self, max_chars: int):
+    With stop_on_cap=True, hitting the cap raises BrokenPipeError instead of
+    silently swallowing further writes. Every script's main() already wraps
+    its print loop in `except BrokenPipeError: pass` (so it behaves nicely
+    when piped into e.g. `head`), so raising here unwinds straight out of the
+    loop instead of letting it keep formatting/stringifying (potentially huge)
+    remaining terms that would just be discarded anyway.
+    """
+
+    def __init__(self, max_chars: int, *, stop_on_cap: bool = False):
         super().__init__()
         self._max_chars = max_chars
         self._truncated = False
+        self._stop_on_cap = stop_on_cap
 
     def write(self, s: str) -> int:
-        if not self._truncated:
-            remaining = self._max_chars - self.tell()
-            if remaining <= 0:
-                self._truncated = True
-                super().write(f"\n... [output truncated at {self._max_chars} characters]\n")
-            elif len(s) > remaining:
-                super().write(s[:remaining])
-                self._truncated = True
-                super().write(f"\n... [output truncated at {self._max_chars} characters]\n")
-            else:
-                super().write(s)
+        if self._truncated:
+            if self._stop_on_cap:
+                raise BrokenPipeError("output truncated")
+            return len(s)
+        remaining = self._max_chars - self.tell()
+        if remaining <= 0 or len(s) > remaining:
+            super().write(s[:max(remaining, 0)])
+            self._truncated = True
+            super().write(f"\n... [output truncated at {self._max_chars} characters]\n")
+            if self._stop_on_cap:
+                raise BrokenPipeError("output truncated")
+        else:
+            super().write(s)
         return len(s)
 
 
@@ -248,13 +259,14 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
 
 def _worker(flavor: str, argv: list[str], q) -> None:
     """Subprocess entrypoint: run the script's main() and ship back its stdio."""
-    out, err = _CappedBuffer(MAX_OUTPUT_BYTES), _CappedBuffer(MAX_OUTPUT_BYTES)
+    out = _CappedBuffer(MAX_OUTPUT_BYTES, stop_on_cap=True)
+    err = _CappedBuffer(MAX_OUTPUT_BYTES)
     try:
         mod = _script_module(flavor)
         with redirect_stdout(out), redirect_stderr(err):
             try:
                 mod.main(argv)
-            except SystemExit:
+            except (SystemExit, BrokenPipeError):
                 pass
             except Exception:
                 err.write(traceback.format_exc())
@@ -264,7 +276,8 @@ def _worker(flavor: str, argv: list[str], q) -> None:
 
 def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
     """Fallback: run in-process (no timeout). Used when multiprocessing fails."""
-    out, err = _CappedBuffer(MAX_OUTPUT_BYTES), _CappedBuffer(MAX_OUTPUT_BYTES)
+    out = _CappedBuffer(MAX_OUTPUT_BYTES, stop_on_cap=True)
+    err = _CappedBuffer(MAX_OUTPUT_BYTES)
     try:
         try:
             mod = _script_module(flavor)
@@ -273,7 +286,7 @@ def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool]:
         with redirect_stdout(out), redirect_stderr(err):
             try:
                 mod.main(argv)
-            except SystemExit:
+            except (SystemExit, BrokenPipeError):
                 pass
             except Exception:
                 err.write(traceback.format_exc())
