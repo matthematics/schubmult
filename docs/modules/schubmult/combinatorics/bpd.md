@@ -271,26 +271,6 @@ def delete_top_row()
 
 Remove the top row, first popping it off with `pop_op` until it's exhausted.
 
-<a id="schubmult.combinatorics.bpd.BPD.delete_row"></a>
-
-#### delete\_row
-
-```python
-def delete_row(row: int) -> BPD
-```
-
-Remove ``row`` by tracing its pipe out to the boundary and dropping the corresponding grid row/column.
-
-<a id="schubmult.combinatorics.bpd.BPD.prepend_row"></a>
-
-#### prepend\_row
-
-```python
-def prepend_row(value_of_row: int) -> BPD
-```
-
-Insert a new top row realizing the given permutation value, growing the permutation by one.
-
 <a id="schubmult.combinatorics.bpd.BPD.append"></a>
 
 #### append
@@ -311,7 +291,8 @@ pipes across the boundary to resolve the joining tiles.
 def from_bruhat_path(cls, path: Sequence[Permutation]) -> BPD
 ```
 
-Create a BPD from a Bruhat path.
+Create a BPD from a Bruhat path, as per Yu
+"Embedding bumpless pipedreams as Bruhat chains" (2024)
 
 <a id="schubmult.combinatorics.bpd.BPD.row_from_k_chain"></a>
 
@@ -339,6 +320,7 @@ k-chain from u to w and constructs a row of n tiles based on that chain.
 
   1D numpy array of TileType values representing the row
   
+  From Yu "Embedding bumpless pipedreams as Bruhat chains" (2024):
   Definition 3.15 cases (for tile at position (row, c)):
   - If chain swaps c with larger but not smaller: ELBOW_SE (⌜)
   - If chain swaps c with both larger and smaller: CROSS (╋)
@@ -424,6 +406,7 @@ def co_bpd()
 ```
 
 The complementary BPD: swap HORIZ<->CROSS and VERT<->BLANK, reading rows bottom to top.
+See Weigandt, "Changing Bases with Pipe Dream Combinatorics" (2025)
 
 <a id="schubmult.combinatorics.bpd.BPD.groth_to_schub"></a>
 
@@ -461,7 +444,7 @@ Row-preserving disjoint union.
 
 This keeps both summands on the same row indices by placing them side-by-side,
 with a single horizontal connector column between them.
-The result is intended to preserve row placement of blanks and may be unreduced.
+The result is intended to preserve row placement of blanks.
 
 <a id="schubmult.combinatorics.bpd.BPD.disjoint_union_block_diag"></a>
 
@@ -510,10 +493,10 @@ This is a convenience property that delegates to perm.inv.
 def length_vector() -> tuple[int, ...]
 ```
 
-Compute the length vector of the permutation represented by this BPD.
+Compute the length vector of the BPD.
 
 The length vector is a tuple (l_1, l_2, ..., l_n) where l_i is the number
-of crossings in row i.
+of blanks (weighty tiles) in row i.
 
 **Returns**:
 

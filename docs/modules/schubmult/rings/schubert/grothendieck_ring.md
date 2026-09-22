@@ -113,7 +113,7 @@ Multiply by an expression by first converting it into the Grothendieck basis.
 def cached_product(u, v, basis2)
 ```
 
-Structure constants ``c^w_{u,v}(beta)`` via ``groth_mul_full_with_ring``; only same-ring products supported.
+Structure constants ``c^w_{u,v}(beta)`` via `schubmult.mult.groth.grothmult_py`; only same-ring products supported.
 
 <a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.cached_positive_product"></a>
 

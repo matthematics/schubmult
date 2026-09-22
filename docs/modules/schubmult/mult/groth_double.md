@@ -260,9 +260,15 @@ Closed positive Molev--Sagan Pieri rule (conjectural; verified exhaustively on
 where the factor ``f_i`` depends on the fate of the window value ``u(i)``:
 
 * ``u(i) = w(i)`` (the set ``Q``):  ``(z(1 + beta*y_{u(i)}) - y_{u(i)}) / (1 + beta*y_{u(i)})``,
-  i.e. ``z (+) (-)y_{u(i)}``, the K-theoretic analogue of ``z - y_{u(i)}``;
+  i.e. ``z + (-)y_{u(i)}`` with ``(-)y = -y/(1 + beta*y)`` the formal inverse, the
+  K-theoretic analogue of ``z - y_{u(i)}``;
 * ``u(i)`` stays in the window but moves left:  ``1 - beta*zvar``;
 * ``u(i)`` exits the window or moves right within it:  ``1/(1 + beta*y_{u(i)})``.
+
+Equivalently the coefficient is
+``beta^(d - m) (-beta)^`left` prod_{out}(1 + beta*y)^{-1} E_{n,n}((-)y_Q, (-1/beta)^`left`; -z)``
+with ``n = |Q| + `left``` -- a factorial elementary symmetric polynomial, which is what
+lets ``_groth_elem_sym_frac`` write the ``E_{p,k}`` coefficients in closed form.
 
 The sum runs over the marked-chain K-Pieri support (``_top_block_support``).
 At ``beta = 0`` this collapses to the ``p = k`` Pieri formula for double
@@ -292,6 +298,7 @@ are handled by ``single_variable_groth``.
 #### dgroth\_to\_dschub
 
 ```python
+@cache
 def dgroth_to_dschub(v, var3, beta=None)
 ```
 
@@ -299,7 +306,7 @@ Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
 
 ``sum_{v'} coeff_{v'} S_{v'}(x, var3) = G_v(x, var3)`` with coefficients in
 ``var3`` and ``beta``.  Exact but slow; delegates to ``grothendieck_poly``
-with ``keep_as_schub=True``.
+with ``keep_as_schub=True``.  Memoized; callers must not mutate the result.
 
 <a id="schubmult.mult.groth_double.groth_elem_sym_func"></a>
 

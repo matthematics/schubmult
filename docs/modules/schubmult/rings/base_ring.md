@@ -63,6 +63,16 @@ def apply_to_keys(func)
 
 Map each basis key through ``func`` (dropping keys where it returns ``None``), keeping coefficients.
 
+<a id="schubmult.rings.base_ring.BaseRingElement.simplify"></a>
+
+#### simplify
+
+```python
+def simplify()
+```
+
+Simplify the coefficients of the elements of this ring.
+
 <a id="schubmult.rings.base_ring.BaseRingElement.as_terms"></a>
 
 #### as\_terms
@@ -322,7 +332,7 @@ Hook: elementary-symmetric fast-path multiplication.
 #### from\_dict
 
 ```python
-def from_dict(element, orig_domain=None)
+def from_dict(element)
 ```
 
 Build an element from ``{key: coeff}``, coercing each coefficient via ``domain_new`` and dropping zeros.

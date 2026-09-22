@@ -26,7 +26,7 @@
 
 4. **CLI Scripts** ([src/schubmult/_scripts/](src/schubmult/_scripts/))
    - All use `schub_argparse()` for consistent argument parsing
-   - Entry points: `schubmult_py`, `schubmult_double`, `schubmult_q`, `schubmult_q_double`, `lr_rule_verify`
+   - Entry points: `schubmult_py`, `schubmult_double`, `schubmult_q`, `schubmult_q_double`, `grothmult_py`, `grothmult_double`, `grothmult_q`, `grothmult_q_double`
    - Permutations specified as space-separated integers or via `--code` flag for Lehmer codes
 
 ### Critical Data Flows
@@ -54,7 +54,7 @@ pip install -e .                 # Editable dev install
 python -m build                  # Build distribution packages
 ```
 - Uses `setuptools>=61.0` backend with PEP 621 metadata in `pyproject.toml`
-- Dynamic versioning from `schubmult.__version__` (currently `"4.0.0dev"`)
+- Dynamic versioning via setuptools-scm from git tags (release tags are bare versions, e.g. `5.1.0`)
 - CLI scripts auto-registered via `[project.scripts]` section
 
 ### Running Scripts
@@ -122,12 +122,3 @@ schubmult_py --code 2 0 - 1 0                 # Using Lehmer codes
 - **Optimization**: PuLP>=2.7 (for positivity display via MILP)
 - **Optional**: sagemath-standard (for Sage integration, `[sage]` extra)
 - **Build**: setuptools>=61, joblib (parallelization), psutil (resource monitoring)
-
-## Verification Workflows
-
-The `lr_rule_verify` script runs exhaustive LR coefficient verification:
-- Generates all permutations up to size n
-- Compares algorithmic results against classical formulas
-- Outputs JSON with verification records (see `logs/*.verification.json`)
-- Uses multiprocessing (specify `num_processors` argument)
-- Resumable: Loads existing `.verification.json` to continue interrupted runs

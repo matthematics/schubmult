@@ -42,6 +42,20 @@ def perm_subs(perm)
 
 Localize at the torus fixed point ``perm``: substitute ``x_i -> (-) y_{perm(i)}`` (formal inverse).
 
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckElement.simplify"></a>
+
+#### simplify
+
+```python
+def simplify(factor=True)
+```
+
+Return a copy with each coefficient put in cancelled (and, by default, factored) rational
+normal form in ``y`` and ``beta``, dropping terms whose coefficient simplifies to zero.
+
+Products in this ring leave coefficients as unsimplified rational expressions; this
+makes them readable, e.g. ``(y_1 - y_2)/(1 + beta*y_2)``.
+
 <a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing"></a>
 
 ## DoubleGrothendieckRing Objects
