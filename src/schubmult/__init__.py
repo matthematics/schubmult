@@ -9,7 +9,7 @@ from typing import Dict, List
 try:
     from schubmult._version import version as __version__
 except ImportError:
-    __version__ = "4.0.0.dev0"
+    __version__ = "5.1.0"
 
 """
 Top-level schubmult package initializer.

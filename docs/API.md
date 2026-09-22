@@ -56,6 +56,14 @@ LP.  ``beta`` is restored as ``beta**(`diffs` - d)`` with the Laurent atoms
 
 # schubmult.\_scripts.grothmult\_py
 
+<a id="schubmult._scripts.grothmult_q"></a>
+
+# schubmult.\_scripts.grothmult\_q
+
+<a id="schubmult._scripts.grothmult_q_double"></a>
+
+# schubmult.\_scripts.grothmult\_q\_double
+
 <a id="schubmult._scripts.schubmult_double"></a>
 
 # schubmult.\_scripts.schubmult\_double
@@ -664,26 +672,6 @@ def delete_top_row()
 
 Remove the top row, first popping it off with `pop_op` until it's exhausted.
 
-<a id="schubmult.combinatorics.bpd.BPD.delete_row"></a>
-
-#### delete\_row
-
-```python
-def delete_row(row: int) -> BPD
-```
-
-Remove ``row`` by tracing its pipe out to the boundary and dropping the corresponding grid row/column.
-
-<a id="schubmult.combinatorics.bpd.BPD.prepend_row"></a>
-
-#### prepend\_row
-
-```python
-def prepend_row(value_of_row: int) -> BPD
-```
-
-Insert a new top row realizing the given permutation value, growing the permutation by one.
-
 <a id="schubmult.combinatorics.bpd.BPD.append"></a>
 
 #### append
@@ -704,7 +692,8 @@ pipes across the boundary to resolve the joining tiles.
 def from_bruhat_path(cls, path: Sequence[Permutation]) -> BPD
 ```
 
-Create a BPD from a Bruhat path.
+Create a BPD from a Bruhat path, as per Yu
+"Embedding bumpless pipedreams as Bruhat chains" (2024)
 
 <a id="schubmult.combinatorics.bpd.BPD.row_from_k_chain"></a>
 
@@ -732,6 +721,7 @@ k-chain from u to w and constructs a row of n tiles based on that chain.
 
   1D numpy array of TileType values representing the row
   
+  From Yu "Embedding bumpless pipedreams as Bruhat chains" (2024):
   Definition 3.15 cases (for tile at position (row, c)):
   - If chain swaps c with larger but not smaller: ELBOW_SE (⌜)
   - If chain swaps c with both larger and smaller: CROSS (╋)
@@ -817,6 +807,7 @@ def co_bpd()
 ```
 
 The complementary BPD: swap HORIZ<->CROSS and VERT<->BLANK, reading rows bottom to top.
+See Weigandt, "Changing Bases with Pipe Dream Combinatorics" (2025)
 
 <a id="schubmult.combinatorics.bpd.BPD.groth_to_schub"></a>
 
@@ -854,7 +845,7 @@ Row-preserving disjoint union.
 
 This keeps both summands on the same row indices by placing them side-by-side,
 with a single horizontal connector column between them.
-The result is intended to preserve row placement of blanks and may be unreduced.
+The result is intended to preserve row placement of blanks.
 
 <a id="schubmult.combinatorics.bpd.BPD.disjoint_union_block_diag"></a>
 
@@ -903,10 +894,10 @@ This is a convenience property that delegates to perm.inv.
 def length_vector() -> tuple[int, ...]
 ```
 
-Compute the length vector of the permutation represented by this BPD.
+Compute the length vector of the BPD.
 
 The length vector is a tuple (l_1, l_2, ..., l_n) where l_i is the number
-of crossings in row i.
+of blanks (weighty tiles) in row i.
 
 **Returns**:
 
@@ -10043,6 +10034,8 @@ in various settings:
 - schubmult_q: Quantum Schubert polynomial multiplication
 - schubmult_q_double: Quantum double Schubert polynomial multiplication
 - grothmult_double: Double Grothendieck multiplication by a degree-one class
+- grothmult_q_double: Quantum double Grothendieck multiplication (conjectural Molev--Sagan rule)
+- grothmult_q: Quantum (single) Grothendieck multiplication
 
 Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
 
@@ -10434,21 +10427,25 @@ substitutes the merged alphabet back to ``var2``/``var3``.
 
 # schubmult.mult.groth
 
-beta-Grothendieck Chevalley formula: multiplication of a (single) Grothendieck
-polynomial by a bare x_k variable, i.e. x_k * G_w^(beta).
+Multiplication kernels for (single) beta-Grothendieck polynomials.
 
-Non-equivariant (y=0) for now; ``GrothendieckRing`` has no coefficient/y genset yet.
+* ``grothmult_py``: the product ``G_u * G_v`` in the ``G`` basis, by the same route as
+  ``groth_double.grothmult_double`` specialized to ``y = z = 0`` -- expand ``G_v`` into
+  Schubert polynomials via WC graphs, then push each ``S_{v'}`` through the v-path layers
+  of ``theta(v'^{-1})`` with the closed-form K-Pieri coefficient ``groth_elem_sym_coeff``
+  (a binomial times a power of ``beta``).
+* ``single_variable_groth`` / ``mult_poly_groth``: multiplication by ``x_k`` (the
+  non-equivariant K-theoretic Chevalley formula) and by arbitrary polynomials in ``x``.
 
-Derived from M. Willems, "A Chevalley formula in equivariant K-theory"
-(arXiv:math/0603220), Theorem 5 (the ordinary, non-equivariant specialization of
-his equivariant Chevalley formula, Theorem 4). Willems indexes K-theory classes
-O_w by the *dimension* of the Schubert variety, dual to the *codimension*
-indexing used by Schubert/Grothendieck polynomials S_w/G_w; the w0-conjugation
-below (``hat_w = w0*w`` going in, ``w0*v`` coming out) translates between the two
-conventions. The beta-grading (beta^(d-1) per length difference d = l(v)-l(w))
-matches this codebase's beta-deformed Grothendieck polynomial normalization
-(beta=0 recovers the classical double Schubert Monk formula). Calibrated against
-grothendieck_poly()/to_groth() (see session notes).
+The Chevalley coefficients are derived from M. Willems, "A Chevalley formula in
+equivariant K-theory" (arXiv:math/0603220), Theorem 5 (the ordinary, non-equivariant
+specialization of his equivariant Chevalley formula, Theorem 4). Willems indexes K-theory
+classes O_w by the *dimension* of the Schubert variety, dual to the *codimension* indexing
+used by Schubert/Grothendieck polynomials S_w/G_w; the w0-conjugation in
+``_chevalley_ev_weights`` (``hat_w = w0*w`` going in, ``w0*v`` coming out) translates
+between the two conventions. The beta-grading (beta^(d-1) per length difference
+d = l(v)-l(w)) matches this codebase's beta-deformed Grothendieck polynomial
+normalization (beta=0 recovers the classical Monk formula).
 
 <a id="schubmult.mult.groth.chevalley_x_k"></a>
 
@@ -10484,6 +10481,52 @@ Multiply ``sum_u coeff_u G_u^(beta)`` by an arbitrary polynomial ``poly`` in ``v
 
 Recurses over the ``Add``/``Mul``/``Pow`` structure of ``poly``, dispatching
 single-variable leaves to ``single_variable_groth``.
+
+<a id="schubmult.mult.groth.groth_elem_sym_coeff"></a>
+
+#### groth\_elem\_sym\_coeff
+
+```python
+def groth_elem_sym_coeff(k, u1, u2, vdiff, beta, length=None)
+```
+
+Coefficient of ``G_{u2}`` in ``E_{k - vdiff, k}(x; 0) G_{u1} = e_{k - vdiff}(x_1..x_k) G_{u1}``.
+
+The ``y = z = 0`` specialization of ``groth_double._groth_elem_sym_frac``.  Sort the
+window positions ``j <= k`` by the fate of ``u1(j)`` in ``u2``: *fixed*, *left*
+(reappears at an earlier window position) or *out* (leaves the window or moves
+right); with ``F = `fixed```, ``L = `left```, ``m = L + `out``` movers and
+``d = l(u2) - l(u1)`` the closed form
+
+    beta^(d - m) (-beta)^L E_{n - q, n}( (-)y_fixed, (-1/beta)^L ; z ),   n = F + L, q = vdiff,
+
+collapses at ``y = z = 0`` (the fixed alphabet entries become ``0``) to
+
+    beta^(d - m) (-beta)^(L - p) binom(L, p),   p = n - q,   0 <= p <= L,
+
+and to ``0`` otherwise.  At ``beta = 0`` only ``d = m``, ``p = L`` survive, i.e. the
+classical Pieri rule ``e_p(x_1..x_k) S_u = sum_{u ->_k w} S_w`` with ``p = k - d``
+(there ``L = 0`` for chains with distinct lower indices, so ``p = F = k - d``).
+
+``length`` overrides ``d``; the quantum kernel passes the quantum Bruhat chain length.
+
+<a id="schubmult.mult.groth.grothmult_py"></a>
+
+#### grothmult\_py
+
+```python
+def grothmult_py(perm_dict, v, beta=None)
+```
+
+Multiply (single) Grothendieck polynomials, mirroring ``schubmult_py``.
+
+Computes the expansion of ``sum_u coeff_u G_u(x) * G_v(x)`` in the basis ``{G_w(x)}``
+and returns it as ``{w: coeff_w}`` with coefficients polynomial in ``beta``.
+
+Same method as ``groth_double.grothmult_double`` specialized to ``y = z = 0``: expand
+``G_v`` into Schubert polynomials (``groth_elem_as_schub_dict``, via WC graphs) and
+push each ``S_{v'}`` through the v-path kernel ``_groth_schub_vpath_mul``, whose
+per-layer coefficients are the binomial closed form ``groth_elem_sym_coeff``.
 
 <a id="schubmult.mult.groth_double"></a>
 
@@ -10747,9 +10790,15 @@ Closed positive Molev--Sagan Pieri rule (conjectural; verified exhaustively on
 where the factor ``f_i`` depends on the fate of the window value ``u(i)``:
 
 * ``u(i) = w(i)`` (the set ``Q``):  ``(z(1 + beta*y_{u(i)}) - y_{u(i)}) / (1 + beta*y_{u(i)})``,
-  i.e. ``z (+) (-)y_{u(i)}``, the K-theoretic analogue of ``z - y_{u(i)}``;
+  i.e. ``z + (-)y_{u(i)}`` with ``(-)y = -y/(1 + beta*y)`` the formal inverse, the
+  K-theoretic analogue of ``z - y_{u(i)}``;
 * ``u(i)`` stays in the window but moves left:  ``1 - beta*zvar``;
 * ``u(i)`` exits the window or moves right within it:  ``1/(1 + beta*y_{u(i)})``.
+
+Equivalently the coefficient is
+``beta^(d - m) (-beta)^`left` prod_{out}(1 + beta*y)^{-1} E_{n,n}((-)y_Q, (-1/beta)^`left`; -z)``
+with ``n = |Q| + `left``` -- a factorial elementary symmetric polynomial, which is what
+lets ``_groth_elem_sym_frac`` write the ``E_{p,k}`` coefficients in closed form.
 
 The sum runs over the marked-chain K-Pieri support (``_top_block_support``).
 At ``beta = 0`` this collapses to the ``p = k`` Pieri formula for double
@@ -10779,6 +10828,7 @@ are handled by ``single_variable_groth``.
 #### dgroth\_to\_dschub
 
 ```python
+@cache
 def dgroth_to_dschub(v, var3, beta=None)
 ```
 
@@ -10786,7 +10836,7 @@ Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
 
 ``sum_{v'} coeff_{v'} S_{v'}(x, var3) = G_v(x, var3)`` with coefficients in
 ``var3`` and ``beta``.  Exact but slow; delegates to ``grothendieck_poly``
-with ``keep_as_schub=True``.
+with ``keep_as_schub=True``.  Memoized; callers must not mutate the result.
 
 <a id="schubmult.mult.groth_double.groth_elem_sym_func"></a>
 
@@ -10818,6 +10868,292 @@ the basis ``{G_w(x, var2)}`` and returns it as ``{w: coeff_w}``.
 expansion of ``G_v``.
 
 The chain rank is inferred from the current permutation and selected positions.
+
+<a id="schubmult.mult.groth_quantum"></a>
+
+# schubmult.mult.groth\_quantum
+
+Multiplication kernel for (single) quantum beta-Grothendieck polynomials.
+
+``grothmult_q`` computes ``G^q_u(x) * G^q_v(x)`` in the ``G^q`` basis: the ``y = z = 0``
+specialization of ``groth_quantum_double.grothmult_q_double``, by the same route as
+``groth.grothmult_py`` -- expand ``G_v`` into Schubert polynomials, push each ``S_{v'}``
+through the strict-theta v-path layers, and use the quantum K-Pieri support
+``quantum_pieri_chains`` with the binomial closed form ``groth_elem_sym_coeff`` evaluated at
+the quantum chain length and weighted by ``q^D``.
+
+``G^q_v = Q(G_v)`` is the Lenart--Maeno quantization (``groth_quantum_double.lm_quantize``);
+at ``beta = -1`` these are the quantum Grothendieck polynomials of Lenart--Maeno with
+``Q_j = q_j``, and the ``e_p`` Pieri rule ``grothmult_q_pieri`` is then equivalent to the
+Naito--Sagaki quantum K Pieri theorem (arXiv:2211.01578): the sign ``(-1)^{len - p}`` and the
+marking count ```Mark``` there are the ``beta^{len - m} (-beta)^{L - p'} binom(L, p')`` here,
+summed over the ``e_p <-> G_{c[k,p]}`` triangular change of basis.  Conjectural in general;
+see ``groth_quantum_double`` for the evidence.
+
+<a id="schubmult.mult.groth_quantum.grothmult_q_pieri"></a>
+
+#### grothmult\_q\_pieri
+
+```python
+def grothmult_q_pieri(coeff_dict, p, k, beta=None, q_var=None)
+```
+
+Multiply ``sum_u coeff_u G^q_u(x)`` by ``Q(e_p(x_1..x_k))``.
+
+Coefficient of ``G^q_w``: ``q^D * groth_elem_sym_coeff(k, u, w, k - p, beta, length)``
+over the quantum K-Pieri support; ``p = k`` is the non-equivariant quantum top block.
+
+<a id="schubmult.mult.groth_quantum.grothmult_q"></a>
+
+#### grothmult\_q
+
+```python
+def grothmult_q(perm_dict, v, beta=None, q_var=None)
+```
+
+Multiply (single) quantum Grothendieck polynomials, mirroring ``schubmult_q``.
+
+Returns the expansion of ``sum_u coeff_u G^q_u(x) * G^q_v(x)`` in the basis ``{G^q_w(x)}``
+as ``{w: coeff_w}``, polynomial in ``beta`` and ``q``.  ``G_v`` is expanded into Schubert
+polynomials by ``groth_elem_as_schub_dict`` (quantization is linear over ``beta``) and
+each ``S_{v'}`` pushed through ``_qgroth_schub_vpath_mul``.  ``q = 0`` is ``grothmult_py``;
+``beta = 0`` is ``schubmult_q``.
+
+<a id="schubmult.mult.groth_quantum.grothmult_q_dict"></a>
+
+#### grothmult\_q\_dict
+
+```python
+def grothmult_q_dict(perm_dict1, perm_dict2, beta=None, q_var=None)
+```
+
+Product of two coefficient dicts: ``sum_v coeff2_v grothmult_q(perm_dict1, v, ...)``.
+
+<a id="schubmult.mult.groth_quantum_double"></a>
+
+# schubmult.mult.groth\_quantum\_double
+
+Quantum double Grothendieck multiplication: the Molev--Sagan machinery for ``QK_T(Fl_n)``.
+
+Conventions
+-----------
+The quantum double Grothendieck polynomials are the Lenart--Maeno quantizations of the double
+Grothendieck polynomials in the ``x`` alphabet, with ``beta`` and the secondary alphabet treated
+as scalars.  Write ``X_i = 1 + beta*x_i`` (the K-theoretic line bundle variables; ``1 - x_i`` at
+``beta = -1``).  The quantization map ``Q`` is the linear map that is multiplicative on the
+standard elementary monomials ``prod_j e_{i_j}(X_1..X_j)``, ``i_j <= j``, and sends
+
+    e_l(X_1..X_k)  ->  F^k_l(X) = sum_{J in [k], |J| = l} prod_{j in J, j+1 not in J} (1 - Q_j) prod_{j in J} X_j,
+    Q_j = beta^2 q_j
+
+(``lm_quantize``).  ``G^q_v(x; y) := Q(G_v(x; y))``; at ``beta = -1``, ``Q_j`` these are the
+Lenart--Maeno polynomials that represent the Schubert classes of ``QK_T(Fl_n)`` in the
+Maeno--Naito--Sagaki presentation (arXiv:2302.09485, 2305.17685), with ``e^{-eps_j} = 1 - y_j``.
+The normalization ``Q_j = beta^2 q_j`` makes ``deg Q_j = 0`` (``deg beta = -1``, ``deg q_j = 2``)
+and gives ``G^q_v(x; y)|_{beta = 0} = S^q_v(x; -y)`` (quantum double Schubert).  Note this is not
+the Fomin--Gelfand--Postnikov quantization of the ``x`` alphabet: already
+``G^q_{21}(x; y) = x_1 (+) y_1 - beta q_1 (1 + beta x_1)(1 + beta y_1)``.
+
+Every function here returns ``{w: coeff}`` meaning ``sum_w coeff_w G^q_w(x; var2)``.  The products
+are polynomial identities in ``Z[beta, q, y, z][x]``: the ``G^q_w`` are stable in ``n`` and span
+the same filtered pieces as the classical ``G_w``, so no quotient by the quantum ideal is needed.
+
+The rule
+--------
+Everything is read off the equivariant quantum top block
+
+    Q( prod_{i<=k} (x_i + z) ) G^q_u(x; y)
+        = sum_w beta^{len - m} q^D prod_{Fix}(z + (-)y_a) (1 - beta z)^{|Left|}
+              prod_{Out} (1 + beta y_a)^{-1}  G^q_w(x; y),
+
+where ``w`` runs over the endpoints of the Naito--Sagaki ``k``-Pieri chains
+(arXiv:2211.01578) in the quantum Bruhat graph starting at ``u``, ``len`` is the length of the
+chain and ``q^D`` its quantum weight, and (Fix, Left, Out) sorts the window values ``u(i)``,
+``i <= k``, exactly as in ``grothmult_double_top`` (``m = |Left| + |Out|``).  Equivalently the
+prefactor is ``beta^{l(w) - l(u) - m} Q^D``.  The pair ``(len, D)`` is an invariant of
+``(u, w, k)`` in every case computed so far; the code raises if that ever fails.  The rule is
+conjectural: it is verified in ``QK_T(Fl_3)`` symbolically and in ``QK_T(Fl_4)`` under random
+specializations against the Maeno--Naito--Sagaki presentation
+(``_lscripts/qk_equivariant_oracle.py``), and as a polynomial identity by
+``_lscripts/qgroth_kernel_check.py``.  Its specializations are theorems or existing kernels:
+``q = 0`` is ``grothmult_double_top``, ``beta = 0`` is the ``p = k`` quantum Pieri rule of
+``schubmult_q_double``, and ``y = 0``, ``beta = -1`` is Naito--Sagaki's quantum K Pieri theorem.
+
+Molev--Sagan assembly
+---------------------
+``S_{v'}(x; z)`` is a sum over strict-theta v-paths of products of factorial elementary symmetric
+polynomials ``E_{p,k}(x; z)`` with strictly decreasing ``k``.  Each ``E_{p,k}`` is symmetric in
+``x_1..x_k`` and of degree ``<= 1`` in each variable, hence a combination of the
+``e_l(X_1..X_k)``, so the product is a combination of standard elementary monomials and
+``Q`` is multiplicative on it: ``Q(S_{v'}(x; z))`` is the same v-path sum with ``Q(E_{p,k})``.
+Since ``E_{k-q,k}(x; z_1..z_{q+1}) = (-1)^q d^z_q ... d^z_1 prod_{i<=k}(x_i - z_1)`` and ``Q``
+commutes with the ``z``-divided differences, the coefficient of ``G^q_{u2}`` in
+``Q(E_{k-q,k}(x; z)) G^q_{u1}(x; y)`` is ``_groth_elem_sym_frac`` with ``l(u2) - l(u1)`` replaced
+by the chain length and the quantum weight ``q^D`` attached.  Chaining the layers of the v-path
+recursion exactly as ``schubmult_q_double`` does gives ``G^q_u(x; y) Q(S_{v'}(x; z))``, and
+``dgroth_to_dschub`` (``G_v = sum c_{v'} S_{v'}``, ``Q`` linear over ``z, beta``) turns that into
+``G^q_u(x; y) G^q_v(x; z)``.
+
+<a id="schubmult.mult.groth_quantum_double.quantum_pieri_chains"></a>
+
+#### quantum\_pieri\_chains
+
+```python
+@cache
+def quantum_pieri_chains(u, k)
+```
+
+Endpoints of the Naito--Sagaki ``k``-Pieri chains from ``u`` in the quantum Bruhat graph.
+
+A ``k``-Pieri chain is a path ``u = w_0 -> w_1 -> ... -> w_r`` with edges
+``w -> w t_{ab}``, ``a <= k < b``, that are either Bruhat covers or quantum edges
+(``l`` drops by ``2(b - a) - 1``, weight ``q_a ... q_{b-1}``), whose labels ``(a, b)`` are
+distinct, have ``b`` weakly decreasing, and satisfy: whenever a label repeats an earlier
+lower index ``a``, the next label is larger in ``_ns_prec``.  Every such chain admits a
+Naito--Sagaki marking, so these endpoints are exactly the support of the quantum top block
+(at ``q = 0`` they reduce to ``_top_block_support``).
+
+Returns ``{w: (length, D)}`` with ``D`` the tuple of ``q`` exponents (``D[j - 1]`` is the
+exponent of ``q_j``).  The empty chain contributes ``u: (0, 0)``.  Raises ``ValueError``
+if two chains to the same ``w`` disagree on ``(length, D)``, which would leave the rule
+undefined.
+
+<a id="schubmult.mult.groth_quantum_double.grothmult_q_double_top"></a>
+
+#### grothmult\_q\_double\_top
+
+```python
+def grothmult_q_double_top(coeff_dict,
+                           k,
+                           zvar=None,
+                           var2=None,
+                           beta=None,
+                           q_var=None)
+```
+
+Multiply ``sum_u coeff_u G^q_u(x, var2)`` by the quantized top block ``Q(prod_{i<=k}(x_i + zvar))``.
+
+The multiplier is ``groth_elem_sym_poly_q(k, k, zvar, x, beta, q_var, fgl=False)``, i.e.
+``beta^{-k} sum_l (-(1 - beta z))^{k-l} F^k_l(X)``.  The coefficient of ``G^q_w`` is
+``_top_block_coeff`` evaluated with the quantum chain length, times the quantum weight
+``q^D``; see the module docstring.
+
+<a id="schubmult.mult.groth_quantum_double.groth_elem_sym_poly_q"></a>
+
+#### groth\_elem\_sym\_poly\_q
+
+```python
+def groth_elem_sym_poly_q(p, k, zvar, var_x, beta, q_var=None, fgl=True)
+```
+
+Quantization of ``groth_elem_sym_poly``: ``Q(e_p(x_1 (+) z, ..., x_k (+) z))``.
+
+``fgl=False`` quantizes the plain ``e_p(x_1 + z, ..., x_k + z)`` instead, whose ``p = k``
+case is the top block of ``grothmult_q_double_top``.  Both are symmetric in ``x_1..x_k`` of
+degree ``<= 1`` in each variable, so ``lm_quantize`` with ``k + 1`` slots applies.
+
+<a id="schubmult.mult.groth_quantum_double.grothmult_q_double_pieri"></a>
+
+#### grothmult\_q\_double\_pieri
+
+```python
+def grothmult_q_double_pieri(coeff_dict,
+                             p,
+                             k,
+                             zvar=None,
+                             var2=None,
+                             beta=None,
+                             q_var=None,
+                             fgl=True)
+```
+
+Multiply ``sum_u coeff_u G^q_u(x, var2)`` by ``groth_elem_sym_poly_q(p, k, zvar, x, beta, q_var, fgl)``.
+
+Closed form from the top block (see ``_q_pieri_coeff``); ``fgl=False`` multiplies by the
+quantization of ``e_p(x_1 + z, ..., x_k + z)``.  At ``q = 0`` this agrees with the exact
+fold ``grothmult_double_pieri``.
+
+<a id="schubmult.mult.groth_quantum_double.grothmult_q_double"></a>
+
+#### grothmult\_q\_double
+
+```python
+def grothmult_q_double(perm_dict,
+                       v,
+                       var2=None,
+                       var3=None,
+                       beta=None,
+                       q_var=None)
+```
+
+Multiply quantum double Grothendieck polynomials, mirroring ``schubmult_q_double``.
+
+Returns the expansion of ``sum_u coeff_u G^q_u(x, var2) * G^q_v(x, var3)`` in the basis
+``{G^q_w(x, var2)}`` as ``{w: coeff_w}``, coefficients rational in ``var2`` (denominators
+are products of ``1 + beta*var2[a]``) and polynomial in ``var3``, ``beta``, ``q``.
+
+``G^q_v(x, var3)`` is expanded through ``dgroth_to_dschub`` and one run of the quantum
+v-path kernel ``_qgroth_schub_vpath_mul`` per double Schubert term.  At ``q = 0`` this is
+``grothmult_double``; at ``beta = 0`` it is ``schubmult_q_double``.
+
+<a id="schubmult.mult.groth_quantum_double.grothmult_q_double_dict"></a>
+
+#### grothmult\_q\_double\_dict
+
+```python
+def grothmult_q_double_dict(perm_dict1,
+                            perm_dict2,
+                            var2=None,
+                            var3=None,
+                            beta=None,
+                            q_var=None)
+```
+
+Product of two coefficient dicts: ``sum_v coeff2_v grothmult_q_double(perm_dict1, v, ...)``.
+
+<a id="schubmult.mult.groth_quantum_double.quantum_elem_sym"></a>
+
+#### quantum\_elem\_sym
+
+```python
+def quantum_elem_sym(l, k, var_x, beta, q_var=None)
+```
+
+``F^k_l(X) = sum_{J in [k], |J| = l} prod_{j in J, j+1 not in J} (1 - beta^2 q_j) prod_{j in J} X_j``, ``X_j = 1 + beta*x_j``.
+
+The Lenart--Maeno quantization of ``e_l(X_1..X_k)``; ``beta = -1`` gives the ``F^k_l`` of
+Maeno--Naito--Sagaki with ``Q_j = q_j``.  No ``1 - Q_N := 1`` convention is applied: that
+belongs to the defining ideal of ``QK_T(Fl_N)``, not to the polynomials.
+
+<a id="schubmult.mult.groth_quantum_double.lm_quantize"></a>
+
+#### lm\_quantize
+
+```python
+def lm_quantize(poly, N, var_x, beta, q_var=None)
+```
+
+Lenart--Maeno quantization of a polynomial in ``x_1..x_{N-1}`` of degree ``<= N - i`` in ``x_i``.
+
+Expands ``poly`` in the standard elementary monomials ``prod_j e_{i_j}(X_1..X_j)`` of
+``X_i = 1 + beta*x_i`` (a basis of that span; ``_sem_basis``) and replaces each
+``e_{i_j}(X_1..X_j)`` by ``quantum_elem_sym(i_j, j)``.  Linear over everything but ``x``,
+stable in ``N`` (``poly`` may use fewer variables), and ``Q_j = beta^2 q_j`` so the result
+is polynomial in ``beta``.  Raises if ``poly`` is not in the span.
+
+<a id="schubmult.mult.groth_quantum_double.qgroth_poly"></a>
+
+#### qgroth\_poly
+
+```python
+def qgroth_poly(v, var_x=None, var_y=None, beta=None, q_var=None)
+```
+
+The quantum double Grothendieck polynomial ``G^q_v(var_x; var_y)`` as an explicit expression.
+
+``lm_quantize`` applied to ``grothendieck_poly(v)`` with ``N = len(v)`` slots.  At
+``beta = -1`` this is the Maeno--Naito--Sagaki ``G^Q_v(x, y)`` with ``Q_j = q_j``.  Slow
+(symbolic); intended for verification.
 
 <a id="schubmult.mult.positivity"></a>
 
@@ -11778,6 +12114,16 @@ def apply_to_keys(func)
 
 Map each basis key through ``func`` (dropping keys where it returns ``None``), keeping coefficients.
 
+<a id="schubmult.rings.base_ring.BaseRingElement.simplify"></a>
+
+#### simplify
+
+```python
+def simplify()
+```
+
+Simplify the coefficients of the elements of this ring.
+
 <a id="schubmult.rings.base_ring.BaseRingElement.as_terms"></a>
 
 #### as\_terms
@@ -12037,7 +12383,7 @@ Hook: elementary-symmetric fast-path multiplication.
 #### from\_dict
 
 ```python
-def from_dict(element, orig_domain=None)
+def from_dict(element)
 ```
 
 Build an element from ``{key: coeff}``, coercing each coefficient via ``domain_new`` and dropping zeros.
@@ -20262,6 +20608,20 @@ def perm_subs(perm)
 
 Localize at the torus fixed point ``perm``: substitute ``x_i -> (-) y_{perm(i)}`` (formal inverse).
 
+<a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckElement.simplify"></a>
+
+#### simplify
+
+```python
+def simplify(factor=True)
+```
+
+Return a copy with each coefficient put in cancelled (and, by default, factored) rational
+normal form in ``y`` and ``beta``, dropping terms whose coefficient simplifies to zero.
+
+Products in this ring leave coefficients as unsimplified rational expressions; this
+makes them readable, e.g. ``(y_1 - y_2)/(1 + beta*y_2)``.
+
 <a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing"></a>
 
 ## DoubleGrothendieckRing Objects
@@ -21492,7 +21852,7 @@ Multiply by an expression by first converting it into the Grothendieck basis.
 def cached_product(u, v, basis2)
 ```
 
-Structure constants ``c^w_{u,v}(beta)`` via ``groth_mul_full_with_ring``; only same-ring products supported.
+Structure constants ``c^w_{u,v}(beta)`` via `schubmult.mult.groth.grothmult_py`; only same-ring products supported.
 
 <a id="schubmult.rings.schubert.grothendieck_ring.GrothendieckRing.cached_positive_product"></a>
 
@@ -21565,7 +21925,7 @@ standard instance in ``x``.
 ## NilHeckeElement Objects
 
 ```python
-class NilHeckeElement(DomainElement, DefaultPrinting, dict)
+class NilHeckeElement(BaseRingElement)
 ```
 
 An element of a `NilHeckeRing`: ``{Permutation: coeff}`` combination of divided-difference operators.
@@ -21636,7 +21996,7 @@ Sum of the ``as_terms()`` as a sympy ``Add``.
 ## NilHeckeRing Objects
 
 ```python
-class NilHeckeRing(Ring, CompositeDomain)
+class NilHeckeRing(BaseRing)
 ```
 
 The nilHecke ring in the alphabet ``genset``; see the module docstring. ``df`` is the standard instance.
@@ -21656,7 +22016,7 @@ Convert an element to a sympy expression (``as_expr``).
 #### isobaric
 
 ```python
-def isobaric(perm, groth=False, *, groth_beta=None)
+def isobaric(perm, groth=False, *, groth_beta=None, neg=False)
 ```
 
 The isobaric divided difference ``pi_perm`` as a nilHecke element: ``pi_i = partial_i x_{i+1}``
@@ -21668,7 +22028,7 @@ along a reduced word of ``perm``.
 #### g\_isobaric
 
 ```python
-def g_isobaric(perm)
+def g_isobaric(perm, neg=False)
 ```
 
 ``isobaric(perm, groth=True)``.

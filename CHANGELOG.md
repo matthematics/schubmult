@@ -1,5 +1,68 @@
 # Changelog
 
+## 5.1.0
+
+Grothendieck products on the command line and in `schubmult.mult`, including the quantum
+and quantum double cases; the multiplication kernels stop expanding coefficients.
+
+### Added
+
+- **`grothmult_py`, `grothmult_double`, `grothmult_q`, `grothmult_q_double` command-line
+  scripts.** The README and API reference on GitHub have described the Grothendieck CLI
+  since 5.0.0 was tagged, but the 5.0.0 release only shipped `grothmult_py` (via the slow
+  ring-expansion route) and `grothmult_double`; `grothmult_q` and `grothmult_q_double` did
+  not exist. All four are now installed alongside the `schubmult_*` scripts, accept the
+  same options (`--code`, `--display-mode`, `--mixed-var`, `--display-positive` for the
+  double case), and have script tests with JSON fixtures.
+- **`schubmult.mult.groth.grothmult_py(perm_dict, v, beta)`**: ordinary
+  $\beta$-Grothendieck products in the $G$ basis, computed by expanding $G_v$ into Schubert
+  polynomials and pushing each through the theta-code v-path layers with the binomial
+  closed form `groth_elem_sym_coeff`. Replaces the ring-level `groth_mul_full_with_ring`
+  route in `GrothendieckRing`; typical products are orders of magnitude faster.
+- **`schubmult.mult.groth_quantum.grothmult_q`** and
+  **`schubmult.mult.groth_quantum_double.grothmult_q_double`**: quantum and quantum double
+  $\beta$-Grothendieck products for the Lenart-Maeno quantization $G^q_v = Q(G_v)$, with
+  $Q_j = \beta^2 q_j$ so that $\beta = 0$ recovers the quantum double Schubert polynomials
+  and $\beta = -1$ the Lenart-Maeno polynomials representing $QK_T(Fl_n)$. The rule is an
+  equivariant quantum $K$-Pieri formula over Naito-Sagaki chains in the quantum Bruhat
+  graph, assembled Molev-Sagan style. It is **conjectural**: verified symbolically in
+  $QK_T(Fl_3)$ and under random specializations in $QK_T(Fl_4)$ against the
+  Maeno-Naito-Sagaki presentation, and its specializations ($q = 0$, $\beta = 0$,
+  $y = 0$ with $\beta = -1$) are theorems or existing kernels. Also exported:
+  `grothmult_q_pieri`, `grothmult_q_double_pieri`, `grothmult_q_double_top`,
+  `lm_quantize`, `qgroth_poly`, `quantum_elem_sym`, `quantum_pieri_chains`.
+- `DoubleGrothendieckElement.simplify()` puts the rational coefficients in $y$ and $\beta$
+  in normal form (`sympy.cancel`, then `factor`), dropping terms that simplify to zero.
+  `BaseRingElement.simplify()` applies `.simplify()` coefficientwise for any ring.
+- `NilHeckeRing.isobaric(..., neg=True)` and `g_isobaric(neg=True)` for the
+  $\partial_i(1 - \beta x_{i+1})$ convention.
+- Test coverage for every kernel in `schubmult.mult` (`tests/mult/`), the C++
+  acceleration layer (`test_accel.py`), and positivity (`test_positivity.py`).
+- API reference regenerated from docstrings with pydoc-markdown and published with
+  MkDocs (`docs/`, `pip install -e ".[docs]"`, GitHub Pages workflow).
+
+### Changed
+
+- **Multiplication kernels no longer expand coefficients.** `grothmult_double` and the
+  quantum double kernels keep coefficients as structured products and flat fractions
+  instead of calling `expand()`/`cancel()` on every term. This is what makes the quantum
+  double Grothendieck kernel usable; `grothmult_double` itself is also considerably
+  faster. Call `.simplify()` (or `sympy.cancel`) on the result if a normal form is wanted.
+- `BaseRing.from_dict(element)` drops its unused `orig_domain` parameter and builds the
+  element in one pass.
+- `NilHeckeRing`/`NilHeckeElement` derive from `BaseRing`/`BaseRingElement`.
+
+### Removed
+
+- The research scripts that lived under `src/schubmult/_scripts/` (including the
+  `unlinted/` tree and `lr_rule_verify`) are no longer part of the package. Only the eight
+  `schubmult_*`/`grothmult_*` CLI entry points remain in `_scripts`.
+
+### Fixed
+
+- `grothmult_double` failed at import on Windows (`resource` is POSIX-only; the memory cap
+  is now skipped where it is unavailable).
+
 ## 5.0.0
 
 The multiplication kernels are now compiled C++. This release consolidates the

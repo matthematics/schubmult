@@ -17,7 +17,7 @@ standard instance in ``x``.
 ## NilHeckeElement Objects
 
 ```python
-class NilHeckeElement(DomainElement, DefaultPrinting, dict)
+class NilHeckeElement(BaseRingElement)
 ```
 
 An element of a `NilHeckeRing`: ``{Permutation: coeff}`` combination of divided-difference operators.
@@ -88,7 +88,7 @@ Sum of the ``as_terms()`` as a sympy ``Add``.
 ## NilHeckeRing Objects
 
 ```python
-class NilHeckeRing(Ring, CompositeDomain)
+class NilHeckeRing(BaseRing)
 ```
 
 The nilHecke ring in the alphabet ``genset``; see the module docstring. ``df`` is the standard instance.
@@ -108,7 +108,7 @@ Convert an element to a sympy expression (``as_expr``).
 #### isobaric
 
 ```python
-def isobaric(perm, groth=False, *, groth_beta=None)
+def isobaric(perm, groth=False, *, groth_beta=None, neg=False)
 ```
 
 The isobaric divided difference ``pi_perm`` as a nilHecke element: ``pi_i = partial_i x_{i+1}``
@@ -120,7 +120,7 @@ along a reduced word of ``perm``.
 #### g\_isobaric
 
 ```python
-def g_isobaric(perm)
+def g_isobaric(perm, neg=False)
 ```
 
 ``isobaric(perm, groth=True)``.

@@ -186,7 +186,7 @@ readme = {file = ["README.md"]}
 
 [tool.setuptools_scm]
 version_file = "src/schubmult/_version.py"
-fallback_version = "4.0.0.dev0"
+fallback_version = "5.1.0"
 
 [project.scripts]
 schubmult_py = "schubmult._scripts.schubmult_py:main"
