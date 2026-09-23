@@ -1,6 +1,6 @@
 import sys
 
-from schubmult.symbolic import sstr, sympify
+from schubmult.symbolic import sympify
 from schubmult.utils.argparse import schub_argparse
 
 from schubmult.combinatorics.permutation import Permutation, uncode
@@ -34,7 +34,7 @@ def _display_full(coeff_dict, args, formatter):
         if val != 0:
             raw_result_dict[perm] = val
             if formatter:
-                print(f"{sstr(perm)!s}  {formatter(val)}")
+                print(f"{str(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 

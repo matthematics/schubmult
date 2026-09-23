@@ -3,14 +3,12 @@ graph's Edelman-Greene insertion tableau together with its plactic recording tab
 conversion to and from `RCGraphRing`.
 """
 
-from sympy import Tuple
-
 from schubmult.combinatorics.nilplactic import NilPlactic
 
 # from schubmult.combinatorics.nilplactic import NilPlactic
 # from schubmult.combinatorics.plactic import Plactic
 from schubmult.combinatorics.rc_graph import RCGraph
-from schubmult.symbolic import S
+from schubmult.symbolic import S, Tuple
 
 from ..printing import PrintingTerm, TypedPrintingTerm
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement

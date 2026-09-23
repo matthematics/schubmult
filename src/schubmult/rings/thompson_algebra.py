@@ -8,9 +8,9 @@ A monomial is a tuple of nonzero integers: ``i > 0`` stands for ``T_i`` and ``i 
 
 from functools import cache
 
-from sympy import Symbol, UnevaluatedExpr, sympify
-
-from schubmult.symbolic import CoercionFailed, prod
+from schubmult.symbolic import CoercionFailed, UnevaluatedExpr, prod
+from schubmult.symbolic import sympify_sympy as sympify
+from schubmult.symbolic import sympy_Symbol as Symbol
 from schubmult.utils._mul_utils import add_perm_dict
 
 from .base_ring import BaseRing, BaseRingElement

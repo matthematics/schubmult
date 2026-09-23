@@ -14,9 +14,11 @@ import schubmult.utils.schub_lib as schub_lib
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, poly_genset
-from schubmult.symbolic.symmetric_polynomials import ElemSym
+from schubmult.utils._lazy import LazyAttr
 
 from .double_schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing
+
+ElemSym = LazyAttr("schubmult.symbolic.symmetric_polynomials", "ElemSym")
 
 __all__ = [
     "DSx",

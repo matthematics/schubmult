@@ -7,14 +7,12 @@ from __future__ import annotations
 import logging  # noqa: F401
 from functools import cache
 
-from sympy import Tuple
-
 from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
 from schubmult.combinatorics.wc_graph import WCGraph
 from schubmult.rings.combinatorial.crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 from schubmult.rings.combinatorial.wc_graph_ring import WCGraphRing
 from schubmult.rings.printing import PrintingTerm, TypedPrintingTerm
-from schubmult.symbolic import S
+from schubmult.symbolic import S, Tuple
 
 
 def _tensor_to_rcs(weight_tensor, descents):

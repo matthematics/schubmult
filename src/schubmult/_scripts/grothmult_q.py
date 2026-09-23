@@ -2,7 +2,7 @@ import sys
 
 from schubmult import Gx, Permutation, uncode
 from schubmult.mult.groth_quantum import grothmult_q
-from schubmult.symbolic import expand, sstr, sympify
+from schubmult.symbolic import expand, sympify
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -15,7 +15,7 @@ def _display_full(coeff_dict, args, formatter):
         if val != 0:
             raw_result_dict[perm] = val
             if formatter:
-                print(f"{sstr(perm)!s}  {formatter(val)}")
+                print(f"{str(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 

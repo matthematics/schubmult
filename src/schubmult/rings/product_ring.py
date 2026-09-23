@@ -9,9 +9,8 @@ componentwise on the array. This is an older sketch of the same idea as
 from functools import cache
 
 import numpy as np
-from sympy import Tuple
 
-from schubmult.symbolic import Mul, S, sympy_Mul
+from schubmult.symbolic import Mul, S, Tuple, sympy_Mul
 from schubmult.utils.logging import get_logger
 
 from .printing import PrintingTerm

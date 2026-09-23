@@ -38,6 +38,7 @@ class PlacticAlgebraElement(BaseRingElement):
     def __eq__(self, other):
         return type(self) is type(other) and dict(self) == dict(other)
 
+    __hash__ = None
 
 class PlacticAlgebra(BaseRing):
     """The plactic monoid algebra on `Plactic` tableaux (``op=True`` for the opposite product)."""

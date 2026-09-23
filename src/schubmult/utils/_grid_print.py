@@ -2,7 +2,7 @@
 as an aligned table for str/pretty/LaTeX output; used by RC graphs, BPDs and similar diagrams.
 """
 
-from sympy.printing.defaults import Printable
+from schubmult.utils._printable import LazyPrintable as Printable
 
 
 class GridPrint(Printable):

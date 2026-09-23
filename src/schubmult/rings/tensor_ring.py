@@ -8,9 +8,7 @@ is factorwise, and the coproduct of a ring lands in ``R @ R``. Elements print as
 
 from functools import cache
 
-from sympy import Tuple
-
-from schubmult.symbolic import Mul, S, sympy_Mul
+from schubmult.symbolic import Mul, S, Tuple, sympy_Mul
 from schubmult.utils.logging import get_logger
 
 #from .schubert.base_schubert_ring import BaseRingElement, BaseRing

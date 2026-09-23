@@ -1,7 +1,7 @@
 import sys
 from functools import cached_property
 
-from schubmult.symbolic import simplify, sstr, sympify
+from schubmult.symbolic import simplify, sympify
 from schubmult.utils.argparse import schub_argparse
 
 from schubmult.combinatorics.permutation import Permutation, permtrim, uncode
@@ -82,7 +82,7 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
         if val != 0:
             raw_result_dict[perm] = val
             if formatter:
-                print(f"{sstr(perm)!s}  {formatter(val)}")
+                print(f"{str(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 

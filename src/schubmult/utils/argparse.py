@@ -245,15 +245,8 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
     return args, formatter
 
 
-_sym_initialized = False
-
-
 def _sym():
-    """The `schubmult.symbolic` facade, running SymPy's ``init_printing`` on first use."""
-    global _sym_initialized  # noqa: PLW0603
+    """The `schubmult.symbolic` facade (SymPy loads only if a SymPy-backed formatter is used)."""
     import schubmult.symbolic as symbolic
 
-    if not _sym_initialized:
-        _sym_initialized = True
-        symbolic.init_printing()
     return symbolic

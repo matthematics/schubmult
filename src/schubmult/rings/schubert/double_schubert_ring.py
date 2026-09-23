@@ -24,11 +24,23 @@ from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import Add, DomainElement, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
 from schubmult.symbolic.common_polys import elem_sym_poly, schubpoly_classical_from_elems, schubpoly_from_elems, xreplace_genvars
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, genset_dict_from_expr, poly_genset
-from schubmult.symbolic.symmetric_polynomials import CompleteSym_base, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
+from schubmult.utils._lazy import lazy_from
 from schubmult.utils.perm_utils import add_perm_dict
 
 from ..tensor_ring import TensorRing
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+
+CompleteSym_base, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars = lazy_from(
+    "schubmult.symbolic.symmetric_polynomials",
+    "CompleteSym_base",
+    "ElemSym_base",
+    "FactorialElemSym",
+    "coeffvars",
+    "degree",
+    "genvars",
+    "numvars",
+    "split_out_vars",
+)
 
 
 def is_fact_elem_sym(obj):

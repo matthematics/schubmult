@@ -1,37 +1,105 @@
-"""SymPy atoms used to display ring basis elements.
+"""Display atoms for ring basis elements.
 
-Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert SymPy
-``Expr`` atom (``args == ()``, so SymPy never traverses into it) that knows how to render itself
-for ``str``, pretty printing, and LaTeX. Instances are interned via cached ``__xnew_cached__``
-constructors so equal keys give identical objects. The subclasses cover single/double Schubert
-(``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck (``G``/``DG``), separated
-descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert atom
+that knows how to render itself for ``str``, pretty printing, and LaTeX. Instances are interned via
+cached ``__xnew_cached__`` constructors so equal keys give identical objects. The subclasses cover
+single/double Schubert (``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck
+(``G``/``DG``), separated descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+
+A `PrintingTerm` is a plain Python object, so defining and creating them needs no SymPy. SymPy sees
+one through ``_sympy_``, which returns a copy whose class also derives from SymPy's ``Expr`` (an
+``Expr`` atom with ``args == ()``, so SymPy never traverses into it).
 """
 
+import types
 from functools import cache
 
 import schubmult.symbolic as ssymb
 from schubmult.combinatorics.permutation import Permutation
+from schubmult.utils._printable import LazyPrintable
 
-# from schubmult.rings.backend import expand, sympify
-# from schubmult.symbolic import S
+
+class _Hidden:
+    """Descriptor that makes an inherited attribute look absent (``hasattr`` is False)."""
+
+    def __get__(self, obj, objtype=None):
+        raise AttributeError
+
+
+@cache
+def _sympy_class(cls):
+    """``cls`` combined with SymPy's ``Expr``; ``cls``'s methods take precedence except arithmetic."""
+    (expr,) = types.resolve_bases((ssymb.Expr,))
+
+    def body(ns):
+        ns["__module__"] = cls.__module__
+        ns["__qualname__"] = cls.__qualname__
+        # SymEngine recurses on _sympy_ before checking for sympy.Basic, so it must not be visible here
+        ns["_sympy_"] = _Hidden()
+        for name in _ARITHMETIC:
+            ns[name] = getattr(expr, name)
+
+    return types.new_class(cls.__name__, (cls, expr), exec_body=body)
+
+
+_ARITHMETIC = ("__add__", "__radd__", "__sub__", "__rsub__", "__mul__", "__rmul__", "__truediv__", "__rtruediv__", "__pow__", "__neg__")
 
 
 # Atomic Schubert polynomial
-class PrintingTerm(ssymb.Expr):
+class PrintingTerm(LazyPrintable):
     """Base display atom carrying a key, generating set, coefficient generating set, and prefix."""
 
     is_Atom = True
     is_number = False
 
     def __new__(cls, k, genset, coeff_genset, prefix=""):
-        obj = ssymb.Expr.__new__(cls)
+        obj = object.__new__(cls)
         obj._prefix = prefix
         obj._key = k
         obj._genset = genset
         obj._coeff_genset = coeff_genset
         obj._perm = k
         return obj
+
+    def _sympy_(self):
+        obj = self.__dict__.get("_sympy_obj")
+        if obj is None:
+            sympy_cls = _sympy_class(type(self))
+            # skip the plain __new__ chain: allocate through Expr (Basic.__new__), the next base after LazyPrintable
+            obj = super(LazyPrintable, sympy_cls).__new__(sympy_cls)
+            obj.__dict__.update(self.__dict__)
+            self._sympy_obj = obj
+        return obj
+
+    def __add__(self, other):
+        return self._sympy_() + other
+
+    def __radd__(self, other):
+        return other + self._sympy_()
+
+    def __sub__(self, other):
+        return self._sympy_() - other
+
+    def __rsub__(self, other):
+        return other - self._sympy_()
+
+    def __mul__(self, other):
+        return self._sympy_() * other
+
+    def __rmul__(self, other):
+        return other * self._sympy_()
+
+    def __truediv__(self, other):
+        return self._sympy_() / other
+
+    def __rtruediv__(self, other):
+        return other / self._sympy_()
+
+    def __pow__(self, other):
+        return self._sympy_() ** other
+
+    def __neg__(self):
+        return -self._sympy_()
 
     def __hash__(self):
         return hash((self._key, self._genset, self._coeff_genset, "AbS", self._prefix))

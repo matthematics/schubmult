@@ -10,14 +10,12 @@ from functools import cache, cached_property
 from typing import Tuple
 
 import numpy as np
-from sympy import pretty
-from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.combinatorics.bpd import BPD, TileType
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
-from schubmult.symbolic import Expr
+from schubmult.symbolic import DefaultPrinting, Expr, pretty
 
 
 class HPDTile(IntEnum):

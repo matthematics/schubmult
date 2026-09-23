@@ -3,7 +3,7 @@ import sys
 from schubmult import GeneratingSet, Permutation, uncode
 from schubmult.abc import beta
 from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double
-from schubmult.symbolic import S, sstr, sympify, sympify_sympy, expand
+from schubmult.symbolic import S, sympify, sympify_sympy, expand
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
 
@@ -320,13 +320,13 @@ def main(argv=None):
         # one finishes (the LPs can take a long time); structural zero test only
         coeff_perms = [perm for perm, val in coeff_dict.items() if val != S.Zero]
         coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
-        width = max([len(sstr(perm)) for perm in coeff_perms]) if coeff_perms else 0
+        width = max([len(str(perm)) for perm in coeff_perms]) if coeff_perms else 0
 
         raw_result_dict = {}
         for i, perm in enumerate(coeff_perms):
             val = coeff_dict[perm]
             if args.display_positive:
-                print(f"posify {i + 1}/{len(coeff_perms)}: {sstr(perm)}", file=sys.stderr)
+                print(f"posify {i + 1}/{len(coeff_perms)}: {str(perm)}", file=sys.stderr)
                 try:
                     # groth_posify verifies its own output exactly
                     val = groth_posify(val, var2, var3, args.msg)
@@ -338,7 +338,7 @@ def main(argv=None):
                     return 1
             raw_result_dict[perm] = val
             if pr and formatter:
-                print(f"{sstr(perm)!s:>{width}}  {formatter(val)}", flush=True)
+                print(f"{str(perm)!s:>{width}}  {formatter(val)}", flush=True)
 
         if formatter is None:
             return raw_result_dict

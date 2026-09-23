@@ -15,13 +15,15 @@ from functools import cache
 
 from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import Add, Integer, Mul, S, is_of_func_type, sympify, sympify_sympy
-from schubmult.symbolic.symmetric_polynomials import FactorialElemSym
+from schubmult.utils._lazy import LazyAttr
 from schubmult.utils.perm_utils import add_perm_dict, mu_A
 
 from ..printing import SepDescSchubPoly
 from ..schubert.schubert_ring import DSx, Sx
 from ..schubert.separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import FreeAlgebraBasis
+
+FactorialElemSym = LazyAttr("schubmult.symbolic.symmetric_polynomials", "FactorialElemSym")
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
 ADSx = SeparatedDescentsRing(DSx([]).ring)

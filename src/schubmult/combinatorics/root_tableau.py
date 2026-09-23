@@ -8,8 +8,8 @@ from functools import cached_property
 from typing import Any
 
 import numpy as np
-from sympy import pretty_print  # noqa: F401
 
+from schubmult.symbolic import pretty_print  # noqa: F401
 from schubmult.utils._grid_print import GridPrint
 
 from .crystal_graph import CrystalGraph

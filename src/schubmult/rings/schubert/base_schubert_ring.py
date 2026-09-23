@@ -8,10 +8,8 @@ element to a polynomial, how to print it, and how to change basis. `BaseSchubert
 is the corresponding dict-like element type (``{Permutation: coefficient}``).
 """
 
-from sympy import pretty
-
 from schubmult.combinatorics.permutation import Permutation
-from schubmult.symbolic import Add, CoercionFailed, S, expand, sympify, sympify_sympy, sympy_Mul
+from schubmult.symbolic import Add, CoercionFailed, S, expand, pretty, sympify, sympify_sympy, sympy_Mul
 from schubmult.symbolic.common_polys import schubpoly_from_elems
 from schubmult.utils._mul_utils import _mul_schub_dicts
 from schubmult.utils.logging import get_logger
@@ -110,6 +108,8 @@ class BaseSchubertElement(BaseRingElement):
         """Drop basis elements whose coefficient is exactly zero."""
         return self.ring.from_dict({k: v for k, v in self.items() if v != S.Zero})
 
+    __hash__ = None
+
 
 class BaseSchubertRing(BaseRing):
     """Abstract base ring for Schubert-family polynomials.
@@ -122,6 +122,9 @@ class BaseSchubertRing(BaseRing):
 
     def __eq__(self, other):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset
+
+    def __hash__(self):
+        return hash((type(self), self.genset, self.coeff_genset))
 
     def __init__(self, genset, coeff_genset, domain=None):
         """Args:
