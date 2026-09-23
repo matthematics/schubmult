@@ -23,14 +23,18 @@ Configuration via environment variables:
     SCHUBMULT_ENABLE_MULT       Set to "1" to enable the --mult polynomial
                                 factor (passes through sympify; treat as
                                 untrusted). Default: disabled.
-    SCHUBMULT_MP_START_METHOD  multiprocessing start method for per-request
+    SCHUBMULT_MP_START_METHOD  multiprocessing start method for the compute
                                 workers: "fork" or "spawn". Default: "fork"
                                 on Linux (reuses this process's already-
                                 imported sympy/symengine/schubmult via
                                 copy-on-write, avoiding per-request re-import
                                 cost), "spawn" elsewhere.
+    SCHUBMULT_WORKER_MAX_REQUESTS  Requests a compute worker serves before it
+                                is recycled (bounds memoization-cache memory).
+                                Default: 200.
 """
 
+import gc
 import io
 import logging
 import logging.handlers
@@ -39,6 +43,7 @@ import os
 import re
 import shlex
 import sys
+import threading
 import time
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
@@ -106,6 +111,9 @@ FLAVORS = {
     "groth_q_double": ("grothmult_q_double", "grothmult_q_double"),
 }
 
+# prefilled in the form; warmed up at startup so the first request for it is not cold
+DEFAULT_PERMS = "1 2 4 7 5 3 6 - 1 3 5 6 2 7 4"
+
 
 def _script_module(flavor: str):
     import importlib
@@ -122,8 +130,9 @@ def _warm_up() -> None:
     what the CLI wants but not this server: per-request computation runs in a
     forked child that inherits this process's memory via copy-on-write, so any
     import or first-use cost not paid here would be paid by every request.
-    Import eagerly, resolve the lazy proxies, and run each script once on a tiny
-    input so runtime-only imports and caches are populated before forking.
+    Import eagerly, resolve the lazy proxies, and run each script on a tiny input
+    and on the form's default input so runtime-only imports and the kernels'
+    memoization caches are populated before forking.
     """
     import importlib
 
@@ -166,16 +175,16 @@ def _warm_up() -> None:
         runs = [["3", "1", "2", "-", "2", "1", "3"]]
         if "double" in flavor:
             runs += [[*runs[0], "--display-positive"], [*runs[0], "--display-positive", "--mixed-var"]]
+        runs.append(DEFAULT_PERMS.split())
         for args in runs:
             try:
                 mod = _script_module(flavor)
-                with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                # capped like a real request: some default outputs are hundreds of MB
+                with redirect_stdout(_CappedBuffer(MAX_OUTPUT_BYTES, stop_on_cap=True)), redirect_stderr(io.StringIO()):
                     mod.main([prog, *args])
             except (Exception, SystemExit):
                 pass
 
-
-_warm_up()
 
 # ---------- config ----------
 ALLOWED_ORIGINS = [
@@ -198,6 +207,8 @@ MP_START_METHOD = os.environ.get(
     "SCHUBMULT_MP_START_METHOD",
     "fork" if sys.platform.startswith("linux") else "spawn",
 )
+WORKER_MAX_REQUESTS = int(os.environ.get("SCHUBMULT_WORKER_MAX_REQUESTS", "200"))
+_MAX_IDLE_WORKERS = 4
 
 
 class _CappedBuffer(io.StringIO):
@@ -337,24 +348,77 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
     return argv
 
 
-def _worker(flavor: str, argv: list[str], q) -> None:
-    """Subprocess entrypoint: run the script's main() and ship back its stdio."""
-    out = _CappedBuffer(MAX_OUTPUT_BYTES, stop_on_cap=True)
-    err = _CappedBuffer(MAX_OUTPUT_BYTES)
-    start = time.perf_counter()
-    elapsed = 0.0
+def _serve(conn) -> None:
+    """Compute-worker loop. The worker outlives a single request so the kernels'
+    memoization caches keep accumulating, as they would in one CLI process."""
+    while True:
+        try:
+            flavor, argv = conn.recv()
+        except (EOFError, OSError):
+            return
+        out, err, _, elapsed = _run_inline(flavor, argv)
+        conn.send((out, err, elapsed))
+
+
+class _Worker:
+    def __init__(self, ctx):
+        self.owner = os.getpid()
+        self.conn, child_conn = ctx.Pipe()
+        self.proc = ctx.Process(target=_serve, args=(child_conn,), daemon=True)
+        self.proc.start()
+        child_conn.close()
+        self.uses = 0
+
+    def kill(self) -> None:
+        self.conn.close()
+        self.proc.terminate()
+        self.proc.join(1.0)
+        if self.proc.is_alive():
+            self.proc.kill()
+            self.proc.join()
+
+
+_idle_workers: list[_Worker] = []
+_idle_lock = threading.Lock()
+
+
+def _acquire_worker() -> _Worker:
+    with _idle_lock:
+        while _idle_workers:
+            worker = _idle_workers.pop()
+            if worker.owner != os.getpid():
+                continue  # inherited through a pre-forking server; belongs to the parent
+            if worker.proc.is_alive():
+                return worker
+            worker.kill()
+    return _Worker(mp.get_context(MP_START_METHOD))
+
+
+def _release_worker(worker: _Worker) -> None:
+    worker.uses += 1
+    if worker.uses < WORKER_MAX_REQUESTS:
+        with _idle_lock:
+            if len(_idle_workers) < _MAX_IDLE_WORKERS:
+                _idle_workers.append(worker)
+                return
+    worker.kill()
+
+
+def _prime_worker() -> None:
+    """Start a worker and run the default input through it, so the first visitor
+    doesn't pay the worker's copy-on-write page faults on the warmed-up heap."""
     try:
-        mod = _script_module(flavor)
-        with redirect_stdout(out), redirect_stderr(err):
-            try:
-                mod.main(argv)
-            except (SystemExit, BrokenPipeError):
-                pass
-            except Exception:
-                err.write(traceback.format_exc())
-    finally:
-        elapsed = time.perf_counter() - start
-        q.put((out.getvalue(), err.getvalue(), elapsed))
+        worker = _Worker(mp.get_context(MP_START_METHOD))
+        for flavor, (_module, prog) in FLAVORS.items():
+            worker.conn.send((flavor, [prog, *DEFAULT_PERMS.split()]))
+            if not worker.conn.poll(COMPUTE_TIMEOUT):
+                worker.kill()
+                return
+            worker.conn.recv()
+    except Exception:
+        return
+    with _idle_lock:
+        _idle_workers.append(worker)
 
 
 def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
@@ -380,8 +444,8 @@ def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
 
 
 def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
-    """Run the script in a child process with a hard timeout, falling back
-    to in-process execution if multiprocessing isn't available.
+    """Run the script in a (reused) worker process with a hard timeout, falling
+    back to in-process execution if multiprocessing isn't available.
 
     Returns (stdout, stderr, timed_out, elapsed_seconds). elapsed_seconds
     times only the script's main() call, not process spawn/import overhead.
@@ -389,25 +453,23 @@ def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
     if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") == "1":
         return _run_inline(flavor, argv)
     try:
-        ctx = mp.get_context(MP_START_METHOD)
-        q = ctx.Queue()
-        p = ctx.Process(target=_worker, args=(flavor, argv, q), daemon=True)
-        p.start()
+        worker = _acquire_worker()
     except Exception:
         # Fall back to inline if subprocess machinery fails (e.g. some
         # restricted hosts disallow exec/fork).
         return _run_inline(flavor, argv)
-    p.join(COMPUTE_TIMEOUT)
-    if p.is_alive():
-        p.terminate()
-        p.join(1.0)
-        if p.is_alive():
-            p.kill()
-        return ("", f"Computation exceeded {COMPUTE_TIMEOUT}s timeout.\n", True, COMPUTE_TIMEOUT)
-    if q.empty():
+    try:
+        worker.conn.send((flavor, argv))
+        # read before joining: a child blocked writing a large result into the pipe never exits
+        if not worker.conn.poll(COMPUTE_TIMEOUT):
+            worker.kill()
+            return ("", f"Computation exceeded {COMPUTE_TIMEOUT}s timeout.\n", True, COMPUTE_TIMEOUT)
+        out, err, elapsed = worker.conn.recv()
+    except (EOFError, OSError):
+        worker.kill()
         return ("", "Worker exited without producing output. "
                     "Set SCHUBMULT_DISABLE_SUBPROCESS=1 to run inline.\n", False, 0.0)
-    out, err, elapsed = q.get()
+    _release_worker(worker)
     return (out, err, False, elapsed)
 
 
@@ -436,12 +498,12 @@ def _add_security_headers(resp):
 
 @app.route("/")
 def index():
-    return render_template("index.html", embed=False, enable_mult=ENABLE_MULT)
+    return render_template("index.html", embed=False, enable_mult=ENABLE_MULT, default_perms=DEFAULT_PERMS)
 
 
 @app.route("/embed")
 def embed():
-    return render_template("index.html", embed=True, enable_mult=ENABLE_MULT)
+    return render_template("index.html", embed=True, enable_mult=ENABLE_MULT, default_perms=DEFAULT_PERMS)
 
 
 @app.route("/api/compute", methods=["POST"])
@@ -515,6 +577,12 @@ def compute():
         "elapsed_seconds": round(elapsed_seconds, 3),
     })
 
+
+_warm_up()
+# keep the warmed-up heap out of GC passes, so forked workers don't copy-on-write it
+gc.freeze()
+if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") != "1" and mp.parent_process() is None:
+    threading.Thread(target=_prime_worker, daemon=True).start()
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=False)
