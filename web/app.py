@@ -111,7 +111,7 @@ FLAVORS = {
     "groth_q_double": ("grothmult_q_double", "grothmult_q_double"),
 }
 
-# prefilled in the form; warmed up at startup so the first request for it is not cold
+# must match the sm-perms value in templates/index.html; warmed up at startup
 DEFAULT_PERMS = "1 2 4 7 5 3 6 - 1 3 5 6 2 7 4"
 
 
@@ -498,12 +498,12 @@ def _add_security_headers(resp):
 
 @app.route("/")
 def index():
-    return render_template("index.html", embed=False, enable_mult=ENABLE_MULT, default_perms=DEFAULT_PERMS)
+    return render_template("index.html", embed=False, enable_mult=ENABLE_MULT)
 
 
 @app.route("/embed")
 def embed():
-    return render_template("index.html", embed=True, enable_mult=ENABLE_MULT, default_perms=DEFAULT_PERMS)
+    return render_template("index.html", embed=True, enable_mult=ENABLE_MULT)
 
 
 @app.route("/api/compute", methods=["POST"])
