@@ -108,7 +108,7 @@ ignore = [
     "RUF003",
     "N806",
     "D105",
-    "UP038",  # isinstance(x, (A, B)) is faster than A | B; rule is deprecated upstream
+    "PLW1641",  # isinstance(x, (A, B)) is faster than A | B; rule is deprecated upstream
     "D107",
     "D203",
     "D212",

@@ -303,7 +303,7 @@ def posify(
             u3, v3, w3 = try_reduce_u(u, v, w)
             if not is_coeff_irreducible(u3, v3, w3):
                 u, v, w = u3, v3, w3
-    split_two_b, split_two = is_split_two(u, v, w)
+    _split_two_b, _split_two = is_split_two(u, v, w)
     # logger.debug("Recording line number")
     if len([i for i in v.code if i != 0]) == 1:
         # logger.debug("Recording line number")

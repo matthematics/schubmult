@@ -3,8 +3,6 @@
 import sys  # noqa: F401
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
-from schubmult.symbolic import init_printing, latex, pretty, sstr, sympify, sympify_sympy
-
 # from sympy import init_printing
 from schubmult.utils.logging import init_logging
 
@@ -225,24 +223,37 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
             json.dump(args.__dict__, js, ensure_ascii=False, indent=1)
         exit(0)
 
-    init_printing()
-
+    # SymPy is only needed to render symbolic output; defer it so integer-only runs never load it
     if args.disp_mode == "latex":
         formatter = (  # noqa: E731
-            lambda bob, width=None: latex(sympify_sympy(bob), order="old").replace("\\left", "").replace("\\right", "")
+            lambda bob, width=None: _sym().latex(_sym().sympify_sympy(bob), order="old").replace("\\left", "").replace("\\right", "")
         )
     elif args.disp_mode == "pretty":
         # pretty we need to keep centered
         formatter = (  # noqa: E731
-            lambda bob, width=None: pretty(sympify_sympy(bob), order="old")
+            lambda bob, width=None: _sym().pretty(_sym().sympify_sympy(bob), order="old")
             if width is None
-            else pretty(sympify_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n", "\n" + " ".join(["" for i in range(width)]))
+            else _sym().pretty(_sym().sympify_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n", "\n" + " ".join(["" for i in range(width)]))
         )
     elif args.disp_mode == "basic":
-        formatter = lambda bob, width=None: repr(sympify(bob))#, order="none")  # , order="rev-lex" if args.same else "none")  # noqa: E731
+        formatter = lambda bob, width=None: repr(_sym().sympify(bob))#, order="none")  # , order="rev-lex" if args.same else "none")  # noqa: E731
     elif args.disp_mode == "sympy":
-        formatter = lambda bob, width=None: sstr(sympify_sympy(bob), order="old")  # , order="rev-lex" if args.same else "none")  # noqa: E731
+        formatter = lambda bob, width=None: _sym().sstr(_sym().sympify_sympy(bob), order="old")  # , order="rev-lex" if args.same else "none")  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
     init_logging(debug=args.debug)
     return args, formatter
+
+
+_sym_initialized = False
+
+
+def _sym():
+    """The `schubmult.symbolic` facade, running SymPy's ``init_printing`` on first use."""
+    global _sym_initialized  # noqa: PLW0603
+    import schubmult.symbolic as symbolic
+
+    if not _sym_initialized:
+        _sym_initialized = True
+        symbolic.init_printing()
+    return symbolic

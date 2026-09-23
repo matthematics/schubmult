@@ -3,7 +3,10 @@ import sys
 from schubmult.symbolic import sstr, sympify
 from schubmult.utils.argparse import schub_argparse
 
-from schubmult import GeneratingSet, Permutation, apply_peterson_woodward, schubmult_q, schubmult_q_fast, uncode
+from schubmult.combinatorics.permutation import Permutation, uncode
+from schubmult.mult.quantum import schubmult_q, schubmult_q_fast
+from schubmult.mult.quantum_double import apply_peterson_woodward
+from schubmult.symbolic.poly.variables import GeneratingSet
 
 q_var = GeneratingSet("q")
 

@@ -21,17 +21,13 @@ from schubmult.combinatorics.permutation import (
     uncode,
 )
 from schubmult.mult import _accel
-from schubmult.symbolic import Add, Mul, Pow
-from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import (
     add_perm_dict,
 )
-from schubmult.utils.schub_lib import (
-    compute_vpathdicts,
-    elem_sym_perms,
-    elem_sym_perms_op,
-)
+
+# schubmult.symbolic and schubmult.utils.schub_lib are imported inside the functions that need
+# them: they load SymPy/SymEngine, which the compiled schubmult_py path never touches.
 
 init_logging(debug=False)
 logger = get_logger(__name__)
@@ -41,6 +37,8 @@ class _gvars:
 
     @cached_property
     def var_x(self):
+        from schubmult.symbolic.poly.variables import GeneratingSet
+
         return GeneratingSet("x")
 
 
@@ -61,6 +59,8 @@ def single_variable(coeff_dict, varnum):
     Returns:
         dict: The updated coefficient dict ``{Permutation: coeff}``.
     """
+    from schubmult.utils.schub_lib import elem_sym_perms
+
     ret = {}
     for u in coeff_dict:
         new_perms_k = elem_sym_perms(u, 1, varnum)
@@ -77,7 +77,7 @@ def single_variable(coeff_dict, varnum):
 
 
 # TODO: if need indexes, CustomGeneratingSet
-def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x):
+def mult_poly_py(coeff_dict, poly, var_x=None):
     """Multiply ``sum_u coeff_u S_u(x)`` by an arbitrary polynomial ``poly`` in ``var_x``.
 
     Recurses over the ``Add``/``Mul``/``Pow`` structure of ``poly``; each single
@@ -92,6 +92,11 @@ def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x):
     Returns:
         dict: The updated coefficient dict ``{Permutation: coeff}``.
     """
+    from schubmult.symbolic import Add, Mul, Pow
+    from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
+
+    if var_x is None:
+        var_x = _vars.var_x
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
 
@@ -146,6 +151,8 @@ def schubmult_py(perm_dict, v):
 
 def _schubmult_py_python(perm_dict, v):
     """Pure-Python implementation of ``schubmult_py``; see there for the contract."""
+    from schubmult.utils.schub_lib import compute_vpathdicts, elem_sym_perms
+
     v = Permutation(v)
     # print(f"{v=}")
     vn1 = ~v
@@ -212,6 +219,8 @@ def schubmult_py_down(perm_dict, v):
     Returns:
         dict: Coefficient dict ``{Permutation: coeff}``.
     """
+    from schubmult.utils.schub_lib import compute_vpathdicts, elem_sym_perms_op
+
     v = Permutation(v)
     # print(f"{v=}")
     vn1 = ~v

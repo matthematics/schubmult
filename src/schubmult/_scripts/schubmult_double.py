@@ -1,28 +1,17 @@
 import sys
 from functools import cached_property
 
-from schubmult import split_perms
+from schubmult.combinatorics.permutation import Permutation, split_perms, uncode
+from schubmult.mult.double import mult_poly_double, schub_coprod_double, schubmult_double, schubmult_double_alt_from_elems
+from schubmult.mult.positivity import posify
 from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
-from schubmult import FactorialElemSym
+from schubmult.symbolic.functions import efficient_subs
+from schubmult.symbolic.poly.variables import GeneratingSet
+from schubmult.symbolic.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
-from schubmult import (
-    add_perm_dict,
-    mu_A,
-    will_formula_work,
-)
-
-from schubmult import (
-    GeneratingSet,
-    Permutation,
-    efficient_subs,
-    mult_poly_double,
-    posify,
-    schub_coprod_double,
-    schubmult_double,
-    schubmult_double_alt_from_elems,
-    uncode,
-)
+from schubmult.utils.perm_utils import add_perm_dict, mu_A
+from schubmult.utils.schub_lib import will_formula_work
 
 logger = get_logger(__name__)
 

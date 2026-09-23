@@ -4,19 +4,17 @@ from functools import cached_property
 from schubmult.symbolic import simplify, sstr, sympify
 from schubmult.utils.argparse import schub_argparse
 
-from schubmult import (
-    GeneratingSet,
-    Permutation,
+from schubmult.combinatorics.permutation import Permutation, permtrim, uncode
+from schubmult.mult.quantum_double import (
     apply_peterson_woodward,
-    div_diff,
-    efficient_subs,
     nil_hecke,
-    permtrim,
     q_posify,
     schubmult_q_double,
     schubmult_q_double_fast,
-    uncode,
 )
+from schubmult.symbolic.functions import efficient_subs
+from schubmult.symbolic.poly.schub_poly import div_diff
+from schubmult.symbolic.poly.variables import GeneratingSet
 
 
 class _gvars:

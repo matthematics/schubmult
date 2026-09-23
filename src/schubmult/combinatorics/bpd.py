@@ -384,7 +384,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         the_bpd = self
 
         while True:
-            new_bpd, (a, r) = the_bpd.pop_op()
+            new_bpd, (_a, r) = the_bpd.pop_op()
             if r == 1:
                 the_bpd = new_bpd
             else:
@@ -807,7 +807,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # self._perm = Permutation.ref_product(*self.word)
 
         #return self._perm
-        nrows, ncols = self._grid.shape
+        nrows, _ncols = self._grid.shape
         bottom_row = self._grid[nrows - 1, :]
 
         # # Check for TBD in bottom row

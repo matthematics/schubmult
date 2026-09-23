@@ -1,9 +1,8 @@
 import sys
 
-from schubmult.symbolic import sstr, sympify
+from schubmult.combinatorics.permutation import Permutation, uncode
+from schubmult.mult.single import mult_poly_py, schub_coprod_py, schubmult_py
 from schubmult.utils.argparse import schub_argparse
-
-from schubmult import Permutation, mult_poly_py, schub_coprod_py, schubmult_py, uncode
 
 
 def main(argv=None):
@@ -50,7 +49,7 @@ def main(argv=None):
                         if formatter is None:
                             raw_result_dict[(firstperm, secondperm)] = val
                         else:
-                            print(f"{val} {sstr(firstperm)} {sstr(secondperm)}")
+                            print(f"{val} {firstperm} {secondperm}")
         else:
             if ascode:
                 for i in range(len(perms)):
@@ -64,6 +63,8 @@ def main(argv=None):
             for perm in perms[1:]:
                 coeff_dict = schubmult_py(coeff_dict, Permutation(perm))
             if mult:
+                from schubmult.symbolic import sympify
+
                 mul_exp = sympify(mulstring)
                 coeff_dict = mult_poly_py(coeff_dict, mul_exp)
 
@@ -72,7 +73,7 @@ def main(argv=None):
                     if val != 0:
                         raw_result_dict[perm] = val
                         if formatter:
-                            print(f"{val}  {sstr(perm)}")
+                            print(f"{val}  {perm}")
         if formatter is None:
             return raw_result_dict
     except BrokenPipeError:

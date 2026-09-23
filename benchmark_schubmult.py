@@ -57,15 +57,15 @@ def run_benchmark(executable: str, perm_input: str, num_runs: int = 1, use_conda
         
         start = time.time()
         try:
-            if use_conda:
-                result = py.main(cmd) 
-                result = 0 if result is not None else 1
-            else:
-                result = subprocess.run(
-                    cmd,
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                    timeout=30,
-                )
+            # if use_conda:
+            #     result = py.main(cmd) 
+            #     result = 0 if result is not None else 1
+            # else:
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                timeout=30,
+            )
             elapsed = time.time() - start
             total_time += elapsed
             

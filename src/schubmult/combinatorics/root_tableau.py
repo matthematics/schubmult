@@ -5,7 +5,7 @@
 import copy
 import logging
 from functools import cached_property
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from sympy import pretty_print  # noqa: F401
@@ -144,7 +144,7 @@ def _root_compare(root1, root2):
     return 0
 
 
-def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optional[bool] = False, with_compatible_seq: Optional[bool] = False) -> Any:
+def _word_from_grid(grid0, as_grid: bool | None = False, as_ordering: bool | None = False, with_compatible_seq: bool | None = False) -> Any:
     """
     Two modes:
 

@@ -17,9 +17,9 @@ def _canonical_rc(rc):
     # if rc.extremal_weight != rc.perm.pad_code(len(rc)):
     #     return None
     # return rc#.to_highest_weight()[0]
-    nilp, plac = NilPlactic.ed_column_insert_rsk(rc.perm_word, rc.compatible_sequence)
+    _nilp, plac = NilPlactic.ed_column_insert_rsk(rc.perm_word, rc.compatible_sequence)
     for rc2 in RCGraph.all_key_rcs(rc.extremal_weight, weight=rc.length_vector):
-        nilp2, plac2 = NilPlactic.ed_column_insert_rsk(rc2.perm_word, rc2.compatible_sequence)
+        _nilp2, plac2 = NilPlactic.ed_column_insert_rsk(rc2.perm_word, rc2.compatible_sequence)
         if plac == plac2:
             return rc
     raise ValueError("ca")

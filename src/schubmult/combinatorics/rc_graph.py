@@ -86,7 +86,7 @@ class RCGraph(WCGraph, CrystalGraph):
 
         hw, raise_seq = rc.to_highest_weight()
         perm = self.perm
-        perm_grass, perm_base = perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
+        _perm_grass, perm_base = perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
 
         def decomp_hw():
             stack = [hw]
@@ -105,7 +105,7 @@ class RCGraph(WCGraph, CrystalGraph):
             min_perm_inv = 0
             the_rc = None
             for rc_max in maxes:
-                grass, base = rc_max.perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
+                _grass, base = rc_max.perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
                 if the_rc is None:
                     the_rc = rc_max
                     min_perm_inv = base.inv
@@ -2153,7 +2153,7 @@ class RCGraph(WCGraph, CrystalGraph):
     @cached_property
     def weight_tableau(self) -> Plactic:
         """Plactic tableau recording the RC graph's weight, via column Edelman-Greene RSK insertion."""
-        nilp, plac = NilPlactic.ed_column_insert_rsk(self.perm_word, self.compatible_sequence)
+        _nilp, plac = NilPlactic.ed_column_insert_rsk(self.perm_word, self.compatible_sequence)
         return plac
 
     def monk_insert(self, row):

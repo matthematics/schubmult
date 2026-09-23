@@ -1450,7 +1450,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             return self._perm
         # self._perm = Permutation.ref_product(*self.word)
 
-        nrows, ncols = self._grid.shape
+        _nrows, _ncols = self._grid.shape
         # left_col = self._grid[:, 0]
         # right_col = self._grid[:, -1]
 
