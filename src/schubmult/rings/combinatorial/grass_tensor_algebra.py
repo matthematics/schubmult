@@ -22,7 +22,7 @@ def _is_full_grassmannian_rc(rc: RCGraph) -> bool:
     return rc.perm.inv == 0 or rc.perm.descents() == {len(rc) - 1}
 
 def _ensure_valid_key(key):
-    if not isinstance(key, (tuple, CrystalGraphTensor)):
+    if not isinstance(key, tuple | CrystalGraphTensor):
         raise TypeError(f"Expected CrystalGraphTensor or tuple key, got {type(key)}")
     for rc in key:
         if not isinstance(rc, RCGraph):
@@ -187,7 +187,7 @@ class GrassTensorAlgebra(CrystalGraphRing):
 
     def key_to_rc_graph(self, key: CrystalGraphTensor | tuple) -> RCGraph:
         """Evaluate a tensor key to an RCGraph using left-to-right squash_product."""
-        if not isinstance(key, (tuple, CrystalGraphTensor)):
+        if not isinstance(key, tuple | CrystalGraphTensor):
             raise TypeError(f"Expected CrystalGraphTensor or tuple key, got {type(key)}")
         if len(key) == 0:
             return RCGraph()

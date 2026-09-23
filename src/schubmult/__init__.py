@@ -146,7 +146,7 @@ def _scan_modules():
             continue
 
         for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
                 name = node.name
                 if not name.startswith("_") and name not in _module_map:
                     _module_map[name] = modname

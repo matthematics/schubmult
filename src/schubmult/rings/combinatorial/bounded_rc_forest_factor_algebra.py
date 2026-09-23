@@ -642,7 +642,7 @@ class BoundedRCForestFactorAlgebra(CrystalGraphRing):
     #     return acc.to_rc_graph_ring_element()
 
     def _ensure_valid_key(self, key):
-        if not isinstance(key, (tuple, self.make_key)):
+        if not isinstance(key, tuple | self.make_key):
             raise TypeError(f"Expected key type or tuple key, got {type(key)} for {key=}")
         if isinstance(key, tuple):
             key = self.make_key(key[0], key[1])

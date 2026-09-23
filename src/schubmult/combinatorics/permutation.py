@@ -501,7 +501,7 @@ class Permutation(LazyPrintable):
 
     def __call__(self, *tup):
         if len(tup) == 1:
-            if isinstance(tup[0], (list, tuple)):
+            if isinstance(tup[0], list | tuple):
                 tup = tup[0]
             else:
                 return self._perm[tup[0] - 1]

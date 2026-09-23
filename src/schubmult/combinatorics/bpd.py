@@ -667,7 +667,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Access grid elements, casting to TileType"""
         result = self._grid[key]
         # If it's a scalar, wrap it in TileType
-        if isinstance(result, (int, np.integer)):
+        if isinstance(result, int | np.integer):
             return TileType(result)
         return result
 
@@ -1304,7 +1304,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def all_tiles_of_type(self, tile_type: TileType) -> set[tuple[int, int]]:
         """All ``(row, col)`` positions matching ``tile_type`` (or any type in an iterable of types)."""
-        if isinstance(tile_type, (list, tuple)):
+        if isinstance(tile_type, list | tuple):
             result = set()
             for t in tile_type:
                 result.update(self.all_tiles_of_type(t))

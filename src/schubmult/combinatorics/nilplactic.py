@@ -219,7 +219,7 @@ class NilPlactic(Plactic):
         for i in range(self._grid.shape[0]):
             for j in range(self._grid.shape[1]):
                 val = self._grid[i, j]
-                if val is not None and isinstance(val, (int, np.integer)):
+                if val is not None and isinstance(val, int | np.integer):
                     max_switcher = max(max_switcher, int(val))
 
         switcher = max_switcher
@@ -291,7 +291,7 @@ class NilPlactic(Plactic):
         for i in range(self.rows):
             for j in range(self.cols):
                 val = self._grid[i, j]
-                if val is not None and isinstance(val, (int, np.integer)):
+                if val is not None and isinstance(val, int | np.integer):
                     max_switcher = max(max_switcher, int(val))
 
         switcher = 1

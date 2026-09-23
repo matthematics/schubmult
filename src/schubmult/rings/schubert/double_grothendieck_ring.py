@@ -367,7 +367,7 @@ class DoubleGrothendieckRing(BaseSchubertRing):
 
     def new(self, x):
         """Build an element from a permutation/Lehmer list, an element of this ring, or a polynomial expression."""
-        if isinstance(x, (list, tuple)):
+        if isinstance(x, list | tuple):
             return self.from_dict({Permutation(x): S.One})
         if isinstance(x, Permutation):
             return self.from_dict({x: S.One})

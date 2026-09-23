@@ -193,7 +193,7 @@ class IncreasingTableau(Plactic):
         any number of ``(row, col)`` pairs, and returns a list of
         ``(int, int)`` tuples.
         """
-        if len(corners) == 2 and all(isinstance(c, (int, np.integer)) for c in corners):
+        if len(corners) == 2 and all(isinstance(c, int | np.integer) for c in corners):
             return [(int(corners[0]), int(corners[1]))]
         return [(int(c[0]), int(c[1])) for c in corners]
 
@@ -285,7 +285,7 @@ class IncreasingTableau(Plactic):
         for i in range(new_grid.shape[0]):
             for j in range(new_grid.shape[1]):
                 val = new_grid[i, j]
-                if val is not None and val != -1 and isinstance(val, (int, np.integer)):
+                if val is not None and val != -1 and isinstance(val, int | np.integer):
                     max_switcher = max(max_switcher, int(val))
 
         order = range(max_switcher, 0, -1) if upward else range(1, max_switcher + 1)

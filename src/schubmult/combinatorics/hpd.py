@@ -1262,7 +1262,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         """Access grid elements, casting to HPDTile"""
         result = self._grid[key]
         # If it's a single element, convert to HPDTile enum
-        if isinstance(result, (int, np.integer)):
+        if isinstance(result, int | np.integer):
             return HPDTile(result)
         # If it's an array, return as-is (caller will need to convert)
         return result
@@ -2029,7 +2029,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         return self.all_tiles_of_type(HPDTile.CROSS)
 
     def all_tiles_of_type(self, tile_type: HPDTile) -> set[tuple[int, int]]:
-        if isinstance(tile_type, (list, tuple)):
+        if isinstance(tile_type, list | tuple):
             result = set()
             for t in tile_type:
                 result.update(self.all_tiles_of_type(t))

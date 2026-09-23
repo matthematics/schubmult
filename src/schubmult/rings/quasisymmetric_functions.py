@@ -181,7 +181,7 @@ class QSym(BaseSchubertRing):
         >>> QS = QSym()
         >>> QS.quasi_schur(2, 1)
         """
-        if len(comp) == 1 and isinstance(comp[0], (tuple, list)):
+        if len(comp) == 1 and isinstance(comp[0], tuple | list):
             comp = comp[0]
 
         monomial_expansion = quasi_schur_to_monomial(tuple(comp))

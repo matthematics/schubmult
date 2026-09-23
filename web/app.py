@@ -116,16 +116,63 @@ def _script_module(flavor: str):
 
 
 def _warm_up() -> None:
-    """Import every script module (and the sympy/symengine/schubmult stack
-    they drag in) once, right now, in this process. Per-request computation
-    runs in a forked child that inherits this already-imported memory via
-    copy-on-write, so the multi-second cold-import cost is paid once at
-    startup instead of on every user's first request per flavor."""
-    for flavor in FLAVORS:
+    """Load everything a request could touch, once, right now, in this process.
+
+    The package imports lazily (SymPy/SymEngine/PuLP load on first use), which is
+    what the CLI wants but not this server: per-request computation runs in a
+    forked child that inherits this process's memory via copy-on-write, so any
+    import or first-use cost not paid here would be paid by every request.
+    Import eagerly, resolve the lazy proxies, and run each script once on a tiny
+    input so runtime-only imports and caches are populated before forking.
+    """
+    import importlib
+
+    for modname in (
+        "symengine",
+        "sympy",
+        "sympy.printing.str",
+        "sympy.printing.pretty",
+        "sympy.printing.latex",
+        "sympy.polys",
+        "pulp",
+        "schubmult.abc",
+        "schubmult.symbolic.functions",
+        "schubmult.symbolic.symmetric_polynomials",
+        "schubmult.mult.positivity",
+    ):
         try:
-            _script_module(flavor)
+            importlib.import_module(modname)
         except Exception:
             pass  # missing optional deps (e.g. pulp) shouldn't block startup
+
+    import schubmult
+    import schubmult.symbolic
+    from schubmult.utils._lazy import LazyAttr
+
+    for name in schubmult._lazy_exports:
+        try:
+            getattr(schubmult, name)
+        except Exception:
+            pass
+    for name in schubmult.symbolic.__all__:
+        try:
+            val = getattr(schubmult.symbolic, name)
+            if isinstance(val, LazyAttr):
+                val._resolve()
+        except Exception:
+            pass
+
+    for flavor, (_module, prog) in FLAVORS.items():
+        runs = [["3", "1", "2", "-", "2", "1", "3"]]
+        if "double" in flavor:
+            runs += [[*runs[0], "--display-positive"], [*runs[0], "--display-positive", "--mixed-var"]]
+        for args in runs:
+            try:
+                mod = _script_module(flavor)
+                with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                    mod.main([prog, *args])
+            except (Exception, SystemExit):
+                pass
 
 
 _warm_up()
