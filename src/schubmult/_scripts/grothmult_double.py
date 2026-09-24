@@ -38,7 +38,9 @@ def _solver(msg):
 
     if pu.HiGHS_CMD().available():
         return pu.HiGHS_CMD(msg=msg)
-    return pu.PULP_CBC_CMD(msg=msg)
+    from schubmult.mult.positivity import cbc_solver
+
+    return cbc_solver(msg)
 
 
 def _denominator_budget(den, var2):
@@ -203,8 +205,8 @@ def groth_posify(val, var2, var3, msg):
         return lev
 
     def solve(candidates):
-        vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(candidates))]
         lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+        vrs = [lp_prob.add_variable(f"a{i}", lowBound=0, cat="Integer") for i in range(len(candidates))]
         lp_prob += 0
         eqs = {}
         for i, (svec, _, _, _) in enumerate(candidates):

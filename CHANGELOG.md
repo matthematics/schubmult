@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- The PuLP requirement is now `PuLP[cbc]>=3.3.2`. `--display-positive` builds variables
+  with `LpProblem.add_variable` and solves with `COIN_CMD` (the CBC binary comes from the
+  `[cbc]` extra), replacing `LpVariable(...)` and `PULP_CBC_CMD`, which PuLP deprecates
+  ahead of 4.0.
+
 ## 5.1.0
 
 Grothendieck products on the command line and in `schubmult.mult`, including the quantum
