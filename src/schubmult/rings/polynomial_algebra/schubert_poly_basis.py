@@ -110,7 +110,7 @@ class SchubertPolyBasis(PolynomialBasis):
                     res_dict[other_basis.as_key([u, v])] = res_dict.get(other_basis.as_key([u, v]), S.Zero) + coeff1 * coeff2 * coeff0
         return res_dict
 
-    def transition_elementary(self, dct, other_basis):
+    def transition_elementary(self, dct, other_basis): # noqa: ARG002
         """Transition from Schubert basis to elementary symmetric basis."""
         from schubmult.combinatorics.permutation import uncode
         from schubmult.rings.free_algebra import FA
@@ -123,35 +123,28 @@ class SchubertPolyBasis(PolynomialBasis):
 
         for k, v in elem.items():
             num_vars = k[1]
-            if k[0].inv != 0:
-                cd = list(range(num_vars, 0, -1))
-                if len(k[0]) > num_vars:
-                    cd = ([cd[0]] * (len(k[0]) - num_vars)) + cd
-                w0 = uncode(cd)
-                rp = self.ring(k[0]).cem_rep(elem_func=elem_func, mumu=w0)
-                for part, v2 in rp.items():
-                    funny_bacon = [0]
-                    for i in range(0, len(part), 2):
-                        degree = part[i]
-                        numvars = part[i + 1]
-                        if numvars == 0:
-                            continue
-                        if numvars == num_vars:
-                            if len(funny_bacon) < numvars:
-                                funny_bacon += [0] * (numvars - len(funny_bacon))
-                                funny_bacon[numvars - 1] = degree
-                            else:
-                                funny_bacon.append(degree)
-                        else:
-                            if len(funny_bacon) < numvars:
-                                funny_bacon += [0] * (numvars - len(funny_bacon))
-                            funny_bacon[numvars - 1] += degree
-                    funny_bacon = funny_bacon[: num_vars - 1] + sorted(funny_bacon[num_vars - 1 :])
-                    key = (tuple(funny_bacon), k[1])
-                    res[key] = res.get(key, S.Zero) + v * v2
-            else:
-                key = other_basis.zero_monom
-                res[key] = res.get(key, S.Zero) + v
+            cd = list(range(num_vars, 0, -1))
+            if cd and len(k[0]) > num_vars:
+                cd = ([cd[0]] * (len(k[0]) - num_vars)) + cd
+            w0 = uncode(cd)
+            rp = self.ring(k[0]).cem_rep(elem_func=elem_func, mumu=w0)
+            for part, v2 in rp.items():
+                lower = [0] * (num_vars - 1)
+                top = []
+                for i in range(0, len(part), 2):
+                    degree = part[i]
+                    numvars = part[i + 1]
+                    if numvars == 0 or degree == 0:
+                        continue
+                    if numvars == num_vars:
+                        top.append(degree)
+                    else:
+                        lower[numvars - 1] += degree
+                # canonical: slot i < n-1 is e(x_1..x_{i+1}); slots >= n-1 are e(x_1..x_n), ascending
+                tup = lower + sorted(top)
+                tup += [0] * (num_vars - len(tup))
+                key = (tuple(tup), num_vars)
+                res[key] = res.get(key, S.Zero) + v * v2
         return res
 
     def transition_key_fundamental_slide(self, perm, n):

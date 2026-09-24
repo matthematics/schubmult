@@ -66,7 +66,7 @@ class MonomialSlidePolyBasis(PolynomialBasis):
 
     def expand(self, dct):
         """Expand a monomial slide basis dict into a symbolic polynomial expression."""
-        return Add(*[v * self.to_monoms(k) for k, v in dct.items()])
+        return Add(*[v * self._monomial_basis.expand(self.to_monoms(k)) for k, v in dct.items()])
 
     def transition(self, other_basis):
         """Return a transition function from monomial slide basis to *other_basis*."""

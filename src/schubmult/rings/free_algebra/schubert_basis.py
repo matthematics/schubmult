@@ -196,7 +196,7 @@ class SchubertBasis(FreeAlgebraBasis):
                 lambd2 = (0,) * numvars
             for tup, v2 in the_words.items():
                 new_tup = tuple(reversed([numvars - 1 - i - tup[i] for i in range(len(tup))]))
-                dct2[(new_tup, lambd2)] = v * v2
+                dct2[(new_tup, lambd2)] = dct2.get((new_tup, lambd2), 0) + v * v2
                 #ret[((tuple(reversed(new_tup[-numvars + 1 :])), *sorted(new_tup[: -numvars + 1])), numvars)] = v
         return dct2
 

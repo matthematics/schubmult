@@ -93,8 +93,8 @@ class PolynomialBasis(ABC):
         Tring2 = TensorRing(ring1.__class__(basis=basis1), ring2.__class__(basis=basis2))
         res = Tring2.zero
         for (key1, key2), v in tensor_elem.items():
-            new_elem1 = ring1(*key1).change_basis(basis1)
-            new_elem2 = ring2(*key2).change_basis(basis2)
+            new_elem1 = ring1.from_dict({key1: S.One}).change_basis(basis1)
+            new_elem2 = ring2.from_dict({key2: S.One}).change_basis(basis2)
             res += v * Tring2.ext_multiply(new_elem1, new_elem2)
         return res
 
