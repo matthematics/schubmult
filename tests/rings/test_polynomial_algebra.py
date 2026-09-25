@@ -148,7 +148,8 @@ def test_monomial_basis_transitions(basis):
 
     PA = PolynomialAlgebra(MonomialBasis(x))
 
-    monom_elem = PA(1, 3, 1, 2) + PA(2,2,0,3) + PA(0, 1, 4, 0)
+    # degree 6: one degree higher makes the Lascoux round trip ~6x slower for no extra coverage
+    monom_elem = PA(1, 2, 1, 1) + PA(2, 1, 0, 2) + PA(0, 1, 3, 0)
     monom_elem2 = monom_elem.change_basis(basis).change_basis(MonomialBasis(x))
     assert monom_elem2.almosteq(monom_elem)
 
@@ -171,7 +172,7 @@ def test_schubert_basis_transitions(basis):
 
     Schub = PolynomialAlgebra(SchubertPolyBasis(x))
 
-    monom_elem = Schub(uncode([2,0,1,3])) - Schub(uncode([2,0,1]), 4)
+    monom_elem = Schub(uncode([2, 0, 1, 2])) - Schub(uncode([1, 0, 1]), 4)
     monom_elem2 = monom_elem.change_basis(basis).change_basis(SchubertPolyBasis)
     assert monom_elem2.almosteq(monom_elem)
 

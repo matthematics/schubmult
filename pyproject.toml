@@ -165,6 +165,7 @@ exclude_also = [
 [project.optional-dependencies]
 visualization = ["matplotlib>=3.0"]
 docs = ["pydoc-markdown>=4.8", "mkdocs>=1.6", "mkdocs-material>=9.5"]
+test = ["pytest", "pytest-xdist"]
 
 
 [project.urls]

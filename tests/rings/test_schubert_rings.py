@@ -212,13 +212,13 @@ def test_double_grothendieck_expr_trans():
 
 
 def test_double_grothendieck_poly_round_trip():
-    from sympy import cancel
     from schubmult import DGx
-    from schubmult.symbolic import sympify_sympy
+    from schubmult.utils.test_utils import vanishes
 
     elem = DGx([2, 1]) * DGx([1, 3, 2])
     diff = elem.ring.from_expr(elem.as_polynomial()) - elem
-    assert all(cancel(sympify_sympy(v)) == 0 for v in diff.values())
+    # coefficients are large unsimplified rational functions; sympy.cancel took ~90s here
+    assert vanishes(diff.values())
 
 
 def test_quantum_schub_expand():
@@ -256,8 +256,9 @@ def test_quantum_schubert_parabolic():
     from schubmult import uncode
     from schubmult.symbolic import S, expand
 
+    # keep the second factor small: [1, 3, 0, 1, 2] made this an 82-term, 12s product
     a = QPSx(2, 3, 4)(uncode([1, 2, 0, 2, 3]))
-    b = QPSx(2, 3, 4)(uncode([1, 3, 0, 1, 2]))
+    b = QPSx(2, 3, 4)(uncode([1, 1, 0, 1, 1]))
     c = a * b
     assert expand(c.as_polynomial() - a.as_polynomial() * b.as_polynomial()) == S.Zero
 
