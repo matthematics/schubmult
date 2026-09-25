@@ -205,22 +205,24 @@ class SchubertBasis(FreeAlgebraBasis):
         """Expand ``(perm, numvars)`` in the `ElementaryBasis`: read the monomials of ``S_{perm * w0}``
         and complement each exponent against the staircase to get elementary-symmetric indices.
         """
-        from schubmult.symbolic.poly.variables import genset_dict_from_expr
-        from schubmult.utils.perm_utils import p_trans
+        from collections import Counter
 
-        mu = p_trans(list(range(numvars, 0, -1)))
-        if len(mu) < len(perm) - 1:
-            mu = ([numvars] * (len(perm) - 1 - len(mu))) + mu
+        from ...combinatorics.rc_graph import RCGraph
+        from .elementary_basis import ElementaryBasis
+
+        if numvars == 0:
+            return {((), 0): 1} if perm.inv == 0 else {}
+
+        L, mu = ElementaryBasis.staircase(numvars, perm.inv)
         w0 = uncode(mu)
-        dct = genset_dict_from_expr(Sx(perm * w0).as_polynomial(), Sx([]).ring.genset)
+        dct = Counter([rc.length_vector for rc in RCGraph.all_rc_graphs(perm * w0, len(mu))])
         ret = {}
 
         for tup, v in dct.items():
-            new_tup = [mu[i] - tup[i] for i in range(len(tup))]
-
-            if len(new_tup) < len(mu):
-                new_tup += mu[len(new_tup) :]
-            ret[((*reversed(new_tup[-numvars + 1 :]), *sorted(new_tup[: -numvars + 1])), numvars)] = v
+            new_tup = [mu[i] - tup[i] for i in range(len(mu))]
+            # S_{perm w0} is symmetric in the first L variables, so every ordering of the tail
+            # carries the same coefficient: read one representative rather than summing.
+            ret[ElementaryBasis.canonical_key((*reversed(new_tup[L:]), *new_tup[:L]), numvars)] = v
         return ret
 
     @classmethod

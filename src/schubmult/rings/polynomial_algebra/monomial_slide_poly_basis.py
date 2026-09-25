@@ -74,6 +74,12 @@ class MonomialSlidePolyBasis(PolynomialBasis):
             return self.transition_monomial
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))
 
+    @classmethod
+    def dual_basis(cls):
+        """Return the dual free algebra basis class (:class:`MonomialSlideBasis`)."""
+        from ..free_algebra.monomial_slide_basis import MonomialSlideBasis
+        return MonomialSlideBasis
+
     @property
     def zero_monom(self):
         return self.as_key([])
