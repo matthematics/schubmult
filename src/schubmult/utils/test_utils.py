@@ -3,6 +3,27 @@
 import symengine
 
 
+def vanishes(exprs, trials=3, seed=1):
+    """True if every rational-function expression in ``exprs`` is identically zero, tested exactly at
+    ``trials`` random rational points (no floats, so a zero *is* a zero).
+
+    A nonzero rational function vanishes at a random point with negligible probability, and this is
+    orders of magnitude faster than ``sympy.cancel`` on large unsimplified differences.
+    """
+    import random
+
+    import sympy
+
+    exprs = [sympy.sympify(e) for e in exprs]
+    syms = sorted(set().union(*[e.free_symbols for e in exprs]), key=str) if exprs else []
+    rng = random.Random(seed)
+    for _ in range(trials):
+        point = {s: sympy.Rational(rng.randint(2, 97), rng.randint(2, 97)) for s in syms}
+        if any(e.xreplace(point) != 0 for e in exprs):
+            return False
+    return True
+
+
 def generate_all(module, filename):
     """Print an import block and ``__all__`` list for the public names defined in ``filename`` (dev helper)."""
     D = dir(module)

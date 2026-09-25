@@ -1,7 +1,14 @@
 """`ElementaryBasis`: free-algebra basis indexed by ``(composition, numvars)``, dual to products of
-elementary symmetric polynomials ``e_{c_1}(x_1..x_k) e_{c_2}(x_1..x_{k-1}) ...`` in nested
-variable sets. `SchubertBasis` expands into it via the monomials of ``S_{perm * w0}``.
+elementary symmetric polynomials ``e_{a_1}(x_1) e_{a_2}(x_1, x_2) ... e_{a_{n-1}}(x_1..x_{n-1})`` times a
+symmetric tail of ``e_k(x_1..x_n)`` factors (`ElemSymPolyBasis`).
+
+Transitions to and from `SchubertBasis` go through the finite ``(numvars, degree)`` block: expanding
+every elementary product of that degree in the Schubert basis (Pieri rule) gives the Schubert -> Elem
+matrix, and its inverse is Elem -> Schubert.
 """
+
+import itertools
+from functools import cache
 
 from schubmult.combinatorics.permutation import uncode
 from schubmult.symbolic import S
@@ -9,6 +16,26 @@ from schubmult.symbolic import S
 from ..printing import GenericPrintingTerm
 from ..schubert.schubert_ring import Sx
 from .free_algebra_basis import FreeAlgebraBasis
+
+
+def _partitions(total, max_part):
+    """Partitions of ``total`` with parts in ``1..max_part``, as ascending tuples."""
+    if total == 0:
+        yield ()
+        return
+    for part in range(1, min(total, max_part) + 1):
+        for rest in _partitions(total - part, part):
+            yield (*rest, part)
+
+
+def _compositions(total, length):
+    """Weak compositions of ``total`` into ``length`` parts."""
+    if length == 1:
+        yield (total,)
+        return
+    for first in range(total + 1):
+        for rest in _compositions(total - first, length - 1):
+            yield (first, *rest)
 
 
 class ElementaryBasis(FreeAlgebraBasis):
@@ -45,15 +72,60 @@ class ElementaryBasis(FreeAlgebraBasis):
         return ((*head, *tail) if tail else (*head, 0), numvars)
 
     @staticmethod
-    def staircase(numvars, degree):
-        """Dominant code ``[n]*(L-1) + [n, n-1, ..., 1]`` with ``L = max(degree, 1)`` symmetric slots.
-
-        Every degree-``degree`` elementary product in ``numvars`` variables has at most ``degree``
-        tail factors, so using ``L`` slots uniformly makes the Cauchy-kernel duality cover the
-        whole degree at once; a per-key tail length only gives duality within a smaller span.
+    def degree_keys(numvars, degree):
+        """All canonical keys of the given degree in ``numvars`` variables: flag part ``a_i <= i``,
+        tail a partition with parts in ``1..numvars``. There are as many as monomials of that degree.
         """
-        L = max(degree, 1)
-        return L, [numvars] * (L - 1) + list(range(numvars, 0, -1))
+        if numvars == 0:
+            return [((), 0)] if degree == 0 else []
+        keys = []
+        for head in itertools.product(*[range(i + 1) for i in range(1, numvars)]):
+            rest = degree - sum(head)
+            if rest < 0:
+                continue
+            if rest == 0:
+                keys.append(((*head, 0), numvars))
+            else:
+                keys.extend(((*head, *tail), numvars) for tail in _partitions(rest, numvars))
+        return keys
+
+    @staticmethod
+    def _elem_product_schubert(key):
+        """Schubert expansion of the elementary product ``E_key`` (Pieri rule)."""
+        from schubmult.abc import e
+
+        tup, numvars = key
+        res = Sx.one
+        for i, a in enumerate(tup):
+            if a:
+                res = Sx.elem_mul(res, e(a, min(i + 1, numvars), Sx.genset[1:]))
+        return res
+
+    @classmethod
+    @cache
+    def schubert_block(cls, numvars, degree):
+        """``(keys, perms, to_schubert, to_elementary)`` for one ``(numvars, degree)`` block.
+
+        ``perms`` are the permutations whose Schubert polynomial lies in ``Z[x_1..x_numvars]`` with
+        that degree (Lehmer codes of length ``numvars``). ``to_schubert[key][perm]`` is the
+        coefficient of ``S_perm`` in ``E_key``; ``to_elementary[perm][key]`` is the inverse matrix,
+        i.e. the coefficient of ``Elem(key)`` in ``Schub(perm)``.
+        """
+        from sympy import Matrix
+
+        keys = cls.degree_keys(numvars, degree)
+        perms = [uncode(list(code)) for code in _compositions(degree, numvars)] if numvars else [uncode([])]
+        perm_index = {perm: i for i, perm in enumerate(perms)}
+        to_schubert = {}
+        rows = [[0] * len(keys) for _ in perms]
+        for j, key in enumerate(keys):
+            expansion = {perm: int(c) for perm, c in cls._elem_product_schubert(key).items() if c != 0}
+            to_schubert[key] = expansion
+            for perm, c in expansion.items():
+                rows[perm_index[perm]][j] = c
+        inverse = Matrix(rows).inv()
+        to_elementary = {perm: {keys[j]: int(inverse[j, i]) for j in range(len(keys)) if inverse[j, i] != 0} for i, perm in enumerate(perms)}
+        return keys, perms, to_schubert, to_elementary
 
     @classmethod
     def transition(cls, other_basis):
@@ -76,28 +148,22 @@ class ElementaryBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, tup, numvars):
-        """Transition an elementary key to the Schubert basis."""
-        from schubmult.abc import x
-        from schubmult.symbolic import prod
-        from schubmult.symbolic.common_polys import monom_sym
-
+        """Transition an elementary key to the Schubert basis (row of the inverse block matrix)."""
         if numvars == 0:
             return {(uncode([]), 0): S.One} if not any(tup) else {}
-        head = list(tup[: numvars - 1])
-        tail = sorted(t for t in tup[numvars - 1 :] if t)
-        L, mu = cls.staircase(numvars, sum(tup))
-        tail = [0] * (L - len(tail)) + tail
-        # symmetric tail lives in the first L variables, flag part in the remaining numvars-1
-        painted_bagel = monom_sym([numvars - t for t in tail], L, Sx([]).ring.genset)
-        painted_bagel *= prod([x[L + j + 1] ** ((numvars - 1 - j) - head[numvars - 2 - j]) for j in range(numvars - 1)])
-        painted_bagel = Sx.from_expr(painted_bagel)
-        w0 = ~uncode(mu)
-        monom = {}
-        for k, v in painted_bagel.items():
-            if (k * w0).inv != w0.inv - k.inv:
-                raise Exception
-            monom[(k * w0, numvars)] = v
-        return dict(monom)
+        key = cls.canonical_key(tup, numvars)
+        _keys, perms, _to_schubert, to_elementary = cls.schubert_block(numvars, sum(tup))
+        return {(perm, numvars): S(c) for perm in perms if (c := to_elementary[perm].get(key, 0)) != 0}
+
+    @classmethod
+    def transition_from_schubert(cls, perm, numvars):
+        """Expand ``Schub(perm, numvars)`` in this basis: the Schubert coefficients of each ``E_key``."""
+        if numvars == 0:
+            return {((), 0): S.One} if perm.inv == 0 else {}
+        if len(perm.trimcode) > numvars:
+            raise ValueError(f"S_{perm} is not a polynomial in {numvars} variables")
+        keys, _perms, to_schubert, _to_elementary = cls.schubert_block(numvars, perm.inv)
+        return {key: S(c) for key in keys if (c := to_schubert[key].get(perm, 0)) != 0}
 
     @classmethod
     def printing_term(cls, k):

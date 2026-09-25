@@ -9,6 +9,7 @@ from schubmult.abc import beta, y, z
 from schubmult.mult.double import schubmult_double
 from schubmult.mult.separated_descents import grothmult_double, separated_descents_coeffs
 from schubmult.symbolic import S, sympify_sympy
+from schubmult.utils.test_utils import vanishes
 
 S3 = [Permutation(list(p)) for p in itertools.permutations(range(1, 4))]
 S4 = [Permutation(list(p)) for p in itertools.permutations(range(1, 5))]
@@ -27,10 +28,8 @@ def _separated_pairs(perms):
 
 
 def _same(d1, d2):
-    for w in set(d1) | set(d2):
-        if sympy.cancel(sp(d1.get(w, 0)) - sp(d2.get(w, 0))) != 0:
-            return False
-    return True
+    # coefficients are rational functions; exact random-point test instead of sympy.cancel
+    return vanishes([sp(d1.get(w, 0)) - sp(d2.get(w, 0)) for w in set(d1) | set(d2)])
 
 
 def test_grothmult_double_identity_pairs_always_separated():

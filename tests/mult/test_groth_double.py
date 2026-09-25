@@ -19,6 +19,7 @@ from schubmult.mult.groth_double import (
 from schubmult.symbolic import S, sympify_sympy
 from schubmult.symbolic.poly.schub_poly import grothendieck_poly
 from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+from schubmult.utils.test_utils import vanishes
 
 zero = ZeroGeneratingSet()
 S3 = [Permutation(list(p)) for p in itertools.permutations(range(1, 4))]
@@ -31,16 +32,16 @@ def _groth(v, var2, var3):
 
 
 def _same(d1, d2, subs1=None, subs2=None):
-    # coefficients are rational functions in beta/y/z, so compare via cancel, not expand
+    # coefficients are rational functions in beta/y/z: test the differences exactly at random points
+    diffs = []
     for w in set(d1) | set(d2):
         a, b = sp(d1.get(w, 0)), sp(d2.get(w, 0))
         if subs1:
             a = a.xreplace(subs1)
         if subs2:
             b = b.xreplace(subs2)
-        if sympy.cancel(a - b) != 0:
-            return False
-    return True
+        diffs.append(a - b)
+    return vanishes(diffs)
 
 
 def test_grothmult_double_identity_v_empty():
@@ -63,7 +64,7 @@ def test_grothmult_double_polynomial_identity():
         for v in S3:
             prod_dict = grothmult_double({u: S.One}, v, y, z, beta)
             rhs = sum((sp(c) * _groth(w, x, y) for w, c in prod_dict.items()), sympy.Integer(0))
-            assert sympy.cancel(_groth(u, x, y) * _groth(v, x, z) - rhs) == 0, (u, v)
+            assert vanishes([_groth(u, x, y) * _groth(v, x, z) - rhs]), (u, v)
 
 
 def test_single_variable_groth_double_v_zero_alphabet_matches_top():

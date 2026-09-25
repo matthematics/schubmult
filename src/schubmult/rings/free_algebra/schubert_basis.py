@@ -202,28 +202,12 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_elementary(cls, perm, numvars):
-        """Expand ``(perm, numvars)`` in the `ElementaryBasis`: read the monomials of ``S_{perm * w0}``
-        and complement each exponent against the staircase to get elementary-symmetric indices.
+        """Expand ``(perm, numvars)`` in the `ElementaryBasis`: the coefficient of ``Elem(key)`` is the
+        coefficient of ``S_perm`` in the elementary product ``E_key`` (see `ElementaryBasis.schubert_block`).
         """
-        from collections import Counter
-
-        from ...combinatorics.rc_graph import RCGraph
         from .elementary_basis import ElementaryBasis
 
-        if numvars == 0:
-            return {((), 0): 1} if perm.inv == 0 else {}
-
-        L, mu = ElementaryBasis.staircase(numvars, perm.inv)
-        w0 = uncode(mu)
-        dct = Counter([rc.length_vector for rc in RCGraph.all_rc_graphs(perm * w0, len(mu))])
-        ret = {}
-
-        for tup, v in dct.items():
-            new_tup = [mu[i] - tup[i] for i in range(len(mu))]
-            # S_{perm w0} is symmetric in the first L variables, so every ordering of the tail
-            # carries the same coefficient: read one representative rather than summing.
-            ret[ElementaryBasis.canonical_key((*reversed(new_tup[L:]), *new_tup[:L]), numvars)] = v
-        return ret
+        return ElementaryBasis.transition_from_schubert(perm, numvars)
 
     @classmethod
     def transition_separated_descents(cls, k, *x):
