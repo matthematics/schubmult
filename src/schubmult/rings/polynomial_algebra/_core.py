@@ -37,8 +37,6 @@ class PolynomialAlgebraElement(BaseRingElement):
     depending on the parent ring's basis. Supports arithmetic, basis changes,
     and duality pairing with free algebra elements.
     """
-    def __hash__(self):
-        return hash(set(self.items()))
 
     def as_coefficients_dict(self):
         """Return a dict mapping printing terms to sympified coefficients."""
