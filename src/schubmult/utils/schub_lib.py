@@ -674,7 +674,7 @@ def elem_sym_chains_groth(orig_perm, p, k):  # noqa: ARG001
                                 if len(updated_markings) > 0 and updated_markings[-1] == -1:
                                     continue
                                 if len(updated_markings) > 0 and updated_markings[-1] == 0:
-                                    updated_markings = updated_markings[:-1] + (1,)
+                                    updated_markings = (*updated_markings[:-1], 1)
 
                         # P4 applies only along the initial block with equal b and strictly decreasing a.
                         if len(a_list) == 0:

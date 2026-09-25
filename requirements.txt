@@ -1,6 +1,6 @@
 cachetools
 psutil
-PuLP>=2.7.0
+PuLP[cbc]>=3.3.2
 setuptools
 symengine>=0.14.1
 sympy>=1.14.0

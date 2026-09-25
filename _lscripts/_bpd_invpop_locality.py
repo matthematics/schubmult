@@ -42,6 +42,6 @@ for q, key, s in bad:
             D = D.resize(n)
             E, pr = D.pop_op()
             if pr == (a, r) and E.resize(n)._grid[:q].tobytes() == key[0]:
-                print("D (perm", D.perm, ") -> E (perm", E.perm, ")")
+                print("D (perm", D.perm, ") -> E (perm", E.perm, ")  phi(D) =", repr(D.to_rc_graph()))
                 print(D)
-                print(E.resize(n))
+    break

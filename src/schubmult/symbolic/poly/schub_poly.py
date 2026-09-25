@@ -1022,7 +1022,7 @@ def _lascoux_poly(composition, genset):
         return prod([genset[i + 1] ** composition[i] for i in range(len(composition)) if composition[i] > 0])
     for i in range(len(composition) - 1):
         if composition[i] < composition[i + 1]:
-            return isobar_it(i + 1, genset, lascoux_poly(composition[:i] + (composition[i + 1], composition[i]) + composition[i + 2 :], genset))
+            return isobar_it(i + 1, genset, lascoux_poly((*composition[:i], composition[i + 1], composition[i], *composition[i + 2:]), genset))
     raise ValueError(f"Unexpected composition: {composition}")
 
 

@@ -174,3 +174,89 @@ def test_schubert_basis_transitions(basis):
     monom_elem = Schub(uncode([2,0,1,3])) - Schub(uncode([2,0,1]), 4)
     monom_elem2 = monom_elem.change_basis(basis).change_basis(SchubertPolyBasis)
     assert monom_elem2.almosteq(monom_elem)
+
+
+@pytest.mark.parametrize("basis", [
+    MonomialBasis,
+    SchubertPolyBasis,
+    ElemSymPolyBasis,
+    FundamentalSlidePolyBasis,
+    ForestPolyBasis,
+    MonomialSlidePolyBasis,
+    KeyPolyBasis,
+    GrothendieckPolyBasis,
+    GrovePolyBasis,
+    GlidePolyBasis,
+    LascouxPolyBasis,
+    ])
+def test_basis_product_matches_polynomial_product(basis):
+    from schubmult.abc import x
+    from schubmult.symbolic import expand
+
+    PA = PolynomialAlgebra(MonomialBasis(x))
+    left_monom = PA(1, 0, 2) + 2 * PA(0, 1, 1)
+    right_monom = PA(1, 1, 0) - PA(0, 0, 1)
+    left = left_monom.change_basis(basis)
+    right = right_monom.change_basis(basis)
+
+    prd = left * right
+    assert prd.change_basis(MonomialBasis(x)).almosteq(left_monom * right_monom)
+    assert expand(prd.expand() - left.expand() * right.expand()) == 0
+
+
+@pytest.mark.parametrize("basis", [
+    MonomialBasis,
+    SchubertPolyBasis,
+    ElemSymPolyBasis,
+    FundamentalSlidePolyBasis,
+    ForestPolyBasis,
+    MonomialSlidePolyBasis,
+    KeyPolyBasis,
+    GrothendieckPolyBasis,
+    GrovePolyBasis,
+    GlidePolyBasis,
+    LascouxPolyBasis,
+    ])
+def test_basis_coproduct_matches_monomial_coproduct(basis):
+    from schubmult.abc import x
+    from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
+
+    PA = PolynomialAlgebra(MonomialBasis(x))
+    monom_elem = PA(1, 0, 2) + 2 * PA(0, 1, 1) - PA(2, 1, 0)
+    cprd = monom_elem.change_basis(basis).coproduct()
+
+    assert PolynomialBasis.change_tensor_basis(cprd, MonomialBasis(x), MonomialBasis(x)).almosteq(monom_elem.coproduct())
+
+
+def test_monomial_coproduct_deconcatenates():
+    from schubmult.abc import x
+
+    PA = PolynomialAlgebra(MonomialBasis(x))
+    T = PA @ PA
+    expected = T(((), (1, 0, 2))) + T(((1,), (0, 2))) + T(((1, 0), (2,))) + T(((1, 0, 2), ()))
+    assert PA.coproduct_on_basis((1, 0, 2)).almosteq(expected)
+    assert PA(1, 0, 2).coproduct().almosteq(expected)
+
+
+def test_grothendieck_product_matches_grothendieck_ring():
+    from schubmult import Permutation
+    from schubmult.abc import x
+
+    basis = GrothendieckPolyBasis(x)
+    n = 3
+    for u in Permutation.all_permutations(4):
+        for v in Permutation.all_permutations(4):
+            expected = {(w, n): c for w, c in basis.ring.mul(basis.ring(u), basis.ring(v)).items() if c != 0}
+            assert {k: c for k, c in basis.product((u, n), (v, n)).items() if c != 0} == expected
+
+
+def test_grothendieck_product_expansion():
+    from schubmult import uncode
+    from schubmult.abc import x
+    from schubmult.symbolic import expand
+
+    G = PolynomialAlgebra(GrothendieckPolyBasis(x))
+    left = G(uncode([1, 0, 2]), 3) + 2 * G(uncode([0, 2]), 3)
+    right = G(uncode([2, 1]), 3)
+    assert expand((left * right).expand() - left.expand() * right.expand()) == 0
+

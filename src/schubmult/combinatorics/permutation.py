@@ -13,12 +13,9 @@ inversions, and Bruhat/weak order.
 import math
 from functools import cache, cached_property
 
-import numpy as np
-import sympy.combinatorics.permutations as spp
-from sympy.printing.defaults import Printable
-
 import schubmult.utils.logging as lg
 import schubmult.utils.perm_utils as sl
+from schubmult.utils._printable import LazyPrintable
 
 logger = lg.get_logger(__name__)
 
@@ -26,7 +23,7 @@ zero = 0
 n = 100
 
 
-class Permutation(Printable):
+class Permutation(LazyPrintable):
     """A finite permutation, stored as a 1-indexed array and extended by the identity.
 
     Construct from array form, e.g. ``Permutation([2, 1, 3])``, or via
@@ -58,7 +55,7 @@ class Permutation(Printable):
         for i in range(start_spot - 1, len(self)):
             if self[i - 1] == i:
                 parabolic_list = list(range(1, i)) + list(range(i + 1, len(self) + 1))
-                coset_rep, residue = self.coset_decomp(*parabolic_list)
+                coset_rep, _residue = self.coset_decomp(*parabolic_list)
                 if coset_rep.inv == 0:
                     perm1 = Permutation(self[: i - 1])
                     perm2 = Permutation([a - i for a in self[i:]])
@@ -142,7 +139,7 @@ class Permutation(Printable):
 
     def max_coset_rep(self, *descs):
         """Maximal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``."""
-        red, w_J = self.coset_decomp(*descs)
+        red, _w_J = self.coset_decomp(*descs)
         return red * Permutation.longest_element(*descs)
 
     @classmethod
@@ -347,7 +344,7 @@ class Permutation(Printable):
             ret.add(u)
             for i in range(len(u) - 1):
                 if abs(u[i] - u[i + 1]) >= 2:
-                    v = u[:i] + (u[i + 1], u[i]) + u[i + 2 :]
+                    v = (*u[:i], u[i + 1], u[i], *u[i + 2:])
                     if v not in ret:
                         stack.append(v)
         return ret
@@ -369,7 +366,7 @@ class Permutation(Printable):
                     da_word = word_to_pairinj_labeled(tuple(reversed(u[i:])))
                     P_right = omega_insertion(da_word[:-2])[0]
                     if len(P_right.separators(da_word[-2], da_word[-1])) > 1:
-                        v = u[:i] + (u[i + 1], u[i]) + u[i + 2 :]
+                        v = (*u[:i], u[i + 1], u[i], *u[i + 2:])
                         if v not in ret:
                             stack.append(v)
         return ret
@@ -416,6 +413,8 @@ class Permutation(Printable):
     @cached_property
     def _arr(self):
         """Cached numpy array representation (1-indexed values)."""
+        import numpy as np
+
         return np.array(self._perm, dtype=int)
 
     @property
@@ -502,7 +501,7 @@ class Permutation(Printable):
 
     def __call__(self, *tup):
         if len(tup) == 1:
-            if isinstance(tup[0], (list, tuple)):
+            if isinstance(tup[0], list | tuple):
                 tup = tup[0]
             else:
                 return self._perm[tup[0] - 1]
@@ -530,6 +529,8 @@ class Permutation(Printable):
 
     @cache
     def get_cycles_cached(self, sort_min):
+        import sympy.combinatorics.permutations as spp
+
         if not sort_min:
             return [tuple(sl.cyclic_sort([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
         return [tuple(sl.cyclic_sort_min([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
@@ -537,6 +538,8 @@ class Permutation(Printable):
     @classmethod
     def from_cycles(cls, cycle_iter):
         """Build a permutation from a cycle decomposition (sequence of cycles, each a sequence of 1-indexed values)."""
+        import sympy.combinatorics.permutations as spp
+
         spoing = spp.Permutation(*cycle_iter)
         return cls([a + 1 for a in spoing.array_form])
 
@@ -791,21 +794,11 @@ class Permutation(Printable):
         return ret
 
     def __mul__(self, other):
-        max_len = max(len(self._perm), len(other._perm))
-        # Extend arrays if needed
-        if len(self._perm) < max_len:
-            self_arr = np.arange(1, max_len + 1, dtype=int)
-            self_arr[: len(self._perm)] = self._arr
-        else:
-            self_arr = self._arr
-        if len(other._perm) < max_len:
-            other_arr = np.arange(1, max_len + 1, dtype=int)
-            other_arr[: len(other._perm)] = other._arr
-        else:
-            other_arr = other._arr
-        # Composition: self[other[i] - 1] but other[i] is 1-indexed, so use other_arr - 1
-        result = self_arr[other_arr - 1]
-        return Permutation(result.tolist())
+        a, b = self._perm, other._perm
+        la = len(a)
+        if len(b) < la:
+            b = b + tuple(range(len(b) + 1, la + 1))
+        return Permutation([a[j - 1] if j <= la else j for j in b])
 
     def __iter__(self):
         yield from self._perm.__iter__()
@@ -861,9 +854,18 @@ class Permutation(Printable):
     #     return self != other and self.bruhat_leq(other)
 
     def __invert__(self):
-        new_arr = np.empty(len(self._perm), dtype=int)
-        new_arr[self._arr - 1] = np.arange(1, len(self._perm) + 1, dtype=int)
+        new_arr = [0] * len(self._perm)
+        for i, v in enumerate(self._perm, 1):
+            new_arr[v - 1] = i
         return Permutation(new_arr)
+
+    def __str__(self):
+        # Same output as sstr (StrPrinter prints int tuples/lists like Python) without importing sympy
+        if Permutation.print_as_code:
+            return f"[{', '.join(map(str, self.trimcode))}]"
+        if len(self._perm) == 1:
+            return f"({self._perm[0]},)"
+        return f"({', '.join(map(str, self._perm))})"
 
     def __repr__(self):
         return self.__str__()

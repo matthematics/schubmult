@@ -1,5 +1,74 @@
 # Changelog
 
+## 5.1.1
+
+Patch release: compatibility with PuLP 4.0.0, a correctness fix for the elementary basis of
+the free algebra, and a much lighter import footprint (SymPy loads only when needed).
+
+### Fixed
+
+- **`--display-positive` under PuLP 4.0.0.** PuLP 4.0.0 (released after 5.1.0) broke
+  `compute_positive_rep` and `grothmult_double --display-positive` in several ways:
+  `expr == <symengine Integer>` now yields a bare `False` instead of a constraint
+  (`TypeError: A False object cannot be passed as a constraint`), `pulp.LpStatus` was removed
+  and `LpProblem.solve` returns an `LpSolveStats` object, `LpAffineExpression(dict)` can no
+  longer form constraints, and variables become unusable once their `LpProblem` is garbage
+  collected. Constraints are now built with `int(...)` right-hand sides and `lpSum`, status is
+  read via a helper that accepts both APIs, and variable values are read while the problem is
+  alive. The code runs on both PuLP 3.3.x and 4.0; the requirement is
+  `PuLP[cbc]>=3.3.2, <4` for now so that a resolver does not pull in 4.x untested.
+- **`ElementaryBasis` / `ElemSymPolyBasis` were not dual.** Keys are `(tup, numvars)` with
+  `tup[:numvars-1]` the flag part ($e_{a_i}(x_1..x_i)$) and `tup[numvars-1:]` the symmetric
+  tail (a sorted product of $e_k(x_1..x_n)$). `ElementaryBasis.transition_schubert` built its
+  staircase from the key's own tail length, so `Elem(key)` only annihilated the `E(key')`
+  whose tail fit inside that staircase; e.g. $\langle \mathrm{Elem}((0,2),2),\,
+  E((0,1,1),2)\rangle = 1$ ($e_2$ against $e_1^2$). The staircase is now padded uniformly to
+  the degree, `SchubertBasis.transition_elementary` uses the same staircase and emits
+  canonical keys (zeros stripped from the tail, tail sorted, `(0,)` if empty), and the
+  `numvars == 1` slicing bug in `transition_schubert` is gone. `Elem -> Schub -> Elem` is
+  now the identity and the delta property holds on every canonical key checked
+  ($n \le 4$, degree $\le 4$). `SchubertPolyBasis.transition_elementary` emits the same
+  canonical keys.
+- `MonomialSlideBasis` / `MonomialSlidePolyBasis` declare each other as `dual_basis()`;
+  `GrovePolyBasis` expands through its monomial basis so `expand()` returns a polynomial;
+  `GrothendieckPolyBasis` products go through the `grothmult_py` kernel at $\beta = 1$
+  instead of the ring-level route. The polynomial-algebra coproduct is the free-algebra
+  product's adjoint again for every declared dual pair.
+- `BaseSchubertRing` defines `__hash__` consistent with its `__eq__` (type and generating
+  sets), so rings can be dict keys and cache keys; ring *elements* are explicitly unhashable
+  (`__hash__ = None`) since they are mutable dicts.
+
+### Changed
+
+- **SymPy is imported lazily.** `schubmult.symbolic` exposes SymPy names as
+  `schubmult.utils._lazy.LazyAttr` proxies that resolve on first call, attribute access or
+  subclassing; the ring-domain protocol (`EXRAW`, `CoercionFailed`, `Ring`, ...) lives in the
+  new SymPy-free `schubmult.symbolic.domain`; ring elements print through
+  `schubmult.utils._printable.LazyPrintable` instead of subclassing SymPy's `Printable`;
+  `schubmult.mult` and the kernels in `schubmult.mult.single` import SymPy/SymEngine only
+  inside the functions that need them. `schubmult_py` with integer output never loads SymPy,
+  and the CLI sets `OPENBLAS_NUM_THREADS`/`OMP_NUM_THREADS`/`MKL_NUM_THREADS=1` before
+  importing numpy. Import time and CLI start-up drop accordingly; no public names moved.
+- Ring elements print as linear text built from SymEngine's `str` (terms sorted by length
+  then permutation) instead of SymPy's pretty printer, which took seconds on large double
+  Grothendieck coefficients. `_repr_latex_` is disabled for these elements so notebooks show
+  the fast form; call `latex(elem)` or `pretty(elem)` explicitly for the SymPy renderings.
+- The PuLP requirement is `PuLP[cbc]>=3.3.2, <4` (was `PuLP>=2.7.0,<4`). `--display-positive`
+  builds variables with `LpProblem.add_variable` and solves with `COIN_CMD` using the CBC
+  binary from the `[cbc]` extra (`cbcbox`), replacing `LpVariable(...)` and `PULP_CBC_CMD`.
+- Ruff `UP038` is no longer ignored; `isinstance` checks use `X | Y` unions.
+
+### Added
+
+- `benchmark_schubmult.py`: timing harness for the `schubmult_*`/`grothmult_*` kernels.
+- `web/`: a small Flask wrapper exposing the CLI scripts through a web form and
+  `POST /api/compute`, embeddable via `<iframe>` (see `web/README.md`, `web/DEPLOY.md`).
+- Tests: `tests/rings/test_duality.py` covers `ElementaryBasis` and `MonomialSlideBasis`,
+  includes colliding elementary keys, and checks that the free-algebra product is adjoint to
+  the polynomial coproduct (and vice versa) for every dual pair; more polynomial-algebra and
+  free-algebra basis round-trip tests in `tests/rings/`.
+- CI runs on pushes to `redevelop` as well as `main`.
+
 ## 5.1.0
 
 Grothendieck products on the command line and in `schubmult.mult`, including the quantum

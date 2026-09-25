@@ -203,6 +203,7 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
     def as_polynomial(self):
         """Hook: expand this element to an explicit polynomial expression."""
 
+    __hash__ = None
 
     def __eq__(self, other):
         return type(self) is type(other) and self.ring == other.ring and dict.__eq__(self, other)
@@ -237,6 +238,9 @@ class BaseRing(Ring, CompositeDomain):
 
     def __eq__(self, other):
         return type(self) is type(other)
+
+    def __hash__(self):
+        return hash(type(self))
 
     def to_sympy(self, elem):
         """Convert an element to a sympy expression (``as_expr``)."""

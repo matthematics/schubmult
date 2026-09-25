@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from itertools import combinations
 
-from sympy import expand
+from schubmult.symbolic import sympy_expand as expand
 
 
 def _rightmost_leaf(t):

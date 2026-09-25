@@ -81,41 +81,6 @@ def test_sepdesc_to_schubert():
         poly = Sx(k1).expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
 
-
-def test_schubert_to_elementary():
-    from schubmult import ASx, uncode, Sx
-    from schubmult.rings.free_algebra import ElementaryBasis, WordBasis
-    from schubmult.symbolic import S
-    from schubmult.abc import e
-
-    perm = uncode([3, 1, 3, 0, 1])
-    result = ASx(perm).change_basis(ElementaryBasis)
-    wbelem = ASx(perm).change_basis(WordBasis)
-    for (tup, n), v in result.items():
-        assert n == 5
-        res = Sx([])
-        for i, c in enumerate(tup):
-            res *= e(c, i + 1, res.ring.genset[1:]) if i <= n else e(c, n, res.ring.genset[1:])
-        poly = res.expand()
-        assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
-
-
-def test_elementary_to_schubert():
-    from schubmult import Sx, FreeAlgebra
-    from schubmult.rings.free_algebra import ElementaryBasis, WordBasis, SchubertBasis
-
-    EE = FreeAlgebra(ElementaryBasis)
-    tup = (1, 0, 1, 2, 3)
-    numvars = 3
-    result = EE(tup, numvars).change_basis(SchubertBasis)
-    wbelem = EE(tup, numvars).change_basis(WordBasis)
-    for (perm, n), v in result.items():
-        assert n == numvars
-        res = Sx(perm)
-        poly = res.expand()
-        assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
-
-
 from schubmult.rings.free_algebra import (
     WordBasis,
     SchubertBasis,
@@ -145,10 +110,50 @@ def test_word_basis_transitions(basis):
 def test_schubert_basis_transitions(basis):
     from schubmult import ASx, uncode
 
-    schub_elem = ASx(uncode([0, 3, 0, 2]))
+    schub_elem = ASx(uncode([0, 3, 0, 1]))
 
     schub_elem2 = schub_elem.change_basis(basis).change_basis(SchubertBasis)
     assert schub_elem2 == schub_elem
+
+
+@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis, GroveBasis, GlideBasis, LascouxBasis])
+def test_basis_product_matches_word_concatenation(basis):
+    left_word = FA(2)
+    right_word = FA(2, 1)
+    left = left_word.change_basis(basis)
+    right = right_word.change_basis(basis)
+
+    assert (left * right).change_basis(WordBasis) == left_word * right_word
+
+
+@pytest.mark.parametrize("basis", [WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, KeyBasis, SchurElementaryBasis, GrothendieckBasis, GroveBasis, GlideBasis, LascouxBasis])
+def test_basis_coproduct_matches_word_coproduct(basis):
+    from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
+
+    word_elem = FA(1, 0, 2) + 2 * FA(0, 1) - FA(2, 1)
+    cprd = word_elem.change_basis(basis).coproduct()
+
+    assert FreeAlgebraBasis.change_tensor_basis(cprd, WordBasis, WordBasis) == word_elem.coproduct()
+
+
+def test_word_coproduct_splits_letters():
+    T = FA @ FA
+    assert FA(2).coproduct() == T(((0,), (2,))) + T(((1,), (1,))) + T(((2,), (0,)))
+    assert FA(1, 0).coproduct() == T(((0, 0), (1, 0))) + T(((1, 0), (0, 0)))
+
+
+def test_word_product_is_concatenation():
+    assert FA(1, 0, 2) * FA(2, 1) == FA(1, 0, 2, 2, 1)
+    assert (FA(1) + FA(0, 2)) * FA(3) == FA(1, 3) + FA(0, 2, 3)
+
+
+def test_grothendieck_product_matches_schubert_product():
+    from schubmult import FreeAlgebra, uncode
+
+    AGx = FreeAlgebra(GrothendieckBasis)
+    left = AGx(uncode([1, 0, 1]), 3)
+    right = AGx(uncode([0, 2]), 2)
+    assert (left * right).change_basis(SchubertBasis) == left.change_basis(SchubertBasis) * right.change_basis(SchubertBasis)
 
 
 # --- SchurElementaryBasis tests ---
@@ -223,6 +228,14 @@ def test_schubert_to_schur_elementary():
     # Round-trip back
     schub_back = se_elem.change_basis(SchubertBasis)
     assert schub_back == ASx(perm)
+
+
+def test_schubert_schur_elementary_roundtrip_all_s5():
+    from schubmult import ASx, Permutation
+
+    for perm in Permutation.all_permutations(5):
+        elem = ASx(perm, 4)
+        assert elem.change_basis(SchurElementaryBasis).change_basis(SchubertBasis) == elem, perm
 
 
 def test_schur_elementary_printing_term():

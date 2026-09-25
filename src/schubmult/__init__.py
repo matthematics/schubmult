@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import importlib
+import importlib.util
 from pathlib import Path
 from typing import Dict, List
 
@@ -145,7 +146,7 @@ def _scan_modules():
             continue
 
         for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
                 name = node.name
                 if not name.startswith("_") and name not in _module_map:
                     _module_map[name] = modname
@@ -173,6 +174,10 @@ def __getattr__(name: str):
             return val
         except Exception as e:
             raise AttributeError(f"cannot import {name!r} from {_lazy_exports[name]!r}: {e}") from e
+
+    # Submodules (e.g. ``from schubmult import schubmult_cpp``) must not trigger the slow scan
+    if importlib.util.find_spec(f"{__name__}.{name}") is not None:
+        return importlib.import_module(f"{__name__}.{name}")
 
     # Not in known exports - scan modules if we haven't yet
     _scan_modules()

@@ -8,8 +8,6 @@ element to a polynomial, how to print it, and how to change basis. `BaseSchubert
 is the corresponding dict-like element type (``{Permutation: coefficient}``).
 """
 
-from sympy import pretty
-
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, CoercionFailed, S, expand, sympify, sympify_sympy, sympy_Mul
 from schubmult.symbolic.common_polys import schubpoly_from_elems
@@ -20,6 +18,10 @@ from schubmult.utils.perm_utils import add_perm_dict
 from ..base_ring import BaseRing, BaseRingElement
 
 logger = get_logger(__name__)
+
+
+def _display_key(k):
+    return (k.inv, tuple(k)) if hasattr(k, "inv") else k
 
 
 class BaseSchubertElement(BaseRingElement):
@@ -57,13 +59,36 @@ class BaseSchubertElement(BaseRingElement):
         return result
 
     def _sympystr(self, printer):
-        return printer._print(pretty(self, use_unicode=False))
+        # Linear text from SymEngine's str: SymPy's printers take seconds on large (double Grothendieck) coefficients
+        if len(self) == 0:
+            return "0"
+        parts = []
+        for k in sorted(self.keys(), key=_display_key):
+            coeff = sympify(self[k])
+            if k == self.ring.zero_monom:
+                parts.append(str(coeff))
+                continue
+            term = printer._print(self.ring.printing_term(k))
+            if coeff == 1:
+                parts.append(term)
+            elif coeff == -1:
+                parts.append(f"-{term}")
+            else:
+                parts.append(f"({coeff})*{term}" if getattr(coeff, "is_Add", False) else f"{coeff}*{term}")
+        out = parts[0]
+        for part in parts[1:]:
+            out += f" - {part[1:]}" if part.startswith("-") else f" + {part}"
+        return out
+
+    def _repr_latex_(self):
+        """Disabled so notebooks show the fast text form; use ``latex(elem)`` or ``pretty(elem)`` explicitly."""
+        return None # noqa: RET501
 
     def as_ordered_terms(self, *_, **__):
         """Terms ``coeff * basis_symbol`` sorted by permutation length then lexicographically (sympy printing hook)."""
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=(lambda kk: (kk.inv, tuple(kk)) if hasattr(kk, "inv") else kk))]
+        return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=_display_key)]
 
     def _eval_expand_basic(self, *args, **kwargs):  # noqa: ARG002
         return self.as_polynomial()
@@ -110,6 +135,8 @@ class BaseSchubertElement(BaseRingElement):
         """Drop basis elements whose coefficient is exactly zero."""
         return self.ring.from_dict({k: v for k, v in self.items() if v != S.Zero})
 
+    __hash__ = None
+
 
 class BaseSchubertRing(BaseRing):
     """Abstract base ring for Schubert-family polynomials.
@@ -122,6 +149,9 @@ class BaseSchubertRing(BaseRing):
 
     def __eq__(self, other):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset
+
+    def __hash__(self):
+        return hash((type(self), self.genset, self.coeff_genset))
 
     def __init__(self, genset, coeff_genset, domain=None):
         """Args:

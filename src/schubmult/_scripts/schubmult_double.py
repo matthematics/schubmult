@@ -1,28 +1,16 @@
 import sys
 from functools import cached_property
 
-from schubmult import split_perms
-from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
-from schubmult import FactorialElemSym
+from schubmult.combinatorics.permutation import Permutation, split_perms, uncode
+from schubmult.mult.double import mult_poly_double, schub_coprod_double, schubmult_double, schubmult_double_alt_from_elems
+from schubmult.mult.positivity import posify
+from schubmult.symbolic import S, expand, expand_func, simplify, sympify
+from schubmult.symbolic.functions import efficient_subs
+from schubmult.symbolic.poly.variables import GeneratingSet
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
-from schubmult import (
-    add_perm_dict,
-    mu_A,
-    will_formula_work,
-)
-
-from schubmult import (
-    GeneratingSet,
-    Permutation,
-    efficient_subs,
-    mult_poly_double,
-    posify,
-    schub_coprod_double,
-    schubmult_double,
-    schubmult_double_alt_from_elems,
-    uncode,
-)
+from schubmult.utils.perm_utils import add_perm_dict, mu_A
+from schubmult.utils.schub_lib import will_formula_work
 
 logger = get_logger(__name__)
 
@@ -177,7 +165,7 @@ def _display_full(
     coeff_perms = list(coeff_dict.keys())
     if coprod:
         perm_pairs = coeff_perms
-        width = max([len(sstr(perm[0]) + " " + sstr(perm[1])) for perm in perm_pairs])
+        width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
 
         for firstperm, secondperm in perm_pairs:
             val = coeff_dict[(firstperm, secondperm)]
@@ -201,7 +189,7 @@ def _display_full(
                             val2 = flip_symbol_signs(val2)
                             if check and expand(val - val2) != 0:
                                 _display(
-                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{sstr(firstperm)=} {sstr(secondperm)=}\n{val2=}\n{val=}",
+                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{str(firstperm)=} {str(secondperm)=}\n{val2=}\n{val=}",
                                 )
                                 _display(f"{firstperm*muA=} {secondperm*muB=} {the_top_perm=}")
                                 exit(1)
@@ -209,14 +197,14 @@ def _display_full(
                     else:
                         val = 0
                 if val != 0:
-                    width2 = width - len(sstr(Permutation(firstperm))) - len(sstr(Permutation(secondperm)))
+                    width2 = width - len(str(Permutation(firstperm))) - len(str(Permutation(secondperm)))
                     raw_result_dict[(Permutation(firstperm), Permutation(secondperm))] = val
                     if formatter:
                         _display(
-                            f"{sstr(Permutation(firstperm))}{' ':>{width2}}{sstr(Permutation(secondperm))}  {formatter(val)}",
+                            f"{str(Permutation(firstperm))}{' ':>{width2}}{str(Permutation(secondperm))}  {formatter(val)}",
                         )
     else:
-        width = max([len(sstr(perm)) for perm in coeff_dict.keys()])
+        width = max([len(str(perm)) for perm in coeff_dict.keys()])
 
         coeff_perms = list(coeff_dict.keys())
         coeff_perms.sort(key=lambda x: (x.inv, *x))
@@ -227,7 +215,7 @@ def _display_full(
             if val != 0:
                 raw_result_dict[perm] = val
                 if formatter:
-                    _display(f"{sstr(perm)!s:>{width}}  {formatter(val)}")
+                    _display(f"{str(perm)!s:>{width}}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -239,9 +227,6 @@ def main(argv=None):
         var2 = GeneratingSet("y")
         var3 = GeneratingSet("z")
         sys.setrecursionlimit(1000000)
-
-        # TEMP
-        init_printing()
 
         args, formatter = schub_argparse(
             "schubmult_double",
@@ -327,6 +312,8 @@ def main(argv=None):
             use_alt = display_positive
             elem_dict = None
             if use_alt:
+                from schubmult.symbolic.symmetric_polynomials.elem_sym import FactorialElemSym
+
                 if not same:
                     elem_dict = check_coeff_dict
                 for perm in orig_perms[1:]:

@@ -3,7 +3,7 @@ import sys
 from schubmult import GeneratingSet, Permutation, uncode
 from schubmult.abc import beta
 from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double
-from schubmult.symbolic import S, sstr, sympify, sympify_sympy, expand
+from schubmult.symbolic import S, sympify, sympify_sympy, expand
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
 
@@ -38,7 +38,16 @@ def _solver(msg):
 
     if pu.HiGHS_CMD().available():
         return pu.HiGHS_CMD(msg=msg)
-    return pu.PULP_CBC_CMD(msg=msg)
+    from schubmult.mult.positivity import cbc_solver
+
+    return cbc_solver(msg)
+
+
+def _is_optimal(status):
+    """``LpProblem.solve`` returns an int status in PuLP < 4 and an ``LpSolveStats`` object in PuLP >= 4."""
+    if status is None:
+        return False
+    return int(getattr(status, "status", status)) == 1
 
 
 def _denominator_budget(den, var2):
@@ -203,15 +212,16 @@ def groth_posify(val, var2, var3, msg):
         return lev
 
     def solve(candidates):
-        vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(candidates))]
         lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+        vrs = [lp_prob.add_variable(f"a{i}", lowBound=0, cat="Integer") for i in range(len(candidates))]
         lp_prob += 0
         eqs = {}
         for i, (svec, _, _, _) in enumerate(candidates):
             for k, c in svec.items():
                 eqs.setdefault(k, {})[vrs[i]] = c
         for k in set(eqs) | set(vec0):
-            lp_prob += pu.LpAffineExpression(eqs.get(k, {})) == vec0.get(k, 0)
+            # lpSum rather than LpAffineExpression(dict): the latter cannot form constraints in PuLP >= 4
+            lp_prob += pu.lpSum(c * v for v, c in eqs.get(k, {}).items()) == vec0.get(k, 0)
         try:
             status = lp_prob.solve(_solver(msg))
         except KeyboardInterrupt:
@@ -223,7 +233,8 @@ def groth_posify(val, var2, var3, msg):
                 child_process.terminate()
                 child_process.kill()
             raise
-        return status, vrs
+        # read values here: in PuLP >= 4 variables become unusable once lp_prob is garbage collected
+        return status, [v.value() for v in vrs]
 
     # escalate the factor-count ceiling: small LPs solve fast and usually suffice
     candidates = []
@@ -236,15 +247,15 @@ def groth_posify(val, var2, var3, msg):
         if len(candidates) > _MAX_CANDIDATES:
             raise ValueError(f"candidate set too large ({len(candidates)}) for {val}")
         print(f"  solving level m={m}: {len(candidates)} candidates", file=sys.stderr)
-        status, vrs = solve(candidates)
-        if pu.LpStatus[status] == "Optimal":
+        status, values = solve(candidates)
+        if _is_optimal(status):
             break
-    if status is None or pu.LpStatus[status] != "Optimal":
+    if not _is_optimal(status):
         raise ValueError(f"no positive representation found for {val}")
 
     result = S.Zero
     for i, (_, combo, usage, m) in enumerate(candidates):
-        x = vrs[i].value()
+        x = values[i]
         # round, don't truncate: solvers return near-integers like 0.9999999999996
         xi = 0 if x is None else round(x)
         if xi != 0:
@@ -320,13 +331,13 @@ def main(argv=None):
         # one finishes (the LPs can take a long time); structural zero test only
         coeff_perms = [perm for perm, val in coeff_dict.items() if val != S.Zero]
         coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
-        width = max([len(sstr(perm)) for perm in coeff_perms]) if coeff_perms else 0
+        width = max([len(str(perm)) for perm in coeff_perms]) if coeff_perms else 0
 
         raw_result_dict = {}
         for i, perm in enumerate(coeff_perms):
             val = coeff_dict[perm]
             if args.display_positive:
-                print(f"posify {i + 1}/{len(coeff_perms)}: {sstr(perm)}", file=sys.stderr)
+                print(f"posify {i + 1}/{len(coeff_perms)}: {str(perm)}", file=sys.stderr)
                 try:
                     # groth_posify verifies its own output exactly
                     val = groth_posify(val, var2, var3, args.msg)
@@ -338,7 +349,7 @@ def main(argv=None):
                     return 1
             raw_result_dict[perm] = val
             if pr and formatter:
-                print(f"{sstr(perm)!s:>{width}}  {formatter(val)}", flush=True)
+                print(f"{str(perm)!s:>{width}}  {formatter(val)}", flush=True)
 
         if formatter is None:
             return raw_result_dict

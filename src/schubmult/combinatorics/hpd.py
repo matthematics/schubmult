@@ -10,14 +10,12 @@ from functools import cache, cached_property
 from typing import Tuple
 
 import numpy as np
-from sympy import pretty
-from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.combinatorics.bpd import BPD, TileType
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
-from schubmult.symbolic import Expr
+from schubmult.symbolic import DefaultPrinting, Expr, pretty
 
 
 class HPDTile(IntEnum):
@@ -1264,7 +1262,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         """Access grid elements, casting to HPDTile"""
         result = self._grid[key]
         # If it's a single element, convert to HPDTile enum
-        if isinstance(result, (int, np.integer)):
+        if isinstance(result, int | np.integer):
             return HPDTile(result)
         # If it's an array, return as-is (caller will need to convert)
         return result
@@ -1450,7 +1448,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             return self._perm
         # self._perm = Permutation.ref_product(*self.word)
 
-        nrows, ncols = self._grid.shape
+        _nrows, _ncols = self._grid.shape
         # left_col = self._grid[:, 0]
         # right_col = self._grid[:, -1]
 
@@ -2031,7 +2029,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         return self.all_tiles_of_type(HPDTile.CROSS)
 
     def all_tiles_of_type(self, tile_type: HPDTile) -> set[tuple[int, int]]:
-        if isinstance(tile_type, (list, tuple)):
+        if isinstance(tile_type, list | tuple):
             result = set()
             for t in tile_type:
                 result.update(self.all_tiles_of_type(t))

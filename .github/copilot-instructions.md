@@ -119,6 +119,6 @@ schubmult_py --code 2 0 - 1 0                 # Using Lehmer codes
 ## External Dependencies
 
 - **Core**: numpy, sympy>=1.14, symengine>=0.14, cachetools, sortedcontainers
-- **Optimization**: PuLP>=2.7 (for positivity display via MILP)
+- **Optimization**: PuLP[cbc]>=3.3.2 (for positivity display via MILP)
 - **Optional**: sagemath-standard (for Sage integration, `[sage]` extra)
 - **Build**: setuptools>=61, joblib (parallelization), psutil (resource monitoring)

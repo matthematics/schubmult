@@ -2,7 +2,7 @@ import sys
 
 from schubmult import GeneratingSet, Permutation, uncode
 from schubmult.mult.groth_quantum_double import grothmult_q_double
-from schubmult.symbolic import S, sstr
+from schubmult.symbolic import S
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -58,14 +58,14 @@ def main(argv=None):
 
         coeff_perms = [perm for perm, val in coeff_dict.items() if val != S.Zero]
         coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
-        width = max([len(sstr(perm)) for perm in coeff_perms]) if coeff_perms else 0
+        width = max([len(str(perm)) for perm in coeff_perms]) if coeff_perms else 0
 
         raw_result_dict = {}
         for perm in coeff_perms:
             val = coeff_dict[perm]
             raw_result_dict[perm] = val
             if pr and formatter:
-                print(f"{sstr(perm)!s:>{width}}  {formatter(val)}", flush=True)
+                print(f"{str(perm)!s:>{width}}  {formatter(val)}", flush=True)
 
         if formatter is None:
             return raw_result_dict

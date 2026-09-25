@@ -1,13 +1,10 @@
 name: Deploy docs
 
+# Docs track releases: build on release tags (bare versions like 5.1.1), never on branch pushes,
+# so the published site never reports a setuptools-scm dev version.
 on:
   push:
-    branches: ["main"]
-    paths:
-      - "src/**"
-      - "docs/**"
-      - "mkdocs.yml"
-      - ".github/workflows/docs.yml"
+    tags: ["[0-9]*"]
   workflow_dispatch:
 
 permissions:
@@ -34,6 +31,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .[docs]
+      - name: Refuse to publish docs for a dev version
+        run: |
+          VERSION=$(python -c "from importlib.metadata import version; print(version('schubmult'))")
+          echo "schubmult $VERSION"
+          case "$VERSION" in
+            *.dev*|*+*) echo "::error::$VERSION is not a release version; run this workflow from a release tag"; exit 1 ;;
+          esac
       - name: Regenerate API reference
         run: python docs/generate_docs.py
       - name: Build site

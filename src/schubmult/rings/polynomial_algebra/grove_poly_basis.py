@@ -5,7 +5,7 @@ from functools import cache
 from schubmult.combinatorics.indexed_forests import grove_polynomial
 from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
 from schubmult.rings.printing import GenericPrintingTerm
-from schubmult.symbolic import S, Symbol
+from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
 
 """
@@ -35,7 +35,7 @@ class GrovePolyBasis(PolynomialBasis):
     def printing_term(self, k):
         return GenericPrintingTerm(f"GrovePoly{k}", "")
 
-    def __init__(self, genset, beta=Symbol("beta")):
+    def __init__(self, genset, beta=S.One):#Symbol("beta")):
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
 
         super().__init__(genset=genset)

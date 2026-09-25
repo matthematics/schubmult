@@ -13,42 +13,76 @@ in various settings:
 - grothmult_q: Quantum (single) Grothendieck multiplication
 
 Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
+Exports resolve lazily (PEP 562) so that importing one kernel does not load all the others.
 """
 
-from schubmult.mult.double import mult_poly_double, schubmult_double
-from schubmult.mult.groth import grothmult_py, mult_poly_groth
-from schubmult.mult.groth_double import (
-    elem_sym_perms_groth,
-    epsilon_chain,
-    groth_elem_sym_poly,
-    grothmult_double,
-    grothmult_double_block,
-    grothmult_double_pieri,
-    monk_chain,
-    mult_poly_groth_double,
-    one_plus_beta_x_groth,
-    single_variable_groth,
+_exports = {
+    "mult_poly_double": ("double", "mult_poly_double"),
+    "schubmult_double": ("double", "schubmult_double"),
+    "grothmult_py": ("groth", "grothmult_py"),
+    "mult_poly_groth": ("groth", "mult_poly_groth"),
+    "grothmult_q": ("groth_quantum", "grothmult_q"),
+    "grothmult_q_dict": ("groth_quantum", "grothmult_q_dict"),
+    "grothmult_q_pieri": ("groth_quantum", "grothmult_q_pieri"),
+    "compute_positive_rep": ("positivity", "compute_positive_rep"),
+    "posify": ("positivity", "posify"),
+    "schubmult_q": ("quantum", "schubmult_q"),
+    "factor_out_q": ("quantum_double", "factor_out_q"),
+    "schubmult_q_double": ("quantum_double", "schubmult_q_double"),
+    "separated_descents_grothmult_double": ("separated_descents", "grothmult_double"),
+    "separated_descents_coeffs": ("separated_descents", "separated_descents_coeffs"),
+    "mult_poly_py": ("single", "mult_poly_py"),
+    "schubmult_py": ("single", "schubmult_py"),
+}
+_exports.update(
+    {
+        name: ("groth_double", name)
+        for name in (
+            "elem_sym_perms_groth",
+            "epsilon_chain",
+            "groth_elem_sym_poly",
+            "grothmult_double",
+            "grothmult_double_block",
+            "grothmult_double_pieri",
+            "monk_chain",
+            "mult_poly_groth_double",
+            "one_plus_beta_x_groth",
+            "single_variable_groth",
+        )
+    },
 )
-from schubmult.mult.groth_quantum import grothmult_q, grothmult_q_dict, grothmult_q_pieri
-from schubmult.mult.groth_quantum_double import (
-    groth_elem_sym_poly_q,
-    grothmult_q_double,
-    grothmult_q_double_dict,
-    grothmult_q_double_pieri,
-    grothmult_q_double_top,
-    lm_quantize,
-    qgroth_poly,
-    quantum_elem_sym,
-    quantum_pieri_chains,
+_exports.update(
+    {
+        name: ("groth_quantum_double", name)
+        for name in (
+            "groth_elem_sym_poly_q",
+            "grothmult_q_double",
+            "grothmult_q_double_dict",
+            "grothmult_q_double_pieri",
+            "grothmult_q_double_top",
+            "lm_quantize",
+            "qgroth_poly",
+            "quantum_elem_sym",
+            "quantum_pieri_chains",
+        )
+    },
 )
-from schubmult.mult.positivity import compute_positive_rep, posify
-from schubmult.mult.quantum import schubmult_q
-from schubmult.mult.quantum_double import factor_out_q, schubmult_q_double
-from schubmult.mult.separated_descents import (
-    grothmult_double as separated_descents_grothmult_double,
-)
-from schubmult.mult.separated_descents import separated_descents_coeffs
-from schubmult.mult.single import mult_poly_py, schubmult_py
+
+
+def __getattr__(name):
+    if name not in _exports:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    import importlib
+
+    modname, attr = _exports[name]
+    val = getattr(importlib.import_module(f"{__name__}.{modname}"), attr)
+    globals()[name] = val
+    return val
+
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))
+
 
 __all__ = [
     "compute_positive_rep",

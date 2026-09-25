@@ -8,8 +8,6 @@ identically to `NilHeckeRing`/`NilHeckeElement`, and the deformation has not bee
 Prefer `nil_hecke` for actual use; this module is kept as a starting point for that work.
 """
 
-from sympy import Expr
-
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.mult.double import schubmult_double_down
 from schubmult.symbolic import (
@@ -19,6 +17,7 @@ from schubmult.symbolic import (
     CompositeDomain,
     DefaultPrinting,
     DomainElement,
+    Expr,
     Mul,
     Pow,
     Ring,
@@ -49,6 +48,8 @@ class BetaCoxeterElement(DomainElement, DefaultPrinting, dict):
     precedence = 40
 
     __sympy__ = True
+
+    __hash__ = None
 
     def apply(self, other):
         if not isinstance(other, DoubleSchubertElement):

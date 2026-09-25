@@ -1,17 +1,23 @@
 """SymEngine-first wrappers (`expand`, `symbols`, `sympify`) that fall back to SymPy, plus small helpers."""
 
+import operator
+from functools import reduce
+
 import symengine
 import symengine.lib.symengine_wrapper as sw
-import sympy
 
 
 def expand(obj, **kwargs):
     """Expand with SymEngine; use SymPy if keyword options are given or SymEngine fails."""
     if len(kwargs.keys()):
+        import sympy
+
         return symengine.sympify(sympy.expand(obj, **kwargs))
     try:
         return symengine.expand(obj)
     except Exception:
+        import sympy
+
         return sympy.expand(obj)
 
 
@@ -25,6 +31,8 @@ def sympify(val):
     try:
         return symengine.sympify(val)
     except symengine.SympifyError:
+        import sympy
+
         return sympy.sympify(val)
 
 
@@ -35,7 +43,12 @@ def is_of_func_type(elem, typ):
 
 def expand_seq(seq, genset):
     """The monomial ``genset[1]**seq[0] * genset[2]**seq[1] * ...`` (1-indexed generators)."""
-    return sympy.prod([genset[i + 1] ** seq[i] for i in range(len(seq))])
+    return prod([genset[i + 1] ** seq[i] for i in range(len(seq))])
+
+
+def prod(a, start=1):
+    """Product of the elements of ``a`` times ``start`` (same as ``sympy.prod``)."""
+    return reduce(operator.mul, a, start)
 
 
 def efficient_subs(expr, subs_dict):

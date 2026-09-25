@@ -9,14 +9,13 @@ to commute polynomial coefficients past operators. The module-level ``df`` is th
 standard instance in ``x``.
 """
 
-from sympy import Expr
-
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.mult.double import schubmult_double_down
 from schubmult.symbolic import (
     EXRAW,
     Add,
     CoercionFailed,
+    Expr,
     Mul,
     Pow,
     S,
@@ -47,6 +46,8 @@ class NilHeckeElement(BaseRingElement):
     precedence = 40
 
     __sympy__ = True
+
+    __hash__ = None
 
     def apply(self, other):
         """Act on a `DoubleSchubertElement`: each ``partial_w`` sends ``S_v -> S_{v w^{-1}}`` when

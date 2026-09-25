@@ -52,6 +52,11 @@ class MonomialSlideBasis(FreeAlgebraBasis):
 
     zero_monom = ()
 
+    @classmethod
+    def dual_basis(cls):
+        """Return the MonomialSlidePolyBasis as the dual of MonomialSlideBasis."""
+        from ..polynomial_algebra.monomial_slide_poly_basis import MonomialSlidePolyBasis
+        return MonomialSlidePolyBasis
 
     @classmethod
     def printing_term(cls, k):

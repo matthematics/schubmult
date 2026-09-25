@@ -548,7 +548,7 @@ _probe_index = {}
 
 
 def _to_py_number(v):
-    if isinstance(v, (int, Fraction)):
+    if isinstance(v, int | Fraction):
         return v
     if v.is_Integer:
         return int(v)

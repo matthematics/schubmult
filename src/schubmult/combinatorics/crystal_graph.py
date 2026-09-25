@@ -9,7 +9,7 @@ products) is generic in terms of those four.
 
 from itertools import zip_longest
 
-from sympy.printing.defaults import Printable
+from schubmult.utils._printable import LazyPrintable as Printable
 
 
 class CrystalGraph(Printable):

@@ -118,9 +118,11 @@ The bundled `web/app.py` already:
 
 - Validates permutation tokens (integers only, bounded range).
 - Rejects requests above `SCHUBMULT_MAX_PERM_LENGTH` integers (default 64).
-- Runs each computation in a child process with a hard
-  `SCHUBMULT_COMPUTE_TIMEOUT` (default 8s). The child is `terminate()`d /
-  `kill()`ed if it overruns.
+- Runs each computation in a reused worker process (so memoization caches
+  stay warm between requests) with a hard `SCHUBMULT_COMPUTE_TIMEOUT`
+  (default 8s). A worker that overruns is `terminate()`d / `kill()`ed and
+  replaced; workers are recycled after `SCHUBMULT_WORKER_MAX_REQUESTS`
+  requests (default 200).
 - Disables the `--mult` polynomial input by default (it goes through
   `sympify`). Only enable it on trusted, authenticated deployments by setting
   `SCHUBMULT_ENABLE_MULT=1`.

@@ -25,7 +25,6 @@ from schubmult.mult import _accel
 from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func, sympify
 from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_func_func_mul, elem_sym_func, elem_sym_poly
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
-from schubmult.symbolic.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 from schubmult.utils.schub_lib import (
@@ -262,6 +261,8 @@ def schubmult_double_pair_generic_alt(perm1, perm2):
     """Like ``schubmult_double_pair_generic`` but computed via ``schubmult_double_alt_from_elems``
     with the factorial elementary symmetric function, then expanded/simplified.
     """
+    from schubmult.symbolic.symmetric_polynomials import FactorialElemSym
+
     return {k: expand_func(expand(v)) for k, v in schubmult_double_alt_from_elems({perm1: S.One}, perm2, _vars.var_g1, _vars.var_g2, elem_func=FactorialElemSym).items()}
 
 

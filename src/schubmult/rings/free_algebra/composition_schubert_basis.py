@@ -22,7 +22,7 @@ class CompositionSchubertBasis(FreeAlgebraBasis):
     @classmethod
     def is_key(cls, x):
         """Return True if *x* is a tuple or list (composition)."""
-        return isinstance(x, (tuple, list))
+        return isinstance(x, tuple | list)
 
     @classmethod
     def as_schubert_key(cls, key):
@@ -35,7 +35,7 @@ class CompositionSchubertBasis(FreeAlgebraBasis):
 
         Accepts either a Schubert key ``(Permutation, int)`` or a raw tuple.
         """
-        if isinstance(key, tuple) and len(key) == 2 and isinstance(key[1], int) and isinstance(key[0], (Permutation, list, tuple)):
+        if isinstance(key, tuple) and len(key) == 2 and isinstance(key[1], int) and isinstance(key[0], Permutation | list | tuple):
             perm = Permutation(key[0])
             return pad_tuple(perm.trimcode, key[1])
         return tuple(key)

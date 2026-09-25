@@ -11,13 +11,11 @@ from itertools import combinations
 from typing import Tuple
 
 import numpy as np
-from sympy import pretty
-from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
-from schubmult.symbolic import Expr
+from schubmult.symbolic import DefaultPrinting, Expr, pretty
 from schubmult.utils.schub_lib import pull_out_var
 
 from .planar_history import PlanarHistory, Tile
@@ -384,7 +382,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         the_bpd = self
 
         while True:
-            new_bpd, (a, r) = the_bpd.pop_op()
+            new_bpd, (_a, r) = the_bpd.pop_op()
             if r == 1:
                 the_bpd = new_bpd
             else:
@@ -669,7 +667,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Access grid elements, casting to TileType"""
         result = self._grid[key]
         # If it's a scalar, wrap it in TileType
-        if isinstance(result, (int, np.integer)):
+        if isinstance(result, int | np.integer):
             return TileType(result)
         return result
 
@@ -807,7 +805,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # self._perm = Permutation.ref_product(*self.word)
 
         #return self._perm
-        nrows, ncols = self._grid.shape
+        nrows, _ncols = self._grid.shape
         bottom_row = self._grid[nrows - 1, :]
 
         # # Check for TBD in bottom row
@@ -1306,7 +1304,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def all_tiles_of_type(self, tile_type: TileType) -> set[tuple[int, int]]:
         """All ``(row, col)`` positions matching ``tile_type`` (or any type in an iterable of types)."""
-        if isinstance(tile_type, (list, tuple)):
+        if isinstance(tile_type, list | tuple):
             result = set()
             for t in tile_type:
                 result.update(self.all_tiles_of_type(t))

@@ -3,7 +3,7 @@ import sys
 from schubmult import Gx, Permutation, uncode
 from schubmult.abc import x
 from schubmult.mult.groth import grothmult_py, mult_poly_groth
-from schubmult.symbolic import sstr, sympify
+from schubmult.symbolic import sympify
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -55,7 +55,7 @@ def main(argv=None):
                 if val != 0:
                     raw_result_dict[perm] = val
                     if formatter:
-                        print(f"{val}  {sstr(perm)}")
+                        print(f"{val}  {str(perm)}")
 
         if formatter is None:
             return raw_result_dict

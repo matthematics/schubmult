@@ -1,9 +1,12 @@
 import sys
 
-from schubmult.symbolic import sstr, sympify
+from schubmult.symbolic import sympify
 from schubmult.utils.argparse import schub_argparse
 
-from schubmult import GeneratingSet, Permutation, apply_peterson_woodward, schubmult_q, schubmult_q_fast, uncode
+from schubmult.combinatorics.permutation import Permutation, uncode
+from schubmult.mult.quantum import schubmult_q, schubmult_q_fast
+from schubmult.mult.quantum_double import apply_peterson_woodward
+from schubmult.symbolic.poly.variables import GeneratingSet
 
 q_var = GeneratingSet("q")
 
@@ -31,7 +34,7 @@ def _display_full(coeff_dict, args, formatter):
         if val != 0:
             raw_result_dict[perm] = val
             if formatter:
-                print(f"{sstr(perm)!s}  {formatter(val)}")
+                print(f"{str(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 

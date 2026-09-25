@@ -109,6 +109,8 @@ class NSymElement(FreeAlgebraElement):
 
     __sympy__ = True
 
+    __hash__ = None
+
     def parent(self):
         return self.ring
 

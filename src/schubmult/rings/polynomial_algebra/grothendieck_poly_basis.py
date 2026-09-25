@@ -66,14 +66,12 @@ class GrothendieckPolyBasis(PolynomialBasis):
         self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def product(self, key1, key2, coeff=S.One):
-        """Multiply two Grothendieck keys using the Grothendieck ring multiplication."""
+        """Multiply two Grothendieck keys with the ``grothmult_py`` kernel at ``beta = 1``."""
+        from schubmult.mult.groth import grothmult_py
+
         if key1[1] != key2[1]:
             return {}
-
-        def pair_length(dct, length):
-            return {(k, length): v for k, v in dct.items()}
-
-        return pair_length(self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])), key1[1])
+        return {(k, key1[1]): v for k, v in grothmult_py({key1[0]: coeff}, key2[0], beta=S.One).items()}
 
     def transition_schubert(self, dct):
         """Transition from Grothendieck basis to separated descents basis."""

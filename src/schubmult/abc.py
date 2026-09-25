@@ -40,7 +40,20 @@ x_1 + x_2 - y_1 - y_2
 from symengine import var
 
 from schubmult.symbolic.poly.variables import GeneratingSet
-from schubmult.symbolic.symmetric_polynomials import CompleteSym, E, E_q, ElemSym, FactorialCompleteSym, FactorialElemSym, H, QFactorialElemSym, e, h  # noqa: F401
+
+_symmetric_names = ("CompleteSym", "E", "E_q", "ElemSym", "FactorialCompleteSym", "FactorialElemSym", "H", "QFactorialElemSym", "e", "h")
+
+
+def __getattr__(name):
+    # The symmetric polynomial atoms are SymPy Functions; import them only when requested
+    if name in _symmetric_names:
+        import schubmult.symbolic.symmetric_polynomials as symmetric_polynomials
+
+        val = getattr(symmetric_polynomials, name)
+        globals()[name] = val
+        return val
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 var("x_(1:100)")
 var("y_(1:100)")

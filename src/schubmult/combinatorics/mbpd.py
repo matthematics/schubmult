@@ -768,7 +768,7 @@ class MBPD:
         # F-nonterminal
         rest = self.f_move(r, c)._phi_biletters()
         (i0, a0) = rest[0]
-        return [(i0 - 1, a0)] + rest[1:]
+        return [(i0 - 1, a0), *rest[1:]]
 
     # ---- BPD bridge ------------------------------------------------------
     # MBPD tiles map onto ordinary BPD tiles identically; the extra mark ``M``

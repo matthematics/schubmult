@@ -51,6 +51,18 @@ from .double import schubmult_double, schubmult_double_pair, schubmult_double_pa
 logger = get_logger(__name__)
 
 
+def cbc_solver(msg=False):
+    """PuLP ``COIN_CMD`` using the CBC binary bundled by ``pulp[cbc]``, falling back to ``cbc`` on PATH."""
+    import pulp as pu
+
+    try:
+        from cbcbox import cbc_bin_path
+
+        return pu.COIN_CMD(msg=msg, path=cbc_bin_path())
+    except ImportError:
+        return pu.COIN_CMD(msg=msg)
+
+
 def compute_positive_rep(val, var2=None, var3=None, msg=False):
     """Express ``val`` as a nonnegative-integer combination of product-of-differences monomials.
 
@@ -151,9 +163,8 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
                     break
             if not bad:
                 base_vectors[b1] = dct2
-    # vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
-    vrs = {bv: pu.LpVariable(name=f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
     lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+    vrs = {bv: lp_prob.add_variable(f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
     lp_prob += 0
     eqs = {}
     for bv, vec in base_vectors.items():
@@ -171,14 +182,15 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
                     eqs[i] += bvi * vrs[bv]
     for i in eqs:
         try:
-            lp_prob += eqs[i] == vec0[i]
+            # PuLP >= 4 returns a bare False for `expr == <symengine Integer>`
+            lp_prob += eqs[i] == int(vec0[i])
         except KeyError:
             raise
     # print(f"{vec=}")
     # print(lp_prob.constraints)
     try:
         # logger.debug("I IS SOLVING BOLVING")
-        solver = pu.PULP_CBC_CMD(msg=msg)
+        solver = cbc_solver(msg)
         status = lp_prob.solve(solver)  # noqa: F841
     except KeyboardInterrupt:
         current_process = psutil.Process()
@@ -303,7 +315,7 @@ def posify(
             u3, v3, w3 = try_reduce_u(u, v, w)
             if not is_coeff_irreducible(u3, v3, w3):
                 u, v, w = u3, v3, w3
-    split_two_b, split_two = is_split_two(u, v, w)
+    _split_two_b, _split_two = is_split_two(u, v, w)
     # logger.debug("Recording line number")
     if len([i for i in v.code if i != 0]) == 1:
         # logger.debug("Recording line number")

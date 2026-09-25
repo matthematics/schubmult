@@ -5,11 +5,11 @@
 import copy
 import logging
 from functools import cached_property
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
-from sympy import pretty_print  # noqa: F401
 
+from schubmult.symbolic import pretty_print  # noqa: F401
 from schubmult.utils._grid_print import GridPrint
 
 from .crystal_graph import CrystalGraph
@@ -144,7 +144,7 @@ def _root_compare(root1, root2):
     return 0
 
 
-def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optional[bool] = False, with_compatible_seq: Optional[bool] = False) -> Any:
+def _word_from_grid(grid0, as_grid: bool | None = False, as_ordering: bool | None = False, with_compatible_seq: bool | None = False) -> Any:
     """
     Two modes:
 
@@ -239,7 +239,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optiona
             ordering[i, j] = index_val - 1
             index_val -= 1
             # remove box and apply shift to left / above regions
-            rd = int(root_cell[0]) if isinstance(root_cell, (tuple, list)) else int(root_cell)
+            rd = int(root_cell[0]) if isinstance(root_cell, tuple | list) else int(root_cell)
             grid[i, j] = None
             grid = _root_shift(rd)(grid)
 
@@ -330,7 +330,7 @@ def _root_shift(root, spots=None):
     sref = None
     if isinstance(root, int):
         sref = Permutation.ref_product(int(root))
-    elif isinstance(root, (tuple, list)) and len(root) >= 1:
+    elif isinstance(root, tuple | list) and len(root) >= 1:
         # use first entry as the simple-reflection index (safe fallback)
         sref = Permutation.reflection(root)
 
@@ -398,14 +398,14 @@ def _validate_grid(grid: np.ndarray) -> None:
             cell = grid[i, j]
             if cell is None:
                 continue
-            if not isinstance(cell, (tuple, list)) or len(cell) < 2:
+            if not isinstance(cell, tuple | list) or len(cell) < 2:
                 raise RuntimeError(f"_validate_grid: bad cell at {(i, j)}: {cell!r}")
             root, letter = cell[0], cell[1]
             try:
                 int(letter)
             except Exception:
                 raise RuntimeError(f"_validate_grid: non-int letter at {(i, j)}: {letter!r}")
-            if not (isinstance(root, (tuple, list, int))):
+            if not (isinstance(root, tuple | list | int)):
                 raise RuntimeError(f"_validate_grid: unexpected root at {(i, j)}: {root!r}")
 
 

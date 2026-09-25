@@ -61,7 +61,7 @@ class EGRing(BaseRing):
         return hash(("Dsdfginkberysfhafrrtystoa", self._ID))
 
     def from_rc_graph(self, rc):
-        nilp, plac = rc.hw_tab_rep()
+        nilp, _plac = rc.hw_tab_rep()
         nilp = NilPlactic.from_word(rc.perm_word)
         return self.from_dict({(nilp, len(rc)): S.One})
 

@@ -1,22 +1,20 @@
 import sys
 from functools import cached_property
 
-from schubmult.symbolic import simplify, sstr, sympify
+from schubmult.symbolic import simplify, sympify
 from schubmult.utils.argparse import schub_argparse
 
-from schubmult import (
-    GeneratingSet,
-    Permutation,
+from schubmult.combinatorics.permutation import Permutation, permtrim, uncode
+from schubmult.mult.quantum_double import (
     apply_peterson_woodward,
-    div_diff,
-    efficient_subs,
     nil_hecke,
-    permtrim,
     q_posify,
     schubmult_q_double,
     schubmult_q_double_fast,
-    uncode,
 )
+from schubmult.symbolic.functions import efficient_subs
+from schubmult.symbolic.poly.schub_poly import div_diff
+from schubmult.symbolic.poly.variables import GeneratingSet
 
 
 class _gvars:
@@ -84,7 +82,7 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
         if val != 0:
             raw_result_dict[perm] = val
             if formatter:
-                print(f"{sstr(perm)!s}  {formatter(val)}")
+                print(f"{str(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 

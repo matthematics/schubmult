@@ -14,11 +14,18 @@ class ElemSymPolyBasis(PolynomialBasis):
     e_k(x_1, ..., x_n). Each key specifies degrees and variable counts
     for the elementary symmetric factors.
     """
-    def is_key(self, x):
-        return isinstance(x, tuple | list)
 
-    def as_key(self, x):
-        return ((*x,), len(x))
+    @classmethod
+    def is_key(cls, x):
+        """Return True if *x* is a ``(tuple/list, int)`` pair."""
+        return isinstance(x, tuple | list) and len(x) == 2 and isinstance(x[0], tuple | list) and isinstance(x[1], int)
+
+    @classmethod
+    def as_key(cls, x):
+        """Normalize *x* into a ``(tuple, int)`` key."""
+        if cls.is_key(x):
+            return (tuple(x[0]), x[1])
+        return None
 
     def printing_term(self, k):
         return GenericPrintingTerm(k, "E")
@@ -28,6 +35,7 @@ class ElemSymPolyBasis(PolynomialBasis):
 
     def __init__(self, genset):
         from .monomial_basis import MonomialBasis
+
         self.ring = SingleSchubertRing(genset)
         super().__init__(genset=genset)
         self._monomial_basis = MonomialBasis(genset=genset)
@@ -82,4 +90,10 @@ class ElemSymPolyBasis(PolynomialBasis):
 
     @property
     def zero_monom(self):
-        return self.as_key([])
+        return ((), 0)
+
+    @classmethod
+    def dual_basis(cls):
+        from ..free_algebra.elementary_basis import ElementaryBasis
+
+        return ElementaryBasis

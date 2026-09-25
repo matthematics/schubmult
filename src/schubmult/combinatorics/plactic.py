@@ -622,7 +622,7 @@ class Plactic(GridPrint, CrystalGraph):
     def rs_insert(self, *letters):
         """Insert one or more letters in sequence (row-insertion) and return a new Plactic."""
         # accept either rs_insert(a,b,...) or rs_insert([a,b,...])
-        if len(letters) == 1 and isinstance(letters[0], (list, tuple)):
+        if len(letters) == 1 and isinstance(letters[0], list | tuple):
             seq = list(letters[0])
         else:
             seq = list(letters)
@@ -972,7 +972,7 @@ class Plactic(GridPrint, CrystalGraph):
           P, Q = Plactic().rsk_insert([3,1,2,1])
         """
         # normalize letters accept either rsk_insert(a,b,...) or rsk_insert(iterable)
-        if len(letters) == 1 and isinstance(letters[0], (list, tuple)):
+        if len(letters) == 1 and isinstance(letters[0], list | tuple):
             seq = list(letters[0])
         else:
             seq = list(letters)
