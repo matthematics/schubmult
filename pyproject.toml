@@ -11,7 +11,7 @@ dependencies = [
         "numpy",
         "joblib",
         "latex2sympy2_extended",
-        "PuLP[cbc]>=3.3.2",  # [cbc] ships the CBC binary used by COIN_CMD
+        "PuLP[cbc]>=3.3.2, <4",  # [cbc] ships the CBC binary used by COIN_CMD
         "symengine>=0.14.1",
         "sympy>=1.14.0",
         "psutil",

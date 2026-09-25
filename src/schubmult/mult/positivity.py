@@ -182,7 +182,8 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
                     eqs[i] += bvi * vrs[bv]
     for i in eqs:
         try:
-            lp_prob += eqs[i] == vec0[i]
+            # PuLP >= 4 returns a bare False for `expr == <symengine Integer>`
+            lp_prob += eqs[i] == int(vec0[i])
         except KeyError:
             raise
     # print(f"{vec=}")
