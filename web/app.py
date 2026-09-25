@@ -578,11 +578,17 @@ def compute():
     })
 
 
-_warm_up()
-# keep the warmed-up heap out of GC passes, so forked workers don't copy-on-write it
-gc.freeze()
-if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") != "1" and mp.parent_process() is None:
-    threading.Thread(target=_prime_worker, daemon=True).start()
+if mp.current_process().name == "MainProcess":
+    # main process only. A spawned worker re-imports this module while unpickling its target,
+    # *before* multiprocessing sets parent_process(), so that check is None in the child too;
+    # current_process().name is already set to "SpawnProcess-N" at that point. Without this the
+    # child would repeat the seconds-long warm-up (eating into the compute timeout) and start a
+    # prime worker of its own, which would recurse.
+    _warm_up()
+    # keep the warmed-up heap out of GC passes, so forked workers don't copy-on-write it
+    gc.freeze()
+    if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") != "1":
+        threading.Thread(target=_prime_worker, daemon=True).start()
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=False)
