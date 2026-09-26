@@ -260,7 +260,7 @@ class SchubertPolyBasis(PolynomialBasis):
         from .sepdesc_poly_basis import SepDescPolyBasis
 
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: dict(x)
+            return lambda x: other_basis.attach_key(x)  # a subclass may index differently (Lehmer codes)
         if isinstance(other_basis, FundamentalSlidePolyBasis):
             return lambda x: self.transition_fundamental_slide(x)
         if isinstance(other_basis, MonomialSlidePolyBasis):

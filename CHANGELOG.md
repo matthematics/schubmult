@@ -31,6 +31,19 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
     numerator / atom-power denominator evaluation in the libsingular ring underneath, one gcd per
     coefficient); a triple product of `S_4` elements with 24 terms and numerators of ~10^4 terms
     takes a few seconds.
+  - `PolynomialAlgebra(R)` and `PolynomialAlgebra(R, n)` -- the polynomial ring `R[x0, x1, ...]`
+    (resp. in `n` variables) as a Sage parent with realizations (like `SymmetricFunctions`), each
+    indexed as in the literature: `schubert()` and the `beta = 1` `grothendieck()` by permutations
+    (`S[3, 1, 2]`); `monomial()`, `key()`, `fundamental_slide()`, `monomial_slide()`, `forest()` and the
+    K-theoretic (`beta = 1`) `glide()`, `lascoux()`, `grove()` by weak compositions (`k[2, 0, 1]`); and,
+    in `n` variables only, `elementary()` -- products of elementary symmetric polynomials
+    `e_a(x0..x_{j-1})`, whose indexing depends on `n`. All bases coerce into one another through the
+    monomial basis, products come from the schubmult bases and Schubert kernels, Sage's
+    `SchubertPolynomialRing` and `KeyPolynomials` coerce in, and the elements coerce into the (double,
+    quantum, Grothendieck) Schubert rings above. schubmult's own `PolynomialAlgebra` is graded by the
+    number of variables (keys of different lengths multiply to zero, the structure dual to the free
+    algebra); the Sage parents are the plain polynomial ring and pad keys to a common number of
+    variables before calling schubmult.
   - All accept lists/`Permutation`s, Sage polynomials (finite or `InfinitePolynomialRing`), and
     elements of `SchubertPolynomialRing`, `KeyPolynomials` and `AtomPolynomials` (whose variables are
     read as `x`, as Sage's Schubert ring does; these also coerce, so `X(w) + k([1])` works).
@@ -65,6 +78,12 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
   size explicitly and the parabolic rings pass `sum(blocks)`. `QPSx(2, 3)`, `(2, 3, 1)`,
   `(2, 3, 2)` and `(2, 3, 1, 1)` now all agree, as they should. The CLI (`--parabolic`), which only
   knows generator indices, is unchanged.
+- **`CompositionSchubertPolyBasis` received `(perm, length)` keys.** Transitions landing in a
+  Schubert-type basis (from `MonomialBasis`, `GrothendieckPolyBasis`, and `SchubertPolyBasis` itself)
+  handed the target the keys of `SchubertPolyBasis` without normalizing them, so
+  `PolynomialAlgebra(CompositionSchubertPolyBasis(x)).from_expr(...)` and every `change_basis` into
+  that basis produced elements keyed by permutations instead of Lehmer codes, and any transition out
+  of the ring then failed. Keys now go through the target basis's `attach_key`.
 
 ### Changed
 

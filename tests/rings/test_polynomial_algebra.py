@@ -128,11 +128,12 @@ def test_schubert_key_expansion():
     for perm in perms:
         assert expand(sch(perm).change_basis(KeyPolyBasis(Sx.genset)).expand() - sch(perm).expand()) == 0
 
-from schubmult.rings.polynomial_algebra import PolynomialAlgebra, MonomialBasis, SchubertPolyBasis, ElemSymPolyBasis, FundamentalSlidePolyBasis, ForestPolyBasis, MonomialSlidePolyBasis, KeyPolyBasis, GrothendieckPolyBasis, GrovePolyBasis, GlidePolyBasis, LascouxPolyBasis
+from schubmult.rings.polynomial_algebra import PolynomialAlgebra, MonomialBasis, SchubertPolyBasis, CompositionSchubertPolyBasis, ElemSymPolyBasis, FundamentalSlidePolyBasis, ForestPolyBasis, MonomialSlidePolyBasis, KeyPolyBasis, GrothendieckPolyBasis, GrovePolyBasis, GlidePolyBasis, LascouxPolyBasis
 
 @pytest.mark.parametrize("basis", [
     MonomialBasis, 
     SchubertPolyBasis, 
+    CompositionSchubertPolyBasis,
     ElemSymPolyBasis, 
     FundamentalSlidePolyBasis, 
     ForestPolyBasis, 
@@ -156,6 +157,7 @@ def test_monomial_basis_transitions(basis):
 @pytest.mark.parametrize("basis", [
     MonomialBasis, 
     SchubertPolyBasis, 
+    CompositionSchubertPolyBasis,
     ElemSymPolyBasis, 
     FundamentalSlidePolyBasis, 
     ForestPolyBasis, 
@@ -175,6 +177,29 @@ def test_schubert_basis_transitions(basis):
     monom_elem = Schub(uncode([2, 0, 1, 2])) - Schub(uncode([1, 0, 1]), 4)
     monom_elem2 = monom_elem.change_basis(basis).change_basis(SchubertPolyBasis)
     assert monom_elem2.almosteq(monom_elem)
+
+
+@pytest.mark.parametrize("source", [MonomialBasis, SchubertPolyBasis, GrothendieckPolyBasis, KeyPolyBasis, ElemSymPolyBasis])
+def test_composition_schubert_receives_composition_keys(source):
+    """Transitions into the composition-indexed Schubert basis must produce Lehmer codes, not the
+    ``(perm, length)`` keys of ``SchubertPolyBasis`` (regression: ``from_expr`` used to leave those in place,
+    which then broke every transition out of the ring)."""
+    from schubmult import uncode
+    from schubmult.abc import x
+    from schubmult.symbolic import expand
+
+    comp_basis = CompositionSchubertPolyBasis(x)
+    Comp = PolynomialAlgebra(comp_basis)
+    Schub = PolynomialAlgebra(SchubertPolyBasis(x))
+    elem = (Schub(uncode([2, 0, 1, 2])) + 3 * Schub(uncode([1, 0, 1]), 4)).change_basis(source)
+    comp = elem.change_basis(comp_basis)
+    assert all(comp_basis.is_key(k) and all(isinstance(a, int) for a in k) for k in comp), list(comp)
+    assert comp == Comp(2, 0, 1, 2) + 3 * Comp(1, 0, 1, 0)
+    assert expand(comp.change_basis(MonomialBasis(x)).expand() - elem.expand()) == 0
+
+    parsed = Comp.from_expr(x[1] ** 2 * x[2] + x[1], length=3)
+    assert parsed == Comp(2, 1, 0) + Comp(1, 0, 0)
+    assert parsed.change_basis(MonomialBasis(x)).change_basis(comp_basis) == parsed
 
 
 @pytest.mark.parametrize("basis", [
