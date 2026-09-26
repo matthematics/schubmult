@@ -58,3 +58,14 @@ def transition(other_basis)
 
 Return a transition function from monomial slide basis to *other_basis*.
 
+<a id="schubmult.rings.polynomial_algebra.monomial_slide_poly_basis.MonomialSlidePolyBasis.dual_basis"></a>
+
+#### dual\_basis
+
+```python
+@classmethod
+def dual_basis(cls)
+```
+
+Return the dual free algebra basis class (:class:`MonomialSlideBasis`).
+

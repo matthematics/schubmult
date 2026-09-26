@@ -46,16 +46,6 @@ def branch(index)
 Split the variables at ``index``: ``x_1..x_index`` on the left tensor factor, the rest on the
 right, returned in the tensor square of this ring's basis.
 
-<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.coproduct"></a>
-
-#### coproduct
-
-```python
-def coproduct()
-```
-
-Sum of ``branch(index)`` over every split point (the full variable-splitting coproduct).
-
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.change_basis"></a>
 
 #### change\_basis

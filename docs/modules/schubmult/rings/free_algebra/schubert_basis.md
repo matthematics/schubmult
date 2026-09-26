@@ -146,8 +146,8 @@ Expand ``(perm, numvars)`` in the `SchurElementaryBasis` (a word-like tuple pair
 def transition_elementary(cls, perm, numvars)
 ```
 
-Expand ``(perm, numvars)`` in the `ElementaryBasis`: read the monomials of ``S_{perm * w0}``
-and complement each exponent against the staircase to get elementary-symmetric indices.
+Expand ``(perm, numvars)`` in the `ElementaryBasis`: the coefficient of ``Elem(key)`` is the
+coefficient of ``S_perm`` in the elementary product ``E_key`` (see `ElementaryBasis.schubert_block`).
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_separated_descents"></a>
 

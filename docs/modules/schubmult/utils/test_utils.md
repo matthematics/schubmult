@@ -4,6 +4,20 @@
 
 Helpers for the test suite: locating JSON test data and inspecting SymPy/SymEngine expression trees.
 
+<a id="schubmult.utils.test_utils.vanishes"></a>
+
+#### vanishes
+
+```python
+def vanishes(exprs, trials=3, seed=1)
+```
+
+True if every rational-function expression in ``exprs`` is identically zero, tested exactly at
+``trials`` random rational points (no floats, so a zero *is* a zero).
+
+A nonzero rational function vanishes at a random point with negligible probability, and this is
+orders of magnitude faster than ``sympy.cancel`` on large unsimplified differences.
+
 <a id="schubmult.utils.test_utils.generate_all"></a>
 
 #### generate\_all

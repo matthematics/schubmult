@@ -46,7 +46,7 @@ covers ``u t_{ij}`` with ``i <= k < j`` (added) minus those with ``j <= k < i``
 #### mult\_poly\_py
 
 ```python
-def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x)
+def mult_poly_py(coeff_dict, poly, var_x=None)
 ```
 
 Multiply ``sum_u coeff_u S_u(x)`` by an arbitrary polynomial ``poly`` in ``var_x``.

@@ -166,3 +166,34 @@ def test_unknown_attribute_raises_attribute_error():
     """The lazy loader must not mask a typo as something importable."""
     with pytest.raises(AttributeError):
         schubmult.ThisNameDoesNotExist
+
+
+_NO_SAGE_SCRIPT = r"""
+import importlib, sys
+# make any `import sage...` fail loudly, whether or not Sage is installed
+sys.modules["sage"] = None
+import schubmult
+for name in schubmult._lazy_exports:
+    getattr(schubmult, name)
+for module in sys.argv[1:]:
+    importlib.import_module(module)
+from schubmult import DSx, QPSx, Sx, uncode
+assert Sx([3, 1, 2]) * Sx([2, 1, 3])
+assert DSx([3, 1, 2]) * DSx([2, 3, 1], "z")
+assert QPSx(2, 3)(uncode([2, 3])) * QPSx(2, 3)(uncode([0, 1]))
+from schubmult._scripts.schubmult_double import main
+main(["schubmult_double", "3", "1", "2", "-", "2", "1", "3", "--no-print"])
+print("ok")
+"""
+
+
+def test_package_is_fully_usable_without_sage():
+    """`schubmult.sage` is an optional integration: the rest of the package must never import Sage.
+
+    Runs a fresh interpreter with ``sys.modules["sage"] = None`` (so any Sage import raises), imports
+    every shipped module outside ``schubmult.sage``, resolves the whole lazy top-level API, and runs
+    single, double, and parabolic quantum products.
+    """
+    modules = [m for m in _shipped_modules() if not m.startswith("schubmult.sage")]
+    result = subprocess.run([sys.executable, "-c", _NO_SAGE_SCRIPT, *modules], capture_output=True, text=True, check=False)
+    assert result.returncode == 0 and result.stdout.strip() == "ok", f"schubmult pulled in Sage or failed without it:\n{result.stderr}"

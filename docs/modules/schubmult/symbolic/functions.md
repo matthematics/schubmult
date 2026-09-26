@@ -54,6 +54,16 @@ def expand_seq(seq, genset)
 
 The monomial ``genset[1]**seq[0] * genset[2]**seq[1] * ...`` (1-indexed generators).
 
+<a id="schubmult.symbolic.functions.prod"></a>
+
+#### prod
+
+```python
+def prod(a, start=1)
+```
+
+Product of the elements of ``a`` times ``start`` (same as ``sympy.prod``).
+
 <a id="schubmult.symbolic.functions.efficient_subs"></a>
 
 #### efficient\_subs
