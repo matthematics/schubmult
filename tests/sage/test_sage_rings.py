@@ -146,6 +146,41 @@ def test_single_schubert_coerces(X, S):
     assert (X([2, 1]) + S([2, 1])).parent() is X
 
 
+def test_key_polynomials_convert_and_coerce(X, S):
+    """Key/atom polynomial variables z_i are read as x_i, as Sage's SchubertPolynomialRing does."""
+    from sage.combinat.key_polynomial import AtomPolynomialBasis, KeyPolynomialBasis
+
+    k, a = KeyPolynomialBasis(QQ), AtomPolynomialBasis(QQ)
+    for alpha in ([0, 2], [1, 0, 2], [2, 1], [0, 1, 1]):
+        assert X(k(alpha)) == X(S(k(alpha))), alpha
+        assert X(a(alpha)) == X(S(a(alpha))), alpha
+    assert (X([2, 1]) + k([1])).parent() is X
+    assert X.has_coerce_map_from(k)
+    for w in S3 + S4_SAMPLE:  # key polynomials of dominant weights are the Schubert polynomials of dominant permutations
+        code = w.to_lehmer_code()
+        if code == sorted(code, reverse=True):
+            assert X(k(code)) == X(S(w)), w
+
+
+def test_symmetric_functions_round_trip(X, S):
+    """s_lambda(x_0..x_{n-1}) is the Grassmannian Schubert polynomial; to_symmetric_function inverts it."""
+    from sage.combinat.permutation import from_lehmer_code
+
+    Sym = SymmetricFunctions(QQ)
+    s, h = Sym.s(), Sym.h()
+    for la, n in (([2, 1], 2), ([2, 1], 3), ([3, 1, 1], 3), ([1], 4), ([2, 2], 2)):
+        w = from_lehmer_code([0] * (n - len(la)) + list(reversed(la)) + [0] * la[0])  # Grassmannian, descent at n
+        assert S(s[la].expand(n, alphabet=[f"x{i}" for i in range(n)])) == S(w), (la, n)
+        f = X.from_symmetric_function(s[la], n)
+        assert f.to_symmetric_function(n) == s[la], (la, n)
+        assert X.from_symmetric_function(h[la], n).to_symmetric_function(n) == s(h[la]).restrict_partition_lengths(n, exact=False), (la, n)
+    assert X([2, 4, 1, 3]).to_symmetric_function().parent().base_ring().variable_names() == ("y0", "y1", "y2")
+    with pytest.raises(ValueError):
+        X([3, 2, 1]).to_symmetric_function()
+    with pytest.raises(TypeError):
+        X(s[2, 1])
+
+
 def test_divided_difference_is_the_operator(X):
     """partial_i f = (f - s_i f) / (x_{i-1} - x_i) on the x variables, coefficients untouched."""
     for w in S4_SAMPLE:

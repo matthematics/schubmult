@@ -23885,6 +23885,43 @@ There are `n` variables ``x``, `n` the size of the largest permutation involved 
 :meth:`sage.combinat.schubert_polynomial.SchubertPolynomial_class.expand`); coefficient
 letters get exactly the indices that occur.
 
+<a id="schubmult.sage._common.SchubmultBackedElement.to_symmetric_function"></a>
+
+#### to\_symmetric\_function
+
+```python
+def to_symmetric_function(n=None)
+```
+
+The symmetric function whose expansion in `x_0, \ldots, x_{n-1}` is this element.
+
+``n`` defaults to the number of ``x`` variables that actually occur. Returns an element of
+``SymmetricFunctions(C)`` in the Schur basis supported on partitions with at most ``n`` parts
+(the unique such preimage), ``C`` the ring of the coefficient variables (``y``, ``q``, ``beta``,
+...) that occur; raises ``ValueError`` if the expansion is not symmetric in those variables.
+Grassmannian Schubert polynomials with descent at `n` are the Schur functions
+`s_\lambda(x_0, \ldots, x_{n-1})`; double ones are factorial Schur functions.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing, GrothendieckPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: X([2, 4, 1, 3]).to_symmetric_function()
+    -(y0^2*y1+y0^2*y2)*s[] + (y0^2+y0*y1+y0*y2)*s[1] - (y0+y1+y2)*s[1, 1] - y0*s[2] + s[2, 1]
+    sage: X([3, 2, 1]).to_symmetric_function()
+    Traceback (most recent call last):
+    ...
+    ValueError: X_y[3, 2, 1] is not symmetric in x0, x1
+    sage: X([3, 1, 2]).to_symmetric_function()  # a polynomial in x0 alone
+    y0*y1*s[] - (y0+y1)*s[1] + s[2]
+    sage: X([3, 1, 2]).to_symmetric_function(2)
+    Traceback (most recent call last):
+    ...
+    ValueError: X_y[3, 1, 2] is not symmetric in x0, x1
+    sage: G = GrothendieckPolynomialRing(ZZ)
+    sage: G([1, 3, 2]).to_symmetric_function()
+    s[1] + beta*s[1, 1]
+
 <a id="schubmult.sage._common.SchubmultBackedRing"></a>
 
 ## SchubmultBackedRing Objects
@@ -23895,6 +23932,31 @@ class SchubmultBackedRing(CombinatorialFreeModule)
 
 Base class: subclasses set ``_alphabet`` (basis alphabet letter or ``None``), ``_alphabets`` (all
 coefficient letters, sorted), and implement ``_schub_ring(alphabet)`` and ``_check_basis_perm``.
+
+<a id="schubmult.sage._common.SchubmultBackedRing.from_symmetric_function"></a>
+
+#### from\_symmetric\_function
+
+```python
+def from_symmetric_function(f, n)
+```
+
+Expand the symmetric function ``f`` in ``n`` variables `x_0, \ldots, x_{n-1}` in this basis.
+
+A Schur function `s_\lambda(x_0, \ldots, x_{n-1})` is the Schubert polynomial of the Grassmannian
+permutation with descent at `n` and shape `\lambda`; in the double ring the same polynomial
+expands with coefficients in the second alphabet.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ); s = SymmetricFunctions(QQ).s()
+    sage: X.from_symmetric_function(s[2, 1], 2)
+    (y_1^2*y_0+y_1*y_0^2)*X_y[1] + (y_2*y_0+y_1*y_0+y_0^2)*X_y[1, 3, 2] + y_0*X_y[1, 4, 2, 3] + (y_2+y_1+y_0)*X_y[2, 3, 1] + X_y[2, 4, 1, 3]
+    sage: SchubertPolynomialRing(QQ)(s[2, 1].expand(2, alphabet=['x0', 'x1']))
+    X[2, 4, 1, 3]
+    sage: X.from_symmetric_function(s[2, 1], 2).to_symmetric_function()
+    s[2, 1]
 
 <a id="schubmult.sage._convert"></a>
 
@@ -24263,6 +24325,19 @@ Ordinary Schubert polynomials and the other-alphabet double rings coerce::
     sage: Z(X(Z([3, 1, 2]))) == Z([3, 1, 2])
     True
 
+Key and atom polynomials (whose variables are read as ``x``) too; symmetric functions need the
+number of variables, see :meth:`from_symmetric_function`::
+
+    sage: k = KeyPolynomials(QQ)
+    sage: X(k([0, 2]))
+    (y_1^2+y_1*y_0+y_0^2)*X_y[1] + (y_2+y_1+y_0)*X_y[1, 3, 2] + X_y[1, 4, 2, 3]
+    sage: X([2, 1]) + k([1])
+    y_0*X_y[1] + 2*X_y[2, 1]
+    sage: X(SymmetricFunctions(QQ).s()[2, 1])
+    Traceback (most recent call last):
+    ...
+    TypeError: a symmetric function needs a number of variables: use Double Schubert polynomial ring in the alphabet y with X_y basis over Rational Field.from_symmetric_function(f, n)
+
 <a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis._coerce_map_from_"></a>
 
 #### \_coerce\_map\_from\_
@@ -24271,14 +24346,16 @@ Ordinary Schubert polynomials and the other-alphabet double rings coerce::
 def _coerce_map_from_(S)
 ```
 
-Ordinary Schubert polynomial rings and double rings in another alphabet (over a base that
-coerces into ours) coerce in.
+Ordinary Schubert polynomial rings, key and atom polynomial rings, and double rings in another
+alphabet (over a base that coerces into ours) coerce in.
 
 EXAMPLES::
 
     sage: from schubmult.sage import DoubleSchubertPolynomialRing
     sage: X = DoubleSchubertPolynomialRing(QQ)
     sage: X.has_coerce_map_from(SchubertPolynomialRing(ZZ))
+    True
+    sage: X.has_coerce_map_from(KeyPolynomials(ZZ))
     True
     sage: X.has_coerce_map_from(DoubleSchubertPolynomialRing(QQ, 'z'))
     True

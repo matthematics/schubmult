@@ -157,7 +157,7 @@ sage: GD([2, 1]) * GD([2, 1])
 -((y_1-y_0)/(beta*y_1+1))*G_y[2, 1] + ((beta*y_0+1)/(beta*y_1+1))*G_y[3, 1, 2]
 ```
 
-`DoubleSchubertPolynomialRing`, `QuantumSchubertPolynomialRing`, `QuantumDoubleSchubertPolynomialRing` (with `parabolic=` block sizes), `GrothendieckPolynomialRing`, and `DoubleGrothendieckPolynomialRing` accept permutations, Sage polynomials, and elements of `SchubertPolynomialRing`; a ring in another alphabet (`DoubleSchubertPolynomialRing(QQ, 'z')`) coerces in for mixed products. Variables are 0-indexed as in Sage (`x0, y0, q0`); the Grothendieck deformation parameter is `beta`.
+`DoubleSchubertPolynomialRing`, `QuantumSchubertPolynomialRing`, `QuantumDoubleSchubertPolynomialRing` (with `parabolic=` block sizes), `GrothendieckPolynomialRing`, and `DoubleGrothendieckPolynomialRing` accept permutations, Sage polynomials, and elements of `SchubertPolynomialRing` and `KeyPolynomials`; a ring in another alphabet (`DoubleSchubertPolynomialRing(QQ, 'z')`) coerces in for mixed products, and `from_symmetric_function(f, n)` / `to_symmetric_function()` go back and forth with `SymmetricFunctions`. Variables are 0-indexed as in Sage (`x0, y0, q0`); the Grothendieck deformation parameter is `beta`.
 
 ## Documentation
 

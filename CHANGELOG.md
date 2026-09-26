@@ -32,9 +32,14 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
     coefficient); a triple product of `S_4` elements with 24 terms and numerators of ~10^4 terms
     takes a few seconds.
   - All accept lists/`Permutation`s, Sage polynomials (finite or `InfinitePolynomialRing`), and
-    elements of `SchubertPolynomialRing`; `expand()` lands in `R[x0.., y0.., q0..]`, 0-indexed
-    like Sage; `divided_difference(i)` on the double ring. Coefficients are converted at the
-    boundary, so nothing SymEngine-flavoured leaks into the Sage API.
+    elements of `SchubertPolynomialRing`, `KeyPolynomials` and `AtomPolynomials` (whose variables are
+    read as `x`, as Sage's Schubert ring does; these also coerce, so `X(w) + k([1])` works).
+    `from_symmetric_function(f, n)` expands a symmetric function in `x0..x{n-1}` (a Schur function
+    gives the Grassmannian Schubert polynomial with descent at `n`) and `to_symmetric_function(n=None)`
+    reads a symmetric element back as a Schur expansion over the coefficient variables (Grassmannian
+    double Schubert polynomials are factorial Schur functions). `expand()` lands in
+    `R[x0.., y0.., q0..]`, 0-indexed like Sage; `divided_difference(i)` on the double ring.
+    Coefficients are converted at the boundary, so nothing SymEngine-flavoured leaks into the Sage API.
   - Sage is **not** a dependency: the subpackage is inert unless imported, and
     `tests/test_api_surface.py::test_package_is_fully_usable_without_sage` runs the whole package
     with Sage imports blocked. Install schubmult into a Sage environment
