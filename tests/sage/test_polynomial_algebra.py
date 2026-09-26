@@ -73,6 +73,27 @@ def test_algebra_testsuites():
         PolynomialAlgebra(QQ, 0)
 
 
+def test_coefficients_in_a_polynomial_base_ring():
+    """Coefficients that are not rational numbers survive the round trip through schubmult (regression:
+    the conversion back assumed every coefficient was an integer or a rational)."""
+    R = PolynomialRing(QQ, "a")
+    a = R.gen()
+    A = PolynomialAlgebra(R)
+    x, k, S, G = A.monomial(), A.key(), A.schubert(), A.grothendieck()
+    f = a * x[1] + (a**2 - 1 / 2) * x[0, 2]
+    assert k(f) == a * k[1] + (a**2 - 1 / 2) * k[0, 2] - (a**2 - 1 / 2) * k[1, 1]
+    assert x(k(f)) == f
+    assert S(G(f)) == S(f)
+    assert (a * S[2, 1]) * (a * S[1, 3, 2]) == a**2 * (S[2, 3, 1] + S[3, 1, 2])
+    p = f.expand()
+    assert p.parent().base_ring() is R
+    assert p == a * p.parent()("x0") + (a**2 - 1 / 2) * p.parent()("x1^2")
+    assert x(p) == f
+    SageTestSuite(k).run(raise_on_failure=True)
+    with pytest.raises(ValueError):
+        PolynomialAlgebra(QQ).key()._scalar("a")  # a symbol the base ring does not have
+
+
 # --- products and basis changes --------------------------------------------------------------------
 
 

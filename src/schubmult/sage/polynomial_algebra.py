@@ -501,11 +501,29 @@ class PolynomialAlgebraBasis(CombinatorialFreeModule):
         return max((self._variables_of(k) for k in keys), default=0)
 
     def _scalar(self, c):
-        import symengine
-
-        c = symengine.sympify(c)
+        """SymEngine coefficient -> base ring: rationals, and the generators of the base ring by name (so
+        ``PolynomialAlgebra(QQ['a'])`` carries ``a`` through schubmult and back)."""
         R = self.base_ring()
-        return R(int(c)) if c.is_Integer else R(QQ((int(c.p), int(c.q))))
+        named = self._base_ring_generators()
+
+        def variable(letter, i):
+            name = f"{letter}_{i}"
+            if name not in named:
+                raise ValueError(f"cannot convert the coefficient {c} to an element of {R}")
+            return named[name]
+
+        def scalar(q):
+            return R(q) if isinstance(q, int) else R(QQ((q.numerator, q.denominator)))
+
+        return symengine_to_sage(c, variable, scalar, named)
+
+    @cached_method
+    def _base_ring_generators(self):
+        try:
+            gens = self.base_ring().gens()
+        except (AttributeError, NotImplementedError):
+            return {}
+        return {str(g): g for g in gens if str(g).isidentifier()}
 
     def _from_schubmult(self, dct):
         """``{schubmult key at beta = 1: coefficient}`` -> element of this basis."""
