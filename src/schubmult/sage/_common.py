@@ -9,11 +9,14 @@ Index conventions: Sage variables are 0-indexed (``x0``, ``y_0``, ``q_0``), schu
 (``x_1``, ``y_1``, ``q_1``); see :mod:`schubmult.sage._convert`.
 """
 
+from typing import ClassVar
+
 from sage.categories.filtered_algebras_with_basis import FilteredAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
 from sage.combinat.permutation import Permutation, Permutations
 from sage.combinat.schubert_polynomial import SchubertPolynomialRing_xbasis
 from sage.misc.cachefunc import cached_method
+from sage.rings.fraction_field_element import FractionFieldElement
 from sage.rings.polynomial.infinite_polynomial_element import InfinitePolynomial
 from sage.rings.polynomial.infinite_polynomial_ring import InfinitePolynomialRing
 from sage.rings.polynomial.multi_polynomial import MPolynomial
@@ -21,7 +24,7 @@ from sage.rings.polynomial.polynomial_element import Polynomial
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.rational_field import QQ
 
-from ._convert import parse_sage_name, sage_polynomial_to_symengine, symengine_to_infinite_polynomials, symengine_to_sage
+from ._convert import parse_sage_name, sage_polynomial_to_symengine, symengine_to_base_ring, symengine_to_sage
 
 X_LETTER = "x"
 
@@ -42,20 +45,34 @@ def genset(letter):
     return GeneratingSet(letter)
 
 
-def coefficient_into(c, T):
-    """Move a base-ring coefficient (infinite polynomial in ``a_<i>``) into the finite ring ``T`` with variables ``a<i>``."""
+def coefficient_into(c, T, aliases=None):
+    """Move a base-ring coefficient into the finite ring ``T`` (variables ``a<i>`` for ``a_<i>``, plus
+    named scalars like ``beta``); fractions land in ``T.fraction_field()``. ``aliases`` renames
+    base-ring variables (``{'beta_0': 'beta'}``)."""
+    aliases = aliases or {}
+    if isinstance(c, FractionFieldElement):
+        return T.fraction_field()(coefficient_into(c.numerator(), T, aliases)) / T.fraction_field()(coefficient_into(c.denominator(), T, aliases))
     if not isinstance(c, InfinitePolynomial):
-        return T(c)
+        return T(c)  # scalar, possibly in R[beta]: matched by variable name
     p = c.polynomial()
-    names = [f"{letter}{idx}" for letter, idx in map(parse_sage_name, p.parent().variable_names())]
+    names = [aliases[v] if v in aliases else "{}{}".format(*parse_sage_name(v)) for v in p.parent().variable_names()]
     result = T.zero()
     for exps, coeff in p.dict().items():
-        term = T(coeff)
+        term = coefficient_into(coeff, T, aliases)
         for name, e in zip(names, exps):
             if e:
                 term *= T(name) ** e
         result += term
     return result
+
+
+def _coefficient_variables(c):
+    """Indexed variable names (``y_3``) occurring in a base-ring coefficient."""
+    if isinstance(c, FractionFieldElement):
+        return _coefficient_variables(c.numerator()) | _coefficient_variables(c.denominator())
+    if isinstance(c, InfinitePolynomial):
+        return {str(v) for v in c.polynomial().variables()}
+    return set()
 
 
 class SchubmultBackedElement(CombinatorialFreeModule.Element):
@@ -70,23 +87,27 @@ class SchubmultBackedElement(CombinatorialFreeModule.Element):
         import symengine
 
         P = self.parent()
-        R = P.base_ring().base_ring()
+        R = P._scalars
         n = max([len(w) for w in self.support()] + [1])
         exprs = {w: symengine.sympify(P._basis_polynomial(w)) for w in self.support()}
         counts = dict.fromkeys(P._alphabets, 0)
         counts[X_LETTER] = n
         for expr in exprs.values():
             for s in expr.free_symbols:
+                if str(s) in P._named_symbols:
+                    continue
                 letter, idx = parse_sage_name(str(s))
                 counts[letter] = max(counts.get(letter, 0), idx)  # schubmult index i is Sage index i-1
         for c in self.coefficients():
-            if isinstance(c, InfinitePolynomial):
-                for v in c.polynomial().variables():
-                    letter, idx = parse_sage_name(str(v))
-                    counts[letter] = max(counts[letter], idx + 1)
-        names = [f"{X_LETTER}{i}" for i in range(counts[X_LETTER])] + [f"{a}{i}" for a in P._alphabets for i in range(counts[a])]
+            for v in _coefficient_variables(c):
+                if v in P._base_aliases:
+                    continue
+                letter, idx = parse_sage_name(v)
+                counts[letter] = max(counts[letter], idx + 1)
+        names = [f"{X_LETTER}{i}" for i in range(counts[X_LETTER])] + [f"{a}{i}" for a in P._alphabets for i in range(counts[a])] + list(P._named_symbols.values())
         T = PolynomialRing(R, len(names), names)  # explicit count: one name alone would give a univariate ring
         gens = dict(zip(names, T.gens()))
+        named = {sym: gens[name] for sym, name in P._named_symbols.items()}
 
         def variable(letter, i):
             return gens[f"{letter}{i - 1}"]
@@ -96,7 +117,9 @@ class SchubmultBackedElement(CombinatorialFreeModule.Element):
 
         result = T.zero()
         for w, c in self:
-            result += coefficient_into(c, T) * symengine_to_sage(exprs[w], variable, scalar)
+            result += coefficient_into(c, T, P._base_aliases) * symengine_to_sage(exprs[w], variable, scalar, named)
+        if isinstance(result, FractionFieldElement) and result.denominator().is_one():
+            return result.numerator()
         return result
 
 
@@ -107,17 +130,27 @@ class SchubmultBackedRing(CombinatorialFreeModule):
 
     Element = SchubmultBackedElement
 
+    # unindexed schubmult symbols that live in the coefficient ring -> Sage variable name
+    _named_symbols: ClassVar[dict[str, str]] = {}
+    # base-ring variable name -> Sage variable name in expansions (``{'beta_0': 'beta'}``)
+    _base_aliases: ClassVar[dict[str, str]] = {}
+
     def __init__(self, R, alphabets, prefix, name):
         self._alphabets = tuple(alphabets)
+        self._scalars = R
         self._name = name
         self._repr_option_bracket = False
-        base = InfinitePolynomialRing(R, list(alphabets))
+        base = self._make_base_ring(R, self._alphabets)
         # filtered, not graded: S_u S_v = sum c^w_{uv} S_w with l(w) <= l(u) + l(v), the coefficients
         # carrying the missing degree (and q terms lower the length further)
         CombinatorialFreeModule.__init__(self, base, Permutations(), category=FilteredAlgebrasWithBasis(base), prefix=prefix)
 
+    @staticmethod
+    def _make_base_ring(R, alphabets):
+        return InfinitePolynomialRing(R, list(alphabets))
+
     def _repr_(self):
-        return f"{self._name} over {self.base_ring().base_ring()}"
+        return f"{self._name} over {self._scalars}"
 
     # ---- hooks -----------------------------------------------------------------------------
 
@@ -144,12 +177,19 @@ class SchubmultBackedRing(CombinatorialFreeModule):
     def _convert_dict(self, dct):
         """schubmult ``{Permutation: symengine coeff}`` -> element of ``self``."""
         perms = [to_sage_perm(w) for w in dct]
-        coeffs = symengine_to_infinite_polynomials(dct.values(), self.base_ring())
+        coeffs = symengine_to_base_ring(dct.values(), self.base_ring(), self._named_base_elements())
         return self._from_dict(dict(zip(perms, coeffs)), remove_zeros=True)
 
+    def _named_base_elements(self):
+        """``{schubmult symbol name: element of the base ring}`` for the unindexed scalars (e.g. beta)."""
+        return {}
+
     def _from_polynomial(self, p):
+        from schubmult.symbolic import Symbol
+
         gensets = {X_LETTER: genset(X_LETTER), **{a: genset(a) for a in self._alphabets}}
-        return self._convert_dict(self._schub_ring().from_expr(sage_polynomial_to_symengine(p, gensets)))
+        named = {name: Symbol(sym) for sym, name in self._named_symbols.items()}
+        return self._convert_dict(self._schub_ring().from_expr(sage_polynomial_to_symengine(p, gensets, named)))
 
     def _from_other_alphabet(self, elem):
         """Expand an element of the same kind of ring with another second alphabet in this basis."""
@@ -185,6 +225,10 @@ class SchubmultBackedRing(CombinatorialFreeModule):
             return self._from_dict({w: self.base_ring().one()})
         if isinstance(x, Polynomial):  # univariate: re-wrap as a one-variable multivariate polynomial
             x = PolynomialRing(x.base_ring(), 1, x.parent().variable_name())(x)
+        if isinstance(x, FractionFieldElement):
+            if not x.denominator().is_one():
+                raise TypeError(f"{x} is not a polynomial")
+            x = x.numerator()
         if isinstance(x, MPolynomial | InfinitePolynomial):
             return self._from_polynomial(x)
         parent = getattr(x, "parent", None)

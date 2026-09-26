@@ -134,16 +134,6 @@ def almosteq(other)
 
 Equality up to coefficient expansion (handles elements of different but compatible rings).
 
-<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.strip_zeros"></a>
-
-#### strip\_zeros
-
-```python
-def strip_zeros()
-```
-
-Drop basis elements whose coefficient is exactly zero.
-
 <a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing"></a>
 
 ## BaseSchubertRing Objects

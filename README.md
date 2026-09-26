@@ -151,9 +151,13 @@ x0^2 - x0*y0 - x0*y1 + y0*y1
 sage: G = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))   # QH^*(Gr(2, 5))
 sage: G([3, 5, 1, 2, 4]) * G([1, 3, 2])
 q_0*Xq[1, 3, 2] + Xq[3, 6, 1, 2, 4, 5] + Xq[4, 5, 1, 2, 3]
+sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+sage: GD = DoubleGrothendieckPolynomialRing(QQ)                  # K_T of the flag variety
+sage: GD([2, 1]) * GD([2, 1])
+-((y_1-y_0)/(beta*y_1+1))*G_y[2, 1] + ((beta*y_0+1)/(beta*y_1+1))*G_y[3, 1, 2]
 ```
 
-`DoubleSchubertPolynomialRing`, `QuantumSchubertPolynomialRing`, and `QuantumDoubleSchubertPolynomialRing` (with `parabolic=` block sizes) accept permutations, Sage polynomials, and elements of `SchubertPolynomialRing`; a ring in another alphabet (`DoubleSchubertPolynomialRing(QQ, 'z')`) coerces in for mixed products. Variables are 0-indexed as in Sage (`x0, y0, q0`).
+`DoubleSchubertPolynomialRing`, `QuantumSchubertPolynomialRing`, `QuantumDoubleSchubertPolynomialRing` (with `parabolic=` block sizes), `GrothendieckPolynomialRing`, and `DoubleGrothendieckPolynomialRing` accept permutations, Sage polynomials, and elements of `SchubertPolynomialRing`; a ring in another alphabet (`DoubleSchubertPolynomialRing(QQ, 'z')`) coerces in for mixed products. Variables are 0-indexed as in Sage (`x0, y0, q0`); the Grothendieck deformation parameter is `beta`.
 
 ## Documentation
 
