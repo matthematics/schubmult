@@ -10,6 +10,22 @@ on:
     branches: [ "main", "redevelop" ]
 
 jobs:
+  # `main` only receives final releases from `redevelop` (or a `hotfix/*` branched from main).
+  # This check is required by the `main` ruleset, so a PR opened against `main` by mistake
+  # (e.g. `gh pr create` defaulting to the default branch) cannot be merged.
+  guard-main-base:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only redevelop or hotfix/* may target main
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            redevelop|hotfix/*) echo "ok: $HEAD_REF -> main" ;;
+            *) echo "::error::PRs into main must come from redevelop or hotfix/*, not '$HEAD_REF'. Retarget with: gh pr edit ${{ github.event.pull_request.number }} --base redevelop"; exit 1 ;;
+          esac
+
   build:
 
     runs-on: ${{ matrix.os }}
