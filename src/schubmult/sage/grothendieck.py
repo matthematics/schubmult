@@ -135,7 +135,7 @@ class GrothendieckPolynomial_class(SchubmultBackedElement):
 
 
 class GrothendieckCoefficient(FractionFieldElement):
-    """
+    r"""
     Element of :class:`GrothendieckCoefficientField`: the deformation parameter prints as ``beta``.
 
     EXAMPLES::

@@ -23833,6 +23833,10 @@ installed). Provides Sage parents whose arithmetic is delegated to the schubmult
     sage: X([3, 1, 2]) * X([2, 1])
     (y_2-y_0)*X_y[3, 1, 2] + X_y[4, 1, 2, 3]
 
+Rings: :func:`DoubleSchubertPolynomialRing`, :func:`QuantumSchubertPolynomialRing`,
+:func:`QuantumDoubleSchubertPolynomialRing` (both with ``parabolic=``), :func:`GrothendieckPolynomialRing`
+and :func:`DoubleGrothendieckPolynomialRing`.
+
 <a id="schubmult.sage._common"></a>
 
 # schubmult.sage.\_common
@@ -24452,7 +24456,7 @@ EXAMPLES::
     sage: (y[0] - y[1]) / (1 + b*y[1])
     (-y_1 + y_0)/(beta*y_1 + 1)
     sage: latex(_)
-    rac{-y_{1} + y_{0}}{eta y_{1} + 1}
+    \frac{-y_{1} + y_{0}}{\beta y_{1} + 1}
 
 <a id="schubmult.sage.grothendieck.GrothendieckCoefficientField"></a>
 

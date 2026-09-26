@@ -71,6 +71,7 @@ exclude = [
     "site-packages",
     "venv",
     "tests",
+    "src/schubmult/_version.py",
 ]
 
 # Same as Black.

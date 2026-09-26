@@ -155,7 +155,7 @@ EXAMPLES::
     sage: (y[0] - y[1]) / (1 + b*y[1])
     (-y_1 + y_0)/(beta*y_1 + 1)
     sage: latex(_)
-    rac{-y_{1} + y_{0}}{eta y_{1} + 1}
+    \frac{-y_{1} + y_{0}}{\beta y_{1} + 1}
 
 <a id="schubmult.sage.grothendieck.GrothendieckCoefficientField"></a>
 
