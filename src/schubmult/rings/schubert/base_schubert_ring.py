@@ -131,10 +131,6 @@ class BaseSchubertElement(BaseRingElement):
             return elem1.almosteq(elem1.ring.one * elem2)
         return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
 
-    def strip_zeros(self):
-        """Drop basis elements whose coefficient is exactly zero."""
-        return self.ring.from_dict({k: v for k, v in self.items() if v != S.Zero})
-
     __hash__ = None
 
 

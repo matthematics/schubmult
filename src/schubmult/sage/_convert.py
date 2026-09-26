@@ -61,6 +61,70 @@ def sage_polynomial_to_symengine(p, gensets):
     return result
 
 
+def symengine_to_infinite_polynomials(exprs, B):
+    """Batch-convert SymEngine expressions to elements of the ``InfinitePolynomialRing`` ``B``.
+
+    The generic tree walk does every ``+``/``*`` through ``InfinitePolynomial`` arithmetic, which is
+    Python-level and ~10x slower than the libsingular ring underneath. Here the trees are evaluated
+    directly in ``B``'s underlying finite ring (grown first to cover every index that occurs) and the
+    results wrapped without conversion. Coefficients are never symbolically expanded on the schubmult
+    side; the polynomial normal form is computed by libsingular.
+    """
+    import symengine
+    from sage.rings.rational_field import QQ
+
+    exprs = [symengine.sympify(e) for e in exprs]
+    letters = {name: i for i, name in enumerate(B.variable_names())}
+    # grow the underlying ring so it has every variable we will need (Sage index = schubmult index - 1)
+    max_index = dict.fromkeys(letters, 0)
+    for e in exprs:
+        for s in e.free_symbols:
+            m = _SCHUB_NAME.match(str(s))
+            if m is None or m.group(1) not in letters:
+                raise ValueError(f"cannot convert symbol {s} to an element of {B}")
+            max_index[m.group(1)] = max(max_index[m.group(1)], int(m.group(2)) - 1)
+    for letter, idx in max_index.items():
+        B.gen(letters[letter])[idx]
+    P = B.gen(0)[0].polynomial().parent()  # the (now large enough) libsingular ring
+    gens = dict(zip(P.variable_names(), P.gens()))
+    element_class = type(B.gen(0)[0])
+    # Coefficients of one product share most of their subtrees (the same (y_i - z_j) factors and
+    # partial products recur across terms), so memoizing on the SymEngine node cuts the walk ~10x.
+    memo = {}
+    zero, one = P.zero(), P.one()
+
+    def go(e):
+        v = memo.get(e)
+        if v is not None:
+            return v
+        if e.is_Integer:
+            v = P(int(e))
+        elif e.is_Symbol:
+            m = _SCHUB_NAME.match(str(e))
+            v = gens[f"{m.group(1)}_{int(m.group(2)) - 1}"]
+        elif e.is_Add:
+            v = zero
+            for a in e.args:
+                v += go(a)
+        elif e.is_Mul:
+            v = one
+            for a in e.args:
+                v *= go(a)
+        elif e.is_Pow:
+            base, exp = e.args
+            if not exp.is_Integer or int(exp) < 0:
+                raise ValueError(f"cannot convert {e} to a polynomial")
+            v = go(base) ** int(exp)
+        elif e.is_Rational:
+            v = P(QQ((int(e.p), int(e.q))))
+        else:
+            raise ValueError(f"cannot convert {e} ({type(e).__name__}) to Sage")
+        memo[e] = v
+        return v
+
+    return [element_class(B, go(e)) for e in exprs]
+
+
 def symengine_to_sage(expr, variable, scalar):
     """SymEngine expression -> Sage element.
 

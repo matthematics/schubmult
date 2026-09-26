@@ -203,6 +203,25 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
     def as_polynomial(self):
         """Hook: expand this element to an explicit polynomial expression."""
 
+    def strip_zeros(self, exact=False, trials=2, seed=1):
+        """Drop basis elements whose coefficient is zero.
+
+        With ``exact=False`` only coefficients that are literally ``0`` are dropped (free). With
+        ``exact=True`` coefficients that are zero *as polynomials* are dropped too, detected by evaluating
+        them at ``trials`` random integer points in exact arithmetic (never by expanding them): the kernels
+        leave coefficients as products of factors, and in large products a sizeable fraction of those
+        cancel to zero without looking like it. The test is probabilistic in the sense that a nonzero
+        polynomial could vanish at every sample point; with the default parameters that probability is
+        negligible. Costs well under one product's worth of time even for thousands of terms.
+        """
+        if not exact:
+            return self.ring.from_dict({k: v for k, v in self.items() if v != S.Zero})
+        from schubmult.symbolic.functions import vanish_at_random_points
+
+        keys = list(self.keys())
+        zero = vanish_at_random_points([self[k] for k in keys], trials=trials, seed=seed)
+        return self.ring.from_dict({k: self[k] for k, z in zip(keys, zero) if not z})
+
     __hash__ = None
 
     def __eq__(self, other):
