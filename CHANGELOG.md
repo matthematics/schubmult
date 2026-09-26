@@ -33,11 +33,13 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
     takes a few seconds.
   - `PolynomialAlgebra(R)` and `PolynomialAlgebra(R, n)` -- the polynomial ring `R[x0, x1, ...]`
     (resp. in `n` variables) as a Sage parent with realizations (like `SymmetricFunctions`), each
-    indexed as in the literature: `schubert()` and the `beta = 1` `grothendieck()` by permutations
-    (`S[3, 1, 2]`); `monomial()`, `key()`, `fundamental_slide()`, `monomial_slide()`, `forest()` and the
-    K-theoretic (`beta = 1`) `glide()`, `lascoux()`, `grove()` by weak compositions (`k[2, 0, 1]`); and,
-    in `n` variables only, `elementary()` -- products of elementary symmetric polynomials
-    `e_a(x0..x_{j-1})`, whose indexing depends on `n`. All bases coerce into one another through the
+    indexed as in the literature: `schubert()` and `grothendieck()` by permutations (`S[3, 1, 2]`);
+    `monomial()`, `key()`, `fundamental_slide()`, `monomial_slide()`, `forest()` and the K-theoretic
+    `glide()`, `lascoux()`, `grove()` by weak compositions (`k[2, 0, 1]`); and, in `n` variables only,
+    `elementary()` -- products of elementary symmetric polynomials `e_a(x0..x_{j-1})`, whose indexing
+    depends on `n`. The K-theoretic bases are at `beta = -1`, the classical convention
+    (`G[1, 3, 2].expand()` is `x0 + x1 - x0*x1`); schubmult's own bases work at `beta = 1` and the
+    layer converts through the grading (`P^{-1}_a(x) = (-1)^|a| P^{1}_a(-x)`). All bases coerce into one another through the
     monomial basis, products come from the schubmult bases and Schubert kernels, Sage's
     `SchubertPolynomialRing` and `KeyPolynomials` coerce in, and the elements coerce into the (double,
     quantum, Grothendieck) Schubert rings above. schubmult's own `PolynomialAlgebra` is graded by the

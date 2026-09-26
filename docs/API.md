@@ -24718,16 +24718,20 @@ bases and Schubert kernels.
 
 Each basis is indexed the way its polynomials are indexed in the literature:
 
-- ``schubert``, ``grothendieck``: by permutations, `\mathfrak S_w` and the `\beta = 1` Grothendieck
-  polynomials `\mathfrak G_w` (prefixes ``S``, ``G``);
+- ``schubert``, ``grothendieck``: by permutations, `\mathfrak S_w` and the Grothendieck polynomials
+  `\mathfrak G_w` (prefixes ``S``, ``G``);
 - ``monomial``, ``key``, ``fundamental_slide``, ``monomial_slide``, ``forest``, ``glide``, ``lascoux``,
   ``grove``: by weak compositions `\alpha`: `x^\alpha`, the key polynomials `\kappa_\alpha`, the slide
   polynomials of Assaf-Searles, the forest polynomials of Nadeau-Spink-Tewari, and the K-theoretic
-  (`\beta = 1`) glide, Lascoux and grove polynomials (prefixes ``x``, ``k``, ``F``, ``M``, ``P``, ``Gl``,
-  ``L``, ``Gr``);
+  glide, Lascoux and grove polynomials (prefixes ``x``, ``k``, ``F``, ``M``, ``P``, ``Gl``, ``L``, ``Gr``);
 - ``elementary``: products `\prod_{j < n} e_{a_j}(x_0, \ldots, x_{j-1}) \cdot \prod_i e_{b_i}(x_0, \ldots, x_{n-1})`
   of elementary symmetric polynomials, a basis of the polynomial ring in `n` variables *for each fixed
   `n`* -- so it is only available in ``PolynomialAlgebra(R, n)`` (prefix ``E``; see :meth:`PolynomialAlgebra.elementary`).
+
+The K-theoretic bases (``grothendieck``, ``glide``, ``lascoux``, ``grove``) are taken at `\beta = -1`, the
+classical convention (`\mathfrak G_{132} = x_0 + x_1 - x_0 x_1`). Nothing is lost: with `\deg \beta = -1`
+these polynomials are homogeneous, so `P^{\beta}_a(x) = (-\beta)^{|a|} P^{-1}_a(-x/\beta)` recovers any
+`\beta`; schubmult's own bases work at `\beta = 1` and the layer applies that sign twist.
 
 schubmult's ``PolynomialAlgebra`` is graded by the number of variables (a key of length `n` lives in
 the `n`-variable slice and keys of different lengths multiply to zero -- the structure dual to the
@@ -24755,7 +24759,7 @@ EXAMPLES::
     sage: S[2, 1, 4, 3] * S[1, 3, 2]
     S[2, 3, 4, 1] + S[2, 4, 1, 3] + S[3, 1, 4, 2] + S[4, 1, 2, 3]
     sage: A.grothendieck()(S[1, 3, 2])
-    G[1, 3, 2] - G[2, 3, 1]
+    G[1, 3, 2] + G[2, 3, 1]
 
 The bases coerce into one another, and Sage's own Schubert and key polynomials coerce in::
 
@@ -24798,7 +24802,7 @@ EXAMPLES::
     sage: sorted(A.basis_names())
     ['forest', 'fundamental_slide', 'glide', 'grothendieck', 'grove', 'key', 'lascoux', 'monomial', 'monomial_slide', 'schubert']
     sage: A.basis('lascoux')
-    Polynomial ring in x0, x1, ... over Integer Ring in the Lascoux polynomial (beta = 1) basis
+    Polynomial ring in x0, x1, ... over Integer Ring in the Lascoux polynomial basis
     sage: A.elementary()
     Traceback (most recent call last):
     ...
@@ -24901,18 +24905,20 @@ In `n` variables the last descent must be at most `n`::
 def grothendieck()
 ```
 
-Grothendieck polynomials `\mathfrak G_w` at `\beta = 1`, indexed by permutations.
+Grothendieck polynomials `\mathfrak G_w` (at `\beta = -1`, the classical convention), indexed by permutations.
 
 EXAMPLES::
 
     sage: from schubmult.sage import PolynomialAlgebra
     sage: A = PolynomialAlgebra(QQ); G = A.grothendieck()
     sage: G[1, 3, 2].expand()
-    x0*x1 + x0 + x1
+    -x0*x1 + x0 + x1
     sage: A.schubert()(G[1, 3, 2])
-    S[1, 3, 2] + S[2, 3, 1]
+    S[1, 3, 2] - S[2, 3, 1]
     sage: G[2, 1] * G[2, 1]
     G[3, 1, 2]
+    sage: G[1, 3, 2] * G[2, 1]
+    G[2, 3, 1] + G[3, 1, 2] - G[3, 2, 1]
 
 <a id="schubmult.sage.polynomial_algebra.PolynomialAlgebra.key"></a>
 
@@ -24992,14 +24998,16 @@ EXAMPLES::
 def glide()
 ```
 
-Glide polynomials (Pechenik-Searles) at `\beta = 1`, the K-theoretic fundamental slides.
+Glide polynomials (Pechenik-Searles), the K-theoretic fundamental slides, at `\beta = -1`.
 
 EXAMPLES::
 
     sage: from schubmult.sage import PolynomialAlgebra
     sage: A = PolynomialAlgebra(QQ); Gl = A.glide()
     sage: Gl[0, 2].expand()
-    x0^2*x1 + x0*x1^2 + x0^2 + x0*x1 + x1^2
+    -x0^2*x1 - x0*x1^2 + x0^2 + x0*x1 + x1^2
+    sage: Gl(A.grothendieck()[1, 3, 2])
+    Gl[0, 1]
 
 <a id="schubmult.sage.polynomial_algebra.PolynomialAlgebra.lascoux"></a>
 
@@ -25009,7 +25017,7 @@ EXAMPLES::
 def lascoux()
 ```
 
-Lascoux polynomials at `\beta = 1`, the K-theoretic key polynomials.
+Lascoux polynomials, the K-theoretic key polynomials, at `\beta = -1`.
 
 EXAMPLES::
 
@@ -25017,6 +25025,8 @@ EXAMPLES::
     sage: A = PolynomialAlgebra(QQ); L = A.lascoux()
     sage: A.glide()(L[0, 2])
     Gl[0, 2]
+    sage: L[1, 0, 2].expand()
+    x0^2*x1^2*x2 + x0^2*x1*x2^2 - x0^2*x1^2 - 2*x0^2*x1*x2 - x0*x1^2*x2 - x0^2*x2^2 - x0*x1*x2^2 + x0^2*x1 + x0*x1^2 + x0^2*x2 + x0*x1*x2 + x0*x2^2
 
 <a id="schubmult.sage.polynomial_algebra.PolynomialAlgebra.grove"></a>
 
@@ -25026,14 +25036,14 @@ EXAMPLES::
 def grove()
 ```
 
-Grove polynomials at `\beta = 1`, the K-theoretic forest polynomials.
+Grove polynomials, the K-theoretic forest polynomials, at `\beta = -1`.
 
 EXAMPLES::
 
     sage: from schubmult.sage import PolynomialAlgebra
     sage: A = PolynomialAlgebra(QQ); Gr = A.grove()
     sage: Gr[0, 2].expand()
-    x0^2*x1 + x0*x1^2 + x0^2 + x0*x1 + x1^2
+    -x0^2*x1 - x0*x1^2 + x0^2 + x0*x1 + x1^2
 
 <a id="schubmult.sage.polynomial_algebra.PolynomialAlgebra.elementary"></a>
 
@@ -25125,7 +25135,7 @@ EXAMPLES::
     sage: A.key()[1, 0, 2].expand()
     x0^2*x1 + x0*x1^2 + x0^2*x2 + x0*x1*x2 + x0*x2^2
     sage: A.lascoux()[0, 2].expand()
-    x0^2*x1 + x0*x1^2 + x0^2 + x0*x1 + x1^2
+    -x0^2*x1 - x0*x1^2 + x0^2 + x0*x1 + x1^2
     sage: A.monomial().one().expand().parent()
     Multivariate Polynomial Ring in x0 over Rational Field
     sage: PolynomialAlgebra(QQ, 3).monomial().one().expand().parent()

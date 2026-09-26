@@ -6,6 +6,7 @@ implementations resp. the Grothendieck ring.
 """
 
 import itertools
+import re
 
 import pytest
 
@@ -146,7 +147,7 @@ def test_composition_keys_are_trimmed_and_graded(A):
     assert k([2, 0, 1, 0, 0]) == k[2, 0, 1]
     assert k([]) == k.one() == k(1)
     assert k[2, 0, 1].degree() == 3
-    assert A.lascoux()[2, 0, 1].expand().degree() > 3  # inhomogeneous (beta = 1)
+    assert A.lascoux()[2, 0, 1].expand().degree() > 3  # inhomogeneous (beta = -1)
     with pytest.raises(TypeError):
         k(Permutation([3, 1, 2]))
 
@@ -180,17 +181,39 @@ def test_schubert_basis_matches_sage(A):
 
 
 def test_grothendieck_basis_matches_grothendieck_ring(A):
-    """The beta = 1 Grothendieck basis is the Grothendieck ring at beta = 1, and its Schubert expansion is positive-looking."""
+    """The Grothendieck basis is the Grothendieck ring at beta = -1 (the classical convention)."""
     G, S = A.grothendieck(), A.schubert()
     GR = GrothendieckPolynomialRing(QQ)
     for w in PERMS:
         p = GR(w).expand()
-        assert as_T(G(w).expand()) == as_T(p.subs({p.parent()("beta"): 1})), w
+        assert as_T(G(w).expand()) == as_T(p.subs({p.parent()("beta"): -1})), w
     for u, v in itertools.product(PERMS[:4], PERMS[:4]):
         f = GR(u) * GR(v)
-        expected = {tuple(w): c(1) for w, c in f}
+        expected = {tuple(w): c(-1) for w, c in f}
         assert {tuple(w): c for w, c in G(u) * G(v)} == expected, (u, v)
-    assert S(G[1, 3, 2]) == S[1, 3, 2] + S[2, 3, 1]
+    assert G[1, 3, 2].expand() == T("x0 + x1 - x0*x1")
+    assert S(G[1, 3, 2]) == S[1, 3, 2] - S[2, 3, 1]
+
+
+def test_k_theoretic_bases_are_at_beta_minus_one(A):
+    """Independent of the sign twist: the grove basis agrees with schubmult's ``GrovePolyBasis(beta=-1)``,
+    and every K-theoretic basis element is its beta = 1 version with x -> -x and the sign (-1)^|alpha|."""
+    from schubmult.rings.polynomial_algebra import GlidePolyBasis, GrovePolyBasis, LascouxPolyBasis
+    from schubmult.rings.polynomial_algebra import PolynomialAlgebra as SPA
+    from schubmult.symbolic.poly.variables import GeneratingSet
+
+    x = GeneratingSet("x")
+    grove_minus = SPA(GrovePolyBasis(x, beta=-1))
+    negate = {T.gen(i): -T.gen(i) for i in range(5)}
+
+    def sage_poly(expr):  # schubmult's 1-indexed x_i -> Sage's 0-indexed xi
+        return T(re.sub(r"x_(\d+)", lambda m: f"x{int(m.group(1)) - 1}", str(expr)).replace("**", "^"))
+
+    for a in COMPOSITIONS:
+        assert as_T(A.grove()(a).expand()) == sage_poly(grove_minus.from_dict({a: 1}).expand()), a
+        for name, basis in (("glide", GlidePolyBasis), ("lascoux", LascouxPolyBasis), ("grove", GrovePolyBasis)):
+            plus = sage_poly(SPA(basis(x)).from_dict({a: 1}).expand())
+            assert as_T(A.basis(name)(a).expand()) == (-1) ** sum(a) * plus.subs(negate), (name, a)
 
 
 def test_k_theoretic_bases_specialize_to_their_classical_ones(A):

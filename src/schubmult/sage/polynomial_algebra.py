@@ -10,16 +10,20 @@ bases and Schubert kernels.
 
 Each basis is indexed the way its polynomials are indexed in the literature:
 
-- ``schubert``, ``grothendieck``: by permutations, `\mathfrak S_w` and the `\beta = 1` Grothendieck
-  polynomials `\mathfrak G_w` (prefixes ``S``, ``G``);
+- ``schubert``, ``grothendieck``: by permutations, `\mathfrak S_w` and the Grothendieck polynomials
+  `\mathfrak G_w` (prefixes ``S``, ``G``);
 - ``monomial``, ``key``, ``fundamental_slide``, ``monomial_slide``, ``forest``, ``glide``, ``lascoux``,
   ``grove``: by weak compositions `\alpha`: `x^\alpha`, the key polynomials `\kappa_\alpha`, the slide
   polynomials of Assaf-Searles, the forest polynomials of Nadeau-Spink-Tewari, and the K-theoretic
-  (`\beta = 1`) glide, Lascoux and grove polynomials (prefixes ``x``, ``k``, ``F``, ``M``, ``P``, ``Gl``,
-  ``L``, ``Gr``);
+  glide, Lascoux and grove polynomials (prefixes ``x``, ``k``, ``F``, ``M``, ``P``, ``Gl``, ``L``, ``Gr``);
 - ``elementary``: products `\prod_{j < n} e_{a_j}(x_0, \ldots, x_{j-1}) \cdot \prod_i e_{b_i}(x_0, \ldots, x_{n-1})`
   of elementary symmetric polynomials, a basis of the polynomial ring in `n` variables *for each fixed
   `n`* -- so it is only available in ``PolynomialAlgebra(R, n)`` (prefix ``E``; see :meth:`PolynomialAlgebra.elementary`).
+
+The K-theoretic bases (``grothendieck``, ``glide``, ``lascoux``, ``grove``) are taken at `\beta = -1`, the
+classical convention (`\mathfrak G_{132} = x_0 + x_1 - x_0 x_1`). Nothing is lost: with `\deg \beta = -1`
+these polynomials are homogeneous, so `P^{\beta}_a(x) = (-\beta)^{|a|} P^{-1}_a(-x/\beta)` recovers any
+`\beta`; schubmult's own bases work at `\beta = 1` and the layer applies that sign twist.
 
 schubmult's ``PolynomialAlgebra`` is graded by the number of variables (a key of length `n` lives in
 the `n`-variable slice and keys of different lengths multiply to zero -- the structure dual to the
@@ -47,7 +51,7 @@ EXAMPLES::
     sage: S[2, 1, 4, 3] * S[1, 3, 2]
     S[2, 3, 4, 1] + S[2, 4, 1, 3] + S[3, 1, 4, 2] + S[4, 1, 2, 3]
     sage: A.grothendieck()(S[1, 3, 2])
-    G[1, 3, 2] - G[2, 3, 1]
+    G[1, 3, 2] + G[2, 3, 1]
 
 The bases coerce into one another, and Sage's own Schubert and key polynomials coerce in::
 
@@ -143,18 +147,18 @@ def _bases():
     )
 
     return {
-        # name: (realization class, prefix, description, schubmult basis factory)
-        "monomial": (_CompositionBasis, "x", "monomial", MonomialBasis),
-        "schubert": (_PermutationBasis, "S", "Schubert", SchubertPolyBasis),
-        "grothendieck": (_PermutationBasis, "G", "Grothendieck (beta = 1)", GrothendieckPolyBasis),
-        "key": (_CompositionBasis, "k", "key polynomial", KeyPolyBasis),
-        "fundamental_slide": (_CompositionBasis, "F", "fundamental slide polynomial", FundamentalSlidePolyBasis),
-        "monomial_slide": (_CompositionBasis, "M", "monomial slide polynomial", MonomialSlidePolyBasis),
-        "forest": (_CompositionBasis, "P", "forest polynomial", ForestPolyBasis),
-        "glide": (_CompositionBasis, "Gl", "glide polynomial (beta = 1)", GlidePolyBasis),
-        "lascoux": (_CompositionBasis, "L", "Lascoux polynomial (beta = 1)", LascouxPolyBasis),
-        "grove": (_CompositionBasis, "Gr", "grove polynomial (beta = 1)", lambda gs: GrovePolyBasis(gs, beta=1)),
-        "elementary": (_ElementaryBasis, "E", "elementary symmetric", ElemSymPolyBasis),
+        # name: (realization class, prefix, description, schubmult basis factory, K-theoretic)
+        "monomial": (_CompositionBasis, "x", "monomial", MonomialBasis, False),
+        "schubert": (_PermutationBasis, "S", "Schubert", SchubertPolyBasis, False),
+        "grothendieck": (_PermutationBasis, "G", "Grothendieck", GrothendieckPolyBasis, True),
+        "key": (_CompositionBasis, "k", "key polynomial", KeyPolyBasis, False),
+        "fundamental_slide": (_CompositionBasis, "F", "fundamental slide polynomial", FundamentalSlidePolyBasis, False),
+        "monomial_slide": (_CompositionBasis, "M", "monomial slide polynomial", MonomialSlidePolyBasis, False),
+        "forest": (_CompositionBasis, "P", "forest polynomial", ForestPolyBasis, False),
+        "glide": (_CompositionBasis, "Gl", "glide polynomial", GlidePolyBasis, True),
+        "lascoux": (_CompositionBasis, "L", "Lascoux polynomial", LascouxPolyBasis, True),
+        "grove": (_CompositionBasis, "Gr", "grove polynomial", lambda gs: GrovePolyBasis(gs, beta=1), True),
+        "elementary": (_ElementaryBasis, "E", "elementary symmetric", ElemSymPolyBasis, False),
     }
 
 
@@ -171,7 +175,7 @@ class PolynomialAlgebra(UniqueRepresentation, Parent):
         sage: sorted(A.basis_names())
         ['forest', 'fundamental_slide', 'glide', 'grothendieck', 'grove', 'key', 'lascoux', 'monomial', 'monomial_slide', 'schubert']
         sage: A.basis('lascoux')
-        Polynomial ring in x0, x1, ... over Integer Ring in the Lascoux polynomial (beta = 1) basis
+        Polynomial ring in x0, x1, ... over Integer Ring in the Lascoux polynomial basis
         sage: A.elementary()
         Traceback (most recent call last):
         ...
@@ -269,18 +273,20 @@ class PolynomialAlgebra(UniqueRepresentation, Parent):
 
     def grothendieck(self):
         r"""
-        Grothendieck polynomials `\mathfrak G_w` at `\beta = 1`, indexed by permutations.
+        Grothendieck polynomials `\mathfrak G_w` (at `\beta = -1`, the classical convention), indexed by permutations.
 
         EXAMPLES::
 
             sage: from schubmult.sage import PolynomialAlgebra
             sage: A = PolynomialAlgebra(QQ); G = A.grothendieck()
             sage: G[1, 3, 2].expand()
-            x0*x1 + x0 + x1
+            -x0*x1 + x0 + x1
             sage: A.schubert()(G[1, 3, 2])
-            S[1, 3, 2] + S[2, 3, 1]
+            S[1, 3, 2] - S[2, 3, 1]
             sage: G[2, 1] * G[2, 1]
             G[3, 1, 2]
+            sage: G[1, 3, 2] * G[2, 1]
+            G[2, 3, 1] + G[3, 1, 2] - G[3, 2, 1]
         """
         return self.basis("grothendieck")
 
@@ -340,20 +346,22 @@ class PolynomialAlgebra(UniqueRepresentation, Parent):
 
     def glide(self):
         r"""
-        Glide polynomials (Pechenik-Searles) at `\beta = 1`, the K-theoretic fundamental slides.
+        Glide polynomials (Pechenik-Searles), the K-theoretic fundamental slides, at `\beta = -1`.
 
         EXAMPLES::
 
             sage: from schubmult.sage import PolynomialAlgebra
             sage: A = PolynomialAlgebra(QQ); Gl = A.glide()
             sage: Gl[0, 2].expand()
-            x0^2*x1 + x0*x1^2 + x0^2 + x0*x1 + x1^2
+            -x0^2*x1 - x0*x1^2 + x0^2 + x0*x1 + x1^2
+            sage: Gl(A.grothendieck()[1, 3, 2])
+            Gl[0, 1]
         """
         return self.basis("glide")
 
     def lascoux(self):
         r"""
-        Lascoux polynomials at `\beta = 1`, the K-theoretic key polynomials.
+        Lascoux polynomials, the K-theoretic key polynomials, at `\beta = -1`.
 
         EXAMPLES::
 
@@ -361,19 +369,21 @@ class PolynomialAlgebra(UniqueRepresentation, Parent):
             sage: A = PolynomialAlgebra(QQ); L = A.lascoux()
             sage: A.glide()(L[0, 2])
             Gl[0, 2]
+            sage: L[1, 0, 2].expand()
+            x0^2*x1^2*x2 + x0^2*x1*x2^2 - x0^2*x1^2 - 2*x0^2*x1*x2 - x0*x1^2*x2 - x0^2*x2^2 - x0*x1*x2^2 + x0^2*x1 + x0*x1^2 + x0^2*x2 + x0*x1*x2 + x0*x2^2
         """
         return self.basis("lascoux")
 
     def grove(self):
         r"""
-        Grove polynomials at `\beta = 1`, the K-theoretic forest polynomials.
+        Grove polynomials, the K-theoretic forest polynomials, at `\beta = -1`.
 
         EXAMPLES::
 
             sage: from schubmult.sage import PolynomialAlgebra
             sage: A = PolynomialAlgebra(QQ); Gr = A.grove()
             sage: Gr[0, 2].expand()
-            x0^2*x1 + x0*x1^2 + x0^2 + x0*x1 + x1^2
+            -x0^2*x1 - x0*x1^2 + x0^2 + x0*x1 + x1^2
         """
         return self.basis("grove")
 
@@ -430,7 +440,7 @@ class PolynomialAlgebraBasis(CombinatorialFreeModule):
 
     def __init__(self, A, name):
         self._name = name
-        _, self._prefix, self._description, make = _bases()[name]
+        _, self._prefix, self._description, make, self._k_theoretic = _bases()[name]
         self._backend = _Backend(make)
         CombinatorialFreeModule.__init__(self, A.base_ring(), self._index_set(A), prefix=self._prefix, bracket=False, category=A.Bases(), sorting_key=self._sorting_key)
 
@@ -471,6 +481,18 @@ class PolynomialAlgebraBasis(CombinatorialFreeModule):
         raise NotImplementedError
 
     # ---- conversions -----------------------------------------------------------------------
+    #
+    # schubmult's K-theoretic bases are at beta = 1, ours at beta = -1.  With deg(beta) = -1 every such
+    # polynomial is homogeneous of weight deg(key), so P^{-1}_a(x) = (-1)^{deg a} P^{1}_a(-x): a sign
+    # (-1)^{deg key} on basis keys and (-1)^{deg m} on monomials converts between the two conventions.
+
+    def _sign(self, key):
+        return -1 if self._k_theoretic and self.degree_on_basis(key) % 2 else 1
+
+    def _sign_monomials(self, mono):
+        if not self._k_theoretic:
+            return mono
+        return {m: -c if sum(m) % 2 else c for m, c in mono.items()}
 
     def _variables(self, keys):
         """The number of variables to run a schubmult computation on ``keys`` in."""
@@ -486,26 +508,28 @@ class PolynomialAlgebraBasis(CombinatorialFreeModule):
         return R(int(c)) if c.is_Integer else R(QQ((int(c.p), int(c.q))))
 
     def _from_schubmult(self, dct):
+        """``{schubmult key at beta = 1: coefficient}`` -> element of this basis."""
         out = {}
         for k, c in dct.items():
             if c == 0:
                 continue
             key = self._from_schubmult_key(k)
-            out[key] = out[key] + self._scalar(c) if key in out else self._scalar(c)
+            c = self._sign(key) * self._scalar(c)
+            out[key] = out[key] + c if key in out else c
         return self._from_dict(out, remove_zeros=True)
 
     def _to_schubmult(self, elem, N=None):
         from schubmult.symbolic import sympify
 
         N = self._variables(elem.support()) if N is None else N
-        return {self._schubmult_key(k, N): sympify(str(c)) for k, c in elem}
+        return {self._schubmult_key(k, N): self._sign(k) * sympify(str(c)) for k, c in elem}
 
     def _to_monomials(self, elem):
         """``{exponents (all of one length): coefficient}`` of an element of this basis."""
-        return self._backend.to_monomials(self._to_schubmult(elem))
+        return self._sign_monomials(self._backend.to_monomials(self._to_schubmult(elem)))
 
     def _from_monomials(self, mono):
-        mono = self._pad_monomials(mono)
+        mono = self._sign_monomials(self._pad_monomials(mono))
         return self._from_schubmult(self._backend.from_monomials(mono))
 
     def _pad_monomials(self, mono):
@@ -541,7 +565,8 @@ class PolynomialAlgebraBasis(CombinatorialFreeModule):
 
     def product_on_basis(self, left, right):
         N = self._variables([left, right])
-        return self._from_schubmult(self._backend.product(self._schubmult_key(left, N), self._schubmult_key(right, N)))
+        product = self._from_schubmult(self._backend.product(self._schubmult_key(left, N), self._schubmult_key(right, N)))
+        return self._sign(left) * self._sign(right) * product
 
     def __getitem__(self, key):
         """``k[2, 0, 1]``, ``S[3, 1, 2]``: the basis element with that index."""
@@ -595,7 +620,7 @@ class PolynomialAlgebraBasis(CombinatorialFreeModule):
                 sage: A.key()[1, 0, 2].expand()
                 x0^2*x1 + x0*x1^2 + x0^2*x2 + x0*x1*x2 + x0*x2^2
                 sage: A.lascoux()[0, 2].expand()
-                x0^2*x1 + x0*x1^2 + x0^2 + x0*x1 + x1^2
+                -x0^2*x1 - x0*x1^2 + x0^2 + x0*x1 + x1^2
                 sage: A.monomial().one().expand().parent()
                 Multivariate Polynomial Ring in x0 over Rational Field
                 sage: PolynomialAlgebra(QQ, 3).monomial().one().expand().parent()
@@ -612,7 +637,11 @@ class PolynomialAlgebraBasis(CombinatorialFreeModule):
             def scalar(q):
                 return T(q) if isinstance(q, int) else T(QQ(q.numerator) / QQ(q.denominator))
 
-            return sum((c * symengine_to_sage(P._backend.expand(P._schubmult_key(k, N)), variable, scalar) for k, c in self), T.zero())
+            def basis_polynomial(k):
+                p = symengine_to_sage(P._backend.expand(P._schubmult_key(k, N)), variable, scalar)
+                return P._sign(k) * p(*[-g for g in gens]) if P._k_theoretic else p  # beta = 1 -> beta = -1
+
+            return sum((c * basis_polynomial(k) for k, c in self), T.zero())
 
 
 class _CompositionBasis(PolynomialAlgebraBasis):
