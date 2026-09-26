@@ -10,7 +10,7 @@ on:
     branches: [ "main", "redevelop" ]
 
 jobs:
-  # `main` only receives final releases from `redevelop` (or a `hotfix/*` branched from main).
+   # `main` only receives final releases from `redevelop` (or a `hotfix/*` branched from main).
   # This check is required by the `main` ruleset, so a PR opened against `main` by mistake
   # (e.g. `gh pr create` defaulting to the default branch) cannot be merged.
   guard-main-base:
@@ -97,6 +97,9 @@ jobs:
     - name: Sage doctests for schubmult.sage
       shell: bash -el {0}
       run: python -m sage.doctest --force-lib src/schubmult/sage
+    - name: Sage property tests
+      shell: bash -el {0}
+      run: pytest tests/sage -q
     - name: Package stays Sage-free
       shell: bash -el {0}
       run: pytest tests/test_api_surface.py -k "without_sage or module_imports_in_isolation" -q
