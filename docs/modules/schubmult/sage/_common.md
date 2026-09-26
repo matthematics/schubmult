@@ -17,10 +17,12 @@ Index conventions: Sage variables are 0-indexed (``x0``, ``y_0``, ``q_0``), schu
 #### coefficient\_into
 
 ```python
-def coefficient_into(c, T)
+def coefficient_into(c, T, aliases=None)
 ```
 
-Move a base-ring coefficient (infinite polynomial in ``a_<i>``) into the finite ring ``T`` with variables ``a<i>``.
+Move a base-ring coefficient into the finite ring ``T`` (variables ``a<i>`` for ``a_<i>``, plus
+named scalars like ``beta``); fractions land in ``T.fraction_field()``. ``aliases`` renames
+base-ring variables (``{'beta_0': 'beta'}``).
 
 <a id="schubmult.sage._common.SchubmultBackedElement"></a>
 

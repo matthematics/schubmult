@@ -74,3 +74,22 @@ def efficient_subs(expr, subs_dict)
 
 ``expr.subs`` restricted to the entries of ``subs_dict`` that actually occur in ``expr``.
 
+<a id="schubmult.symbolic.functions.vanish_at_random_points"></a>
+
+#### vanish\_at\_random\_points
+
+```python
+def vanish_at_random_points(exprs, trials=2, seed=1, bound=10**6)
+```
+
+For each expression, whether it evaluates to zero at ``trials`` random integer points (exact arithmetic).
+
+A polynomial that is identically zero always does; a nonzero one of modest degree vanishes at a
+random point of ``[-bound, bound]^n`` with negligible probability, so this is a fast surrogate for
+``expand(e) == 0`` that never touches the (possibly enormous) expanded form. Values of shared
+subtrees are memoized across the whole batch, which is what makes it cheap: the coefficients of one
+Schubert product reuse the same ``(y_i - z_j)`` factors and partial products over and over.
+
+Expressions containing nodes other than numbers, symbols, ``Add``, ``Mul`` and integer ``Pow`` fall
+back to ``expand(e) == 0``.
+
