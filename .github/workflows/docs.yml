@@ -31,12 +31,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .[docs]
-      - name: Refuse to publish docs for a dev version
+      - name: Refuse to publish docs for a dev or pre-release version
         run: |
           VERSION=$(python -c "from importlib.metadata import version; print(version('schubmult'))")
           echo "schubmult $VERSION"
+          # the single Pages site documents the latest final release; pre-releases (5.2.0b1, rc1, a1)
+          # are published to PyPI by wheels.yml but must not overwrite it
           case "$VERSION" in
-            *.dev*|*+*) echo "::error::$VERSION is not a release version; run this workflow from a release tag"; exit 1 ;;
+            *.dev*|*+*|*a[0-9]*|*b[0-9]*|*rc[0-9]*) echo "::error::$VERSION is not a final release; docs deploy only from final release tags"; exit 1 ;;
           esac
       - name: Regenerate API reference
         run: python docs/generate_docs.py
