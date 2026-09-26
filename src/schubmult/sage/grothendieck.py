@@ -13,7 +13,9 @@ are polynomials in `\beta`; those of the double polynomials are rational functio
 second alphabet, so the double ring lives over the fraction field of ``R[beta][y, z]``.
 
 Variables are 0-indexed on the Sage side (``x0, y_0``) as for the other rings in :mod:`schubmult.sage`;
-the deformation parameter is ``beta``.
+the deformation parameter is ``beta`` and stays a variable of the base ring (specialize it yourself,
+e.g. ``p.subs(beta=-1)`` on an expansion). This differs from :func:`~schubmult.sage.PolynomialAlgebra`,
+whose K-theoretic bases are taken at `\beta = -1`.
 
 EXAMPLES::
 

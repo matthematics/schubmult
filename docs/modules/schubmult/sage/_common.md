@@ -32,6 +32,29 @@ base-ring variables (``{'beta_0': 'beta'}``).
 class SchubmultBackedElement(CombinatorialFreeModule.Element)
 ```
 
+<a id="schubmult.sage._common.SchubmultBackedElement.project"></a>
+
+#### project
+
+```python
+def project(n)
+```
+
+The image in the cohomology of the flag variety of `\CC^n` (equivariant, quantum, or partial as
+the ring dictates): drop the terms indexed by permutations outside `S_n`, whose classes vanish there.
+
+The rings are stable -- `\mathfrak S_w` is `\mathfrak S_w` for every `n` -- so a product
+contains every class of the infinite flag variety; restricting to one `n` is a projection.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: f = X([2, 3, 1]) * X([3, 1, 2]); f
+    (y_2-y_0)*X_y[3, 2, 1] + X_y[4, 2, 1, 3]
+    sage: f.project(3)                # in H_T^*(Fl(3)) only S_{321} survives
+    (y_2-y_0)*X_y[3, 2, 1]
+
 <a id="schubmult.sage._common.SchubmultBackedElement.expand"></a>
 
 #### expand

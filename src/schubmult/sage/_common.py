@@ -85,6 +85,24 @@ def _coefficient_variables(c):
 
 
 class SchubmultBackedElement(CombinatorialFreeModule.Element):
+    def project(self, n):
+        r"""
+        The image in the cohomology of the flag variety of `\CC^n` (equivariant, quantum, or partial as
+        the ring dictates): drop the terms indexed by permutations outside `S_n`, whose classes vanish there.
+
+        The rings are stable -- `\mathfrak S_w` is `\mathfrak S_w` for every `n` -- so a product
+        contains every class of the infinite flag variety; restricting to one `n` is a projection.
+
+        EXAMPLES::
+
+            sage: from schubmult.sage import DoubleSchubertPolynomialRing
+            sage: X = DoubleSchubertPolynomialRing(QQ)
+            sage: f = X([2, 3, 1]) * X([3, 1, 2]); f
+            (y_2-y_0)*X_y[3, 2, 1] + X_y[4, 2, 1, 3]
+            sage: f.project(3)                # in H_T^*(Fl(3)) only S_{321} survives
+            (y_2-y_0)*X_y[3, 2, 1]
+        """
+        return self.parent().sum_of_terms((w, c) for w, c in self if len(w) <= n)
     def expand(self):
         r"""
         Expand into a polynomial in ``x0, x1, ...`` and the coefficient variables ``y0, q0, ...``.
