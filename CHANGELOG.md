@@ -38,7 +38,9 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
     `glide()`, `lascoux()`, `grove()` by weak compositions (`k[2, 0, 1]`); and, in `n` variables only,
     `elementary()` -- products of elementary symmetric polynomials `e_a(x0..x_{j-1})`, whose indexing
     depends on `n`. The K-theoretic bases are at `beta = -1`, the classical convention
-    (`G[1, 3, 2].expand()` is `x0 + x1 - x0*x1`); schubmult's own bases work at `beta = 1` and the
+    (`G[1, 3, 2].expand()` is `x0 + x1 - x0*x1`); `GrothendieckPolynomialRing` and
+    `DoubleGrothendieckPolynomialRing` are unaffected and keep `beta` as a variable of their base ring.
+    schubmult's own bases work at `beta = 1` and the
     layer converts through the grading (`P^{-1}_a(x) = (-1)^|a| P^{1}_a(-x)`). All bases coerce into one another through the
     monomial basis, products come from the schubmult bases and Schubert kernels, Sage's
     `SchubertPolynomialRing` and `KeyPolynomials` coerce in, and the elements coerce into the (double,
@@ -49,6 +51,9 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
   - All accept lists/`Permutation`s, Sage polynomials (finite or `InfinitePolynomialRing`), and
     elements of `SchubertPolynomialRing`, `KeyPolynomials` and `AtomPolynomials` (whose variables are
     read as `x`, as Sage's Schubert ring does; these also coerce, so `X(w) + k([1])` works).
+    `project(n)` drops the classes that vanish in the flag variety of `C^n` (the rings are stable, so
+    a product carries every class of the infinite flag variety; e.g. Buch's equivariant quantum
+    `Gr(2, 5)` example is `(QD(u) * QD(v)).project(5)` with `parabolic=(2, 3)`).
     `from_symmetric_function(f, n)` expands a symmetric function in `x0..x{n-1}` (a Schur function
     gives the Grassmannian Schubert polynomial with descent at `n`) and `to_symmetric_function(n=None)`
     reads a symmetric element back as a Schur expansion over the coefficient variables (Grassmannian

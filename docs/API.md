@@ -23872,6 +23872,29 @@ base-ring variables (``{'beta_0': 'beta'}``).
 class SchubmultBackedElement(CombinatorialFreeModule.Element)
 ```
 
+<a id="schubmult.sage._common.SchubmultBackedElement.project"></a>
+
+#### project
+
+```python
+def project(n)
+```
+
+The image in the cohomology of the flag variety of `\CC^n` (equivariant, quantum, or partial as
+the ring dictates): drop the terms indexed by permutations outside `S_n`, whose classes vanish there.
+
+The rings are stable -- `\mathfrak S_w` is `\mathfrak S_w` for every `n` -- so a product
+contains every class of the infinite flag variety; restricting to one `n` is a projection.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: f = X([2, 3, 1]) * X([3, 1, 2]); f
+    (y_2-y_0)*X_y[3, 2, 1] + X_y[4, 2, 1, 3]
+    sage: f.project(3)                # in H_T^*(Fl(3)) only S_{321} survives
+    (y_2-y_0)*X_y[3, 2, 1]
+
 <a id="schubmult.sage._common.SchubmultBackedElement.expand"></a>
 
 #### expand
@@ -24395,7 +24418,9 @@ are polynomials in `\beta`; those of the double polynomials are rational functio
 second alphabet, so the double ring lives over the fraction field of ``R[beta][y, z]``.
 
 Variables are 0-indexed on the Sage side (``x0, y_0``) as for the other rings in :mod:`schubmult.sage`;
-the deformation parameter is ``beta``.
+the deformation parameter is ``beta`` and stays a variable of the base ring (specialize it yourself,
+e.g. ``p.subs(beta=-1)`` on an expansion). This differs from :func:`~schubmult.sage.PolynomialAlgebra`,
+whose K-theoretic bases are taken at `\beta = -1`.
 
 EXAMPLES::
 
@@ -25225,6 +25250,31 @@ increasing beyond it are allowed)::
     Xq[3, 5, 1, 2, 4]
     sage: P([1, 3, 2, 4, 6, 5])  # descent at 5 = N_2, increasing afterwards
     Xq[1, 3, 2, 4, 6, 5]
+
+Equivariant quantum Schubert calculus of a Grassmannian: Example 2.5 of Buch, *Mutations of puzzles
+and equivariant cohomology of two-step flag varieties* (Ann. of Math. 182, 2015) computes
+`[X^{(2,1)}] \star [X^{(3,1)}]` in `QH^*_T(Gr(2, 5))`. The Grassmannian permutation of a partition
+`\lambda` in the `2 \times 3` box has Lehmer code `(\lambda_2, \lambda_1)`; the product in the stable
+ring also contains classes of the infinite flag variety that vanish in `Gr(2, 5)` (permutations
+outside `S_5`), which :meth:`~schubmult.sage._common.SchubmultBackedElement.project` drops. With
+``y_i`` here being Buch's `y_{i+1}` and ``q_0`` his `q`::
+
+    sage: QD = QuantumDoubleSchubertPolynomialRing(QQ, parabolic=(2, 3))
+    sage: s21, s31 = QD([2, 4, 1, 3]), QD([2, 5, 1, 3, 4])
+    sage: f = (s21 * s31).project(5)
+    sage: shape = lambda w: Partition(sorted(w.to_lehmer_code(), reverse=True))
+    sage: for w, c in sorted(f, key=lambda t: (t[0].length(), shape(t[0]))):
+    ....:     print(shape(w), factor(c))
+    [] (-1) * (-y_4 + y_2) * (y_1 - y_0) * q_0
+    [1] (1) * (y_4 - y_0) * q_0
+    [1, 1] (1) * q_0
+    [2] (1) * q_0
+    [3, 1] (-1) * (-y_4 + y_2) * (y_1 - y_0) * (y_4 - y_0)
+    [3, 2] (1) * (y_4 - y_0)^2
+    [3, 3] (1) * (y_4 - y_0)
+
+that is, `(y_5-y_3)(y_5-y_1)(y_2-y_1)[X^{(3,1)}] + (y_5-y_1)^2[X^{(3,2)}] + (y_5-y_1)[X^{(3,3)}] +
+(y_5-y_3)(y_2-y_1)\,q + (y_5-y_1)\,q[X^{(1)}] + q[X^{(1,1)}] + q[X^{(2)}]`, as in the paper.
 
 <a id="schubmult.sage.quantum_schubert.QuantumSchubertPolynomialRing"></a>
 
