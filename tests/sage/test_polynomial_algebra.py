@@ -80,14 +80,15 @@ def test_coefficients_in_a_polynomial_base_ring():
     a = R.gen()
     A = PolynomialAlgebra(R)
     x, k, S, G = A.monomial(), A.key(), A.schubert(), A.grothendieck()
-    f = a * x[1] + (a**2 - 1 / 2) * x[0, 2]
-    assert k(f) == a * k[1] + (a**2 - 1 / 2) * k[0, 2] - (a**2 - 1 / 2) * k[1, 1]
+    c = a**2 - QQ((1, 2))
+    f = a * x[1] + c * x[0, 2]
+    assert k(f) == a * k[1] + c * (k[0, 2] - k[2] - k[1, 1])  # x1^2 = kappa_02 - kappa_20 - kappa_11
     assert x(k(f)) == f
     assert S(G(f)) == S(f)
     assert (a * S[2, 1]) * (a * S[1, 3, 2]) == a**2 * (S[2, 3, 1] + S[3, 1, 2])
     p = f.expand()
     assert p.parent().base_ring() is R
-    assert p == a * p.parent()("x0") + (a**2 - 1 / 2) * p.parent()("x1^2")
+    assert p == a * p.parent()("x0") + c * p.parent()("x1^2")
     assert x(p) == f
     SageTestSuite(k).run(raise_on_failure=True)
     with pytest.raises(ValueError):
