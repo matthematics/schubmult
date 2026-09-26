@@ -21,6 +21,16 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
     gives the partial flag variety with those block sizes, with an implicit unbounded last block
     (basis permutations may have descents exactly at the recorded boundaries and be increasing
     beyond them; products extend by one new block as needed, never by enlarging a recorded one).
+  - `GrothendieckPolynomialRing(R)` and `DoubleGrothendieckPolynomialRing(R, alphabet='y')` --
+    $\beta$-Grothendieck polynomials $\mathfrak G^\beta_w(x)$ over `R[beta]` and their double
+    versions $\mathfrak G^\beta_w(x; y)$ (with $x \oplus y = x + y + \beta x y$) over the fraction
+    field of `R[beta, y, z]`, where the equivariant K-theoretic structure constants live (denominators
+    are products of $1 + \beta y_i$). `beta()` returns the deformation parameter; $\beta = 0$
+    recovers the (double) Schubert polynomials. Coefficients of the double ring are reduced
+    rational functions computed without any symbolic expansion on the schubmult side (a flat
+    numerator / atom-power denominator evaluation in the libsingular ring underneath, one gcd per
+    coefficient); a triple product of `S_4` elements with 24 terms and numerators of ~10^4 terms
+    takes a few seconds.
   - All accept lists/`Permutation`s, Sage polynomials (finite or `InfinitePolynomialRing`), and
     elements of `SchubertPolynomialRing`; `expand()` lands in `R[x0.., y0.., q0..]`, 0-indexed
     like Sage; `divided_difference(i)` on the double ring. Coefficients are converted at the

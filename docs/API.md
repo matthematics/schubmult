@@ -33,6 +33,13 @@ Console and helper scripts shipped with schubmult.
 
 # schubmult.\_scripts.grothmult\_double
 
+``grothmult_double`` console script: products of double Grothendieck polynomials.
+
+**Example**:
+
+  grothmult_double 3 1 2 - 2 1 3 --display-positive
+  grothmult_double --code 2 0 - 1 0 --mixed-var
+
 <a id="schubmult._scripts.grothmult_double.groth_posify"></a>
 
 #### groth\_posify
@@ -52,33 +59,246 @@ difference products times leftover clearing monomials, expanded once, with
 LP.  ``beta`` is restored as ``beta**(`diffs` - d)`` with the Laurent atoms
 ``(1 + beta*y)`` degree 0 by construction.
 
+<a id="schubmult._scripts.grothmult_double.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``grothmult_double`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their double Grothendieck polynomials via `schubmult.mult.groth_double.grothmult_double`,
+and prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
+``y``/``z`` coefficient variables and the K-theory parameter ``beta``. With
+``--display-positive`` (only supported together with ``--mixed-var``), coefficients
+are rewritten in the positive FGL basis of ``z_i - y_j``, ``(1 + y_j)^{-1}``, and
+``(1 + z_i)^{-1}`` via an integer program (see `groth_posify`). Returns the raw
+result dict when the caller passes a ``None`` formatter (e.g. from tests); otherwise
+prints and returns ``None``.
+
 <a id="schubmult._scripts.grothmult_py"></a>
 
 # schubmult.\_scripts.grothmult\_py
+
+``grothmult_py`` console script: products of (ordinary) Grothendieck polynomials.
+
+**Example**:
+
+  grothmult_py 3 1 2 - 2 1 3
+  grothmult_py --code 2 0 - 1 0
+
+<a id="schubmult._scripts.grothmult_py.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``grothmult_py`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their Grothendieck polynomials via `schubmult.mult.groth.grothmult_py`, and prints
+the resulting coefficient dictionary ``{Permutation: coefficient}`` (coefficients are
+Laurent polynomials in the K-theory parameter ``beta``). Returns the raw result dict
+when the caller passes a ``None`` formatter (e.g. from tests); otherwise prints and
+returns ``None``.
 
 <a id="schubmult._scripts.grothmult_q"></a>
 
 # schubmult.\_scripts.grothmult\_q
 
+``grothmult_q`` console script: products of quantum Grothendieck polynomials.
+
+Conjectural quantum K-theory Pieri rule; ``--parabolic`` and ``--mult`` are not yet
+supported.
+
+**Example**:
+
+  grothmult_q 3 1 2 - 2 1 3
+
+<a id="schubmult._scripts.grothmult_q.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``grothmult_q`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their quantum Grothendieck polynomials via `schubmult.mult.groth_quantum.grothmult_q`,
+and prints the resulting coefficient dictionary ``{Permutation: coefficient}``
+(coefficients are polynomials in the quantum parameters ``q_i`` and the K-theory
+parameter ``beta``). ``--parabolic`` and ``--mult`` are not yet supported and cause
+an early exit. Returns the raw result dict when the caller passes a ``None``
+formatter (e.g. from tests); otherwise prints and returns ``None``.
+
 <a id="schubmult._scripts.grothmult_q_double"></a>
 
 # schubmult.\_scripts.grothmult\_q\_double
+
+``grothmult_q_double`` console script: products of quantum double Grothendieck polynomials.
+
+Conjectural quantum K-theory Pieri rule; ``--display-positive``, ``--parabolic``, and
+``--nil-hecke``/``--nil-hecke-apply`` are not yet supported.
+
+**Example**:
+
+  grothmult_q_double 3 1 2 - 2 1 3 --mixed-var
+
+<a id="schubmult._scripts.grothmult_q_double.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``grothmult_q_double`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their quantum double Grothendieck polynomials via
+`schubmult.mult.groth_quantum_double.grothmult_q_double`, and prints the resulting
+coefficient dictionary ``{Permutation: coefficient}`` in the ``y``/``z`` coefficient
+variables and quantum parameters ``q_i``. ``--display-positive``, ``--parabolic``,
+``--nil-hecke``, and ``--mult`` are not yet supported and cause an early exit.
+Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
+tests); otherwise prints and returns ``None``.
 
 <a id="schubmult._scripts.schubmult_double"></a>
 
 # schubmult.\_scripts.schubmult\_double
 
+``schubmult_double`` console script: products of double Schubert polynomials.
+
+**Example**:
+
+  schubmult_double 3 1 2 - 2 1 3 --display-positive
+  schubmult_double --code 2 0 - 1 0 --mixed-var
+
+<a id="schubmult._scripts.schubmult_double.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``schubmult_double`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their double Schubert polynomials via `schubmult.mult.double.schubmult_double`, and
+prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
+``y``/``z`` coefficient variables. By default the two coefficient variable sets are
+the same (``y``); pass ``--mixed-var`` to use distinct ``y``/``z`` sets. With
+``--display-positive``, coefficients are rewritten as positive combinations of
+``y_i - z_j`` (or verified positive in the single-variable case) via an integer
+program (`schubmult.mult.positivity.posify`). Returns the raw result dict when the
+caller passes a ``None`` formatter (e.g. from tests); otherwise prints and returns
+``None``.
+
 <a id="schubmult._scripts.schubmult_py"></a>
 
 # schubmult.\_scripts.schubmult\_py
+
+``schubmult_py`` console script: products of ordinary Schubert polynomials.
+
+**Example**:
+
+  schubmult_py 3 1 2 - 2 1 3
+  schubmult_py --code 2 0 - 1 0
+  schubmult_py --coprod --code 2 0 3 0 1 - 2 4
+
+<a id="schubmult._scripts.schubmult_py.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``schubmult_py`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their ordinary Schubert polynomials via `schubmult.mult.single.schubmult_py`, and
+prints the resulting coefficient dictionary ``{Permutation: coefficient}``. With
+``--coprod``, computes a coproduct instead (see `schub_coprod_py`). Returns the raw
+result dict when the caller passes a ``None`` formatter (e.g. from tests); otherwise
+prints and returns ``None``.
 
 <a id="schubmult._scripts.schubmult_q"></a>
 
 # schubmult.\_scripts.schubmult\_q
 
+``schubmult_q`` console script: products of quantum Schubert polynomials.
+
+**Example**:
+
+  schubmult_q 3 1 2 - 2 1 3
+  schubmult_q 3 1 2 - 2 1 3 --parabolic 1
+
+<a id="schubmult._scripts.schubmult_q.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``schubmult_q`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their quantum Schubert polynomials via `schubmult.mult.quantum.schubmult_q_fast`
+(or the unoptimized `schubmult.mult.quantum.schubmult_q` with ``--basic-pieri``),
+and prints the resulting coefficient dictionary ``{Permutation: coefficient}``
+(coefficients are polynomials in the quantum parameters ``q_i``). With
+``--parabolic g1 g2 ...`` (generator block sizes of a parabolic subgroup, exactly
+two input permutations required), the result is projected via the Peterson-Woodward
+theorem (`schubmult.mult.quantum_double.apply_peterson_woodward`). Returns the raw
+result dict when the caller passes a ``None`` formatter (e.g. from tests); otherwise
+prints and returns ``None``.
+
 <a id="schubmult._scripts.schubmult_q_double"></a>
 
 # schubmult.\_scripts.schubmult\_q\_double
+
+``schubmult_q_double`` console script: products of quantum double Schubert polynomials.
+
+Conjectural for most cases; see `schubmult.mult.quantum_double`.
+
+**Example**:
+
+  schubmult_q_double 3 1 2 - 2 1 3 --display-positive
+  schubmult_q_double 3 1 2 - 2 1 3 --parabolic 1
+
+<a id="schubmult._scripts.schubmult_q_double.main"></a>
+
+#### main
+
+```python
+def main(argv=None)
+```
+
+Entry point for the ``schubmult_q_double`` console script.
+
+Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+their quantum double Schubert polynomials via
+`schubmult.mult.quantum_double.schubmult_q_double_fast` (or the unoptimized
+`schubmult.mult.quantum_double.schubmult_q_double` with ``--basic-pieri``), and
+prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
+``y``/``z`` coefficient variables and quantum parameters ``q_i``. With
+``--parabolic``, the result is projected via the Peterson-Woodward theorem
+(`apply_peterson_woodward`). With ``--display-positive``, coefficients are rewritten
+positively via `schubmult.mult.quantum_double.q_posify`. ``--nil-hecke N`` substitutes
+up to ``N`` Fomin-Gelfand-Postnikov commuting difference operators
+(`schubmult.mult.quantum_double.nil_hecke`) instead of multiplying permutations.
+Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
+tests); otherwise prints and returns ``None``.
 
 <a id="schubmult.abc"></a>
 
@@ -12212,6 +12432,24 @@ def as_polynomial()
 
 Hook: expand this element to an explicit polynomial expression.
 
+<a id="schubmult.rings.base_ring.BaseRingElement.strip_zeros"></a>
+
+#### strip\_zeros
+
+```python
+def strip_zeros(exact=False, trials=2, seed=1)
+```
+
+Drop basis elements whose coefficient is zero.
+
+With ``exact=False`` only coefficients that are literally ``0`` are dropped (free). With
+``exact=True`` coefficients that are zero *as polynomials* are dropped too, detected by evaluating
+them at ``trials`` random integer points in exact arithmetic (never by expanding them): the kernels
+leave coefficients as products of factors, and in large products a sizeable fraction of those
+cancel to zero without looking like it. The test is probabilistic in the sense that a nonzero
+polynomial could vanish at every sample point; with the default parameters that probability is
+negligible. Costs well under one product's worth of time even for thousands of terms.
+
 <a id="schubmult.rings.base_ring.BaseRingElement.almosteq"></a>
 
 #### almosteq
@@ -20302,16 +20540,6 @@ def almosteq(other)
 
 Equality up to coefficient expansion (handles elements of different but compatible rings).
 
-<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.strip_zeros"></a>
-
-#### strip\_zeros
-
-```python
-def strip_zeros()
-```
-
-Drop basis elements whose coefficient is exactly zero.
-
 <a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertRing"></a>
 
 ## BaseSchubertRing Objects
@@ -23624,10 +23852,12 @@ Index conventions: Sage variables are 0-indexed (``x0``, ``y_0``, ``q_0``), schu
 #### coefficient\_into
 
 ```python
-def coefficient_into(c, T)
+def coefficient_into(c, T, aliases=None)
 ```
 
-Move a base-ring coefficient (infinite polynomial in ``a_<i>``) into the finite ring ``T`` with variables ``a<i>``.
+Move a base-ring coefficient into the finite ring ``T`` (variables ``a<i>`` for ``a_<i>``, plus
+named scalars like ``beta``); fractions land in ``T.fraction_field()``. ``aliases`` renames
+base-ring variables (``{'beta_0': 'beta'}``).
 
 <a id="schubmult.sage._common.SchubmultBackedElement"></a>
 
@@ -23697,26 +23927,51 @@ Base-ring scalar (integer or rational) to a SymEngine number.
 #### sage\_polynomial\_to\_symengine
 
 ```python
-def sage_polynomial_to_symengine(p, gensets)
+def sage_polynomial_to_symengine(p, gensets, named=None)
 ```
 
 Sage polynomial (finite or infinite polynomial ring) -> SymEngine expression.
 
 ``gensets`` maps a letter to a schubmult ``GeneratingSet``; the Sage variable ``a<i>``/``a_<i>``
-becomes ``gensets[a][i + 1]``. Letters not in ``gensets`` are created on the fly.
+becomes ``gensets[a][i + 1]``. Letters not in ``gensets`` are created on the fly. ``named`` maps
+unindexed Sage variable names (``'beta'``) to SymEngine symbols.
+
+<a id="schubmult.sage._convert.symengine_to_base_ring"></a>
+
+#### symengine\_to\_base\_ring
+
+```python
+def symengine_to_base_ring(exprs, B, named=None)
+```
+
+Batch-convert SymEngine expressions to elements of the coefficient ring ``B``.
+
+``B`` may be an ``InfinitePolynomialRing``, the fraction field of one (double Grothendieck
+coefficients are rational in ``beta`` and ``y``), or a finite ``PolynomialRing`` (e.g. ``R[beta]``).
+``named`` maps unindexed SymEngine symbol names to elements of the finite ring underneath ``B``
+(``{'β': beta}``).
+
+A generic tree walk doing every ``+``/``*`` through ``InfinitePolynomial`` arithmetic is Python-level
+and ~10x slower than the libsingular ring underneath; here the trees are evaluated directly in the
+underlying finite ring (grown first to cover every index that occurs) and wrapped without
+conversion. Coefficients are never symbolically expanded on the schubmult side; the normal form is
+computed by libsingular. Coefficients of one product share most of their subtrees (the same
+``(y_i - z_j)`` factors and partial products recur), so values are memoized on the SymEngine node
+across the whole batch.
 
 <a id="schubmult.sage._convert.symengine_to_sage"></a>
 
 #### symengine\_to\_sage
 
 ```python
-def symengine_to_sage(expr, variable, scalar)
+def symengine_to_sage(expr, variable, scalar, named=None)
 ```
 
 SymEngine expression -> Sage element.
 
 ``variable(letter, i)`` returns the Sage element for the schubmult symbol ``letter_i`` (1-based ``i``);
-``scalar(n)`` converts a Python ``int``/``Fraction``-like rational to the target ring.
+``scalar(n)`` converts a Python ``int``/``Fraction``-like rational to the target ring; ``named`` maps
+unindexed symbol names (``'β'``) to target elements.
 
 <a id="schubmult.sage.double_schubert"></a>
 
@@ -24039,6 +24294,332 @@ EXAMPLES::
     sage: from schubmult.sage import DoubleSchubertPolynomialRing
     sage: DoubleSchubertPolynomialRing(QQ).some_elements()
     [X_y[1], X_y[1] + 2*X_y[2, 1], -X_y[3, 2, 1] + X_y[4, 2, 1, 3]]
+
+<a id="schubmult.sage.grothendieck"></a>
+
+# schubmult.sage.grothendieck
+
+Grothendieck polynomials
+
+The `\beta`-Grothendieck polynomials `\mathfrak{G}^\beta_w(x)` (Fomin-Kirillov) represent Schubert
+classes in the connective K-theory of the flag variety; `\beta = -1` gives the classical Grothendieck
+polynomials of Lascoux-Schutzenberger and `\beta = 0` the Schubert polynomials. The double versions
+`\mathfrak{G}^\beta_w(x; y)` are the equivariant classes; here the second alphabet enters through
+`x \oplus y = x + y + \beta x y`, so `\mathfrak{G}_{21}(x; y) = x_0 + y_0 + \beta x_0 y_0`.
+
+Products are computed by the schubmult kernels (:func:`schubmult.mult.groth.grothmult_py`,
+:func:`schubmult.mult.groth_double.grothmult_double`). Structure constants of the single polynomials
+are polynomials in `\beta`; those of the double polynomials are rational functions in `\beta` and the
+second alphabet, so the double ring lives over the fraction field of ``R[beta][y, z]``.
+
+Variables are 0-indexed on the Sage side (``x0, y_0``) as for the other rings in :mod:`schubmult.sage`;
+the deformation parameter is ``beta``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import GrothendieckPolynomialRing, DoubleGrothendieckPolynomialRing
+    sage: G = GrothendieckPolynomialRing(QQ); G
+    Grothendieck polynomial ring with G basis over Rational Field
+    sage: G([1, 3, 2]) * G([2, 1])
+    G[2, 3, 1] + G[3, 1, 2] + beta*G[3, 2, 1]
+    sage: G([1, 3, 2]).expand()
+    x0*x1*beta + x0 + x1
+
+At `\beta = 0` these are Schubert polynomials::
+
+    sage: S = SchubertPolynomialRing(QQ)
+    sage: f = G([1, 3, 2]) * G([2, 1]); p = f.expand()
+    sage: S(p.subs({p.parent()('beta'): 0}))
+    X[2, 3, 1] + X[3, 1, 2]
+
+Double Grothendieck polynomials, with mixed alphabets as for the double Schubert ring::
+
+    sage: GD = DoubleGrothendieckPolynomialRing(QQ); GD
+    Double Grothendieck polynomial ring in the alphabet y with G_y basis over Rational Field
+    sage: GD([2, 1]) * GD([2, 1])
+    -((y_1-y_0)/(beta*y_1+1))*G_y[2, 1] + ((beta*y_0+1)/(beta*y_1+1))*G_y[3, 1, 2]
+    sage: GD([2, 1]).expand()
+    x0*y0*beta + x0 + y0
+    sage: GZ = DoubleGrothendieckPolynomialRing(QQ, 'z')
+    sage: GD([2, 1]) * GZ([2, 1])
+    -((y_1-z_0)/(beta*y_1+1))*G_y[2, 1] + ((beta*z_0+1)/(beta*y_1+1))*G_y[3, 1, 2]
+
+Products agree with polynomial multiplication (in the fraction field, for the double ring)::
+
+    sage: f = GD([3, 1, 2]) * GD([2, 3, 1])
+    sage: f.expand() == GD([3, 1, 2]).expand() * GD([2, 3, 1]).expand()
+    True
+
+<a id="schubmult.sage.grothendieck.BETA"></a>
+
+#### BETA
+
+schubmult's symbol for the deformation parameter
+
+<a id="schubmult.sage.grothendieck.BETA_VARIABLE"></a>
+
+#### BETA\_VARIABLE
+
+its name inside the infinite polynomial ring (which only has indexed variables)
+
+<a id="schubmult.sage.grothendieck.GrothendieckPolynomialRing"></a>
+
+#### GrothendieckPolynomialRing
+
+```python
+def GrothendieckPolynomialRing(R)
+```
+
+Return the ring of `\beta`-Grothendieck polynomials `\mathfrak{G}^\beta_w(x)` over ``R``.
+
+The base ring is ``R[beta]``. Ordinary Schubert polynomials (elements of Sage's
+:func:`SchubertPolynomialRing`) and polynomials in ``x0, x1, ...`` (and ``beta``) coerce in.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import GrothendieckPolynomialRing
+    sage: G = GrothendieckPolynomialRing(ZZ); G
+    Grothendieck polynomial ring with G basis over Integer Ring
+    sage: G.base_ring()
+    Univariate Polynomial Ring in beta over Integer Ring
+    sage: TestSuite(G).run()
+    sage: G([2, 1]) * G([2, 1])
+    G[3, 1, 2]
+    sage: G([2, 1]) * G([1, 3, 2])
+    G[2, 3, 1] + G[3, 1, 2] + beta*G[3, 2, 1]
+    sage: G(SchubertPolynomialRing(ZZ)([1, 3, 2]))
+    G[1, 3, 2] - beta*G[2, 3, 1]
+    sage: R.<x0, x1, beta> = ZZ[]
+    sage: G(x0 + x1 + beta*x0*x1)
+    G[1, 3, 2]
+
+<a id="schubmult.sage.grothendieck.DoubleGrothendieckPolynomialRing"></a>
+
+#### DoubleGrothendieckPolynomialRing
+
+```python
+def DoubleGrothendieckPolynomialRing(R,
+                                     alphabet="y",
+                                     coefficient_alphabets=("y", "z"))
+```
+
+Return the ring of double `\beta`-Grothendieck polynomials `\mathfrak{G}^\beta_w(x; \text{alphabet})` over ``R``.
+
+The base ring is the fraction field of ``R[beta][alphabets]`` (see :class:`GrothendieckCoefficientField`):
+equivariant K-theoretic structure constants are rational in `\beta` and the second alphabet, with
+denominators that are products of `1 + \beta y_i`. As for
+:func:`~schubmult.sage.DoubleSchubertPolynomialRing`, rings over ``R`` with the same set of letters
+share a base ring and coerce into each other (mixed products).
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+    sage: GD = DoubleGrothendieckPolynomialRing(QQ); GD
+    Double Grothendieck polynomial ring in the alphabet y with G_y basis over Rational Field
+    sage: GD.base_ring()
+    Fraction Field of Infinite polynomial ring in beta, y, z over Rational Field
+    sage: TestSuite(GD).run()
+    sage: GD([2, 1]) * GD([1, 3, 2])
+    G_y[2, 3, 1] + G_y[3, 1, 2] + beta*G_y[3, 2, 1]
+    sage: GD([3, 1, 2]) * GD([2, 1])
+    -((y_2-y_0)/(beta*y_2+1))*G_y[3, 1, 2] + ((beta*y_0+1)/(beta*y_2+1))*G_y[4, 1, 2, 3]
+    sage: GD([2, 1]).expand()
+    x0*y0*beta + x0 + y0
+
+Setting `\beta = 0` gives the double Schubert polynomial in `x` and `-y` (the second alphabet enters
+through `x \oplus y`, whereas :func:`~schubmult.sage.DoubleSchubertPolynomialRing` uses `x - y`)::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: p = GD([3, 1, 2]).expand(); T = p.parent()
+    sage: q = DoubleSchubertPolynomialRing(QQ)([3, 1, 2]).expand()
+    sage: p.subs({T('beta'): 0}) == T(q.subs({g: -g for g in q.parent().gens() if str(g).startswith('y')}))
+    True
+
+<a id="schubmult.sage.grothendieck.GrothendieckCoefficient"></a>
+
+## GrothendieckCoefficient Objects
+
+```python
+class GrothendieckCoefficient(FractionFieldElement)
+```
+
+Element of :class:`GrothendieckCoefficientField`: the deformation parameter prints as ``beta``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+    sage: GD = DoubleGrothendieckPolynomialRing(QQ); b = GD.beta(); y = GD.base_ring().ring().gen(1)
+    sage: (y[0] - y[1]) / (1 + b*y[1])
+    (-y_1 + y_0)/(beta*y_1 + 1)
+    sage: latex(_)
+    rac{-y_{1} + y_{0}}{eta y_{1} + 1}
+
+<a id="schubmult.sage.grothendieck.GrothendieckCoefficientField"></a>
+
+## GrothendieckCoefficientField Objects
+
+```python
+class GrothendieckCoefficientField(UniqueRepresentation,
+                                   FractionField_generic)
+```
+
+The coefficient field ``Frac(R[beta, y_0, y_1, ..., z_0, ...])`` of a double Grothendieck ring.
+
+It is the fraction field of an ``InfinitePolynomialRing`` in which ``beta`` is the indexed
+variable ``beta_0`` -- that keeps every finite ring underneath a libsingular ring over ``R``
+(``R[beta][y_0, ...]`` would be the generic, very slow implementation, and gcds over ``R(beta)``
+are slow too), which is what makes coefficient arithmetic fast. Elements print ``beta_0`` as ``beta``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+    sage: F = DoubleGrothendieckPolynomialRing(QQ).base_ring(); F
+    Fraction Field of Infinite polynomial ring in beta, y, z over Rational Field
+    sage: F is loads(dumps(F))
+    True
+    sage: F.ring().gens()
+    (beta_*, y_*, z_*)
+
+<a id="schubmult.sage.grothendieck._GrothendieckMixin"></a>
+
+## \_GrothendieckMixin Objects
+
+```python
+class _GrothendieckMixin()
+```
+
+<a id="schubmult.sage.grothendieck._GrothendieckMixin.beta"></a>
+
+#### beta
+
+```python
+def beta()
+```
+
+The deformation parameter `\beta` as an element of the base ring.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import GrothendieckPolynomialRing
+    sage: G = GrothendieckPolynomialRing(QQ)
+    sage: G.beta() * G([2, 1])
+    beta*G[2, 1]
+
+<a id="schubmult.sage.grothendieck.GrothendieckPolynomialRing_gbasis"></a>
+
+## GrothendieckPolynomialRing\_gbasis Objects
+
+```python
+class GrothendieckPolynomialRing_gbasis(_GrothendieckMixin,
+                                        SchubmultBackedRing)
+```
+
+<a id="schubmult.sage.grothendieck.GrothendieckPolynomialRing_gbasis.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(R)
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import GrothendieckPolynomialRing
+    sage: G = GrothendieckPolynomialRing(QQ)
+    sage: G == loads(dumps(G))
+    True
+
+<a id="schubmult.sage.grothendieck.GrothendieckPolynomialRing_gbasis.product_on_basis"></a>
+
+#### product\_on\_basis
+
+```python
+def product_on_basis(left, right)
+```
+
+`\mathfrak{G}_u \mathfrak{G}_v = \sum_w c^w_{uv}(\beta) \mathfrak{G}_w` via ``grothmult_py``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import GrothendieckPolynomialRing
+    sage: G = GrothendieckPolynomialRing(QQ)
+    sage: G.product_on_basis(Permutation([1, 3, 2]), Permutation([1, 3, 2]))
+    G[1, 4, 2, 3] + G[2, 3, 1] + beta*G[2, 4, 1, 3]
+
+<a id="schubmult.sage.grothendieck.DoubleGrothendieckPolynomialRing_gbasis"></a>
+
+## DoubleGrothendieckPolynomialRing\_gbasis Objects
+
+```python
+class DoubleGrothendieckPolynomialRing_gbasis(_GrothendieckMixin,
+                                              SchubmultBackedRing)
+```
+
+<a id="schubmult.sage.grothendieck.DoubleGrothendieckPolynomialRing_gbasis.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(R, alphabet, alphabets)
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+    sage: GD = DoubleGrothendieckPolynomialRing(QQ, 'z')
+    sage: GD == loads(dumps(GD))
+    True
+    sage: GD is DoubleGrothendieckPolynomialRing(QQ, 'z', ('y',))
+    True
+
+<a id="schubmult.sage.grothendieck.DoubleGrothendieckPolynomialRing_gbasis.alphabet"></a>
+
+#### alphabet
+
+```python
+def alphabet()
+```
+
+The letter of the second alphabet of the basis elements.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+    sage: DoubleGrothendieckPolynomialRing(QQ, 'z').alphabet()
+    'z'
+
+<a id="schubmult.sage.grothendieck.DoubleGrothendieckPolynomialRing_gbasis.some_elements"></a>
+
+#### some\_elements
+
+```python
+def some_elements()
+```
+
+A few small elements (structure constants grow quickly with the permutations, so these stay in `S_3`).
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+    sage: DoubleGrothendieckPolynomialRing(QQ).some_elements()
+    [G_y[1], G_y[1] + 2*G_y[2, 1], -G_y[1, 3, 2] + G_y[2, 3, 1]]
+
+<a id="schubmult.sage.grothendieck.DoubleGrothendieckPolynomialRing_gbasis.product_on_basis"></a>
+
+#### product\_on\_basis
+
+```python
+def product_on_basis(left, right)
+```
+
+`\mathfrak{G}_u(x; y) \mathfrak{G}_v(x; y) = \sum_w c^w_{uv}(\beta; y) \mathfrak{G}_w(x; y)` via ``grothmult_double``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+    sage: GD = DoubleGrothendieckPolynomialRing(QQ)
+    sage: GD.product_on_basis(Permutation([2, 1]), Permutation([2, 1]))
+    -((y_1-y_0)/(beta*y_1+1))*G_y[2, 1] + ((beta*y_0+1)/(beta*y_1+1))*G_y[3, 1, 2]
 
 <a id="schubmult.sage.quantum_schubert"></a>
 
@@ -24506,6 +25087,25 @@ def efficient_subs(expr, subs_dict)
 ```
 
 ``expr.subs`` restricted to the entries of ``subs_dict`` that actually occur in ``expr``.
+
+<a id="schubmult.symbolic.functions.vanish_at_random_points"></a>
+
+#### vanish\_at\_random\_points
+
+```python
+def vanish_at_random_points(exprs, trials=2, seed=1, bound=10**6)
+```
+
+For each expression, whether it evaluates to zero at ``trials`` random integer points (exact arithmetic).
+
+A polynomial that is identically zero always does; a nonzero one of modest degree vanishes at a
+random point of ``[-bound, bound]^n`` with negligible probability, so this is a fast surrogate for
+``expand(e) == 0`` that never touches the (possibly enormous) expanded form. Values of shared
+subtrees are memoized across the whole batch, which is what makes it cheap: the coefficients of one
+Schubert product reuse the same ``(y_i - z_j)`` factors and partial products over and over.
+
+Expressions containing nodes other than numbers, symbols, ``Add``, ``Mul`` and integer ``Pow`` fall
+back to ``expand(e) == 0``.
 
 <a id="schubmult.symbolic.poly"></a>
 
