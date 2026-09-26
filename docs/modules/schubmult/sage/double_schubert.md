@@ -284,6 +284,19 @@ Ordinary Schubert polynomials and the other-alphabet double rings coerce::
     sage: Z(X(Z([3, 1, 2]))) == Z([3, 1, 2])
     True
 
+Key and atom polynomials (whose variables are read as ``x``) too; symmetric functions need the
+number of variables, see :meth:`from_symmetric_function`::
+
+    sage: k = KeyPolynomials(QQ)
+    sage: X(k([0, 2]))
+    (y_1^2+y_1*y_0+y_0^2)*X_y[1] + (y_2+y_1+y_0)*X_y[1, 3, 2] + X_y[1, 4, 2, 3]
+    sage: X([2, 1]) + k([1])
+    y_0*X_y[1] + 2*X_y[2, 1]
+    sage: X(SymmetricFunctions(QQ).s()[2, 1])
+    Traceback (most recent call last):
+    ...
+    TypeError: a symmetric function needs a number of variables: use Double Schubert polynomial ring in the alphabet y with X_y basis over Rational Field.from_symmetric_function(f, n)
+
 <a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis._coerce_map_from_"></a>
 
 #### \_coerce\_map\_from\_
@@ -292,14 +305,16 @@ Ordinary Schubert polynomials and the other-alphabet double rings coerce::
 def _coerce_map_from_(S)
 ```
 
-Ordinary Schubert polynomial rings and double rings in another alphabet (over a base that
-coerces into ours) coerce in.
+Ordinary Schubert polynomial rings, key and atom polynomial rings, and double rings in another
+alphabet (over a base that coerces into ours) coerce in.
 
 EXAMPLES::
 
     sage: from schubmult.sage import DoubleSchubertPolynomialRing
     sage: X = DoubleSchubertPolynomialRing(QQ)
     sage: X.has_coerce_map_from(SchubertPolynomialRing(ZZ))
+    True
+    sage: X.has_coerce_map_from(KeyPolynomials(ZZ))
     True
     sage: X.has_coerce_map_from(DoubleSchubertPolynomialRing(QQ, 'z'))
     True

@@ -13,8 +13,11 @@ from typing import ClassVar
 
 from sage.categories.filtered_algebras_with_basis import FilteredAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
+from sage.combinat.key_polynomial import OperatorPolynomial, OperatorPolynomialBasis
 from sage.combinat.permutation import Permutation, Permutations
 from sage.combinat.schubert_polynomial import SchubertPolynomialRing_xbasis
+from sage.combinat.sf.sf import SymmetricFunctions
+from sage.combinat.sf.sfa import SymmetricFunctionAlgebra_generic
 from sage.misc.cachefunc import cached_method
 from sage.rings.fraction_field_element import FractionFieldElement
 from sage.rings.polynomial.infinite_polynomial_element import InfinitePolynomial
@@ -122,6 +125,65 @@ class SchubmultBackedElement(CombinatorialFreeModule.Element):
             return result.numerator()
         return result
 
+    def to_symmetric_function(self, n=None):
+        r"""
+        The symmetric function whose expansion in `x_0, \ldots, x_{n-1}` is this element.
+
+        ``n`` defaults to the number of ``x`` variables that actually occur. Returns an element of
+        ``SymmetricFunctions(C)`` in the Schur basis supported on partitions with at most ``n`` parts
+        (the unique such preimage), ``C`` the ring of the coefficient variables (``y``, ``q``, ``beta``,
+        ...) that occur; raises ``ValueError`` if the expansion is not symmetric in those variables.
+        Grassmannian Schubert polynomials with descent at `n` are the Schur functions
+        `s_\lambda(x_0, \ldots, x_{n-1})`; double ones are factorial Schur functions.
+
+        EXAMPLES::
+
+            sage: from schubmult.sage import DoubleSchubertPolynomialRing, GrothendieckPolynomialRing
+            sage: X = DoubleSchubertPolynomialRing(QQ)
+            sage: X([2, 4, 1, 3]).to_symmetric_function()
+            -(y0^2*y1+y0^2*y2)*s[] + (y0^2+y0*y1+y0*y2)*s[1] - (y0+y1+y2)*s[1, 1] - y0*s[2] + s[2, 1]
+            sage: X([3, 2, 1]).to_symmetric_function()
+            Traceback (most recent call last):
+            ...
+            ValueError: X_y[3, 2, 1] is not symmetric in x0, x1
+            sage: X([3, 1, 2]).to_symmetric_function()  # a polynomial in x0 alone
+            y0*y1*s[] - (y0+y1)*s[1] + s[2]
+            sage: X([3, 1, 2]).to_symmetric_function(2)
+            Traceback (most recent call last):
+            ...
+            ValueError: X_y[3, 1, 2] is not symmetric in x0, x1
+            sage: G = GrothendieckPolynomialRing(ZZ)
+            sage: G([1, 3, 2]).to_symmetric_function()
+            s[1] + beta*s[1, 1]
+        """
+        p = self.expand()
+        if isinstance(p, FractionFieldElement):
+            raise ValueError(f"{self} does not expand to a polynomial")
+        gens = p.parent().gens()
+        if n is None:
+            n = 1 + max([parse_sage_name(g)[1] for g in p.variables() if str(g).startswith(X_LETTER)] + [-1])
+        is_x = [str(g).startswith(X_LETTER) and parse_sage_name(g)[1] < n for g in gens]
+        is_other = [not str(g).startswith(X_LETTER) for g in gens]
+        xs = [g for g, b in zip(gens, is_x) if b]
+        others = [g for g, b in zip(gens, is_other) if b]
+        R = self.parent()._scalars
+        C = PolynomialRing(R, len(others), [str(g) for g in others]) if others else R
+        Tx = PolynomialRing(C, len(xs), [str(g) for g in xs])
+        terms = {}  # x-exponents -> coefficient in C, assembled by hand: T -> C[x] has no conversion
+        for exps, c in p.dict().items():
+            if any(e and not bx and not bo for e, bx, bo in zip(exps, is_x, is_other)):  # an x beyond n
+                raise ValueError(f"{self} is not symmetric in {', '.join(map(str, xs))}")
+            key = tuple(e for e, b in zip(exps, is_x) if b)
+            cf = C({tuple(e for e, b in zip(exps, is_other) if b): c}) if others else c
+            terms[key] = terms[key] + cf if key in terms else cf
+        Sym = SymmetricFunctions(C)
+        try:
+            f = Sym.monomial().from_polynomial(Tx(terms))
+        except ValueError:
+            raise ValueError(f"{self} is not symmetric in {', '.join(map(str, xs))}") from None
+        # the unique preimage supported on partitions with at most n parts (the others vanish in n variables)
+        return Sym.schur()(f).restrict_partition_lengths(n, exact=False)
+
 
 class SchubmultBackedRing(CombinatorialFreeModule):
     """Base class: subclasses set ``_alphabet`` (basis alphabet letter or ``None``), ``_alphabets`` (all
@@ -184,12 +246,36 @@ class SchubmultBackedRing(CombinatorialFreeModule):
         """``{schubmult symbol name: element of the base ring}`` for the unindexed scalars (e.g. beta)."""
         return {}
 
-    def _from_polynomial(self, p):
+    def _from_polynomial(self, p, all_x=False):
         from schubmult.symbolic import Symbol
 
         gensets = {X_LETTER: genset(X_LETTER), **{a: genset(a) for a in self._alphabets}}
+        if all_x:  # key/atom polynomials: every variable is an x, whatever Sage calls it
+            q = p.polynomial() if isinstance(p, InfinitePolynomial) else p
+            gensets = {parse_sage_name(n)[0]: gensets[X_LETTER] for n in q.parent().variable_names()}
         named = {name: Symbol(sym) for sym, name in self._named_symbols.items()}
         return self._convert_dict(self._schub_ring().from_expr(sage_polynomial_to_symengine(p, gensets, named)))
+
+    def from_symmetric_function(self, f, n):
+        r"""
+        Expand the symmetric function ``f`` in ``n`` variables `x_0, \ldots, x_{n-1}` in this basis.
+
+        A Schur function `s_\lambda(x_0, \ldots, x_{n-1})` is the Schubert polynomial of the Grassmannian
+        permutation with descent at `n` and shape `\lambda`; in the double ring the same polynomial
+        expands with coefficients in the second alphabet.
+
+        EXAMPLES::
+
+            sage: from schubmult.sage import DoubleSchubertPolynomialRing
+            sage: X = DoubleSchubertPolynomialRing(QQ); s = SymmetricFunctions(QQ).s()
+            sage: X.from_symmetric_function(s[2, 1], 2)
+            (y_1^2*y_0+y_1*y_0^2)*X_y[1] + (y_2*y_0+y_1*y_0+y_0^2)*X_y[1, 3, 2] + y_0*X_y[1, 4, 2, 3] + (y_2+y_1+y_0)*X_y[2, 3, 1] + X_y[2, 4, 1, 3]
+            sage: SchubertPolynomialRing(QQ)(s[2, 1].expand(2, alphabet=['x0', 'x1']))
+            X[2, 4, 1, 3]
+            sage: X.from_symmetric_function(s[2, 1], 2).to_symmetric_function()
+            s[2, 1]
+        """
+        return self._from_polynomial(f.expand(n, alphabet=[f"{X_LETTER}{i}" for i in range(n)]), all_x=True)
 
     def _from_other_alphabet(self, elem):
         """Expand an element of the same kind of ring with another second alphabet in this basis."""
@@ -231,9 +317,13 @@ class SchubmultBackedRing(CombinatorialFreeModule):
             x = x.numerator()
         if isinstance(x, MPolynomial | InfinitePolynomial):
             return self._from_polynomial(x)
+        if isinstance(x, OperatorPolynomial):  # key and atom polynomials
+            return self._from_polynomial(x.expand(), all_x=True)
         parent = getattr(x, "parent", None)
         if parent is not None:
             parent = parent()
+            if isinstance(parent, SymmetricFunctionAlgebra_generic):
+                raise TypeError(f"a symmetric function needs a number of variables: use {self}.from_symmetric_function(f, n)")
             if isinstance(parent, SchubertPolynomialRing_xbasis):
                 return self._from_polynomial(x.expand())
             if isinstance(parent, SchubmultBackedRing):
@@ -249,7 +339,7 @@ class SchubmultBackedRing(CombinatorialFreeModule):
         return type(other) is type(self) and getattr(other, "_parabolic", None) == getattr(self, "_parabolic", None)
 
     def _coerce_map_from_(self, S):
-        if isinstance(S, SchubertPolynomialRing_xbasis):
+        if isinstance(S, SchubertPolynomialRing_xbasis | OperatorPolynomialBasis):
             return self.base_ring().has_coerce_map_from(S.base_ring())
         if isinstance(S, SchubmultBackedRing):
             if getattr(S, "_parabolic", None) not in (None, getattr(self, "_parabolic", None)):
