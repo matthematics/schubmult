@@ -53,6 +53,16 @@ def in_SEM_basis(elem_func=None)
 Expand as a polynomial in elementary symmetric functions (the "SEM" presentation), using
 ``elem_func`` (default: the ring's symbolic ``symbol_elem_func``) as the elementary symmetric symbol.
 
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement._repr_latex_"></a>
+
+#### \_repr\_latex\_
+
+```python
+def _repr_latex_()
+```
+
+Disabled so notebooks show the fast text form; use ``latex(elem)`` or ``pretty(elem)`` explicitly.
+
 <a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.as_ordered_terms"></a>
 
 #### as\_ordered\_terms

@@ -333,7 +333,7 @@ def q_partial_posify_generic(val, u, v, w):
     return val2
 
 
-def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
+def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=None):
     """Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
 
     Implements the Peterson-Woodward comparison: for each ``q``-monomial of each coefficient,
@@ -345,11 +345,14 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
         coeff_dict: Full-flag quantum coefficient dict ``{Permutation: coeff}``.
         parabolic_index: Sorted list of 1-indexed positions generating the parabolic subgroup.
         q_var: Quantum parameter generating set.
+        n: Ambient flag size ``S_n``; results indexed by longer permutations are dropped. Defaults to
+            ``parabolic_index[-1] + 1``, which undercounts when the last block has size 1 (it
+            contributes no reflection), so callers that know the block sizes should pass their sum.
 
     Returns:
         dict: Parabolic quantum coefficient dict ``{Permutation: coeff}``.
     """
-    max_len = parabolic_index[-1] + 1
+    max_len = parabolic_index[-1] + 1 if n is None else n
     w_P = Permutation.longest_element(*parabolic_index)
     w_P_prime = Permutation([1, 2])
     coeff_dict_update = {}

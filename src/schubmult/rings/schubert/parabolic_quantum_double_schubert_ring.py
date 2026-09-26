@@ -164,6 +164,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         """
         max_len = max(len(w) for w in coeff_dict)
         parabolic_index = [*self._parabolic_index]
+        index_comp = list(self._n)
         if max_len > len(self._longest):
             parabolic_index = []
             start = 0
@@ -172,7 +173,9 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
                 end = start + index_comp[i]
                 parabolic_index += list(range(start + 1, end))
                 start = end
-        return yz.apply_peterson_woodward(coeff_dict, parabolic_index)
+        # pass the ambient size explicitly: a trailing size-1 block adds no reflection, so it is
+        # invisible in parabolic_index and results of length exactly N would otherwise be dropped
+        return yz.apply_peterson_woodward(coeff_dict, parabolic_index, n=sum(index_comp))
 
     @cache
     def cached_product(self, u, v, basis2):

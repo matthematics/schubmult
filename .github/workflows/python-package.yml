@@ -55,3 +55,32 @@ jobs:
         name: dist-${{ matrix.python-version }}
         path: dist/
         retention-days: 30
+
+  # The optional SageMath integration (schubmult.sage). Sage is never a dependency of the package
+  # itself (tests/test_api_surface.py::test_package_is_fully_usable_without_sage guards that), so
+  # this runs once, outside the OS/Python matrix, against conda-forge's Sage.
+  sage-doctests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0  # setuptools-scm version
+    - name: Set up SageMath (conda-forge)
+      uses: mamba-org/setup-micromamba@v2
+      with:
+        environment-name: sage
+        create-args: >-
+          python=3.12
+          sage
+          pytest
+          cxx-compiler
+        cache-environment: true
+    - name: Install schubmult into the Sage environment
+      shell: bash -el {0}
+      run: python -m pip install -e .
+    - name: Sage doctests for schubmult.sage
+      shell: bash -el {0}
+      run: python -m sage.doctest --force-lib src/schubmult/sage
+    - name: Package stays Sage-free
+      shell: bash -el {0}
+      run: pytest tests/test_api_surface.py -k "without_sage or module_imports_in_isolation" -q

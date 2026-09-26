@@ -4760,7 +4760,7 @@ inversions, and Bruhat/weak order.
 ## Permutation Objects
 
 ```python
-class Permutation(Printable)
+class Permutation(LazyPrintable)
 ```
 
 A finite permutation, stored as a 1-indexed array and extended by the identity.
@@ -10038,6 +10038,7 @@ in various settings:
 - grothmult_q: Quantum (single) Grothendieck multiplication
 
 Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
+Exports resolve lazily (PEP 562) so that importing one kernel does not load all the others.
 
 <a id="schubmult.mult._accel"></a>
 
@@ -11179,6 +11180,16 @@ positivity theorem). This module computes that manifestly positive form:
   special cases (``u`` dominates ``w``, the ``will_formula_work`` forward Monk
   case, and the dual Pieri expansion respectively).
 
+<a id="schubmult.mult.positivity.cbc_solver"></a>
+
+#### cbc\_solver
+
+```python
+def cbc_solver(msg=False)
+```
+
+PuLP ``COIN_CMD`` using the CBC binary bundled by ``pulp[cbc]``, falling back to ``cbc`` on PATH.
+
 <a id="schubmult.mult.positivity.compute_positive_rep"></a>
 
 #### compute\_positive\_rep
@@ -11605,7 +11616,10 @@ leaves non-reducible ``q``-pieces unchanged rather than running the LP.
 #### apply\_peterson\_woodward
 
 ```python
-def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var)
+def apply_peterson_woodward(coeff_dict,
+                            parabolic_index,
+                            q_var=_vars.q_var,
+                            n=None)
 ```
 
 Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
@@ -11620,6 +11634,9 @@ only the ``parabolic``-minimal results, and reindexes the surviving ``q`` variab
 - `coeff_dict` - Full-flag quantum coefficient dict ``{Permutation: coeff}``.
 - `parabolic_index` - Sorted list of 1-indexed positions generating the parabolic subgroup.
 - `q_var` - Quantum parameter generating set.
+- `n` - Ambient flag size ``S_n``; results indexed by longer permutations are dropped. Defaults to
+  ``parabolic_index[-1] + 1``, which undercounts when the last block has size 1 (it
+  contributes no reflection), so callers that know the block sizes should pass their sum.
   
 
 **Returns**:
@@ -11931,7 +11948,7 @@ covers ``u t_{ij}`` with ``i <= k < j`` (added) minus those with ``j <= k < i``
 #### mult\_poly\_py
 
 ```python
-def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x)
+def mult_poly_py(coeff_dict, poly, var_x=None)
 ```
 
 Multiply ``sum_u coeff_u S_u(x)`` by an arbitrary polynomial ``poly`` in ``var_x``.
@@ -15412,8 +15429,12 @@ Return a ``CompSchub``-labelled display object for the composition key *k*.
 # schubmult.rings.free\_algebra.elementary\_basis
 
 `ElementaryBasis`: free-algebra basis indexed by ``(composition, numvars)``, dual to products of
-elementary symmetric polynomials ``e_{c_1}(x_1..x_k) e_{c_2}(x_1..x_{k-1}) ...`` in nested
-variable sets. `SchubertBasis` expands into it via the monomials of ``S_{perm * w0}``.
+elementary symmetric polynomials ``e_{a_1}(x_1) e_{a_2}(x_1, x_2) ... e_{a_{n-1}}(x_1..x_{n-1})`` times a
+symmetric tail of ``e_k(x_1..x_n)`` factors (`ElemSymPolyBasis`).
+
+Transitions to and from `SchubertBasis` go through the finite ``(numvars, degree)`` block: expanding
+every elementary product of that degree in the Schubert basis (Pieri rule) gives the Schubert -> Elem
+matrix, and its inverse is Elem -> Schubert.
 
 <a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis"></a>
 
@@ -15450,6 +15471,48 @@ def as_key(cls, x)
 
 Normalize *x* into a ``(tuple, int)`` key.
 
+<a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis.canonical_key"></a>
+
+#### canonical\_key
+
+```python
+@classmethod
+def canonical_key(cls, tup, numvars)
+```
+
+Canonicalize ``(tup, numvars)``: the flag part ``tup[:numvars-1]`` is kept as is; the
+symmetric tail ``tup[numvars-1:]`` (indices of ``e_k(x_1..x_numvars)`` factors) is sorted
+with zeros dropped, or ``(0,)`` if empty.
+
+<a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis.degree_keys"></a>
+
+#### degree\_keys
+
+```python
+@staticmethod
+def degree_keys(numvars, degree)
+```
+
+All canonical keys of the given degree in ``numvars`` variables: flag part ``a_i <= i``,
+tail a partition with parts in ``1..numvars``. There are as many as monomials of that degree.
+
+<a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis.schubert_block"></a>
+
+#### schubert\_block
+
+```python
+@classmethod
+@cache
+def schubert_block(cls, numvars, degree)
+```
+
+``(keys, perms, to_schubert, to_elementary)`` for one ``(numvars, degree)`` block.
+
+``perms`` are the permutations whose Schubert polynomial lies in ``Z[x_1..x_numvars]`` with
+that degree (Lehmer codes of length ``numvars``). ``to_schubert[key][perm]`` is the
+coefficient of ``S_perm`` in ``E_key``; ``to_elementary[perm][key]`` is the inverse matrix,
+i.e. the coefficient of ``Elem(key)`` in ``Schub(perm)``.
+
 <a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis.transition"></a>
 
 #### transition
@@ -15470,7 +15533,18 @@ Return a transition function from ElementaryBasis to *other_basis*.
 def transition_schubert(cls, tup, numvars)
 ```
 
-Transition an elementary key to the Schubert basis.
+Transition an elementary key to the Schubert basis (row of the inverse block matrix).
+
+<a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis.transition_from_schubert"></a>
+
+#### transition\_from\_schubert
+
+```python
+@classmethod
+def transition_from_schubert(cls, perm, numvars)
+```
+
+Expand ``Schub(perm, numvars)`` in this basis: the Schubert coefficients of each ``E_key``.
 
 <a id="schubmult.rings.free_algebra.elementary_basis.ElementaryBasis.printing_term"></a>
 
@@ -16615,6 +16689,17 @@ def as_key(cls, x)
 
 Normalize *x* to a tuple key.
 
+<a id="schubmult.rings.free_algebra.monomial_slide_basis.MonomialSlideBasis.dual_basis"></a>
+
+#### dual\_basis
+
+```python
+@classmethod
+def dual_basis(cls)
+```
+
+Return the MonomialSlidePolyBasis as the dual of MonomialSlideBasis.
+
 <a id="schubmult.rings.free_algebra.monomial_slide_basis.MonomialSlideBasis.printing_term"></a>
 
 #### printing\_term
@@ -16898,8 +16983,8 @@ Expand ``(perm, numvars)`` in the `SchurElementaryBasis` (a word-like tuple pair
 def transition_elementary(cls, perm, numvars)
 ```
 
-Expand ``(perm, numvars)`` in the `ElementaryBasis`: read the monomials of ``S_{perm * w0}``
-and complement each exponent against the staircase to get elementary-symmetric indices.
+Expand ``(perm, numvars)`` in the `ElementaryBasis`: the coefficient of ``Elem(key)`` is the
+coefficient of ``S_perm`` in the elementary product ``E_key`` (see `ElementaryBasis.schubert_block`).
 
 <a id="schubmult.rings.free_algebra.schubert_basis.SchubertBasis.transition_separated_descents"></a>
 
@@ -17953,16 +18038,6 @@ def branch(index)
 Split the variables at ``index``: ``x_1..x_index`` on the left tensor factor, the rest on the
 right, returned in the tensor square of this ring's basis.
 
-<a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.coproduct"></a>
-
-#### coproduct
-
-```python
-def coproduct()
-```
-
-Sum of ``branch(index)`` over every split point (the full variable-splitting coproduct).
-
 <a id="schubmult.rings.polynomial_algebra._core.PolynomialAlgebraElement.change_basis"></a>
 
 #### change\_basis
@@ -18505,6 +18580,28 @@ Keys are tuples encoding products of elementary symmetric polynomials
 e_k(x_1, ..., x_n). Each key specifies degrees and variable counts
 for the elementary symmetric factors.
 
+<a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis.is_key"></a>
+
+#### is\_key
+
+```python
+@classmethod
+def is_key(cls, x)
+```
+
+Return True if *x* is a ``(tuple/list, int)`` pair.
+
+<a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis.as_key"></a>
+
+#### as\_key
+
+```python
+@classmethod
+def as_key(cls, x)
+```
+
+Normalize *x* into a ``(tuple, int)`` key.
+
 <a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis.transition_schubert"></a>
 
 #### transition\_schubert
@@ -18903,7 +19000,7 @@ is set to 1 without loss of generality (see the module docstring).
 def product(key1, key2, coeff=S.One)
 ```
 
-Multiply two Grothendieck keys using the Grothendieck ring multiplication.
+Multiply two Grothendieck keys with the ``grothmult_py`` kernel at ``beta = 1``.
 
 <a id="schubmult.rings.polynomial_algebra.grothendieck_poly_basis.GrothendieckPolyBasis.transition_schubert"></a>
 
@@ -19476,6 +19573,17 @@ def transition(other_basis)
 
 Return a transition function from monomial slide basis to *other_basis*.
 
+<a id="schubmult.rings.polynomial_algebra.monomial_slide_poly_basis.MonomialSlidePolyBasis.dual_basis"></a>
+
+#### dual\_basis
+
+```python
+@classmethod
+def dual_basis(cls)
+```
+
+Return the dual free algebra basis class (:class:`MonomialSlideBasis`).
+
 <a id="schubmult.rings.polynomial_algebra.polynomial_basis"></a>
 
 # schubmult.rings.polynomial\_algebra.polynomial\_basis
@@ -19698,21 +19806,24 @@ Return a transition function from separated descents to *other_basis*.
 
 # schubmult.rings.printing
 
-SymPy atoms used to display ring basis elements.
+Display atoms for ring basis elements.
 
-Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert SymPy
-``Expr`` atom (``args == ()``, so SymPy never traverses into it) that knows how to render itself
-for ``str``, pretty printing, and LaTeX. Instances are interned via cached ``__xnew_cached__``
-constructors so equal keys give identical objects. The subclasses cover single/double Schubert
-(``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck (``G``/``DG``), separated
-descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert atom
+that knows how to render itself for ``str``, pretty printing, and LaTeX. Instances are interned via
+cached ``__xnew_cached__`` constructors so equal keys give identical objects. The subclasses cover
+single/double Schubert (``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck
+(``G``/``DG``), separated descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+
+A `PrintingTerm` is a plain Python object, so defining and creating them needs no SymPy. SymPy sees
+one through ``_sympy_``, which returns a copy whose class also derives from SymPy's ``Expr`` (an
+``Expr`` atom with ``args == ()``, so SymPy never traverses into it).
 
 <a id="schubmult.rings.printing.PrintingTerm"></a>
 
 ## PrintingTerm Objects
 
 ```python
-class PrintingTerm(ssymb.Expr)
+class PrintingTerm(LazyPrintable)
 ```
 
 Base display atom carrying a key, generating set, coefficient generating set, and prefix.
@@ -20109,6 +20220,16 @@ def in_SEM_basis(elem_func=None)
 
 Expand as a polynomial in elementary symmetric functions (the "SEM" presentation), using
 ``elem_func`` (default: the ring's symbolic ``symbol_elem_func``) as the elementary symmetric symbol.
+
+<a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement._repr_latex_"></a>
+
+#### \_repr\_latex\_
+
+```python
+def _repr_latex_()
+```
+
+Disabled so notebooks show the fast text form; use ``latex(elem)`` or ``pretty(elem)`` explicitly.
 
 <a id="schubmult.rings.schubert.base_schubert_ring.BaseSchubertElement.as_ordered_terms"></a>
 
@@ -23470,24 +23591,845 @@ def mul(elem, other)
 
 Scalar multiplication, or the bilinear extension of `_mul_monomials`.
 
+<a id="schubmult.sage"></a>
+
+# schubmult.sage
+
+SageMath integration.
+
+Importable only inside a Sage environment (``sage -python`` / a conda ``sagemath`` env with schubmult
+installed). Provides Sage parents whose arithmetic is delegated to the schubmult kernels::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: X([3, 1, 2]) * X([2, 1])
+    (y_2-y_0)*X_y[3, 1, 2] + X_y[4, 1, 2, 3]
+
+<a id="schubmult.sage._common"></a>
+
+# schubmult.sage.\_common
+
+Shared machinery for Sage parents backed by schubmult rings.
+
+A backed ring is a :class:`~sage.combinat.free_module.CombinatorialFreeModule` indexed by
+permutations whose base ring is an infinite polynomial ring over the scalars in the coefficient
+alphabets (``y``, ``z``, ``q``, ...). Arithmetic is delegated to a schubmult ring object
+(:meth:`SchubmultBackedRing._schub_ring`) and coefficients are converted at the boundary.
+
+Index conventions: Sage variables are 0-indexed (``x0``, ``y_0``, ``q_0``), schubmult's are 1-indexed
+(``x_1``, ``y_1``, ``q_1``); see :mod:`schubmult.sage._convert`.
+
+<a id="schubmult.sage._common.coefficient_into"></a>
+
+#### coefficient\_into
+
+```python
+def coefficient_into(c, T)
+```
+
+Move a base-ring coefficient (infinite polynomial in ``a_<i>``) into the finite ring ``T`` with variables ``a<i>``.
+
+<a id="schubmult.sage._common.SchubmultBackedElement"></a>
+
+## SchubmultBackedElement Objects
+
+```python
+class SchubmultBackedElement(CombinatorialFreeModule.Element)
+```
+
+<a id="schubmult.sage._common.SchubmultBackedElement.expand"></a>
+
+#### expand
+
+```python
+def expand()
+```
+
+Expand into a polynomial in ``x0, x1, ...`` and the coefficient variables ``y0, q0, ...``.
+
+There are `n` variables ``x``, `n` the size of the largest permutation involved (as for
+:meth:`sage.combinat.schubert_polynomial.SchubertPolynomial_class.expand`); coefficient
+letters get exactly the indices that occur.
+
+<a id="schubmult.sage._common.SchubmultBackedRing"></a>
+
+## SchubmultBackedRing Objects
+
+```python
+class SchubmultBackedRing(CombinatorialFreeModule)
+```
+
+Base class: subclasses set ``_alphabet`` (basis alphabet letter or ``None``), ``_alphabets`` (all
+coefficient letters, sorted), and implement ``_schub_ring(alphabet)`` and ``_check_basis_perm``.
+
+<a id="schubmult.sage._convert"></a>
+
+# schubmult.sage.\_convert
+
+Conversions between schubmult's SymEngine expressions and Sage ring elements.
+
+Index conventions differ by one: schubmult's generating sets are 1-indexed (``x_1`` is the first
+variable, ``x_0`` unused) while Sage's Schubert polynomials expand into ``x0, x1, ...``. Every
+conversion here shifts accordingly, so ``y_3`` on the schubmult side is ``y_2`` / ``y2`` on the Sage side.
+
+<a id="schubmult.sage._convert.parse_sage_name"></a>
+
+#### parse\_sage\_name
+
+```python
+def parse_sage_name(name)
+```
+
+``'x3'`` or ``'y_3'`` -> ``('x', 3)`` / ``('y', 3)`` (0-based Sage index); ``None`` if not indexed.
+
+<a id="schubmult.sage._convert.sage_coefficient_to_symengine"></a>
+
+#### sage\_coefficient\_to\_symengine
+
+```python
+def sage_coefficient_to_symengine(c)
+```
+
+Base-ring scalar (integer or rational) to a SymEngine number.
+
+<a id="schubmult.sage._convert.sage_polynomial_to_symengine"></a>
+
+#### sage\_polynomial\_to\_symengine
+
+```python
+def sage_polynomial_to_symengine(p, gensets)
+```
+
+Sage polynomial (finite or infinite polynomial ring) -> SymEngine expression.
+
+``gensets`` maps a letter to a schubmult ``GeneratingSet``; the Sage variable ``a<i>``/``a_<i>``
+becomes ``gensets[a][i + 1]``. Letters not in ``gensets`` are created on the fly.
+
+<a id="schubmult.sage._convert.symengine_to_sage"></a>
+
+#### symengine\_to\_sage
+
+```python
+def symengine_to_sage(expr, variable, scalar)
+```
+
+SymEngine expression -> Sage element.
+
+``variable(letter, i)`` returns the Sage element for the schubmult symbol ``letter_i`` (1-based ``i``);
+``scalar(n)`` converts a Python ``int``/``Fraction``-like rational to the target ring.
+
+<a id="schubmult.sage.double_schubert"></a>
+
+# schubmult.sage.double\_schubert
+
+Double Schubert polynomials
+
+The double Schubert polynomials `\mathfrak{S}_w(x; y)` are indexed by permutations `w` and form a
+basis of `\ZZ[y_1, y_2, \ldots][x_1, x_2, \ldots]` over `\ZZ[y]`; they represent the equivariant
+Schubert classes of the flag variety. Products are computed by the ``schubmult`` kernel
+(:func:`schubmult.mult.double.schubmult_double`), so the structure constants come out as
+polynomials in the second alphabet with no expansion to monomials.
+
+Variables are 0-indexed on the Sage side, like :class:`~sage.combinat.schubert_polynomial.SchubertPolynomialRing`:
+``expand()`` lands in ``x0, x1, ...`` and the coefficient alphabet is ``y_0, y_1, ...``. The sign
+convention is `\mathfrak{S}_{21}(x; y) = x_0 - y_0`.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ); X
+    Double Schubert polynomial ring in the alphabet y with X_y basis over Rational Field
+    sage: X([3, 1, 2]) * X([2, 1])
+    (y_2-y_0)*X_y[3, 1, 2] + X_y[4, 1, 2, 3]
+    sage: X([3, 1, 2]).expand()
+    x0^2 - x0*y0 - x0*y1 + y0*y1
+
+Products agree with polynomial multiplication::
+
+    sage: f = X([3, 1, 2]) * X([2, 1])
+    sage: f.expand() == X([3, 1, 2]).expand() * X([2, 1]).expand()
+    True
+
+Setting the second alphabet to zero recovers ordinary Schubert polynomials::
+
+    sage: S = SchubertPolynomialRing(QQ)
+    sage: p = X([3, 1, 2]).expand()
+    sage: S(p.subs({v: 0 for v in p.parent().gens()[3:]}))
+    X[3, 1, 2]
+
+Ordinary Schubert polynomials coerce in (they are polynomials in `x`, expanded in the double basis)::
+
+    sage: X(S([2, 1]))
+    y_0*X_y[1] + X_y[2, 1]
+    sage: X([2, 1]) + S([2, 1])
+    y_0*X_y[1] + 2*X_y[2, 1]
+
+Mixed products `\mathfrak{S}_u(x; y) \mathfrak{S}_v(x; z)` expanded in the `y`-basis: build the
+second factor in the ring with alphabet ``z``; it coerces into the ``y`` ring::
+
+    sage: Z = DoubleSchubertPolynomialRing(QQ, 'z')
+    sage: X([2, 1]) * Z([2, 1])
+    (y_1-z_0)*X_y[2, 1] + X_y[3, 1, 2]
+
+Arbitrary polynomials in `x` and the alphabets are expanded in the basis::
+
+    sage: R.<x0, x1, y0, y1> = QQ[]
+    sage: X(x0 - y0)
+    X_y[2, 1]
+    sage: X(x0*x1)
+    y_1*y_0*X_y[1] + y_0*X_y[1, 3, 2] + X_y[2, 3, 1]
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing"></a>
+
+#### DoubleSchubertPolynomialRing
+
+```python
+def DoubleSchubertPolynomialRing(R,
+                                 alphabet="y",
+                                 coefficient_alphabets=("y", "z"))
+```
+
+Return the ring of double Schubert polynomials `\mathfrak{S}_w(x; \text{alphabet})` over ``R``.
+
+INPUT:
+
+- ``R`` -- a commutative ring (the scalars; the base ring of the result is the infinite
+  polynomial ring ``R[alphabets]``)
+- ``alphabet`` -- (default: ``'y'``) the letter of the second alphabet of the basis elements
+- ``coefficient_alphabets`` -- (default: ``('y', 'z')``) letters available in coefficients;
+  ``alphabet`` is always included. Rings over ``R`` with the same set of letters share a base
+  ring, which is what lets elements of one coerce into another (mixed products).
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(ZZ); X
+    Double Schubert polynomial ring in the alphabet y with X_y basis over Integer Ring
+    sage: X.base_ring()
+    Infinite polynomial ring in y, z over Integer Ring
+    sage: TestSuite(X).run()
+    sage: X(1)
+    X_y[1]
+    sage: X([1, 2, 3]) * X([2, 1, 3])
+    X_y[2, 1]
+    sage: X([2, 1, 3]) * X([2, 1, 3])
+    (y_1-y_0)*X_y[2, 1] + X_y[3, 1, 2]
+    sage: a = X([2, 1, 3]) + X([3, 1, 2, 4]); a^2
+    (y_1-y_0)*X_y[2, 1] + (y_2^2-y_2*y_1-y_2*y_0+2*y_2+y_1*y_0-2*y_0+1)*X_y[3, 1, 2] + (y_3+y_2-y_1-y_0+2)*X_y[4, 1, 2, 3] + X_y[5, 1, 2, 3, 4]
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomial_class"></a>
+
+## DoubleSchubertPolynomial\_class Objects
+
+```python
+class DoubleSchubertPolynomial_class(SchubmultBackedElement)
+```
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomial_class.expand"></a>
+
+#### expand
+
+```python
+def expand()
+```
+
+Expand into a polynomial in ``x0, x1, ...`` and the coefficient alphabets ``y0, y1, ...``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(ZZ)
+    sage: X([2, 1]).expand()
+    x0 - y0
+    sage: X([1, 3, 2]).expand()
+    x0 + x1 - y0 - y1
+    sage: [X(p).expand() for p in Permutations(3)]
+    [1, x0 + x1 - y0 - y1, x0 - y0, x0*x1 - x0*y0 - x1*y0 + y0^2, x0^2 - x0*y0 - x0*y1 + y0*y1, x0^2*x1 - x0^2*y0 - x0*x1*y0 + x0*y0^2 - x0*x1*y1 + x0*y0*y1 + x1*y0*y1 - y0^2*y1]
+    sage: X([3, 1, 2]).expand().parent()
+    Multivariate Polynomial Ring in x0, x1, x2, y0, y1 over Integer Ring
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomial_class.divided_difference"></a>
+
+#### divided\_difference
+
+```python
+def divided_difference(i)
+```
+
+The divided difference `\partial_i` in the `x` variables: `\mathfrak{S}_w \mapsto \mathfrak{S}_{w s_i}`
+when `i` is a descent of `w`, and `0` otherwise; the coefficients are untouched.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: X([3, 2, 1]).divided_difference(1)
+    X_y[2, 3, 1]
+    sage: X([3, 2, 1]).divided_difference(2)
+    X_y[3, 1, 2]
+    sage: X([3, 1, 2]).divided_difference(2)
+    0
+    sage: f = X([3, 1, 2]) * X([2, 1])
+    sage: g = f.expand(); x0, x1 = g.parent().gens()[:2]
+    sage: (g - g.subs({x0: x1, x1: x0})) // (x0 - x1) == f.divided_difference(1).expand()
+    True
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis"></a>
+
+## DoubleSchubertPolynomialRing\_xbasis Objects
+
+```python
+class DoubleSchubertPolynomialRing_xbasis(SchubmultBackedRing)
+```
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(R, alphabet, alphabets)
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: X == loads(dumps(X))
+    True
+    sage: X is DoubleSchubertPolynomialRing(QQ, 'y', ('z', 'y'))
+    True
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis.alphabet"></a>
+
+#### alphabet
+
+```python
+def alphabet()
+```
+
+The letter of the second alphabet of the basis elements.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: DoubleSchubertPolynomialRing(QQ, 'z').alphabet()
+    'z'
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis.one_basis"></a>
+
+#### one\_basis
+
+```python
+def one_basis()
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: DoubleSchubertPolynomialRing(QQ).one()
+    X_y[1]
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis.degree_on_basis"></a>
+
+#### degree\_on\_basis
+
+```python
+def degree_on_basis(w)
+```
+
+The degree of `\mathfrak{S}_w` is the length of `w`.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: DoubleSchubertPolynomialRing(QQ)([3, 1, 2]).degree()
+    2
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis.product_on_basis"></a>
+
+#### product\_on\_basis
+
+```python
+def product_on_basis(left, right)
+```
+
+`\mathfrak{S}_u(x; y) \mathfrak{S}_v(x; y) = \sum_w c^w_{uv}(y) \mathfrak{S}_w(x; y)` via ``schubmult_double``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: X.product_on_basis(Permutation([3, 2, 1]), Permutation([2, 1, 3]))
+    (y_2-y_0)*X_y[3, 2, 1] + X_y[4, 2, 1, 3]
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis._element_constructor_"></a>
+
+#### \_element\_constructor\_
+
+```python
+def _element_constructor_(x)
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: X([2, 1, 3])
+    X_y[2, 1]
+    sage: X(Permutation([2, 1, 3]))
+    X_y[2, 1]
+    sage: X([])
+    X_y[1]
+    sage: X([1, 2, 1])
+    Traceback (most recent call last):
+    ...
+    ValueError: the input [1, 2, 1] is not a valid permutation
+
+    sage: R.<x0, x1, x2, y0, y1> = QQ[]
+    sage: X(x0^2*x1)
+    y_1*y_0^2*X_y[1] + y_0^2*X_y[1, 3, 2] + y_1*y_0*X_y[2, 1] + (y_1+y_0)*X_y[2, 3, 1] + y_0*X_y[3, 1, 2] + X_y[3, 2, 1]
+    sage: X(X([3, 2, 1]).expand()) == X([3, 2, 1])
+    True
+    sage: S.<x> = InfinitePolynomialRing(QQ)
+    sage: X(x[0]^2*x[1]) == X(x0^2*x1)
+    True
+
+Ordinary Schubert polynomials and the other-alphabet double rings coerce::
+
+    sage: X(SchubertPolynomialRing(QQ)([3, 1, 2]))
+    y_0^2*X_y[1] + (y_1+y_0)*X_y[2, 1] + X_y[3, 1, 2]
+    sage: Z = DoubleSchubertPolynomialRing(QQ, 'z')
+    sage: X(Z([2, 1]))
+    (y_0-z_0)*X_y[1] + X_y[2, 1]
+    sage: Z(X(Z([3, 1, 2]))) == Z([3, 1, 2])
+    True
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis._coerce_map_from_"></a>
+
+#### \_coerce\_map\_from\_
+
+```python
+def _coerce_map_from_(S)
+```
+
+Ordinary Schubert polynomial rings and double rings in another alphabet (over a base that
+coerces into ours) coerce in.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: X = DoubleSchubertPolynomialRing(QQ)
+    sage: X.has_coerce_map_from(SchubertPolynomialRing(ZZ))
+    True
+    sage: X.has_coerce_map_from(DoubleSchubertPolynomialRing(QQ, 'z'))
+    True
+    sage: X.has_coerce_map_from(DoubleSchubertPolynomialRing(QQ, 'w'))
+    False
+
+<a id="schubmult.sage.double_schubert.DoubleSchubertPolynomialRing_xbasis.some_elements"></a>
+
+#### some\_elements
+
+```python
+def some_elements()
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import DoubleSchubertPolynomialRing
+    sage: DoubleSchubertPolynomialRing(QQ).some_elements()
+    [X_y[1], X_y[1] + 2*X_y[2, 1], -X_y[3, 2, 1] + X_y[4, 2, 1, 3]]
+
+<a id="schubmult.sage.quantum_schubert"></a>
+
+# schubmult.sage.quantum\_schubert
+
+Quantum and quantum double Schubert polynomials
+
+The quantum Schubert polynomials `\mathfrak{S}^q_w(x)` of Fomin-Gelfand-Postnikov represent Schubert
+classes in the (small) quantum cohomology ring `QH^*(Fl_n)`; the quantum double Schubert polynomials
+`\mathfrak{S}^q_w(x; y)` (Kirillov-Maeno, Ciocan-Fontanine-Fulton) do the same equivariantly. With
+block sizes ``parabolic = (n_1, ..., n_k)`` one gets the quantum cohomology of the partial flag
+variety `Fl(n_1, n_1 + n_2, \ldots)`: the basis is indexed by permutations whose descents lie at the
+block boundaries `N_j = n_1 + \cdots + n_j`, and products are computed in the full flag ring and
+projected by the Peterson-Woodward comparison formula.
+
+The recorded blocks are followed by an implicit last block that is never recorded and is as large as
+any computation needs it to be. Concretely, a basis permutation may have descents exactly at the
+recorded boundaries `N_1, \ldots, N_k` (so `N_k` itself is allowed) and must be increasing beyond
+`N_k`; a product whose result reaches past `N_k` is computed with one extra block appended, and the
+answer does not depend on how large that block is made. The recorded block sizes are never changed:
+enlarging the last recorded block would change which `q` has which degree, and adding singleton blocks
+instead gives a different (and, as polynomials, inconsistent) ring.
+
+For blocks `(2, 3)` (the Grassmannian `Gr(2, 5)`) the basis elements inside the `2 \times 3` box are
+literally Schur polynomials in `x_0, x_1`, and `q` enters a product only through classes that need the
+implicit block; those carry `q`'s in their polynomial that cancel again on expansion::
+
+    sage: from schubmult.sage import QuantumSchubertPolynomialRing
+    sage: G = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))
+    sage: s32, s1 = G([3, 5, 1, 2, 4]), G([1, 3, 2])      # sigma_32, sigma_1
+    sage: s32.expand(), s1.expand()
+    (x0^3*x1^2 + x0^2*x1^3, x0 + x1)
+    sage: s32 * s1                                        # sigma_33 + q sigma_1  (+ sigma_42, which lives past the box)
+    q_0*Xq[1, 3, 2] + Xq[3, 6, 1, 2, 4, 5] + Xq[4, 5, 1, 2, 3]
+    sage: G([3, 6, 1, 2, 4, 5]).expand()                  # sigma_42 = s_42 - q_0 s_1
+    x0^4*x1^2 + x0^3*x1^3 + x0^2*x1^4 - x0*q0 - x1*q0
+    sage: (s32 * s1).expand() == s32.expand() * s1.expand()
+    True
+
+The quantum parameters are ``q_0, q_1, ...`` (0-indexed like everything on the Sage side; the
+schubmult parameter `q_i` is ``q_{i-1}``); the base ring is ``R[q]`` resp. ``R[q, y, z]``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumSchubertPolynomialRing, QuantumDoubleSchubertPolynomialRing
+    sage: Q = QuantumSchubertPolynomialRing(QQ); Q
+    Quantum Schubert polynomial ring with Xq basis over Rational Field
+    sage: Q([2, 1]) * Q([2, 1])
+    q_0*Xq[1] + Xq[3, 1, 2]
+    sage: Q([3, 1, 2]).expand()
+    x0^2 - q0
+
+The quantum Monk formula `\mathfrak{S}^q_{s_1} \mathfrak{S}^q_{s_1} = \mathfrak{S}^q_{312} + q_1`
+is visible above; at `q = 0` the classical product returns::
+
+    sage: (Q([2, 1]) * Q([2, 1])).expand().subs(q0=0)
+    x0^2
+
+Products agree with polynomial multiplication in `\QQ[q][x]`::
+
+    sage: f = Q([3, 1, 2]) * Q([2, 3, 1])
+    sage: f.expand() == Q([3, 1, 2]).expand() * Q([2, 3, 1]).expand()
+    True
+
+Quantum double::
+
+    sage: QD = QuantumDoubleSchubertPolynomialRing(QQ)
+    sage: QD([2, 1]) * QD([2, 1])
+    q_0*Xq_y[1] + (y_1-y_0)*Xq_y[2, 1] + Xq_y[3, 1, 2]
+    sage: QD([3, 1, 2]).expand()
+    x0^2 - x0*y0 - x0*y1 + y0*y1 - q0
+
+Parabolic (block sizes 2, 3, so the flag variety `Fl(2, 5)`; the position-5 boundary and anything
+increasing beyond it are allowed)::
+
+    sage: P = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3)); P
+    Parabolic quantum Schubert polynomial ring with Xq basis for block sizes (2, 3) over Rational Field
+    sage: P([2, 1, 3])
+    Traceback (most recent call last):
+    ...
+    ValueError: [2, 1] is not parabolic for block sizes (2, 3): descents must lie in [2, 5]
+    sage: P([2, 3, 1]) * P([2, 4, 1, 3])
+    Xq[3, 5, 1, 2, 4]
+    sage: P([1, 3, 2, 4, 6, 5])  # descent at 5 = N_2, increasing afterwards
+    Xq[1, 3, 2, 4, 6, 5]
+
+<a id="schubmult.sage.quantum_schubert.QuantumSchubertPolynomialRing"></a>
+
+#### QuantumSchubertPolynomialRing
+
+```python
+def QuantumSchubertPolynomialRing(R, parabolic=None)
+```
+
+Return the ring of quantum Schubert polynomials `\mathfrak{S}^q_w(x)` over ``R``.
+
+INPUT:
+
+- ``R`` -- a commutative ring; the base ring of the result is ``R[q_0, q_1, ...]``
+- ``parabolic`` -- (optional) block sizes `(n_1, \ldots, n_k)` of a partial flag variety; basis
+  permutations may only have descents at the block boundaries `n_1 + \cdots + n_j` (an implicit
+  unbounded last block follows the recorded ones)
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumSchubertPolynomialRing
+    sage: Q = QuantumSchubertPolynomialRing(ZZ); Q
+    Quantum Schubert polynomial ring with Xq basis over Integer Ring
+    sage: Q.base_ring()
+    Infinite polynomial ring in q over Integer Ring
+    sage: TestSuite(Q).run()
+    sage: Q([1, 3, 2]) * Q([2, 1])
+    Xq[2, 3, 1] + Xq[3, 1, 2]
+    sage: f = Q([2, 3, 1]) * Q([3, 1, 2]); f
+    q_1*q_0*Xq[1] + Xq[4, 2, 1, 3]
+    sage: f.expand() == Q([2, 3, 1]).expand() * Q([3, 1, 2]).expand()
+    True
+
+Ordinary Schubert polynomials coerce in (as polynomials in `x`, re-expanded in the quantum basis)::
+
+    sage: Q(SchubertPolynomialRing(ZZ)([3, 1, 2]))
+    q_0*Xq[1] + Xq[3, 1, 2]
+
+Parabolic, blocks `(1, 2)`: the projective plane `\PP^2 = Gr(1, 3)` with the implicit block after it.
+`\sigma_1^2 = \sigma_2` has no `q`; `\sigma_1 \sigma_2 = q` in `QH^*(\PP^2)`, and the class
+`\sigma_3` that only exists past the box appears alongside (its polynomial is `x_0^3 - q_0`)::
+
+    sage: P = QuantumSchubertPolynomialRing(QQ, parabolic=(1, 2))
+    sage: TestSuite(P).run()
+    sage: P([2, 1, 3]) * P([2, 1, 3])
+    Xq[3, 1, 2]
+    sage: P([2, 1, 3]) * P([3, 1, 2])
+    q_0*Xq[1] + Xq[4, 1, 2, 3]
+    sage: P([4, 1, 2, 3]).expand()
+    x0^3 - q0
+
+<a id="schubmult.sage.quantum_schubert.QuantumDoubleSchubertPolynomialRing"></a>
+
+#### QuantumDoubleSchubertPolynomialRing
+
+```python
+def QuantumDoubleSchubertPolynomialRing(R,
+                                        alphabet="y",
+                                        coefficient_alphabets=("y", "z"),
+                                        parabolic=None)
+```
+
+Return the ring of quantum double Schubert polynomials `\mathfrak{S}^q_w(x; \text{alphabet})` over ``R``.
+
+INPUT:
+
+- ``R`` -- a commutative ring; the base ring of the result is ``R[q, alphabets]``
+- ``alphabet`` -- (default: ``'y'``) the letter of the second alphabet of the basis elements
+- ``coefficient_alphabets`` -- (default: ``('y', 'z')``) letters available in coefficients
+- ``parabolic`` -- (optional) block sizes of a partial flag variety, as for
+  :func:`QuantumSchubertPolynomialRing`
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumDoubleSchubertPolynomialRing
+    sage: QD = QuantumDoubleSchubertPolynomialRing(QQ); QD
+    Quantum double Schubert polynomial ring in the alphabet y with Xq_y basis over Rational Field
+    sage: QD.base_ring()
+    Infinite polynomial ring in q, y, z over Rational Field
+    sage: TestSuite(QD).run()
+    sage: QD([3, 1, 2]) * QD([2, 1])
+    q_0*Xq_y[1, 3, 2] + (y_2-y_0)*Xq_y[3, 1, 2] + Xq_y[4, 1, 2, 3]
+
+Mixed alphabets, as for :func:`~schubmult.sage.DoubleSchubertPolynomialRing`::
+
+    sage: QZ = QuantumDoubleSchubertPolynomialRing(QQ, 'z')
+    sage: QD([2, 1]) * QZ([2, 1])
+    q_0*Xq_y[1] + (y_1-z_0)*Xq_y[2, 1] + Xq_y[3, 1, 2]
+
+Products agree with polynomial multiplication::
+
+    sage: f = QD([3, 1, 2]) * QD([2, 3, 1])
+    sage: f.expand() == QD([3, 1, 2]).expand() * QD([2, 3, 1]).expand()
+    True
+
+Parabolic quantum double, blocks `(1, 2)`::
+
+    sage: PD = QuantumDoubleSchubertPolynomialRing(QQ, parabolic=(1, 2))
+    sage: TestSuite(PD).run()
+    sage: f = PD([2, 1, 3]) * PD([2, 1, 3]); f
+    (y_1-y_0)*Xq_y[2, 1] + Xq_y[3, 1, 2]
+    sage: f.expand() == PD([2, 1, 3]).expand()^2
+    True
+
+<a id="schubmult.sage.quantum_schubert.QuantumSchubertPolynomial_class"></a>
+
+## QuantumSchubertPolynomial\_class Objects
+
+```python
+class QuantumSchubertPolynomial_class(SchubmultBackedElement)
+```
+
+<a id="schubmult.sage.quantum_schubert.QuantumSchubertPolynomial_class.expand"></a>
+
+#### expand
+
+```python
+def expand()
+```
+
+Expand into a polynomial in ``x0, x1, ...`` and ``q0, q1, ...``.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumSchubertPolynomialRing
+    sage: Q = QuantumSchubertPolynomialRing(ZZ)
+    sage: [Q(p).expand() for p in Permutations(3)]
+    [1, x0 + x1, x0, x0*x1 + q0, x0^2 - q0, x0^2*x1 + x0*q0]
+    sage: Q([2, 1]).expand().parent()
+    Multivariate Polynomial Ring in x0, x1 over Integer Ring
+
+<a id="schubmult.sage.quantum_schubert._QuantumMixin"></a>
+
+## \_QuantumMixin Objects
+
+```python
+class _QuantumMixin()
+```
+
+<a id="schubmult.sage.quantum_schubert._QuantumMixin.parabolic"></a>
+
+#### parabolic
+
+```python
+def parabolic()
+```
+
+The block sizes of the partial flag variety, or ``None`` for the full flag variety.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumSchubertPolynomialRing
+    sage: QuantumSchubertPolynomialRing(QQ).parabolic() is None
+    True
+    sage: QuantumSchubertPolynomialRing(QQ, parabolic=[2, 3]).parabolic()
+    (2, 3)
+
+<a id="schubmult.sage.quantum_schubert.QuantumSchubertPolynomialRing_xbasis"></a>
+
+## QuantumSchubertPolynomialRing\_xbasis Objects
+
+```python
+class QuantumSchubertPolynomialRing_xbasis(_QuantumMixin, SchubmultBackedRing)
+```
+
+<a id="schubmult.sage.quantum_schubert.QuantumSchubertPolynomialRing_xbasis.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(R, parabolic)
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumSchubertPolynomialRing
+    sage: Q = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))
+    sage: Q == loads(dumps(Q))
+    True
+    sage: Q is QuantumSchubertPolynomialRing(QQ, parabolic=[2, 3])
+    True
+
+<a id="schubmult.sage.quantum_schubert.QuantumSchubertPolynomialRing_xbasis.product_on_basis"></a>
+
+#### product\_on\_basis
+
+```python
+def product_on_basis(left, right)
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumSchubertPolynomialRing
+    sage: Q = QuantumSchubertPolynomialRing(QQ)
+    sage: Q.product_on_basis(Permutation([3, 1, 2]), Permutation([2, 1]))
+    q_0*Xq[1, 3, 2] + Xq[4, 1, 2, 3]
+
+<a id="schubmult.sage.quantum_schubert.QuantumDoubleSchubertPolynomialRing_xbasis"></a>
+
+## QuantumDoubleSchubertPolynomialRing\_xbasis Objects
+
+```python
+class QuantumDoubleSchubertPolynomialRing_xbasis(_QuantumMixin,
+                                                 SchubmultBackedRing)
+```
+
+<a id="schubmult.sage.quantum_schubert.QuantumDoubleSchubertPolynomialRing_xbasis.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(R, alphabet, alphabets, parabolic)
+```
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumDoubleSchubertPolynomialRing
+    sage: QD = QuantumDoubleSchubertPolynomialRing(QQ, 'z', parabolic=(1, 2))
+    sage: QD == loads(dumps(QD))
+    True
+
+<a id="schubmult.sage.quantum_schubert.QuantumDoubleSchubertPolynomialRing_xbasis.alphabet"></a>
+
+#### alphabet
+
+```python
+def alphabet()
+```
+
+The letter of the second alphabet of the basis elements.
+
+EXAMPLES::
+
+    sage: from schubmult.sage import QuantumDoubleSchubertPolynomialRing
+    sage: QuantumDoubleSchubertPolynomialRing(QQ, 'z').alphabet()
+    'z'
+
 <a id="schubmult.symbolic"></a>
 
 # schubmult.symbolic
 
-Symbolic computation facade: fast SymEngine arithmetic with SymPy printing and polynomial domains.
+Symbolic computation facade: fast SymEngine arithmetic with SymPy printing and polynomial algorithms.
 
 Import ``Add``, ``Mul``, ``Pow``, ``S``, ``Symbol``, ``sympify``, ``expand`` from here rather than
 from ``symengine``/``sympy`` directly; the SymPy versions are available under ``sympy_``-prefixed
-names (``sympy_Add``, ``sympy_Mul``, ``sympify_sympy``, ``sympy_poly``). Also re-exports the
-Schubert-polynomial helpers of `schubmult.symbolic.poly.schub_poly` and SymPy's
-``EXRAW``/``CoercionFailed`` used by the ring domains. Generating sets live in
-`schubmult.symbolic.poly.variables` (re-exported from `schubmult.symbolic.poly`).
+names (``sympy_Add``, ``sympy_Mul``, ``sympify_sympy``, ``sympy_poly``). The ring-domain protocol
+(``EXRAW``, ``CoercionFailed``, ``Ring``, ...) comes from `schubmult.symbolic.domain`. Generating
+sets live in `schubmult.symbolic.poly.variables` (re-exported from `schubmult.symbolic.poly`).
+
+Nothing here imports SymPy eagerly: SymPy names are `schubmult.utils._lazy.LazyAttr` proxies that import on first use
+(call, attribute access, or subclassing), so SymPy loads only when something actually needs it.
 
 <a id="schubmult.symbolic.common_polys"></a>
 
 # schubmult.symbolic.common\_polys
 
 Re-exports `schubmult.symbolic.poly.schub_poly` and the ``_vars``/``call_zvars``/``q_vector`` helpers.
+
+<a id="schubmult.symbolic.domain"></a>
+
+# schubmult.symbolic.domain
+
+SymPy-free stand-ins for the parts of SymPy's polys ``Domain`` protocol that `schubmult.rings` uses.
+
+The ring classes only ever relied on ``Domain.__call__`` (construct via ``new``), ``Domain.sum``,
+``repr == str``, the ``EXRAW`` coefficient domain's ``zero``/``one``, and ``CoercionFailed``.
+
+<a id="schubmult.symbolic.domain.CoercionFailed"></a>
+
+## CoercionFailed Objects
+
+```python
+class CoercionFailed(Exception)
+```
+
+Raised when a value cannot be coerced into a ring or its coefficient domain.
+
+<a id="schubmult.symbolic.domain.DomainElement"></a>
+
+## DomainElement Objects
+
+```python
+class DomainElement()
+```
+
+Marker base class for ring elements.
+
+<a id="schubmult.symbolic.domain.Ring"></a>
+
+## Ring Objects
+
+```python
+class Ring()
+```
+
+Base class for rings: calling a ring constructs an element via ``new``.
+
+<a id="schubmult.symbolic.domain.CompositeDomain"></a>
+
+## CompositeDomain Objects
+
+```python
+class CompositeDomain()
+```
+
+Marker base class for rings built over a coefficient domain.
 
 <a id="schubmult.symbolic.functions"></a>
 
@@ -23544,6 +24486,16 @@ def expand_seq(seq, genset)
 ```
 
 The monomial ``genset[1]**seq[0] * genset[2]**seq[1] * ...`` (1-indexed generators).
+
+<a id="schubmult.symbolic.functions.prod"></a>
+
+#### prod
+
+```python
+def prod(a, start=1)
+```
+
+Product of the elements of ``a`` times ``start`` (same as ``sympy.prod``).
 
 <a id="schubmult.symbolic.functions.efficient_subs"></a>
 
@@ -24723,11 +25675,50 @@ class GridPrint(Printable)
 
 Mixin: subclasses provide ``rows``, ``cols``, ``__getitem__((i, j))`` and ``_display_name``.
 
+<a id="schubmult.utils._lazy"></a>
+
+# schubmult.utils.\_lazy
+
+`LazyAttr`: a stand-in for a module attribute that imports the module on first real use.
+
+<a id="schubmult.utils._lazy.LazyAttr"></a>
+
+## LazyAttr Objects
+
+```python
+class LazyAttr()
+```
+
+Proxy for ``getattr(import_module(modname), attr)``, resolved on first call, attribute access,
+or use as a base class. ``isinstance``/``issubclass`` checks resolve it only once ``modname`` has
+been imported, since no instance of a class can exist before its module is loaded.
+
+<a id="schubmult.utils._lazy.lazy_from"></a>
+
+#### lazy\_from
+
+```python
+def lazy_from(modname, *names)
+```
+
+``LazyAttr`` proxies for ``from modname import *names``.
+
 <a id="schubmult.utils._mul_utils"></a>
 
 # schubmult.utils.\_mul\_utils
 
 Dict-level helpers for ring multiplication and tensor products of ``{key: coeff}`` expansions.
+
+<a id="schubmult.utils._printable"></a>
+
+# schubmult.utils.\_printable
+
+`LazyPrintable`: drop-in for SymPy's ``Printable`` mixin that defers importing SymPy until an
+object is actually printed.
+
+SymPy's printers discover these classes through the ``_sympystr``/``_latex``/``_pretty`` hooks, so
+subclassing ``Printable`` itself is unnecessary. The IPython ``_repr_*_`` methods forward to
+``Printable``'s at call time, so ``init_printing``'s class-level patches still take effect.
 
 <a id="schubmult.utils.argparse"></a>
 
@@ -25567,6 +26558,20 @@ chosen binomially.
 # schubmult.utils.test\_utils
 
 Helpers for the test suite: locating JSON test data and inspecting SymPy/SymEngine expression trees.
+
+<a id="schubmult.utils.test_utils.vanishes"></a>
+
+#### vanishes
+
+```python
+def vanishes(exprs, trials=3, seed=1)
+```
+
+True if every rational-function expression in ``exprs`` is identically zero, tested exactly at
+``trials`` random rational points (no floats, so a zero *is* a zero).
+
+A nonzero rational function vanishes at a random point with negligible probability, and this is
+orders of magnitude faster than ``sympy.cancel`` on large unsimplified differences.
 
 <a id="schubmult.utils.test_utils.generate_all"></a>
 
