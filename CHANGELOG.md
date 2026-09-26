@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 5.2.0 (in pre-release: 5.2.0b1)
+
+SageMath integration (`schubmult.sage`), a correctness fix for parabolic quantum products with
+trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-releases install with
+`pip install --pre schubmult`; `pip install schubmult` keeps giving 5.1.1 until 5.2.0 is final.
 
 ### Added
 
@@ -38,6 +42,28 @@
   size explicitly and the parabolic rings pass `sum(blocks)`. `QPSx(2, 3)`, `(2, 3, 1)`,
   `(2, 3, 2)` and `(2, 3, 1, 1)` now all agree, as they should. The CLI (`--parabolic`), which only
   knows generator indices, is unchanged.
+
+### Changed
+
+- **`ElementaryBasis` <-> `SchubertBasis` transitions are computed blockwise.** Both directions
+  go through the finite `(numvars, degree)` block: every elementary product of that degree is
+  expanded in the Schubert basis by the Pieri rule (`ElementaryBasis.schubert_block`, cached), which
+  is the Schubert -> Elem matrix, and its inverse is Elem -> Schubert. This replaces
+  `Sx.from_expr` on staircase-padded monomial-symmetric polynomials and RC-graph enumeration of
+  `S_{perm w0}`; e.g. `FA(2) * FA(2, 1)` in the elementary basis went from 25 s to 0.04 s. Results
+  are identical on every key checked ($n \le 3$, degree $\le 4$). `ElementaryBasis.degree_keys`
+  and `transition_from_schubert` are new; `ElementaryBasis.staircase` is gone.
+- **Test suite runs in ~1 min instead of ~8.** Slow tests were made cheaper without losing
+  coverage: exact zero tests of rational-function identities now evaluate at random rational
+  points (`schubmult.utils.test_utils.vanishes`) instead of `sympy.cancel` on huge unsimplified
+  differences (90 s -> 0.2 s for the double Grothendieck round trip); the heaviest
+  `--display-positive` script fixtures were replaced by same-flag, smaller permutations; a few
+  ring examples dropped one degree. CI runs `pytest -n auto` (`pytest-xdist`; `pip install -e
+  .[test]` locally) and triggers on pull requests into `redevelop` as well as `main`.
+- **Docs deploy only from final release tags.** The docs workflow no longer runs on pushes to
+  `main`; it runs on release tags and refuses `.dev`, local (`+...`), and pre-release
+  (`a`/`b`/`rc`) versions, so a pre-release tag publishes wheels but leaves the documentation site
+  at the last final release.
 
 ## 5.1.1
 
