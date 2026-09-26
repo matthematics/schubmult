@@ -48,6 +48,12 @@ def genset(letter):
     return GeneratingSet(letter)
 
 
+def _is_polynomial_algebra_basis(parent):
+    from .polynomial_algebra import PolynomialAlgebraBasis  # circular at module level
+
+    return isinstance(parent, PolynomialAlgebraBasis)
+
+
 def coefficient_into(c, T, aliases=None):
     """Move a base-ring coefficient into the finite ring ``T`` (variables ``a<i>`` for ``a_<i>``, plus
     named scalars like ``beta``); fractions land in ``T.fraction_field()``. ``aliases`` renames
@@ -324,7 +330,7 @@ class SchubmultBackedRing(CombinatorialFreeModule):
             parent = parent()
             if isinstance(parent, SymmetricFunctionAlgebra_generic):
                 raise TypeError(f"a symmetric function needs a number of variables: use {self}.from_symmetric_function(f, n)")
-            if isinstance(parent, SchubertPolynomialRing_xbasis):
+            if isinstance(parent, SchubertPolynomialRing_xbasis) or _is_polynomial_algebra_basis(parent):
                 return self._from_polynomial(x.expand())
             if isinstance(parent, SchubmultBackedRing):
                 if self._same_kind(parent):
@@ -339,7 +345,7 @@ class SchubmultBackedRing(CombinatorialFreeModule):
         return type(other) is type(self) and getattr(other, "_parabolic", None) == getattr(self, "_parabolic", None)
 
     def _coerce_map_from_(self, S):
-        if isinstance(S, SchubertPolynomialRing_xbasis | OperatorPolynomialBasis):
+        if isinstance(S, SchubertPolynomialRing_xbasis | OperatorPolynomialBasis) or _is_polynomial_algebra_basis(S):
             return self.base_ring().has_coerce_map_from(S.base_ring())
         if isinstance(S, SchubmultBackedRing):
             if getattr(S, "_parabolic", None) not in (None, getattr(self, "_parabolic", None)):

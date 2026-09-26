@@ -155,9 +155,15 @@ sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
 sage: GD = DoubleGrothendieckPolynomialRing(QQ)                  # K_T of the flag variety
 sage: GD([2, 1]) * GD([2, 1])
 -((y_1-y_0)/(beta*y_1+1))*G_y[2, 1] + ((beta*y_0+1)/(beta*y_1+1))*G_y[3, 1, 2]
+sage: from schubmult.sage import PolynomialAlgebra
+sage: A = PolynomialAlgebra(QQ); k = A.key(); F = A.fundamental_slide()   # bases of QQ[x0, x1, ...]
+sage: F(k[1, 0, 2])
+F[1, 0, 2] + F[2, 0, 1]
+sage: k(A.schubert()[3, 1, 2])
+k[2]
 ```
 
-`DoubleSchubertPolynomialRing`, `QuantumSchubertPolynomialRing`, `QuantumDoubleSchubertPolynomialRing` (with `parabolic=` block sizes), `GrothendieckPolynomialRing`, and `DoubleGrothendieckPolynomialRing` accept permutations, Sage polynomials, and elements of `SchubertPolynomialRing` and `KeyPolynomials`; a ring in another alphabet (`DoubleSchubertPolynomialRing(QQ, 'z')`) coerces in for mixed products, and `from_symmetric_function(f, n)` / `to_symmetric_function()` go back and forth with `SymmetricFunctions`. Variables are 0-indexed as in Sage (`x0, y0, q0`); the Grothendieck deformation parameter is `beta`.
+`DoubleSchubertPolynomialRing`, `QuantumSchubertPolynomialRing`, `QuantumDoubleSchubertPolynomialRing` (with `parabolic=` block sizes), `GrothendieckPolynomialRing`, and `DoubleGrothendieckPolynomialRing` accept permutations, Sage polynomials, and elements of `SchubertPolynomialRing` and `KeyPolynomials`; a ring in another alphabet (`DoubleSchubertPolynomialRing(QQ, 'z')`) coerces in for mixed products, and `from_symmetric_function(f, n)` / `to_symmetric_function()` go back and forth with `SymmetricFunctions`. `PolynomialAlgebra(R)` (or `PolynomialAlgebra(R, n)` in `n` variables) is the polynomial ring with its combinatorial bases as mutually coercing realizations: Schubert and Grothendieck indexed by permutations, monomial/key/slide/forest/glide/Lascoux/grove by weak compositions, and in `n` variables the elementary symmetric basis; the K-theoretic bases are at `beta = -1`. Variables are 0-indexed as in Sage (`x0, y0, q0`); the Grothendieck deformation parameter is `beta`.
 
 ## Documentation
 

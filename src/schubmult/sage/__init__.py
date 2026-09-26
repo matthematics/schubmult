@@ -9,8 +9,9 @@ installed). Provides Sage parents whose arithmetic is delegated to the schubmult
     (y_2-y_0)*X_y[3, 1, 2] + X_y[4, 1, 2, 3]
 
 Rings: :func:`DoubleSchubertPolynomialRing`, :func:`QuantumSchubertPolynomialRing`,
-:func:`QuantumDoubleSchubertPolynomialRing` (both with ``parabolic=``), :func:`GrothendieckPolynomialRing`
-and :func:`DoubleGrothendieckPolynomialRing`.
+:func:`QuantumDoubleSchubertPolynomialRing` (both with ``parabolic=``), :func:`GrothendieckPolynomialRing`,
+:func:`DoubleGrothendieckPolynomialRing`, and :func:`PolynomialAlgebra` (the polynomial ring with its
+combinatorial bases -- Schubert, key, slide, forest, glide, Lascoux, grove -- as realizations).
 """
 
 # Sage's submodules are not independently importable: entering the library at
@@ -20,12 +21,14 @@ import sage.all  # isort: skip
 
 from .double_schubert import DoubleSchubertPolynomialRing
 from .grothendieck import DoubleGrothendieckPolynomialRing, GrothendieckPolynomialRing
+from .polynomial_algebra import PolynomialAlgebra
 from .quantum_schubert import QuantumDoubleSchubertPolynomialRing, QuantumSchubertPolynomialRing
 
 __all__ = [
     "DoubleGrothendieckPolynomialRing",
     "DoubleSchubertPolynomialRing",
     "GrothendieckPolynomialRing",
+    "PolynomialAlgebra",
     "QuantumDoubleSchubertPolynomialRing",
     "QuantumSchubertPolynomialRing",
 ]
