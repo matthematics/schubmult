@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **`schubmult.sage`: SageMath integration.** Sage parents built on `CombinatorialFreeModule`
+  whose arithmetic is delegated to the schubmult kernels, alongside Sage's own
+  `SchubertPolynomialRing`:
+  - `DoubleSchubertPolynomialRing(R, alphabet='y')` -- double Schubert polynomials
+    $\mathfrak S_w(x; y)$ over `R[y, z]`; a ring in another alphabet
+    (`DoubleSchubertPolynomialRing(R, 'z')`) coerces in, so `X(u) * Z(v)` is the mixed product
+    $\mathfrak S_u(x;y)\,\mathfrak S_v(x;z)$ expanded in the `y`-basis.
+  - `QuantumSchubertPolynomialRing(R, parabolic=None)` and
+    `QuantumDoubleSchubertPolynomialRing(R, alphabet='y', parabolic=None)` -- quantum and
+    quantum double Schubert polynomials over `R[q]` resp. `R[q, y, z]`; `parabolic=(n_1, ..., n_k)`
+    gives the partial flag variety with those block sizes, with an implicit unbounded last block
+    (basis permutations may have descents exactly at the recorded boundaries and be increasing
+    beyond them; products extend by one new block as needed, never by enlarging a recorded one).
+  - All accept lists/`Permutation`s, Sage polynomials (finite or `InfinitePolynomialRing`), and
+    elements of `SchubertPolynomialRing`; `expand()` lands in `R[x0.., y0.., q0..]`, 0-indexed
+    like Sage; `divided_difference(i)` on the double ring. Coefficients are converted at the
+    boundary, so nothing SymEngine-flavoured leaks into the Sage API.
+  - Sage is **not** a dependency: the subpackage is inert unless imported, and
+    `tests/test_api_surface.py::test_package_is_fully_usable_without_sage` runs the whole package
+    with Sage imports blocked. Install schubmult into a Sage environment
+    (`sage -pip install schubmult`) to use it; CI runs the Sage doctests in a separate job against
+    conda-forge Sage.
+
+### Fixed
+
+- **Parabolic quantum products with a trailing size-1 block** (`QPSx(2, 3, 1)`,
+  `QPSx(2, 3, 1, 1)`, ...). `apply_peterson_woodward` inferred the ambient flag size from the last
+  parabolic generator, and a size-1 block contributes none, so the ambient was taken one block
+  short: result permutations of length exactly `sum(blocks)` were dropped (for
+  $\sigma_{32}\sigma_1$ with blocks `(2,3,1)` the class $\sigma_{42}$ vanished) and the product no
+  longer matched the basis polynomials. `apply_peterson_woodward(..., n=)` now takes the ambient
+  size explicitly and the parabolic rings pass `sum(blocks)`. `QPSx(2, 3)`, `(2, 3, 1)`,
+  `(2, 3, 2)` and `(2, 3, 1, 1)` now all agree, as they should. The CLI (`--parabolic`), which only
+  knows generator indices, is unchanged.
+
 ## 5.1.1
 
 Patch release: compatibility with PuLP 4.0.0, a correctness fix for the elementary basis of
