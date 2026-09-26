@@ -30,6 +30,14 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
     with Sage imports blocked. Install schubmult into a Sage environment
     (`sage -pip install schubmult`) to use it; CI runs the Sage doctests in a separate job against
     conda-forge Sage.
+- **`strip_zeros(exact=True)` on every ring element.** The kernels leave coefficients as products of
+  factors, and in large products a sizeable fraction of them cancel to zero without looking like it
+  (7868 -> 3845 terms for a quantum double product in $S_8$). `strip_zeros()` (now on
+  `BaseRingElement`, so available in every ring) still only drops literal zeros; `exact=True` also drops
+  coefficients that are zero as polynomials, detected by evaluating them at random integer points in
+  exact arithmetic with memoized shared subtrees (`schubmult.symbolic.functions.vanish_at_random_points`)
+  -- about 0.7x the cost of the product itself, versus ~10x for expanding the coefficients. Products
+  are unchanged: stripping stays opt-in.
 
 ### Fixed
 

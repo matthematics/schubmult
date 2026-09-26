@@ -21,7 +21,7 @@ from sage.rings.polynomial.polynomial_element import Polynomial
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.rational_field import QQ
 
-from ._convert import parse_sage_name, sage_polynomial_to_symengine, symengine_to_sage
+from ._convert import parse_sage_name, sage_polynomial_to_symengine, symengine_to_infinite_polynomials, symengine_to_sage
 
 X_LETTER = "x"
 
@@ -143,7 +143,9 @@ class SchubmultBackedRing(CombinatorialFreeModule):
 
     def _convert_dict(self, dct):
         """schubmult ``{Permutation: symengine coeff}`` -> element of ``self``."""
-        return self._from_dict({to_sage_perm(w): symengine_to_sage(c, self._variable, self._scalar) for w, c in dct.items()}, remove_zeros=True)
+        perms = [to_sage_perm(w) for w in dct]
+        coeffs = symengine_to_infinite_polynomials(dct.values(), self.base_ring())
+        return self._from_dict(dict(zip(perms, coeffs)), remove_zeros=True)
 
     def _from_polynomial(self, p):
         gensets = {X_LETTER: genset(X_LETTER), **{a: genset(a) for a in self._alphabets}}

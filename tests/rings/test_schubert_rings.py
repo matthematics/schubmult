@@ -8,6 +8,30 @@ def test_schubert_schub_expand():
     assert (x_1 * Sx([3, 4, 1, 2])).expand() == x_1 ** 3 * x_2 ** 2
 
 
+def test_strip_zeros_exact_finds_hidden_zeros():
+    """Unexpanded coefficients that cancel are invisible to the structural strip_zeros(); exact=True
+    removes them by random-point evaluation, agreeing with full coefficient expansion."""
+    from schubmult import DSx, QDSx
+    from schubmult.abc import y, z
+    from schubmult.symbolic import S, sympify
+
+    ring = DSx([3, 1, 2]).ring
+    w = next(iter(DSx([3, 1, 2])))
+    hidden = sympify((y[1] - z[2]) * (y[3] - z[1]) - (y[1] * y[3] - y[1] * z[1] - z[2] * y[3] + z[1] * z[2]))
+    elem = ring.from_dict({w: hidden, next(iter(DSx([2, 1]))): y[1] - z[1]})
+    assert len(elem.strip_zeros()) == 2
+    assert dict(elem.strip_zeros(exact=True)) == {next(iter(DSx([2, 1]))): y[1] - z[1]}
+
+    # a product with a hidden zero: exact stripping matches expansion (from_dict drops literal zeros),
+    # and never drops a nonzero term
+    prod = QDSx([2, 4, 1, 3]) * QDSx([3, 1, 4, 2])
+    assert len(prod) == 11 and len(prod.strip_zeros()) == 11
+    stripped = prod.strip_zeros(exact=True)
+    assert len(stripped) == 10
+    assert set(stripped) == set(prod.expand(deep=False))
+    assert all(k in prod for k in stripped)
+
+
 def test_schubert_coproduct():
     from schubmult import Sx
     from schubmult.symbolic import expand
