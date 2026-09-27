@@ -108,7 +108,9 @@ trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Pre-relea
   differences (90 s -> 0.2 s for the double Grothendieck round trip); the heaviest
   `--display-positive` script fixtures were replaced by same-flag, smaller permutations; a few
   ring examples dropped one degree. CI runs `pytest -n auto` (`pytest-xdist`; `pip install -e
-  .[test]` locally) and triggers on pull requests into `redevelop` as well as `main`.
+  .[test]` locally) and triggers on pull requests into `develop` as well as `main`.
+- **Integration branch renamed `redevelop` -> `develop`.** Feature branches PR into `develop`;
+  `main` only receives final releases from `develop` or a `hotfix/*` branch.
 - **Docs deploy only from final release tags.** The docs workflow no longer runs on pushes to
   `main`; it runs on release tags and refuses `.dev`, local (`+...`), and pre-release
   (`a`/`b`/`rc`) versions, so a pre-release tag publishes wheels but leaves the documentation site
