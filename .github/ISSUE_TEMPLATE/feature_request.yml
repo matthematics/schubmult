@@ -1,0 +1,39 @@
+name: Feature request
+description: A new ring, basis, combinatorial object, conversion, or API improvement.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like to compute or do?
+      description: Describe the mathematics or the workflow, not just the API. A reference (paper, theorem, example) helps a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: A small worked example -- input and the output you would expect -- if you have one.
+      render: text
+  - type: textarea
+    id: current
+    attributes:
+      label: How do you do it today?
+      description: Existing schubmult / Sage / other-system workaround, if any.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Schubert / double Schubert rings
+        - quantum / parabolic quantum rings
+        - Grothendieck / K-theory
+        - polynomial bases (key, slide, forest, glide, Lascoux, grove, elementary)
+        - free algebra / coproducts
+        - combinatorics (permutations, RC graphs, BPDs, tableaux, crystals)
+        - SageMath layer (schubmult.sage)
+        - command-line scripts
+        - performance
+        - documentation

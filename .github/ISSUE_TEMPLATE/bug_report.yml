@@ -1,0 +1,50 @@
+name: Bug report
+description: An error, crash, hang, or something that does not work as documented.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a result that is *wrong* rather than an error, use the "Wrong result" template instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did and what went wrong. Paste the full traceback if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: The smallest code or command that triggers it. Include imports.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to happen
+  - type: input
+    id: version
+    attributes:
+      label: schubmult version
+      description: "`python -c 'import schubmult; print(schubmult.__version__)'` (or `pip show schubmult`)"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Python version, OS, how you installed (pip / sage -pip / conda / source), and the SageMath version if relevant.
+      placeholder: Python 3.12, Linux, pip install --pre schubmult, Sage 10.9 (conda-forge)
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I can reproduce this on the latest release (or pre-release, `pip install --pre schubmult`).
+        - label: I searched the existing issues.

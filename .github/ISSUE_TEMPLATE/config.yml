@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/matthematics/schubmult/discussions
+    about: Usage questions, conventions, "is this the right way to compute X" -- not bugs.
+  - name: Documentation
+    url: https://matthematics.github.io/schubmult/
+    about: API reference and getting-started guide.
