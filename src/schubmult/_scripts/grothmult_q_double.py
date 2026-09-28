@@ -10,6 +10,7 @@ Example:
 import sys
 
 from schubmult import GeneratingSet, Permutation, uncode
+from schubmult.mult.groth_double import normalize_coeff
 from schubmult.mult.groth_quantum_double import grothmult_q_double
 from schubmult.symbolic import S
 from schubmult.utils.argparse import schub_argparse
@@ -22,8 +23,9 @@ def main(argv=None):
     their quantum double Grothendieck polynomials via
     `schubmult.mult.groth_quantum_double.grothmult_q_double`, and prints the resulting
     coefficient dictionary ``{Permutation: coefficient}`` in the ``y``/``z`` coefficient
-    variables and quantum parameters ``q_i``. ``--display-positive``, ``--parabolic``,
-    ``--nil-hecke``, and ``--mult`` are not yet supported and cause an early exit.
+    variables and quantum parameters ``q_i``. With ``--simplify`` coefficients are printed in
+    cancelled form ``numer / prod (1 + beta*y_i)**e``. ``--display-positive``,
+    ``--parabolic``, ``--nil-hecke``, and ``--mult`` are not yet supported and cause an early exit.
     Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
     tests); otherwise prints and returns ``None``.
     """
@@ -75,6 +77,9 @@ def main(argv=None):
         coeff_dict = {perms[0]: 1}
         for perm in perms[1:]:
             coeff_dict = grothmult_q_double(coeff_dict, perm, var2, var3)
+
+        if args.simplify:
+            coeff_dict = {perm: normalize_coeff(val, var2) for perm, val in coeff_dict.items()}
 
         coeff_perms = [perm for perm, val in coeff_dict.items() if val != S.Zero]
         coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))
