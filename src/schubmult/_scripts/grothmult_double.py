@@ -9,7 +9,7 @@ import sys
 
 from schubmult import GeneratingSet, Permutation, uncode
 from schubmult.abc import beta
-from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double
+from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double, normalize_coeff
 from schubmult.symbolic import S, sympify, sympify_sympy, expand
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
@@ -345,6 +345,9 @@ def main(argv=None):
         if mult:
             mul_exp = sympify(mulstring)
             coeff_dict = mult_poly_groth_double(coeff_dict, mul_exp, var2, var3)
+
+        if args.simplify and not args.display_positive:
+            coeff_dict = {perm: normalize_coeff(val, var2) for perm, val in coeff_dict.items()}
 
         # sort/filter up front so posified coefficients can stream out as each
         # one finishes (the LPs can take a long time); structural zero test only
