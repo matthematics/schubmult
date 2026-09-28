@@ -659,7 +659,53 @@ def _frac_to_expr(f, varl1, beta):
         if e:
             den = den * _atom_pow(varl1, beta, a, e)
     return n / den
-    return n / den
+
+
+def normalize_coeff(expr, var2, beta=None):
+    r"""Cancelled normal form ``numer / prod (1 + beta*y_i)**e`` of a double Grothendieck coefficient.
+
+    In the multiplicative variables ``t_i = 1 + beta*y_i`` (the ``e^{-gamma}`` of equivariant
+    K-theory) every coefficient is a Laurent polynomial: the atoms are monomials, so plain
+    expansion collects everything and the denominator is read off as the monomial of negative
+    exponents.  No gcd is ever computed.  Passing to ``t`` first also keeps the expansion small:
+    the unexpanded kernel output is a tower of products of atoms, which in ``y`` expands to
+    thousands of monomials before cancelling and in ``t`` collapses immediately.
+    """
+    from schubmult.symbolic import Symbol, expand
+
+    if beta is None:
+        beta = _default_beta
+    e = sympify(expr)
+    b = sympify(beta)
+    ysyms = [s for s in e.free_symbols if var2.index(s) != -1]
+    if not ysyms:
+        return expand(e)
+    atoms = {s: Symbol(f"_groth_atom_{var2.index(s)}") for s in ysyms}
+    laurent = expand(e.xreplace({s: (t - S.One) / b for s, t in atoms.items()}))
+    if laurent == S.Zero:
+        return S.Zero
+    gens = [*atoms.values(), b]
+    mins = dict.fromkeys(gens, 0)
+    for term in laurent.args if laurent.is_Add else (laurent,):
+        pd = term.as_powers_dict()
+        for g in gens:
+            k = int(pd.get(g, 0))
+            if k < mins[g]:
+                mins[g] = k
+    clear = S.One
+    for g, k in mins.items():
+        if k < 0:
+            clear = clear * g ** (-k)
+    back = {t: S.One + b * s for s, t in atoms.items()}
+    numer = expand(expand(laurent * clear).xreplace(back))
+    den = S.One
+    for s, t in atoms.items():
+        k = -mins[t]
+        if k > 0:
+            den = den * (S.One + b * s) ** k
+    if mins[b] < 0:
+        den = den * b ** (-mins[b])
+    return numer / den
 
 
 def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
