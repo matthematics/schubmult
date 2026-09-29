@@ -256,7 +256,7 @@ def _tokenize(s: str) -> list[str]:
 
 def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
                 display_positive: bool, mixed_var: bool, parabolic: str | None,
-                mult: str | None) -> list[str]:
+                mult: str | None, simplify: bool = False) -> list[str]:
     """Build sys.argv-like list to pass to the script's main(). Validates input."""
     argv: list[str] = [prog]
     tokens = _tokenize(perms_raw)
@@ -323,6 +323,8 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         argv.append("--display-positive")
     if mixed_var:
         argv.append("--mixed-var")
+    if simplify:
+        argv.append("--simplify")
     # Validate parabolic but do NOT append it yet; --parabolic uses nargs="+" and
     # would greedily swallow the perm tokens. We append it *after* the perms.
     ptoks: list[str] = []
@@ -330,9 +332,9 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         ptoks = parabolic.replace(",", " ").split()
         for t in ptoks:
             if not t.isdigit():
-                raise ValueError(f"Invalid parabolic generator {t!r}: expected positive integers.")
+                raise ValueError(f"Invalid parabolic block size {t!r}: expected positive integers.")
             if int(t) < 1 or int(t) > MAX_INT_VALUE:
-                raise ValueError(f"Parabolic generator {t} out of range [1, {MAX_INT_VALUE}].")
+                raise ValueError(f"Parabolic block size {t} out of range [1, {MAX_INT_VALUE}].")
     mult_tail: list[str] = []
     if mult:
         if not ENABLE_MULT:
@@ -517,12 +519,15 @@ def compute():
     mixed_var = bool(data.get("mixed_var", False))
     parabolic = (data.get("parabolic") or "").strip() or None
     mult = (data.get("mult") or "").strip() or None
+    simplify = bool(data.get("simplify", False))
 
     if flavor not in FLAVORS:
         return jsonify({"ok": False, "error": f"Unknown flavor {flavor!r}"}), 400
     prog = FLAVORS[flavor][1]
 
     # drop options the flavor does not support (the frontend greys them out too)
+    if flavor not in ("groth_double", "groth_q_double"):
+        simplify = False
     if flavor == "py":
         display_positive = False
         mixed_var = False
@@ -546,20 +551,19 @@ def compute():
         display_positive = False
         mixed_var = False
         coprod = False
-        parabolic = None  # not supported by grothmult_q yet
         mult = None
     elif flavor == "q_double":
         coprod = False
     elif flavor == "groth_q_double":
         coprod = False
         display_positive = False  # not supported by grothmult_q_double yet
-        parabolic = None
         mult = None
 
     try:
         argv = _build_argv(prog, perms_raw, ascode=ascode, coprod=coprod,
                            display_positive=display_positive,
-                           mixed_var=mixed_var, parabolic=parabolic, mult=mult)
+                           mixed_var=mixed_var, parabolic=parabolic, mult=mult,
+                           simplify=simplify)
     except ValueError as e:
         _log_access(flavor, None, status="reject", error=str(e))
         return jsonify({"ok": False, "error": str(e)}), 400

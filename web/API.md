@@ -37,7 +37,8 @@ frame-ancestors` header on the server).
 | `coprod`           | boolean | `false` | Compute the coproduct of a single permutation along a split index list. Only honoured for `py`/`double`. With `coprod=true`, `perms` is one permutation followed by `-` followed by the split indices, e.g. `"1 4 2 3 - 1 2"`. |
 | `display_positive` | boolean | `false` | (`double`/`q_double` only) Solve a MILP to display coefficients in the root-positive form. Slower. |
 | `mixed_var`        | boolean | `false` | (`double`/`groth_double`/`q_double`/`groth_q_double` only) Use two variable sets `y`, `z` instead of just `y`. |
-| `parabolic`        | string  | `""`    | (`q`/`q_double` only) Space-separated positive integers giving the simple-reflection generators of the parabolic subgroup, e.g. `"1 3"`. Empty = non-parabolic. |
+| `parabolic`        | string  | `""`    | (`q`/`groth_q`/`q_double`/`groth_q_double` only) Space-separated block sizes of the parabolic subgroup, e.g. `"2 2"` for `Gr(2,4)` or `"1 2 1"` for `Fl(1,3;4)`. Input permutations must be increasing on each block (minimal coset representatives). Empty = full flag variety. |
+| `simplify`         | boolean | `false` | (`groth_double`/`groth_q_double` only) Print coefficients in cancelled form `numer / prod (1 + β*y_i)**e` instead of as computed. Slower. |
 | `mult`             | string  | `""`    | (Disabled by default on this host for security.) Polynomial factor parsed by SymPy. |
 
 ### Permutation input rules (when `ascode=false`)
@@ -54,12 +55,16 @@ a Lehmer code (which has no such constraint), set `ascode=true`.
 | `coprod`           |  ✓   |    —    |    ✓     |       —        |  —  |     —     |     —      |        —         |
 | `display_positive` |  —   |    —    |    ✓     |       —        |  —  |     —     |     ✓      |        —         |
 | `mixed_var`        |  —   |    —    |    ✓     |       ✓        |  —  |     —     |     ✓      |        ✓         |
-| `parabolic`        |  —   |    —    |    —     |       —        |  ✓  |     —     |     ✓      |        —         |
+| `parabolic`        |  —   |    —    |    —     |       —        |  ✓  |     ✓     |     ✓      |        ✓         |
+| `simplify`         |  —   |    —    |    —     |       ✓        |  —  |     —     |     —      |        ✓         |
 
 Unsupported options are silently ignored for that flavor.  The `groth_q` and `groth_q_double`
 flavors (quantum Grothendieck polynomials) use a conjectural quantum K-theoretic Pieri rule; their
 coefficients are polynomials in the quantum parameters `q_i` and `β` (and rational in `y` for
-`groth_q_double`).
+`groth_q_double`).  With `parabolic`, `q`/`q_double` use the Peterson--Woodward comparison
+(quantum cohomology) while `groth_q`/`groth_q_double` project by Kato's ring homomorphism
+`QK_T(G/B) -> QK_T(G/P)` (arXiv:1906.09343); for the latter the input permutations must be
+minimal coset representatives or the request is rejected.
 
 ### Limits
 
@@ -148,6 +153,13 @@ curl -X POST https://schubmult.pythonanywhere.com/api/compute \
   -d '{"flavor":"q","perms":"3 1 2 - 2 1 3","parabolic":"1"}'
 ```
 
+### Quantum Grothendieck product in QK(Gr(2,4))
+```bash
+curl -X POST https://schubmult.pythonanywhere.com/api/compute \
+  -H 'Content-Type: application/json' \
+  -d '{"flavor":"groth_q","perms":"1 3 2 4 - 2 4 1 3","parabolic":"2 2"}'
+```
+
 ### Quantum Grothendieck product
 ```bash
 curl -X POST https://schubmult.pythonanywhere.com/api/compute \
@@ -204,7 +216,7 @@ print(data["stdout"])
 | 400  | Too many integers                                    | `Too many integers (50); limit is 24 per request.`   |
 | 400  | Missing `-` separator (and not `coprod`)             | `Need at least two permutations separated by '-'.`   |
 | 400  | Tokens are not a real permutation (and not `ascode`) | `Permutation #1 (3 1 4) is not a permutation of 1..3 ...` |
-| 400  | Bad parabolic generator                              | `Parabolic generator 0 out of range [1, 64].`        |
+| 400  | Bad parabolic block size                             | `Parabolic block size 0 out of range [1, 64].`       |
 | 200, `timed_out=true` | Computation exceeded the timeout       | `stderr` may contain partial diagnostics.            |
 
 ---

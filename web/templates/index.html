@@ -92,12 +92,13 @@
     <label id="sm-coprod-label"><input type="checkbox" id="sm-coprod"> Coproduct (one perm + split index list)</label>
     <label id="sm-positive-label"><input type="checkbox" id="sm-positive"> Display positive (double / q_double)</label>
     <label id="sm-mixedvar-label"><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double / q_double / groth_double / groth_q_double)</label>
+    <label id="sm-simplify-label"><input type="checkbox" id="sm-simplify"> Simplify coefficients (groth_double / groth_q_double only; slower)</label>
   </div>
 
   <div class="row" id="sm-parabolic-row">
-    <label for="sm-parabolic">Parabolic generators (schubmult_q / schubmult_q_double only):</label>
-    <input type="text" id="sm-parabolic" placeholder="e.g. 1 3">
-    <div class="hint">Space-separated positive integers. Leave blank for non-parabolic.</div>
+    <label for="sm-parabolic">Parabolic block sizes (q / groth_q / q_double / groth_q_double):</label>
+    <input type="text" id="sm-parabolic" placeholder="e.g. 2 2">
+    <div class="hint">Space-separated block sizes of the parabolic subgroup, e.g. <code>2 2</code> for Gr(2,4). Permutations must be increasing on each block. Leave blank for the full flag variety.</div>
   </div>
 
   {% if enable_mult %}
@@ -141,14 +142,14 @@
   // applicable is disabled and unchecked (greyed out) rather than just
   // silently ignored server-side.
   const FLAVOR_CAPS = {
-    py:           { ascode: true, coprod: true,  display_positive: false, mixed_var: false, parabolic: false },
-    groth:        { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: false },
-    double:       { ascode: true, coprod: true,  display_positive: true,  mixed_var: true,  parabolic: false },
-    groth_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false },
-    q:            { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true },
-    groth_q:      { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: false },
-    q_double:     { ascode: true, coprod: false, display_positive: true,  mixed_var: true,  parabolic: true },
-    groth_q_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false },
+    py:           { ascode: true, coprod: true,  display_positive: false, mixed_var: false, parabolic: false, simplify: false },
+    groth:        { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: false, simplify: false },
+    double:       { ascode: true, coprod: true,  display_positive: true,  mixed_var: true,  parabolic: false, simplify: false },
+    groth_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false, simplify: true },
+    q:            { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false },
+    groth_q:      { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false },
+    q_double:     { ascode: true, coprod: false, display_positive: true,  mixed_var: true,  parabolic: true,  simplify: false },
+    groth_q_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: true,  simplify: true },
   };
 
   function setEnabled(input, label, enabled) {
@@ -167,6 +168,7 @@
       (!caps.positiveNeedsMixedVar || $('sm-mixedvar').checked);
     setEnabled($('sm-positive'), $('sm-positive-label'), positiveEnabled);
     setEnabled($('sm-parabolic'), $('sm-parabolic-row'), caps.parabolic);
+    setEnabled($('sm-simplify'), $('sm-simplify-label'), caps.simplify);
   }
 
   $('sm-flavor').addEventListener('change', applyFlavorCaps);
@@ -191,6 +193,7 @@
       display_positive: $('sm-positive').checked,
       mixed_var: $('sm-mixedvar').checked,
       parabolic: $('sm-parabolic').value.trim(),
+      simplify: $('sm-simplify').checked,
       mult: $('sm-mult').value.trim(),
     };
 
