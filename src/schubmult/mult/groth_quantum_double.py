@@ -88,6 +88,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 from schubmult.utils.schub_lib import compute_vpathdicts
 
 __all__ = [
+    "apply_kato",
     "groth_elem_sym_poly_q",
     "grothmult_q_double",
     "grothmult_q_double_dict",
@@ -375,6 +376,55 @@ def grothmult_q_double_dict(perm_dict1, perm_dict2, var2=None, var3=None, beta=N
     for v, coeff in perm_dict2.items():
         ret = add_perm_dict(ret, {w: coeff * value for w, value in grothmult_q_double(perm_dict1, v, var2, var3, beta, q_var).items()})
     return ret
+
+
+def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None):
+    r"""Project a full-flag quantum K product onto ``QK_T(G/P)`` for the parabolic ``parabolic_index``.
+
+    Kato (arXiv:1906.09343): ``QK_T(G/B) -> QK_T(G/P)``, ``O^w -> O^{w W_P}``, ``q_i -> 1`` for
+    ``i`` in ``P``, is a ring homomorphism -- unlike quantum cohomology, where the comparison is
+    Peterson--Woodward's term-by-term lift (``quantum_double.apply_peterson_woodward``).  So the
+    projection is the naive one: specialize the parabolic ``q``'s to ``1``, replace each ``w`` by
+    the minimal representative of ``w W_P`` (sort its values on each block of positions), and add.
+    Surviving ``q_i`` are reindexed consecutively as in ``apply_peterson_woodward``.
+
+    Args:
+        coeff_dict: Full-flag coefficient dict ``{Permutation: coeff}``.
+        parabolic_index: Sorted 1-indexed simple reflections ``s_i`` generating ``W_P``.
+        q_var: Quantum parameter generating set.
+        n: Ambient ``S_n``; terms indexed by longer permutations are dropped.  Defaults to
+            ``parabolic_index[-1] + 1``.
+    """
+    from schubmult.utils.perm_utils import count_less_than
+
+    if q_var is None:
+        q_var = _vars.q_var
+    if n is None:
+        n = parabolic_index[-1] + 1
+    parabolic_index = sorted(parabolic_index)
+    blocks = []
+    start = 1
+    for i in range(1, n + 1):
+        if i == n or i not in parabolic_index:
+            blocks.append((start, i))
+            start = i + 1
+    qsub = {}
+    for i in range(1, n):
+        if i in parabolic_index:
+            qsub[sympify(q_var[i])] = S.One
+        else:
+            qsub[sympify(q_var[i])] = sympify(q_var[i - count_less_than(parabolic_index, i)])
+    ret = {}
+    for w, val in coeff_dict.items():
+        w = Permutation(w)
+        if len(w) > n:
+            continue
+        lst = list(w) + list(range(len(w) + 1, n + 1))
+        for a, b in blocks:
+            lst[a - 1 : b] = sorted(lst[a - 1 : b])
+        wp = Permutation(lst)
+        ret[wp] = ret.get(wp, S.Zero) + sympify(val).xreplace(qsub)
+    return {w: c for w, c in ret.items() if c != S.Zero}
 
 
 def quantum_elem_sym(l, k, var_x, beta, q_var=None):
