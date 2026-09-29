@@ -88,6 +88,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 from schubmult.utils.schub_lib import compute_vpathdicts
 
 __all__ = [
+    "apply_kato",
     "groth_elem_sym_poly_q",
     "grothmult_q_double",
     "grothmult_q_double_dict",
@@ -375,6 +376,72 @@ def grothmult_q_double_dict(perm_dict1, perm_dict2, var2=None, var3=None, beta=N
     for v, coeff in perm_dict2.items():
         ret = add_perm_dict(ret, {w: coeff * value for w, value in grothmult_q_double(perm_dict1, v, var2, var3, beta, q_var).items()})
     return ret
+
+
+def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None, beta=None):
+    r"""Project a full-flag quantum K product onto ``QK_T(G/P)`` for the parabolic ``parabolic_index``.
+
+    Kato (arXiv:1906.09343, Theorem 2.19): ``QK_T(G/B) -> QK_T(G/P)``, ``O^w -> O^{[w]_P}`` with
+    ``[w]_P`` the minimal representative of ``w W_P``, ``q_j -> 1`` for ``j`` in ``P``, is a ring
+    homomorphism -- unlike quantum cohomology, where the comparison is Peterson--Woodward's
+    term-by-term lift (``quantum_double.apply_peterson_woodward``).  That statement is at
+    ``beta = -1``.  Conjugating by the regrading isomorphisms ``G^{(beta)}_w = (-beta)^{l(w)} G^{(-1)}_w``,
+    ``q_i = (-beta)^{deg q_i} q_i^{(-1)}`` on both sides gives the ``beta``-homogeneous form
+    implemented here, valid identically in ``beta``:
+
+        G_w      ->  (-beta)^{l([w]_P) - l(w)} G_{[w]_P},
+        q_j      ->  beta^{-2}                              (j in P),
+        q_i      ->  (-beta)^{deg_P(q_i) - 2} q_{i'}        (i not in P),
+
+    where ``deg_P(q_i)`` is the ``c_1`` degree of the corresponding curve class of ``G/P``, the sum
+    of the sizes of the two blocks meeting at ``i``, and ``i'`` reindexes the surviving ``q``
+    consecutively as in ``apply_peterson_woodward``.  ``coeff_dict`` should be a product of
+    Schubert classes of ``G/P`` (minimal coset representatives): its image is then polynomial in
+    ``beta`` (the ``beta^{-1}`` of individual terms cancel) and is the ``QK_T(G/P)`` product,
+    homogeneous for ``deg beta = -1``, ``deg q_i = deg_P(q_i)``.  The map is defined on all of
+    ``QK_T(Fl_n)`` but a non-minimal ``G_w`` is not a class of ``G/P``; its image carries
+    ``beta^{-1}``.
+
+    Args:
+        coeff_dict: Full-flag coefficient dict ``{Permutation: coeff}``.
+        parabolic_index: 1-indexed simple reflections ``s_j`` generating ``W_P``.
+        q_var: Quantum parameter generating set.
+        n: Ambient ``S_n``; terms indexed by longer permutations are dropped.  Defaults to
+            ``parabolic_index[-1] + 1``.
+        beta: K-theory parameter; defaults to ``schubmult.abc.beta``.
+    """
+    if q_var is None:
+        q_var = _vars.q_var
+    if beta is None:
+        beta = _default_beta
+    beta = sympify(beta)
+    if n is None:
+        n = parabolic_index[-1] + 1
+    parabolic_index = sorted(parabolic_index)
+    block_sizes = []
+    size = 0
+    for i in range(1, n + 1):
+        size += 1
+        if i == n or i not in parabolic_index:
+            block_sizes.append(size)
+            size = 0
+    qsub = {}
+    boundary = 0
+    for k, size in enumerate(block_sizes[:-1]):
+        boundary += size
+        deg = size + block_sizes[k + 1]
+        qsub[sympify(q_var[boundary])] = (-beta) ** (deg - 2) * sympify(q_var[k + 1])
+    for j in parabolic_index:
+        qsub[sympify(q_var[j])] = beta ** (-2)
+    ret = {}
+    for w, val in coeff_dict.items():
+        w = Permutation(w)
+        if len(w) > n:
+            continue
+        wp = w.min_coset_rep(*parabolic_index)
+        scale = (-beta) ** (wp.inv - w.inv)
+        ret[wp] = ret.get(wp, S.Zero) + scale * sympify(val).xreplace(qsub)
+    return {w: c for w, c in ret.items() if c != S.Zero}
 
 
 def quantum_elem_sym(l, k, var_x, beta, q_var=None):
