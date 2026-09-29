@@ -1,7 +1,8 @@
 """Kato's projection QK(Fl_n) -> QK(Gr(m,n)) vs EquivCalc comin_qkmult / comin_qktmult.
 
 Kato (arXiv:1906.09343): O^w -> O^{w W_P}, q_i -> 1 (i != m), q_m -> q is a ring homomorphism.
-schubmult side: grothmult_q / grothmult_q_double at beta = -1, truncated to S_n, then projected.
+schubmult side: grothmult_q / grothmult_q_double, projected by ``apply_kato`` (beta-homogeneous
+form), then beta = -1.
 Usage: python benchmark_qk_kato.py m n [--equivariant]
 """
 import itertools
@@ -15,8 +16,7 @@ import sympy
 from schubmult import GeneratingSet, Permutation
 from schubmult.mult.groth_double import normalize_coeff
 from schubmult.mult.groth_quantum import grothmult_q
-from schubmult.mult.groth_quantum_double import grothmult_q_double
-from schubmult.symbolic import sympify
+from schubmult.mult.groth_quantum_double import apply_kato, grothmult_q_double
 
 MAPLE = "/mnt/c/Program Files/Maple 2026/bin.X86_64_WINDOWS/cmaple.exe"
 EQUIVCALC = "C:/Users/matth/equivcalc/EquivCalc-1.0.1/equivcalc"
@@ -43,11 +43,6 @@ def grassmannian_perms(m, n):
         rest = [i for i in range(1, n + 1) if i not in S]
         out.append(tuple(list(S) + rest))
     return out
-
-
-def coset_rep(w, m, n):
-    w = list(w) + list(range(len(w) + 1, n + 1))
-    return tuple(sorted(w[:m]) + sorted(w[m:]))
 
 
 def run_maple(m, n, pairs, equivariant):
@@ -114,22 +109,21 @@ def schubmult_to_t(coeff_y, n):
 
 def schubmult_kato(u, v, m, n, equivariant):
     q = sympy.Symbol("q")
-    qsubs = {sympy.Symbol(f"q_{i}"): (q if i == m else 1) for i in range(1, n)}
     if equivariant:
         y = GeneratingSet("y")
         d = grothmult_q_double({Permutation(list(u)): 1}, Permutation(list(v)), y, y)
-        d = {w: normalize_coeff(c, y) for w, c in d.items()}
     else:
         d = grothmult_q({Permutation(list(u)): 1}, Permutation(list(v)))
+    d = apply_kato(d, [i for i in range(1, n) if i != m], n=n)
+    if equivariant:
+        d = {w: normalize_coeff(c, y) for w, c in d.items()}
     out = {}
     for w, c in d.items():
+        c = sympy.sympify(str(c)).subs(sympy.Symbol("β"), -1).subs(sympy.Symbol("beta"), -1).subs(sympy.Symbol("q_1"), q)
         w = tuple(w)
-        if len(w) > n:
-            continue
-        c = sympy.sympify(str(c)).subs(sympy.Symbol("β"), -1).subs(sympy.Symbol("beta"), -1).subs(qsubs)
-        wp = coset_rep(w, m, n)
-        out[wp] = out.get(wp, 0) + c
-    return {w: sympy.cancel(c) for w, c in out.items() if sympy.cancel(c) != 0}
+        w = w + tuple(range(len(w) + 1, n + 1))
+        out[w] = c
+    return {w: c for w, c in out.items() if c != 0}
 
 
 def main():

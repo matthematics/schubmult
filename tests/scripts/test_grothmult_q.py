@@ -81,8 +81,39 @@ def test_with_same_args_exec(capsys, json_file):
     assert_expansion_good(perms, ret_dict)
 
 
-def test_parabolic_not_supported(capsys):
+def test_parabolic_rejects_non_minimal_coset_rep(capsys):
     from schubmult._scripts.grothmult_q import main
 
-    assert main(["grothmult_q", "2", "1", "-", "2", "1", "--parabolic", "2"]) == 1
-    assert "not supported" in capsys.readouterr().out
+    assert main(["grothmult_q", "2", "1", "3", "-", "2", "1", "3", "--parabolic", "2", "1"]) == 1
+    assert "minimal coset representative" in capsys.readouterr().out
+    assert main(["grothmult_q", "4", "1", "2", "3", "-", "2", "1", "3", "--parabolic", "1", "2"]) == 1
+
+
+def test_parabolic_kato_sl3(capsys):
+    """Kato (arXiv:1906.09343, Section 3), ``G = SL(3)``, ``P`` with ``W_P = <s_2>`` (blocks 1, 2), non-equivariant:
+    ``O^{s_1} * O^{s_1} = O^{s_2 s_1}`` in ``QK(P^2)``; ``beta``-homogeneous form ``G_{213}^2 = G_{312}``.
+    """
+    from schubmult import Permutation
+    from schubmult._scripts.grothmult_q import main
+
+    ret = main(["grothmult_q", "2", "1", "3", "-", "2", "1", "3", "--parabolic", "1", "2", "--display-mode", "raw"])
+    assert {Permutation(list(k)): v for k, v in ret.items()} == {Permutation([3, 1, 2]): 1}
+
+
+def test_parabolic_kato_grassmannian_pieri():
+    """``O_1 * O_{21} = O_{22} + q O_0 - q O_1`` in ``QK(Gr(2,4))`` (Buch--Mihalcea), via Kato's projection
+    from ``QK(Fl_4)`` with blocks (2, 2); ``beta``-homogeneous with ``deg beta = -1``, ``deg q = 4``.
+    """
+    from schubmult import Permutation
+    from schubmult._scripts.grothmult_q import main
+    from schubmult.abc import beta
+    from schubmult.symbolic import expand, sympify
+    from schubmult.symbolic.poly.schub_poly import _vars
+
+    q = _vars.q_var[1]
+    ret = main(["grothmult_q", "1", "3", "2", "4", "-", "2", "4", "1", "3", "--parabolic", "2", "2", "--display-mode", "raw"])
+    ret = {Permutation(list(k)): sympify(v) for k, v in ret.items()}
+    expected = {Permutation([3, 4, 1, 2]): sympify(1), Permutation([1, 2, 3, 4]): q, Permutation([1, 3, 2, 4]): beta * q}
+    assert set(ret) == set(expected)
+    for w in expected:
+        assert expand(ret[w] - expected[w]) == 0

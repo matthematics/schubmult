@@ -14,6 +14,7 @@ from schubmult.mult.groth_quantum import grothmult_q
 from schubmult.mult.groth_quantum_double import apply_kato
 from schubmult.symbolic import expand, sympify
 from schubmult.utils.argparse import schub_argparse
+from schubmult.utils.perm_utils import is_parabolic
 
 
 def _parabolic_blocks(blocks):
@@ -25,6 +26,16 @@ def _parabolic_blocks(blocks):
         parabolic_index += list(range(start + 1, end))
         start = end
     return parabolic_index, start
+
+
+def _check_parabolic_inputs(perms, parabolic_index, n):
+    """Print a message and return ``False`` unless every input indexes a Schubert class of ``G/P``:
+    a minimal coset representative of ``S_n / W_P`` (increasing on each block)."""
+    for perm in perms:
+        if perm.inv > 0 and (max(perm) > n or not is_parabolic(perm, parabolic_index)):
+            print(f"{perm} is not a minimal coset representative for --parabolic blocks (must be increasing on each block of positions and lie in S_{n}).")
+            return False
+    return True
 
 
 def _display_full(coeff_dict, args, formatter):
@@ -48,10 +59,12 @@ def main(argv=None):
     and prints the resulting coefficient dictionary ``{Permutation: coefficient}``
     (coefficients are polynomials in the quantum parameters ``q_i`` and the K-theory
     parameter ``beta``). With ``--parabolic g1 g2 ...`` (block sizes of a parabolic subgroup
-    ``S_{g1} x S_{g2} x ...``), the result is projected to ``QK(G/P)`` by Kato's ring
-    homomorphism (`schubmult.mult.groth_quantum_double.apply_kato`). ``--mult`` is not yet
-    supported and causes an early exit. Returns the raw result dict when the caller passes a
-    ``None`` formatter (e.g. from tests); otherwise prints and returns ``None``.
+    ``S_{g1} x S_{g2} x ...``), the result is projected to ``QK(G/P)`` by the ``beta``-homogeneous
+    form of Kato's ring homomorphism (`schubmult.mult.groth_quantum_double.apply_kato`); the input
+    permutations must then be minimal coset representatives (increasing on each block), since only
+    those index Schubert classes of ``G/P``. ``--mult`` is not yet supported and causes an early
+    exit. Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
+    tests); otherwise prints and returns ``None``.
     """
     if argv is None:
         argv = sys.argv
@@ -78,6 +91,9 @@ def main(argv=None):
             perms = [uncode(perm) for perm in perms]
         else:
             perms = [Permutation(perm) for perm in perms]
+
+        if parabolic_index and not _check_parabolic_inputs(perms, parabolic_index, n):
+            return 1
 
         coeff_dict = {perms[0]: 1}
         for perm in perms[1:]:

@@ -84,9 +84,33 @@ def test_with_same_args_exec(capsys, json_file):
     assert_expansion_good(perms, ret_dict, same)
 
 
-@pytest.mark.parametrize("flag", [["--display-positive", "--mixed-var"], ["--parabolic", "2"], ["--nil-hecke", "2"]])
+@pytest.mark.parametrize("flag", [["--display-positive", "--mixed-var"], ["--nil-hecke", "2"]])
 def test_unsupported_options_refused(capsys, flag):
     from schubmult._scripts.grothmult_q_double import main
 
     assert main(["grothmult_q_double", "2", "1", "-", "2", "1", *flag]) == 1
     assert "not supported" in capsys.readouterr().out
+
+
+def test_parabolic_kato_sl3_equivariant():
+    """Kato (arXiv:1906.09343, Section 3), ``G = SL(3)``, ``W_P = <s_2>``:
+    ``O^{s_1} * O^{s_1} = (1 - e^{alpha_2}) O^{s_1} + e^{alpha_2} O^{s_2 s_1}`` in ``QK_T(P^2)``.
+    In schubmult's variables ``e^{alpha_2} = (1 + beta y_1) / (1 + beta y_2)`` and
+    ``1 - e^{alpha_2} = (y_1 - y_2) / (1 + beta y_2)`` up to the ``beta``-regrading.
+    """
+    from schubmult import GeneratingSet, Permutation
+    from schubmult._scripts.grothmult_q_double import main
+    from schubmult.abc import beta
+    from schubmult.mult.groth_double import normalize_coeff
+    from schubmult.symbolic import expand, sympify
+
+    y = GeneratingSet("y")
+    ret = main(["grothmult_q_double", "2", "1", "3", "-", "2", "1", "3", "--parabolic", "1", "2", "--display-mode", "raw"])
+    ret = {Permutation(list(k)): normalize_coeff(sympify(v), y) for k, v in ret.items()}
+    expected = {
+        Permutation([2, 1, 3]): (y[1] - y[2]) / (1 + beta * y[2]),
+        Permutation([3, 1, 2]): (1 + beta * y[1]) / (1 + beta * y[2]),
+    }
+    assert set(ret) == set(expected)
+    for w in expected:
+        assert expand((ret[w] - expected[w]) * (1 + beta * y[2])) == 0

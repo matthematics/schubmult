@@ -378,52 +378,69 @@ def grothmult_q_double_dict(perm_dict1, perm_dict2, var2=None, var3=None, beta=N
     return ret
 
 
-def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None):
+def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None, beta=None):
     r"""Project a full-flag quantum K product onto ``QK_T(G/P)`` for the parabolic ``parabolic_index``.
 
-    Kato (arXiv:1906.09343): ``QK_T(G/B) -> QK_T(G/P)``, ``O^w -> O^{w W_P}``, ``q_i -> 1`` for
-    ``i`` in ``P``, is a ring homomorphism -- unlike quantum cohomology, where the comparison is
-    Peterson--Woodward's term-by-term lift (``quantum_double.apply_peterson_woodward``).  So the
-    projection is the naive one: specialize the parabolic ``q``'s to ``1``, replace each ``w`` by
-    the minimal representative of ``w W_P`` (sort its values on each block of positions), and add.
-    Surviving ``q_i`` are reindexed consecutively as in ``apply_peterson_woodward``.
+    Kato (arXiv:1906.09343, Theorem 2.19): ``QK_T(G/B) -> QK_T(G/P)``, ``O^w -> O^{[w]_P}`` with
+    ``[w]_P`` the minimal representative of ``w W_P``, ``q_j -> 1`` for ``j`` in ``P``, is a ring
+    homomorphism -- unlike quantum cohomology, where the comparison is Peterson--Woodward's
+    term-by-term lift (``quantum_double.apply_peterson_woodward``).  That statement is at
+    ``beta = -1``.  Conjugating by the regrading isomorphisms ``G^{(beta)}_w = (-beta)^{l(w)} G^{(-1)}_w``,
+    ``q_i = (-beta)^{deg q_i} q_i^{(-1)}`` on both sides gives the ``beta``-homogeneous form
+    implemented here, valid identically in ``beta``:
+
+        G_w      ->  (-beta)^{l([w]_P) - l(w)} G_{[w]_P},
+        q_j      ->  beta^{-2}                              (j in P),
+        q_i      ->  (-beta)^{deg_P(q_i) - 2} q_{i'}        (i not in P),
+
+    where ``deg_P(q_i)`` is the ``c_1`` degree of the corresponding curve class of ``G/P``, the sum
+    of the sizes of the two blocks meeting at ``i``, and ``i'`` reindexes the surviving ``q``
+    consecutively as in ``apply_peterson_woodward``.  ``coeff_dict`` should be a product of
+    Schubert classes of ``G/P`` (minimal coset representatives): its image is then polynomial in
+    ``beta`` (the ``beta^{-1}`` of individual terms cancel) and is the ``QK_T(G/P)`` product,
+    homogeneous for ``deg beta = -1``, ``deg q_i = deg_P(q_i)``.  The map is defined on all of
+    ``QK_T(Fl_n)`` but a non-minimal ``G_w`` is not a class of ``G/P``; its image carries
+    ``beta^{-1}``.
 
     Args:
         coeff_dict: Full-flag coefficient dict ``{Permutation: coeff}``.
-        parabolic_index: Sorted 1-indexed simple reflections ``s_i`` generating ``W_P``.
+        parabolic_index: 1-indexed simple reflections ``s_j`` generating ``W_P``.
         q_var: Quantum parameter generating set.
         n: Ambient ``S_n``; terms indexed by longer permutations are dropped.  Defaults to
             ``parabolic_index[-1] + 1``.
+        beta: K-theory parameter; defaults to ``schubmult.abc.beta``.
     """
-    from schubmult.utils.perm_utils import count_less_than
-
     if q_var is None:
         q_var = _vars.q_var
+    if beta is None:
+        beta = _default_beta
+    beta = sympify(beta)
     if n is None:
         n = parabolic_index[-1] + 1
     parabolic_index = sorted(parabolic_index)
-    blocks = []
-    start = 1
+    block_sizes = []
+    size = 0
     for i in range(1, n + 1):
+        size += 1
         if i == n or i not in parabolic_index:
-            blocks.append((start, i))
-            start = i + 1
+            block_sizes.append(size)
+            size = 0
     qsub = {}
-    for i in range(1, n):
-        if i in parabolic_index:
-            qsub[sympify(q_var[i])] = S.One
-        else:
-            qsub[sympify(q_var[i])] = sympify(q_var[i - count_less_than(parabolic_index, i)])
+    boundary = 0
+    for k, size in enumerate(block_sizes[:-1]):
+        boundary += size
+        deg = size + block_sizes[k + 1]
+        qsub[sympify(q_var[boundary])] = (-beta) ** (deg - 2) * sympify(q_var[k + 1])
+    for j in parabolic_index:
+        qsub[sympify(q_var[j])] = beta ** (-2)
     ret = {}
     for w, val in coeff_dict.items():
         w = Permutation(w)
         if len(w) > n:
             continue
-        lst = list(w) + list(range(len(w) + 1, n + 1))
-        for a, b in blocks:
-            lst[a - 1 : b] = sorted(lst[a - 1 : b])
-        wp = Permutation(lst)
-        ret[wp] = ret.get(wp, S.Zero) + sympify(val).xreplace(qsub)
+        wp = w.min_coset_rep(*parabolic_index)
+        scale = (-beta) ** (wp.inv - w.inv)
+        ret[wp] = ret.get(wp, S.Zero) + scale * sympify(val).xreplace(qsub)
     return {w: c for w, c in ret.items() if c != S.Zero}
 
 

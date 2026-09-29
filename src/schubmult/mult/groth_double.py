@@ -698,13 +698,21 @@ def normalize_coeff(expr, var2, beta=None):
             clear = clear * g ** (-k)
     back = {t: S.One + b * s for s, t in atoms.items()}
     numer = expand(expand(laurent * clear).xreplace(back))
+    bpow = -mins[b]
+    if bpow > 0:
+        # after passing back to y the numerator may carry a common power of beta; cancel it against the denominator
+        common = min(int(term.as_powers_dict().get(b, 0)) for term in (numer.args if numer.is_Add else (numer,)))
+        common = min(common, bpow)
+        if common > 0:
+            numer = expand(numer / b**common)
+            bpow -= common
     den = S.One
     for s, t in atoms.items():
         k = -mins[t]
         if k > 0:
             den = den * (S.One + b * s) ** k
-    if mins[b] < 0:
-        den = den * b ** (-mins[b])
+    if bpow > 0:
+        den = den * b**bpow
     return numer / den
 
 

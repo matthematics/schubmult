@@ -11,7 +11,7 @@ Example:
 import sys
 
 from schubmult import GeneratingSet, Permutation, uncode
-from schubmult._scripts.grothmult_q import _parabolic_blocks
+from schubmult._scripts.grothmult_q import _check_parabolic_inputs, _parabolic_blocks
 from schubmult.mult.groth_double import normalize_coeff
 from schubmult.mult.groth_quantum_double import apply_kato, grothmult_q_double
 from schubmult.symbolic import S
@@ -27,9 +27,11 @@ def main(argv=None):
     coefficient dictionary ``{Permutation: coefficient}`` in the ``y``/``z`` coefficient
     variables and quantum parameters ``q_i``. With ``--simplify`` coefficients are printed in
     cancelled form ``numer / prod (1 + beta*y_i)**e``. With ``--parabolic g1 g2 ...`` (block
-    sizes of a parabolic subgroup) the result is projected to ``QK_T(G/P)`` by Kato's ring
-    homomorphism (`schubmult.mult.groth_quantum_double.apply_kato`). ``--display-positive``,
-    ``--nil-hecke``, and ``--mult`` are not yet supported and cause an early exit.
+    sizes of a parabolic subgroup) the result is projected to ``QK_T(G/P)`` by the
+    ``beta``-homogeneous form of Kato's ring homomorphism
+    (`schubmult.mult.groth_quantum_double.apply_kato`); inputs must be minimal coset
+    representatives. ``--display-positive``, ``--nil-hecke``, and ``--mult`` are not yet supported
+    and cause an early exit.
     Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
     tests); otherwise prints and returns ``None``.
     """
@@ -77,11 +79,14 @@ def main(argv=None):
                     perms[i] = Permutation([])
                 perms[i] = Permutation(perms[i])
 
+        parabolic_index, n = _parabolic_blocks(args.parabolic)
+        if parabolic_index and not _check_parabolic_inputs(perms, parabolic_index, n):
+            return 1
+
         coeff_dict = {perms[0]: 1}
         for perm in perms[1:]:
             coeff_dict = grothmult_q_double(coeff_dict, perm, var2, var3)
 
-        parabolic_index, n = _parabolic_blocks(args.parabolic)
         if parabolic_index:
             coeff_dict = apply_kato(coeff_dict, parabolic_index, n=n)
 
