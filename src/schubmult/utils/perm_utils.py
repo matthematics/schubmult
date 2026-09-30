@@ -5,10 +5,19 @@ Most functions here are used by the multiplication kernels in `schubmult.mult` a
 ``{key: coeff}`` expansions.
 """
 
+from __future__ import annotations
+
 from bisect import bisect_left
+from collections.abc import Hashable, Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, TypeVar
+
+if TYPE_CHECKING:
+    from schubmult.combinatorics.permutation import Permutation
+
+K = TypeVar("K", bound=Hashable)
 
 
-def permtrim_list(perm):
+def permtrim_list(perm: list[int]) -> list[int]:
     """Strip trailing fixed points ``perm[L-1] == L`` from a list in place and return it."""
     L = len(perm)
     while L > 0 and perm[-1] == L:
@@ -16,7 +25,7 @@ def permtrim_list(perm):
     return perm
 
 
-def has_bruhat_descent(perm, i, j):
+def has_bruhat_descent(perm: Permutation | Sequence[int], i: int, j: int) -> bool:
     """Check if perm has a Bruhat descent from position i to j.
 
     Optimized version assuming perm is a Permutation object with direct indexing.
@@ -33,7 +42,7 @@ def has_bruhat_descent(perm, i, j):
     return True
 
 
-def count_bruhat(perm, i, j):
+def count_bruhat(perm: Permutation | Sequence[int], i: int, j: int) -> int:
     """Signed length change ``inv(perm * t_{ij}) - inv(perm)`` for the transposition of positions ``i < j``."""
     up_amount = 0
     if perm[i] < perm[j]:
@@ -48,7 +57,7 @@ def count_bruhat(perm, i, j):
     return up_amount
 
 
-def has_bruhat_ascent(perm, i, j):
+def has_bruhat_ascent(perm: Permutation | Sequence[int], i: int, j: int) -> bool:
     """Check if perm has a Bruhat ascent from position i to j.
 
     Optimized version assuming perm is a Permutation object with direct indexing.
@@ -65,7 +74,7 @@ def has_bruhat_ascent(perm, i, j):
     return True
 
 
-def omega(i, qv):
+def omega(i: int, qv: Sequence[int]) -> int:
     """``i``-th entry (1-indexed) of the Cartan-matrix image of the q-exponent vector ``qv``:
     ``2 qv[i] - qv[i-1] - qv[i+1]`` with boundary conventions. Used to convert quantum ``q``
     monomials to weights in the parabolic quantum product.
@@ -84,14 +93,14 @@ def omega(i, qv):
     return 2 * qv[i] - qv[i - 1] - qv[i + 1]
 
 
-def sg(i, w):
+def sg(i: int, w: Permutation | Sequence[int]) -> int:
     """1 if ``w`` has a descent at 0-indexed position ``i``, else 0."""
     if i >= len(w) - 1 or w[i] < w[i + 1]:
         return 0
     return 1
 
 
-def count_less_than(arr, val):
+def count_less_than(arr: Sequence[int], val: int) -> int:
     """Number of leading entries of the sorted list ``arr`` that are ``< val``."""
     ct = 0
     i = 0
@@ -101,33 +110,33 @@ def count_less_than(arr, val):
     return ct
 
 
-def artin_sequences(n):
+def artin_sequences(n: int) -> set[tuple[int, ...]]:
     """All tuples ``(a_1, ..., a_n)`` with ``0 <= a_i <= n + 1 - i`` (Lehmer codes of ``S_{n+1}``)."""
     if n == 0:
         return {()}
     old_seqs = artin_sequences(n - 1)
 
-    ret = set()
+    ret: set[tuple[int, ...]] = set()
     for seq in old_seqs:
         for i in range(n + 1):
             ret.add((i, *seq))
     return ret
 
 
-def weak_compositions(length, max_degree):
+def weak_compositions(length: int, max_degree: int) -> set[tuple[int, ...]]:
     """All tuples of the given ``length`` with entries in ``0..max_degree``."""
     if length == 0:
         return {()}
     old_seqs = weak_compositions(length - 1, max_degree)
 
-    ret = set()
+    ret: set[tuple[int, ...]] = set()
     for seq in old_seqs:
         for i in range(max_degree + 1):
             ret.add((i, *seq))
     return ret
 
 
-def is_parabolic(w, parabolic_index):
+def is_parabolic(w: Permutation | Sequence[int], parabolic_index: Iterable[int]) -> bool:
     """Whether ``w`` has no descent at any of the (1-indexed) positions in ``parabolic_index``."""
     for i in parabolic_index:
         if sg(i - 1, w) == 1:
@@ -135,7 +144,7 @@ def is_parabolic(w, parabolic_index):
     return True
 
 
-def add_perm_dict(d1, d2):
+def add_perm_dict(d1: Mapping[K, Any], d2: Mapping[K, Any]) -> dict[K, Any]:
     """Return ``d1 + d2`` as coefficient dicts (keys merged, values added)."""
     d_ret = {**d1}
     for k, v in d2.items():
@@ -143,7 +152,7 @@ def add_perm_dict(d1, d2):
     return d_ret
 
 
-def add_perm_dict_with_coeff(d1, d2, coeff):
+def add_perm_dict_with_coeff(d1: Mapping[K, Any], d2: Mapping[K, Any], coeff: Any) -> dict[K, Any]:
     """Return ``d1 + coeff * d2`` as coefficient dicts."""
     d_ret = {**d1}
     for k, v in d2.items():
@@ -151,9 +160,9 @@ def add_perm_dict_with_coeff(d1, d2, coeff):
     return d_ret
 
 
-def p_trans(part):
+def p_trans(part: Sequence[int]) -> list[int]:
     """Conjugate (transpose) of a partition given as a weakly decreasing list; ``[0]`` for the empty partition."""
-    newpart = []
+    newpart: list[int] = []
     if len(part) == 0 or part[0] == 0:
         return [0]
     for i in range(1, part[0] + 1):
@@ -167,25 +176,25 @@ def p_trans(part):
     return newpart
 
 
-def mu_A(mu, A):
+def mu_A(mu: Sequence[int], A: Sequence[int]) -> list[int]:
     """The partition whose conjugate consists of the columns of ``mu`` indexed by ``A`` (0-indexed)."""
     mu_t = p_trans(mu)
-    mu_A_t = []
+    mu_A_t: list[int] = []
     for i in range(len(A)):
         if A[i] < len(mu_t):
             mu_A_t += [mu_t[A[i]]]
     return p_trans(mu_A_t)
 
 
-def get_cycles(perm):
+def get_cycles(perm: Permutation) -> list[tuple[int, ...]]:
     """``perm.get_cycles()``."""
     return perm.get_cycles()
 
 
-def old_code(perm):
+def old_code(perm: Sequence[int]) -> list[int]:
     """Lehmer code of a permutation list computed by successive deletion from ``[1..L]``."""
     L = len(perm)
-    ret = []
+    ret: list[int] = []
     v = list(range(1, L + 1))
     for i in range(L - 1):
         itr = bisect_left(v, perm[i])
@@ -194,23 +203,23 @@ def old_code(perm):
     return ret
 
 
-def cyclic_sort(L):
+def cyclic_sort(L: list[int]) -> list[int]:
     """Rotate the list so its maximum is last."""
     m = max(L)
     i = L.index(m)
     return L[i + 1 :] + L[: i + 1]
 
 
-def cyclic_sort_min(L):
+def cyclic_sort_min(L: list[int]) -> list[int]:
     """Rotate the list so its minimum is first."""
     m = min(L)
     i = L.index(m)
     return L[i:] + L[:i]
 
 
-def h_vector(q_vector):
+def h_vector(q_vector: Sequence[int]) -> tuple[int, ...]:
     """Positions (1-indexed) where the vector strictly increases, up to its first decrease."""
-    h = []
+    h: list[int] = []
     val = 0
     for i in range(len(q_vector)):
         val2 = q_vector[i]
@@ -222,9 +231,9 @@ def h_vector(q_vector):
     return tuple(h)
 
 
-def l_vector(q_vector):
+def l_vector(q_vector: Sequence[int]) -> tuple[int, ...]:
     """Find l_j = last position where d equals j (where d decreases from j to j-1)."""
-    l = []
+    l: list[int] = []
     val = 0
     for i in range(len(q_vector)):
         val2 = q_vector[i]
@@ -235,7 +244,7 @@ def l_vector(q_vector):
     return tuple(reversed(l))
 
 
-def tau_d(d):
+def tau_d(d: Sequence[int]) -> Permutation:
     """Partial permutation built from `h_vector`/`l_vector` of ``d`` (``tau[l_i - i] = h_i``), completed by
     ``Permutation.from_partial``.
     """
@@ -244,7 +253,7 @@ def tau_d(d):
     lv = l_vector(d)
     hv = h_vector(d)
 
-    tau = [None] * len(d)
+    tau: list[int | None] = [None] * len(d)
     for i in range(len(lv)):
         if lv[i] - i >= len(d):
             tau += [None] * (lv[i] - i - len(d) + 1)
@@ -252,14 +261,14 @@ def tau_d(d):
     return Permutation.from_partial(tau)
 
 
-def phi_d(d):
+def phi_d(d: Sequence[int]) -> Permutation:
     """Companion of `tau_d` with the shifted placement ``phi[l_i - 1 - i] = h_i``."""
     from schubmult.combinatorics.permutation import Permutation
 
     hv = h_vector(d)
     lv = l_vector(d)
 
-    phi = [None] * len(d)
+    phi: list[int | None] = [None] * len(d)
     for i in range(len(hv)):
         if lv[i] - 1 - i >= len(d):
             phi += [None] * (lv[i] - 1 - i - len(d) + 1)
@@ -267,7 +276,7 @@ def phi_d(d):
     return Permutation.from_partial(phi)
 
 
-def conjugate_weak_composition(comp):
+def conjugate_weak_composition(comp: Sequence[int]) -> tuple[int, ...]:
     """Compute the conjugate of a weak composition.
 
     The conjugate of a weak composition α = (α₁, α₂, ..., αₙ) is the weak composition
@@ -307,7 +316,7 @@ def conjugate_weak_composition(comp):
     return tuple(conjugate)
 
 
-def find_reduced_fail(word, inserted):
+def find_reduced_fail(word: Sequence[int], inserted: int) -> int | None:
     """After changing letter ``inserted`` of a word, find the other position carrying the same root
     (the letter whose deletion would make the word reduced again), or ``None``.
     """
@@ -330,14 +339,14 @@ def find_reduced_fail(word, inserted):
     return next(iter([i for i in range(len(word)) if set(perm.right_root_at(i, word=word)) == {a_start, b_start} and i != inserted]), None)
 
 
-def is_reduced(word):
+def is_reduced(word: Sequence[int]) -> bool:
     """Whether the word of simple reflections is reduced (``inv`` of its product equals its length)."""
     from schubmult.combinatorics.permutation import Permutation
 
     return Permutation.ref_product(*word).inv == len(word)
 
 
-def little_bump_pos(word, index):
+def little_bump_pos(word: Sequence[int], index: int) -> tuple[int, ...]:
     """Little bump at position ``index``: decrement that letter (increment if it is 1), and while the
     word is not reduced, repeat at the letter found by `find_reduced_fail`.
     """
@@ -346,33 +355,36 @@ def little_bump_pos(word, index):
         raise ValueError(f"Word {word} is not reduced, cannot perform Little bump.")
     if index < 0 or index >= len(word):
         raise ValueError(f"Index {index} is out of bounds for word of length {len(word)}.")
-    word = [*word]
+    letters = [*word]
     while True:
-        if word[index] == 1:
-            word[index] = word[index] + 1
+        if letters[index] == 1:
+            letters[index] = letters[index] + 1
         else:
-            word[index] = word[index] - 1
-        if is_reduced(word):
+            letters[index] = letters[index] - 1
+        if is_reduced(letters):
             break
-        index = find_reduced_fail(word, index)
-    return tuple(word)
+        fail = find_reduced_fail(letters, index)
+        if fail is None:
+            raise ValueError(f"Word {letters} is not reduced but no repeated root was found.")
+        index = fail
+    return tuple(letters)
 
 
-def little_bump(word, i, j):
+def little_bump(word: Sequence[int], i: int, j: int) -> tuple[int, ...]:
     """Little bump of a reduced word at the letter whose right root is the inversion ``(i, j)``."""
     from schubmult.combinatorics.permutation import Permutation
 
     if not is_reduced(word):
         raise ValueError(f"Word {word} is not reduced, cannot perform Little bump.")
-    word = [*word]
-    roots = {Permutation._right_root_at(index, word): index for index in range(len(word))}
+    letters = [*word]
+    roots = {Permutation._right_root_at(index, letters): index for index in range(len(letters))}
     index = roots.get((i, j), None)
     if index is None:
-        raise ValueError(f"Word {word} does not have an inversion at ({i}, {j})")
-    return little_bump_pos(word, index)
+        raise ValueError(f"Word {letters} does not have an inversion at ({i}, {j})")
+    return little_bump_pos(letters, index)
 
 
-def little_zero(word, length):
+def little_zero(word: Sequence[int], length: int) -> tuple[int, ...]:
     """Repeatedly Little-bump at the last descent until the product's code has fewer than ``length``
     entries (Little's map toward a smaller permutation).
     """
@@ -383,7 +395,7 @@ def little_zero(word, length):
         return tuple(word)
     if len(perm.trimcode) > length:
         raise ValueError("Word is too long for the specified length")
-    new_word = [*word]
+    new_word: Sequence[int] = [*word]
     while len(perm.trimcode) >= length:
         d = len(perm.trimcode)
         old_word = new_word

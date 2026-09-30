@@ -10,14 +10,20 @@ library is built from a `Permutation`'s Lehmer code (``code``/``trimcode``),
 inversions, and Bruhat/weak order.
 """
 
+from __future__ import annotations
+
 import math
+from collections.abc import Iterable, Iterator, Sequence
 from functools import cache, cached_property
+from typing import Any, TypeVar, overload
 
 import schubmult.utils.logging as lg
 import schubmult.utils.perm_utils as sl
 from schubmult.utils._printable import LazyPrintable
 
 logger = lg.get_logger(__name__)
+
+T = TypeVar("T")
 
 zero = 0
 n = 100
@@ -32,12 +38,17 @@ class Permutation(LazyPrintable):
     (``list(perm)``, ``perm[i]`` 0-indexed).
     """
 
-    def apply(self, arr):
+    _perm: tuple[int, ...]
+    _args: tuple[tuple[int, ...]]
+    _hash_code: int
+    _unique_key: tuple[int, int]
+
+    def apply(self, arr: Sequence[T]) -> tuple[T, ...]:
         """Permute the elements of ``arr`` by this permutation: return ``[arr[self[i] - 1] for i in range(len(arr))]``."""
         return tuple([arr[self[i] - 1] for i in range(len(arr))])
 
     @property
-    def is_reducible(self):
+    def is_reducible(self) -> bool:
         """Whether ``self`` splits as a direct sum of two smaller permutations across some fixed point."""
         if self.inv == 0:
             return False
@@ -48,7 +59,7 @@ class Permutation(LazyPrintable):
                     return True
         return False
 
-    def reduce(self, start_spot=1, strict=False):
+    def reduce(self, start_spot: int = 1, strict: bool = False) -> tuple[Permutation, Permutation] | None:
         """Split ``self`` at a fixed point into ``(perm1, perm2)`` on disjoint blocks of values, or ``None`` if not reducible."""
         if self.inv == 0:
             return None
@@ -64,34 +75,34 @@ class Permutation(LazyPrintable):
                 return None
         return None
 
-    def act_root(self, a, b):
+    def act_root(self, a: int, b: int) -> tuple[int, int]:
         """Image of the root/pair ``(a, b)`` (1-indexed positions) under ``self``: ``(self[a-1], self[b-1])``."""
         return self[a - 1], self[b - 1]
 
-    def one_dominates(self, other):
+    def one_dominates(self, other: Permutation) -> bool:
         """Whether ``self`` one-step dominates ``other`` (one level of the recursive ``dominates`` test)."""
         return _one_dominates(self, other)
 
-    def dominates(self, other):
+    def dominates(self, other: Permutation) -> bool:
         """Whether ``self`` dominates ``other`` in the sense used by the dual Pieri / positivity rules."""
         return _dominates(self, other)
 
     @property
-    def antiperm(self):
+    def antiperm(self) -> Permutation:
         """Conjugate of ``self`` by the longest element ``w0``: ``w0 * self * w0``."""
         w0 = Permutation.w0(len(self))
         return w0 * (self) * w0
 
-    def weight_coset_decomp(self, dominant_weight):
+    def weight_coset_decomp(self, dominant_weight: Sequence[int]) -> tuple[Permutation, Permutation]:
         """Coset decomposition of ``self`` with respect to the stabilizer of ``dominant_weight``; see ``coset_decomp``."""
         fixers = Permutation.fixers(dominant_weight)
         return self.coset_decomp(*list(fixers))
 
-    def min_of_weight_coset(self, dominant_weight):
+    def min_of_weight_coset(self, dominant_weight: Sequence[int]) -> Permutation:
         """Minimal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``."""
         return self.weight_coset_decomp(dominant_weight)[0]
 
-    def max_of_weight_coset(self, dominant_weight):
+    def max_of_weight_coset(self, dominant_weight: Sequence[int]) -> Permutation:
         """Maximal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``."""
         return self.weight_coset_decomp(dominant_weight)[0] * Permutation.longest_element(*Permutation.fixers(dominant_weight))
 
@@ -111,7 +122,7 @@ class Permutation(LazyPrintable):
         left_descents = (~max_w).descents(zero_indexed=False)
         return min_v.bruhat_leq(Permutation.longest_element(*left_descents))
 
-    def coset_decomp(self, *descs):
+    def coset_decomp(self, *descs: int) -> tuple[Permutation, Permutation]:
         """Decompose ``self = reduced_perm * w_J`` where ``w_J`` lies in the parabolic subgroup generated
         by the simple reflections at 1-indexed positions ``descs`` and ``reduced_perm`` is the minimal-length
         coset representative (no descents in ``descs``).
@@ -119,31 +130,31 @@ class Permutation(LazyPrintable):
         Returns:
             tuple: ``(reduced_perm, w_J)``.
         """
-        descs = set(descs)
+        desc_set = set(descs)
         reduced_perm = self
         w_J = Permutation([])
         found = True
         while found:
             found = False
             for d in reduced_perm.descents():
-                if d + 1 in descs:
+                if d + 1 in desc_set:
                     w_J = ~((~w_J).swap(d, d + 1))
                     reduced_perm = reduced_perm.swap(d, d + 1)
                     found = True
                     break
         return reduced_perm, w_J
 
-    def min_coset_rep(self, *descs):
+    def min_coset_rep(self, *descs: int) -> Permutation:
         """Minimal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``."""
         return self.coset_decomp(*descs)[0]
 
-    def max_coset_rep(self, *descs):
+    def max_coset_rep(self, *descs: int) -> Permutation:
         """Maximal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``."""
         red, _w_J = self.coset_decomp(*descs)
         return red * Permutation.longest_element(*descs)
 
     @classmethod
-    def longest_element(cls, *descs):
+    def longest_element(cls, *descs: int) -> Permutation:
         """Longest element of the parabolic subgroup generated by the simple reflections at 1-indexed positions ``descs``."""
         perm = Permutation([])
         did_one = True
@@ -157,33 +168,33 @@ class Permutation(LazyPrintable):
         return perm
 
     @classmethod
-    def w0(cls, n):
+    def w0(cls, n: int) -> Permutation:
         """The longest element of the symmetric group on ``n`` letters: ``[n, n-1, ..., 1]``."""
         return cls.from_code([n - 1 - i for i in range(n - 1)])
 
     @classmethod
     @cache
-    def all_permutations(cls, n):
+    def all_permutations(cls, n: int) -> list[Permutation]:
         """All permutations of ``{1, ..., n}``, as a list of `Permutation`."""
         from itertools import permutations
 
         return [cls(perm) for perm in list(permutations(list(range(1, n + 1))))]
 
-    def parabolic_reduce(self, *descs):
+    def parabolic_reduce(self, *descs: int) -> tuple[Permutation, Permutation]:
         """Decompose ``self = reduced_perm * w_J`` where ``w_J`` is generated by the simple reflections
         *not* in ``descs`` and ``reduced_perm`` has no descents outside ``descs``.
 
         Returns:
             tuple: ``(reduced_perm, w_J)``.
         """
-        descs = set(descs)
+        desc_set = set(descs)
         reduced_perm = self
         w_J = Permutation([])
         found = True
         while found:
             found = False
             for d in reduced_perm.descents():
-                if d not in descs:
+                if d not in desc_set:
                     w_J = ~((~w_J).swap(d, d + 1))
                     reduced_perm = reduced_perm.swap(d, d + 1)
                     found = True
@@ -196,13 +207,13 @@ class Permutation(LazyPrintable):
             return (self, other)
         raise NotImplementedError("Division by non-permutation is not implemented.")
 
-    def __new__(cls, perm):
-        return Permutation.__xnew_cached__(cls, tuple(perm))
+    def __new__(cls, perm: Iterable[int]) -> Permutation:
+        return Permutation.__xnew_cached__(cls, tuple(perm))  # type: ignore[arg-type]  # mypy: type[Permutation] vs Hashable (python/mypy#11470)
 
     print_as_code = False
 
     @staticmethod
-    def fixers(dominant_weight):
+    def fixers(dominant_weight: Sequence[int]) -> set[int]:
         """1-indexed positions ``i`` where ``dominant_weight[i-1] == dominant_weight[i]``
         (the simple reflections fixing ``dominant_weight``, i.e. generating its stabilizer).
         """
@@ -213,7 +224,7 @@ class Permutation(LazyPrintable):
         return fixers
 
     @classmethod
-    def ref_product(cls, *args):
+    def ref_product(cls, *args: int) -> Permutation:
         """Product of the simple reflections ``s_a`` for ``a`` in ``args``, applied left to right."""
         p = cls([])
         for a in args:
@@ -221,7 +232,7 @@ class Permutation(LazyPrintable):
         return p
 
     @classmethod
-    def hecke_ref_product(cls, *args):
+    def hecke_ref_product(cls, *args: int) -> Permutation:
         """Like ``ref_product``, but each ``s_a`` is applied only if it is a Bruhat ascent
         (the 0-Hecke / Demazure product of the simple reflections).
         """
@@ -232,10 +243,10 @@ class Permutation(LazyPrintable):
         return p
 
     @property
-    def code_word(self):
+    def code_word(self) -> tuple[int, ...]:
         """A canonical reduced word for ``self``, read off from ``trimcode``."""
         cd = self.trimcode
-        word = []
+        word: list[int] = []
         for i in range(len(cd)):
             word += list(range(i + cd[i], i, -1))
         return tuple(word)
@@ -335,7 +346,7 @@ class Permutation(LazyPrintable):
         return out
 
     @staticmethod
-    def commutation_class_of(word):
+    def commutation_class_of(word: Sequence[int]) -> set[tuple[int, ...]]:
         """All words obtainable from ``word`` by commuting adjacent far-apart letters (``|a - b| >= 2``)."""
         stack = [tuple(word)]
         ret = set()
@@ -350,7 +361,7 @@ class Permutation(LazyPrintable):
         return ret
 
     @staticmethod
-    def forest_class_of(word):
+    def forest_class_of(word: Sequence[int]) -> set[tuple[int, ...]]:
         """Words reachable from ``word`` by commutation moves that also preserve the indexed-forest
         insertion structure (``omega_insertion``); a refinement of ``commutation_class_of``.
         """
@@ -371,7 +382,7 @@ class Permutation(LazyPrintable):
                             stack.append(v)
         return ret
 
-    def code_index_of_index(self, index):
+    def code_index_of_index(self, index: int) -> int:
         """The position in ``trimcode`` whose block of ``code_word`` letters contains position ``index``."""
         running_sum = 0
         running_code_index = 0
@@ -385,7 +396,7 @@ class Permutation(LazyPrintable):
         return len(self.trimcode)
 
     @staticmethod
-    def cycle(p, q):
+    def cycle(p: int, q: int) -> Permutation:
         """
         Construct the cycle permutation used elsewhere in the code.
         Kept as a staticmethod on Permutation for call sites like Permutation.cycle(p,q).
@@ -422,19 +433,19 @@ class Permutation(LazyPrintable):
         return self._args
 
     @classmethod
-    def sorting_perm(cls, itera, reverse=False):
+    def sorting_perm(cls, itera: Sequence[Any], reverse: bool = False) -> Permutation:
         """The permutation that sorts ``itera`` into (by default) increasing order."""
         L = [i + 1 for i in range(len(itera))]
         L.sort(key=lambda i: itera[i - 1], reverse=reverse)
         return Permutation(L)
 
-    def right_act(self, lst):
+    def right_act(self, lst: list[T] | tuple[T, ...]) -> list[T] | tuple[T, ...]:
         """Permute the entries of ``lst`` by this permutation, preserving ``lst``'s type (list stays a list)."""
         if isinstance(lst, list):
             return [lst[self[i] - 1] for i in range(len(lst))]
         return tuple([lst[self[i] - 1] for i in range(len(lst))])
 
-    def bruhat_leq(perm, perm2):
+    def bruhat_leq(perm, perm2: Permutation) -> bool:
         """Whether ``perm <= perm2`` in Bruhat order (equivalently, ``perm``'s tableau criterion
         against ``perm2`` on every prefix of their windows).
         """
@@ -455,7 +466,7 @@ class Permutation(LazyPrintable):
         return True
 
     @classmethod
-    def from_code(cls, cd):
+    def from_code(cls, cd: Sequence[int]) -> Permutation:
         """Alias for ``uncode(cd)``: the permutation with Lehmer code ``cd``."""
         return uncode(cd)
 
@@ -465,7 +476,7 @@ class Permutation(LazyPrintable):
     #     return printer._print(list(self._perm))
 
     # pattern is a list, not a permutation
-    def has_pattern(self, pattern):
+    def has_pattern(self, pattern: Sequence[int]) -> bool:
         """Whether ``self`` contains ``pattern`` (a plain list, not necessarily reduced) as a pattern:
         some subsequence of ``self``'s window order-isomorphic to ``pattern``.
         """
@@ -476,8 +487,7 @@ class Permutation(LazyPrintable):
         expanded = list(self) + list(range(len(self) + 1, len(pattern) + 1))
         for i in range(len(expanded)):
             rmval = expanded[i]
-            perm2 = [*expanded[:i], *expanded[i + 1 :]]
-            perm2 = tuple([val - 1 if val > rmval else val for val in perm2])
+            perm2 = tuple(val - 1 if val > rmval else val for val in (*expanded[:i], *expanded[i + 1 :]))
             if Permutation(perm2).has_pattern(pattern):
                 return True
         return False
@@ -499,15 +509,24 @@ class Permutation(LazyPrintable):
             return printer.doprint(self.trimcode)
         return printer.doprint(tuple(self._perm))
 
+    @overload
+    def __call__(self, index: int, /) -> int: ...
+
+    @overload
+    def __call__(self, indices: Sequence[int], /) -> tuple[int, ...]: ...
+
+    @overload
+    def __call__(self, first: int, second: int, /, *rest: int) -> tuple[int, ...]: ...
+
     def __call__(self, *tup):
+        """``perm(i)`` is the 1-indexed value at position ``i``; ``perm(i, j, ...)`` or ``perm([i, j, ...])`` the tuple of values."""
         if len(tup) == 1:
             if isinstance(tup[0], list | tuple):
-                tup = tup[0]
-            else:
-                return self._perm[tup[0] - 1]
+                return tuple(self[i - 1] for i in tup[0])
+            return self._perm[tup[0] - 1]
         return tuple(self[i - 1] for i in tup)
 
-    def zero_indexed_descents(self):
+    def zero_indexed_descents(self) -> set[int]:
         """0-indexed descent positions: ``i`` such that ``self[i] > self[i+1]``."""
         desc = set()
         for i in range(len(self._perm) - 1):
@@ -515,13 +534,13 @@ class Permutation(LazyPrintable):
                 desc.add(i)
         return desc
 
-    def descents(self, zero_indexed=True):
+    def descents(self, zero_indexed: bool = True) -> set[int]:
         """Descent positions of ``self``, 0-indexed by default or 1-indexed if ``zero_indexed=False``."""
         if zero_indexed:
             return self.zero_indexed_descents()
         return {i + 1 for i in self.zero_indexed_descents()}
 
-    def get_cycles(self, sort_min=False):
+    def get_cycles(self, sort_min: bool = False) -> list[tuple[int, ...]]:
         """Cycle decomposition of ``self`` as a list of tuples; ``sort_min`` rotates each cycle to start
         at its minimum element instead of the sympy convention.
         """
@@ -536,7 +555,7 @@ class Permutation(LazyPrintable):
         return [tuple(sl.cyclic_sort_min([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
 
     @classmethod
-    def from_cycles(cls, cycle_iter):
+    def from_cycles(cls, cycle_iter: Iterable[Sequence[int]]) -> Permutation:
         """Build a permutation from a cycle decomposition (sequence of cycles, each a sequence of 1-indexed values)."""
         import sympy.combinatorics.permutations as spp
 
@@ -544,7 +563,7 @@ class Permutation(LazyPrintable):
         return cls([a + 1 for a in spoing.array_form])
 
     @property
-    def code(self):
+    def code(self) -> list[int]:
         """Lehmer code of ``self``: ``code[i]`` counts ``j > i`` with ``self[i] > self[j]``."""
         return [*self._cached_code()]
 
@@ -553,7 +572,7 @@ class Permutation(LazyPrintable):
         return sl.old_code(self._perm)
 
     @property
-    def graph(self):
+    def graph(self) -> set[tuple[int, int]]:
         """The permutation matrix support as a set of 1-indexed pairs ``{(i, self[i])}``."""
         return {(i + 1, self[i]) for i in range(len(self._perm))}
 
@@ -701,7 +720,7 @@ class Permutation(LazyPrintable):
         return tuple(list(self.trimcode) + [0 for i in range(length - len(self.trimcode))])
 
     @cached_property
-    def trimcode(self):
+    def trimcode(self) -> list[int]:
         """Lehmer code truncated to drop trailing zeros (length equals the last descent position)."""
         if self._perm == ():
             return []
@@ -718,12 +737,12 @@ class Permutation(LazyPrintable):
         the_perm = uncode([self.trimcode[a] + 1 if a < len(self.trimcode) else 1 for a in range(size)])
         return uncode((~(uncode((~the_perm).theta()))).strict_theta())
 
-    def shiftup(self, k):
+    def shiftup(self, k: int) -> Permutation:
         """``self`` with its Lehmer code shifted right by ``k`` (``k`` leading zero code entries prepended)."""
         return Permutation.from_code(k * [0] + self.code)
 
     @cached_property
-    def inv(self):
+    def inv(self) -> int:
         """Length of ``self``: the number of inversions, i.e. ``sum(self.code)``."""
         return sum(self.code)
 
@@ -747,7 +766,7 @@ class Permutation(LazyPrintable):
     def __reduce__(self):
         return (self.__class__, (self._perm,))
 
-    def swap(self, i, j):
+    def swap(self, i: int, j: int) -> Permutation:
         """Multiply ``self`` by the transposition of 0-indexed positions ``i`` and ``j`` (window extended as needed)."""
         if i > j:
             i, j = j, i
@@ -762,10 +781,16 @@ class Permutation(LazyPrintable):
         new_arr[i], new_arr[j] = new_arr[j], new_arr[i]
         return Permutation(new_arr)
 
-    def rslice(self, start, stop):
+    def rslice(self, start: int, stop: int) -> list[int]:
         """Window values at 0-indexed positions ``start`` (inclusive) to ``stop`` (exclusive), extended by fixed points."""
         ttup = [*self._perm, *list(range(len(self._perm) + 1, stop + 2))]
         return ttup[start:stop]
+
+    @overload
+    def __getitem__(self, i: int) -> int: ...
+
+    @overload
+    def __getitem__(self, i: slice) -> list[int]: ...
 
     def __getitem__(self, i):
         try:
@@ -775,14 +800,15 @@ class Permutation(LazyPrintable):
                 return [self[ii] for ii in range(i.start if i.start is not None else 0, i.stop if i.stop is not None else len(self))]
             if i >= len(self._perm):
                 return i + 1
+            raise IndexError(i) from None
 
     def __setitem__(self, i, v):
         raise NotImplementedError
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return self._hash_code
 
-    def __matmul__(self, other):
+    def __matmul__(self, other: Permutation) -> Permutation:
         """Demazure product"""
         word = other.code_word
         ret = self
@@ -793,14 +819,14 @@ class Permutation(LazyPrintable):
                 ret = ret.swap(letter - 1, letter)
         return ret
 
-    def __mul__(self, other):
+    def __mul__(self, other: Permutation) -> Permutation:
         a, b = self._perm, other._perm
         la = len(a)
         if len(b) < la:
             b = b + tuple(range(len(b) + 1, la + 1))
         return Permutation([a[j - 1] if j <= la else j for j in b])
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         yield from self._perm.__iter__()
 
     def __getslice__(self, i, j):
@@ -809,7 +835,7 @@ class Permutation(LazyPrintable):
     # def __str__(self):
     #     return str(self._perm)
 
-    def __add__(self, other):
+    def __add__(self, other: list[int]) -> Permutation | list[int]:
         if not isinstance(other, list):
             raise NotImplementedError
         permlist = [*self._perm, *other]
@@ -821,7 +847,7 @@ class Permutation(LazyPrintable):
     # def _sympyrepr(self, printer):
     #     return f"Permutation({list(self._perm)})"
 
-    def __radd__(self, other):
+    def __radd__(self, other: list[int]) -> Permutation | list[int]:
         if not isinstance(other, list):
             raise NotImplementedError
         permlist = [*other, *self._perm]
@@ -830,7 +856,7 @@ class Permutation(LazyPrintable):
         except Exception:
             return permlist
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Permutation):
             # print(f"{other._perm= } {self._perm=} {type(self._perm)=}")
             # return other._perm == self._perm
@@ -843,17 +869,17 @@ class Permutation(LazyPrintable):
             return self._perm == other
         return False
 
-    def __len__(self):
-        # print("REMOVE THIS")
+    def __len__(self) -> int:
+        # window length, but never below 2: the identity iterates as () yet has len 2
         return max(len(self._perm), 2)
 
-    def __le__(self, other):
+    def __le__(self, other: Permutation) -> bool:
         return self.bruhat_leq(other)
 
     # def __lt__(self, other):
     #     return self != other and self.bruhat_leq(other)
 
-    def __invert__(self):
+    def __invert__(self) -> Permutation:
         new_arr = [0] * len(self._perm)
         for i, v in enumerate(self._perm, 1):
             new_arr[v - 1] = i
@@ -870,21 +896,20 @@ class Permutation(LazyPrintable):
     def __repr__(self):
         return self.__str__()
 
-    def __lt__(self, other):
+    def __lt__(self, other: Permutation) -> bool:
         return tuple(self) < tuple(other)
 
-    def pattern_at(self, *indices):
+    def pattern_at(self, *indices: int) -> Permutation:
         """The (inverse sorting) pattern induced by ``self`` on the given 1-indexed ``indices``."""
-        indices = sorted(indices)
-        seq = [self[i] for i in indices]
+        seq = [self[i] for i in sorted(indices)]
         return ~Permutation.sorting_perm(seq)
 
-    def minimal_dominant_above(self):
+    def minimal_dominant_above(self) -> Permutation:
         """The minimal dominant permutation ``>= self`` in Bruhat order: ``uncode(self.theta())``."""
         return uncode(self.theta())
 
     @property
-    def foundational_root(self):
+    def foundational_root(self) -> tuple[int, int] | None:
         """The pivot pair ``(k, mx)`` marking ``self``'s last descent block and the last position dropping below it."""
         if self.inv == 0:
             return None
@@ -910,17 +935,17 @@ class Permutation(LazyPrintable):
             ret.pop()
         return tuple(ret)
 
-    def theta(self):
+    def theta(self) -> list[int]:
         """Dominant (weakly decreasing) sequence bounding ``self``'s code, used throughout the v-path
         multiplication algorithms (see ``schubmult.mult``).
         """
         return [*self._cached_theta()]
 
-    def medium_theta(self):
+    def medium_theta(self) -> list[int]:
         """Variant of ``theta`` used by the \"fast\"/merged-layer multiplication kernels."""
         return [*self._cached_medium_theta()]
 
-    def strict_theta(self):
+    def strict_theta(self) -> list[int]:
         """Variant of ``theta`` with strictly decreasing entries (no repeated nonzero layers)."""
         return [*self._cached_strict_theta()]
 
@@ -974,7 +999,7 @@ class Permutation(LazyPrintable):
         return tuple(cd)
 
 
-def uncode(cd):
+def uncode(cd: Sequence[int]) -> Permutation:
     """The permutation whose Lehmer code is ``cd`` (a list of nonnegative integers)."""
     cd2 = [*cd]
     if cd2 == []:
@@ -989,17 +1014,17 @@ def uncode(cd):
     return Permutation(perm)
 
 
-def permtrim(perm):
+def permtrim(perm: Iterable[int]) -> Permutation:
     """Normalize ``perm`` (a plain array) into a `Permutation` (trims trailing fixed points)."""
     return Permutation(perm)
 
 
-def cycle(p, q):
+def cycle(p: int, q: int) -> Permutation:
     # keep a thin module-level wrapper for backwards compatibility
     return Permutation.cycle(p, q)
 
 
-def phi1(u):
+def phi1(u: Permutation) -> Permutation:
     """Drop the first entry of ``(~u).code`` and re-invert: one step of the ``dominates`` recursion."""
     c_star = (~u).code
     c_star.pop(0)
@@ -1007,7 +1032,7 @@ def phi1(u):
     return ~(uncode(c_star))
 
 
-def split_perms(perms):
+def split_perms(perms: Sequence[Permutation]) -> list[Permutation]:
     """Split each permutation in ``perms`` (after the first) into two smaller ones across a
     reducible point, whenever a valid split point exists; used to normalize a chain of
     dominant permutations into minimal reducible pieces.
@@ -1079,6 +1104,6 @@ ID_PERM = Permutation([])
 
 
 @cache
-def s(i):
+def s(i: int) -> Permutation:
     """The simple reflection swapping 1-indexed positions ``i`` and ``i + 1``."""
     return Permutation([*list(range(1, i)), i + 1, i])
