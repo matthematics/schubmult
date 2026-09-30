@@ -1,8 +1,13 @@
 """
-Bumpless Pipe Dreams (HPD) module -- EXPERIMENTAL, currently unmaintained.
+Hybrid pipe dreams (HPD) -- EXPERIMENTAL, currently unmaintained.
 
-`HPD` is a variant of `schubmult.combinatorics.bpd.BPD` whose rows carry an ``id_vector`` flag.
-Development stopped partway through the port: the constructor requires ``id_vector``, but
+Hybrid pipe dreams (Knutson--Udell, "Interpolating between classic and bumpless pipe dreams")
+interpolate between classic pipe dreams and bumpless pipe dreams: each row is declared either
+classic (``id_vector[row] == 0``) or bumpless (``id_vector[row] == 1``), and the tiles are read with
+the corresponding convention row by row.  All-zero ``id_vector`` recovers a classic pipe dream
+(`schubmult.combinatorics.rc_graph.RCGraph`), all-one a bumpless one (`schubmult.combinatorics.bpd.BPD`).
+
+Development stopped partway through the port from `BPD`: the constructor requires ``id_vector``, but
 ``delete_row``, ``append``, ``from_bruhat_path``, ``shiftup``, ``rothe_bpd``, ``resize``, and
 ``right_zero_act`` still construct ``HPD(grid)`` without it and raise ``TypeError``.  Nothing in the
 package or the test suite depends on this module; it is kept for possible future work.
@@ -188,12 +193,10 @@ def _bpd_bottom_row(weight, length):
 
 class HPD(SchubertMonomialGraph, DefaultPrinting):
     """
-    Bumpless Pipe Dream representation.  EXPERIMENTAL -- see the module docstring.
+    Hybrid pipe dream (Knutson--Udell).  EXPERIMENTAL -- see the module docstring.
 
-    A bumpless pipe dream is an n×n grid where:
-    - HPDTile.CROSS (1) represents a crossing
-    - HPDTile.BLANK (0) represents an empty box (pipes go straight)
-    - For general pipe dreams, can use HPDTile.ELBOW_* (2-5) for elbows
+    An n×n grid of `HPDTile` values together with an ``id_vector`` declaring each row classic (``0``)
+    or bumpless (``1``); the tile conventions and the pipe labeling switch per row accordingly.
 
     Each HPD corresponds to a permutation and has an associated weight.
     """
@@ -204,6 +207,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
 
         Args:
             grid: n×n array-like of HPDTile values, integers 0-5, or list of lists
+            id_vector: one entry per row, ``0`` for a classic row and ``1`` for a bumpless row
         """
         if _is_copy:
             return
