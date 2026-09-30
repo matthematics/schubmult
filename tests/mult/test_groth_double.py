@@ -8,6 +8,7 @@ from schubmult import Permutation
 from schubmult.abc import beta, x, y, z
 from schubmult.mult.double import schubmult_double
 from schubmult.mult.groth_double import (
+    double_groth_times_double_schub,
     epsilon_chain,
     grothmult_double,
     grothmult_double_pieri,
@@ -103,3 +104,22 @@ def test_epsilon_chain_single_index_known_shape():
             assert m == 0
         elif a == k:
             assert m == 1
+
+
+def test_double_groth_times_double_schub_polynomial_identity():
+    # G_u(x; y) S_v(x; z) = sum_w c_w G_w(x; y) as rational functions; S_v(x; z) = schubpoly(v, x, z).
+    from schubmult.symbolic.poly.schub_poly import schubpoly
+
+    S4 = [Permutation(list(p)) for p in itertools.permutations(range(1, 5))]
+    for u in S4:
+        for v in S3:
+            d = double_groth_times_double_schub(u, v, y, z, beta)
+            lhs = _groth(u, x, y) * sp(schubpoly(v, x, z))
+            rhs = sum((sp(c) * _groth(w, x, y) for w, c in d.items()), sympy.Integer(0))
+            assert vanishes([lhs - rhs]), (u, v)
+
+
+def test_double_groth_times_double_schub_defaults_and_identity_perm():
+    u = Permutation([2, 1, 3])
+    assert _same(double_groth_times_double_schub(u, Permutation([])), {u: S.One})
+    assert _same(double_groth_times_double_schub(u, Permutation([1, 3, 2])), double_groth_times_double_schub(u, Permutation([1, 3, 2]), y, z, beta))

@@ -59,11 +59,12 @@ from functools import cache
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, Mul, Pow, S, sympify
-from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
+from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.perm_utils import add_perm_dict
 
 __all__ = [
     "dgroth_to_dschub",
+    "double_groth_times_double_schub",
     "elem_sym_perms_groth",
     "epsilon_chain",
     "groth_elem_sym_func",
@@ -913,6 +914,33 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
         return {w: f for w, f in ret_dict.items() if not _frac_is_zero(f)}
     ret = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
     return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
+
+
+def double_groth_times_double_schub(groth_perm, schub_perm, coeffvar_groth=None, coeffvar_schub=None, beta=None):
+    r"""``G_u(x; coeffvar_groth) * S_v(x; coeffvar_schub)`` expanded in the basis ``{G_w(x; coeffvar_groth)}``.
+
+    This is the mixed product at the heart of ``grothmult_double``: a double Grothendieck polynomial
+    times a double Schubert polynomial, computed by the v-path kernel ``_groth_schub_vpath_mul``
+    (``S_v`` is expanded layer by layer over ``theta(v^{-1})`` as in ``schubmult_double``, with the
+    K-theoretic Pieri coefficients ``_groth_elem_sym_frac``).  ``grothmult_double`` is this summed
+    over the ``dgroth_to_dschub`` expansion of ``G_v`` in double Schubert polynomials.
+
+    Args:
+        groth_perm: Permutation ``u`` indexing the double Grothendieck factor.
+        schub_perm: Permutation ``v`` indexing the double Schubert factor.
+        coeffvar_groth: Coefficient alphabet of ``G_u`` (and of the output basis); default ``y``.
+        coeffvar_schub: Coefficient alphabet of ``S_v``; default ``z``.
+        beta: K-theory parameter; defaults to ``schubmult.abc.beta``.
+
+    Returns:
+        dict: ``{w: coeff_w}`` with nonzero ``coeff_w`` rational in ``coeffvar_groth`` (denominators
+        are products of ``1 + beta*y_i``), polynomial in ``coeffvar_schub`` and ``beta``.
+    """
+    if beta is None:
+        beta = _default_beta
+    coeffvar_groth = GeneratingSet("y") if coeffvar_groth is None else _genset(coeffvar_groth)
+    coeffvar_schub = GeneratingSet("z") if coeffvar_schub is None else _genset(coeffvar_schub)
+    return _groth_schub_vpath_mul({Permutation(groth_perm): S.One}, Permutation(schub_perm), coeffvar_groth, coeffvar_schub, beta)
 
 
 def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
