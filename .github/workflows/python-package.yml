@@ -46,7 +46,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install ruff==0.11.0 pytest pytest-xdist build
+        python -m pip install ruff==0.11.0 mypy pytest pytest-xdist build
         # Editable install; compiles the schubmult_cpp extension (MSVC / clang / gcc)
         python -m pip install -e .
     - name: Check the extension loaded
@@ -56,6 +56,10 @@ jobs:
       run: |
         # Run ruff linter with your local configuration from pyproject.toml
         ruff check . --config pyproject.toml
+    - name: Type-check with mypy
+      if: runner.os == 'Linux'
+      # Scope is the [tool.mypy] files list in pyproject.toml: only deliberately typed modules.
+      run: mypy
     - name: Test with pytest
       run: |
         # one worker per runner core (4 on ubuntu/windows, 3 on macos); tests are independent

@@ -375,8 +375,10 @@ class Permutation(LazyPrintable):
             for i in range(len(u) - 1):
                 if abs(u[i] - u[i + 1]) >= 2:
                     da_word = word_to_pairinj_labeled(tuple(reversed(u[i:])))
-                    P_right = omega_insertion(da_word[:-2])[0]
-                    if len(P_right.separators(da_word[-2], da_word[-1])) > 1:
+                    inserted = omega_insertion(da_word[:-2])
+                    if inserted is None:
+                        continue
+                    if len(inserted[0].separators(da_word[-2], da_word[-1])) > 1:
                         v = (*u[:i], u[i + 1], u[i], *u[i + 2:])
                         if v not in ret:
                             stack.append(v)

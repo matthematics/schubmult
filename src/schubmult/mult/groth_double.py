@@ -53,14 +53,22 @@ reflections in type ``A_{n-1}`` is
     ``t_{1,n}, t_{1,n-1}, ..., t_{1,k+1}, t_{2,n}, ..., t_{2,k+1}, ..., t_{k,k+1}``.
 """
 
+from __future__ import annotations
+
 from fractions import Fraction
 from functools import cache
+from typing import TYPE_CHECKING, Any, overload
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, Mul, Pow, S, sympify
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.perm_utils import add_perm_dict
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from schubmult._typing import Alphabet, Coeff, Expr, PermCoeffDict, PermLike
 
 __all__ = [
     "dgroth_to_dschub",
@@ -80,7 +88,7 @@ __all__ = [
 ]
 
 
-def monk_chain(k):
+def monk_chain(k: int) -> tuple[tuple[int, int], ...]:
     """Reduced ``(-omega_k)``-chain of reflections in ``A_{n-1}``, as ``(i, j)``, ``i <= k < j``.
 
     ``omega_k = eps_1 + ... + eps_k``, so this is ``epsilon_chain`` on ``{1, ..., k}``:
@@ -90,7 +98,7 @@ def monk_chain(k):
     return tuple((a, b) for a, b, _ in epsilon_chain(tuple(range(1, k + 1))))
 
 
-def epsilon_chain(positions, inverse=False, ambient_rank=None):
+def epsilon_chain(positions: int | Iterable[int], inverse: bool = False, ambient_rank: int | None = None) -> tuple[tuple[int, int, int], ...]:
     r"""Reduced ``(-eps_A)``-chain of reflections in ``A_{n-1}``, ``A = positions``.
 
     ``positions`` is a single index or an iterable of them (repeats allowed), and
@@ -117,6 +125,8 @@ def epsilon_chain(positions, inverse=False, ambient_rank=None):
     """
     if isinstance(positions, int):
         positions = (positions,)
+    else:
+        positions = tuple(positions)
     step = 1 if inverse else -1
     if ambient_rank is None:
         ambient_rank = max(positions) + len(positions)
@@ -195,7 +205,7 @@ def _rank(u, positions):
     return max(len(u), max(positions) + 1) + len(positions)
 
 
-def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, inverse=False):
+def one_plus_beta_x_groth(coeff_dict: PermCoeffDict, positions: int | Iterable[int], var2: Alphabet | None = None, beta: Expr | None = None, inverse: bool = False) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``prod_{i in positions} (1 + beta*x_i)``.
 
     The one-pass Pieri rule of Theorem 6.1 at ``lambda = -eps_A``; see
@@ -204,10 +214,10 @@ def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, inverse=F
     """
     if beta is None:
         beta = _default_beta
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
     positions = (positions,) if isinstance(positions, int) else tuple(positions)
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, inverse=inverse).items():
@@ -215,7 +225,7 @@ def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, inverse=F
     return ret
 
 
-def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
+def single_variable_groth(coeff_dict: PermCoeffDict, varnum: int, var2: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the single variable ``x_varnum``.
 
     Returns ``{w: coeff_w}``.  This is ``_one_plus_beta_x_terms`` with the
@@ -225,11 +235,11 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
     """
     if beta is None:
         beta = _default_beta
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
     k = varnum
     positions = (k,)
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         y = var2[u[k - 1]]
@@ -240,7 +250,7 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
     return ret
 
 
-def elem_sym_perms_groth(u, k):
+def elem_sym_perms_groth(u: Permutation, k: int) -> dict[Permutation, dict[int, int]]:
     r"""K-theoretic analogue of ``elem_sym_perms``: ``{w: {d: multiplicity}}``.
 
     Same recursion as ``elem_sym_perms(u, p, k)`` -- a step is any Bruhat cover
@@ -257,7 +267,7 @@ def elem_sym_perms_groth(u, k):
     than once, and distinct chains can land on the same ``w`` at the same ``d``, which is
     the source of the K-theoretic multiplicities.
     """
-    out = {}
+    out: dict[Permutation, dict[int, int]] = {}
 
     def walk(w, last_b, d):
         if d:
@@ -273,7 +283,7 @@ def elem_sym_perms_groth(u, k):
     return out
 
 
-def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=None, fgl=True):
+def grothmult_double_block(coeff_dict: PermCoeffDict, positions: int | Iterable[int], zvar: Expr | None = None, var2: Alphabet | None = None, beta: Expr | None = None, fgl: bool = True) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by a linear block over ``positions``:
 
         fgl=True  ->  prod_{i in A} (x_i (+) zvar),   x (+) z = x*(1 + beta*z) + z
@@ -299,7 +309,7 @@ def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=Non
         beta = _default_beta
     if zvar is None:
         zvar = S.Zero
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
     positions = (positions,) if isinstance(positions, int) else tuple(positions)
 
     scale, shift = (S.One + beta * zvar, zvar) if fgl else (S.One, -zvar)
@@ -313,7 +323,7 @@ def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=Non
     return ret
 
 
-def groth_elem_sym_poly(p, k, zvar, var_x, beta):
+def groth_elem_sym_poly(p: int, k: int, zvar: Expr, var_x: Alphabet, beta: Expr) -> Expr:
     """``E_p^beta(x_1..x_k; z) = e_p(x_1 (+) z, ..., x_k (+) z)``, ``x (+) z = x(1 + beta*z) + z``.
 
     The double Grothendieck elementary symmetric: ``p == k`` gives
@@ -328,7 +338,7 @@ def groth_elem_sym_poly(p, k, zvar, var_x, beta):
     return acc[p]
 
 
-def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, beta=None):  # noqa: ARG001
+def grothmult_double_pieri(coeff_dict: PermCoeffDict, p: int, k: int, zvar: Expr | None = None, var_x: Alphabet | None = None, var2: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:  # noqa: ARG001
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``groth_elem_sym_poly(p, k, zvar, var_x, beta)``.
 
     Exact, by folding the ``e_p`` DP over coefficient dicts one shifted variable
@@ -348,7 +358,7 @@ def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, b
         beta = _default_beta
     if zvar is None:
         zvar = S.Zero
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
 
     # acc[r] = e_r(x_1 (+) z, ..., x_i (+) z) * input, folded as coefficient dicts
     acc = [{Permutation(key): value for key, value in coeff_dict.items()}] + [{} for _ in range(p)]
@@ -412,7 +422,7 @@ def _top_block_coeff(u, w, k, zvar, var2, beta, length=None):
     return beta**power * value
 
 
-def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
+def grothmult_double_top(coeff_dict: PermCoeffDict, k: int, zvar: Expr | None = None, var2: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the top linear block ``prod_{i=1}^{k}(x_i + zvar)``.
 
     Closed positive Molev--Sagan Pieri rule (conjectural; verified exhaustively on
@@ -449,9 +459,9 @@ def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
         beta = _default_beta
     if zvar is None:
         zvar = S.Zero
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         if k == 0:
@@ -462,14 +472,14 @@ def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
     return ret
 
 
-def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None):
+def mult_poly_groth_double(coeff_dict: PermCoeffDict, poly: Expr, var_x: Alphabet | None = None, var_y: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     """Multiply ``sum_u coeff_u G_u(x, var_y)`` by an arbitrary polynomial in ``var_x``.
 
     Mirrors ``mult_poly_double``; the leaves of the ``Add``/``Mul``/``Pow`` recursion
     are handled by ``single_variable_groth``.
     """
-    var_x = _genset(var_x)
-    var_y = _genset(var_y)
+    var_x = _genset(var_x, "x")
+    var_y = _genset(var_y, "y")
     index = var_x.index(poly)
     if index != -1:
         return single_variable_groth(coeff_dict, index, var_y, beta)
@@ -485,10 +495,10 @@ def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None):
             ret = mult_poly_groth_double(ret, base, var_x, var_y, beta)
         return ret
     if isinstance(poly, Add):
-        ret = {}
+        total: PermCoeffDict = {}
         for arg in poly.args:
-            ret = add_perm_dict(ret, mult_poly_groth_double(coeff_dict, arg, var_x, var_y, beta))
-        return ret
+            total = add_perm_dict(total, mult_poly_groth_double(coeff_dict, arg, var_x, var_y, beta))
+        return total
     return {perm: poly * coeff for perm, coeff in coeff_dict.items()}
 
 
@@ -514,15 +524,30 @@ def _chain_sums(u, k, beta):
     return sums
 
 
-def _genset(var):
-    """Wrap a plain sequence of symbols in a ``CustomGeneratingSet``; pass generating sets and ``None`` through."""
-    if var is None or isinstance(var, GeneratingSet_base):
+@overload
+def _genset(var: None, default: None = None) -> None: ...
+
+
+@overload
+def _genset(var: None, default: str) -> GeneratingSet_base: ...
+
+
+@overload
+def _genset(var: Alphabet, default: str | None = None) -> GeneratingSet_base: ...
+
+
+def _genset(var, default=None):
+    """Wrap a plain sequence of symbols in a ``CustomGeneratingSet``; pass generating sets through.
+    ``None`` becomes ``GeneratingSet(default)`` when a default name is given, else stays ``None``."""
+    if var is None:
+        return None if default is None else GeneratingSet(default)
+    if isinstance(var, GeneratingSet_base):
         return var
     return CustomGeneratingSet(var)
 
 
 @cache
-def dgroth_to_dschub(v, var3, beta=None):
+def dgroth_to_dschub(v: PermLike, var3: Alphabet | None, beta: Expr | None = None) -> PermCoeffDict:
     """Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
 
     ``sum_{v'} coeff_{v'} S_{v'}(x, var3) = G_v(x, var3)`` with coefficients in
@@ -534,7 +559,7 @@ def dgroth_to_dschub(v, var3, beta=None):
 
     if beta is None:
         beta = _default_beta
-    var3 = _genset(var3)
+    var3 = _genset(var3, "z")
     elem = grothendieck_poly(Permutation(v), GeneratingSet("x"), var3, beta, keep_as_schub=True)
     return {Permutation(key): value for key, value in elem.items() if value != S.Zero}
 
@@ -545,7 +570,7 @@ def dgroth_to_dschub(v, var3, beta=None):
 # multiplication/addition makes the hidden-zero test free, and lets dead path sums be pruned
 # mid-recursion, without ever expanding or re-evaluating the (large, unexpanded) numerators.
 _PROBE_POINTS = ((1000003, 7919), (999983, 104729))
-_probe_index = {}
+_probe_index: dict[Any, int] = {}
 
 
 def _to_py_number(v):
@@ -662,7 +687,7 @@ def _frac_to_expr(f, varl1, beta):
     return n / den
 
 
-def normalize_coeff(expr, var2, beta=None):
+def normalize_coeff(expr: Coeff, var2: GeneratingSet_base, beta: Expr | None = None) -> Expr:
     r"""Cancelled normal form ``numer / prod (1 + beta*y_i)**e`` of a double Grothendieck coefficient.
 
     In the multiplicative variables ``t_i = 1 + beta*y_i`` (the ``e^{-gamma}`` of equivariant
@@ -717,7 +742,7 @@ def normalize_coeff(expr, var2, beta=None):
     return numer / den
 
 
-def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
+def groth_elem_sym_func(k: int, i: int, u1: Permutation, u2: Permutation, v1: Permutation, v2: Permutation, vdiff: int, varl1: GeneratingSet_base, varl2: GeneratingSet_base, beta: Expr) -> Expr:
     """Expression form of ``_groth_elem_sym_frac``; see there for the rule."""
     return _frac_to_expr(_groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta), varl1, beta)
 
@@ -784,7 +809,7 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length
     return (bpow * value, denom, (bprobe[0] * vprobe[0], bprobe[1] * vprobe[1]))
 
 
-_ZERO_FRAC = (S.Zero, {}, (0, 0))
+_ZERO_FRAC: tuple[Any, dict[Any, int], tuple[Any, Any]] = (S.Zero, {}, (0, 0))
 
 
 @cache
@@ -853,7 +878,7 @@ def _elem_sym_dp(alphabet, zidx, vdiff, varl1, varl2, beta):
     return state[p]
 
 
-def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
+def _groth_schub_vpath_mul(perm_dict: PermCoeffDict, v: PermLike, var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, as_frac: bool = False) -> dict:
     """``sum_u coeff_u G_u(x, var2) * S_v(x, var3)`` in the ``G`` basis.
 
     Mirrors ``schubmult_double``: expand ``S_v`` by ``compute_vpathdicts`` over the
@@ -878,7 +903,7 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
     mu = uncode(th)
     vmu = v * mu
     vpathdicts = compute_vpathdicts(tuple(th), vmu)
-    ret_dict = {}
+    ret_dict: dict[Permutation, Any] = {}
     for u, val in perm_dict.items():
         u = Permutation(u)
         vpathsums = {u: {Permutation([1, 2]): _frac_const(val)}}
@@ -886,7 +911,7 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
             k = th[index]
             layer = vpathdicts[index]
             i = index + 1
-            newpathsums = {}
+            newpathsums: dict[Permutation, dict[Permutation, Any]] = {}
             for up, sums in vpathsums.items():
                 live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if v_iter in layer and not _frac_is_zero(sumval)]
                 if not live:
@@ -916,7 +941,7 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
     return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
 
 
-def double_groth_times_double_schub(groth_perm, schub_perm, coeffvar_groth=None, coeffvar_schub=None, beta=None):
+def double_groth_times_double_schub(groth_perm: PermLike, schub_perm: PermLike, coeffvar_groth: Alphabet | None = None, coeffvar_schub: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""``G_u(x; coeffvar_groth) * S_v(x; coeffvar_schub)`` expanded in the basis ``{G_w(x; coeffvar_groth)}``.
 
     This is the mixed product at the heart of ``grothmult_double``: a double Grothendieck polynomial
@@ -938,12 +963,12 @@ def double_groth_times_double_schub(groth_perm, schub_perm, coeffvar_groth=None,
     """
     if beta is None:
         beta = _default_beta
-    coeffvar_groth = GeneratingSet("y") if coeffvar_groth is None else _genset(coeffvar_groth)
-    coeffvar_schub = GeneratingSet("z") if coeffvar_schub is None else _genset(coeffvar_schub)
+    coeffvar_groth = _genset(coeffvar_groth, "y")
+    coeffvar_schub = _genset(coeffvar_schub, "z")
     return _groth_schub_vpath_mul({Permutation(groth_perm): S.One}, Permutation(schub_perm), coeffvar_groth, coeffvar_schub, beta)
 
 
-def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
+def grothmult_double(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | None = None, var3: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Multiply double Grothendieck polynomials, mirroring ``schubmult_double``.
 
     Computes the expansion of ``sum_u coeff_u G_u(x, var2) * G_v(x, var3)`` in
@@ -959,14 +984,14 @@ def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
     """
     if beta is None:
         beta = _default_beta
-    var2 = _genset(var2)
-    var3 = _genset(var3)
+    var2 = _genset(var2, "y")
+    var3 = _genset(var3, "z")
 
     v = Permutation(v)
     perm_dict = {Permutation(key): value for key, value in perm_dict.items()}
     if v.inv == 0:
         return perm_dict
-    ret = {}
+    ret: dict[Permutation, Any] = {}
     for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
         cprobe = _probe_vals(coeff)
         for w, value in _groth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, as_frac=True).items():

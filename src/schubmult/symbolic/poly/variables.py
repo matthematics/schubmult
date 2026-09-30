@@ -280,7 +280,7 @@ class MaskedGeneratingSet(GeneratingSet_base):
         return len(self.base_genset) - len(self.index_mask)
 
     def __eq__(self, other: object) -> bool:
-        return type(self) is type(other) and other.base_genset == self.base_genset and other.index_mask == self.index_mask  # type: ignore[attr-defined]
+        return type(self) is type(other) and other.base_genset == self.base_genset and other.index_mask == self.index_mask
 
 
 class CustomGeneratingSet(GeneratingSet_base):
@@ -335,7 +335,7 @@ class CustomGeneratingSet(GeneratingSet_base):
         return hash(self._symbols_arr)
 
     def __eq__(self, other: object) -> bool:
-        return type(self) is type(other) and other._symbols_arr == self._symbols_arr  # type: ignore[attr-defined]
+        return type(self) is type(other) and other._symbols_arr == self._symbols_arr
 
 
 NoneVar = 1e10

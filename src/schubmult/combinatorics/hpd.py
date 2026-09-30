@@ -1,5 +1,11 @@
 """
-Bumpless Pipe Dreams (HPD) module
+Bumpless Pipe Dreams (HPD) module -- EXPERIMENTAL, currently unmaintained.
+
+`HPD` is a variant of `schubmult.combinatorics.bpd.BPD` whose rows carry an ``id_vector`` flag.
+Development stopped partway through the port: the constructor requires ``id_vector``, but
+``delete_row``, ``append``, ``from_bruhat_path``, ``shiftup``, ``rothe_bpd``, ``resize``, and
+``right_zero_act`` still construct ``HPD(grid)`` without it and raise ``TypeError``.  Nothing in the
+package or the test suite depends on this module; it is kept for possible future work.
 """
 
 from __future__ import annotations
@@ -182,7 +188,7 @@ def _bpd_bottom_row(weight, length):
 
 class HPD(SchubertMonomialGraph, DefaultPrinting):
     """
-    Bumpless Pipe Dream representation.
+    Bumpless Pipe Dream representation.  EXPERIMENTAL -- see the module docstring.
 
     A bumpless pipe dream is an n×n grid where:
     - HPDTile.CROSS (1) represents a crossing
