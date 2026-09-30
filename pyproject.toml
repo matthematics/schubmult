@@ -166,7 +166,7 @@ exclude_also = [
 [project.optional-dependencies]
 visualization = ["matplotlib>=3.0"]
 docs = ["pydoc-markdown>=4.8", "mkdocs>=1.6", "mkdocs-material>=9.5"]
-test = ["pytest", "pytest-xdist"]
+test = ["pytest", "pytest-xdist", "mypy"]
 
 
 [project.urls]
@@ -207,3 +207,22 @@ addopts = [
     "--capture=tee-sys",
     "--ignore=src/schubmult/utils/test_utils.py",
 ]
+
+[tool.mypy]
+# Only the modules with deliberate type hints are checked; add a module here when you type it.
+# Coefficients are SymEngine/SymPy expressions (no stubs), so they are ``Any`` -- the checker
+# verifies the combinatorial plumbing (permutations, alphabets, dict shapes), not the algebra.
+files = [
+    "src/schubmult/_typing.py",
+    "src/schubmult/combinatorics/permutation.py",
+    "src/schubmult/symbolic/poly/variables.py",
+    "src/schubmult/utils/perm_utils.py",
+    "src/schubmult/mult/groth_double.py",
+    "src/schubmult/mult/groth_quantum_double.py",
+]
+# No python_version pin: it would make mypy parse third-party stubs (numpy's use the 3.12 ``type``
+# statement) with older syntax rules and abort.  3.10 compatibility is ruff's job (target-version).
+follow_imports = "silent"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true

@@ -60,9 +60,12 @@ recursion exactly as ``schubmult_q_double`` does gives ``G^q_u(x; y) Q(S_{v'}(x;
 ``G^q_u(x; y) G^q_v(x; z)``.
 """
 
+from __future__ import annotations
+
 from functools import cache
 from itertools import combinations, product
 from math import comb
+from typing import TYPE_CHECKING, Any
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation, uncode
@@ -87,6 +90,12 @@ from schubmult.symbolic.poly.schub_poly import _vars
 from schubmult.utils.perm_utils import add_perm_dict
 from schubmult.utils.schub_lib import compute_vpathdicts
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from schubmult._typing import Alphabet, Expr, PermCoeffDict, PermLike
+    from schubmult.symbolic.poly.variables import GeneratingSet_base
+
 __all__ = [
     "apply_kato",
     "groth_elem_sym_poly_q",
@@ -108,7 +117,7 @@ def _ns_prec(label1, label2):
 
 
 @cache
-def quantum_pieri_chains(u, k):
+def quantum_pieri_chains(u: PermLike, k: int) -> dict[Permutation, tuple[int, tuple[int, ...]]]:
     r"""Endpoints of the Naito--Sagaki ``k``-Pieri chains from ``u`` in the quantum Bruhat graph.
 
     A ``k``-Pieri chain is a path ``u = w_0 -> w_1 -> ... -> w_r`` with edges
@@ -127,7 +136,7 @@ def quantum_pieri_chains(u, k):
     u = Permutation(u)
     rank = _rank(u, tuple(range(1, k + 1)))
     labels = [(a, b) for b in range(rank, k, -1) for a in range(1, k + 1)]
-    found = {}
+    found: dict[Permutation, tuple[int, tuple[int, ...]]] = {}
 
     def walk(w, path, dvec):
         found.setdefault(w, set()).add((len(path), dvec))
@@ -148,7 +157,7 @@ def quantum_pieri_chains(u, k):
             walk(stepped, [*path, label], new_d)
 
     walk(u, [], (0,) * (rank - 1))
-    out = {}
+    out: dict[Permutation, tuple[int, tuple[int, ...]]] = {}
     for w, data in found.items():
         if len(data) != 1:
             raise ValueError(f"ambiguous quantum chain data for u={list(u)}, k={k}, w={list(w)}: {sorted(data)}")
@@ -183,7 +192,7 @@ def _fate(u, w, k):
     return fixed, left, out
 
 
-def grothmult_q_double_top(coeff_dict, k, zvar=None, var2=None, beta=None, q_var=None):
+def grothmult_q_double_top(coeff_dict: PermCoeffDict, k: int, zvar: Expr | None = None, var2: Alphabet | None = None, beta: Expr | None = None, q_var: GeneratingSet_base | None = None) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G^q_u(x, var2)`` by the quantized top block ``Q(prod_{i<=k}(x_i + zvar))``.
 
     The multiplier is ``groth_elem_sym_poly_q(k, k, zvar, x, beta, q_var, fgl=False)``, i.e.
@@ -197,9 +206,9 @@ def grothmult_q_double_top(coeff_dict, k, zvar=None, var2=None, beta=None, q_var
         zvar = S.Zero
     if q_var is None:
         q_var = _vars.q_var
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         if k == 0:
@@ -210,7 +219,7 @@ def grothmult_q_double_top(coeff_dict, k, zvar=None, var2=None, beta=None, q_var
     return ret
 
 
-def groth_elem_sym_poly_q(p, k, zvar, var_x, beta, q_var=None, fgl=True):
+def groth_elem_sym_poly_q(p: int, k: int, zvar: Expr, var_x: Alphabet, beta: Expr, q_var: GeneratingSet_base | None = None, fgl: bool = True) -> Expr:
     r"""Quantization of ``groth_elem_sym_poly``: ``Q(e_p(x_1 (+) z, ..., x_k (+) z))``.
 
     ``fgl=False`` quantizes the plain ``e_p(x_1 + z, ..., x_k + z)`` instead, whose ``p = k``
@@ -256,7 +265,7 @@ def _q_pieri_coeff(u, w, k, p, zvar, var2, beta, length, fgl):
     return beta ** (length - m) * prod([S.One / (S.One + beta * var2[a]) for a in out]) * total
 
 
-def grothmult_q_double_pieri(coeff_dict, p, k, zvar=None, var2=None, beta=None, q_var=None, fgl=True):
+def grothmult_q_double_pieri(coeff_dict: PermCoeffDict, p: int, k: int, zvar: Expr | None = None, var2: Alphabet | None = None, beta: Expr | None = None, q_var: GeneratingSet_base | None = None, fgl: bool = True) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G^q_u(x, var2)`` by ``groth_elem_sym_poly_q(p, k, zvar, x, beta, q_var, fgl)``.
 
     Closed form from the top block (see ``_q_pieri_coeff``); ``fgl=False`` multiplies by the
@@ -269,9 +278,9 @@ def grothmult_q_double_pieri(coeff_dict, p, k, zvar=None, var2=None, beta=None, 
         zvar = S.Zero
     if q_var is None:
         q_var = _vars.q_var
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         if p == 0:
@@ -339,7 +348,7 @@ def _qgroth_schub_vpath_mul(perm_dict, v, var2, var3, beta, q_var, as_frac=False
     return {w: coeff for w, coeff in out.items() if coeff != S.Zero}
 
 
-def grothmult_q_double(perm_dict, v, var2=None, var3=None, beta=None, q_var=None):
+def grothmult_q_double(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | None = None, var3: Alphabet | None = None, beta: Expr | None = None, q_var: GeneratingSet_base | None = None) -> PermCoeffDict:
     r"""Multiply quantum double Grothendieck polynomials, mirroring ``schubmult_q_double``.
 
     Returns the expansion of ``sum_u coeff_u G^q_u(x, var2) * G^q_v(x, var3)`` in the basis
@@ -354,14 +363,14 @@ def grothmult_q_double(perm_dict, v, var2=None, var3=None, beta=None, q_var=None
         beta = _default_beta
     if q_var is None:
         q_var = _vars.q_var
-    var2 = _genset(var2)
-    var3 = _genset(var3)
+    var2 = _genset(var2, "y")
+    var3 = _genset(var3, "z")
 
     v = Permutation(v)
     perm_dict = {Permutation(key): value for key, value in perm_dict.items()}
     if v.inv == 0:
         return perm_dict
-    ret = {}
+    ret: dict[Permutation, Any] = {}
     for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
         cprobe = _probe_vals(coeff)
         for w, value in _qgroth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, q_var, as_frac=True).items():
@@ -370,15 +379,15 @@ def grothmult_q_double(perm_dict, v, var2=None, var3=None, beta=None, q_var=None
     return {w: coeff for w, coeff in out.items() if coeff != S.Zero}
 
 
-def grothmult_q_double_dict(perm_dict1, perm_dict2, var2=None, var3=None, beta=None, q_var=None):
+def grothmult_q_double_dict(perm_dict1: PermCoeffDict, perm_dict2: PermCoeffDict, var2: Alphabet | None = None, var3: Alphabet | None = None, beta: Expr | None = None, q_var: GeneratingSet_base | None = None) -> PermCoeffDict:
     """Product of two coefficient dicts: ``sum_v coeff2_v grothmult_q_double(perm_dict1, v, ...)``."""
-    ret = {}
+    ret: PermCoeffDict = {}
     for v, coeff in perm_dict2.items():
         ret = add_perm_dict(ret, {w: coeff * value for w, value in grothmult_q_double(perm_dict1, v, var2, var3, beta, q_var).items()})
     return ret
 
 
-def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None, beta=None):
+def apply_kato(coeff_dict: PermCoeffDict, parabolic_index: Iterable[int], q_var: GeneratingSet_base | None = None, n: int | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Project a full-flag quantum K product onto ``QK_T(G/P)`` for the parabolic ``parabolic_index``.
 
     Kato (arXiv:1906.09343, Theorem 2.19): ``QK_T(G/B) -> QK_T(G/P)``, ``O^w -> O^{[w]_P}`` with
@@ -415,9 +424,9 @@ def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None, beta=None):
     if beta is None:
         beta = _default_beta
     beta = sympify(beta)
+    parabolic_index = sorted(parabolic_index)
     if n is None:
         n = parabolic_index[-1] + 1
-    parabolic_index = sorted(parabolic_index)
     block_sizes = []
     size = 0
     for i in range(1, n + 1):
@@ -433,7 +442,7 @@ def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None, beta=None):
         qsub[sympify(q_var[boundary])] = (-beta) ** (deg - 2) * sympify(q_var[k + 1])
     for j in parabolic_index:
         qsub[sympify(q_var[j])] = beta ** (-2)
-    ret = {}
+    ret: PermCoeffDict = {}
     for w, val in coeff_dict.items():
         w = Permutation(w)
         if len(w) > n:
@@ -444,7 +453,7 @@ def apply_kato(coeff_dict, parabolic_index, q_var=None, n=None, beta=None):
     return {w: c for w, c in ret.items() if c != S.Zero}
 
 
-def quantum_elem_sym(l, k, var_x, beta, q_var=None):
+def quantum_elem_sym(l: int, k: int, var_x: Alphabet, beta: Expr, q_var: GeneratingSet_base | None = None) -> Expr:
     r"""``F^k_l(X) = sum_{J in [k], |J| = l} prod_{j in J, j+1 not in J} (1 - beta^2 q_j) prod_{j in J} X_j``, ``X_j = 1 + beta*x_j``.
 
     The Lenart--Maeno quantization of ``e_l(X_1..X_k)``; ``beta = -1`` gives the ``F^k_l`` of
@@ -489,7 +498,7 @@ def _sem_basis(N):
     return X, monos, sems, inv
 
 
-def lm_quantize(poly, N, var_x, beta, q_var=None):
+def lm_quantize(poly: Expr, N: int, var_x: Alphabet, beta: Expr, q_var: GeneratingSet_base | None = None) -> Expr:
     r"""Lenart--Maeno quantization of a polynomial in ``x_1..x_{N-1}`` of degree ``<= N - i`` in ``x_i``.
 
     Expands ``poly`` in the standard elementary monomials ``prod_j e_{i_j}(X_1..X_j)`` of
@@ -526,7 +535,7 @@ def lm_quantize(poly, N, var_x, beta, q_var=None):
     return sympify(sympy.expand(sympy.cancel(sympify_sympy(total))))
 
 
-def qgroth_poly(v, var_x=None, var_y=None, beta=None, q_var=None):
+def qgroth_poly(v: PermLike, var_x: Alphabet | None = None, var_y: Alphabet | None = None, beta: Expr | None = None, q_var: GeneratingSet_base | None = None) -> Expr:
     r"""The quantum double Grothendieck polynomial ``G^q_v(var_x; var_y)`` as an explicit expression.
 
     ``lm_quantize`` applied to ``grothendieck_poly(v)`` with ``N = len(v)`` slots.  At
@@ -534,13 +543,12 @@ def qgroth_poly(v, var_x=None, var_y=None, beta=None, q_var=None):
     (symbolic); intended for verification.
     """
     from schubmult.symbolic.poly.schub_poly import grothendieck_poly
-    from schubmult.symbolic.poly.variables import GeneratingSet
 
     if beta is None:
         beta = _default_beta
     if q_var is None:
         q_var = _vars.q_var
-    var_x = GeneratingSet("x") if var_x is None else _genset(var_x)
-    var_y = GeneratingSet("y") if var_y is None else _genset(var_y)
+    var_x = _genset(var_x, "x")
+    var_y = _genset(var_y, "y")
     v = Permutation(v)
     return lm_quantize(grothendieck_poly(v, var_x, var_y, beta), max(len(v), 2), var_x, beta, q_var)

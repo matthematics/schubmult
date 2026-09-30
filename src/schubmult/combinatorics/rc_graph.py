@@ -901,22 +901,26 @@ class RCGraph(WCGraph, CrystalGraph):
         """Whether ``self`` (assumed to have permutation ``dom_perm``) matches the highest weight of the
         Demazure-crystal tensor factor for the ``dom_perm``-part of the product ``S_self.perm * S_dom_perm``
         landing on ``perm``, via matching P/weight tableaux against the principal RC graphs.
-        """
-        from schubmult.rings.schubert.schubert_ring import Sx
 
-        if (Sx(self.perm) * Sx(dom_perm)).get(perm, 0) == 0:
-            return False
-        length = max(len(perm.trimcode), len(dom_perm.trimcode))
-        rc = RCGraph.principal_rc(perm, length)
-        dom_rc = RCGraph.principal_rc(dom_perm, length)
-        weight = tuple([rc.length_vector[i] - dom_rc.length_vector[i] for i in range(len(rc))])
-        if self.length_vector != weight:
-            return False
-        outer_shape = rc.p_tableau.shape
-        inner_shape = dom_rc.p_tableau.shape
-        if NilPlactic.exists_ed_tableau_equiv(rc.p_tableau, inner_shape, outer_shape) and Plactic.exists_ss_tableau_equiv(rc.weight_tableau, inner_shape, outer_shape):
-            return True  # should match highest weight of tensor
-        return False
+        Not implemented: the original body (kept below) relied on ``NilPlactic.exists_ed_tableau_equiv``
+        and ``Plactic.exists_ss_tableau_equiv``, which do not exist, and on `edelman_greene`.
+        """
+        raise NotImplementedError("is_dom_perm_yamanouchi depends on tableau-equivalence tests that were never written")
+        # from schubmult.rings.schubert.schubert_ring import Sx
+        #
+        # if (Sx(self.perm) * Sx(dom_perm)).get(perm, 0) == 0:
+        #     return False
+        # length = max(len(perm.trimcode), len(dom_perm.trimcode))
+        # rc = RCGraph.principal_rc(perm, length)
+        # dom_rc = RCGraph.principal_rc(dom_perm, length)
+        # weight = tuple([rc.length_vector[i] - dom_rc.length_vector[i] for i in range(len(rc))])
+        # if self.length_vector != weight:
+        #     return False
+        # outer_shape = rc.p_tableau.shape
+        # inner_shape = dom_rc.p_tableau.shape
+        # if NilPlactic.exists_ed_tableau_equiv(rc.p_tableau, inner_shape, outer_shape) and Plactic.exists_ss_tableau_equiv(rc.weight_tableau, inner_shape, outer_shape):
+        #     return True  # should match highest weight of tensor
+        # return False
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -949,18 +953,24 @@ class RCGraph(WCGraph, CrystalGraph):
     def edelman_greene(self) -> tuple[NilPlactic, Plactic]:
         """Edelman-Greene correspondence: insert the inversions (in reverse reading order) to build the
         ``(P, Q)`` pair of a nilCoxeter tableau and a plactic recording tableau.
-        """
-        word1, word2 = (), ()
-        index = 0
-        for index, (row, col) in enumerate(list(reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]))):
-            to_insert = row + col - 1
-            word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, len(self) - row + 1)
-            index += 1
-        P = word1
-        Q = word2
 
-        # reg._rc_graph = self
-        return (NilPlactic(P), Plactic(Q))
+        Not implemented: the original body (kept below) calls ``NilPlactic.ed_insert_rsk`` with the
+        four-argument signature of the private ``_ed_insert_rsk``, so it always raised ``TypeError``.
+        ``p_tableau``, ``q_tableau`` and ``shape`` depend on it.  Use `RootTableau.from_rc_graph`
+        for the tableau data of an RC graph.
+        """
+        raise NotImplementedError("edelman_greene was never wired to a working insertion; see RootTableau.from_rc_graph")
+        # word1, word2 = (), ()
+        # index = 0
+        # for index, (row, col) in enumerate(list(reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]))):
+        #     to_insert = row + col - 1
+        #     word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, len(self) - row + 1)
+        #     index += 1
+        # P = word1
+        # Q = word2
+        #
+        # # reg._rc_graph = self
+        # return (NilPlactic(P), Plactic(Q))
 
     def __mul__(self, other: object) -> object:
         """Multiply as elements of the `RCGraphRing` (delegates to that ring's product for `RCGraph` operands)."""
