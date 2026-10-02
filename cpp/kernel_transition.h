@@ -196,6 +196,7 @@ static long count_rec(const Perm& w, int n, CountMemo& memo, long budget) {
 // memoized on the sub-permutations, so far cheaper than the transition expansion. Returns -1 as
 // soon as any intermediate count exceeds `budget` (the root count dominates every sub-count).
 static long pipe_dream_count(const Perm& w, int n, long budget = LONG_MAX) {
+    if (budget < 0) return -1;
     pd_detail::CountMemo memo;
     try {
         return pd_detail::count_rec(w, n, memo, budget);
