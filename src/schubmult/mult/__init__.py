@@ -33,6 +33,10 @@ _exports = {
     "separated_descents_coeffs": ("separated_descents", "separated_descents_coeffs"),
     "mult_poly_py": ("single", "mult_poly_py"),
     "schubmult_py": ("single", "schubmult_py"),
+    "pipe_dream_count": ("transition", "pipe_dream_count"),
+    "schubmult_py_hybrid": ("transition", "schubmult_py_hybrid"),
+    "schubmult_py_transition": ("transition", "schubmult_py_transition"),
+    "transition_monomials": ("transition", "transition_monomials"),
 }
 _exports.update(
     {
