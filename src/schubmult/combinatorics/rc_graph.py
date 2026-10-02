@@ -285,7 +285,7 @@ class RCGraph(WCGraph, CrystalGraph):
         return self.to_highest_weight()[0], self.grass
 
     def all_chute_moves(self):
-        """All valid chute moves ``(start, end)`` available on this RC graph (see `ChuteMoveElement`)."""
+        """All valid chute moves ``(start, end)`` available on this RC graph."""
         chute_moves = set()
         rc = self
         for row_num in range(len(self), 0, -1):

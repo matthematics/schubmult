@@ -8,6 +8,7 @@
 //   pipe_dream_count(v)                                 S_v(1, ..., 1)
 //   schubmult_double(perm_dict, v, var2, var3[, elem_func])
 //   schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
+//   schubmult_double_transition(perm_dict, v, var2, var3)  same product, double transition + Monk kernel
 //   schubmult_q_fast(perm_dict, v, q_var)               integer input coefficients
 //   schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
 //
@@ -169,6 +170,12 @@ PyObject* py_schubmult_double_alt_from_elems(PyObject*, PyObject* args) {
     return guarded([&] { return expr_dict_out(api_schubmult_double_alt_from_elems(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3), Expr(elem_func, false))); });
 }
 
+PyObject* py_schubmult_double_transition(PyObject*, PyObject* args) {
+    PyObject *d, *v, *var2, *var3;
+    if (!PyArg_ParseTuple(args, "O!OOO", &PyDict_Type, &d, &v, &var2, &var3)) return nullptr;
+    return guarded([&] { return expr_dict_out(api_schubmult_double_transition(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3))); });
+}
+
 PyObject* py_schubmult_q_fast(PyObject*, PyObject* args) {
     PyObject *d, *v, *q;
     if (!PyArg_ParseTuple(args, "O!OO", &PyDict_Type, &d, &v, &q)) return nullptr;
@@ -188,6 +195,7 @@ PyMethodDef methods[] = {
     {"pipe_dream_count", py_pipe_dream_count, METH_VARARGS, "S_w(1, ..., 1): the number of pipe dreams of w."},
     {"schubmult_double", py_schubmult_double, METH_VARARGS, "Double Schubert product; var2/var3 are generating sets, optional elem_func builds the elementary symmetric objects."},
     {"schubmult_double_alt_from_elems", py_schubmult_double_alt_from_elems, METH_VARARGS, "Pull-out-variable recursion with elem_func (positivity)."},
+    {"schubmult_double_transition", py_schubmult_double_transition, METH_VARARGS, "Double Schubert product by the double transition recursion + double Monk."},
     {"schubmult_q_fast", py_schubmult_q_fast, METH_VARARGS, "Quantum Schubert product; integer input coefficients."},
     {"schubmult_q_double_fast", py_schubmult_q_double_fast, METH_VARARGS, "Quantum double Schubert product."},
     {nullptr, nullptr, 0, nullptr},

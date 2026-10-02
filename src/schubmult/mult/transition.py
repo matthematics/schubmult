@@ -1,4 +1,4 @@
-"""Ordinary Schubert products by transition + Monk, and the cost-model hybrid with `schubmult_py`.
+"""Schubert products by transition + Monk, and the cost-model hybrid with `schubmult_py`.
 
 This is the algorithm of Buch's ``lrcalc``: expand one factor into monomials with the
 Lascoux--Schützenberger transition recursion ``S_w = x_r S_v + sum_i S_{v t_{ir}}`` (``r`` the last
@@ -7,6 +7,11 @@ rule, as a Horner scheme over the Schubert basis.  Its cost is governed by the n
 of the expanded factor, where the v-path kernel's is governed by the size of its v-path structure;
 the two are complementary, and `schubmult_py_hybrid` picks between them with a cost model fitted on
 exhaustive timings over ``S_7`` (see ``cpp/kernel_transition.h``).
+
+`schubmult_double_transition` is the double version: the transition formula for double Schubert
+polynomials (Kohnert--Veigneau) reads ``S_w(x, z) = (x_r - z_{v(r)}) S_v(x, z) + sum_i S_{v t_{ir}}(x, z)``,
+and the linear factor acts on ``S_u(x, y)`` by the double Monk rule plus the scalar ``y_{u(r)} - z_{v(r)}``.
+The recursion is run directly on the coefficient dict and memoized on the permutation being expanded.
 
 The compiled kernels in ``schubmult_cpp`` do the work; the Python implementations here are the
 reference and the fallback for permutations beyond the extension's ``MAXN``.
@@ -21,9 +26,16 @@ from schubmult.mult import _accel
 from schubmult.mult.single import schubmult_py, single_variable
 
 if TYPE_CHECKING:
-    from schubmult._typing import PermCoeffDict, PermLike
+    from schubmult._typing import Alphabet, PermCoeffDict, PermLike
 
-__all__ = ["mult_monomials_py", "pipe_dream_count", "schubmult_py_hybrid", "schubmult_py_transition", "transition_monomials"]
+__all__ = [
+    "mult_monomials_py",
+    "pipe_dream_count",
+    "schubmult_double_transition",
+    "schubmult_py_hybrid",
+    "schubmult_py_transition",
+    "transition_monomials",
+]
 
 Monomial = tuple[int, ...]
 """Exponent vector ``(a_1, a_2, ...)`` of ``x_1^{a_1} x_2^{a_2} ...``, trailing zeros trimmed."""
@@ -162,3 +174,66 @@ def schubmult_py_hybrid(perm_dict: PermCoeffDict, v: PermLike) -> PermCoeffDict:
     if _prefers_transition(pipe_dream_count(v), _vpath_count(v)):
         return schubmult_py_transition(perm_dict, v)
     return schubmult_py(perm_dict, v)
+
+
+def _last_descent_split(w: Permutation) -> tuple[int, Permutation] | None:
+    """``(r, v)`` with ``r`` the last descent of ``w`` and ``v = w t_{rs}``, ``s`` the last position with ``w(s) < w(r)``; ``None`` if ``w`` is the identity."""
+    arr = list(w)
+    n = len(arr)
+    r = next((i for i in range(n - 1, 0, -1) if arr[i - 1] > arr[i]), 0)
+    if r == 0:
+        return None
+    s = r + 1
+    while s < n and arr[r - 1] > arr[s]:
+        s += 1
+    arr[r - 1], arr[s - 1] = arr[s - 1], arr[r - 1]
+    return r, Permutation(arr)
+
+
+def _linear_factor(coeff_dict: PermCoeffDict, r: int, zc, var2: Alphabet) -> PermCoeffDict:
+    """``(x_r - zc) * sum_u coeff_u S_u(x, var2)``: double Monk covers of each ``u`` plus ``(y_{u(r)} - zc) S_u``."""
+    out = dict(single_variable(coeff_dict, r))
+    for u, c in coeff_dict.items():
+        f = var2[u[r - 1]] - zc
+        if f != 0:
+            out[u] = out.get(u, 0) + c * f
+    return out
+
+
+def schubmult_double_transition(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | None = None, var3: Alphabet | None = None) -> PermCoeffDict:
+    """``(sum_u coeff_u S_u(x, var2)) * S_v(x, var3)`` in the basis ``S_w(x, var2)`` by the double transition recursion on ``v``.
+
+    Same contract as `schubmult_double` (``var2``/``var3`` default to the ``y``/``z`` generating sets).
+    """
+    from schubmult.symbolic.poly.variables import GeneratingSet
+
+    if var2 is None:
+        var2 = GeneratingSet("y")
+    if var3 is None:
+        var3 = GeneratingSet("z")
+    if _accel.available:
+        ret = _accel.schubmult_double_transition(perm_dict, v, var2, var3)
+        if ret is not None:
+            return ret
+    base = {Permutation(u): c for u, c in perm_dict.items() if c != 0}
+    memo: dict[Permutation, PermCoeffDict] = {}
+
+    def run(w: Permutation) -> PermCoeffDict:
+        split = _last_descent_split(w)
+        if split is None:
+            return base
+        if w in memo:
+            return memo[w]
+        r, vv = split
+        acc = _linear_factor(run(vv), r, var3[vv[r - 1]], var2)
+        vr, last = vv[r - 1], 0
+        for i in range(r - 1, 0, -1):
+            vi = vv[i - 1]
+            if last < vi < vr:
+                last = vi
+                for u, c in run(vv.swap(i - 1, r - 1)).items():
+                    acc[u] = acc.get(u, 0) + c
+        memo[w] = {u: c for u, c in acc.items() if c != 0}
+        return memo[w]
+
+    return dict(run(Permutation(v)))

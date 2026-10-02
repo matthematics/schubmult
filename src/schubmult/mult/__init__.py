@@ -34,6 +34,7 @@ _exports = {
     "mult_poly_py": ("single", "mult_poly_py"),
     "schubmult_py": ("single", "schubmult_py"),
     "pipe_dream_count": ("transition", "pipe_dream_count"),
+    "schubmult_double_transition": ("transition", "schubmult_double_transition"),
     "schubmult_py_hybrid": ("transition", "schubmult_py_hybrid"),
     "schubmult_py_transition": ("transition", "schubmult_py_transition"),
     "transition_monomials": ("transition", "transition_monomials"),

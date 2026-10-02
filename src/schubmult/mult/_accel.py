@@ -74,6 +74,11 @@ def schubmult_double(perm_dict, v, var2, var3):
     return _call(_cpp.schubmult_double, perm_dict, v, var2, var3)
 
 
+def schubmult_double_transition(perm_dict, v, var2, var3):
+    """C++ double transition + Monk kernel; same contract as `schubmult_double`."""
+    return _call(_cpp.schubmult_double_transition, perm_dict, v, var2, var3)
+
+
 def schubmult_q_fast(perm_dict, v, q_var):
     """C++ ``schubmult_q_fast``; non-integer coefficients are handled by linearity, one key at a time."""
     if all(_is_int(c) for c in perm_dict.values()):

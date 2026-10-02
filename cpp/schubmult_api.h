@@ -8,6 +8,7 @@
 #define SCHUB_THROW
 #include "kernel_double.h"
 #include "kernel_double_alt.h"
+#include "kernel_double_transition.h"
 #include "kernel_q.h"
 #include "kernel_q_double.h"
 #include "kernel_single.h"
@@ -123,6 +124,10 @@ static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy, int ker
 
 static PyExprDict api_schubmult_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const Expr& elem_func) {
     return expr_dict_out(schubmult_double(expr_dict_in(d), perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars(), elem_func)));
+}
+
+static PyExprDict api_schubmult_double_transition(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z) {
+    return expr_dict_out(schubmult_double_transition(expr_dict_in(d), perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars())));
 }
 
 static PyExprDict api_schubmult_double_alt_from_elems(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const Expr& elem_func) {
