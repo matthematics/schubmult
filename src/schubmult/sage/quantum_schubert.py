@@ -138,7 +138,7 @@ def _check_parabolic(w, parabolic):
         raise ValueError(f"{list(w)} is not parabolic for block sizes {parabolic}: descents must lie in {_block_boundaries(parabolic)}")
 
 
-def QuantumSchubertPolynomialRing(R, parabolic=None):
+def QuantumSchubertPolynomialRing(R, parabolic=None, raw_coefficients=False):
     r"""
     Return the ring of quantum Schubert polynomials `\mathfrak{S}^q_w(x)` over ``R``.
 
@@ -148,6 +148,8 @@ def QuantumSchubertPolynomialRing(R, parabolic=None):
     - ``parabolic`` -- (optional) block sizes `(n_1, \ldots, n_k)` of a partial flag variety; basis
       permutations may only have descents at the block boundaries `n_1 + \cdots + n_j` (an implicit
       unbounded last block follows the recorded ones)
+    - ``raw_coefficients`` -- (default: ``False``) keep the coefficients as unexpanded SymEngine
+      expressions, as for :func:`~schubmult.sage.DoubleSchubertPolynomialRing`
 
     EXAMPLES::
 
@@ -182,10 +184,10 @@ def QuantumSchubertPolynomialRing(R, parabolic=None):
         sage: P([4, 1, 2, 3]).expand()
         x0^3 - q0
     """
-    return QuantumSchubertPolynomialRing_xbasis(R, _normalize_parabolic(parabolic))
+    return QuantumSchubertPolynomialRing_xbasis(R, _normalize_parabolic(parabolic), raw_coefficients)
 
 
-def QuantumDoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z"), parabolic=None):
+def QuantumDoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z"), parabolic=None, raw_coefficients=False):
     r"""
     Return the ring of quantum double Schubert polynomials `\mathfrak{S}^q_w(x; \text{alphabet})` over ``R``.
 
@@ -196,6 +198,8 @@ def QuantumDoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=(
     - ``coefficient_alphabets`` -- (default: ``('y', 'z')``) letters available in coefficients
     - ``parabolic`` -- (optional) block sizes of a partial flag variety, as for
       :func:`QuantumSchubertPolynomialRing`
+    - ``raw_coefficients`` -- (default: ``False``) keep the coefficients as unexpanded SymEngine
+      expressions, as for :func:`~schubmult.sage.DoubleSchubertPolynomialRing`
 
     EXAMPLES::
 
@@ -230,7 +234,7 @@ def QuantumDoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=(
         True
     """
     names = tuple(sorted({"q", str(alphabet), *map(str, coefficient_alphabets)}))
-    return QuantumDoubleSchubertPolynomialRing_xbasis(R, str(alphabet), names, _normalize_parabolic(parabolic))
+    return QuantumDoubleSchubertPolynomialRing_xbasis(R, str(alphabet), names, _normalize_parabolic(parabolic), raw_coefficients)
 
 
 class QuantumSchubertPolynomial_class(SchubmultBackedElement):
@@ -277,7 +281,7 @@ class _QuantumMixin:
 class QuantumSchubertPolynomialRing_xbasis(_QuantumMixin, SchubmultBackedRing):
     Element = QuantumSchubertPolynomial_class
 
-    def __init__(self, R, parabolic):
+    def __init__(self, R, parabolic, raw=False):
         """
         EXAMPLES::
 
@@ -290,7 +294,7 @@ class QuantumSchubertPolynomialRing_xbasis(_QuantumMixin, SchubmultBackedRing):
         """
         self._alphabet = None
         self._parabolic = parabolic
-        super().__init__(R, ("q",), prefix="Xq", name=self._parabolic_name("Schubert polynomial ring with Xq basis"))
+        super().__init__(R, ("q",), prefix="Xq", name=self._parabolic_name("Schubert polynomial ring with Xq basis"), raw=raw)
 
     def _schub_ring(self, alphabet=None):  # noqa: ARG002  (single ring: no second alphabet; signature shared with the double rings)
         if self._parabolic is None:
@@ -316,7 +320,7 @@ class QuantumSchubertPolynomialRing_xbasis(_QuantumMixin, SchubmultBackedRing):
 class QuantumDoubleSchubertPolynomialRing_xbasis(_QuantumMixin, SchubmultBackedRing):
     Element = SchubmultBackedElement
 
-    def __init__(self, R, alphabet, alphabets, parabolic):
+    def __init__(self, R, alphabet, alphabets, parabolic, raw=False):
         """
         EXAMPLES::
 
@@ -327,7 +331,7 @@ class QuantumDoubleSchubertPolynomialRing_xbasis(_QuantumMixin, SchubmultBackedR
         """
         self._alphabet = alphabet
         self._parabolic = parabolic
-        super().__init__(R, alphabets, prefix=f"Xq_{alphabet}", name=self._parabolic_name(f"double Schubert polynomial ring in the alphabet {alphabet} with Xq_{alphabet} basis"))
+        super().__init__(R, alphabets, prefix=f"Xq_{alphabet}", name=self._parabolic_name(f"double Schubert polynomial ring in the alphabet {alphabet} with Xq_{alphabet} basis"), raw=raw)
 
     def alphabet(self):
         """

@@ -6,10 +6,77 @@
 #include "schub_common.h"
 
 #include <functional>
+#include <unordered_map>
 
 #include "expr.h"
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 static bool is_zero(const Expr& e) { return ex_is_zero(e); }
+
+// ---------------------------------------------------------------------------
+// Shadow values: a partial sum's value at SHADOW_POINTS random points of F_p, p = 2^61 - 1,
+// carried alongside the expression and combined node by node (see schubmult/mult/_shadow.py).
+// A state whose shadow vanishes at every point is dropped (probabilistic=True).
+// ---------------------------------------------------------------------------
+
+static const uint64_t SHADOW_P = (1ULL << 61) - 1;
+static const int SHADOW_POINTS = 2;
+
+static inline uint64_t shadow_mulmod(uint64_t a, uint64_t b) {
+#ifdef _MSC_VER
+    uint64_t hi, lo = _umul128(a, b, &hi);
+#else
+    unsigned __int128 m = (unsigned __int128)a * b;
+    uint64_t lo = (uint64_t)m, hi = (uint64_t)(m >> 64);
+#endif
+    // 2^61 = 1 mod p, so a*b = hi*2^64 + lo = 8*hi + (lo >> 61) + (lo & p)
+    uint64_t r = (lo & SHADOW_P) + ((lo >> 61) | (hi << 3));
+    r = (r & SHADOW_P) + (r >> 61);
+    return r >= SHADOW_P ? r - SHADOW_P : r;
+}
+
+struct ShadowVal {
+    uint64_t v[SHADOW_POINTS] = {0, 0};
+    bool is_zero() const {
+        for (int i = 0; i < SHADOW_POINTS; ++i)
+            if (v[i]) return false;
+        return true;
+    }
+    ShadowVal operator*(const ShadowVal& o) const {
+        ShadowVal r;
+        for (int i = 0; i < SHADOW_POINTS; ++i) r.v[i] = shadow_mulmod(v[i], o.v[i]);
+        return r;
+    }
+    ShadowVal operator-() const {
+        ShadowVal r;
+        for (int i = 0; i < SHADOW_POINTS; ++i) r.v[i] = v[i] ? SHADOW_P - v[i] : 0;
+        return r;
+    }
+    ShadowVal& operator+=(const ShadowVal& o) {
+        for (int i = 0; i < SHADOW_POINTS; ++i) {
+            uint64_t s = v[i] + o.v[i];
+            v[i] = s >= SHADOW_P ? s - SHADOW_P : s;
+        }
+        return *this;
+    }
+};
+
+// Evaluates kernel *inputs* (coefficients, e_p's) at the sample points; memoized by object
+// identity, which is stable for the lifetime of a call (inputs live in the caller's dict and in
+// the ElemSymCache). Null `eval` means exact mode.
+struct Shadow {
+    std::function<ShadowVal(const Expr&)> eval;
+    std::unordered_map<const void*, ShadowVal> memo;
+
+    const ShadowVal& of(const Expr& e) {
+        auto it = memo.find((const void*)e.get());
+        if (it != memo.end()) return it->second;
+        return memo.emplace((const void*)e.get(), eval(e)).first->second;
+    }
+};
 
 // e_p(y[xs..xs+k) | z[ys..]) via the same divide-and-conquer recursion as the Python.
 static Expr elem_sym_poly(int p, int k, const std::vector<Expr>& y, const std::vector<Expr>& z, int xs, int ys) {

@@ -50,9 +50,17 @@ def schubmult_py(perm_dict, v):
     return _call(_cpp.schubmult_py, {k: int(c) for k, c in perm_dict.items()}, v)
 
 
-def schubmult_double(perm_dict, v, var2, var3):
+def _evaluator(probabilistic):
+    if not probabilistic:
+        return None
+    from schubmult.mult._shadow import ShadowEvaluator
+
+    return ShadowEvaluator()
+
+
+def schubmult_double(perm_dict, v, var2, var3, probabilistic=False):
     """C++ ``schubmult_double``; returns ``None`` if the size exceeds ``MAXN``."""
-    return _call(_cpp.schubmult_double, perm_dict, v, var2, var3)
+    return _call(_cpp.schubmult_double, perm_dict, v, var2, var3, None, _evaluator(probabilistic))
 
 
 def schubmult_q_fast(perm_dict, v, q_var):
@@ -75,9 +83,9 @@ def schubmult_q_double_fast(perm_dict, v, var2, var3, q_var):
     return _call(_cpp.schubmult_q_double_fast, perm_dict, v, var2, var3, q_var)
 
 
-def schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func):
+def schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func, probabilistic=False):
     """C++ ``schubmult_double`` with a custom elementary-symmetric ``elem_func``; ``None`` if size exceeds ``MAXN``."""
-    return _call(_cpp.schubmult_double, perm_dict, v, var2, var3, elem_func)
+    return _call(_cpp.schubmult_double, perm_dict, v, var2, var3, elem_func, _evaluator(probabilistic))
 
 
 def schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func):

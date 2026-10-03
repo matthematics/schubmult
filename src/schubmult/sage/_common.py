@@ -2,11 +2,13 @@
 
 A backed ring is a :class:`~sage.combinat.free_module.CombinatorialFreeModule` indexed by
 permutations whose base ring is an infinite polynomial ring over the scalars in the coefficient
-alphabets (``y``, ``z``, ``q``, ...). Arithmetic is delegated to a schubmult ring object
+alphabets (``y``, ``z``, ``q``, ...) -- or, with ``raw_coefficients=True``, the ring of unexpanded
+SymEngine expressions (:class:`~schubmult.sage.symengine_ring.SymEngineRing`), in which case the
+kernel output is used as is. Arithmetic is delegated to a schubmult ring object
 (:meth:`SchubmultBackedRing._schub_ring`) and coefficients are converted at the boundary.
 
 Index conventions: Sage variables are 0-indexed (``x0``, ``y_0``, ``q_0``), schubmult's are 1-indexed
-(``x_1``, ``y_1``, ``q_1``); see :mod:`schubmult.sage._convert`.
+(``x_1``, ``y_1``, ``q_1``); see :mod:`schubmult.sage._convert`. Raw coefficients keep schubmult's names.
 """
 
 from typing import ClassVar
@@ -19,6 +21,7 @@ from sage.combinat.schubert_polynomial import SchubertPolynomialRing_xbasis
 from sage.combinat.sf.sf import SymmetricFunctions
 from sage.combinat.sf.sfa import SymmetricFunctionAlgebra_generic
 from sage.misc.cachefunc import cached_method
+from sage.misc.repr import repr_lincomb
 from sage.rings.fraction_field_element import FractionFieldElement
 from sage.rings.polynomial.infinite_polynomial_element import InfinitePolynomial
 from sage.rings.polynomial.infinite_polynomial_ring import InfinitePolynomialRing
@@ -26,8 +29,10 @@ from sage.rings.polynomial.multi_polynomial import MPolynomial
 from sage.rings.polynomial.polynomial_element import Polynomial
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.rational_field import QQ
+from sage.structure.dynamic_class import DynamicMetaclass
 
 from ._convert import parse_sage_name, sage_polynomial_to_symengine, symengine_to_base_ring, symengine_to_sage
+from .symengine_ring import REPR_TREE_LIMIT, SymEngineExpression, SymEngineRing, nonzero_mask, normal_forms, tree_size
 
 X_LETTER = "x"
 
@@ -76,15 +81,32 @@ def coefficient_into(c, T, aliases=None):
 
 
 def _coefficient_variables(c):
-    """Indexed variable names (``y_3``) occurring in a base-ring coefficient."""
+    """Indexed variable names (``y_3``, 0-based) occurring in a base-ring coefficient."""
     if isinstance(c, FractionFieldElement):
         return _coefficient_variables(c.numerator()) | _coefficient_variables(c.denominator())
     if isinstance(c, InfinitePolynomial):
         return {str(v) for v in c.polynomial().variables()}
+    if isinstance(c, SymEngineExpression):  # schubmult's 1-based ``y_3`` -> ``y_2``; unindexed symbols (beta) are skipped
+        parsed = [parse_sage_name(str(s)) for s in c.expr().free_symbols]
+        return {f"{letter}_{i - 1}" for letter, i in filter(None, parsed)}
     return set()
 
 
 class SchubmultBackedElement(CombinatorialFreeModule.Element):
+    def _repr_(self):
+        P = self.parent()
+        if not P._raw:
+            return super()._repr_()
+        # large raw coefficients print in normal form; normalize them all at once (shared subtrees)
+        items = self._sorted_items_for_printing()
+        big = [i for i, (_, c) in enumerate(items) if tree_size(c.expr(), REPR_TREE_LIMIT) > REPR_TREE_LIMIT]
+        if big:
+            forms = normal_forms([items[i][1].expr() for i in big], P._scalars)
+            items = list(items)
+            for i, form in zip(big, forms):
+                items[i] = (items[i][0], form)
+        return repr_lincomb(items, scalar_mult=P._print_options["scalar_mult"], repr_monomial=P._repr_term, strip_one=True)
+
     def project(self, n):
         r"""
         The image in the cohomology of the flag variety of `\CC^n` (equivariant, quantum, or partial as
@@ -144,7 +166,8 @@ class SchubmultBackedElement(CombinatorialFreeModule.Element):
 
         result = T.zero()
         for w, c in self:
-            result += coefficient_into(c, T, P._base_aliases) * symengine_to_sage(exprs[w], variable, scalar, named)
+            cf = symengine_to_sage(c.expr(), variable, scalar, named) if isinstance(c, SymEngineExpression) else coefficient_into(c, T, P._base_aliases)
+            result += cf * symengine_to_sage(exprs[w], variable, scalar, named)
         if isinstance(result, FractionFieldElement) and result.denominator().is_one():
             return result.numerator()
         return result
@@ -221,12 +244,13 @@ class SchubmultBackedRing(CombinatorialFreeModule):
     # base-ring variable name -> Sage variable name in expansions (``{'beta_0': 'beta'}``)
     _base_aliases: ClassVar[dict[str, str]] = {}
 
-    def __init__(self, R, alphabets, prefix, name):
+    def __init__(self, R, alphabets, prefix, name, raw=False):
         self._alphabets = tuple(alphabets)
         self._scalars = R
         self._name = name
+        self._raw = raw
         self._repr_option_bracket = False
-        base = self._make_base_ring(R, self._alphabets)
+        base = SymEngineRing(R) if raw else self._make_base_ring(R, self._alphabets)
         # filtered, not graded: S_u S_v = sum c^w_{uv} S_w with l(w) <= l(u) + l(v), the coefficients
         # carrying the missing degree (and q terms lower the length further)
         CombinatorialFreeModule.__init__(self, base, Permutations(), category=FilteredAlgebrasWithBasis(base), prefix=prefix)
@@ -236,7 +260,7 @@ class SchubmultBackedRing(CombinatorialFreeModule):
         return InfinitePolynomialRing(R, list(alphabets))
 
     def _repr_(self):
-        return f"{self._name} over {self._scalars}"
+        return f"{self._name} over {self._scalars}" + (" with unexpanded coefficients" if self._raw else "")
 
     # ---- hooks -----------------------------------------------------------------------------
 
@@ -258,12 +282,45 @@ class SchubmultBackedRing(CombinatorialFreeModule):
         return B(q) if isinstance(q, int) else B(QQ(q.numerator) / QQ(q.denominator))
 
     def _variable(self, letter, i):
+        if self._raw:
+            return self.base_ring().variable(letter, i)
         return self.base_ring().gen(self._alphabets.index(letter))[i - 1]
+
+    def _base_coefficient(self, c, source):
+        """A coefficient of the backed ring ``source`` (raw or polynomial) as an element of this base ring."""
+        B = self.base_ring()
+        if isinstance(c, SymEngineExpression):
+            return B(c) if self._raw else c.to_polynomial(B, self._named_base_elements())
+        if self._raw and isinstance(c, Polynomial | MPolynomial | InfinitePolynomial | FractionFieldElement):
+            from schubmult.symbolic import Symbol
+
+            # base-ring variables standing for unindexed schubmult symbols (``beta``, ``beta_0`` -> β)
+            named = {}
+            for sym, name in source._named_symbols.items():
+                named[name] = Symbol(sym)
+                named.update({var: Symbol(sym) for var, alias in source._base_aliases.items() if alias == name})
+
+            def convert(p):
+                if isinstance(p, Polynomial):
+                    p = PolynomialRing(p.base_ring(), 1, p.parent().variable_name())(p)
+                return B(sage_polynomial_to_symengine(p, {}, named))
+
+            if isinstance(c, FractionFieldElement):
+                return convert(c.numerator()) / convert(c.denominator())
+            return convert(c)
+        return B(c)
 
     def _convert_dict(self, dct):
         """schubmult ``{Permutation: symengine coeff}`` -> element of ``self``."""
         perms = [to_sage_perm(w) for w in dct]
-        coeffs = symengine_to_base_ring(dct.values(), self.base_ring(), self._named_base_elements())
+        B = self.base_ring()
+        if self._raw:
+            # the kernels cancel: most of the terms of a large product have coefficients that are zero
+            # but not literally so (4187 terms vs 246 in a product of two S_8 classes), and nothing
+            # downstream could tell -- the Schwartz-Zippel test is one shared pass over the trees
+            exprs = list(dct.values())
+            return self._from_dict({w: B(c) for w, c, keep in zip(perms, exprs, nonzero_mask(exprs)) if keep}, remove_zeros=False)
+        coeffs = symengine_to_base_ring(dct.values(), B, self._named_base_elements())
         return self._from_dict(dict(zip(perms, coeffs)), remove_zeros=True)
 
     def _named_base_elements(self):
@@ -307,7 +364,7 @@ class SchubmultBackedRing(CombinatorialFreeModule):
         one = ring(to_schubmult_perm([]))
         result = self.zero()
         for w, c in elem:
-            result += c * self._convert_dict(one * other(to_schubmult_perm(w)))
+            result += self._base_coefficient(c, elem.parent()) * self._convert_dict(one * other(to_schubmult_perm(w)))
         return result
 
     # ---- algebra structure -----------------------------------------------------------------
@@ -353,14 +410,20 @@ class SchubmultBackedRing(CombinatorialFreeModule):
             if isinstance(parent, SchubmultBackedRing):
                 if self._same_kind(parent):
                     if parent._alphabet == self._alphabet:
-                        return self._from_dict({w: self.base_ring()(c) for w, c in x})
+                        return self._from_dict({w: self._base_coefficient(c, parent) for w, c in x}, remove_zeros=True)
                     return self._from_other_alphabet(x)
                 return self._from_polynomial(x.expand())
         raise TypeError(f"do not know how to make an element of {self} from {x!r}")
 
     def _same_kind(self, other):
-        """Same family of rings (so only the second alphabet may differ)."""
-        return type(other) is type(self) and getattr(other, "_parabolic", None) == getattr(self, "_parabolic", None)
+        """Same family of rings (so only the second alphabet and the coefficient representation may differ)."""
+        return self._kind(other) is self._kind(self) and getattr(other, "_parabolic", None) == getattr(self, "_parabolic", None)
+
+    @staticmethod
+    def _kind(ring):
+        """The class of ``ring`` without Sage's category refinement (which depends on the base ring)."""
+        cls = type(ring)
+        return cls.__bases__[0] if isinstance(cls, DynamicMetaclass) else cls
 
     def _coerce_map_from_(self, S):
         if isinstance(S, SchubertPolynomialRing_xbasis | OperatorPolynomialBasis) or _is_polynomial_algebra_basis(S):
