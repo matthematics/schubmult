@@ -31,7 +31,7 @@ from schubmult.combinatorics.permutation import (
     phi1,
     uncode,
 )
-from schubmult.symbolic import S, expand, prod, sympify, sympify_sympy, sympy_poly
+from schubmult.symbolic import S, expand, prod, sympify
 from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
@@ -63,6 +63,253 @@ def cbc_solver(msg=False):
         return pu.COIN_CMD(msg=msg)
 
 
+def _monomial_dict(expr, variables):
+    """``{exponent tuple: int}`` of the expanded polynomial ``expr`` in ``variables`` (SymEngine, no SymPy)."""
+    pos = {v: i for i, v in enumerate(variables)}
+    out = {}
+    for mono, c in expand(expr).as_coefficients_dict().items():
+        e = [0] * len(variables)
+        if mono != 1:
+            for a in mono.args if mono.is_Mul else (mono,):
+                if a.is_Pow:
+                    base, k = a.args
+                    e[pos[base]] += int(k)
+                else:
+                    e[pos[a]] += 1
+        out[tuple(e)] = out.get(tuple(e), 0) + int(c)
+    return {m: c for m, c in out.items() if c}
+
+
+def _vec_mul(a, b):
+    """Product of two sparse polynomials in exponent-tuple form."""
+    out = {}
+    for m1, c1 in a.items():
+        for m2, c2 in b.items():
+            m = tuple(x + y for x, y in zip(m1, m2))
+            out[m] = out.get(m, 0) + c1 * c2
+    return {m: c for m, c in out.items() if c}
+
+
+def _difference_vec(ks, j, n1, n3):
+    """``prod_{k in ks} (y_k + z_j)`` in exponent-tuple form (``y`` positions ``0..n1-1``, ``z_j`` at ``n1 + j``).
+
+    All coefficients are positive: this is the product of differences ``prod (y_k - z_j)`` with the
+    sign ``(-1)^(z-degree)`` of each monomial stripped, the convention used throughout the solver.
+    """
+    vec = {(0,) * (n1 + n3): 1}
+    for k in ks:
+        new = {}
+        for m, c in vec.items():
+            m1 = list(m)
+            m1[k] += 1
+            new[tuple(m1)] = new.get(tuple(m1), 0) + c
+            m2 = list(m)
+            m2[n1 + j] += 1
+            new[tuple(m2)] = new.get(tuple(m2), 0) + c
+        vec = new
+    return vec
+
+
+def _fits(vec, target):
+    return all(target.get(m, 0) >= c for m, c in vec.items())
+
+
+def _enumerate_candidates(target, n1, n3):
+    """Products of differences that can occur in a positive decomposition of ``target`` (homogeneous,
+    sign-stripped, nonnegative), as ``(pairs, vec)``: the factors ``(k, j)`` and the positive vector.
+
+    A candidate is a bipartite multigraph between ``y`` and ``z`` whose pure-``z`` monomial ``z^beta``
+    is a monomial of ``target``; its ``z_j`` group is a subset ``S`` of the ``y``'s with ``|S| = beta_j``
+    and ``y^S z^(beta - beta_j e_j)`` a monomial of ``target``. Groups are assigned one ``z`` at a time,
+    and a partial product is discarded as soon as one of its monomials (times the pure-``z`` part of the
+    groups still to come, a monomial every completion has with at least that coefficient) exceeds the
+    target: no complete candidate below it can occur.
+    """
+    by_z = {}
+    for m in target:
+        by_z.setdefault(m[n1:], []).append(m[:n1])
+    zero = (0,) * (n1 + n3)
+    cands = []
+    for beta in by_z:
+        if zero[:n1] not in by_z[beta]:  # z^beta itself must be a monomial of the target
+            continue
+        groups = [j for j in range(n3) if beta[j]]
+        options = []
+        for j in groups:
+            base = tuple(0 if i == j else beta[i] for i in range(n3))
+            options.append([tuple(k for k in range(n1) if y[k]) for y in by_z.get(base, []) if set(y) <= {0, 1} and sum(y) == beta[j]])
+        if not all(options):
+            continue
+        suffix = []  # pure-z exponent tuple of the groups after each position
+        for gi in range(len(groups)):
+            s = [0] * (n1 + n3)
+            for j in groups[gi + 1 :]:
+                s[n1 + j] = beta[j]
+            suffix.append(tuple(s))
+
+        def rec(gi, pairs, vec):
+            if gi == len(groups):
+                cands.append((pairs, vec))
+                return
+            j, suf = groups[gi], suffix[gi]
+            for ks in options[gi]:
+                new = _vec_mul(vec, _difference_vec(ks, j, n1, n3))
+                if all(target.get(tuple(a + b for a, b in zip(m, suf)), 0) >= c for m, c in new.items()):
+                    rec(gi + 1, pairs + tuple((k, j) for k in ks), new)
+
+        rec(0, (), {zero: 1})
+    return cands
+
+
+def _peel(vecs, resid, alive):
+    """Subtract the forced candidates in place: while some monomial of ``resid`` is covered by exactly
+    one candidate (among ``alive``) that still fits, that candidate's multiplicity is determined.
+    Returns ``(forced {index: n}, surviving indices)``; ``None`` if a monomial of the residual is
+    covered by no candidate (no decomposition over ``vecs``).
+    """
+    forced = {}
+    while True:
+        alive = [i for i in alive if _fits(vecs[i], resid)]
+        cover = {}
+        for i in alive:
+            for m in vecs[i]:
+                cover.setdefault(m, []).append(i)
+        progress = False
+        for m, c in resid.items():
+            if c == 0:
+                continue
+            idx = cover.get(m)
+            if not idx:
+                return None
+            if len(idx) == 1:
+                i = idx[0]
+                vec = vecs[i]
+                if c % vec[m]:
+                    return None
+                n = c // vec[m]
+                if not all(resid.get(mm, 0) >= n * cc for mm, cc in vec.items()):
+                    return None
+                for mm, cc in vec.items():
+                    resid[mm] -= n * cc
+                forced[i] = forced.get(i, 0) + n
+                progress = True
+                break
+        if not progress:
+            for m in [m for m, c in resid.items() if c == 0]:
+                del resid[m]
+            return forced, alive
+
+
+def _solve_positive_system(vecs, target, msg):
+    """Nonnegative integers ``x`` with ``sum_i x_i vecs[i] == target`` (all entries nonnegative), or ``None``.
+
+    First the exact search (:func:`_cover_search`) within a node budget. If that runs out, rounds of:
+    solve the LP relaxation and fix the integral part of its vertex (which fits, the columns being
+    nonnegative); the residual shrinks, so dominance and peeling remove candidates, and the search is
+    tried again. The CBC integer program is the last resort, when a vertex has no integral part.
+    """
+    x = {}
+    resid = dict(target)
+    alive = list(range(len(vecs)))
+    while True:
+        peeled = _peel(vecs, resid, alive)
+        if peeled is None:
+            return None
+        forced, alive = peeled
+        for i, n in forced.items():
+            x[i] = x.get(i, 0) + n
+        if not resid:
+            return x
+        try:
+            sol = _cover_search(vecs, resid, alive)
+        except _SearchBudget:
+            sol = None
+        else:
+            if sol is None:
+                return None
+            for i, n in sol.items():
+                x[i] = x.get(i, 0) + n
+            return x
+        relaxed = _solve_with_cbc([vecs[i] for i in alive], resid, msg, integer=False)
+        if relaxed is None:
+            return None
+        fixed = {i: int(v + 1e-6) for i, v in zip(alive, relaxed) if v >= 1 - 1e-6}
+        if not fixed:
+            sol = _solve_with_cbc([vecs[i] for i in alive], resid, msg, integer=True)
+            if sol is None:
+                return None
+            for i, n in zip(alive, sol):
+                if n:
+                    x[i] = x.get(i, 0) + n
+            return x
+        for i, n in fixed.items():
+            for m, c in vecs[i].items():
+                resid[m] -= n * c
+            x[i] = x.get(i, 0) + n
+        if any(c < 0 for c in resid.values()):
+            return None
+
+
+def _decompose(target, n1, n3, msg):
+    """``[(n, pairs)]`` with ``sum n * prod (y_k + z_j) == target`` (homogeneous, nonnegative), or raise."""
+    cands = _enumerate_candidates(target, n1, n3)
+    x = _solve_positive_system([vec for _, vec in cands], target, msg)
+    if x is None:
+        raise Exception
+    return [(n, cands[i][0]) for i, n in x.items() if n]
+
+
+class _SearchBudget(Exception):
+    pass
+
+
+_SEARCH_NODE_LIMIT = 5000
+
+
+def _cover_search(vecs, resid, alive, node_limit=_SEARCH_NODE_LIMIT):
+    """Nonnegative integers ``{i: n}`` with ``sum n * vecs[i] == resid`` over the candidates ``alive``, or
+    ``None``; raises ``_SearchBudget`` after ``node_limit`` nodes.
+
+    At each node the forced candidates are peeled off, then the monomial of the residual covered by the
+    fewest fitting candidates is chosen and one copy of one of them is subtracted: candidate ``t`` is
+    used, the candidates listed before it are not (removed), so the branches partition the solutions
+    and every branch strictly shrinks the residual. ``resid`` and ``alive`` are not modified.
+    """
+    nodes = 0
+
+    def dfs(resid, alive):
+        nonlocal nodes
+        nodes += 1
+        if nodes > node_limit:
+            raise _SearchBudget
+        peeled = _peel(vecs, resid, alive)
+        if peeled is None:
+            return None
+        forced, alive = peeled
+        if not resid:
+            return forced
+        cover = {}
+        for i in alive:
+            for m in vecs[i]:
+                cover.setdefault(m, []).append(i)
+        m = min(resid, key=lambda mm: len(cover.get(mm, ())))
+        idx = cover.get(m, [])
+        for pos, t in enumerate(idx):
+            sub = dict(resid)
+            for mm, c in vecs[t].items():
+                sub[mm] -= c
+            rest = [i for i in alive if i not in idx[:pos]]
+            found = dfs(sub, rest)
+            if found is not None:
+                found[t] = found.get(t, 0) + 1
+                for i, n in forced.items():
+                    found[i] = found.get(i, 0) + n
+                return found
+        return None
+
+    return dfs(dict(resid), list(alive))
+
+
 def compute_positive_rep(val, var2=None, var3=None, msg=False):
     """Express ``val`` as a nonnegative-integer combination of product-of-differences monomials.
 
@@ -72,6 +319,14 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
     candidate spanning set of such product monomials from ``val``'s own
     monomials, then solves an integer program (via PuLP) for nonnegative
     integer coefficients ``n_b`` matching ``val`` exactly.
+
+    All polynomial arithmetic is on sparse exponent-tuple dicts with the sign ``(-1)^(z-degree)`` of
+    every monomial stripped, which makes every candidate vector and (for a positive ``val``) the target
+    nonnegative. Candidates are enumerated with pruning against the target
+    (:func:`_enumerate_candidates`), the forced ones are peeled off (:func:`_peel`), and what remains
+    is solved by an exact search in Python (:func:`_cover_search`) or, if that exceeds its budget, by
+    an LP dive and CBC (:func:`_solve_positive_system`). The result is verified against ``val``'s full
+    coefficient vector.
 
     Args:
         val: Symbolic polynomial expression in ``var2``/``var3``.
@@ -87,111 +342,62 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
         Exception: If the reconstructed expression does not equal ``val``
             (i.e. no valid nonnegative integer solution reproduces it exactly).
     """
-    import pulp as pu
-
     try:
         return int(expand(val))
     except Exception:
         pass
-    # opt = Optimizer(z_ring, val)
     frees = val.free_symbols
-    # logger.debug(f"{frees=}")
-    # logger.debug(f"{[type(s) for s in frees]=}")
-    varsimp2 = [m for m in frees if var2.index(m) != -1]
-    varsimp3 = [m for m in frees if var3.index(m) != -1]
-    varsimp2.sort(key=lambda k: var2.index(k))
-    varsimp3.sort(key=lambda k: var3.index(k))
-    # logger.debug(f"{varsimp2=}")
-    # logger.debug(f"{varsimp3=}")
-    var22 = [sympify_sympy(v) for v in varsimp2]
-    var33 = [sympify_sympy(v) for v in varsimp3]
-    # var22 = [sympify(m) for m in varsimp2]
-    # var33 = [sympify(m) for m in varsimp3]
-    n1 = len(varsimp2)
+    varsimp2 = sorted([m for m in frees if var2.index(m) != -1], key=var2.index)
+    varsimp3 = sorted([m for m in frees if var3.index(m) != -1], key=var3.index)
+    n1, n3 = len(varsimp2), len(varsimp3)
 
-    # for i in range(len(varsimp2)):
-    #     varsimp2[i] = var2[var2list.index(varsimp2[i])]
-    # for i in range(len(varsimp3)):
-    #     varsimp3[i] = var3[var3list.index(varsimp3[i])]
+    terms = _monomial_dict(val, varsimp2 + varsimp3)
+    target = {m: c if sum(m[n1:]) % 2 == 0 else -c for m, c in terms.items()}
+    if any(c < 0 for c in target.values()):
+        raise Exception  # not a positive combination of products of differences
 
-    base_vectors = {}
+    # products of differences are homogeneous: each degree is decomposed on its own
+    by_degree = {}
+    for m, c in target.items():
+        by_degree.setdefault(sum(m), {})[m] = c
+    solution = []
+    for component in by_degree.values():
+        solution += _decompose(component, n1, n3, msg)
 
-    val_expr = expand(val)
-    vec0 = {k: v for k, v in val_expr.subs({var3[1]: S.Zero}).as_coefficients_dict().items() if v != S.Zero}
-    val_poly = sympy_poly(val_expr, *var22, *var33)
-    # vec = opt.poly_to_vec(val)
-    mn = val_poly.monoms()
-    L1 = tuple([0 for i in range(n1)])
-    mn1L = []
-    lookup = {}
-    # logger.debug("this")
-    for mm0 in mn:
-        key = mm0[n1:]
-        if key not in lookup:
-            lookup[key] = []
-        mm0n1 = mm0[:n1]
-        st = set(mm0n1)
-        if len(st.intersection({0, 1})) == len(st) and 1 in st:
-            lookup[key] += [mm0]
-        if mm0n1 == L1:
-            mn1L += [mm0]
-    # logger.debug("this")
-    for mn1 in mn1L:
-        comblistmn1 = [S.One]
-        for i in range(n1, len(mn1)):
-            if mn1[i] != 0:
-                arr = [*comblistmn1]
-                comblistmn12 = []
-                mn1_2 = (*mn1[n1:i], 0, *mn1[i + 1 :])
-                for mm0 in lookup[mn1_2]:
-                    prd = sympify(
-                        prod(
-                            [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
-                            start=S.One,
-                        ),
-                    )
-                    comblistmn12 += [a * prd for a in arr]
-                comblistmn1 = comblistmn12
-        for i in range(len(comblistmn1)):
-            b1 = comblistmn1[i]
-            # vec0 = opt.poly_to_vec(b1)
-            dct2 = {k: v for k, v in expand(b1).subs({var3[1]: S.Zero}).as_coefficients_dict().items() if v != S.Zero}
-            bad = False
-            for k in dct2:
-                if abs(vec0.get(k, 0)) < abs(dct2[k]):
-                    bad = True
-                    break
-            if not bad:
-                base_vectors[b1] = dct2
+    total = {}
+    for n, pairs in solution:
+        vec = {(0,) * (n1 + n3): n}
+        for k, j in pairs:
+            vec = _vec_mul(vec, _difference_vec((k,), j, n1, n3))
+        for m, c in vec.items():
+            total[m] = total.get(m, 0) + c
+    if total != target:
+        raise Exception
+    val2 = S.Zero
+    for n, pairs in solution:
+        val2 += n * prod([varsimp2[k] - varsimp3[j] for k, j in pairs], start=S.One)
+    return val2
+
+
+def _solve_with_cbc(cols, rhs, msg, integer=True):
+    """Nonnegative ``x`` with ``sum_i x_i cols[i] == rhs`` by PuLP/CBC: integers, or with ``integer=False``
+    a vertex of the LP relaxation (floats). ``None`` if infeasible."""
+    import pulp as pu
+
     lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
-    vrs = {bv: lp_prob.add_variable(f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
-    lp_prob += 0
+    vrs = [lp_prob.add_variable(f"a{i}", lowBound=0, cat="Integer" if integer else "Continuous") for i in range(len(cols))]
+    # feasibility is all that is wanted of the integer program (a nonzero objective would make CBC prove
+    # optimality); for the relaxation a sparse vertex is preferable
+    lp_prob += 0 if integer else pu.lpSum(vrs)
     eqs = {}
-    for bv, vec in base_vectors.items():
-        for i in vec:
-            bvi = int(vec[i])
-            if bvi == 1:
-                if i not in eqs:
-                    eqs[i] = vrs[bv]
-                else:
-                    eqs[i] += vrs[bv]
-            elif bvi != 0:
-                if i not in eqs:
-                    eqs[i] = bvi * vrs[bv]
-                else:
-                    eqs[i] += bvi * vrs[bv]
-    for i in eqs:
-        try:
-            # PuLP >= 4 returns a bare False for `expr == <symengine Integer>`
-            lp_prob += eqs[i] == int(vec0[i])
-        except KeyError:
-            raise
-    # print(f"{vec=}")
-    # print(lp_prob.constraints)
+    for var, col in zip(vrs, cols):
+        for m, c in col.items():
+            eqs[m] = eqs.get(m, 0) + (var if c == 1 else c * var)
+    for m, lhs in eqs.items():
+        lp_prob += lhs == rhs.get(m, 0)
     try:
-        # logger.debug("I IS SOLVING BOLVING")
         solver = cbc_solver(msg)
-        status = lp_prob.solve(solver)  # noqa: F841
+        status = lp_prob.solve(solver)
     except KeyboardInterrupt:
         current_process = psutil.Process()
         children = current_process.children(recursive=True)
@@ -200,25 +406,13 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
             child_process.terminate()
             child_process.kill()
         raise KeyboardInterrupt()
-    # print(f"{pos_part=}")
-    # print(f"{neg_part=}")
-    # else:
-    # print(f"No dice {flat=}")
-    # exit(1)
-    # #val = pos_part - neg_part
-
-    # depth+=1
-    val2 = 0
-    for k in base_vectors:
-        x = vrs[k].value()
-        # round, don't truncate: solvers return near-integers like 0.9999999999996
-        if x is not None and round(x) != 0:
-            val2 += round(x) * k
-    if expand(val - val2, func=True) != 0:
-        # print(f"{vec=}")
-        raise Exception
-    # print(f"{val2=}")
-    return val2
+    if status != pu.LpStatusOptimal:
+        return None
+    values = [var.value() or 0.0 for var in vrs]
+    if not integer:
+        return values
+    # solvers return near-integers like 0.9999999999996: round, don't truncate
+    return [round(v) for v in values]
 
 
 @cached(
