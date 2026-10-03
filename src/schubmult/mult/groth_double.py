@@ -55,6 +55,7 @@ reflections in type ``A_{n-1}`` is
 
 from __future__ import annotations
 
+import hashlib
 from fractions import Fraction
 from functools import cache
 from typing import TYPE_CHECKING, Any, overload
@@ -565,12 +566,26 @@ def dgroth_to_dschub(v: PermLike, var3: Alphabet | None, beta: Expr | None = Non
 
 
 # Flat fractions are ``(numer, {atom: exp}, probes)`` with ``probes`` the exact values of ``numer``
-# at two fixed integer points (Schwartz--Zippel shadows), held as Python ints/Fractions so the
+# at two integer points (Schwartz--Zippel shadows), held as Python ints/Fractions so the
 # shadow arithmetic bypasses symengine's per-op dispatch.  Carrying the shadows through every
 # multiplication/addition makes the hidden-zero test free, and lets dead path sums be pruned
 # mid-recursion, without ever expanding or re-evaluating the (large, unexpanded) numerators.
-_PROBE_POINTS = ((1000003, 7919), (999983, 104729))
-_probe_index: dict[Any, int] = {}
+#
+# Each symbol gets two coordinates, independent pseudo-random 61-bit integers derived from its
+# name: the same on every platform and run, and with no relation between the two points. (Points
+# affine in a shared per-symbol index are not independent: the offset cancels in every homogeneous
+# linear form, so ``y_2 + y_3 - z_1 - z_2`` vanished at both whenever the indices balanced, and the
+# indices came from set iteration order, which differs between platforms.)
+_PROBE_RANGE = (1 << 61) - 1
+_probe_coords: dict[Any, tuple[int, int]] = {}
+
+
+def _probe_coord(s):
+    c = _probe_coords.get(s)
+    if c is None:
+        h = hashlib.blake2b(str(s).encode(), digest_size=16).digest()
+        c = _probe_coords[s] = (1 + int.from_bytes(h[:8], "little") % _PROBE_RANGE, 1 + int.from_bytes(h[8:], "little") % _PROBE_RANGE)
+    return c
 
 
 def _to_py_number(v):
@@ -585,14 +600,13 @@ def _to_py_number(v):
 
 
 def _probe_vals(expr):
-    """Exact values of ``expr`` at the two probe points; symbols are assigned coordinates on first sight."""
+    """Exact values of ``expr`` at the two probe points."""
     syms = getattr(expr, "free_symbols", None)
     if not syms:
         v = _to_py_number(expr)
         return (v, v)
-    for s in syms:
-        _probe_index.setdefault(s, len(_probe_index))
-    return tuple(_to_py_number(expr.xreplace({s: base + step * _probe_index[s] for s in syms})) for base, step in _PROBE_POINTS)
+    coords = {s: _probe_coord(s) for s in syms}
+    return tuple(_to_py_number(expr.xreplace({s: c[i] for s, c in coords.items()})) for i in range(2))
 
 
 def _frac_is_zero(f):
