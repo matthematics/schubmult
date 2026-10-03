@@ -256,7 +256,7 @@ def _tokenize(s: str) -> list[str]:
 
 def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
                 display_positive: bool, mixed_var: bool, parabolic: str | None,
-                mult: str | None, simplify: bool = False) -> list[str]:
+                mult: str | None, simplify: bool = False, probabilistic: bool = False) -> list[str]:
     """Build sys.argv-like list to pass to the script's main(). Validates input."""
     argv: list[str] = [prog]
     tokens = _tokenize(perms_raw)
@@ -325,6 +325,8 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         argv.append("--mixed-var")
     if simplify:
         argv.append("--simplify")
+    if probabilistic:
+        argv.append("--probabilistic")
     # Validate parabolic but do NOT append it yet; --parabolic uses nargs="+" and
     # would greedily swallow the perm tokens. We append it *after* the perms.
     ptoks: list[str] = []
@@ -520,6 +522,7 @@ def compute():
     parabolic = (data.get("parabolic") or "").strip() or None
     mult = (data.get("mult") or "").strip() or None
     simplify = bool(data.get("simplify", False))
+    probabilistic = bool(data.get("probabilistic", False))
 
     if flavor not in FLAVORS:
         return jsonify({"ok": False, "error": f"Unknown flavor {flavor!r}"}), 400
@@ -528,6 +531,8 @@ def compute():
     # drop options the flavor does not support (the frontend greys them out too)
     if flavor not in ("groth_double", "groth_q_double"):
         simplify = False
+    if flavor not in ("double", "q_double"):
+        probabilistic = False
     if flavor == "py":
         display_positive = False
         mixed_var = False
@@ -558,12 +563,14 @@ def compute():
         coprod = False
         display_positive = False  # not supported by grothmult_q_double yet
         mult = None
+    if coprod:
+        probabilistic = False  # the coproduct path does not go through the pruning kernel
 
     try:
         argv = _build_argv(prog, perms_raw, ascode=ascode, coprod=coprod,
                            display_positive=display_positive,
                            mixed_var=mixed_var, parabolic=parabolic, mult=mult,
-                           simplify=simplify)
+                           simplify=simplify, probabilistic=probabilistic)
     except ValueError as e:
         _log_access(flavor, None, status="reject", error=str(e))
         return jsonify({"ok": False, "error": str(e)}), 400
