@@ -261,9 +261,9 @@ def symengine_to_sage(expr, variable, scalar, named=None):
             return out
         if e.is_Pow:
             base, exp = e.args
-            if not exp.is_Integer or int(exp) < 0:
+            if not exp.is_Integer:
                 raise ValueError(f"cannot convert {e} to a polynomial")
-            return go(base) ** int(exp)
+            return go(base) ** int(exp)  # a negative power of a Sage polynomial lands in the fraction field
         raise ValueError(f"cannot convert {e} ({type(e).__name__}) to Sage")
 
     import symengine

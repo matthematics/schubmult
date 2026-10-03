@@ -60,7 +60,7 @@ Arbitrary polynomials in `x` and the alphabets are expanded in the basis::
 from ._common import SchubmultBackedElement, SchubmultBackedRing, genset, to_sage_perm, to_schubmult_perm
 
 
-def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z")):
+def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z"), raw_coefficients=False):
     r"""
     Return the ring of double Schubert polynomials `\mathfrak{S}_w(x; \text{alphabet})` over ``R``.
 
@@ -72,6 +72,10 @@ def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z
     - ``coefficient_alphabets`` -- (default: ``('y', 'z')``) letters available in coefficients;
       ``alphabet`` is always included. Rings over ``R`` with the same set of letters share a base
       ring, which is what lets elements of one coerce into another (mixed products).
+    - ``raw_coefficients`` -- (default: ``False``) if ``True``, the base ring is the ring of unexpanded
+      SymEngine expressions (:class:`~schubmult.sage.symengine_ring.SymEngineRing`) and the structure
+      constants are kept in the factored form the kernel produces, with schubmult's 1-based variable
+      names; ``R`` must be ``ZZ`` or ``QQ``
 
     EXAMPLES::
 
@@ -89,9 +93,21 @@ def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z
         (y_1-y_0)*X_y[2, 1] + X_y[3, 1, 2]
         sage: a = X([2, 1, 3]) + X([3, 1, 2, 4]); a^2
         (y_1-y_0)*X_y[2, 1] + (y_2^2-y_2*y_1-y_2*y_0+2*y_2+y_1*y_0-2*y_0+1)*X_y[3, 1, 2] + (y_3+y_2-y_1-y_0+2)*X_y[4, 1, 2, 3] + X_y[5, 1, 2, 3, 4]
+
+    With unexpanded coefficients (note the 1-based variables)::
+
+        sage: Y = DoubleSchubertPolynomialRing(ZZ, raw_coefficients=True); Y
+        Double Schubert polynomial ring in the alphabet y with X_y basis over Integer Ring with unexpanded coefficients
+        sage: TestSuite(Y).run()
+        sage: f = Y([3, 1, 2]) * Y([3, 1, 2]) * Y([1, 3, 2]); f
+        ((-y_1+y_3)*(-y_2+y_3)**2)*X_y[3, 1, 2] + ((-y_1+y_3)*(-y_2+y_3))*X_y[3, 2, 1] + ((-y_1+y_3)*(-y_2+y_3)+(-y_1-y_2+y_3+y_4)*(-y_2+y_4))*X_y[4, 1, 2, 3] + (-y_1-y_2+y_3+y_4)*X_y[4, 2, 1, 3] + (-y_1-2*y_2+y_3+y_4+y_5)*X_y[5, 1, 2, 3, 4] + X_y[5, 2, 1, 3, 4] + X_y[6, 1, 2, 3, 4, 5]
+        sage: Y(X([3, 1, 2]) * X([3, 1, 2]) * X([1, 3, 2])) == f, X(f) == X([3, 1, 2]) * X([3, 1, 2]) * X([1, 3, 2])
+        (True, True)
+        sage: f.expand() == Y([3, 1, 2]).expand()^2 * Y([1, 3, 2]).expand()
+        True
     """
     names = tuple(sorted({str(alphabet), *map(str, coefficient_alphabets)}))
-    return DoubleSchubertPolynomialRing_xbasis(R, str(alphabet), names)
+    return DoubleSchubertPolynomialRing_xbasis(R, str(alphabet), names, raw_coefficients)
 
 
 class DoubleSchubertPolynomial_class(SchubmultBackedElement):
@@ -146,7 +162,7 @@ class DoubleSchubertPolynomial_class(SchubmultBackedElement):
 class DoubleSchubertPolynomialRing_xbasis(SchubmultBackedRing):
     Element = DoubleSchubertPolynomial_class
 
-    def __init__(self, R, alphabet, alphabets):
+    def __init__(self, R, alphabet, alphabets, raw=False):
         """
         EXAMPLES::
 
@@ -158,7 +174,7 @@ class DoubleSchubertPolynomialRing_xbasis(SchubmultBackedRing):
             True
         """
         self._alphabet = alphabet
-        super().__init__(R, alphabets, prefix=f"X_{alphabet}", name=f"Double Schubert polynomial ring in the alphabet {alphabet} with X_{alphabet} basis")
+        super().__init__(R, alphabets, prefix=f"X_{alphabet}", name=f"Double Schubert polynomial ring in the alphabet {alphabet} with X_{alphabet} basis", raw=raw)
 
     def alphabet(self):
         """
