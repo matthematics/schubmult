@@ -134,7 +134,7 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
             action="store_true",
             default=False,
             dest="probabilistic",
-            help="Prune intermediate terms that vanish at random points of a prime field (Schwartz-Zippel, error probability ~1e-26); much faster on large products and the output contains only nonzero coefficients (schubmult_double only)",
+            help="Prune intermediate terms that vanish at random points of a prime field (Schwartz-Zippel, error probability ~1e-26); much faster on large products and the output contains only nonzero coefficients (schubmult_double and schubmult_q_double)",
         )
 
     if quantum:

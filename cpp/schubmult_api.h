@@ -166,6 +166,8 @@ static PyExprDict api_schubmult_q(const PyIntDict& d, const PyPerm& vpy, const P
     return r;
 }
 
-static PyExprDict api_schubmult_q_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const PyVars& q) {
-    return expr_dict_out(schubmult_q_double_fast(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, q)));
+static PyExprDict api_schubmult_q_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const PyVars& q, const Expr& evaluator = Expr()) {
+    if (evaluator.is_null()) return expr_dict_out(schubmult_q_double_fast(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, q)));
+    Shadow shadow = python_shadow(evaluator);
+    return expr_dict_out(schubmult_q_double_fast(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, q), &shadow));
 }

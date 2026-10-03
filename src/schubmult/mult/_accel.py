@@ -78,9 +78,9 @@ def schubmult_q_fast(perm_dict, v, q_var):
     return ret
 
 
-def schubmult_q_double_fast(perm_dict, v, var2, var3, q_var):
+def schubmult_q_double_fast(perm_dict, v, var2, var3, q_var, probabilistic=False):
     """C++ ``schubmult_q_double_fast``; returns ``None`` if the size exceeds ``MAXN``."""
-    return _call(_cpp.schubmult_q_double_fast, perm_dict, v, var2, var3, q_var)
+    return _call(_cpp.schubmult_q_double_fast, perm_dict, v, var2, var3, q_var, _evaluator(probabilistic))
 
 
 def schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func, probabilistic=False):
