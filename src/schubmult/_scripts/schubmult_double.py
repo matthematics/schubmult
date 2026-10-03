@@ -347,7 +347,7 @@ def main(argv=None):
                     check_coeff_dict = {k: expand(v) for k, v in elem_dict.items() if expand(v, func=True) != S.Zero}
             else:
                 for perm in orig_perms[1:]:
-                    check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
+                    check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3, probabilistic=args.probabilistic)
             # coeff_dict = check_coeff_dict
             if mult:
                 mul_exp = eval(mulstring)

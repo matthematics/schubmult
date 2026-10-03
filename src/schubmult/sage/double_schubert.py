@@ -60,7 +60,7 @@ Arbitrary polynomials in `x` and the alphabets are expanded in the basis::
 from ._common import SchubmultBackedElement, SchubmultBackedRing, genset, to_sage_perm, to_schubmult_perm
 
 
-def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z"), raw_coefficients=False):
+def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z"), raw_coefficients=False, probabilistic=False):
     r"""
     Return the ring of double Schubert polynomials `\mathfrak{S}_w(x; \text{alphabet})` over ``R``.
 
@@ -75,7 +75,13 @@ def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z
     - ``raw_coefficients`` -- (default: ``False``) if ``True``, the base ring is the ring of unexpanded
       SymEngine expressions (:class:`~schubmult.sage.symengine_ring.SymEngineRing`) and the structure
       constants are kept in the factored form the kernel produces, with schubmult's 1-based variable
-      names; ``R`` must be ``ZZ`` or ``QQ``
+      names; ``R`` must be ``ZZ`` or ``QQ``. Terms whose coefficient vanishes at two random points
+      modulo `2^{61} - 1` are dropped (the kernels cancel, and most terms of a large product are such),
+      so a product is correct up to a probability of error below `(d / 2^{61})^2`, `d` the degree.
+    - ``probabilistic`` -- (default: ``False``) run the kernel with probabilistic zero testing
+      (:func:`schubmult.mult.double.schubmult_double` with ``probabilistic=True``): intermediate
+      states that vanish at two random points of a prime field are pruned, which removes most of the
+      work on large products; a product is wrong with probability around `10^{-26}`
 
     EXAMPLES::
 
@@ -105,9 +111,15 @@ def DoubleSchubertPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z
         (True, True)
         sage: f.expand() == Y([3, 1, 2]).expand()^2 * Y([1, 3, 2]).expand()
         True
+
+    With probabilistic zero testing in the kernel::
+
+        sage: XP = DoubleSchubertPolynomialRing(ZZ, probabilistic=True)
+        sage: XP([3, 1, 2]) * XP([3, 1, 2]) * XP([1, 3, 2]) == X(X([3, 1, 2]) * X([3, 1, 2]) * X([1, 3, 2]))
+        True
     """
     names = tuple(sorted({str(alphabet), *map(str, coefficient_alphabets)}))
-    return DoubleSchubertPolynomialRing_xbasis(R, str(alphabet), names, raw_coefficients)
+    return DoubleSchubertPolynomialRing_xbasis(R, str(alphabet), names, raw_coefficients, probabilistic)
 
 
 class DoubleSchubertPolynomial_class(SchubmultBackedElement):
@@ -162,7 +174,7 @@ class DoubleSchubertPolynomial_class(SchubmultBackedElement):
 class DoubleSchubertPolynomialRing_xbasis(SchubmultBackedRing):
     Element = DoubleSchubertPolynomial_class
 
-    def __init__(self, R, alphabet, alphabets, raw=False):
+    def __init__(self, R, alphabet, alphabets, raw=False, probabilistic=False):
         """
         EXAMPLES::
 
@@ -174,6 +186,7 @@ class DoubleSchubertPolynomialRing_xbasis(SchubmultBackedRing):
             True
         """
         self._alphabet = alphabet
+        self._probabilistic = probabilistic
         super().__init__(R, alphabets, prefix=f"X_{alphabet}", name=f"Double Schubert polynomial ring in the alphabet {alphabet} with X_{alphabet} basis", raw=raw)
 
     def alphabet(self):
@@ -235,7 +248,7 @@ class DoubleSchubertPolynomialRing_xbasis(SchubmultBackedRing):
         from schubmult.symbolic import S
 
         ys = genset(self._alphabet)
-        return self._convert_dict(schubmult_double({to_schubmult_perm(left): S.One}, to_schubmult_perm(right), ys, ys))
+        return self._convert_dict(schubmult_double({to_schubmult_perm(left): S.One}, to_schubmult_perm(right), ys, ys, probabilistic=self._probabilistic))
 
     def _element_constructor_(self, x):
         """

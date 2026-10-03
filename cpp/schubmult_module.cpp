@@ -3,7 +3,8 @@
 // SCHUB_PYEXPR), so building this needs only a C++17 compiler and Python headers.
 //
 //   schubmult_py(perm_dict, v)                          {Permutation: int} -> {Permutation: int}
-//   schubmult_double(perm_dict, v, var2, var3[, elem_func])
+//   schubmult_double(perm_dict, v, var2, var3[, elem_func[, evaluator]])
+//                                                       evaluator: ShadowEvaluator for probabilistic zero testing
 //   schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
 //   schubmult_q_fast(perm_dict, v, q_var)               integer input coefficients
 //   schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
@@ -129,11 +130,12 @@ PyObject* py_schubmult_py(PyObject*, PyObject* args) {
 }
 
 PyObject* py_schubmult_double(PyObject*, PyObject* args) {
-    PyObject *d, *v, *var2, *var3, *elem_func = Py_None;
-    if (!PyArg_ParseTuple(args, "O!OOO|O", &PyDict_Type, &d, &v, &var2, &var3, &elem_func)) return nullptr;
+    PyObject *d, *v, *var2, *var3, *elem_func = Py_None, *evaluator = Py_None;
+    if (!PyArg_ParseTuple(args, "O!OOO|OO", &PyDict_Type, &d, &v, &var2, &var3, &elem_func, &evaluator)) return nullptr;
     return guarded([&] {
         Expr ef = elem_func == Py_None ? Expr() : Expr(elem_func, false);
-        return expr_dict_out(api_schubmult_double(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3), ef));
+        Expr ev = evaluator == Py_None ? Expr() : Expr(evaluator, false);
+        return expr_dict_out(api_schubmult_double(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3), ef, ev));
     });
 }
 
@@ -157,7 +159,7 @@ PyObject* py_schubmult_q_double_fast(PyObject*, PyObject* args) {
 
 PyMethodDef methods[] = {
     {"schubmult_py", py_schubmult_py, METH_VARARGS, "Ordinary Schubert product: {Permutation: int} -> {Permutation: int}."},
-    {"schubmult_double", py_schubmult_double, METH_VARARGS, "Double Schubert product; var2/var3 are generating sets, optional elem_func builds the elementary symmetric objects."},
+    {"schubmult_double", py_schubmult_double, METH_VARARGS, "Double Schubert product; var2/var3 are generating sets, optional elem_func builds the elementary symmetric objects, optional evaluator enables probabilistic zero testing."},
     {"schubmult_double_alt_from_elems", py_schubmult_double_alt_from_elems, METH_VARARGS, "Pull-out-variable recursion with elem_func (positivity)."},
     {"schubmult_q_fast", py_schubmult_q_fast, METH_VARARGS, "Quantum Schubert product; integer input coefficients."},
     {"schubmult_q_double_fast", py_schubmult_q_double_fast, METH_VARARGS, "Quantum double Schubert product."},

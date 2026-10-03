@@ -21,6 +21,7 @@ from sage.combinat.schubert_polynomial import SchubertPolynomialRing_xbasis
 from sage.combinat.sf.sf import SymmetricFunctions
 from sage.combinat.sf.sfa import SymmetricFunctionAlgebra_generic
 from sage.misc.cachefunc import cached_method
+from sage.misc.repr import repr_lincomb
 from sage.rings.fraction_field_element import FractionFieldElement
 from sage.rings.polynomial.infinite_polynomial_element import InfinitePolynomial
 from sage.rings.polynomial.infinite_polynomial_ring import InfinitePolynomialRing
@@ -31,7 +32,7 @@ from sage.rings.rational_field import QQ
 from sage.structure.dynamic_class import DynamicMetaclass
 
 from ._convert import parse_sage_name, sage_polynomial_to_symengine, symengine_to_base_ring, symengine_to_sage
-from .symengine_ring import SymEngineExpression, SymEngineRing
+from .symengine_ring import REPR_TREE_LIMIT, SymEngineExpression, SymEngineRing, nonzero_mask, normal_forms, tree_size
 
 X_LETTER = "x"
 
@@ -92,6 +93,20 @@ def _coefficient_variables(c):
 
 
 class SchubmultBackedElement(CombinatorialFreeModule.Element):
+    def _repr_(self):
+        P = self.parent()
+        if not P._raw:
+            return super()._repr_()
+        # large raw coefficients print in normal form; normalize them all at once (shared subtrees)
+        items = self._sorted_items_for_printing()
+        big = [i for i, (_, c) in enumerate(items) if tree_size(c.expr(), REPR_TREE_LIMIT) > REPR_TREE_LIMIT]
+        if big:
+            forms = normal_forms([items[i][1].expr() for i in big], P._scalars)
+            items = list(items)
+            for i, form in zip(big, forms):
+                items[i] = (items[i][0], form)
+        return repr_lincomb(items, scalar_mult=P._print_options["scalar_mult"], repr_monomial=P._repr_term, strip_one=True)
+
     def project(self, n):
         r"""
         The image in the cohomology of the flag variety of `\CC^n` (equivariant, quantum, or partial as
@@ -299,7 +314,13 @@ class SchubmultBackedRing(CombinatorialFreeModule):
         """schubmult ``{Permutation: symengine coeff}`` -> element of ``self``."""
         perms = [to_sage_perm(w) for w in dct]
         B = self.base_ring()
-        coeffs = [B(c) for c in dct.values()] if self._raw else symengine_to_base_ring(dct.values(), B, self._named_base_elements())
+        if self._raw:
+            # the kernels cancel: most of the terms of a large product have coefficients that are zero
+            # but not literally so (4187 terms vs 246 in a product of two S_8 classes), and nothing
+            # downstream could tell -- the Schwartz-Zippel test is one shared pass over the trees
+            exprs = list(dct.values())
+            return self._from_dict({w: B(c) for w, c, keep in zip(perms, exprs, nonzero_mask(exprs)) if keep}, remove_zeros=False)
+        coeffs = symengine_to_base_ring(dct.values(), B, self._named_base_elements())
         return self._from_dict(dict(zip(perms, coeffs)), remove_zeros=True)
 
     def _named_base_elements(self):
@@ -314,10 +335,7 @@ class SchubmultBackedRing(CombinatorialFreeModule):
             q = p.polynomial() if isinstance(p, InfinitePolynomial) else p
             gensets = {parse_sage_name(n)[0]: gensets[X_LETTER] for n in q.parent().variable_names()}
         named = {name: Symbol(sym) for sym, name in self._named_symbols.items()}
-        result = self._convert_dict(self._schub_ring().from_expr(sage_polynomial_to_symengine(p, gensets, named)))
-        if self._raw:  # the change of basis leaves unexpanded coefficients that are zero
-            result = self._from_dict({w: c for w, c in result if not c.is_identically_zero()}, remove_zeros=False)
-        return result
+        return self._convert_dict(self._schub_ring().from_expr(sage_polynomial_to_symengine(p, gensets, named)))
 
     def from_symmetric_function(self, f, n):
         r"""

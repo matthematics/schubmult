@@ -45,6 +45,7 @@ polynomials and rationals coerce in::
     (1/2)*y_1
 """
 
+from collections import defaultdict
 from fractions import Fraction
 from random import Random
 
@@ -69,31 +70,127 @@ from sage.structure.unique_representation import UniqueRepresentation
 
 from ._convert import parse_sage_name, sage_polynomial_to_symengine, symengine_to_base_ring
 
+_PRIME = (1 << 61) - 1
 _TRIAL_POINTS = 3
-_TRIAL_RANGE = 10**9
-_random = Random(0x5EED)  # noqa: S311  (reproducibility, not security)
+REPR_TREE_LIMIT = 400  # larger coefficient trees print in normal form
+_random = Random(0x5EED)
+
+
+def _evaluator_mod_p():
+    """A memoized evaluator of SymEngine expressions at a random point modulo ``_PRIME``.
+
+    Returns ``None`` for an expression whose denominator vanishes at the point. The memo is keyed by
+    node, so the shared subtrees of a batch of coefficients are evaluated once.
+    """
+    point = defaultdict(lambda: _random.randrange(1, _PRIME))
+    memo = {}
+    sentinel = object()
+
+    def ev(e):
+        v = memo.get(e, sentinel)
+        if v is not sentinel:
+            return v
+        if e.is_Integer:
+            v = int(e) % _PRIME
+        elif e.is_Symbol:
+            v = point[e]
+        elif e.is_Add:
+            v = 0
+            for a in e.args:
+                x = ev(a)
+                if x is None:
+                    v = None
+                    break
+                v += x
+            else:
+                v %= _PRIME
+        elif e.is_Mul:
+            v = 1
+            for a in e.args:
+                x = ev(a)
+                if x is None:
+                    v = None
+                    break
+                v = v * x % _PRIME
+        elif e.is_Pow:
+            base, exp = e.args
+            b, k = ev(base), int(exp)
+            v = None if b is None or (k < 0 and b == 0) else pow(b, k, _PRIME)
+        elif e.is_Rational:
+            v = int(e.p) * pow(int(e.q), -1, _PRIME) % _PRIME
+        else:
+            raise TypeError(f"cannot evaluate {e} ({type(e).__name__})")
+        memo[e] = v
+        return v
+
+    return ev
+
+
+def nonzero_mask(exprs, points=2):
+    """For each SymEngine expression, whether it is nonzero at one of ``points`` random points modulo
+    the prime `2^{61} - 1` (so certainly nonzero as a rational function).
+
+    One shared evaluation per point over all the expressions: the coefficients of one product share
+    most of their subtrees. An expression vanishing at every point is reported zero -- for a nonzero
+    rational function of degree `d` that happens with probability at most `(d / 2^{61})^{\text{points}}`;
+    one undefined at every point (a denominator vanishing there) is reported nonzero.
+    """
+    exprs = list(exprs)
+    mask = [False] * len(exprs)
+    defined = [False] * len(exprs)
+    undecided = range(len(exprs))
+    for _ in range(points):
+        ev = _evaluator_mod_p()
+        for i in undecided:
+            v = ev(exprs[i])
+            if v is not None:
+                defined[i] = True
+                if v != 0:
+                    mask[i] = True
+        undecided = [i for i in undecided if not mask[i]]
+        if not undecided:
+            break
+    return [m or not d for m, d in zip(mask, defined)]
 
 
 def is_identically_zero(expr):
     """Whether the SymEngine expression ``expr`` is zero as a rational function.
 
-    Evaluation at a few random integer points first (linear in the size of the tree): a nonzero
-    value proves nonvanishing, which is the common case. Only an expression vanishing at every
-    point is expanded (over a common denominator) for a proof.
+    Evaluation at a few random points first (one pass over the shared subtrees): a nonzero value
+    proves nonvanishing, which is the common case. Only an expression vanishing at every point is
+    expanded (over a common denominator) for a proof.
     """
     import symengine
 
     if expr == 0:
         return True
-    symbols = list(expr.free_symbols)
-    for _ in range(_TRIAL_POINTS):
-        value = expr.subs({s: symengine.Integer(_random.randrange(-_TRIAL_RANGE, _TRIAL_RANGE)) for s in symbols})
-        if value.is_Integer or value.is_Rational:
-            if value != 0:
-                return False
-        # else a denominator vanished at this point: try another
+    if nonzero_mask([expr], _TRIAL_POINTS)[0]:
+        return False
     numerator, _ = expr.as_numer_denom()
     return symengine.expand(numerator) == 0
+
+
+def symengine_to_sage_scalar(e, R):
+    """SymEngine integer or rational -> element of ``R``."""
+    return R(int(e)) if e.is_Integer else R(QQ((int(e.p), int(e.q))))
+
+
+def tree_size(expr, limit):
+    """Number of nodes of the expression *tree* (shared subtrees counted each time), stopping past ``limit``."""
+    memo = {}
+
+    def go(e):
+        v = memo.get(e)
+        if v is None:
+            v = 1
+            for a in e.args:
+                v += go(a)
+                if v > limit:
+                    break
+            memo[e] = v
+        return v
+
+    return go(expr)
 
 
 class SymEngineExpression(CommutativeRingElement):
@@ -132,12 +229,17 @@ class SymEngineExpression(CommutativeRingElement):
         return type(self)(self.parent(), expr)
 
     def _repr_(self):
-        return str(self._expr)
+        # the kernels' coefficients are DAGs with heavy sharing whose trees run to megabytes of text
+        if tree_size(self._expr, REPR_TREE_LIMIT) <= REPR_TREE_LIMIT:
+            return str(self._expr)
+        return str(self.normal_form())
 
     def _latex_(self):
         from schubmult.symbolic import latex
 
-        return latex(self._expr._sympy_())
+        if tree_size(self._expr, REPR_TREE_LIMIT) <= REPR_TREE_LIMIT:
+            return latex(self._expr._sympy_())
+        return self.normal_form()._latex_()
 
     def __hash__(self):
         return hash(self._expr)
@@ -180,7 +282,7 @@ class SymEngineExpression(CommutativeRingElement):
             raise ZeroDivisionError("division by zero")
         return self._new(self._expr / other._expr)
 
-    def __pow__(self, n, modulus=None):  # noqa: ARG002
+    def __pow__(self, n, modulus=None):
         return self._new(self._expr ** int(n))
 
     def __invert__(self):
@@ -225,8 +327,72 @@ class SymEngineExpression(CommutativeRingElement):
         """
         return symengine_to_base_ring([self._expr], B, named)[0]
 
+    def normal_form(self):
+        """
+        The expression as a Sage polynomial (or fraction) in a ring on the symbols that occur, named as
+        in the expression (``y_3`` stays ``y_3``; ``β`` becomes ``beta``). Computed in libsingular with
+        the subtrees shared, which is far cheaper than ``expand``; this is how large coefficients print.
+
+        EXAMPLES::
+
+            sage: from schubmult.sage.symengine_ring import SymEngineRing
+            sage: E = SymEngineRing(ZZ); y = [E.variable('y', i) for i in range(4)]
+            sage: ((y[1] - y[3]) * (y[2] - y[3])).normal_form()
+            y_1*y_2 - y_1*y_3 - y_2*y_3 + y_3^2
+            sage: (y[1] / (1 + E.symbol('β') * y[2])).normal_form()
+            y_1/(y_2*beta + 1)
+        """
+        return normal_forms([self._expr], self.parent().base())[0]
+
     def _sympy_(self):
         return self._expr._sympy_()
+
+
+def normal_forms(exprs, R):
+    """Sage polynomials (or fractions) over ``R`` for a batch of SymEngine expressions, in one ring on
+    the union of their symbols and with one memo: the coefficients of a product share their subtrees."""
+    from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+
+    exprs = list(exprs)
+    symbols = sorted({s for e in exprs for s in e.free_symbols}, key=str)
+    if not symbols:
+        return [symengine_to_sage_scalar(e, R) for e in exprs]
+    P = PolynomialRing(R, len(symbols), ["beta" if str(s) == "\u03b2" else str(s) for s in symbols])
+    gens = dict(zip(symbols, P.gens()))
+    memo = {}
+    zero, one = P.zero(), P.one()
+
+    def go(e):
+        v = memo.get(e)
+        if v is not None:
+            return v
+        if e.is_Integer or e.is_Rational:
+            v = symengine_to_sage_scalar(e, P)
+        elif e.is_Symbol:
+            v = gens[e]
+        elif e.is_Add:
+            v = zero
+            for a in e.args:
+                v = v + go(a)
+        elif e.is_Mul:
+            v = one
+            for a in e.args:
+                v = v * go(a)
+        elif e.is_Pow:
+            base, exp = e.args
+            v = go(base) ** int(exp)  # negative: into the fraction field
+        else:
+            raise TypeError(f"cannot convert {e} ({type(e).__name__}) to Sage")
+        memo[e] = v
+        return v
+
+    out = []
+    for e in exprs:
+        v = go(e)
+        if isinstance(v, FractionFieldElement) and v.denominator().is_one():
+            v = v.numerator()
+        out.append(v)
+    return out
 
 
 class SymEngineRing(UniqueRepresentation, Parent):
