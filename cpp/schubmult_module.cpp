@@ -3,6 +3,9 @@
 // SCHUB_PYEXPR), so building this needs only a C++17 compiler and Python headers.
 //
 //   schubmult_py(perm_dict, v)                          {Permutation: int} -> {Permutation: int}
+//   schubmult_py_transition(perm_dict, v)               same product, transition + Monk kernel
+//   schubmult_py_hybrid(perm_dict, v)                   same product, cost-model choice of kernel
+//   pipe_dream_count(v)                                 S_v(1, ..., 1)
 //   schubmult_double(perm_dict, v, var2, var3[, elem_func])
 //   schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
 //   schubmult_q_fast(perm_dict, v, q_var)               integer input coefficients
@@ -128,6 +131,29 @@ PyObject* py_schubmult_py(PyObject*, PyObject* args) {
     return guarded([&] { return int_dict_out(api_schubmult_py(int_dict_in(d), perm_in(v))); });
 }
 
+PyObject* py_schubmult_py_transition(PyObject*, PyObject* args) {
+    PyObject *d, *v;
+    if (!PyArg_ParseTuple(args, "O!O", &PyDict_Type, &d, &v)) return nullptr;
+    return guarded([&] { return int_dict_out(api_schubmult_py(int_dict_in(d), perm_in(v), 1)); });
+}
+
+PyObject* py_schubmult_py_hybrid(PyObject*, PyObject* args) {
+    PyObject *d, *v;
+    if (!PyArg_ParseTuple(args, "O!O", &PyDict_Type, &d, &v)) return nullptr;
+    return guarded([&] { return int_dict_out(api_schubmult_py(int_dict_in(d), perm_in(v), 2)); });
+}
+
+PyObject* py_pipe_dream_count(PyObject*, PyObject* args) {
+    PyObject* v;
+    if (!PyArg_ParseTuple(args, "O", &v)) return nullptr;
+    return guarded([&] {
+        PyPerm vp = perm_in(v);
+        int n = std::max(2, perm_len(vp));
+        if (n > MAXN) die("permutation longer than MAXN");
+        return pyexpr_detail::checked(PyLong_FromLong(pipe_dream_count(perm_from_py(vp), n)));
+    });
+}
+
 PyObject* py_schubmult_double(PyObject*, PyObject* args) {
     PyObject *d, *v, *var2, *var3, *elem_func = Py_None;
     if (!PyArg_ParseTuple(args, "O!OOO|O", &PyDict_Type, &d, &v, &var2, &var3, &elem_func)) return nullptr;
@@ -157,6 +183,9 @@ PyObject* py_schubmult_q_double_fast(PyObject*, PyObject* args) {
 
 PyMethodDef methods[] = {
     {"schubmult_py", py_schubmult_py, METH_VARARGS, "Ordinary Schubert product: {Permutation: int} -> {Permutation: int}."},
+    {"schubmult_py_transition", py_schubmult_py_transition, METH_VARARGS, "Ordinary Schubert product by transition expansion of S_v + Monk (lrcalc's algorithm)."},
+    {"schubmult_py_hybrid", py_schubmult_py_hybrid, METH_VARARGS, "Ordinary Schubert product, choosing the v-path or transition kernel by a cost model."},
+    {"pipe_dream_count", py_pipe_dream_count, METH_VARARGS, "S_w(1, ..., 1): the number of pipe dreams of w."},
     {"schubmult_double", py_schubmult_double, METH_VARARGS, "Double Schubert product; var2/var3 are generating sets, optional elem_func builds the elementary symmetric objects."},
     {"schubmult_double_alt_from_elems", py_schubmult_double_alt_from_elems, METH_VARARGS, "Pull-out-variable recursion with elem_func (positivity)."},
     {"schubmult_q_fast", py_schubmult_q_fast, METH_VARARGS, "Quantum Schubert product; integer input coefficients."},
