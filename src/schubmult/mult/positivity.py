@@ -32,7 +32,7 @@ from schubmult.combinatorics.permutation import (
     uncode,
 )
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, prod, sympify
-from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly_classical_from_elems
+from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly, schubpoly_classical_from_elems
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
     divdiffable,
@@ -134,7 +134,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
         return {build_single_monom(a, varlist) for a in arr}
 
     mn = build_monoms(Add.make_args(val_expr), [*var22, *var33])
-    L1 = tuple([0 for i in range(n1)])
+    L1 = tuple([0 for _ in range(n1)])
     mn1L = []
     lookup = {}
 
@@ -145,7 +145,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
         mm0n1 = mm0[:n1]
         st = set(mm0n1)
         if len(st.intersection({0, 1})) == len(st) and 1 in st:
-            lookup[key] += [mm0]
+            lookup[key].append(mm0)
         if mm0n1 == L1:
             mn1L += [mm0]
 
@@ -153,22 +153,19 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
         comblistmn1 = [S.One]
         for i in range(n1, len(mn1)):
             if mn1[i] != 0:
-                arr = [*comblistmn1]
                 comblistmn12 = []
                 mn1_2 = (*mn1[n1:i], 0, *mn1[i + 1 :])
                 for mm0 in lookup[mn1_2]:
-                    prd = sympify(
-                        prod(
-                            [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
-                            start=S.One,
-                        ),
+                    prd = prod(
+                        [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
+                        start=S.One,
                     )
-                    comblistmn12 += [a * prd for a in arr]
+                    comblistmn12.extend([a * prd for a in comblistmn1])
                 comblistmn1 = comblistmn12
         for i in range(len(comblistmn1)):
             b1 = comblistmn1[i]
 
-            dct2 = {k: v for k, v in expand(b1).subs({var3[1]: S.Zero}).as_coefficients_dict().items() if v != S.Zero}
+            dct2 = {k: v for k, v in expand(b1.subs({var3[1]: S.Zero})).as_coefficients_dict().items() if v != S.Zero}
             bad = False
             for k in dct2:
                 if abs(vec0.get(k, 0)) < abs(dct2[k]):
@@ -536,11 +533,10 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
     for vlist, vp in dpret:
         toadd = 1
         vlen = len(vlist)
-        var2cut = var2[vlen:]
         for i in range(vlen):
             for j in range(len(vlist[i])):
                 toadd *= var2[i + 1] - var3[vlist[i][j]]
-        toadd *= schubpoly_classical_from_elems(vp, var2cut, var3, elem_func=elem_sym_poly)
+        toadd *= schubpoly(vp, var2, var3, vlen + 1)
         ret += toadd
     return ret
 
