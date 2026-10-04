@@ -22,10 +22,11 @@ def test_strip_zeros_exact_finds_hidden_zeros():
     assert len(elem.strip_zeros()) == 2
     assert dict(elem.strip_zeros(exact=True)) == {next(iter(DSx([2, 1]))): y[1] - z[1]}
 
-    # a product with a hidden zero: exact stripping matches expansion (from_dict drops literal zeros),
-    # and never drops a nonzero term
+    # a product with hidden zeros: structural stripping sees none, exact stripping matches expansion
+    # (from_dict drops literal zeros) and never drops a nonzero term. The number of hidden zeros
+    # depends on how the kernel groups its unexpanded terms, so only the nonzero count is pinned.
     prod = QDSx([2, 4, 1, 3]) * QDSx([3, 1, 4, 2])
-    assert len(prod) == 11 and len(prod.strip_zeros()) == 11
+    assert len(prod.strip_zeros()) == len(prod) > 10
     stripped = prod.strip_zeros(exact=True)
     assert len(stripped) == 10
     assert set(stripped) == set(prod.expand(deep=False))
