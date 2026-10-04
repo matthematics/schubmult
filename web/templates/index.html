@@ -93,6 +93,7 @@
     <label id="sm-positive-label"><input type="checkbox" id="sm-positive"> Display positive (double / q_double)</label>
     <label id="sm-mixedvar-label"><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double / q_double / groth_double / groth_q_double)</label>
     <label id="sm-simplify-label"><input type="checkbox" id="sm-simplify"> Simplify coefficients (groth_double / groth_q_double only; slower)</label>
+    <label id="sm-probabilistic-label"><input type="checkbox" id="sm-probabilistic"> Probabilistic zero testing (double / q_double; much faster on large products, error rate below 10<sup>-20</sup>)</label>
   </div>
 
   <div class="row" id="sm-parabolic-row">
@@ -142,14 +143,14 @@
   // applicable is disabled and unchecked (greyed out) rather than just
   // silently ignored server-side.
   const FLAVOR_CAPS = {
-    py:           { ascode: true, coprod: true,  display_positive: false, mixed_var: false, parabolic: false, simplify: false },
-    groth:        { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: false, simplify: false },
-    double:       { ascode: true, coprod: true,  display_positive: true,  mixed_var: true,  parabolic: false, simplify: false },
-    groth_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false, simplify: true },
-    q:            { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false },
-    groth_q:      { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false },
-    q_double:     { ascode: true, coprod: false, display_positive: true,  mixed_var: true,  parabolic: true,  simplify: false },
-    groth_q_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: true,  simplify: true },
+    py:           { ascode: true, coprod: true,  display_positive: false, mixed_var: false, parabolic: false, simplify: false, probabilistic: false },
+    groth:        { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: false, simplify: false, probabilistic: false },
+    double:       { ascode: true, coprod: true,  display_positive: true,  mixed_var: true,  parabolic: false, simplify: false, probabilistic: true },
+    groth_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false, simplify: true,  probabilistic: false },
+    q:            { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false, probabilistic: false },
+    groth_q:      { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false, probabilistic: false },
+    q_double:     { ascode: true, coprod: false, display_positive: true,  mixed_var: true,  parabolic: true,  simplify: false, probabilistic: true },
+    groth_q_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: true,  simplify: true,  probabilistic: false },
   };
 
   function setEnabled(input, label, enabled) {
@@ -169,10 +170,13 @@
     setEnabled($('sm-positive'), $('sm-positive-label'), positiveEnabled);
     setEnabled($('sm-parabolic'), $('sm-parabolic-row'), caps.parabolic);
     setEnabled($('sm-simplify'), $('sm-simplify-label'), caps.simplify);
+    // the coproduct does not go through the pruning kernel
+    setEnabled($('sm-probabilistic'), $('sm-probabilistic-label'), caps.probabilistic && !$('sm-coprod').checked);
   }
 
   $('sm-flavor').addEventListener('change', applyFlavorCaps);
   $('sm-mixedvar').addEventListener('change', applyFlavorCaps);
+  $('sm-coprod').addEventListener('change', applyFlavorCaps);
   // ?flavor=... (appended by the WordPress shortcode) preselects a flavor
   const wanted = new URLSearchParams(window.location.search).get('flavor');
   if (wanted && FLAVOR_CAPS[wanted]) $('sm-flavor').value = wanted;
@@ -194,6 +198,7 @@
       mixed_var: $('sm-mixedvar').checked,
       parabolic: $('sm-parabolic').value.trim(),
       simplify: $('sm-simplify').checked,
+      probabilistic: $('sm-probabilistic').checked,
       mult: $('sm-mult').value.trim(),
     };
 
