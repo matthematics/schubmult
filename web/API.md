@@ -39,6 +39,7 @@ frame-ancestors` header on the server).
 | `mixed_var`        | boolean | `false` | (`double`/`groth_double`/`q_double`/`groth_q_double` only) Use two variable sets `y`, `z` instead of just `y`. |
 | `parabolic`        | string  | `""`    | (`q`/`groth_q`/`q_double`/`groth_q_double` only) Space-separated block sizes of the parabolic subgroup, e.g. `"2 2"` for `Gr(2,4)` or `"1 2 1"` for `Fl(1,3;4)`. Input permutations must be increasing on each block (minimal coset representatives). Empty = full flag variety. |
 | `simplify`         | boolean | `false` | (`groth_double`/`groth_q_double` only) Print coefficients in cancelled form `numer / prod (1 + β*y_i)**e` instead of as computed. Slower. |
+| `probabilistic`    | boolean | `false` | (`double`/`q_double` only, not with `coprod`) Prune intermediate terms that vanish at random points of a prime field (Schwartz–Zippel). Much faster on large products and the output contains only nonzero coefficients; a product is wrong with probability below 10⁻²⁰. |
 | `mult`             | string  | `""`    | (Disabled by default on this host for security.) Polynomial factor parsed by SymPy. |
 
 ### Permutation input rules (when `ascode=false`)
@@ -57,6 +58,7 @@ a Lehmer code (which has no such constraint), set `ascode=true`.
 | `mixed_var`        |  —   |    —    |    ✓     |       ✓        |  —  |     —     |     ✓      |        ✓         |
 | `parabolic`        |  —   |    —    |    —     |       —        |  ✓  |     ✓     |     ✓      |        ✓         |
 | `simplify`         |  —   |    —    |    —     |       ✓        |  —  |     —     |     —      |        ✓         |
+| `probabilistic`    |  —   |    —    |    ✓     |       —        |  —  |     —     |     ✓      |        —         |
 
 Unsupported options are silently ignored for that flavor.  The `groth_q` and `groth_q_double`
 flavors (quantum Grothendieck polynomials) use a conjectural quantum K-theoretic Pieri rule; their
