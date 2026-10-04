@@ -32,7 +32,7 @@ from schubmult.combinatorics.permutation import (
     uncode,
 )
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, prod, sympify
-from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly
+from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly_classical_from_elems
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
     divdiffable,
@@ -395,7 +395,7 @@ def posify(
                     yv = w[i]
                 for j in range(len(oaf)):
                     toadd *= var2[yv] - var3[oaf[j]]
-            toadd *= schubpoly(v3, [0, var2[w[a]], var2[w[b]]], var3)
+            toadd *= schubpoly_classical_from_elems(v3, [0, var2[w[a]], var2[w[b]]], var3, elem_func=elem_sym_poly)
             val += toadd
         return val
 
@@ -518,7 +518,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
     if u.inv == 0:
         vp = v * (~perm)
         if vp.inv == v.inv - perm.inv:
-            return schubpoly(vp, var2, var3)
+            return schubpoly_classical_from_elems(vp, var2, var3, elem_func=elem_sym_poly)
     dpret = []
     ret = 0
     if u.dominates(perm):
@@ -535,10 +535,12 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
 
     for vlist, vp in dpret:
         toadd = 1
-        for i in range(len(vlist)):
+        vlen = len(vlist)
+        var2cut = var2[vlen:]
+        for i in range(vlen):
             for j in range(len(vlist[i])):
                 toadd *= var2[i + 1] - var3[vlist[i][j]]
-        toadd *= schubpoly(vp, var2, var3, len(vlist) + 1)
+        toadd *= schubpoly_classical_from_elems(vp, var2cut, var3, elem_func=elem_sym_poly)
         ret += toadd
     return ret
 
