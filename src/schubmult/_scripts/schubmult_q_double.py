@@ -200,7 +200,7 @@ def main(argv=None):
             coeff_dict = {perms[0]: 1}
             for perm in perms[1:]:
                 if not slow:
-                    coeff_dict = schubmult_q_double_fast(coeff_dict, perm, var2, var3)
+                    coeff_dict = schubmult_q_double_fast(coeff_dict, perm, var2, var3, probabilistic=args.probabilistic)
                 else:
                     coeff_dict = schubmult_q_double(coeff_dict, perm, var2, var3)
 

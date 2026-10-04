@@ -6,10 +6,11 @@
 //   schubmult_py_transition(perm_dict, v)               same product, transition + Monk kernel
 //   schubmult_py_hybrid(perm_dict, v)                   same product, cost-model choice of kernel
 //   pipe_dream_count(v)                                 S_v(1, ..., 1)
-//   schubmult_double(perm_dict, v, var2, var3[, elem_func])
+//   schubmult_double(perm_dict, v, var2, var3[, elem_func[, evaluator]])
+//                                                       evaluator: ShadowEvaluator for probabilistic zero testing
 //   schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
 //   schubmult_q_fast(perm_dict, v, q_var)               integer input coefficients
-//   schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+//   schubmult_q_double_fast(perm_dict, v, var2, var3, q_var[, evaluator])
 //
 // Permutations are anything iterable over ints (one-line notation); results are keyed by
 // schubmult.combinatorics.permutation.Permutation. A RuntimeError signals "exceeds MAXN".
@@ -155,11 +156,12 @@ PyObject* py_pipe_dream_count(PyObject*, PyObject* args) {
 }
 
 PyObject* py_schubmult_double(PyObject*, PyObject* args) {
-    PyObject *d, *v, *var2, *var3, *elem_func = Py_None;
-    if (!PyArg_ParseTuple(args, "O!OOO|O", &PyDict_Type, &d, &v, &var2, &var3, &elem_func)) return nullptr;
+    PyObject *d, *v, *var2, *var3, *elem_func = Py_None, *evaluator = Py_None;
+    if (!PyArg_ParseTuple(args, "O!OOO|OO", &PyDict_Type, &d, &v, &var2, &var3, &elem_func, &evaluator)) return nullptr;
     return guarded([&] {
         Expr ef = elem_func == Py_None ? Expr() : Expr(elem_func, false);
-        return expr_dict_out(api_schubmult_double(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3), ef));
+        Expr ev = evaluator == Py_None ? Expr() : Expr(evaluator, false);
+        return expr_dict_out(api_schubmult_double(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3), ef, ev));
     });
 }
 
@@ -176,9 +178,12 @@ PyObject* py_schubmult_q_fast(PyObject*, PyObject* args) {
 }
 
 PyObject* py_schubmult_q_double_fast(PyObject*, PyObject* args) {
-    PyObject *d, *v, *var2, *var3, *q;
-    if (!PyArg_ParseTuple(args, "O!OOOO", &PyDict_Type, &d, &v, &var2, &var3, &q)) return nullptr;
-    return guarded([&] { return expr_dict_out(api_schubmult_q_double(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3), vars_in(q))); });
+    PyObject *d, *v, *var2, *var3, *q, *evaluator = Py_None;
+    if (!PyArg_ParseTuple(args, "O!OOOO|O", &PyDict_Type, &d, &v, &var2, &var3, &q, &evaluator)) return nullptr;
+    return guarded([&] {
+        Expr ev = evaluator == Py_None ? Expr() : Expr(evaluator, false);
+        return expr_dict_out(api_schubmult_q_double(expr_dict_in(d), perm_in(v), vars_in(var2), vars_in(var3), vars_in(q), ev));
+    });
 }
 
 PyMethodDef methods[] = {
@@ -186,10 +191,10 @@ PyMethodDef methods[] = {
     {"schubmult_py_transition", py_schubmult_py_transition, METH_VARARGS, "Ordinary Schubert product by transition expansion of S_v + Monk (lrcalc's algorithm)."},
     {"schubmult_py_hybrid", py_schubmult_py_hybrid, METH_VARARGS, "Ordinary Schubert product, choosing the v-path or transition kernel by a cost model."},
     {"pipe_dream_count", py_pipe_dream_count, METH_VARARGS, "S_w(1, ..., 1): the number of pipe dreams of w."},
-    {"schubmult_double", py_schubmult_double, METH_VARARGS, "Double Schubert product; var2/var3 are generating sets, optional elem_func builds the elementary symmetric objects."},
+    {"schubmult_double", py_schubmult_double, METH_VARARGS, "Double Schubert product; var2/var3 are generating sets, optional elem_func builds the elementary symmetric objects, optional evaluator enables probabilistic zero testing."},
     {"schubmult_double_alt_from_elems", py_schubmult_double_alt_from_elems, METH_VARARGS, "Pull-out-variable recursion with elem_func (positivity)."},
     {"schubmult_q_fast", py_schubmult_q_fast, METH_VARARGS, "Quantum Schubert product; integer input coefficients."},
-    {"schubmult_q_double_fast", py_schubmult_q_double_fast, METH_VARARGS, "Quantum double Schubert product."},
+    {"schubmult_q_double_fast", py_schubmult_q_double_fast, METH_VARARGS, "Quantum double Schubert product; optional evaluator enables probabilistic zero testing."},
     {nullptr, nullptr, 0, nullptr},
 };
 

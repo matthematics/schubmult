@@ -66,12 +66,14 @@ BETA = "\u03b2"  # schubmult's symbol for the deformation parameter
 BETA_VARIABLE = "beta_0"  # its name inside the infinite polynomial ring (which only has indexed variables)
 
 
-def GrothendieckPolynomialRing(R):
+def GrothendieckPolynomialRing(R, raw_coefficients=False):
     r"""
     Return the ring of `\beta`-Grothendieck polynomials `\mathfrak{G}^\beta_w(x)` over ``R``.
 
     The base ring is ``R[beta]``. Ordinary Schubert polynomials (elements of Sage's
     :func:`SchubertPolynomialRing`) and polynomials in ``x0, x1, ...`` (and ``beta``) coerce in.
+    With ``raw_coefficients=True`` the coefficients are unexpanded SymEngine expressions, as for
+    :func:`~schubmult.sage.DoubleSchubertPolynomialRing`.
 
     EXAMPLES::
 
@@ -91,10 +93,10 @@ def GrothendieckPolynomialRing(R):
         sage: G(x0 + x1 + beta*x0*x1)
         G[1, 3, 2]
     """
-    return GrothendieckPolynomialRing_gbasis(R)
+    return GrothendieckPolynomialRing_gbasis(R, raw_coefficients)
 
 
-def DoubleGrothendieckPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z")):
+def DoubleGrothendieckPolynomialRing(R, alphabet="y", coefficient_alphabets=("y", "z"), raw_coefficients=False):
     r"""
     Return the ring of double `\beta`-Grothendieck polynomials `\mathfrak{G}^\beta_w(x; \text{alphabet})` over ``R``.
 
@@ -102,7 +104,8 @@ def DoubleGrothendieckPolynomialRing(R, alphabet="y", coefficient_alphabets=("y"
     equivariant K-theoretic structure constants are rational in `\beta` and the second alphabet, with
     denominators that are products of `1 + \beta y_i`. As for
     :func:`~schubmult.sage.DoubleSchubertPolynomialRing`, rings over ``R`` with the same set of letters
-    share a base ring and coerce into each other (mixed products).
+    share a base ring and coerce into each other (mixed products). With ``raw_coefficients=True`` the
+    coefficients are kept as the kernel produces them (unexpanded, over the factored denominators).
 
     EXAMPLES::
 
@@ -127,9 +130,19 @@ def DoubleGrothendieckPolynomialRing(R, alphabet="y", coefficient_alphabets=("y"
         sage: q = DoubleSchubertPolynomialRing(QQ)([3, 1, 2]).expand()
         sage: p.subs({T('beta'): 0}) == T(q.subs({g: -g for g in q.parent().gens() if str(g).startswith('y')}))
         True
+
+    With unexpanded coefficients the denominators stay factored and `\beta` prints as the schubmult
+    symbol; the numerators are exactly what the kernel produces::
+
+        sage: GR = DoubleGrothendieckPolynomialRing(QQ, raw_coefficients=True)
+        sage: TestSuite(GR).run()
+        sage: f = GR([3, 1, 2]) * GR([2, 1]); f
+        (((1+β*y_1)*(-y_3-y_1*(1+β*y_3))+(1+β*y_3)*(y_1+y_1*(1+β*y_1)))/(1+β*y_3))*G_y[3, 1, 2] + ((1+β*y_1)/(1+β*y_3))*G_y[4, 1, 2, 3]
+        sage: GD(f) == GD([3, 1, 2]) * GD([2, 1])
+        True
     """
     names = tuple(sorted({str(alphabet), *map(str, coefficient_alphabets)}))
-    return DoubleGrothendieckPolynomialRing_gbasis(R, str(alphabet), names)
+    return DoubleGrothendieckPolynomialRing_gbasis(R, str(alphabet), names, raw_coefficients)
 
 
 class GrothendieckPolynomial_class(SchubmultBackedElement):
@@ -221,7 +234,7 @@ class _GrothendieckMixin:
 class GrothendieckPolynomialRing_gbasis(_GrothendieckMixin, SchubmultBackedRing):
     Element = GrothendieckPolynomial_class
 
-    def __init__(self, R):
+    def __init__(self, R, raw=False):
         """
         EXAMPLES::
 
@@ -231,8 +244,8 @@ class GrothendieckPolynomialRing_gbasis(_GrothendieckMixin, SchubmultBackedRing)
             True
         """
         self._alphabet = None
-        super().__init__(R, (), prefix="G", name="Grothendieck polynomial ring with G basis")
-        self._beta_scalar = self.base_ring().gen()
+        super().__init__(R, (), prefix="G", name="Grothendieck polynomial ring with G basis", raw=raw)
+        self._beta_scalar = self.base_ring().symbol(BETA) if raw else self.base_ring().gen()
         self._beta = self._beta_scalar
 
     @staticmethod
@@ -262,7 +275,7 @@ class DoubleGrothendieckPolynomialRing_gbasis(_GrothendieckMixin, SchubmultBacke
     Element = GrothendieckPolynomial_class
     _base_aliases = {BETA_VARIABLE: "beta"}  # noqa: RUF012
 
-    def __init__(self, R, alphabet, alphabets):
+    def __init__(self, R, alphabet, alphabets, raw=False):
         """
         EXAMPLES::
 
@@ -274,7 +287,10 @@ class DoubleGrothendieckPolynomialRing_gbasis(_GrothendieckMixin, SchubmultBacke
             True
         """
         self._alphabet = alphabet
-        super().__init__(R, alphabets, prefix=f"G_{alphabet}", name=f"Double Grothendieck polynomial ring in the alphabet {alphabet} with G_{alphabet} basis")
+        super().__init__(R, alphabets, prefix=f"G_{alphabet}", name=f"Double Grothendieck polynomial ring in the alphabet {alphabet} with G_{alphabet} basis", raw=raw)
+        if raw:
+            self._beta = self._beta_scalar = self.base_ring().symbol(BETA)
+            return
         D = self.base_ring().ring()
         self._beta_scalar = D.gen(D.variable_names().index("beta"))[0].polynomial()
         self._beta = self.base_ring()(self._beta_scalar)
