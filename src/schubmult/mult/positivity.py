@@ -31,7 +31,7 @@ from schubmult.combinatorics.permutation import (
     phi1,
     uncode,
 )
-from schubmult.symbolic import S, expand, prod, sympify, sympify_sympy, sympy_poly
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, prod, sympify
 from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
@@ -101,8 +101,8 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
     varsimp2.sort(key=lambda k: var2.index(k))
     varsimp3.sort(key=lambda k: var3.index(k))
 
-    var22 = [sympify_sympy(v) for v in varsimp2]
-    var33 = [sympify_sympy(v) for v in varsimp3]
+    var22 = tuple(varsimp2)
+    var33 = tuple(varsimp3)
 
     n1 = len(varsimp2)
 
@@ -110,9 +110,30 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
 
     val_expr = expand(val)
     vec0 = {k: v for k, v in val_expr.subs({var3[1]: S.Zero}).as_coefficients_dict().items() if v != S.Zero}
-    val_poly = sympy_poly(val_expr, *var22, *var33)
+    # val_poly = sympy_poly(val_expr, *var22, *var33)
+    # mn = val_poly.monoms()
 
-    mn = val_poly.monoms()
+    def build_single_monom(key, varlist):
+        if key.is_Number:
+            return tuple([0 for _ in varlist])
+        if isinstance(key, Symbol):
+            return tuple([1 if key == v else 0 for v in varlist])
+        if isinstance(key, Mul):
+            result = [0 for _ in varlist]
+            for arg in key.args:
+                single = build_single_monom(arg, varlist)
+                result = [r + s for r, s in zip(result, single)]
+            return tuple(result)
+        if isinstance(key, Pow):
+            base, exp = key.args
+            single = build_single_monom(base, varlist)
+            return tuple([s * exp for s in single])
+        raise ValueError(f"Unsupported key type: {type(key)}")
+
+    def build_monoms(arr, varlist):
+        return {build_single_monom(a, varlist) for a in arr}
+
+    mn = build_monoms(Add.make_args(val_expr), [*var22, *var33])
     L1 = tuple([0 for i in range(n1)])
     mn1L = []
     lookup = {}
