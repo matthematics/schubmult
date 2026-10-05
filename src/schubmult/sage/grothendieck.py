@@ -137,7 +137,7 @@ def DoubleGrothendieckPolynomialRing(R, alphabet="y", coefficient_alphabets=("y"
         sage: GR = DoubleGrothendieckPolynomialRing(QQ, raw_coefficients=True)
         sage: TestSuite(GR).run()
         sage: f = GR([3, 1, 2]) * GR([2, 1]); f
-        (((1+β*y_1)*(-y_3-y_1*(1+β*y_3))+(1+β*y_3)*(y_1+y_1*(1+β*y_1)))/(1+β*y_3))*G_y[3, 1, 2] + ((1+β*y_1)/(1+β*y_3))*G_y[4, 1, 2, 3]
+        (-(-y_1+y_3)/(1+β*y_3))*G_y[3, 1, 2] + ((1+β*y_1)/(1+β*y_3))*G_y[4, 1, 2, 3]
         sage: GD(f) == GD([3, 1, 2]) * GD([2, 1])
         True
     """

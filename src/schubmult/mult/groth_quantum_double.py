@@ -46,18 +46,21 @@ specializations against the Maeno--Naito--Sagaki presentation
 
 Molev--Sagan assembly
 ---------------------
-``S_{v'}(x; z)`` is a sum over strict-theta v-paths of products of factorial elementary symmetric
-polynomials ``E_{p,k}(x; z)`` with strictly decreasing ``k``.  Each ``E_{p,k}`` is symmetric in
-``x_1..x_k`` and of degree ``<= 1`` in each variable, hence a combination of the
-``e_l(X_1..X_k)``, so the product is a combination of standard elementary monomials and
-``Q`` is multiplicative on it: ``Q(S_{v'}(x; z))`` is the same v-path sum with ``Q(E_{p,k})``.
-Since ``E_{k-q,k}(x; z_1..z_{q+1}) = (-1)^q d^z_q ... d^z_1 prod_{i<=k}(x_i - z_1)`` and ``Q``
-commutes with the ``z``-divided differences, the coefficient of ``G^q_{u2}`` in
-``Q(E_{k-q,k}(x; z)) G^q_{u1}(x; y)`` is ``_groth_elem_sym_frac`` with ``l(u2) - l(u1)`` replaced
-by the chain length and the quantum weight ``q^D`` attached.  Chaining the layers of the v-path
-recursion exactly as ``schubmult_q_double`` does gives ``G^q_u(x; y) Q(S_{v'}(x; z))``, and
-``dgroth_to_dschub`` (``G_v = sum c_{v'} S_{v'}``, ``Q`` linear over ``z, beta``) turns that into
-``G^q_u(x; y) G^q_v(x; z)``.
+``dgroth_phantom_expansion`` writes ``G_v(x; z) = prod_i (1 + beta*x_i)^{lambda'_i} sum_sigma c_sigma
+S_sigma((-)x; z)`` over the strict-theta shape ``lambda``, and each ``S_sigma((-)x; z)`` is a sum
+over strict-theta v-paths of products of ``E_{p,k}((-)x; z)`` with strictly decreasing ``k``.
+Absorbing the prefactor layer by layer, the layer factor is
+``F = prod_{j<=k}(1 + beta*x_j) E_{p,k}((-)x; z)``, symmetric in ``x_1..x_k`` and of degree ``<= 1``
+in each variable, hence a combination of the ``e_l(X_1..X_k)``; the product over layers is a
+combination of standard elementary monomials and ``Q`` is multiplicative on it: ``Q(G_v(x; z))``
+is the same v-path sum with ``Q(F)``.  The top block ``F_{q=0} = prod_{i<=k}(x_i (+) z_1)`` is
+``grothmult_q_double_top`` up to the rescaling of ``z``, the general ``q`` follows by the strip
+``pihat_q ... pihat_1`` in ``z`` which commutes with ``Q``, so the coefficient of ``G^q_{u2}`` in
+``Q(F) G^q_{u1}(x; y)`` is ``_tilde_elem_sym_frac`` with ``l(u2) - l(u1)`` replaced by the chain
+length and the quantum weight ``q^D`` attached.  Chaining the layers of the v-path recursion
+exactly as ``schubmult_q_double`` does gives ``G^q_u(x; y) G^q_v(x; z)``
+(``_qgroth_groth_vpath_mul``).  ``_qgroth_schub_vpath_mul`` is the same recursion for a quantum
+double Schubert factor ``Q(S_{v'}(x; z))`` with the classical layer factor ``E_{p,k}(x; z)``.
 """
 
 from __future__ import annotations
@@ -65,7 +68,7 @@ from __future__ import annotations
 from functools import cache
 from itertools import combinations, product
 from math import comb
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation, uncode
@@ -79,10 +82,11 @@ from schubmult.mult.groth_double import (
     _frac_to_expr,
     _genset,
     _groth_elem_sym_frac,
+    _groth_vpath_topdown,
     _probe_vals,
     _rank,
     _top_block_coeff,
-    dgroth_to_dschub,
+    dgroth_phantom_expansion,
     groth_elem_sym_poly,
 )
 from schubmult.symbolic import S, prod, sympify, sympify_sympy
@@ -348,6 +352,35 @@ def _qgroth_schub_vpath_mul(perm_dict, v, var2, var3, beta, q_var, as_frac=False
     return {w: coeff for w, coeff in out.items() if coeff != S.Zero}
 
 
+def _qgroth_groth_vpath_mul(perm_dict, v, var2, var3, beta, q_var, as_frac=False):
+    """``sum_u coeff_u G^q_u(x, var2) * G^q_v(x, var3)`` in the ``G^q`` basis, by the quantum Grothendieck v-path.
+
+    Quantum counterpart of ``_groth_groth_vpath_mul``: the tops come from
+    ``dgroth_phantom_expansion`` over ``strict_theta(v^{-1})`` (one layer per level, so every
+    layer factor ``prod_{j<=k}(1 + beta*x_j) E_{k - vdiff, k}((-)x; z_sel)`` -- symmetric and
+    multilinear in ``x_1..x_k`` -- quantizes on its own), the Pieri support is
+    ``quantum_pieri_chains`` and the coefficient is ``_tilde_elem_sym_frac`` at the quantum
+    chain length, times ``q^D``.  Driven top-down by ``_groth_vpath_topdown``.
+    """
+    v = Permutation(v)
+    th = list((~v).strict_theta())
+    while th and th[-1] == 0:
+        th.pop()
+    if not th:
+        if as_frac:
+            return {Permutation(w): _frac_const(val) for w, val in perm_dict.items()}
+        return dict(perm_dict)
+    mu = uncode(th)
+    tops = {sigma * mu: (coeff, _probe_vals(coeff)) for sigma, coeff in dgroth_phantom_expansion(v, var3, beta, th).items()}
+
+    def pieri(up, k):
+        for up2, (length, dvec) in quantum_pieri_chains(up, k).items():
+            qmon, qprobe = _qmon_probed(dvec, q_var)
+            yield up2, length, qmon, qprobe
+
+    return _groth_vpath_topdown(perm_dict, th, tops, var2, var3, beta, pieri, as_frac)
+
+
 def grothmult_q_double(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | None = None, var3: Alphabet | None = None, beta: Expr | None = None, q_var: GeneratingSet_base | None = None) -> PermCoeffDict:
     r"""Multiply quantum double Grothendieck polynomials, mirroring ``schubmult_q_double``.
 
@@ -355,8 +388,8 @@ def grothmult_q_double(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | N
     ``{G^q_w(x, var2)}`` as ``{w: coeff_w}``, coefficients rational in ``var2`` (denominators
     are products of ``1 + beta*var2[a]``) and polynomial in ``var3``, ``beta``, ``q``.
 
-    ``G^q_v(x, var3)`` is expanded through ``dgroth_to_dschub`` and one run of the quantum
-    v-path kernel ``_qgroth_schub_vpath_mul`` per double Schubert term.  At ``q = 0`` this is
+    Computed by the quantum Grothendieck v-path ``_qgroth_groth_vpath_mul`` (no expansion of
+    ``G^q_v`` in quantum double Schubert polynomials).  At ``q = 0`` this is
     ``grothmult_double``; at ``beta = 0`` it is ``schubmult_q_double``.
     """
     if beta is None:
@@ -370,13 +403,7 @@ def grothmult_q_double(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | N
     perm_dict = {Permutation(key): value for key, value in perm_dict.items()}
     if v.inv == 0:
         return perm_dict
-    ret: dict[Permutation, Any] = {}
-    for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
-        cprobe = _probe_vals(coeff)
-        for w, value in _qgroth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, q_var, as_frac=True).items():
-            ret[w] = _frac_add(ret.get(w), _frac_scale(value, coeff, cprobe), var2, beta)
-    out = {w: _frac_to_expr(f, var2, beta) for w, f in ret.items()}
-    return {w: coeff for w, coeff in out.items() if coeff != S.Zero}
+    return _qgroth_groth_vpath_mul(perm_dict, v, var2, var3, beta, q_var)
 
 
 def grothmult_q_double_dict(perm_dict1: PermCoeffDict, perm_dict2: PermCoeffDict, var2: Alphabet | None = None, var3: Alphabet | None = None, beta: Expr | None = None, q_var: GeneratingSet_base | None = None) -> PermCoeffDict:
