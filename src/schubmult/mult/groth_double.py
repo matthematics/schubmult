@@ -958,7 +958,7 @@ def _tilde_elem_sym_dp_probed(alphabet, zidx, vdiff, base_power, varl1, varl2, b
 
 
 @cache
-def _tilde_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
+def _tilde_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length=None):
     r"""K-analogue of ``elem_sym_func`` for the Grothendieck v-path (``_groth_groth_vpath_mul``).
 
     Coefficient of ``G_{u2}(x, varl1)`` in ``F * G_{u1}(x, varl1)`` where ``F`` is the layer factor
@@ -989,11 +989,14 @@ def _tilde_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
 
     Returns a flat fraction ``(numer, {a: exp}, probes)`` with denominator
     ``prod_a (1 + beta*varl1[a])**exp`` (the same ``denom`` as ``_groth_elem_sym_frac``).
+
+    ``length`` overrides ``d = l(u2) - l(u1)``; the quantum kernel passes the length of the
+    quantum Bruhat chain instead.
     """
     from schubmult.symbolic.poly.schub_poly import call_zvars
 
     alphabet, denom, left = _tilde_window_fate(k, u1, u2)
-    d = u2.inv - u1.inv
+    d = u2.inv - u1.inv if length is None else length
     movers = left + sum(1 for a in alphabet if a is None)
     if d < movers:
         return _ZERO_FRAC
@@ -1008,17 +1011,19 @@ def _tilde_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
     return (value, denom, vprobe)
 
 
-def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
+def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, th: Iterable[int] | None = None) -> PermCoeffDict:
     r"""Expand ``G_v(x, var3)`` in double Schubert polynomials of the formal-inverse alphabet.
 
     Returns ``{sigma: coeff}`` with
 
         G_v(x; z) = prod_i (1 + beta*x_i)^{lambda'_i} * sum_sigma coeff_sigma(beta, z) S_sigma((-)x; z),
 
-    where ``lambda = theta(v^{-1})`` (the dominant shape of the v-path), ``lambda'`` its conjugate,
-    ``(-)x = -x/(1 + beta*x)`` and the coefficients are polynomials in ``beta`` and the atoms
-    ``1 + beta*z_t``.  Every ``sigma`` satisfies ``l(sigma mu) = l(mu) - l(sigma)`` for
-    ``mu = uncode(lambda)``, so the classical v-path over ``lambda`` applies to each term.
+    where ``lambda = th`` is a dominant shape with ``l(v^{-1} mu) = l(mu) - l(v)`` for
+    ``mu = uncode(lambda)`` (default ``theta(v^{-1})``, the shape of the v-path; the quantum
+    kernel passes ``strict_theta(v^{-1})``), ``lambda'`` its conjugate, ``(-)x = -x/(1 + beta*x)``
+    and the coefficients are polynomials in ``beta`` and the atoms ``1 + beta*z_t``.  Every
+    ``sigma`` satisfies the same length condition as ``v``, so the classical v-path over
+    ``lambda`` applies to each term.
 
     Derivation.  With ``mu`` dominant, ``G_v(x; z) = pi_w G_{mu^{-1}}(x; z)`` for isobaric divided
     differences ``pi_i = d_i (1 + beta*z_{i+1})`` acting on ``z``, ``w = (v mu)^{-1}``.  Taking the
@@ -1045,9 +1050,11 @@ def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Ex
     v = Permutation(v)
     if v.inv == 0:
         return {v: S.One}
-    mu_user = uncode((~v).theta())
+    mu_user = uncode([*((~v).theta() if th is None else th)])
     mu = ~mu_user
     vmu = v * mu_user
+    if vmu.inv != mu.inv - v.inv:
+        raise ValueError(f"dominant shape does not lie above v in weak order: v={list(v)}, shape={list(mu_user.code)}")
     code = vmu.code
     blocks = [(j + 1, code[j]) for j in range(len(code)) if code[j]]
 
@@ -1081,15 +1088,83 @@ def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Ex
     return {sg: c for sg, c in out.items() if expand(c) != S.Zero}
 
 
+def _groth_vpath_topdown(perm_dict: PermCoeffDict, th: list[int], tops: dict[Permutation, Any], var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, pieri: Any, as_frac: bool = False) -> dict:
+    """Top-down driver of the Grothendieck v-path shared by the classical and quantum kernels.
+
+    ``th`` is the dominant shape, ``tops`` maps each top ``sigma * mu`` to its coefficient
+    ``c_sigma`` from ``dgroth_phantom_expansion``, and ``pieri(up, k)`` yields the Pieri support
+    of the layer factor on ``G_up`` as ``(up2, length, weight, weight_probes)`` -- ``length`` the
+    chain length handed to ``_tilde_elem_sym_frac`` (``None`` for ``l(up2) - l(up)``) and
+    ``weight`` an extra scalar (the quantum ``q^D``; ``1`` classically).
+
+    The layer factors commute, so the v-path chain ``e = v_0 -> ... -> v_L = sigma * mu`` may be
+    consumed from either end.  Going *top-down* -- start every top with weight ``c_sigma`` and
+    walk the reversed ``compute_vpathdicts`` transitions down to ``v_0 = e`` -- lets the sum over
+    tops cancel as soon as two paths meet, which it does massively: the tops
+    ``prod (1 + beta*x)^{lambda'} S_sigma((-)x; z)`` are long (every layer factor has ``p ~ k`` and
+    a nearly full K-Pieri support) and only their alternating sum is small.  Bottom-up the
+    cancellation would only happen after the last layer, with an order of magnitude more
+    states in between.  Transitions out of a state do not depend on the top, so the reversed
+    layer dictionaries are simply unioned over the tops.
+    """
+    from schubmult.utils.schub_lib import compute_vpathdicts
+
+    reverse: list[dict[Permutation, set]] = [{} for _ in th]
+    for top in tops:
+        for index, layer in enumerate(compute_vpathdicts(tuple(th), top)):
+            for v1, steps in layer.items():
+                for v2, vdiff, s in steps:
+                    reverse[index].setdefault(v2, set()).add((v1, vdiff, s))
+    identity = Permutation([1, 2])
+    ret_dict: dict[Permutation, Any] = {}
+    for u, val in perm_dict.items():
+        u = Permutation(u)
+        base = _frac_const(val)
+        vpathsums = {u: {top: _frac_scale(base, coeff, cprobe) for top, (coeff, cprobe) in tops.items()}}
+        for index in range(len(th) - 1, -1, -1):
+            k = th[index]
+            layer = reverse[index]
+            i = index + 1
+            newpathsums: dict[Permutation, dict[Permutation, Any]] = {}
+            for up, sums in vpathsums.items():
+                live = [(v2, sumval, layer[v2]) for v2, sumval in sums.items() if v2 in layer and not _frac_is_zero(sumval)]
+                if not live:
+                    continue
+                for up2, length, weight, wprobe in pieri(up, k):
+                    bucket = None
+                    for v2, sumval, steps in live:
+                        for v1, vdiff, s in steps:
+                            coeff = _tilde_elem_sym_frac(k, i, up, up2, v1, v2, vdiff, var2, var3, beta, length=length)
+                            if coeff is _ZERO_FRAC:
+                                continue
+                            si = int(s)
+                            contrib = _frac_mul(sumval, _frac_scale(coeff, si * weight, (si * wprobe[0], si * wprobe[1])))
+                            if bucket is None:
+                                bucket = newpathsums.setdefault(up2, {})
+                            bucket[v1] = _frac_add(bucket.get(v1), contrib, var2, beta)
+            vpathsums = newpathsums
+        for ep, sums in vpathsums.items():
+            pair = sums.get(identity)
+            if pair is not None and not _frac_is_zero(pair):
+                ret_dict[ep] = _frac_add(ret_dict.get(ep), pair, var2, beta)
+    if as_frac:
+        return {w: f for w, f in ret_dict.items() if not _frac_is_zero(f)}
+    ret = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
+    return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
+
+
+def _classical_pieri(up, k):
+    """Pieri support of the classical layer factor: the marked-chain K-Pieri support, unit weight."""
+    return ((up2, None, 1, (1, 1)) for up2 in _top_block_support(up, k) | {up})
+
+
 def _groth_groth_vpath_mul(perm_dict: PermCoeffDict, v: PermLike, var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, as_frac: bool = False) -> dict:
     """``sum_u coeff_u G_u(x, var2) * G_v(x, var3)`` in the ``G`` basis, by the Grothendieck v-path.
 
     ``dgroth_phantom_expansion`` writes ``G_v`` as ``prod (1 + beta*x_i)^{lambda'_i}`` times a
     short combination of ``S_sigma((-)x, var3)`` all living over the same dominant shape
-    ``lambda = theta(v^{-1})``.  Their v-paths are run as *one* bottom-up pass of the
-    ``schubmult_double`` recursion: the layer dictionaries of ``compute_vpathdicts`` are
-    unioned over the tops ``sigma * mu`` (transitions out of a state do not depend on the
-    top) and the tops are read off, weighted, at the end.  The layer factor is
+    ``lambda = theta(v^{-1})``; ``_groth_vpath_topdown`` runs their v-paths as one top-down pass
+    of the ``schubmult_double`` recursion.  The layer factor is
     ``prod_{j<=k}(1 + beta*x_j) E_{k - vdiff, k}((-)x; z_sel)`` -- its ``1 + beta*x_j`` dressing
     absorbs the global ``prod (1 + beta*x_i)^{lambda'_i}`` exactly -- with coefficients
     ``_tilde_elem_sym_frac`` in place of ``_groth_elem_sym_frac``.
@@ -1097,7 +1172,6 @@ def _groth_groth_vpath_mul(perm_dict: PermCoeffDict, v: PermLike, var2: Generati
     All path sums are flat fractions, reconstituted at the end (or returned raw with ``as_frac``).
     """
     from schubmult.combinatorics.permutation import uncode
-    from schubmult.utils.schub_lib import compute_vpathdicts
 
     v = Permutation(v)
     th = list((~v).theta())
@@ -1108,51 +1182,8 @@ def _groth_groth_vpath_mul(perm_dict: PermCoeffDict, v: PermLike, var2: Generati
             return {Permutation(w): _frac_const(val) for w, val in perm_dict.items()}
         return dict(perm_dict)
     mu = uncode(th)
-    tops = {}
-    layers: list[dict] = [{} for _ in th]
-    for sigma, coeff in dgroth_phantom_expansion(v, var3, beta).items():
-        top = sigma * mu
-        tops[top] = (coeff, _probe_vals(coeff))
-        for index, layer in enumerate(compute_vpathdicts(tuple(th), top)):
-            for src, steps in layer.items():
-                layers[index].setdefault(src, set()).update(steps)
-    ret_dict: dict[Permutation, Any] = {}
-    for u, val in perm_dict.items():
-        u = Permutation(u)
-        vpathsums = {u: {Permutation([1, 2]): _frac_const(val)}}
-        for index in range(len(th)):
-            k = th[index]
-            layer = layers[index]
-            i = index + 1
-            newpathsums: dict[Permutation, dict[Permutation, Any]] = {}
-            for up, sums in vpathsums.items():
-                live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if v_iter in layer and not _frac_is_zero(sumval)]
-                if not live:
-                    continue
-                for up2 in _top_block_support(up, k) | {up}:
-                    bucket = None
-                    for v_iter, sumval, steps in live:
-                        for v2, vdiff, s in steps:
-                            coeff = _tilde_elem_sym_frac(k, i, up, up2, v_iter, v2, vdiff, var2, var3, beta)
-                            if coeff is _ZERO_FRAC:
-                                continue
-                            contrib = _frac_mul(sumval, coeff)
-                            if s != 1:
-                                si = int(s)
-                                contrib = _frac_scale(contrib, si, (si, si))
-                            if bucket is None:
-                                bucket = newpathsums.setdefault(up2, {})
-                            bucket[v2] = _frac_add(bucket.get(v2), contrib, var2, beta)
-            vpathsums = newpathsums
-        for ep, sums in vpathsums.items():
-            for top, (coeff, cprobe) in tops.items():
-                pair = sums.get(top)
-                if pair is not None and not _frac_is_zero(pair):
-                    ret_dict[ep] = _frac_add(ret_dict.get(ep), _frac_scale(pair, coeff, cprobe), var2, beta)
-    if as_frac:
-        return {w: f for w, f in ret_dict.items() if not _frac_is_zero(f)}
-    ret = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
-    return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
+    tops = {sigma * mu: (coeff, _probe_vals(coeff)) for sigma, coeff in dgroth_phantom_expansion(v, var3, beta, th).items()}
+    return _groth_vpath_topdown(perm_dict, th, tops, var2, var3, beta, _classical_pieri, as_frac)
 
 
 def _groth_schub_vpath_mul(perm_dict: PermCoeffDict, v: PermLike, var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, as_frac: bool = False) -> dict:
