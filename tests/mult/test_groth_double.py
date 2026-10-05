@@ -8,17 +8,21 @@ from schubmult import Permutation
 from schubmult.abc import beta, x, y, z
 from schubmult.mult.double import schubmult_double
 from schubmult.mult.groth_double import (
+    _tilde_elem_sym_frac,
+    _top_block_support,
+    dgroth_phantom_expansion,
     double_groth_times_double_schub,
     epsilon_chain,
     grothmult_double,
     grothmult_double_pieri,
     grothmult_double_top,
+    groth_elem_sym_func,
     monk_chain,
     mult_poly_groth_double,
     single_variable_groth,
 )
 from schubmult.symbolic import S, sympify_sympy
-from schubmult.symbolic.poly.schub_poly import grothendieck_poly
+from schubmult.symbolic.poly.schub_poly import grothendieck_poly, schubpoly
 from schubmult.symbolic.poly.variables import ZeroGeneratingSet
 from schubmult.utils.test_utils import vanishes
 
@@ -123,3 +127,84 @@ def test_double_groth_times_double_schub_defaults_and_identity_perm():
     u = Permutation([2, 1, 3])
     assert _same(double_groth_times_double_schub(u, Permutation([])), {u: S.One})
     assert _same(double_groth_times_double_schub(u, Permutation([1, 3, 2])), double_groth_times_double_schub(u, Permutation([1, 3, 2]), y, z, beta))
+
+
+def _conjugate(th):
+    return [sum(1 for part in th if part >= i) for i in range(1, th[0] + 1)]
+
+
+def _formal_inverse_x():
+    return [None] + [-x[i] / (1 + beta * x[i]) for i in range(1, 8)]
+
+
+def test_dgroth_phantom_expansion_identity():
+    # G_v(x; z) = prod (1 + beta x_i)^{lambda'_i} sum_sigma c_sigma S_sigma((-)x; z), lambda = theta(v^{-1}).
+    S4 = [Permutation(list(p)) for p in itertools.permutations(range(1, 5))]
+    xm = _formal_inverse_x()
+    for v in S4:
+        th = [t for t in (~v).theta() if t]
+        exp = dgroth_phantom_expansion(v, z, beta)
+        if not th:
+            assert exp == {v: S.One}
+            continue
+        prefactor = sympy.prod([(1 + beta * x[i]) ** e for i, e in enumerate(_conjugate(th), start=1)])
+        rhs = prefactor * sum((sp(c) * sp(schubpoly(sg, xm, z)) for sg, c in exp.items()), sympy.Integer(0))
+        assert vanishes([_groth(v, x, z) - rhs]), v
+
+
+def test_dgroth_phantom_expansion_strict_theta_identity():
+    # The same identity over the strict-theta shape used by the quantum kernel.
+    S4 = [Permutation(list(p)) for p in itertools.permutations(range(1, 5))]
+    xm = _formal_inverse_x()
+    for v in S4:
+        th = [t for t in (~v).strict_theta() if t]
+        if not th:
+            continue
+        exp = dgroth_phantom_expansion(v, z, beta, th)
+        prefactor = sympy.prod([(1 + beta * x[i]) ** e for i, e in enumerate(_conjugate(th), start=1)])
+        rhs = prefactor * sum((sp(c) * sp(schubpoly(sg, xm, z)) for sg, c in exp.items()), sympy.Integer(0))
+        assert vanishes([_groth(v, x, z) - rhs]), v
+
+
+def test_dgroth_phantom_expansion_rejects_bad_shape():
+    import pytest
+
+    with pytest.raises(ValueError):
+        dgroth_phantom_expansion(Permutation([2, 3, 1]), z, beta, [1])
+
+
+def test_tilde_elem_sym_frac_matches_exact_multiplication():
+    # Coefficient of G_{u2} in prod_{j<=k}(1 + beta x_j) E_{p,k}((-)x; z_sel) G_{u1}, against the exact fold.
+    from schubmult.mult.groth_double import _frac_to_expr
+
+    def layer_factor(p, k, zs):
+        # (-1)^p sum_{|I|=p} prod_{j not in I}(1 + beta x_j) prod_m (x_{i_m} (+) z_{i_m - m + 1})
+        total = S.Zero
+        for chosen in itertools.combinations(range(1, k + 1), p):
+            term = S.One
+            for j in range(1, k + 1):
+                if j not in chosen:
+                    term *= S.One + beta * x[j]
+            for m, i in enumerate(chosen, start=1):
+                term *= x[i] + zs[i - m] + beta * x[i] * zs[i - m]
+            total += term
+        return (-1) ** p * total
+
+    from schubmult import uncode
+    from schubmult.symbolic.poly.schub_poly import call_zvars
+    from schubmult.utils.schub_lib import compute_vpathdicts
+
+    # genuine v-path steps (v1 -> v2, vdiff) of a few v, with their layer data (k, i)
+    steps = set()
+    for v in (Permutation([2, 3, 1]), Permutation([3, 1, 2]), Permutation([1, 4, 2, 3]), Permutation([2, 4, 1, 3])):
+        th = [t for t in (~v).theta() if t]
+        for index, layer in enumerate(compute_vpathdicts(tuple(th), v * uncode(th))):
+            for v1, moves in layer.items():
+                for v2, vdiff, _ in moves:
+                    steps.add((th[index], index + 1, v1, v2, vdiff))
+    for u1 in S3:
+        for k, i, v1, v2, vdiff in sorted(steps, key=str):
+            zidx = call_zvars(v1, v2, k, i)[: vdiff + 1]
+            exact = mult_poly_groth_double({u1: S.One}, layer_factor(k - vdiff, k, [z[c] for c in zidx]), x, y, beta)
+            closed = {u2: _frac_to_expr(_tilde_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, y, z, beta), y, beta) for u2 in _top_block_support(u1, k) | {u1}}
+            assert _same(exact, closed), (u1, k, i, v1, v2, vdiff)

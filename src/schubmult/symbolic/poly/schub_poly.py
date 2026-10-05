@@ -654,34 +654,38 @@ def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
     return operator.apply(schub)
 
 
-def isobaric_strip_on_dschub_dict(start, length, perm_dict, coeff_genset, beta):
-    """Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded.
-
-    Coefficients landing on the same permutation merge at every stage instead of
-    being carried per input basis element, mirroring ``compute_vpathdicts``.
-    """
+def isobaric_strip_on_dschub_dict(start, length, schub_perm_dict, coeff_genset, beta):
+    """Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded. """
+    from schubmult.combinatorics.permutation import Permutation
     from schubmult.utils.schub_lib import elem_sym_positional_perms
 
     positions = list(range(start + 1, start + length + 1))
-    bigger = {}
-    for perm, coeff in perm_dict.items():
+    positions0 = list(range(start, start + length))
+
+    @cache
+    def cg_beta(index):
+        return coeff_genset[index] * beta + 1
+
+    @cache
+    def bdiff(diff):
+        return beta**diff
+
+    mulperm = Permutation.cycle(start, length)
+    result = {}
+    for perm, coeff in schub_perm_dict.items():
         for elem_perm, diff, sign in elem_sym_positional_perms(perm, length, *positions):
-            value = sign * coeff * (beta**diff) * prod([coeff_genset[perm[positions[p] - 1]] * beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]])
-            bigger[elem_perm] = bigger.get(elem_perm, S.Zero) + value
-    for desc in range(start, start + length):
-        bigger = {perm2.swap(desc - 1, desc): v for perm2, v in bigger.items() if perm2[desc - 1] > perm2[desc]}
-    return bigger
-
-
-def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta):
-    """`isobaric_strip_on_dschub_dict` on a single basis element, returned as a ring element."""
-    return ring.from_dict(isobaric_strip_on_dschub_dict(start, length, {schub_perm: S.One}, ring.coeff_genset, beta))
-
+            indperm = elem_perm * mulperm
+            if indperm.inv == elem_perm.inv - length:
+                value = bdiff(diff) * prod([cg_beta(perm[index]) for index in positions0 if perm[index] == elem_perm[index]])
+                result[indperm] = result.get(indperm, S.Zero) + coeff * sign * value
+    return result
 
 def apply_isobaric_to_schub_dict(diff_perm, perm_dict, coeff_genset, beta):
     """Fold every strip of ``diff_perm`` over the whole dict, merging between strips."""
-    strips = [[i, diff_perm.trimcode[i - 1]] for i in range(1, diff_perm.max_descent + 1)]
-    for strip in reversed(strips):
+    md = diff_perm.max_descent
+    tcd = diff_perm.trimcode
+    strips = [[i, tcd[i - 1]] for i in range(md, 0, -1)]
+    for strip in strips:
         if strip[1] == 0:
             continue
         perm_dict = isobaric_strip_on_dschub_dict(strip[0], strip[1], perm_dict, coeff_genset, beta)
