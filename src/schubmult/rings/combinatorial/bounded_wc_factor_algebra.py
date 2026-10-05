@@ -355,16 +355,75 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         return elem
 
 
+    def groth_elem_factor(self, p, k, size, beta=1):
+        r"""The Grothendieck v-path layer factor ``Etilde_{p,k}(x; 0)`` as elementary Grothendieck WC graphs.
+
+        ``Etilde_{p,k}(x; 0) = sum_{|I|=p} x_I prod_{j<=k, j not in I} (1 + beta*x_j)
+        = G_{1^p}(x_1..x_k) + beta * G_{1^{p+1}}(x_1..x_k)``, a two-term sum of elementary
+        Grothendieck polynomials (compare ``elem_sym``, which expands ``e_p`` over *all*
+        ``G_{1^{p'}}``, ``p' >= p``).  Each ``G_{1^{p'}}`` is the sum of its WC graphs weighted
+        ``beta**(crossings - p')``, so every graph here carries ``beta**(crossings - p)``.
+        Variables beyond ``size`` are zero, which truncates ``k`` to ``size``.
+        """
+        from schubmult import uncode
+
+        k = min(k, size)
+        res = self.zero
+        for pp in (p, p + 1):
+            if pp > k:
+                continue
+            if pp == 0:
+                res += self(self.make_key((), size))
+                continue
+            res += self.from_dict({self.make_key((rc,), size): beta ** (len(rc.perm_word) - p) for rc in WCGraph.all_wc_graphs(uncode([0] * (k - pp) + [1] * pp), k)})
+        return res
+
     @cache
     def full_groth_elem(self, perm, length, beta=1):
-        from ..polynomial_algebra import GrothendieckPoly, SchubertPolyBasis
-        # if beta != 1:
-        #     raise NotImplementedError("Grothendieck polynomials with beta != 1 are not implemented yet.")
-        schub_elem = GrothendieckPoly(perm, length).change_basis(SchubertPolyBasis)
-        res = 0
-        for (perm2, length), coeff in schub_elem.items():
-            res += beta ** (perm2.inv - perm.inv) * coeff * self.full_schub_elem(perm2, length, beta)
-        return res
+        r"""``G_perm(x_1..x_length)`` as a sum of tensors of elementary Grothendieck WC graphs.
+
+        Uses the Grothendieck v-path (``schubmult.mult.groth_double``) directly instead of
+        passing through Schubert polynomials: with ``lambda = theta(perm^{-1})``,
+
+            G_perm(x) = sum_sigma c_sigma(beta) sum_{v-paths of sigma} prod_c s_c (-1)^{p_c} Etilde_{p_c, k_c}(x; 0),
+
+        where ``dgroth_phantom_expansion`` (at ``z = 0``) supplies the handful of tops ``sigma``
+        with their coefficients, the v-paths are those of ``compute_vpathdicts`` over ``lambda``
+        with layer factor ``E_{k - vdiff, k}`` and sign ``s`` exactly as for Schubert polynomials,
+        and ``Etilde = prod_{j<=k}(1 + beta*x_j) E_{p,k}((-)x; 0)`` is ``groth_elem_factor``.  The
+        layers are folded top-down (increasing ``k``, the multiplication order of
+        ``full_schub_elem``) so the tops merge as soon as their paths meet.
+        """
+        from schubmult.combinatorics.permutation import Permutation, uncode
+        from schubmult.mult.groth_double import dgroth_phantom_expansion
+        from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+        from schubmult.utils.schub_lib import compute_vpathdicts
+
+        perm = Permutation(perm)
+        one = self(self.make_key((), length))
+        if perm.inv == 0:
+            return one
+        th = [t for t in (~perm).theta() if t]
+        mu = uncode(th)
+        reverse = [{} for _ in th]
+        sums = {}
+        for sigma, coeff in dgroth_phantom_expansion(perm, ZeroGeneratingSet(), beta, th).items():
+            top = sigma * mu
+            sums[top] = sums.get(top, self.zero) + coeff * one
+            for index, layer in enumerate(compute_vpathdicts(tuple(th), top)):
+                for v1, steps in layer.items():
+                    for v2, vdiff, s in steps:
+                        reverse[index].setdefault(v2, set()).add((v1, vdiff, s))
+        for index in range(len(th) - 1, -1, -1):
+            k = th[index]
+            new = {}
+            for v2, elem in sums.items():
+                for v1, vdiff, s in reverse[index].get(v2, ()):
+                    p = k - vdiff
+                    factor = self.groth_elem_factor(p, k, length, beta)
+                    new[v1] = new.get(v1, self.zero) + (int(s) * (-1) ** p) * (elem * factor)
+            sums = new
+        return sums.get(Permutation([1, 2]), self.zero)
 
 
     def schub_elem(self, perm, size, partition=None):

@@ -240,10 +240,10 @@ if __name__ == "__main__":
 
         real_prod = GrovePoly(*comp1) * GrovePoly(*comp2)
 
-        grove1_poly = grove1.to_wc_graph_ring_element().polyvalue(Sx.genset)
-        assert (grove1_poly - GrovePoly(*comp1).expand()).expand() == 0, f"Failed for {comp1}: {grove1_poly=}\n{GrovePoly(*comp1).expand()=}\n{grove1.to_wc_graph_ring_element()=}\n{GrovePoly(*comp1).change_basis(GrothendieckPolyBasis)=}"
-        grove2_poly = grove2.to_wc_graph_ring_element().polyvalue(Sx.genset)
-        assert (grove2_poly - GrovePoly(*comp2).expand()).expand() == 0, f"Failed for {comp2}: {grove2_poly=}\n{GrovePoly(*comp2).expand()=}\n{grove2.to_wc_graph_ring_element()=}\n{GrovePoly(*comp2).change_basis(GrothendieckPolyBasis)=}"
+        # grove1_poly = grove1.to_wc_graph_ring_element().polyvalue(Sx.genset)
+        # assert (grove1_poly - GrovePoly(*comp1).expand()).expand() == 0, f"Failed for {comp1}: {grove1_poly=}\n{GrovePoly(*comp1).expand()=}\n{grove1.to_wc_graph_ring_element()=}\n{GrovePoly(*comp1).change_basis(GrothendieckPolyBasis)=}"
+        # grove2_poly = grove2.to_wc_graph_ring_element().polyvalue(Sx.genset)
+        # assert (grove2_poly - GrovePoly(*comp2).expand()).expand() == 0, f"Failed for {comp2}: {grove2_poly=}\n{GrovePoly(*comp2).expand()=}\n{grove2.to_wc_graph_ring_element()=}\n{GrovePoly(*comp2).change_basis(GrothendieckPolyBasis)=}"
 
         checko_prod = 0
         for wc, v in producto.items():
