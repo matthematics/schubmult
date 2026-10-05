@@ -1051,15 +1051,16 @@ def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Ex
     code = vmu.code
     blocks = [(j + 1, code[j]) for j in range(len(code)) if code[j]]
 
-    def relabel(c, i):
+    def relabel(c: int, i: int) -> int:
         return i + 1 if c == i else i if c == i + 1 else c
 
-    states = {(mu, ()): S.NegativeOne ** mu.inv}
+    # state: (sigma, sorted multiset of surviving phantom indices) -> coefficient in beta
+    states: dict[tuple[Permutation, tuple[int, ...]], Any] = {(mu, ()): S.NegativeOne ** mu.inv}
     for a, length in reversed(blocks):
         states = {(sg, tuple(sorted((*ph, *range(a + 1, a + length + 1))))): c for (sg, ph), c in states.items()}
         for i in range(a, a + length):
             swap_i = Permutation([]).swap(i - 1, i)
-            new: dict = {}
+            new: dict[tuple[Permutation, tuple[int, ...]], Any] = {}
             for (sg, ph), c in states.items():
                 for r, t in enumerate(ph):
                     if t == i or t == i + 1:
@@ -1071,7 +1072,7 @@ def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Ex
                     new[key] = new.get(key, S.Zero) - c
             states = {key: expand(c) for key, c in new.items()}
             states = {key: c for key, c in states.items() if c != S.Zero}
-    out: dict = {}
+    out: dict[Permutation, Any] = {}
     for (sg, ph), c in states.items():
         term = c
         for t in ph:
