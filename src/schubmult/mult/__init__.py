@@ -33,6 +33,10 @@ _exports = {
     "separated_descents_coeffs": ("separated_descents", "separated_descents_coeffs"),
     "mult_poly_py": ("single", "mult_poly_py"),
     "schubmult_py": ("single", "schubmult_py"),
+    "pipe_dream_count": ("transition", "pipe_dream_count"),
+    "schubmult_py_hybrid": ("transition", "schubmult_py_hybrid"),
+    "schubmult_py_transition": ("transition", "schubmult_py_transition"),
+    "transition_monomials": ("transition", "transition_monomials"),
 }
 _exports.update(
     {
@@ -109,15 +113,19 @@ __all__ = [
     "mult_poly_groth_double",
     "mult_poly_py",
     "one_plus_beta_x_groth",
+    "pipe_dream_count",
     "posify",
     "qgroth_poly",
     "quantum_elem_sym",
     "quantum_pieri_chains",
     "schubmult_double",
     "schubmult_py",
+    "schubmult_py_hybrid",
+    "schubmult_py_transition",
     "schubmult_q",
     "schubmult_q_double",
     "separated_descents_coeffs",
     "separated_descents_grothmult_double",
     "single_variable_groth",
+    "transition_monomials",
 ]

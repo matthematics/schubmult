@@ -1149,6 +1149,26 @@ class RCGraph(WCGraph, CrystalGraph):
             cls._graph_cache[(perm, length)] = ret
         return ret
 
+    @classmethod
+    def count_rc_graphs(cls, perm: Permutation, length: int = -1) -> int:
+        """Number of RC graphs of ``perm`` with ``length`` rows (default: all of them, equal to the sum
+        of the coefficients of the Schubert polynomial), by the same ``pull_out_var`` recursion as
+        `all_rc_graphs` but summing counts instead of building graphs; memoized on ``(perm, length)``.
+        """
+        perm = Permutation(perm)
+        if length < 0:
+            length = len(perm.trimcode)
+        return cls._count_rc_graphs(perm, length)
+
+    @staticmethod
+    @cache
+    def _count_rc_graphs(perm: Permutation, length: int) -> int:
+        if perm.inv == 0:
+            return 1
+        if length <= 0 or len(perm.trimcode) > length:
+            return 0
+        return sum(RCGraph._count_rc_graphs(new_perm, length - 1) for _, new_perm in schub_lib.pull_out_var(1, perm))
+
     def extend(self, extra_rows: int) -> RCGraph:
         """Append ``extra_rows`` empty rows at the bottom."""
         return self._rebuild([*self, *tuple([()] * extra_rows)])
