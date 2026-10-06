@@ -58,6 +58,7 @@ def _elem_factor_from_rc(rc):
     return to_lower
 
 
+@cache
 def _is_full_grassmannian_rc(rc: WCGraph) -> bool:
     return rc.perm.inv == 0 or rc.perm.descents() == {len(rc) - 1}
 
@@ -246,7 +247,17 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
             return self._size
 
         def __hash__(self):
-            return hash((self._size, self.factors))
+            try:
+                return self._hash
+            except AttributeError:
+                self._hash = hash((self._size, self.factors))
+                return self._hash
+
+        def __getstate__(self):
+            # factor hashes are salted per process (see WCGraph.__getstate__): never pickle the memo
+            state = dict(self.__dict__)
+            state.pop("_hash", None)
+            return state
 
         def __eq__(self, other):
             return isinstance(other, BoundedWCFactorAlgebra._key) and self.size == other.size and self.factors == other.factors
@@ -751,12 +762,15 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
     def mul(self, a, b):
         if isinstance(a, BoundedWCFactorAlgebraElement):
             if isinstance(b, BoundedWCFactorAlgebraElement):
-                accum = self.zero
+                # accumulate all key products in one dict; building the element once avoids
+                # re-normalizing the growing partial sum for every pair of terms
+                accum = {}
                 for left_key, left_coeff in a.items():
                     for right_key, right_coeff in b.items():
                         key = self._mul_keys(left_key, right_key)
-                        accum += left_coeff * right_coeff * self(key)
-                return accum
+                        accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
+                # keys from _mul_keys are already normal: skip from_dict's second normalization pass
+                return self._post_normalize_dict(accum)
             return self.from_dict({k: v * b for k, v in a.items()})
         return self.from_dict({k: v * a for k, v in b.items()})
 

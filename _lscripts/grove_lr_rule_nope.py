@@ -176,12 +176,14 @@ def signature(key):
     return (len(k) for k in key)
 
 def _grove_it_up(comp, bw, n):
+    # local imports: keep module-level instances out of the closure that joblib pickles
+    from schubmult.rings.polynomial_algebra import GrothendieckPolyBasis, GrovePoly
+
     grove = 0
     
     # groth = bw.full_groth_elem(uncode(comp), n, 1)
     #grove = 0
     seen = set()
-    signat = _signature(comp)
     grippy = GrovePoly(*comp).change_basis(GrothendieckPolyBasis)
     for (groth_perm, _), coeff0 in grippy.items():
         groth = bw.full_groth_elem(groth_perm, n, GrovePoly._basis.beta)
@@ -213,42 +215,205 @@ def _grove_it_up_old(comp, bw, n):
     return grove
 
 
-if __name__ == "__main__":
-    import sys
+_WORKER_STATE = {}
 
-    bw = BoundedWCFactorAlgebra()
+
+def _worker_state():
+    """Per-process ring and grove cache: algebra elements are not picklable, so each
+    worker builds its own ``BoundedWCFactorAlgebra`` and memoizes the grove elements it needs."""
+    if "bw" not in _WORKER_STATE:
+        from schubmult.rings.combinatorial.bounded_wc_factor_algebra import BoundedWCFactorAlgebra
+
+        _WORKER_STATE["bw"] = BoundedWCFactorAlgebra()
+        _WORKER_STATE["poles"] = {}
+    return _WORKER_STATE["bw"], _WORKER_STATE["poles"]
+
+
+def _grove_cached(comp, bw, n, poles):
+    if comp not in poles:
+        poles[comp] = _grove_it_up(comp, bw, n)
+    return poles[comp]
+
+
+def _freeze_elem(elem):
+    """Picklable form of a BoundedWCFactorAlgebra element: ``{(factors, size): coeff}``."""
+    return {(tuple(key.factors), key.size): coeff for key, coeff in elem.items()}
+
+
+def _thaw_elem(bw, frozen):
+    return bw.from_dict({bw.make_key(factors, size): coeff for (factors, size), coeff in frozen.items()})
+
+
+def build_grove(comp, n):
+    """Phase 1 task: the grove element of ``comp`` in frozen (picklable) form, with its key count."""
+    bw, poles = _worker_state()
+    elem = _grove_cached(comp, bw, n, poles)
+    return comp, _freeze_elem(elem)
+
+
+def _thawed(comp, frozen, bw, poles):
+    if comp not in poles:
+        poles[comp] = _thaw_elem(bw, frozen)
+    return poles[comp]
+
+
+def run_single_test(comp1, comp2, n, frozen1=None, frozen2=None):
+    """Check the grove LR rule for one pair; returns ``((comp1, comp2), ok, detail)`` (picklable).
+
+    With ``frozen1``/``frozen2`` (from ``build_grove``) the elements are rehydrated instead of
+    recomputed; either way they are cached per worker process.
+    """
+    from schubmult.rings.polynomial_algebra import GrovePoly
+
+    bw, poles = _worker_state()
+    grove1 = _thawed(comp1, frozen1, bw, poles) if frozen1 is not None else _grove_cached(comp1, bw, n, poles)
+    grove2 = _thawed(comp2, frozen2, bw, poles) if frozen2 is not None else _grove_cached(comp2, bw, n, poles)
+
+    producto = (grove1 * grove2).to_wc_graph_ring_element().resize(n - 1)
+    real_prod = GrovePoly(*comp1) * GrovePoly(*comp2)
+
+    checko_prod = 0
+    for wc, v in producto.items():
+        if wc.grove_weight == wc.length_vector:
+            checko_prod += v * GrovePoly(*wc.grove_weight)
+
+    good = real_prod.almosteq(checko_prod)
+    detail = None if good else f"{real_prod - checko_prod=}\n{real_prod=}\n{checko_prod=}"
+    del producto
+    _release_caches(bw)
+    return (comp1, comp2), good, detail
+
+
+def _release_caches(bw):
+    """Drop the memo caches that grow with every product, so a worker's footprint is that of its
+    largest task rather than the sum of all its tasks.  Everything cleared is a pure memo
+    (``WCGraph`` equality is by content, so dropping the interning table is safe too)."""
+    from schubmult.combinatorics.wc_graph import WCGraph
+
+    WCGraph.squash_product.cache_clear()
+    WCGraph.zero_out_last_row.cache_clear()
+    WCGraph.to_mbpd.cache_clear()
+    WCGraph.from_mbpd.cache_clear()
+    WCGraph.__xnew_cached__.cache_clear()
+    WCGraph._z_cache.clear()
+    bw._mul_keys.cache_clear()
+    bw._normalize_key.cache_clear()
+
+
+# Memory model for one pair, calibrated at n = 5: the product has about ``|grove1| * |grove2|``
+# keys and the squash/MBPD caches hold ~20 KB per key while the task runs (a 47k-key pair peaks
+# at 1.1 GB).  ``_release_caches`` drops them after every task, so a worker's footprint is that
+# of its heaviest task; chunks group pairs of similar weight and run as many workers as the
+# budget allows for the heaviest pair in the chunk.
+_GB_PER_KEY = 20e-6
+_GB_PER_PROCESS = 0.3
+
+
+def _pair_gb(sizes, pair):
+    return _GB_PER_PROCESS + _GB_PER_KEY * sizes[pair[0]] * sizes[pair[1]]
+
+
+def _memory_chunks(pairs, sizes, budget_gb, n_jobs):
+    """Group ``pairs`` (heaviest first) into chunks; yields ``(chunk, n_jobs_for_chunk)``.
+
+    A chunk's worker count is ``min(n_jobs, budget // heaviest pair)`` for its first (heaviest)
+    pair, and it takes at least ``2 * workers`` pairs so no worker idles, continuing while the
+    following pairs could not use at least twice that many workers (capped at ``n_jobs``).
+
+    Worker counts are at least 2: ``Parallel(n_jobs=1)`` runs *in the parent*, which would
+    both fill the parent with caches and make the task function unpicklable afterwards
+    (cloudpickle serializes the module-level worker state by value)."""
+
+    def allowed(pair):
+        return max(2, min(n_jobs, int(budget_gb // _pair_gb(sizes, pair))))
+
+    index = 0
+    while index < len(pairs):
+        jobs = allowed(pairs[index])
+        if jobs == n_jobs:
+            yield pairs[index:], jobs
+            return
+        end = index + 1
+        while end < len(pairs) and (end - index < 2 * jobs or allowed(pairs[end]) < min(n_jobs, 2 * jobs)):
+            end += 1
+        yield pairs[index:end], jobs
+        index = end
+
+
+def _available_gb():
+    try:
+        import psutil
+
+        return psutil.virtual_memory().available / 1024**3
+    except ImportError:
+        return float(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_AVPHYS_PAGES")) / 1024**3
+
+
+if __name__ == "__main__":
+    import json
+    import os
+    import sys
+    import time
+
+    from joblib import Parallel, delayed
+    from joblib.externals.loky import get_reusable_executor
+
     n = int(sys.argv[1])
+    n_jobs = int(sys.argv[2]) if len(sys.argv) > 2 else os.cpu_count()
+    results_path = sys.argv[3] if len(sys.argv) > 3 else f"grove_lr_rule_results_n{n}.jsonl"
     perms = Permutation.all_permutations(n)
     comps = [tuple(perm.pad_code(n -  1)) for perm in perms]
-    the_poles = {}
-    #for comp1, comp2 in [((0,0,0,1), (0,0,2,1))]: #itertools.product(comps, repeat=2):
-    for comp1, comp2 in itertools.product(comps, repeat=2):
 
-        if comp1 not in the_poles:
-            grove1 = _grove_it_up(comp1, bw, n)
-            the_poles[comp1] = grove1
-        else:
-            grove1 = the_poles[comp1]
+    # Phase 1: every grove element once, in parallel, shipped back in picklable form.
+    t0 = time.perf_counter()
+    frozen = dict(Parallel(n_jobs=n_jobs, batch_size=1)(delayed(build_grove)(comp, n) for comp in comps))
+    sizes = {comp: len(elem) for comp, elem in frozen.items()}
+    print(f"Phase 1: {len(comps)} grove elements, {sum(sizes.values())} keys, in {time.perf_counter() - t0:.1f}s "
+          f"(largest: {sorted(sizes.items(), key=lambda kv: -kv[1])[:3]})", flush=True)
+    get_reusable_executor().shutdown(wait=True)
 
-        if comp2 not in the_poles:
-            grove2 = _grove_it_up(comp2, bw, n)
-            the_poles[comp2] = grove2
-        else:
-            grove2 = the_poles[comp2]
+    # Results are appended per pair so an interrupted run resumes where it stopped.
+    done_pairs = {}
+    if os.path.exists(results_path):
+        with open(results_path) as fh:
+            for line in fh:
+                rec = json.loads(line)
+                done_pairs[(tuple(rec["comp1"]), tuple(rec["comp2"]))] = rec["ok"]
+        print(f"Resuming: {len(done_pairs)} pairs already in {results_path}", flush=True)
 
-        producto = (grove1 * grove2).to_wc_graph_ring_element().resize(n - 1)
+    # Phase 2: all ordered pairs, largest products first (LPT scheduling), in memory-bounded
+    # chunks on fresh workers.  The budget leaves headroom for the interpreters themselves.
+    pairs = [pair for pair in sorted(itertools.product(comps, repeat=2), key=lambda pair: -_pair_gb(sizes, pair)) if pair not in done_pairs]
+    budget_gb = 0.75 * _available_gb()
+    heaviest = _pair_gb(sizes, pairs[0]) if pairs else 0.0
+    print(f"Phase 2: {len(pairs)} pairs, memory budget {budget_gb:.1f} GB, heaviest pair ~{heaviest:.1f} GB", flush=True)
+    if 2 * heaviest > budget_gb:
+        print("WARNING: two of the heaviest pairs exceed the memory budget together; the first chunk may swap", flush=True)
 
-        real_prod = GrovePoly(*comp1) * GrovePoly(*comp2)
+    t0 = time.perf_counter()
+    failures = []
+    done = 0
+    total = len(pairs)
+    with open(results_path, "a") as out:
+        for chunk, chunk_jobs in _memory_chunks(pairs, sizes, budget_gb, n_jobs):
+            print(f"-- chunk of {len(chunk)} pairs on {chunk_jobs} workers (heaviest ~{_pair_gb(sizes, chunk[0]):.1f} GB each)", flush=True)
+            for (comp1, comp2), good, detail in Parallel(n_jobs=chunk_jobs, batch_size=1, return_as="generator_unordered")(
+                delayed(run_single_test)(comp1, comp2, n, frozen[comp1], frozen[comp2]) for comp1, comp2 in chunk
+            ):
+                done += 1
+                out.write(json.dumps({"comp1": comp1, "comp2": comp2, "ok": bool(good)}) + "\n")
+                out.flush()
+                if good:
+                    print(f"Success {comp1} {comp2}  [{done}/{total}, {time.perf_counter() - t0:.0f}s]", flush=True)
+                else:
+                    failures.append(((comp1, comp2), detail))
+                    print(f"Failed for {comp1} * {comp2}: {detail}", flush=True)
+            # fresh worker processes for the next chunk: drops every per-process cache
+            get_reusable_executor().shutdown(wait=True)
 
-        # grove1_poly = grove1.to_wc_graph_ring_element().polyvalue(Sx.genset)
-        # assert (grove1_poly - GrovePoly(*comp1).expand()).expand() == 0, f"Failed for {comp1}: {grove1_poly=}\n{GrovePoly(*comp1).expand()=}\n{grove1.to_wc_graph_ring_element()=}\n{GrovePoly(*comp1).change_basis(GrothendieckPolyBasis)=}"
-        # grove2_poly = grove2.to_wc_graph_ring_element().polyvalue(Sx.genset)
-        # assert (grove2_poly - GrovePoly(*comp2).expand()).expand() == 0, f"Failed for {comp2}: {grove2_poly=}\n{GrovePoly(*comp2).expand()=}\n{grove2.to_wc_graph_ring_element()=}\n{GrovePoly(*comp2).change_basis(GrothendieckPolyBasis)=}"
-
-        checko_prod = 0
-        for wc, v in producto.items():
-            if wc.grove_weight == wc.length_vector:
-                checko_prod += v * GrovePoly(*wc.grove_weight)
-
-        assert real_prod.almosteq(checko_prod), f"Failed for {comp1} * {comp2}: {real_prod-checko_prod=}\n{real_prod=}\n{checko_prod=}"#\n{producto=}\n{grove1.to_wc_graph_ring_element()=}\n{grove2.to_wc_graph_ring_element()=}"
-        print("Pantoopa fatcough")
+    previous_failures = [pair for pair, ok in done_pairs.items() if not ok]
+    print(f"{total - len(failures)}/{total} pairs succeeded in {time.perf_counter() - t0:.0f}s "
+          f"({len(done_pairs)} from a previous run, {len(previous_failures)} of them failed)", flush=True)
+    if failures or previous_failures:
+        print("Failures:", [key for key, _ in failures] + previous_failures)
+    sys.exit(1 if failures or previous_failures else 0)
