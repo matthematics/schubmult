@@ -32,6 +32,8 @@ Configuration via environment variables:
     SCHUBMULT_WORKER_MAX_REQUESTS  Requests a compute worker serves before it
                                 is recycled (bounds memoization-cache memory).
                                 Default: 200.
+    SCHUBMULT_MAX_DOWNLOAD_BYTES  Captured stdout limit for download requests,
+                                measured in UTF-8 bytes. Default: 100,000,000.
 """
 
 import gc
@@ -198,6 +200,7 @@ MAX_INT_VALUE = 64  # reject permutation entries above this
 # Some inputs blow up combinatorially and can print gigabytes; cap captured
 # stdout/stderr so a runaway script can't exhaust memory or the response body.
 MAX_OUTPUT_BYTES = int(os.environ.get("SCHUBMULT_MAX_OUTPUT_BYTES", str(1024 * 1024)))
+MAX_DOWNLOAD_BYTES = int(os.environ.get("SCHUBMULT_MAX_DOWNLOAD_BYTES", "100000000"))
 # fork() lets each request's child process reuse this (already warmed-up)
 # process's imported sympy/symengine/schubmult modules via copy-on-write,
 # instead of re-importing them from scratch (the ~seconds-long "warmup").
@@ -214,6 +217,9 @@ _MAX_IDLE_WORKERS = 4
 class _CappedBuffer(io.StringIO):
     """StringIO that discards writes past a size cap instead of growing forever.
 
+    The cap counts characters by default, or UTF-8 bytes with count_bytes=True.
+    The truncation notice is additional to the cap.
+
     With stop_on_cap=True, hitting the cap raises BrokenPipeError instead of
     silently swallowing further writes. Every script's main() already wraps
     its print loop in `except BrokenPipeError: pass` (so it behaves nicely
@@ -222,26 +228,33 @@ class _CappedBuffer(io.StringIO):
     remaining terms that would just be discarded anyway.
     """
 
-    def __init__(self, max_chars: int, *, stop_on_cap: bool = False):
+    def __init__(self, max_chars: int, *, stop_on_cap: bool = False, count_bytes: bool = False):
         super().__init__()
         self._max_chars = max_chars
         self._truncated = False
         self._stop_on_cap = stop_on_cap
+        self._count_bytes = count_bytes
+        self._size = 0
 
     def write(self, s: str) -> int:
         if self._truncated:
             if self._stop_on_cap:
                 raise BrokenPipeError("output truncated")
             return len(s)
-        remaining = self._max_chars - self.tell()
-        if remaining <= 0 or len(s) > remaining:
-            super().write(s[:max(remaining, 0)])
+        encoded = s.encode("utf-8") if self._count_bytes else None
+        size = len(encoded) if encoded is not None else len(s)
+        remaining = self._max_chars - self._size
+        if remaining <= 0 or size > remaining:
+            prefix = encoded[:max(remaining, 0)].decode("utf-8", errors="ignore") if encoded is not None else s[:max(remaining, 0)]
+            super().write(prefix)
             self._truncated = True
-            super().write(f"\n... [output truncated at {self._max_chars} characters]\n")
+            unit = "bytes" if self._count_bytes else "characters"
+            super().write(f"\n... [output truncated at {self._max_chars} {unit}]\n")
             if self._stop_on_cap:
                 raise BrokenPipeError("output truncated")
         else:
             super().write(s)
+            self._size += size
         return len(s)
 
 
@@ -357,10 +370,10 @@ def _serve(conn) -> None:
     memoization caches keep accumulating, as they would in one CLI process."""
     while True:
         try:
-            flavor, argv = conn.recv()
+            flavor, argv, download = conn.recv()
         except (EOFError, OSError):
             return
-        out, err, _, elapsed = _run_inline(flavor, argv)
+        out, err, _, elapsed = _run_inline(flavor, argv, download=download)
         conn.send((out, err, elapsed))
 
 
@@ -414,7 +427,7 @@ def _prime_worker() -> None:
     try:
         worker = _Worker(mp.get_context(MP_START_METHOD))
         for flavor, (_module, prog) in FLAVORS.items():
-            worker.conn.send((flavor, [prog, *DEFAULT_PERMS.split()]))
+            worker.conn.send((flavor, [prog, *DEFAULT_PERMS.split()], False))
             if not worker.conn.poll(COMPUTE_TIMEOUT):
                 worker.kill()
                 return
@@ -425,9 +438,9 @@ def _prime_worker() -> None:
         _idle_workers.append(worker)
 
 
-def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
+def _run_inline(flavor: str, argv: list[str], *, download: bool = False) -> tuple[str, str, bool, float]:
     """Fallback: run in-process (no timeout). Used when multiprocessing fails."""
-    out = _CappedBuffer(MAX_OUTPUT_BYTES, stop_on_cap=True)
+    out = _CappedBuffer(MAX_DOWNLOAD_BYTES if download else MAX_OUTPUT_BYTES, stop_on_cap=True, count_bytes=download)
     err = _CappedBuffer(MAX_OUTPUT_BYTES)
     start = time.perf_counter()
     try:
@@ -447,7 +460,7 @@ def _run_inline(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
     return (out.getvalue(), err.getvalue(), False, time.perf_counter() - start)
 
 
-def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
+def _run_script(flavor: str, argv: list[str], *, download: bool = False) -> tuple[str, str, bool, float]:
     """Run the script in a (reused) worker process with a hard timeout, falling
     back to in-process execution if multiprocessing isn't available.
 
@@ -455,15 +468,15 @@ def _run_script(flavor: str, argv: list[str]) -> tuple[str, str, bool, float]:
     times only the script's main() call, not process spawn/import overhead.
     """
     if os.environ.get("SCHUBMULT_DISABLE_SUBPROCESS") == "1":
-        return _run_inline(flavor, argv)
+        return _run_inline(flavor, argv, download=download)
     try:
         worker = _acquire_worker()
     except Exception:
         # Fall back to inline if subprocess machinery fails (e.g. some
         # restricted hosts disallow exec/fork).
-        return _run_inline(flavor, argv)
+        return _run_inline(flavor, argv, download=download)
     try:
-        worker.conn.send((flavor, argv))
+        worker.conn.send((flavor, argv, download))
         # read before joining: a child blocked writing a large result into the pipe never exits
         if not worker.conn.poll(COMPUTE_TIMEOUT):
             worker.kill()
@@ -523,6 +536,11 @@ def compute():
     mult = (data.get("mult") or "").strip() or None
     simplify = bool(data.get("simplify", False))
     probabilistic = bool(data.get("probabilistic", False))
+    download = data.get("download", False)
+
+    if not isinstance(download, bool):
+        _log_access(str(flavor), None, status="reject", error="download must be a boolean")
+        return jsonify({"ok": False, "error": "download must be a boolean"}), 400
 
     if flavor not in FLAVORS:
         return jsonify({"ok": False, "error": f"Unknown flavor {flavor!r}"}), 400
@@ -576,7 +594,7 @@ def compute():
         return jsonify({"ok": False, "error": str(e)}), 400
 
     _log_access(flavor, argv, status="run")
-    stdout, stderr, timed_out, elapsed_seconds = _run_script(flavor, argv)
+    stdout, stderr, timed_out, elapsed_seconds = _run_script(flavor, argv, download=download)
     if timed_out:
         _log_access(flavor, argv, status="timeout")
     return jsonify({
