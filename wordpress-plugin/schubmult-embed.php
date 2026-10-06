@@ -86,7 +86,7 @@ function schubmult_embed_shortcode($atts) {
     $iframe = sprintf(
         '<iframe id="%s" src="%s" width="%s" height="%s" %s'
         . 'style="border: 1px solid #ddd; border-radius: 6px; display: block;" '
-        . 'sandbox="allow-scripts allow-same-origin allow-forms"></iframe>',
+        . 'sandbox="allow-scripts allow-same-origin allow-forms allow-downloads"></iframe>',
         esc_attr($id), $src, $width, esc_attr($height), $loading_attr
     );
 
