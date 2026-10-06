@@ -95,7 +95,19 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return tuple(self) == tuple(other)
 
     def __hash__(self) -> int:
-        return hash((tuple(self), "Tweezers"))
+        # instances are interned by ``__xnew_cached__`` and immutable, so memoize: these graphs are
+        # hashed millions of times as factors of BoundedWCFactorAlgebra keys
+        try:
+            return self._hash
+        except AttributeError:
+            self._hash = hash((tuple(self), "Tweezers"))
+            return self._hash
+
+    def __getstate__(self):
+        # the memoized hash includes a string hash, which is salted per process: never pickle it
+        state = dict(self.__dict__)
+        state.pop("_hash", None)
+        return state
 
     def trans_co_pipe(self):
         """The complementary graph on twice as many rows: mark every position ``(i+j, j)`` that is
@@ -193,8 +205,13 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return ret
 
     def normalize(self) -> WCGraph:
-        """Resize to ``perm.max_descent`` rows."""
-        return self.resize(self.perm.max_descent)
+        """Resize to ``perm.max_descent`` rows (memoized; instances are interned and immutable)."""
+        try:
+            return self._normalized
+        except AttributeError:
+            rows = self.perm.max_descent
+            self._normalized = self if rows == len(self) else self.resize(rows)
+            return self._normalized
 
     def resize(self, new_length: int) -> WCGraph:
         """Truncate (via ``rowrange``) or extend to exactly ``new_length`` rows."""

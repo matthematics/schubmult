@@ -72,6 +72,7 @@ import os, sys
 os.environ['SCHUBMULT_ALLOWED_ORIGINS'] = 'https://your-wordpress-site.com,https://www.your-wordpress-site.com'
 os.environ['SCHUBMULT_COMPUTE_TIMEOUT'] = '8'
 os.environ['SCHUBMULT_MAX_PERM_LENGTH'] = '64'
+os.environ['SCHUBMULT_MAX_DOWNLOAD_BYTES'] = '100000000'
 # Leave SCHUBMULT_ENABLE_MULT unset (i.e. disabled) for public deployments.
 
 project_home = '/home/YOURUSER/schubmult/web'
@@ -84,6 +85,13 @@ from app import app as application  # noqa: E402
 6. **Reload** the web app (green button at the top of the Web tab).
 
 Visit `https://YOURUSER.pythonanywhere.com/embed` to confirm the widget loads.
+
+Download requests allow 100 MB of UTF-8 stdout by default, independently of the
+display limit. No output file is stored on the server, but server and browser
+memory usage can be several times the output size because responses are buffered
+as JSON rather than streamed. Lower `SCHUBMULT_MAX_DOWNLOAD_BYTES` before importing
+the app if your host has insufficient memory, and reload after changing it.
+Computation timeouts still apply to downloads.
 
 ## 4. Connect it to WordPress
 

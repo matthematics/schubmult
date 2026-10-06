@@ -42,6 +42,11 @@ Optional attributes:
 `flavor` preselects the kernel: `py`, `groth`, `double`, `groth_double`, `q`, `groth_q`,
 `q_double`, `groth_q_double`.
 
+The widget's **Download output as a text file instead of displaying it** checkbox
+saves computation output as a UTF-8 text file. The plugin's iframe sandbox allows
+downloads; update the installed plugin as well as the web app to enable this on
+an existing WordPress deployment.
+
 ## Server-side configuration
 
 The Flask app at `/embed` must allow your WordPress origin to embed it.

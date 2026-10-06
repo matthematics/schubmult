@@ -41,6 +41,7 @@ frame-ancestors` header on the server).
 | `simplify`         | boolean | `false` | (`groth_double`/`groth_q_double` only) Print coefficients in cancelled form `numer / prod (1 + β*y_i)**e` instead of as computed. Slower. |
 | `probabilistic`    | boolean | `false` | (`double`/`q_double` only, not with `coprod`) Prune intermediate terms that vanish at random points of a prime field (Schwartz–Zippel). Much faster on large products and the output contains only nonzero coefficients; a product is wrong with probability below 10⁻²⁰. |
 | `mult`             | string  | `""`    | (Disabled by default on this host for security.) Polynomial factor parsed by SymPy. |
+| `download`         | boolean | `false` | Use the larger stdout limit for file output (all flavors). The response is still JSON; the widget saves `stdout` as a text file. |
 
 ### Permutation input rules (when `ascode=false`)
 
@@ -75,6 +76,13 @@ minimal coset representatives or the request is rejected.
 - **Per-entry range:** integers must be in `[-64, 64]`.
 - **Compute timeout:** `SCHUBMULT_COMPUTE_TIMEOUT` seconds (default 8). On
   timeout, the response has `ok: false` and `timed_out: true`.
+- **Displayed stdout and stderr:** `SCHUBMULT_MAX_OUTPUT_BYTES` (default
+  1,048,576 characters; the legacy setting counts characters, not bytes).
+- **Download stdout:** with `download=true`, `SCHUBMULT_MAX_DOWNLOAD_BYTES`
+  (default 100 MB = 100,000,000 UTF-8 bytes). Stderr retains the display limit.
+  A truncation notice is appended if output exceeds its limit; the notice is
+  additional to the limit. Downloads remain memory-buffered JSON responses, not
+  streamed files, and do not create a result file on the server.
 
 ### Response
 

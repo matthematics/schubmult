@@ -112,6 +112,10 @@
   {% endif %}
 
   <div class="row">
+    <label><input type="checkbox" id="sm-download"> Download output as a text file instead of displaying it</label>
+  </div>
+
+  <div class="row">
     <button id="sm-go">Compute</button>
     <span id="sm-status" style="margin-left: 1em; color: #555;"></span>
   </div>
@@ -182,7 +186,23 @@
   if (wanted && FLAVOR_CAPS[wanted]) $('sm-flavor').value = wanted;
   applyFlavorCaps();
 
+  function downloadOutput(output, filename) {
+    const url = URL.createObjectURL(new Blob([output], {type: 'text/plain;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    try {
+      link.click();
+    } finally {
+      link.remove();
+      // Give the browser time to start reading the file before releasing it.
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+  }
+
   $('sm-go').addEventListener('click', async () => {
+    const download = $('sm-download').checked;
     status.textContent = 'computing…';
     argvEl.textContent = '';
     outEl.textContent = '';
@@ -200,6 +220,7 @@
       simplify: $('sm-simplify').checked,
       probabilistic: $('sm-probabilistic').checked,
       mult: $('sm-mult').value.trim(),
+      download: download,
     };
 
     try {
@@ -220,10 +241,15 @@
         status.textContent += ` (computed in ${j.elapsed_seconds.toFixed(3)}s)`;
       }
       argvEl.textContent = (j.argv || []).join(' ');
-      outEl.textContent = j.stdout || '(no output)';
       if (j.stderr && j.stderr.trim()) {
         errEl.textContent = j.stderr;
         errRow.style.display = 'block';
+      }
+      if (download) {
+        downloadOutput(j.stdout || '', `${payload.flavor}-output.txt`);
+        status.textContent = status.textContent.replace('done', 'download started');
+      } else {
+        outEl.textContent = j.stdout || '(no output)';
       }
     } catch (e) {
       status.textContent = '';
