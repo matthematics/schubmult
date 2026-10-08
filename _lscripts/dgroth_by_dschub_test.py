@@ -21,13 +21,18 @@ from schubmult.mult.separated_descents import grothmult_double_plus
 beta = Gx._beta
 
 def _check_perm(perm_list):
+    from schubmult.mult.groth_double import dgroth_to_dschub_positive
+    from schubmult.abc import x, y
+    from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
     import time
     start = time.monotonic()
     perm = Permutation(perm_list)
-    ring = DSx([]).ring
+    ring = DoubleSchubertRing(x,y )
     _beta = Gx._beta
-    groth1 = grothendieck_poly_with_ring(perm, ring=ring, beta=_beta, keep_as_schub=True)
-    
+    #groth1 = ((S.NegativeOne**perm.inv)*ring.from_dict({k: v for k,v in dgroth_phantom_expansion(perm, ring.coeff_genset).items()})).expand(deep=False)
+    groth1 = dgroth_to_dschub_positive(perm, y)
+    #grothendieck_poly_with_ring(perm, ring=ring, beta=_beta, keep_as_schub=True)
+    # print(groth1)
     for coeff in groth1.values():
         #coeff = expand(coeff)
         if isinstance(coeff, int):
