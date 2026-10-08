@@ -72,7 +72,10 @@ if TYPE_CHECKING:
     from schubmult._typing import Alphabet, Coeff, Expr, PermCoeffDict, PermLike
 
 __all__ = [
+    "dgroth_copipe_expansion",
+    "dgroth_copipe_to_dschub",
     "dgroth_phantom_expansion",
+    "dgroth_positive_phantom_expansion",
     "dgroth_to_dschub",
     "double_groth_times_double_schub",
     "elem_sym_perms_groth",
@@ -1041,15 +1044,63 @@ def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Ex
     relabel (``s_i``) or consume a phantom (``d_i (1 + beta*z_t) = +-beta``).  The state is
     ``(sigma, multiset of surviving phantoms)``; no polynomial arithmetic occurs.
     """
-    from schubmult.combinatorics.permutation import uncode
     from schubmult.symbolic import expand
 
     if beta is None:
         beta = _default_beta
     var3 = _genset(var3, "z")
     v = Permutation(v)
-    if v.inv == 0:
+    if v.inv == 0 and th is None:
         return {v: S.One}
+    states = _dgroth_phantom_states(v, th)
+    out: PermCoeffDict = {}
+    for (sg, ph), multiplicity in states.items():
+        term = S.NegativeOne**v.inv * multiplicity * beta ** (sg.inv - v.inv)
+        for t in ph:
+            term = term * (S.One + beta * var3[t])
+        out[sg] = out.get(sg, S.Zero) + term
+    return {sg: c for sg, c in out.items() if expand(c) != S.Zero}
+
+
+def dgroth_positive_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, th: Iterable[int] | None = None) -> PermCoeffDict:
+    r"""Return sign-normalized phantom coefficients, certifying positivity in ``A_t = 1 + beta*z_t``.
+
+    Defaults to the staircase ``(n-1, ..., 1)`` with ``n = len(Permutation(v))``.
+    This length is at least two, including for the identity.
+    Pass ``th`` explicitly to choose a larger staircase or another dominant shape.
+    For the same shape, the result is ``(-1)**v.inv * dgroth_phantom_expansion(...)``:
+
+        G_v(x; z) = (-1)**v.inv prod_i (1 + beta*x_i)**lambda'_i
+                    * sum_sigma result[sigma] S_sigma((-)x; z).
+
+    Each returned coefficient is a sum of terms
+    ``m * beta**(sigma.inv - v.inv) * prod_t A_t`` with positive integer ``m``.
+    The recurrence uses signed integer contributions, but checks that their net
+    multiplicities are nonnegative after every divided difference. Positivity
+    in all ranks is conjectural: a negative multiplicity raises ``ValueError``,
+    never an absolute value or a fallback. No combinatorial realization or
+    subtraction-free recurrence is asserted.
+    """
+    v = Permutation(v)
+    if th is None:
+        th = range(len(v) - 1, 0, -1)
+    if beta is None:
+        beta = _default_beta
+    var3 = _genset(var3, "z")
+    states = _dgroth_phantom_states(v, th, check_positive=True)
+    out: PermCoeffDict = {}
+    for (sg, ph), multiplicity in states.items():
+        term = multiplicity * beta ** (sg.inv - v.inv)
+        for t in ph:
+            term = term * (S.One + beta * var3[t])
+        out[sg] = out.get(sg, S.Zero) + term
+    return {sg: c for sg, c in out.items() if c != S.Zero}
+
+
+def _dgroth_phantom_states(v: Permutation, th: Iterable[int] | None, *, check_positive: bool = False) -> dict[tuple[Permutation, tuple[int, ...]], int]:
+    """Factor out ``(-1)**(mu.inv - steps) * beta**(sigma.inv - mu.inv + steps)`` from each state."""
+    from schubmult.combinatorics.permutation import uncode
+
     mu_user = uncode([*((~v).theta() if th is None else th)])
     mu = ~mu_user
     vmu = v * mu_user
@@ -1061,31 +1112,125 @@ def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Ex
     def relabel(c: int, i: int) -> int:
         return i + 1 if c == i else i if c == i + 1 else c
 
-    # state: (sigma, sorted multiset of surviving phantom indices) -> coefficient in beta
-    states: dict[tuple[Permutation, tuple[int, ...]], Any] = {(mu, ()): S.NegativeOne ** mu.inv}
+    states: dict[tuple[Permutation, tuple[int, ...]], int] = {(mu, ()): 1}
     for a, length in reversed(blocks):
         states = {(sg, tuple(sorted((*ph, *range(a + 1, a + length + 1))))): c for (sg, ph), c in states.items()}
         for i in range(a, a + length):
             swap_i = Permutation([]).swap(i - 1, i)
-            new: dict[tuple[Permutation, tuple[int, ...]], Any] = {}
+            new: dict[tuple[Permutation, tuple[int, ...]], int] = {}
             for (sg, ph), c in states.items():
                 for r, t in enumerate(ph):
                     if t == i or t == i + 1:
                         key = (sg, tuple(sorted((*(relabel(tt, i) for tt in ph[:r]), *ph[r + 1 :]))))
-                        new[key] = new.get(key, S.Zero) + (c * beta if t == i else -c * beta)
+                        new[key] = new.get(key, 0) + (-c if t == i else c)
                 sinv = ~sg
                 if sinv[i - 1] > sinv[i]:
                     key = (swap_i * sg, tuple(sorted(relabel(tt, i) for tt in ph)))
-                    new[key] = new.get(key, S.Zero) - c
-            states = {key: expand(c) for key, c in new.items()}
-            states = {key: c for key, c in states.items() if c != S.Zero}
-    out: dict[Permutation, Any] = {}
-    for (sg, ph), c in states.items():
-        term = c
-        for t in ph:
-            term = term * (S.One + beta * var3[t])
-        out[sg] = out.get(sg, S.Zero) + term
-    return {sg: c for sg, c in out.items() if expand(c) != S.Zero}
+                    new[key] = new.get(key, 0) + c
+            states = {key: c for key, c in new.items() if c}
+            if check_positive:
+                for (sg, ph), c in states.items():
+                    if c < 0:
+                        raise ValueError(f"negative phantom multiplicity: v={list(v)}, shape={list(mu_user.code)}, block={(a, length)}, i={i}, sigma={list(sg)}, phantoms={ph}, multiplicity={c}")
+    if check_positive:
+        for (sg, ph) in states:
+            if sg.inv < v.inv:
+                raise ValueError(f"negative beta power in phantom expansion: v={list(v)}, sigma={list(sg)}, phantoms={ph}")
+    return states
+
+
+def dgroth_copipe_expansion(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, n: int | None = None) -> PermCoeffDict:
+    r"""Conjectural unsigned staircase expansion, using reduced dreams with possibly unreduced complements.
+
+    Returns the sign-normalized coefficients of ``dgroth_phantom_expansion``
+    with ``th = (n-1, ..., 1)``; ``n`` defaults to ``len(Permutation(v))``.
+    For each reduced pipe dream ``D`` of ``sigma*w0``, keep ``D`` when
+    ``v <= Demazure(co(D))`` in Bruhat order, and contribute
+
+        beta**(sigma.inv - v.inv) * prod_{(r,c) in crosses(D)} (1 + beta*var3[c]).
+
+    Complementation is in the fixed rank-n staircase, even when the dream's
+    permutation has a shorter window. There is no reducedness requirement on
+    ``co(D)``. Agreement with the phantom recurrence is experimental, not a
+    theorem. This enumerates reduced dreams across S_n and is intended for
+    small-rank research, not as a replacement for the multiplication kernel.
+    The basis is ``S_sigma((-)x; z)`` with the staircase prefactor, not the
+    ordinary double Schubert basis ``S_sigma(x; z)``.
+    """
+    v = Permutation(v)
+    n = len(v) if n is None else n
+    if not isinstance(n, int) or isinstance(n, bool) or n < max(v, default=1):
+        raise ValueError(f"ambient rank must be a positive integer containing v: v={list(v)}, n={n}")
+    if beta is None:
+        beta = _default_beta
+    var3 = _genset(var3, "z")
+    out: PermCoeffDict = {}
+    for (sigma, columns), multiplicity in _dgroth_copipe_states(v, n).items():
+        term = multiplicity * beta ** (sigma.inv - v.inv)
+        for c in columns:
+            term *= S.One + beta * var3[c]
+        out[sigma] = out.get(sigma, S.Zero) + term
+    return {sigma: c for sigma, c in out.items() if c != S.Zero}
+
+
+def _dgroth_copipe_states(v: Permutation, n: int) -> dict[tuple[Permutation, tuple[int, ...]], int]:
+    """Count column multisets directly, independently of the divided-difference recurrence."""
+    from schubmult.combinatorics.rc_graph import RCGraph
+
+    w0 = Permutation.w0(n)
+    states: dict[tuple[Permutation, tuple[int, ...]], int] = {}
+    for sigma in Permutation.all_permutations(n):
+        if sigma.inv < v.inv:
+            continue
+        for rc in RCGraph.all_rc_graphs(sigma * w0, n):
+            crosses = {(r + 1, t - r) for r, row in enumerate(rc) for t in row}
+            # The anti-diagonal co-reflection sends (r,c) to (n+1-r-c,c).
+            co_word = (r + c - 1 for r in range(1, n) for c in range(n - r, 0, -1) if (n + 1 - r - c, c) not in crosses)
+            co_perm = Permutation.hecke_ref_product(*co_word)
+            if v.bruhat_leq(co_perm):
+                key = (sigma, tuple(sorted(c for _, c in crosses)))
+                states[key] = states.get(key, 0) + 1
+    return states
+
+
+def dgroth_copipe_to_dschub(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, n: int | None = None) -> PermCoeffDict:
+    r"""Convert the conjectural co-pipe formula to ordinary ``S_w(x; z)`` with coefficients only in beta and z.
+
+    Uses ``G_v(x; z) = G_{v^{-1}}(z; x)`` and
+    ``S_sigma(a; b) = (-1)**sigma.inv S_{sigma^{-1}}(b; a)``.
+    The prefactor moves to z; column denominators are cleared termwise in a
+    reduced-dream expansion, and all x factors are absorbed using the ordinary
+    double Schubert ring. Unlike ``dgroth_copipe_expansion``, this conversion
+    has signed intermediate sums. It neither proves positivity nor supplies
+    an unsigned ordinary-basis formula. Validity in arbitrary rank inherits
+    the co-pipe conjecture. Intended only for small-rank research.
+    """
+    from schubmult.combinatorics.rc_graph import RCGraph
+    from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
+    from schubmult.symbolic import expand
+
+    v = Permutation(v)
+    n = len(v) if n is None else n
+    var3 = _genset(var3, "z")
+    if beta is None:
+        beta = _default_beta
+    var_x = GeneratingSet("_copipe_x")
+    tops = dgroth_copipe_expansion(~v, var_x, beta, n)
+    ring = DoubleSchubertRing(var_x, var3)
+    result = ring.zero
+    for sigma, coeff in tops.items():
+        for rc in RCGraph.all_rc_graphs(~sigma, n):
+            columns = [0] * n
+            term = S.NegativeOne ** (v.inv + sigma.inv) * coeff
+            for r, row in enumerate(rc):
+                for t in row:
+                    c = t - r
+                    columns[c] += 1
+                    term *= (S.One + beta * var3[c]) * var_x[r + 1] + var3[c]
+            for c in range(1, n):
+                term *= (S.One + beta * var3[c]) ** (n - c - columns[c])
+            result += ring.from_expr(term)
+    return {w: c for w, value in result.items() if (c := expand(value)) != S.Zero}
 
 
 def _groth_vpath_topdown(perm_dict: PermCoeffDict, th: list[int], tops: dict[Permutation, Any], var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, pieri: Any, as_frac: bool = False) -> dict:

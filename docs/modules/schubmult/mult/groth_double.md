@@ -2,6 +2,92 @@
 
 # schubmult.mult.groth\_double
 
+## Positive phantom expansion (experimental)
+
+`dgroth_positive_phantom_expansion(v, var3=None, beta=None, th=None)` returns
+the coefficients of `dgroth_phantom_expansion` multiplied by `(-1)**v.inv`,
+using the staircase `(n-1, ..., 1)` by default, where `n = len(Permutation(v))`.
+This length is at least two, even for the identity; use `th=[]` for its empty shape.
+Supply `th` explicitly to fix the ambient staircase (including for the identity,
+whose permutation representation is trimmed) or to use another dominant shape.
+
+For `lambda = th`, the normalization is
+
+```text
+G_v(x; z) = (-1)**v.inv prod_i (1 + beta*x_i)**lambda'_i
+            * sum_sigma result[sigma] S_sigma((-)x; z).
+```
+
+The implementation accumulates exact integer multiplicities of phantom-label
+multisets, factoring out the sign and beta degree. It checks nonnegativity after
+every divided difference, and returns sums of positive integer multiples of
+`beta**(sigma.inv - v.inv) * prod_t (1 + beta*z_t)`. Thus the returned expressions
+are manifestly nonnegative in the independent formal variables `beta` and `z`.
+Symbolic arithmetic is only needed to materialize the final coefficients.
+
+Positivity in arbitrary rank is conjectural, not proved by this algorithm.
+The integer recurrence still has signed contributions before aggregation:
+this is neither an unsigned combinatorial formula nor a subtraction-free algorithm.
+A negative net multiplicity or beta exponent raises `ValueError` with the
+offending state; there is no absolute-value correction or fallback.
+The original API retains its signed convention and default theta shape.
+Both APIs honor an explicitly supplied shape for the identity.
+
+## Unsigned co-pipe-dream formula (conjectural)
+
+`dgroth_copipe_expansion(v, var3=None, beta=None, n=None)` computes the same
+sign-normalized staircase coefficients by an independent enumeration, with
+no signed contributions. Here `n` is the ambient rank (default `len(Permutation(v))`),
+`w0` is its longest permutation, and `A_c = 1 + beta*z_c`.
+
+For each `sigma` in `S_n`, the proposed formula is
+
+```text
+C[v,sigma] = beta**(length(sigma) - length(v))
+             * sum_D prod_{(r,c) in crosses(D)} A_c,
+```
+
+where `D` ranges over reduced pipe dreams for `sigma*w0` whose co-pipe-dream
+has Demazure permutation at least `v` in Bruhat order. Co-pipe-dreams may
+be unreduced. Complementation always uses the full rank-n staircase, not
+the possibly smaller window of `sigma*w0`. Each surviving dream contributes
+one column multiset of size `n*(n-1)/2 - length(sigma)`.
+
+This agrees with the phantom recurrence for every permutation through `S_6`,
+including every individual column multiset and its multiplicity, not just the
+specialization `z=0`. This is experimental evidence, not a proof in arbitrary rank.
+Unlike `WCGraph.groth_to_schub`, this does not require an exact original
+Demazure permutation or a reduced complement: it uses an upper Bruhat filter
+on the complementary WCGraph.
+
+The identity being proposed is
+
+```text
+G_v(x; z) = (-1)**length(v) prod_{i=1}^{n-1} (1 + beta*x_i)**(n-i)
+            * sum_sigma C[v,sigma] S_sigma(-x/(1+beta*x); z).
+```
+
+This is a basis change with a formal-inverse alphabet and a staircase
+prefactor, not the ordinary expansion in `S_sigma(x; z)` computed by
+`dgroth_to_dschub`. The enumeration traverses reduced dreams across `S_n`;
+it is a small-rank research implementation, not a fast multiplication kernel.
+
+### Ordinary double Schubert coefficients via the antipode
+
+`dgroth_copipe_to_dschub(v, var3=None, beta=None, n=None)` converts the
+graph formula to `G_v(x; z) = sum_w a_w(beta,z) S_w(x; z)`.
+It uses `G_v(x;z) = G_{v^{-1}}(z;x)` and
+`S_sigma(a;b) = (-1)**length(sigma) S_{sigma^{-1}}(b;a)`.
+The prefactor moves to z, while all resulting x weights are absorbed by
+ordinary double Schubert ring multiplication. Column denominators are
+cleared termwise before multiplication. The returned coefficients contain
+only beta and the supplied coefficient alphabet.
+
+This conversion has signed intermediate sums and does not assert a positive
+ordinary-basis graph formula. Its validity in arbitrary rank inherits the
+co-pipe conjecture. It is a research implementation, checked against
+`dgroth_to_dschub` for every input in `S_3`.
+
 K-theoretic Monk formula for double Grothendieck polynomials.
 
 Implements Lenart--Postnikov, *Affine Weyl groups in K-theory and representation
@@ -338,4 +424,3 @@ the basis ``{G_w(x, var2)}`` and returns it as ``{w: coeff_w}``.
 expansion of ``G_v``.
 
 The chain rank is inferred from the current permutation and selected positions.
-

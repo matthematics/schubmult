@@ -10,7 +10,11 @@ from schubmult.mult.double import schubmult_double
 from schubmult.mult.groth_double import (
     _tilde_elem_sym_frac,
     _top_block_support,
+    dgroth_copipe_expansion,
+    dgroth_copipe_to_dschub,
+    dgroth_to_dschub,
     dgroth_phantom_expansion,
+    dgroth_positive_phantom_expansion,
     double_groth_times_double_schub,
     epsilon_chain,
     grothmult_double,
@@ -171,6 +175,142 @@ def test_dgroth_phantom_expansion_rejects_bad_shape():
 
     with pytest.raises(ValueError):
         dgroth_phantom_expansion(Permutation([2, 3, 1]), z, beta, [1])
+
+
+def test_positive_phantom_staircase_coefficients():
+    v = Permutation([1, 3, 2])
+    result = dgroth_positive_phantom_expansion(v, z, beta)
+    expected = {
+        v: (1 + beta * z[1]) ** 2,
+        Permutation([2, 3, 1]): beta * (2 + beta * z[1] + beta * z[2]),
+        Permutation([3, 1, 2]): beta * (1 + beta * z[1]),
+        Permutation([3, 2, 1]): beta**2,
+    }
+    assert result.keys() == expected.keys()
+    assert all(sympy.expand(sp(result[s]) - sp(c)) == 0 for s, c in expected.items())
+
+
+def test_positive_phantom_staircase_through_s5():
+    from schubmult.mult.groth_double import _dgroth_phantom_states
+
+    shape = [4, 3, 2, 1]
+    for p in itertools.permutations(range(1, 6)):
+        v = Permutation(p)
+        states = _dgroth_phantom_states(v, shape, check_positive=True)
+        assert all(isinstance(m, int) and m > 0 for m in states.values())
+        assert all(len(ph) == 10 - sg.inv and sg.inv >= v.inv for sg, ph in states)
+        result = dgroth_positive_phantom_expansion(v, z, beta, shape)
+        signed = dgroth_phantom_expansion(v, z, beta, shape)
+        assert result.keys() == signed.keys()
+        for sg, coeff in result.items():
+            assert sympy.expand(sp(coeff) - (-1)**v.inv * sp(signed[sg])) == 0
+            poly = sympy.Poly(sp(coeff), sp(beta), *(sp(z[i]) for i in range(1, 5)))
+            assert all(c.is_Integer and c > 0 for c in poly.coeffs())
+
+
+def test_positive_phantom_staircase_exact_polynomial_identity():
+    xm = _formal_inverse_x()
+    shape = [2, 1]
+    prefactor = (1 + sp(beta * x[1])) ** 2 * (1 + sp(beta * x[2]))
+    for v in S3:
+        result = dgroth_positive_phantom_expansion(v, z, beta, shape)
+        rhs = (-1)**v.inv * prefactor * sum((sp(c) * sp(schubpoly(sg, xm, z)) for sg, c in result.items()), sympy.Integer(0))
+        assert sympy.cancel(_groth(v, x, z) - rhs) == 0, v
+
+
+def test_positive_phantom_identity_with_explicit_staircase():
+    v = Permutation([])
+    result = dgroth_positive_phantom_expansion(v, z, beta, [2, 1])
+    assert len(result) == 6
+    assert result == dgroth_phantom_expansion(v, z, beta, [2, 1])
+    assert dgroth_positive_phantom_expansion(v) == {v: 1 + beta * z[1], Permutation([2, 1]): beta}
+    assert dgroth_positive_phantom_expansion(v, th=[]) == {v: S.One}
+    assert dgroth_phantom_expansion(v) == {v: S.One}
+
+
+def test_positive_phantom_explicit_shape_and_specializations():
+    v = Permutation([1, 3, 2])
+    shape = (~v).theta()
+    expected = {v: 1 + beta * z[1], Permutation([2, 3, 1]): beta}
+    result = dgroth_positive_phantom_expansion(list(v), [z[i] for i in range(8)], beta, iter(shape))
+    assert all(sympy.expand(sp(result[s]) - sp(c)) == 0 for s, c in expected.items())
+    assert result.keys() == expected.keys()
+    assert dgroth_positive_phantom_expansion(v, zero, 0, [2, 1]) == {v: S.One}
+    import pytest
+
+    with pytest.raises(ValueError, match="dominant shape"):
+        dgroth_positive_phantom_expansion(Permutation([2, 3, 1]), th=[1])
+
+
+def test_copipe_matches_every_weighted_phantom_state_through_s4():
+    from schubmult.mult.groth_double import _dgroth_copipe_states, _dgroth_phantom_states
+
+    for n in range(1, 5):
+        for p in itertools.permutations(range(1, n + 1)):
+            v = Permutation(p)
+            assert _dgroth_copipe_states(v, n) == _dgroth_phantom_states(v, range(n - 1, 0, -1), check_positive=True), (n, p)
+
+
+def test_copipe_s5_weighted_fibers():
+    from schubmult.mult.groth_double import _dgroth_copipe_states, _dgroth_phantom_states
+
+    for p in ([1, 2, 3, 4, 5], [1, 5, 2, 4, 3], [2, 1, 5, 4, 3], [3, 5, 1, 4, 2]):
+        v = Permutation(p)
+        assert _dgroth_copipe_states(v, 5) == _dgroth_phantom_states(v, [4, 3, 2, 1], check_positive=True)
+
+
+def test_copipe_matches_native_pipe_dream_complement():
+    import numpy as np
+    from schubmult import RCGraph
+    from schubmult.combinatorics.pipe_dream import PipeDream
+    from schubmult.mult.groth_double import _dgroth_copipe_states
+
+    n = 4
+    w0 = Permutation.w0(n)
+    v = Permutation([1, 3, 2])
+    expected = {}
+    for p in itertools.permutations(range(1, n + 1)):
+        sigma = Permutation(p)
+        for rc in RCGraph.all_rc_graphs(sigma * w0, n):
+            grid = np.full((n, n), PipeDream.EMPTY, dtype=object)
+            for r in range(1, n):
+                for c in range(1, n - r + 1):
+                    grid[r - 1, c - 1] = PipeDream.CROSS if rc.has_element(r, c) else PipeDream.BUMP
+            co = PipeDream(grid).co_pipe_dream()
+            if v.bruhat_leq(co.perm):
+                key = (sigma, tuple(sorted(t - r for r, row in enumerate(rc) for t in row)))
+                expected[key] = expected.get(key, 0) + 1
+    assert expected == _dgroth_copipe_states(v, n)
+
+
+def test_copipe_exact_identity_and_specializations():
+    xm = _formal_inverse_x()
+    prefactor = (1 + sp(beta * x[1])) ** 2 * (1 + sp(beta * x[2]))
+    for v in S3:
+        result = dgroth_copipe_expansion(v, z, beta, n=3)
+        rhs = (-1)**v.inv * prefactor * sum((sp(c) * sp(schubpoly(sg, xm, z)) for sg, c in result.items()), sympy.Integer(0))
+        assert sympy.cancel(_groth(v, x, z) - rhs) == 0, v
+    v = Permutation([1, 3, 2])
+    assert dgroth_copipe_expansion(v, zero, 0) == {v: S.One}
+    assert dgroth_copipe_expansion([], n=1) == {Permutation([]): S.One}
+    assert dgroth_copipe_expansion(v, [z[i] for i in range(8)]) == dgroth_positive_phantom_expansion(v, z)
+    import pytest
+
+    for n in (0, -1, 2, 3.5, True):
+        with pytest.raises(ValueError, match="ambient rank"):
+            dgroth_copipe_expansion(v, n=n)
+
+
+def test_copipe_antipode_ordinary_transition_through_s3():
+    for v in S3:
+        result = dgroth_copipe_to_dschub(v, z, beta, n=3)
+        expected = dgroth_to_dschub(v, z, beta)
+        assert all(sympy.expand(sp(result.get(w, 0)) - sp(expected.get(w, 0))) == 0 for w in set(result) | set(expected)), v
+        for c in result.values():
+            assert c.free_symbols <= {beta, z[1], z[2]}
+            poly = sympy.Poly(sp(c), sp(beta), sp(z[1]), sp(z[2]))
+            assert all(m.is_Integer and m > 0 for m in poly.coeffs())
+    assert dgroth_copipe_to_dschub([], n=1) == {Permutation([]): S.One}
 
 
 def test_tilde_elem_sym_frac_matches_exact_multiplication():
