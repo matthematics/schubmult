@@ -1214,8 +1214,10 @@ def dgroth_to_dschub_positive(v: PermLike, var3: Alphabet | None = None, beta: E
        ``S_a(z)`` a sum over reduced pipe dreams ``R`` of ``a`` with weight ``z^wt(R)``.
 
     Hence ``a_w`` is the weight generating function of triples ``(P, D, R)`` as above with
-    ``u * v' = v``, ``co(D) = u' w_0``, ``a w = u'``, weighted by ``beta^(l(u) + l(u') - l(v))``
-    times ``z^wt(P) z^wt(R)``.  Every weight is a monomial with coefficient ``+1``, so ``a_w``
+    ``u * v' = v``, ``co(D) = u' w_0``, ``a w = u'``, weighted by ``beta^(|P| + l(u') - l(v))``
+    times ``z^wt(P) z^wt(R)``: the pipe dream ``P`` carries its own ``beta^(|P| - l(u))`` from step
+    1, which combines with the Cauchy and Grothendieck-to-Schubert powers ``beta^(l(u) + l(u') - l(v))``.
+    Every weight is a monomial with coefficient ``+1``, so ``a_w``
     has nonnegative integer coefficients.  Agrees with ``dgroth_to_dschub`` for every ``v`` in
     ``S_4`` and on samples in ``S_5``.  Enumerates the Bruhat interval below ``v`` twice; this is a
     research implementation, not a replacement for the multiplication kernel.
@@ -1249,7 +1251,8 @@ def dgroth_to_dschub_positive(v: PermLike, var3: Alphabet | None = None, beta: E
                 continue
             if groth_u is None:
                 groth_u = single_groth(~u)
-            # c already carries beta^(l(u') - l(v')), so the total exponent is l(u) + l(u') - l(v)
+            # c already carries beta^(l(u') - l(v')), so this prefactor is beta^(l(u) + l(u') - l(v));
+            # each unreduced dream P inside groth_u adds its own beta^(|P| - l(u))
             pre = beta ** (u.inv + vp.inv - v.inv) * groth_u
             for up, c in WCGraph.groth_to_schub(vp, beta).items():
                 single[up] = single.get(up, S.Zero) + pre * c

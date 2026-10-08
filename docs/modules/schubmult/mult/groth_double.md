@@ -99,7 +99,9 @@ The formula composes three sign-free expansions:
 So `a_w` is the weight generating function of triples `(P, D, R)` with
 `u * v' = v`, `co(D).perm * w0 = u'`, and `a w = u'` (lengths adding),
 each weighted by the monomial
-`beta**(l(u)+l(u')-l(v)) z**wt(P) z**wt(R)`. Positivity of the ordinary
+`beta**(|P|+l(u')-l(v)) z**wt(P) z**wt(R)` — the Cauchy and
+Grothendieck-to-Schubert powers give `beta**(l(u)+l(u')-l(v))`, and the
+pipe dream `P` contributes its own excess `beta**(|P|-l(u))`. Positivity of the ordinary
 transition therefore follows from positivity of the three ingredients.
 
 Verified against `dgroth_to_dschub` for every `v` in `S_1`..`S_4` and on
