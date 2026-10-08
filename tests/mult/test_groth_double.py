@@ -11,8 +11,8 @@ from schubmult.mult.groth_double import (
     _tilde_elem_sym_frac,
     _top_block_support,
     dgroth_copipe_expansion,
-    dgroth_copipe_to_dschub,
     dgroth_to_dschub,
+    dgroth_to_dschub_positive,
     dgroth_phantom_expansion,
     dgroth_positive_phantom_expansion,
     double_groth_times_double_schub,
@@ -301,34 +301,49 @@ def test_copipe_exact_identity_and_specializations():
             dgroth_copipe_expansion(v, n=n)
 
 
-def test_copipe_antipode_ordinary_transition_through_s3():
-    for v in S3:
-        result = dgroth_copipe_to_dschub(v, z, beta, n=3)
-        expected = dgroth_to_dschub(v, z, beta)
-        assert all(sympy.expand(sp(result.get(w, 0)) - sp(expected.get(w, 0))) == 0 for w in set(result) | set(expected)), v
-        for c in result.values():
-            assert c.free_symbols <= {beta, z[1], z[2]}
-            poly = sympy.Poly(sp(c), sp(beta), sp(z[1]), sp(z[2]))
-            assert all(m.is_Integer and m > 0 for m in poly.coeffs())
-    assert dgroth_copipe_to_dschub([], n=1) == {Permutation([]): S.One}
+def test_hecke_cauchy_factorization_through_s4():
+    # G_v(x; z) = sum_{u * v' = v} beta^(l(u) + l(v') - l(v)) G_{u^{-1}}(z) G_{v'}(x), * the Demazure product.
+    for n in (2, 3, 4):
+        perms = [Permutation(list(p)) for p in itertools.permutations(range(1, n + 1))]
+        for v in perms:
+            rhs = sympy.Integer(0)
+            for u in perms:
+                for vp in perms:
+                    if u @ vp == v:
+                        rhs += sp(beta ** (u.inv + vp.inv - v.inv) * grothendieck_poly(~u, z, zero, beta) * grothendieck_poly(vp, x, zero, beta))
+            assert sympy.expand(rhs - _groth(v, x, z)) == 0, (n, v)
 
 
-def test_unsigned_wcgraph_ordinary_transition_through_s4():
-    import pytest
+def test_dgroth_to_dschub_positive_through_s4():
+    for n in (1, 2, 3, 4):
+        zs = [sp(z[i]) for i in range(1, n)]
+        for p in itertools.permutations(range(1, n + 1)):
+            v = Permutation(p)
+            result = dgroth_to_dschub_positive(v, z, beta)
+            expected = dgroth_to_dschub(v, z, beta)
+            assert all(sympy.expand(sp(result.get(w, 0)) - sp(expected.get(w, 0))) == 0 for w in set(result) | set(expected)), v
+            for c in result.values():
+                assert c.free_symbols <= {beta, *(z[i] for i in range(1, n))}
+                poly = sympy.Poly(sp(c), sp(beta), *zs) if zs else sympy.Poly(sp(c), sp(beta))
+                assert all(m.is_Integer and m > 0 for m in poly.coeffs())
 
-    for p in itertools.permutations(range(1, 5)):
-        v = Permutation(p)
-        result = dgroth_copipe_to_dschub(v, z, beta, n=4)
-        expected = dgroth_to_dschub(v, z, beta)
-        assert all(sympy.expand(sp(result.get(w, 0)) - sp(expected.get(w, 0))) == 0 for w in set(result) | set(expected)), v
-        for c in result.values():
-            assert c.free_symbols <= {beta, z[1], z[2], z[3]}
-            poly = sympy.Poly(sp(c), sp(beta), sp(z[1]), sp(z[2]), sp(z[3]))
-            assert all(m.is_Integer and m > 0 for m in poly.coeffs())
-    assert dgroth_copipe_to_dschub([1, 3, 2], zero, 0, n=3) == {Permutation([1, 3, 2]): S.One}
-    assert dgroth_copipe_to_dschub([2, 1], [z[i] for i in range(8)], beta, n=2) == dgroth_copipe_to_dschub([2, 1], z, beta, n=2)
-    with pytest.raises(ValueError, match="ambient rank"):
-        dgroth_copipe_to_dschub([1, 3, 2], n=2)
+
+def test_dgroth_to_dschub_positive_specializations():
+    v = Permutation([1, 3, 2])
+    # beta = 0 and z = 0 recover the Schubert polynomial itself
+    assert dgroth_to_dschub_positive(v, zero, 0) == {v: S.One}
+    # z = 0 is WCGraph.groth_to_schub
+    from schubmult import WCGraph
+
+    at_zero = dgroth_to_dschub_positive(v, zero, beta)
+    assert {w: sympy.expand(sp(c)) for w, c in at_zero.items()} == {w: sympy.expand(sp(c)) for w, c in WCGraph.groth_to_schub(v, beta).items()}
+    # plain sequences and the identity are accepted
+    assert dgroth_to_dschub_positive([2, 1], [z[i] for i in range(8)], beta) == dgroth_to_dschub_positive([2, 1], z, beta)
+    assert dgroth_to_dschub_positive([]) == {Permutation([]): S.One}
+    # the rank-two example, G_{21}(x; z) = (1 + beta z_1) S_{21}(x; z) + (2 z_1 + beta z_1^2)
+    two = dgroth_to_dschub_positive([2, 1], z, beta)
+    assert sympy.expand(sp(two[Permutation([2, 1])]) - (1 + sp(beta * z[1]))) == 0
+    assert sympy.expand(sp(two[Permutation([])]) - sp(2 * z[1] + beta * z[1] ** 2)) == 0
 
 
 def test_tilde_elem_sym_frac_matches_exact_multiplication():

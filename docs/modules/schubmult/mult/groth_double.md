@@ -72,28 +72,41 @@ prefactor, not the ordinary expansion in `S_sigma(x; z)` computed by
 `dgroth_to_dschub`. The enumeration traverses reduced dreams across `S_n`;
 it is a small-rank research implementation, not a fast multiplication kernel.
 
-### Ordinary double Schubert coefficients via the antipode
+## Manifestly positive expansion in ordinary double Schubert polynomials
 
-`dgroth_copipe_to_dschub(v, var3=None, beta=None, n=None)` converts the
-graph formula to `G_v(x; z) = sum_w a_w(beta,z) S_w(x; z)`.
-The current implementation uses a conjectural column-weighted
-`WCGraph.groth_to_schub` rule: retain WCGraphs D of v with reduced rank-n
-complement, set `w = co(D).perm*w0`, and weight by
-`beta**(length(w)-length(v)) * prod_{crosses(D)}(1+beta*z_column)`.
-This gives a transition to `S_w(x; (-)z)`.
-For each length-additive factorization `w=a*b`, multiply by
-`S_a(z; (-)z)` and add to the coefficient of `S_b(x;z)`.
-The latter factor is enumerated by reduced dreams with local weight
-`z_row + z_column/(1+beta*z_column)`.
+`dgroth_to_dschub_positive(v, var3=None, beta=None)` returns
+`{w: a_w}` with `G_v(x; z) = sum_w a_w(beta, z) S_w(x; z)` and every
+`a_w` in `N[beta, z]`. The basis is the ordinary double Schubert basis
+in the original alphabets: no change of variables, no first-alphabet
+variables in the coefficients, and no signed term at any stage.
 
-There are no first-alphabet variables, `from_expr` calls, or signed
-summands. However, individual terms are positive rational expressions,
-not necessarily polynomials. Denominators are cancelled after aggregation;
-an uncancelled denominator raises `ValueError`. This is not yet a
-manifestly monomial-positive polynomial formula.
-Agreement, polynomiality, and expanded positivity are checked for every
-input in `S_4`. All-rank validity and positivity remain conjectural.
-The earlier signed first-alphabet conversion has been replaced.
+The formula composes three sign-free expansions:
+
+1. **Cauchy over Demazure products.**
+   `G_v(x; z) = sum_{u * v' = v} beta**(l(u)+l(v')-l(v)) G_{u^{-1}}(z) G_{v'}(x)`,
+   where `*` is the Demazure (0-Hecke) product, `Permutation.__matmul__`. `G_{u^{-1}}(z)` is
+   the single Grothendieck polynomial, a sum over unreduced pipe dreams
+   `P` of `u^{-1}` weighted `beta**(|P| - l(u)) z**wt(P)`.
+2. **Single Grothendieck to single Schubert.**
+   `G_{v'}(x) = sum_{u'} beta**(l(u')-l(v')) c_{v',u'} S_{u'}(x)` with
+   the nonnegative integers `c_{v',u'}` of `WCGraph.groth_to_schub`:
+   WC graphs `D` of `v'` whose co-pipe-dream is reduced, with
+   `u' = co(D).perm * w0`.
+3. **Single to double Schubert.**
+   `S_{u'}(x) = sum_{u' = a w, l(a)+l(w)=l(u')} S_a(z) S_w(x; z)`, with
+   `S_a(z)` a sum over reduced pipe dreams `R` of `a` weighted `z**wt(R)`.
+
+So `a_w` is the weight generating function of triples `(P, D, R)` with
+`u * v' = v`, `co(D).perm * w0 = u'`, and `a w = u'` (lengths adding),
+each weighted by the monomial
+`beta**(l(u)+l(u')-l(v)) z**wt(P) z**wt(R)`. Positivity of the ordinary
+transition therefore follows from positivity of the three ingredients.
+
+Verified against `dgroth_to_dschub` for every `v` in `S_1`..`S_4` and on
+samples in `S_5`. The implementation enumerates the Bruhat interval below
+`v`; it is a research routine, not a replacement for the multiplication
+kernel. The earlier rational conversion through the formal-inverse
+coefficient alphabet has been removed.
 
 K-theoretic Monk formula for double Grothendieck polynomials.
 
