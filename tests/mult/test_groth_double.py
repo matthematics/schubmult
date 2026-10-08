@@ -313,6 +313,24 @@ def test_copipe_antipode_ordinary_transition_through_s3():
     assert dgroth_copipe_to_dschub([], n=1) == {Permutation([]): S.One}
 
 
+def test_unsigned_wcgraph_ordinary_transition_through_s4():
+    import pytest
+
+    for p in itertools.permutations(range(1, 5)):
+        v = Permutation(p)
+        result = dgroth_copipe_to_dschub(v, z, beta, n=4)
+        expected = dgroth_to_dschub(v, z, beta)
+        assert all(sympy.expand(sp(result.get(w, 0)) - sp(expected.get(w, 0))) == 0 for w in set(result) | set(expected)), v
+        for c in result.values():
+            assert c.free_symbols <= {beta, z[1], z[2], z[3]}
+            poly = sympy.Poly(sp(c), sp(beta), sp(z[1]), sp(z[2]), sp(z[3]))
+            assert all(m.is_Integer and m > 0 for m in poly.coeffs())
+    assert dgroth_copipe_to_dschub([1, 3, 2], zero, 0, n=3) == {Permutation([1, 3, 2]): S.One}
+    assert dgroth_copipe_to_dschub([2, 1], [z[i] for i in range(8)], beta, n=2) == dgroth_copipe_to_dschub([2, 1], z, beta, n=2)
+    with pytest.raises(ValueError, match="ambient rank"):
+        dgroth_copipe_to_dschub([1, 3, 2], n=2)
+
+
 def test_tilde_elem_sym_frac_matches_exact_multiplication():
     # Coefficient of G_{u2} in prod_{j<=k}(1 + beta x_j) E_{p,k}((-)x; z_sel) G_{u1}, against the exact fold.
     from schubmult.mult.groth_double import _frac_to_expr

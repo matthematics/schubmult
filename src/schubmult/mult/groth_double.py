@@ -1194,43 +1194,78 @@ def _dgroth_copipe_states(v: Permutation, n: int) -> dict[tuple[Permutation, tup
 
 
 def dgroth_copipe_to_dschub(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, n: int | None = None) -> PermCoeffDict:
-    r"""Convert the conjectural co-pipe formula to ordinary ``S_w(x; z)`` with coefficients only in beta and z.
+    r"""Unsigned coefficient-only WCGraph/RCGraph sum for the ordinary double Schubert transition (conjectural).
 
-    Uses ``G_v(x; z) = G_{v^{-1}}(z; x)`` and
-    ``S_sigma(a; b) = (-1)**sigma.inv S_{sigma^{-1}}(b; a)``.
-    The prefactor moves to z; column denominators are cleared termwise in a
-    reduced-dream expansion, and all x factors are absorbed using the ordinary
-    double Schubert ring. Unlike ``dgroth_copipe_expansion``, this conversion
-    has signed intermediate sums. It neither proves positivity nor supplies
-    an unsigned ordinary-basis formula. Validity in arbitrary rank inherits
-    the co-pipe conjecture. Intended only for small-rank research.
+    For a WCGraph D of v whose rank-n co-pipe-dream is reduced, put
+    w = co(D).perm * w0 and assign weight beta**(w.inv-v.inv)
+    times prod_{(r,c) in D}(1+beta*z_c). For each length-additive
+    factorization w = a*b, multiply that weight by S_a(z; (-)z),
+    computed as the reduced-dream sum prod_{(r,c)}(z_r+z_c/(1+beta*z_c)),
+    and add to the coefficient of S_b(x;z).
+
+    No first-alphabet variables, polynomial-to-Schubert conversion, or signed
+    summands occur. Individual summands are positive rational expressions,
+    not necessarily polynomials: atom denominators are cancelled only after
+    aggregation. The result must be polynomial or ValueError is raised.
+    Monomial positivity and validity in arbitrary rank remain conjectural.
+    This is a small-rank enumeration, not a fast multiplication kernel.
     """
     from schubmult.combinatorics.rc_graph import RCGraph
-    from schubmult.rings.schubert.double_schubert_ring import DoubleSchubertRing
-    from schubmult.symbolic import expand
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult.symbolic import sympify_sympy
 
     v = Permutation(v)
     n = len(v) if n is None else n
+    if not isinstance(n, int) or isinstance(n, bool) or n < max(v, default=1):
+        raise ValueError(f"ambient rank must be a positive integer containing v: v={list(v)}, n={n}")
     var3 = _genset(var3, "z")
     if beta is None:
         beta = _default_beta
-    var_x = GeneratingSet("_copipe_x")
-    tops = dgroth_copipe_expansion(~v, var_x, beta, n)
-    ring = DoubleSchubertRing(var_x, var3)
-    result = ring.zero
-    for sigma, coeff in tops.items():
-        for rc in RCGraph.all_rc_graphs(~sigma, n):
-            columns = [0] * n
-            term = S.NegativeOne ** (v.inv + sigma.inv) * coeff
-            for r, row in enumerate(rc):
-                for t in row:
-                    c = t - r
-                    columns[c] += 1
-                    term *= (S.One + beta * var3[c]) * var_x[r + 1] + var3[c]
-            for c in range(1, n):
-                term *= (S.One + beta * var3[c]) ** (n - c - columns[c])
-            result += ring.from_expr(term)
-    return {w: c for w, value in result.items() if (c := expand(value)) != S.Zero}
+    w0 = Permutation.w0(n)
+    atoms = [S.One + beta * var3[c] for c in range(n)]
+    tops: PermCoeffDict = {}
+    for wc in WCGraph.all_wc_graphs(v, n):
+        co_word = (r + c - 1 for r in range(1, n) for c in range(n - r, 0, -1) if not wc.has_element(n + 1 - r - c, c))
+        word = tuple(co_word)
+        co_perm = Permutation.hecke_ref_product(*word)
+        if co_perm.inv != len(word):
+            continue
+        w = co_perm * w0
+        if w.inv < v.inv:
+            raise ValueError(f"negative beta power in WCGraph transition: v={list(v)}, w={list(w)}, graph={tuple(wc)}")
+        weight = beta ** (w.inv - v.inv)
+        for r, row in enumerate(wc):
+            for t in row:
+                weight *= atoms[t - r]
+        tops[w] = tops.get(w, S.Zero) + weight
+
+    alphabet_changes: PermCoeffDict = {}
+    result: PermCoeffDict = {}
+    permutations = list(Permutation.all_permutations(n))
+    for w, weight in tops.items():
+        for b in permutations:
+            a = w * ~b
+            if a.inv + b.inv != w.inv:
+                continue
+            if a not in alphabet_changes:
+                total = S.Zero
+                for rc in RCGraph.all_rc_graphs(a, n):
+                    term = S.One
+                    for r, row in enumerate(rc):
+                        for t in row:
+                            c = t - r
+                            term *= var3[r + 1] + var3[c] / atoms[c]
+                    total += term
+                alphabet_changes[a] = total
+            result[b] = result.get(b, S.Zero) + weight * alphabet_changes[a]
+    out: PermCoeffDict = {}
+    for b, value in result.items():
+        polynomial = sympify_sympy(value).cancel()
+        if polynomial.as_numer_denom()[1] != 1:
+            raise ValueError(f"uncancelled denominator in WCGraph transition: v={list(v)}, b={list(b)}, coefficient={polynomial}")
+        if polynomial != 0:
+            out[b] = sympify(polynomial.expand())
+    return out
 
 
 def _groth_vpath_topdown(perm_dict: PermCoeffDict, th: list[int], tops: dict[Permutation, Any], var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, pieri: Any, as_frac: bool = False) -> dict:

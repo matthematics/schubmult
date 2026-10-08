@@ -76,17 +76,24 @@ it is a small-rank research implementation, not a fast multiplication kernel.
 
 `dgroth_copipe_to_dschub(v, var3=None, beta=None, n=None)` converts the
 graph formula to `G_v(x; z) = sum_w a_w(beta,z) S_w(x; z)`.
-It uses `G_v(x;z) = G_{v^{-1}}(z;x)` and
-`S_sigma(a;b) = (-1)**length(sigma) S_{sigma^{-1}}(b;a)`.
-The prefactor moves to z, while all resulting x weights are absorbed by
-ordinary double Schubert ring multiplication. Column denominators are
-cleared termwise before multiplication. The returned coefficients contain
-only beta and the supplied coefficient alphabet.
+The current implementation uses a conjectural column-weighted
+`WCGraph.groth_to_schub` rule: retain WCGraphs D of v with reduced rank-n
+complement, set `w = co(D).perm*w0`, and weight by
+`beta**(length(w)-length(v)) * prod_{crosses(D)}(1+beta*z_column)`.
+This gives a transition to `S_w(x; (-)z)`.
+For each length-additive factorization `w=a*b`, multiply by
+`S_a(z; (-)z)` and add to the coefficient of `S_b(x;z)`.
+The latter factor is enumerated by reduced dreams with local weight
+`z_row + z_column/(1+beta*z_column)`.
 
-This conversion has signed intermediate sums and does not assert a positive
-ordinary-basis graph formula. Its validity in arbitrary rank inherits the
-co-pipe conjecture. It is a research implementation, checked against
-`dgroth_to_dschub` for every input in `S_3`.
+There are no first-alphabet variables, `from_expr` calls, or signed
+summands. However, individual terms are positive rational expressions,
+not necessarily polynomials. Denominators are cancelled after aggregation;
+an uncancelled denominator raises `ValueError`. This is not yet a
+manifestly monomial-positive polynomial formula.
+Agreement, polynomiality, and expanded positivity are checked for every
+input in `S_4`. All-rank validity and positivity remain conjectural.
+The earlier signed first-alphabet conversion has been replaced.
 
 K-theoretic Monk formula for double Grothendieck polynomials.
 
