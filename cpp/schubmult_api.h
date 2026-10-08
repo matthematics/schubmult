@@ -11,6 +11,7 @@
 #include "kernel_q.h"
 #include "kernel_q_double.h"
 #include "kernel_single.h"
+#include "kernel_transition.h"
 
 #include <map>
 #include <memory>
@@ -104,7 +105,7 @@ static PyExprDict expr_dict_out(const ExprDict& out) {
     return r;
 }
 
-static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy) {
+static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy, int kernel = 0) {
     IntDict in;
     int a_max = 1;
     for (const auto& kv : d) {
@@ -113,7 +114,8 @@ static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy) {
     }
     int n = std::max(2, a_max + std::max(1, perm_len(vpy)) - 1);
     if (n > MAXN) die("product needs S_n with n > MAXN; rebuild the extension with a larger MAXN");
-    IntDict out = schubmult_single(in, perm_from_py(vpy), n);
+    Perm v = perm_from_py(vpy);
+    IntDict out = kernel == 1 ? schubmult_transition(in, v, n) : kernel == 2 ? schubmult_hybrid(in, v, n) : schubmult_single(in, v, n);
     PyIntDict r;
     for (const auto& kv : out) r.push_back({perm_to_py(kv.first), kv.second});
     return r;
