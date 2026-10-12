@@ -51,6 +51,18 @@ from .double import schubmult_double, schubmult_double_pair, schubmult_double_pa
 logger = get_logger(__name__)
 
 
+def _var_index(varlist, sym):
+    """Position of ``sym`` in ``varlist`` or ``-1``.
+
+    ``posify`` recurses with ``var2[1:]``, which turns a ``GeneratingSet`` into a plain tuple
+    whose ``.index`` raises instead of returning ``-1`` for foreign symbols.
+    """
+    try:
+        return varlist.index(sym)
+    except ValueError:
+        return -1
+
+
 def cbc_solver(msg=False):
     """PuLP ``COIN_CMD`` using the CBC binary bundled by ``pulp[cbc]``, falling back to ``cbc`` on PATH."""
     import pulp as pu
@@ -96,10 +108,10 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
 
     frees = val.free_symbols
 
-    varsimp2 = [m for m in frees if var2.index(m) != -1]
-    varsimp3 = [m for m in frees if var3.index(m) != -1]
-    varsimp2.sort(key=lambda k: var2.index(k))
-    varsimp3.sort(key=lambda k: var3.index(k))
+    varsimp2 = [m for m in frees if _var_index(var2, m) != -1]
+    varsimp3 = [m for m in frees if _var_index(var3, m) != -1]
+    varsimp2.sort(key=lambda k: _var_index(var2, k))
+    varsimp3.sort(key=lambda k: _var_index(var3, k))
 
     var22 = tuple(varsimp2)
     var33 = tuple(varsimp3)
@@ -426,11 +438,14 @@ def posify(
             for arr, v3 in vp:
                 tomul = prod([var2[1] - var3[arr[i]] for i in range(len(arr))])
 
-                val2 = schubmult_double_pair(u3, v3, var2, var3).get(
+                # the reduced coefficient lives in the shifted alphabet var2[1:],
+                # matching the alphabet handed to the recursive posify call below
+                shifted_var2 = var2[1:]
+                val2 = schubmult_double_pair(u3, v3, shifted_var2, var3).get(
                     w3,
                     0,
                 )
-                val2 = posify(val2, u3, v3, w3, var2[1:], var3, msg, optimize=optimize)
+                val2 = posify(val2, u3, v3, w3, shifted_var2, var3, msg, optimize=optimize)
                 val += tomul * val2
 
             return val

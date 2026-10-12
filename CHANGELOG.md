@@ -1,5 +1,27 @@
 # Changelog
 
+## 5.2.0b3
+
+Pre-release of 5.2.0; identical to 5.2.0b2 apart from one bug fix in the manifestly positive
+display of double Schubert structure constants. Pre-releases install with
+`pip install --pre schubmult`; `pip install schubmult` keeps giving 5.1.1 until 5.2.0 is final.
+
+### Fixed
+
+- **`posify` / `q_posify` crashed or returned a wrong expression in the one-dominates recursion**
+  (`schubmult_q_double --mixed-var --display-positive`, `schubmult.mult.positivity.posify`). When
+  $u$ one-dominates $w$, `posify` strips the first row and recurses on $(\phi_1 u, v', \phi_1 w)$
+  over the shifted alphabet $y_2, y_3, \ldots$, passed as a plain tuple. Two bugs met there: the
+  reduced coefficient was still computed in the unshifted alphabet, so any recursion that bottomed
+  out in the integer program returned $c(y_1, y_2, \ldots)$ instead of $c(y_2, y_3, \ldots)$; and
+  `compute_positive_rep` used `tuple.index`, which raises on the $z$ variables where
+  `GeneratingSet.index` returns `-1`. Hit for instance by $u=2431$, $v=1432$, $w=34512$, where
+  `schubmult_q_double 2 4 3 1 - 1 4 3 2 --mixed-var --display-positive` died with a bare
+  `Exception`. The reduced coefficient is now computed in the shifted alphabet and
+  `compute_positive_rep` accepts plain sequences. `posify` and `q_posify` now reconstruct every
+  structure constant on all of $S_4$ (5,558 classical and 11,422 quantum coefficients), and both
+  are covered by direct unit tests.
+
 ## 5.2.0b2
 
 Pre-release of 5.2.0: SageMath integration (`schubmult.sage`), a correctness fix for parabolic
