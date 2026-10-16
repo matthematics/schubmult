@@ -33,7 +33,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 
     steps:
     - uses: actions/checkout@v7
@@ -90,7 +90,7 @@ jobs:
       with:
         environment-name: sage
         create-args: >-
-          python=3.12
+          python=3.13
           sage
           pytest
           cxx-compiler

@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 5.2.0
+
+Final release of 5.2.0, including the changes in 5.2.0b2 and 5.2.0b3.
 
 ### Added
 
@@ -20,11 +22,9 @@
   verified against `schubmult_double` on all of $S_3$ and the paper's running example in the test suite,
   giving the double kernel a rank-mixing consistency check it did not have before.
 
-## 5.2.0b3
+### Changed
 
-Pre-release of 5.2.0; identical to 5.2.0b2 apart from one bug fix in the manifestly positive
-display of double Schubert structure constants. Pre-releases install with
-`pip install --pre schubmult`; `pip install schubmult` keeps giving 5.1.1 until 5.2.0 is final.
+- CI tests Python 3.15, and the wheel workflow builds CPython 3.15 wheels.
 
 ### Fixed
 
