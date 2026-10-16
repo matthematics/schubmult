@@ -246,15 +246,15 @@ def skew_div_diff(poly, w, v, genset=None)
 
 Skew divided difference ``partial_{w/v}`` of ``poly`` in the variables ``genset`` (default ``x``).
 
-``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong / arXiv:2610.21053) is the unique family of
+``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is the unique family of
 operators satisfying the generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``.
 It is zero unless ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w``, and ``partial_{w/w} = w`` acts by
 permuting the variables ``x_i -> x_{w(i)}``.  Computed by peeling a left descent ``s_i`` of ``w = s_i w'``
-(Lemma 4.1 there, due to Samuel):
+(Lemma 4.1 of Hwang, due to Samuel):
 
     partial_{s_i w' / v} = partial_i partial_{w'/v} + s_i partial_{w'/ s_i v}   (second term only if l(s_i v) < l(v)).
 
-For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 there); the
+For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 of Hwang); the
 ring method ``DoubleSchubertElement.skew_divdiff`` uses that identity and is much faster on Schubert elements.
 
 <a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly_legacy"></a>

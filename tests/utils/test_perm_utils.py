@@ -1,4 +1,4 @@
-"""Tests for ``schubmult.utils.perm_utils`` (block lift of arXiv:2610.21053)."""
+"""Tests for ``schubmult.utils.perm_utils`` (block lift of B.-H. Hwang, arXiv:2610.21053)."""
 
 import itertools
 
@@ -28,7 +28,7 @@ def test_increasing_completion():
 
 
 def test_block_lift_example_4_8_and_table_1():
-    """Example 4.8 and Table 1 of arXiv:2610.21053 (one-line notation, bar = appended increasing tail)."""
+    """Example 4.8 and Table 1 of Hwang, arXiv:2610.21053 (one-line notation, bar = appended increasing tail)."""
     table = {
         (0, 0, 0, 0, 0, 0): ([1, 4, 2, 6, 3, 5], [1, 6, 4, 3, 2, 5]),
         (1, 0, 0, 1, 0, 0): ([1, 5, 3, 8, 4, 7, 2, 6], [2, 8, 6, 4, 3, 7, 1, 5]),

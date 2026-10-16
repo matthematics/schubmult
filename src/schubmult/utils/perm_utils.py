@@ -280,7 +280,7 @@ def increasing_completion(values: Sequence[int], n: int) -> Permutation:
     """The permutation in ``S_n`` whose one-line notation begins with the distinct ``values`` and
     continues with the remaining elements of ``{1, ..., n}`` in increasing order.
 
-    Written ``<m_1, ..., m_k>`` in arXiv:2610.21053 (Definition 2.1); for example
+    Written ``<m_1, ..., m_k>`` in B.-H. Hwang, arXiv:2610.21053 (Definition 2.1); for example
     ``<w(1), ..., w(k)>`` is ``w`` padded with fixed points.
     """
     from schubmult.combinatorics.permutation import Permutation
@@ -292,7 +292,10 @@ def increasing_completion(values: Sequence[int], n: int) -> Permutation:
 
 
 def block_lift(u: Permutation | Sequence[int], v: Permutation | Sequence[int], w: Permutation | Sequence[int], alpha: Sequence[int]) -> tuple[Permutation, Permutation, Permutation]:
-    r"""The block lift ``(u~, v~, w~)`` of ``(u, v, w, alpha)`` in ``S_{n + |alpha|}`` (arXiv:2610.21053, Definition 4.4).
+    r"""The block lift ``(u~, v~, w~)`` of ``(u, v, w, alpha)`` in ``S_{n + |alpha|}``.
+
+    Due to Byung-Hak Hwang, *Coefficient lifting for skew divided differences and triple Schubert coefficients*,
+    arXiv:2610.21053 (Definition 4.4); the identities below are Theorem 1.2 and Corollaries 5.1 and 5.3 there.
 
     For ``u, v, w`` in ``S_n`` and a weak composition ``alpha`` of length ``n``, each value ``i`` gets a
     block of ``alpha_i + 1`` consecutive values starting at the base value ``b_i = i + alpha_1 + ... + alpha_{i-1}``.
@@ -300,7 +303,7 @@ def block_lift(u: Permutation | Sequence[int], v: Permutation | Sequence[int], w
     ``b_{v(i)}`` of its block, and ``w~`` sends it to the largest ``b_{w(i)} + alpha_{w(i)}`` (both completed
     increasingly, see `increasing_completion`).
 
-    Theorem 1.2 there: writing ``S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t)``, the coefficient of
+    Hwang's Theorem 1.2: writing ``S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t)``, the coefficient of
     ``t^alpha`` in ``c^w_{u,v}(y, t)`` is the single coefficient ``c^{w~}_{u~,v~}(y, 0)``, so that
     ``partial_{w/v} S_u(x) = sum_{|alpha| = l(u) + l(v) - l(w)} c^{w~}_{u~,v~} x^alpha`` (Kirillov's conjecture)
     and, with ``v = w = id``, ``[x^alpha] S_u(x) = c^{w~}_{u~,v~}`` is a single Schubert structure constant.

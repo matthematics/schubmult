@@ -4,7 +4,8 @@
 
 ### Added
 
-- **Skew divided differences and the block lift** (arXiv:2610.21053). `DoubleSchubertElement.skew_divdiff(w, v)`
+- **Skew divided differences and the block lift**, after Byung-Hak Hwang, *Coefficient lifting for skew
+  divided differences and triple Schubert coefficients* (arXiv:2610.21053). `DoubleSchubertElement.skew_divdiff(w, v)`
   applies Macdonald's skew divided difference $\partial_{w/v}$ (Gao--Xiong normalization, characterized by
   $\partial_w(fg)=\sum_v(\partial_{w/v}f)(\partial_v g)$) to a `DSx`/`Sx` element, using Samuel's identity
   $\partial_{w/v}\mathfrak S_u(x;y)=c^w_{u,v}(y,x)$ so that each basis term is one `schubmult_double` call;

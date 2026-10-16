@@ -245,7 +245,7 @@ def test_schubmult_double_down_identity_and_s4_sweep():
             schubmult_double_down({uu: S.One}, v, y, z)
 
 
-# --- Coefficient lifting (arXiv:2610.21053, Theorem 1.2) -----------------------------------------
+# --- Coefficient lifting (B.-H. Hwang, arXiv:2610.21053, Theorem 1.2) -----------------------------------------
 #
 # Writing S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t), the coefficient of t^alpha in
 # c^w_{u,v}(y, t) is the single coefficient c^{w~}_{u~,v~}(y, 0) of the block lift.  schubmult_double
@@ -269,7 +269,7 @@ def _block_lift_rhs(u, v, w, alpha, kernel=schubmult_double):
 
 
 def test_block_lift_running_example_of_paper():
-    """Example 5.5 / Table 1 of arXiv:2610.21053: c^{164325}_{435126,142635}(y, t) and three of its t-coefficients."""
+    """Example 5.5 / Table 1 of Hwang, arXiv:2610.21053: c^{164325}_{435126,142635}(y, t) and three of its t-coefficients."""
     u, v, w = Permutation([4, 3, 5, 1, 2, 6]), Permutation([1, 4, 2, 6, 3, 5]), Permutation([1, 6, 4, 3, 2, 5])
     c = _triple_coeff(u, v, w)
     expected = sp((z[1] - y[1]) * (z[1] - y[2]) * (z[1] - y[3]) * (z[4] + z[6] - y[1] - y[2]))

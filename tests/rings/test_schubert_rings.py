@@ -363,7 +363,7 @@ def test_complete_sym():
     assert elem.xreplace({y[2]: x[4]}) == H(5, 3, [x[1], x[3], x[5]], [y[3], y[1], y[4], y[7], y[9], y[11], y[15]])
 
 
-# --- Skew divided differences (Macdonald; arXiv:2610.21053) --------------------------------------
+# --- Skew divided differences (Macdonald; B.-H. Hwang, arXiv:2610.21053) --------------------------------------
 
 
 def _partial(poly, perm, genset):

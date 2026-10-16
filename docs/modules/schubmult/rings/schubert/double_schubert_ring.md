@@ -119,16 +119,16 @@ def skew_divdiff(w, v)
 
 Skew divided difference ``partial_{w/v}`` acting on the ``x`` variables, as a ring element.
 
-``partial_{w/v}`` (Macdonald, normalized as in Gao--Xiong / arXiv:2610.21053) is characterized by the
+``partial_{w/v}`` (Macdonald, normalized as in Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is characterized by the
 generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``; it vanishes unless
 ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w`` and ``partial_{w/w} = w`` permutes the variables.
-On a double Schubert polynomial it is a mixed-alphabet structure constant (Samuel; Proposition 2.7 there):
+On a double Schubert polynomial it is a mixed-alphabet structure constant (Samuel; Proposition 2.7 of Hwang):
 
     partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x),   where  S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t),
 
 so each basis term costs one ``schubmult_double`` call with the ``x`` alphabet in the role of ``t``.
 The result has degree ``l(u) + l(v) - l(w)``; for ``l(w) = l(u) + l(v)`` it is the structure constant
-``c^w_{u,v}(y, x)`` and, at ``y = 0``, the ordinary ``c^w_{u,v}``.  By Theorem 1.2 there, every
+``c^w_{u,v}(y, x)`` and, at ``y = 0``, the ordinary ``c^w_{u,v}``.  By Hwang's Theorem 1.2, every
 coefficient is itself a single such constant via `schubmult.utils.perm_utils.block_lift`.
 
 <a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.isobaric_perm"></a>

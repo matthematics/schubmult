@@ -13622,16 +13622,6 @@ Tensor-like algebra on tuples of full Grassmannian WC graphs.
 Basis keys are tuples (g1, ..., gk) where each gi is a full Grassmannian
 WC graph. Simplification rules
 
-<a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorAlgebra.from_wc_graph"></a>
-
-#### from\_wc\_graph
-
-```python
-def from_wc_graph(rc, size)
-```
-
-The K-theoretic lift of ``rc`` (reduced or set-valued) as a basis element; see ``_elem_factor_from_rc``.
-
 <a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorAlgebra.groth_elem_factor"></a>
 
 #### groth\_elem\_factor
@@ -21992,16 +21982,16 @@ def skew_divdiff(w, v)
 
 Skew divided difference ``partial_{w/v}`` acting on the ``x`` variables, as a ring element.
 
-``partial_{w/v}`` (Macdonald, normalized as in Gao--Xiong / arXiv:2610.21053) is characterized by the
+``partial_{w/v}`` (Macdonald, normalized as in Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is characterized by the
 generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``; it vanishes unless
 ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w`` and ``partial_{w/w} = w`` permutes the variables.
-On a double Schubert polynomial it is a mixed-alphabet structure constant (Samuel; Proposition 2.7 there):
+On a double Schubert polynomial it is a mixed-alphabet structure constant (Samuel; Proposition 2.7 of Hwang):
 
     partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x),   where  S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t),
 
 so each basis term costs one ``schubmult_double`` call with the ``x`` alphabet in the role of ``t``.
 The result has degree ``l(u) + l(v) - l(w)``; for ``l(w) = l(u) + l(v)`` it is the structure constant
-``c^w_{u,v}(y, x)`` and, at ``y = 0``, the ordinary ``c^w_{u,v}``.  By Theorem 1.2 there, every
+``c^w_{u,v}(y, x)`` and, at ``y = 0``, the ordinary ``c^w_{u,v}``.  By Hwang's Theorem 1.2, every
 coefficient is itself a single such constant via `schubmult.utils.perm_utils.block_lift`.
 
 <a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.isobaric_perm"></a>
@@ -26904,15 +26894,15 @@ def skew_div_diff(poly, w, v, genset=None)
 
 Skew divided difference ``partial_{w/v}`` of ``poly`` in the variables ``genset`` (default ``x``).
 
-``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong / arXiv:2610.21053) is the unique family of
+``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is the unique family of
 operators satisfying the generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``.
 It is zero unless ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w``, and ``partial_{w/w} = w`` acts by
 permuting the variables ``x_i -> x_{w(i)}``.  Computed by peeling a left descent ``s_i`` of ``w = s_i w'``
-(Lemma 4.1 there, due to Samuel):
+(Lemma 4.1 of Hwang, due to Samuel):
 
     partial_{s_i w' / v} = partial_i partial_{w'/v} + s_i partial_{w'/ s_i v}   (second term only if l(s_i v) < l(v)).
 
-For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 there); the
+For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 of Hwang); the
 ring method ``DoubleSchubertElement.skew_divdiff`` uses that identity and is much faster on Schubert elements.
 
 <a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly_legacy"></a>
@@ -28207,7 +28197,7 @@ def increasing_completion(values: Sequence[int], n: int) -> Permutation
 The permutation in ``S_n`` whose one-line notation begins with the distinct ``values`` and
 continues with the remaining elements of ``{1, ..., n}`` in increasing order.
 
-Written ``<m_1, ..., m_k>`` in arXiv:2610.21053 (Definition 2.1); for example
+Written ``<m_1, ..., m_k>`` in B.-H. Hwang, arXiv:2610.21053 (Definition 2.1); for example
 ``<w(1), ..., w(k)>`` is ``w`` padded with fixed points.
 
 <a id="schubmult.utils.perm_utils.block_lift"></a>
@@ -28221,7 +28211,10 @@ def block_lift(
         alpha: Sequence[int]) -> tuple[Permutation, Permutation, Permutation]
 ```
 
-The block lift ``(u~, v~, w~)`` of ``(u, v, w, alpha)`` in ``S_{n + |alpha|}`` (arXiv:2610.21053, Definition 4.4).
+The block lift ``(u~, v~, w~)`` of ``(u, v, w, alpha)`` in ``S_{n + |alpha|}``.
+
+Due to Byung-Hak Hwang, *Coefficient lifting for skew divided differences and triple Schubert coefficients*,
+arXiv:2610.21053 (Definition 4.4); the identities below are Theorem 1.2 and Corollaries 5.1 and 5.3 there.
 
 For ``u, v, w`` in ``S_n`` and a weak composition ``alpha`` of length ``n``, each value ``i`` gets a
 block of ``alpha_i + 1`` consecutive values starting at the base value ``b_i = i + alpha_1 + ... + alpha_{i-1}``.
@@ -28229,7 +28222,7 @@ Then ``u~ = u`` with ``|alpha|`` fixed points appended, ``v~`` sends position ``
 ``b_{v(i)}`` of its block, and ``w~`` sends it to the largest ``b_{w(i)} + alpha_{w(i)}`` (both completed
 increasingly, see `increasing_completion`).
 
-Theorem 1.2 there: writing ``S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t)``, the coefficient of
+Hwang's Theorem 1.2: writing ``S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t)``, the coefficient of
 ``t^alpha`` in ``c^w_{u,v}(y, t)`` is the single coefficient ``c^{w~}_{u~,v~}(y, 0)``, so that
 ``partial_{w/v} S_u(x) = sum_{|alpha| = l(u) + l(v) - l(w)} c^{w~}_{u~,v~} x^alpha`` (Kirillov's conjecture)
 and, with ``v = w = id``, ``[x^alpha] S_u(x) = c^{w~}_{u~,v~}`` is a single Schubert structure constant.
