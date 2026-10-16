@@ -90,7 +90,7 @@ jobs:
       with:
         environment-name: sage
         create-args: >-
-          python=3.12
+          python=3.13
           sage
           pytest
           cxx-compiler
