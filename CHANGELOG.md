@@ -4,6 +4,24 @@
 
 Final release of 5.2.0, including the changes in 5.2.0b2 and 5.2.0b3.
 
+### Added
+
+- **Skew divided differences and the block lift**, after Byung-Hak Hwang, *Coefficient lifting for skew
+  divided differences and triple Schubert coefficients* (arXiv:2610.21053). `DoubleSchubertElement.skew_divdiff(w, v)`
+  applies Macdonald's skew divided difference $\partial_{w/v}$ (Gao--Xiong normalization, characterized by
+  $\partial_w(fg)=\sum_v(\partial_{w/v}f)(\partial_v g)$) to a `DSx`/`Sx` element, using Samuel's identity
+  $\partial_{w/v}\mathfrak S_u(x;y)=c^w_{u,v}(y,x)$ so that each basis term is one `schubmult_double` call;
+  `schubmult.symbolic.poly.schub_poly.skew_div_diff` applies $\partial_{w/v}$ to an arbitrary polynomial by
+  the recurrence $\partial_{s_iw'/v}=\partial_i\partial_{w'/v}+s_i\partial_{w'/s_iv}$.
+  `schubmult.utils.perm_utils.block_lift(u, v, w, alpha)` builds the triple
+  $(\widetilde u_\alpha,\widetilde v_\alpha,\widetilde w_\alpha)\in S_{n+|\alpha|}$ for which the coefficient
+  of $t^\alpha$ in the triple Schubert coefficient $c^w_{u,v}(y,t)$ (`schubmult_double({v: 1}, u, t, y)[w]`)
+  is the single coefficient $c^{\widetilde w_\alpha}_{\widetilde u_\alpha,\widetilde v_\alpha}(y,0)$; at
+  $y=0$ this realizes every coefficient of $\partial_{w/v}\mathfrak S_u(x)$ (Kirillov's conjecture), and in
+  particular every coefficient of $\mathfrak S_u(x)$, as an ordinary structure constant. The identity is
+  verified against `schubmult_double` on all of $S_3$ and the paper's running example in the test suite,
+  giving the double kernel a rank-mixing consistency check it did not have before.
+
 ### Changed
 
 - CI tests Python 3.15, and the wheel workflow builds CPython 3.15 wheels.
