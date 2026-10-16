@@ -13,7 +13,7 @@ Most functions here are used by the multiplication kernels in `schubmult.mult` a
 #### permtrim\_list
 
 ```python
-def permtrim_list(perm)
+def permtrim_list(perm: list[int]) -> list[int]
 ```
 
 Strip trailing fixed points ``perm[L-1] == L`` from a list in place and return it.
@@ -23,7 +23,8 @@ Strip trailing fixed points ``perm[L-1] == L`` from a list in place and return i
 #### has\_bruhat\_descent
 
 ```python
-def has_bruhat_descent(perm, i, j)
+def has_bruhat_descent(perm: Permutation | Sequence[int], i: int,
+                       j: int) -> bool
 ```
 
 Check if perm has a Bruhat descent from position i to j.
@@ -35,7 +36,7 @@ Optimized version assuming perm is a Permutation object with direct indexing.
 #### count\_bruhat
 
 ```python
-def count_bruhat(perm, i, j)
+def count_bruhat(perm: Permutation | Sequence[int], i: int, j: int) -> int
 ```
 
 Signed length change ``inv(perm * t_{ij}) - inv(perm)`` for the transposition of positions ``i < j``.
@@ -45,7 +46,8 @@ Signed length change ``inv(perm * t_{ij}) - inv(perm)`` for the transposition of
 #### has\_bruhat\_ascent
 
 ```python
-def has_bruhat_ascent(perm, i, j)
+def has_bruhat_ascent(perm: Permutation | Sequence[int], i: int,
+                      j: int) -> bool
 ```
 
 Check if perm has a Bruhat ascent from position i to j.
@@ -57,7 +59,7 @@ Optimized version assuming perm is a Permutation object with direct indexing.
 #### omega
 
 ```python
-def omega(i, qv)
+def omega(i: int, qv: Sequence[int]) -> int
 ```
 
 ``i``-th entry (1-indexed) of the Cartan-matrix image of the q-exponent vector ``qv``:
@@ -69,7 +71,7 @@ monomials to weights in the parabolic quantum product.
 #### sg
 
 ```python
-def sg(i, w)
+def sg(i: int, w: Permutation | Sequence[int]) -> int
 ```
 
 1 if ``w`` has a descent at 0-indexed position ``i``, else 0.
@@ -79,7 +81,7 @@ def sg(i, w)
 #### count\_less\_than
 
 ```python
-def count_less_than(arr, val)
+def count_less_than(arr: Sequence[int], val: int) -> int
 ```
 
 Number of leading entries of the sorted list ``arr`` that are ``< val``.
@@ -89,7 +91,7 @@ Number of leading entries of the sorted list ``arr`` that are ``< val``.
 #### artin\_sequences
 
 ```python
-def artin_sequences(n)
+def artin_sequences(n: int) -> set[tuple[int, ...]]
 ```
 
 All tuples ``(a_1, ..., a_n)`` with ``0 <= a_i <= n + 1 - i`` (Lehmer codes of ``S_{n+1}``).
@@ -99,7 +101,7 @@ All tuples ``(a_1, ..., a_n)`` with ``0 <= a_i <= n + 1 - i`` (Lehmer codes of `
 #### weak\_compositions
 
 ```python
-def weak_compositions(length, max_degree)
+def weak_compositions(length: int, max_degree: int) -> set[tuple[int, ...]]
 ```
 
 All tuples of the given ``length`` with entries in ``0..max_degree``.
@@ -109,7 +111,8 @@ All tuples of the given ``length`` with entries in ``0..max_degree``.
 #### is\_parabolic
 
 ```python
-def is_parabolic(w, parabolic_index)
+def is_parabolic(w: Permutation | Sequence[int],
+                 parabolic_index: Iterable[int]) -> bool
 ```
 
 Whether ``w`` has no descent at any of the (1-indexed) positions in ``parabolic_index``.
@@ -119,7 +122,7 @@ Whether ``w`` has no descent at any of the (1-indexed) positions in ``parabolic_
 #### add\_perm\_dict
 
 ```python
-def add_perm_dict(d1, d2)
+def add_perm_dict(d1: Mapping[K, Any], d2: Mapping[K, Any]) -> dict[K, Any]
 ```
 
 Return ``d1 + d2`` as coefficient dicts (keys merged, values added).
@@ -129,7 +132,8 @@ Return ``d1 + d2`` as coefficient dicts (keys merged, values added).
 #### add\_perm\_dict\_with\_coeff
 
 ```python
-def add_perm_dict_with_coeff(d1, d2, coeff)
+def add_perm_dict_with_coeff(d1: Mapping[K, Any], d2: Mapping[K, Any],
+                             coeff: Any) -> dict[K, Any]
 ```
 
 Return ``d1 + coeff * d2`` as coefficient dicts.
@@ -139,7 +143,7 @@ Return ``d1 + coeff * d2`` as coefficient dicts.
 #### p\_trans
 
 ```python
-def p_trans(part)
+def p_trans(part: Sequence[int]) -> list[int]
 ```
 
 Conjugate (transpose) of a partition given as a weakly decreasing list; ``[0]`` for the empty partition.
@@ -149,7 +153,7 @@ Conjugate (transpose) of a partition given as a weakly decreasing list; ``[0]`` 
 #### mu\_A
 
 ```python
-def mu_A(mu, A)
+def mu_A(mu: Sequence[int], A: Sequence[int]) -> list[int]
 ```
 
 The partition whose conjugate consists of the columns of ``mu`` indexed by ``A`` (0-indexed).
@@ -159,7 +163,7 @@ The partition whose conjugate consists of the columns of ``mu`` indexed by ``A``
 #### get\_cycles
 
 ```python
-def get_cycles(perm)
+def get_cycles(perm: Permutation) -> list[tuple[int, ...]]
 ```
 
 ``perm.get_cycles()``.
@@ -169,7 +173,7 @@ def get_cycles(perm)
 #### old\_code
 
 ```python
-def old_code(perm)
+def old_code(perm: Sequence[int]) -> list[int]
 ```
 
 Lehmer code of a permutation list computed by successive deletion from ``[1..L]``.
@@ -179,7 +183,7 @@ Lehmer code of a permutation list computed by successive deletion from ``[1..L]`
 #### cyclic\_sort
 
 ```python
-def cyclic_sort(L)
+def cyclic_sort(L: list[int]) -> list[int]
 ```
 
 Rotate the list so its maximum is last.
@@ -189,7 +193,7 @@ Rotate the list so its maximum is last.
 #### cyclic\_sort\_min
 
 ```python
-def cyclic_sort_min(L)
+def cyclic_sort_min(L: list[int]) -> list[int]
 ```
 
 Rotate the list so its minimum is first.
@@ -199,7 +203,7 @@ Rotate the list so its minimum is first.
 #### h\_vector
 
 ```python
-def h_vector(q_vector)
+def h_vector(q_vector: Sequence[int]) -> tuple[int, ...]
 ```
 
 Positions (1-indexed) where the vector strictly increases, up to its first decrease.
@@ -209,7 +213,7 @@ Positions (1-indexed) where the vector strictly increases, up to its first decre
 #### l\_vector
 
 ```python
-def l_vector(q_vector)
+def l_vector(q_vector: Sequence[int]) -> tuple[int, ...]
 ```
 
 Find l_j = last position where d equals j (where d decreases from j to j-1).
@@ -219,7 +223,7 @@ Find l_j = last position where d equals j (where d decreases from j to j-1).
 #### tau\_d
 
 ```python
-def tau_d(d)
+def tau_d(d: Sequence[int]) -> Permutation
 ```
 
 Partial permutation built from `h_vector`/`l_vector` of ``d`` (``tau[l_i - i] = h_i``), completed by
@@ -230,17 +234,69 @@ Partial permutation built from `h_vector`/`l_vector` of ``d`` (``tau[l_i - i] = 
 #### phi\_d
 
 ```python
-def phi_d(d)
+def phi_d(d: Sequence[int]) -> Permutation
 ```
 
 Companion of `tau_d` with the shifted placement ``phi[l_i - 1 - i] = h_i``.
+
+<a id="schubmult.utils.perm_utils.increasing_completion"></a>
+
+#### increasing\_completion
+
+```python
+def increasing_completion(values: Sequence[int], n: int) -> Permutation
+```
+
+The permutation in ``S_n`` whose one-line notation begins with the distinct ``values`` and
+continues with the remaining elements of ``{1, ..., n}`` in increasing order.
+
+Written ``<m_1, ..., m_k>`` in B.-H. Hwang, arXiv:2610.21053 (Definition 2.1); for example
+``<w(1), ..., w(k)>`` is ``w`` padded with fixed points.
+
+<a id="schubmult.utils.perm_utils.block_lift"></a>
+
+#### block\_lift
+
+```python
+def block_lift(
+        u: Permutation | Sequence[int], v: Permutation | Sequence[int],
+        w: Permutation | Sequence[int],
+        alpha: Sequence[int]) -> tuple[Permutation, Permutation, Permutation]
+```
+
+The block lift ``(u~, v~, w~)`` of ``(u, v, w, alpha)`` in ``S_{n + |alpha|}``.
+
+Due to Byung-Hak Hwang, *Coefficient lifting for skew divided differences and triple Schubert coefficients*,
+arXiv:2610.21053 (Definition 4.4); the identities below are Theorem 1.2 and Corollaries 5.1 and 5.3 there.
+
+For ``u, v, w`` in ``S_n`` and a weak composition ``alpha`` of length ``n``, each value ``i`` gets a
+block of ``alpha_i + 1`` consecutive values starting at the base value ``b_i = i + alpha_1 + ... + alpha_{i-1}``.
+Then ``u~ = u`` with ``|alpha|`` fixed points appended, ``v~`` sends position ``i`` to the smallest element
+``b_{v(i)}`` of its block, and ``w~`` sends it to the largest ``b_{w(i)} + alpha_{w(i)}`` (both completed
+increasingly, see `increasing_completion`).
+
+Hwang's Theorem 1.2: writing ``S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t)``, the coefficient of
+``t^alpha`` in ``c^w_{u,v}(y, t)`` is the single coefficient ``c^{w~}_{u~,v~}(y, 0)``, so that
+``partial_{w/v} S_u(x) = sum_{|alpha| = l(u) + l(v) - l(w)} c^{w~}_{u~,v~} x^alpha`` (Kirillov's conjecture)
+and, with ``v = w = id``, ``[x^alpha] S_u(x) = c^{w~}_{u~,v~}`` is a single Schubert structure constant.
+In ``schubmult`` conventions ``c^w_{u,v}(y, t) = schubmult_double({v: 1}, u, t, y)[w]``.
+
+**Arguments**:
+
+  u, v, w: Permutations (array form); trailing fixed points up to ``len(alpha)`` are implied.
+- `alpha` - Weak composition; its length ``n`` must be at least the sizes of ``u``, ``v``, ``w``.
+  
+
+**Returns**:
+
+  The triple ``(u~, v~, w~)`` of ``Permutation`` objects.
 
 <a id="schubmult.utils.perm_utils.conjugate_weak_composition"></a>
 
 #### conjugate\_weak\_composition
 
 ```python
-def conjugate_weak_composition(comp)
+def conjugate_weak_composition(comp: Sequence[int]) -> tuple[int, ...]
 ```
 
 Compute the conjugate of a weak composition.
@@ -276,7 +332,7 @@ This is equivalent to transposing the Ferrers diagram of the composition.
 #### find\_reduced\_fail
 
 ```python
-def find_reduced_fail(word, inserted)
+def find_reduced_fail(word: Sequence[int], inserted: int) -> int | None
 ```
 
 After changing letter ``inserted`` of a word, find the other position carrying the same root
@@ -287,7 +343,7 @@ After changing letter ``inserted`` of a word, find the other position carrying t
 #### is\_reduced
 
 ```python
-def is_reduced(word)
+def is_reduced(word: Sequence[int]) -> bool
 ```
 
 Whether the word of simple reflections is reduced (``inv`` of its product equals its length).
@@ -297,7 +353,7 @@ Whether the word of simple reflections is reduced (``inv`` of its product equals
 #### little\_bump\_pos
 
 ```python
-def little_bump_pos(word, index)
+def little_bump_pos(word: Sequence[int], index: int) -> tuple[int, ...]
 ```
 
 Little bump at position ``index``: decrement that letter (increment if it is 1), and while the
@@ -308,7 +364,7 @@ word is not reduced, repeat at the letter found by `find_reduced_fail`.
 #### little\_bump
 
 ```python
-def little_bump(word, i, j)
+def little_bump(word: Sequence[int], i: int, j: int) -> tuple[int, ...]
 ```
 
 Little bump of a reduced word at the letter whose right root is the inversion ``(i, j)``.
@@ -318,7 +374,7 @@ Little bump of a reduced word at the letter whose right root is the inversion ``
 #### little\_zero
 
 ```python
-def little_zero(word, length)
+def little_zero(word: Sequence[int], length: int) -> tuple[int, ...]
 ```
 
 Repeatedly Little-bump at the last descent until the product's code has fewer than ``length``

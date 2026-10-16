@@ -113,12 +113,12 @@ returns ``None``.
 
 ``grothmult_q`` console script: products of quantum Grothendieck polynomials.
 
-Conjectural quantum K-theory Pieri rule; ``--parabolic`` and ``--mult`` are not yet
-supported.
+Quantum K-theory Pieri rule (Naito--Sagaki); ``--mult`` is not yet supported.
 
 **Example**:
 
   grothmult_q 3 1 2 - 2 1 3
+  grothmult_q 1 3 2 4 - 2 4 1 3 --parabolic 2 2
 
 <a id="schubmult._scripts.grothmult_q.main"></a>
 
@@ -134,9 +134,13 @@ Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplie
 their quantum Grothendieck polynomials via `schubmult.mult.groth_quantum.grothmult_q`,
 and prints the resulting coefficient dictionary ``{Permutation: coefficient}``
 (coefficients are polynomials in the quantum parameters ``q_i`` and the K-theory
-parameter ``beta``). ``--parabolic`` and ``--mult`` are not yet supported and cause
-an early exit. Returns the raw result dict when the caller passes a ``None``
-formatter (e.g. from tests); otherwise prints and returns ``None``.
+parameter ``beta``). With ``--parabolic g1 g2 ...`` (block sizes of a parabolic subgroup
+``S_{g1} x S_{g2} x ...``), the result is projected to ``QK(G/P)`` by the ``beta``-homogeneous
+form of Kato's ring homomorphism (`schubmult.mult.groth_quantum_double.apply_kato`); the input
+permutations must then be minimal coset representatives (increasing on each block), since only
+those index Schubert classes of ``G/P``. ``--mult`` is not yet supported and causes an early
+exit. Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
+tests); otherwise prints and returns ``None``.
 
 <a id="schubmult._scripts.grothmult_q_double"></a>
 
@@ -144,12 +148,13 @@ formatter (e.g. from tests); otherwise prints and returns ``None``.
 
 ``grothmult_q_double`` console script: products of quantum double Grothendieck polynomials.
 
-Conjectural quantum K-theory Pieri rule; ``--display-positive``, ``--parabolic``, and
+Conjectural quantum K-theory Pieri rule; ``--display-positive`` and
 ``--nil-hecke``/``--nil-hecke-apply`` are not yet supported.
 
 **Example**:
 
   grothmult_q_double 3 1 2 - 2 1 3 --mixed-var
+  grothmult_q_double 1 3 2 4 - 2 4 1 3 --parabolic 2 2
 
 <a id="schubmult._scripts.grothmult_q_double.main"></a>
 
@@ -165,8 +170,13 @@ Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplie
 their quantum double Grothendieck polynomials via
 `schubmult.mult.groth_quantum_double.grothmult_q_double`, and prints the resulting
 coefficient dictionary ``{Permutation: coefficient}`` in the ``y``/``z`` coefficient
-variables and quantum parameters ``q_i``. ``--display-positive``, ``--parabolic``,
-``--nil-hecke``, and ``--mult`` are not yet supported and cause an early exit.
+variables and quantum parameters ``q_i``. With ``--simplify`` coefficients are printed in
+cancelled form ``numer / prod (1 + beta*y_i)**e``. With ``--parabolic g1 g2 ...`` (block
+sizes of a parabolic subgroup) the result is projected to ``QK_T(G/P)`` by the
+``beta``-homogeneous form of Kato's ring homomorphism
+(`schubmult.mult.groth_quantum_double.apply_kato`); inputs must be minimal coset
+representatives. ``--display-positive``, ``--nil-hecke``, and ``--mult`` are not yet supported
+and cause an early exit.
 Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
 tests); otherwise prints and returns ``None``.
 
@@ -299,6 +309,61 @@ up to ``N`` Fomin-Gelfand-Postnikov commuting difference operators
 (`schubmult.mult.quantum_double.nil_hecke`) instead of multiplying permutations.
 Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
 tests); otherwise prints and returns ``None``.
+
+<a id="schubmult._typing"></a>
+
+# schubmult.\_typing
+
+Type aliases for the vocabulary shared by the kernels and rings.
+
+The aliases record the *intent* of the polymorphic entry points -- what counts as "a permutation",
+"an alphabet", "a coefficient" -- since the runtime coercions (``Permutation(...)``, ``_genset``)
+accept several representations.  Symbolic coefficients are SymEngine/SymPy expressions mixed
+freely with Python numbers; SymEngine ships no stubs, so ``Expr`` is ``Any`` for the checker and
+documentation for the reader.
+
+The aliases are quoted and their targets imported only under ``TYPE_CHECKING``: ``from __future__
+import annotations`` defers annotations, not the right-hand side of an alias assignment, and a real
+import here would make this module unusable inside `schubmult.combinatorics.permutation` and
+`schubmult.symbolic.poly.variables` (its own dependencies).  Modules that *use* the aliases import
+them under ``TYPE_CHECKING`` too and write signatures unquoted.
+
+<a id="schubmult._typing.Expr"></a>
+
+#### Expr
+
+A SymEngine or SymPy expression.
+
+<a id="schubmult._typing.Coeff"></a>
+
+#### Coeff
+
+A structure constant: an ``Expr`` or a Python ``int``/``Fraction``.
+
+<a id="schubmult._typing.PermLike"></a>
+
+#### PermLike
+
+Anything ``Permutation(...)`` accepts: a `Permutation` or its one-line array form.
+
+<a id="schubmult._typing.CoeffDict"></a>
+
+#### CoeffDict
+
+``{key: coeff}``, the expansion ``sum coeff * (basis element indexed by key)``; the key type is the
+basis index of the ring in question (``Permutation``, a tuple of them, an ``RCGraph``, a word, ...).
+
+<a id="schubmult._typing.PermCoeffDict"></a>
+
+#### PermCoeffDict
+
+``{w: coeff_w}`` indexed by permutations: the currency of the ``schubmult.mult`` kernels.
+
+<a id="schubmult._typing.Alphabet"></a>
+
+#### Alphabet
+
+A coefficient alphabet ``y_1, y_2, ...``: a generating set or a plain sequence of symbols.
 
 <a id="schubmult.abc"></a>
 
@@ -2491,7 +2556,18 @@ same shape, reconstruct the two-line array as ``(recording, insertion)``.
 
 # schubmult.combinatorics.hpd
 
-Bumpless Pipe Dreams (HPD) module
+Hybrid pipe dreams (HPD) -- EXPERIMENTAL, currently unmaintained.
+
+Hybrid pipe dreams (Knutson--Udell, "Interpolating between classic and bumpless pipe dreams")
+interpolate between classic pipe dreams and bumpless pipe dreams: each row is declared either
+classic (``id_vector[row] == 0``) or bumpless (``id_vector[row] == 1``), and the tiles are read with
+the corresponding convention row by row.  All-zero ``id_vector`` recovers a classic pipe dream
+(`schubmult.combinatorics.rc_graph.RCGraph`), all-one a bumpless one (`schubmult.combinatorics.bpd.BPD`).
+
+Development stopped partway through the port from `BPD`: the constructor requires ``id_vector``, but
+``delete_row``, ``append``, ``from_bruhat_path``, ``shiftup``, ``rothe_bpd``, ``resize``, and
+``right_zero_act`` still construct ``HPD(grid)`` without it and raise ``TypeError``.  Nothing in the
+package or the test suite depends on this module; it is kept for possible future work.
 
 <a id="schubmult.combinatorics.hpd.HPDTile"></a>
 
@@ -2676,12 +2752,10 @@ True if a pipe can enter from the left
 class HPD(SchubertMonomialGraph, DefaultPrinting)
 ```
 
-Bumpless Pipe Dream representation.
+Hybrid pipe dream (Knutson--Udell).  EXPERIMENTAL -- see the module docstring.
 
-A bumpless pipe dream is an n×n grid where:
-- HPDTile.CROSS (1) represents a crossing
-- HPDTile.BLANK (0) represents an empty box (pipes go straight)
-- For general pipe dreams, can use HPDTile.ELBOW_* (2-5) for elbows
+An n×n grid of `HPDTile` values together with an ``id_vector`` declaring each row classic (``0``)
+or bumpless (``1``); the tile conventions and the pipe labeling switch per row accordingly.
 
 Each HPD corresponds to a permutation and has an associated weight.
 
@@ -2698,6 +2772,7 @@ Initialize a HPD from a grid.
 **Arguments**:
 
 - `grid` - n×n array-like of HPDTile values, integers 0-5, or list of lists
+- `id_vector` - one entry per row, ``0`` for a classic row and ``1`` for a bumpless row
 
 <a id="schubmult.combinatorics.hpd.HPD.is_classic_row"></a>
 
@@ -4995,7 +5070,7 @@ Bruhat order (``<=``/``bruhat_leq``), and iteration over the window
 #### apply
 
 ```python
-def apply(arr)
+def apply(arr: Sequence[T]) -> tuple[T, ...]
 ```
 
 Permute the elements of ``arr`` by this permutation: return ``[arr[self[i] - 1] for i in range(len(arr))]``.
@@ -5006,7 +5081,7 @@ Permute the elements of ``arr`` by this permutation: return ``[arr[self[i] - 1] 
 
 ```python
 @property
-def is_reducible()
+def is_reducible() -> bool
 ```
 
 Whether ``self`` splits as a direct sum of two smaller permutations across some fixed point.
@@ -5016,7 +5091,8 @@ Whether ``self`` splits as a direct sum of two smaller permutations across some 
 #### reduce
 
 ```python
-def reduce(start_spot=1, strict=False)
+def reduce(start_spot: int = 1,
+           strict: bool = False) -> tuple[Permutation, Permutation] | None
 ```
 
 Split ``self`` at a fixed point into ``(perm1, perm2)`` on disjoint blocks of values, or ``None`` if not reducible.
@@ -5026,7 +5102,7 @@ Split ``self`` at a fixed point into ``(perm1, perm2)`` on disjoint blocks of va
 #### act\_root
 
 ```python
-def act_root(a, b)
+def act_root(a: int, b: int) -> tuple[int, int]
 ```
 
 Image of the root/pair ``(a, b)`` (1-indexed positions) under ``self``: ``(self[a-1], self[b-1])``.
@@ -5036,7 +5112,7 @@ Image of the root/pair ``(a, b)`` (1-indexed positions) under ``self``: ``(self[
 #### one\_dominates
 
 ```python
-def one_dominates(other)
+def one_dominates(other: Permutation) -> bool
 ```
 
 Whether ``self`` one-step dominates ``other`` (one level of the recursive ``dominates`` test).
@@ -5046,7 +5122,7 @@ Whether ``self`` one-step dominates ``other`` (one level of the recursive ``domi
 #### dominates
 
 ```python
-def dominates(other)
+def dominates(other: Permutation) -> bool
 ```
 
 Whether ``self`` dominates ``other`` in the sense used by the dual Pieri / positivity rules.
@@ -5057,7 +5133,7 @@ Whether ``self`` dominates ``other`` in the sense used by the dual Pieri / posit
 
 ```python
 @property
-def antiperm()
+def antiperm() -> Permutation
 ```
 
 Conjugate of ``self`` by the longest element ``w0``: ``w0 * self * w0``.
@@ -5067,7 +5143,8 @@ Conjugate of ``self`` by the longest element ``w0``: ``w0 * self * w0``.
 #### weight\_coset\_decomp
 
 ```python
-def weight_coset_decomp(dominant_weight)
+def weight_coset_decomp(
+        dominant_weight: Sequence[int]) -> tuple[Permutation, Permutation]
 ```
 
 Coset decomposition of ``self`` with respect to the stabilizer of ``dominant_weight``; see ``coset_decomp``.
@@ -5077,7 +5154,7 @@ Coset decomposition of ``self`` with respect to the stabilizer of ``dominant_wei
 #### min\_of\_weight\_coset
 
 ```python
-def min_of_weight_coset(dominant_weight)
+def min_of_weight_coset(dominant_weight: Sequence[int]) -> Permutation
 ```
 
 Minimal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``.
@@ -5087,7 +5164,7 @@ Minimal-length coset representative of ``self`` in the stabilizer of ``dominant_
 #### max\_of\_weight\_coset
 
 ```python
-def max_of_weight_coset(dominant_weight)
+def max_of_weight_coset(dominant_weight: Sequence[int]) -> Permutation
 ```
 
 Maximal-length coset representative of ``self`` in the stabilizer of ``dominant_weight``.
@@ -5113,7 +5190,7 @@ lies below the longest element of the left descents of the maximal coset represe
 #### coset\_decomp
 
 ```python
-def coset_decomp(*descs)
+def coset_decomp(*descs: int) -> tuple[Permutation, Permutation]
 ```
 
 Decompose ``self = reduced_perm * w_J`` where ``w_J`` lies in the parabolic subgroup generated
@@ -5129,7 +5206,7 @@ coset representative (no descents in ``descs``).
 #### min\_coset\_rep
 
 ```python
-def min_coset_rep(*descs)
+def min_coset_rep(*descs: int) -> Permutation
 ```
 
 Minimal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``.
@@ -5139,7 +5216,7 @@ Minimal-length coset representative of ``self`` for the parabolic subgroup gener
 #### max\_coset\_rep
 
 ```python
-def max_coset_rep(*descs)
+def max_coset_rep(*descs: int) -> Permutation
 ```
 
 Maximal-length coset representative of ``self`` for the parabolic subgroup generated at ``descs``.
@@ -5150,7 +5227,7 @@ Maximal-length coset representative of ``self`` for the parabolic subgroup gener
 
 ```python
 @classmethod
-def longest_element(cls, *descs)
+def longest_element(cls, *descs: int) -> Permutation
 ```
 
 Longest element of the parabolic subgroup generated by the simple reflections at 1-indexed positions ``descs``.
@@ -5161,7 +5238,7 @@ Longest element of the parabolic subgroup generated by the simple reflections at
 
 ```python
 @classmethod
-def w0(cls, n)
+def w0(cls, n: int) -> Permutation
 ```
 
 The longest element of the symmetric group on ``n`` letters: ``[n, n-1, ..., 1]``.
@@ -5173,7 +5250,7 @@ The longest element of the symmetric group on ``n`` letters: ``[n, n-1, ..., 1]`
 ```python
 @classmethod
 @cache
-def all_permutations(cls, n)
+def all_permutations(cls, n: int) -> list[Permutation]
 ```
 
 All permutations of ``{1, ..., n}``, as a list of `Permutation`.
@@ -5183,7 +5260,7 @@ All permutations of ``{1, ..., n}``, as a list of `Permutation`.
 #### parabolic\_reduce
 
 ```python
-def parabolic_reduce(*descs)
+def parabolic_reduce(*descs: int) -> tuple[Permutation, Permutation]
 ```
 
 Decompose ``self = reduced_perm * w_J`` where ``w_J`` is generated by the simple reflections
@@ -5209,7 +5286,7 @@ Returns a tuple of (self, other) if other is a permutation. Intended for skew el
 
 ```python
 @staticmethod
-def fixers(dominant_weight)
+def fixers(dominant_weight: Sequence[int]) -> set[int]
 ```
 
 1-indexed positions ``i`` where ``dominant_weight[i-1] == dominant_weight[i]``
@@ -5221,7 +5298,7 @@ def fixers(dominant_weight)
 
 ```python
 @classmethod
-def ref_product(cls, *args)
+def ref_product(cls, *args: int) -> Permutation
 ```
 
 Product of the simple reflections ``s_a`` for ``a`` in ``args``, applied left to right.
@@ -5232,7 +5309,7 @@ Product of the simple reflections ``s_a`` for ``a`` in ``args``, applied left to
 
 ```python
 @classmethod
-def hecke_ref_product(cls, *args)
+def hecke_ref_product(cls, *args: int) -> Permutation
 ```
 
 Like ``ref_product``, but each ``s_a`` is applied only if it is a Bruhat ascent
@@ -5244,7 +5321,7 @@ Like ``ref_product``, but each ``s_a`` is applied only if it is a Bruhat ascent
 
 ```python
 @property
-def code_word()
+def code_word() -> tuple[int, ...]
 ```
 
 A canonical reduced word for ``self``, read off from ``trimcode``.
@@ -5341,7 +5418,7 @@ All subwords of `self`, by peeling descents.
 
 ```python
 @staticmethod
-def commutation_class_of(word)
+def commutation_class_of(word: Sequence[int]) -> set[tuple[int, ...]]
 ```
 
 All words obtainable from ``word`` by commuting adjacent far-apart letters (``|a - b| >= 2``).
@@ -5352,7 +5429,7 @@ All words obtainable from ``word`` by commuting adjacent far-apart letters (``|a
 
 ```python
 @staticmethod
-def forest_class_of(word)
+def forest_class_of(word: Sequence[int]) -> set[tuple[int, ...]]
 ```
 
 Words reachable from ``word`` by commutation moves that also preserve the indexed-forest
@@ -5363,7 +5440,7 @@ insertion structure (``omega_insertion``); a refinement of ``commutation_class_o
 #### code\_index\_of\_index
 
 ```python
-def code_index_of_index(index)
+def code_index_of_index(index: int) -> int
 ```
 
 The position in ``trimcode`` whose block of ``code_word`` letters contains position ``index``.
@@ -5374,7 +5451,7 @@ The position in ``trimcode`` whose block of ``code_word`` letters contains posit
 
 ```python
 @staticmethod
-def cycle(p, q)
+def cycle(p: int, q: int) -> Permutation
 ```
 
 Construct the cycle permutation used elsewhere in the code.
@@ -5386,7 +5463,9 @@ Kept as a staticmethod on Permutation for call sites like Permutation.cycle(p,q)
 
 ```python
 @classmethod
-def sorting_perm(cls, itera, reverse=False)
+def sorting_perm(cls,
+                 itera: Sequence[Any],
+                 reverse: bool = False) -> Permutation
 ```
 
 The permutation that sorts ``itera`` into (by default) increasing order.
@@ -5396,7 +5475,7 @@ The permutation that sorts ``itera`` into (by default) increasing order.
 #### right\_act
 
 ```python
-def right_act(lst)
+def right_act(lst: list[T] | tuple[T, ...]) -> list[T] | tuple[T, ...]
 ```
 
 Permute the entries of ``lst`` by this permutation, preserving ``lst``'s type (list stays a list).
@@ -5406,7 +5485,7 @@ Permute the entries of ``lst`` by this permutation, preserving ``lst``'s type (l
 #### bruhat\_leq
 
 ```python
-def bruhat_leq(perm, perm2)
+def bruhat_leq(perm, perm2: Permutation) -> bool
 ```
 
 Whether ``perm <= perm2`` in Bruhat order (equivalently, ``perm``'s tableau criterion
@@ -5418,7 +5497,7 @@ against ``perm2`` on every prefix of their windows).
 
 ```python
 @classmethod
-def from_code(cls, cd)
+def from_code(cls, cd: Sequence[int]) -> Permutation
 ```
 
 Alias for ``uncode(cd)``: the permutation with Lehmer code ``cd``.
@@ -5428,18 +5507,28 @@ Alias for ``uncode(cd)``: the permutation with Lehmer code ``cd``.
 #### has\_pattern
 
 ```python
-def has_pattern(pattern)
+def has_pattern(pattern: Sequence[int]) -> bool
 ```
 
 Whether ``self`` contains ``pattern`` (a plain list, not necessarily reduced) as a pattern:
 some subsequence of ``self``'s window order-isomorphic to ``pattern``.
+
+<a id="schubmult.combinatorics.permutation.Permutation.__call__"></a>
+
+#### \_\_call\_\_
+
+```python
+def __call__(*tup)
+```
+
+``perm(i)`` is the 1-indexed value at position ``i``; ``perm(i, j, ...)`` or ``perm([i, j, ...])`` the tuple of values.
 
 <a id="schubmult.combinatorics.permutation.Permutation.zero_indexed_descents"></a>
 
 #### zero\_indexed\_descents
 
 ```python
-def zero_indexed_descents()
+def zero_indexed_descents() -> set[int]
 ```
 
 0-indexed descent positions: ``i`` such that ``self[i] > self[i+1]``.
@@ -5449,7 +5538,7 @@ def zero_indexed_descents()
 #### descents
 
 ```python
-def descents(zero_indexed=True)
+def descents(zero_indexed: bool = True) -> set[int]
 ```
 
 Descent positions of ``self``, 0-indexed by default or 1-indexed if ``zero_indexed=False``.
@@ -5459,7 +5548,7 @@ Descent positions of ``self``, 0-indexed by default or 1-indexed if ``zero_index
 #### get\_cycles
 
 ```python
-def get_cycles(sort_min=False)
+def get_cycles(sort_min: bool = False) -> list[tuple[int, ...]]
 ```
 
 Cycle decomposition of ``self`` as a list of tuples; ``sort_min`` rotates each cycle to start
@@ -5471,7 +5560,7 @@ at its minimum element instead of the sympy convention.
 
 ```python
 @classmethod
-def from_cycles(cls, cycle_iter)
+def from_cycles(cls, cycle_iter: Iterable[Sequence[int]]) -> Permutation
 ```
 
 Build a permutation from a cycle decomposition (sequence of cycles, each a sequence of 1-indexed values).
@@ -5482,7 +5571,7 @@ Build a permutation from a cycle decomposition (sequence of cycles, each a seque
 
 ```python
 @property
-def code()
+def code() -> list[int]
 ```
 
 Lehmer code of ``self``: ``code[i]`` counts ``j > i`` with ``self[i] > self[j]``.
@@ -5493,7 +5582,7 @@ Lehmer code of ``self``: ``code[i]`` counts ``j > i`` with ``self[i] > self[j]``
 
 ```python
 @property
-def graph()
+def graph() -> set[tuple[int, int]]
 ```
 
 The permutation matrix support as a set of 1-indexed pairs ``{(i, self[i])}``.
@@ -5653,7 +5742,7 @@ def pad_code(length)
 
 ```python
 @cached_property
-def trimcode()
+def trimcode() -> list[int]
 ```
 
 Lehmer code truncated to drop trailing zeros (length equals the last descent position).
@@ -5683,7 +5772,7 @@ Variant of ``mul_dominant`` built from the strict theta (strictly decreasing dom
 #### shiftup
 
 ```python
-def shiftup(k)
+def shiftup(k: int) -> Permutation
 ```
 
 ``self`` with its Lehmer code shifted right by ``k`` (``k`` leading zero code entries prepended).
@@ -5694,7 +5783,7 @@ def shiftup(k)
 
 ```python
 @cached_property
-def inv()
+def inv() -> int
 ```
 
 Length of ``self``: the number of inversions, i.e. ``sum(self.code)``.
@@ -5738,7 +5827,7 @@ single Schur polynomial in the ``trimcode``-shape).
 #### swap
 
 ```python
-def swap(i, j)
+def swap(i: int, j: int) -> Permutation
 ```
 
 Multiply ``self`` by the transposition of 0-indexed positions ``i`` and ``j`` (window extended as needed).
@@ -5748,7 +5837,7 @@ Multiply ``self`` by the transposition of 0-indexed positions ``i`` and ``j`` (w
 #### rslice
 
 ```python
-def rslice(start, stop)
+def rslice(start: int, stop: int) -> list[int]
 ```
 
 Window values at 0-indexed positions ``start`` (inclusive) to ``stop`` (exclusive), extended by fixed points.
@@ -5758,7 +5847,7 @@ Window values at 0-indexed positions ``start`` (inclusive) to ``stop`` (exclusiv
 #### \_\_matmul\_\_
 
 ```python
-def __matmul__(other)
+def __matmul__(other: Permutation) -> Permutation
 ```
 
 Demazure product
@@ -5768,7 +5857,7 @@ Demazure product
 #### pattern\_at
 
 ```python
-def pattern_at(*indices)
+def pattern_at(*indices: int) -> Permutation
 ```
 
 The (inverse sorting) pattern induced by ``self`` on the given 1-indexed ``indices``.
@@ -5778,7 +5867,7 @@ The (inverse sorting) pattern induced by ``self`` on the given 1-indexed ``indic
 #### minimal\_dominant\_above
 
 ```python
-def minimal_dominant_above()
+def minimal_dominant_above() -> Permutation
 ```
 
 The minimal dominant permutation ``>= self`` in Bruhat order: ``uncode(self.theta())``.
@@ -5789,7 +5878,7 @@ The minimal dominant permutation ``>= self`` in Bruhat order: ``uncode(self.thet
 
 ```python
 @property
-def foundational_root()
+def foundational_root() -> tuple[int, int] | None
 ```
 
 The pivot pair ``(k, mx)`` marking ``self``'s last descent block and the last position dropping below it.
@@ -5799,7 +5888,7 @@ The pivot pair ``(k, mx)`` marking ``self``'s last descent block and the last po
 #### theta
 
 ```python
-def theta()
+def theta() -> list[int]
 ```
 
 Dominant (weakly decreasing) sequence bounding ``self``'s code, used throughout the v-path
@@ -5810,7 +5899,7 @@ multiplication algorithms (see ``schubmult.mult``).
 #### medium\_theta
 
 ```python
-def medium_theta()
+def medium_theta() -> list[int]
 ```
 
 Variant of ``theta`` used by the "fast"/merged-layer multiplication kernels.
@@ -5820,7 +5909,7 @@ Variant of ``theta`` used by the "fast"/merged-layer multiplication kernels.
 #### strict\_theta
 
 ```python
-def strict_theta()
+def strict_theta() -> list[int]
 ```
 
 Variant of ``theta`` with strictly decreasing entries (no repeated nonzero layers).
@@ -5851,7 +5940,7 @@ Left factor of ``self`` against its ``maximal_sortable_below`` decomposition (du
 #### uncode
 
 ```python
-def uncode(cd)
+def uncode(cd: Sequence[int]) -> Permutation
 ```
 
 The permutation whose Lehmer code is ``cd`` (a list of nonnegative integers).
@@ -5861,7 +5950,7 @@ The permutation whose Lehmer code is ``cd`` (a list of nonnegative integers).
 #### permtrim
 
 ```python
-def permtrim(perm)
+def permtrim(perm: Iterable[int]) -> Permutation
 ```
 
 Normalize ``perm`` (a plain array) into a `Permutation` (trims trailing fixed points).
@@ -5871,7 +5960,7 @@ Normalize ``perm`` (a plain array) into a `Permutation` (trims trailing fixed po
 #### phi1
 
 ```python
-def phi1(u)
+def phi1(u: Permutation) -> Permutation
 ```
 
 Drop the first entry of ``(~u).code`` and re-invert: one step of the ``dominates`` recursion.
@@ -5881,7 +5970,7 @@ Drop the first entry of ``(~u).code`` and re-invert: one step of the ``dominates
 #### split\_perms
 
 ```python
-def split_perms(perms)
+def split_perms(perms: Sequence[Permutation]) -> list[Permutation]
 ```
 
 Split each permutation in ``perms`` (after the first) into two smaller ones across a
@@ -5894,7 +5983,7 @@ dominant permutations into minimal reducible pieces.
 
 ```python
 @cache
-def s(i)
+def s(i: int) -> Permutation
 ```
 
 The simple reflection swapping 1-indexed positions ``i`` and ``i + 1``.
@@ -7247,6 +7336,9 @@ Whether ``self`` (assumed to have permutation ``dom_perm``) matches the highest 
 Demazure-crystal tensor factor for the ``dom_perm``-part of the product ``S_self.perm * S_dom_perm``
 landing on ``perm``, via matching P/weight tableaux against the principal RC graphs.
 
+Not implemented: the original body (kept below) relied on ``NilPlactic.exists_ed_tableau_equiv``
+and ``Plactic.exists_ss_tableau_equiv``, which do not exist, and on `edelman_greene`.
+
 <a id="schubmult.combinatorics.rc_graph.RCGraph.shape"></a>
 
 #### shape
@@ -7298,6 +7390,11 @@ def edelman_greene() -> tuple[NilPlactic, Plactic]
 
 Edelman-Greene correspondence: insert the inversions (in reverse reading order) to build the
 ``(P, Q)`` pair of a nilCoxeter tableau and a plactic recording tableau.
+
+Not implemented: the original body (kept below) calls ``NilPlactic.ed_insert_rsk`` with the
+four-argument signature of the private ``_ed_insert_rsk``, so it always raised ``TypeError``.
+``p_tableau``, ``q_tableau`` and ``shape`` depend on it.  Use `RootTableau.from_rc_graph`
+for the tableau data of an RC graph.
 
 <a id="schubmult.combinatorics.rc_graph.RCGraph.__mul__"></a>
 
@@ -7429,6 +7526,19 @@ def all_rc_graphs(cls,
 All RC graphs for ``perm`` with ``length`` rows (default: ``len(perm.trimcode)``), optionally
 restricted to a given ``weight`` (row-length vector). Recursively built via ``pull_out_var``
 on the top variable; results are cached by ``(perm, length)`` / ``(perm, weight)``.
+
+<a id="schubmult.combinatorics.rc_graph.RCGraph.count_rc_graphs"></a>
+
+#### count\_rc\_graphs
+
+```python
+@classmethod
+def count_rc_graphs(cls, perm: Permutation, length: int = -1) -> int
+```
+
+Number of RC graphs of ``perm`` with ``length`` rows (default: all of them, equal to the sum
+of the coefficients of the Schubert polynomial), by the same ``pull_out_var`` recursion as
+`all_rc_graphs` but summing counts instead of building graphs; memoized on ``(perm, length)``.
 
 <a id="schubmult.combinatorics.rc_graph.RCGraph.extend"></a>
 
@@ -9444,7 +9554,7 @@ Add ``shift`` to every entry of every row.
 def normalize() -> WCGraph
 ```
 
-Resize to ``perm.max_descent`` rows.
+Resize to ``perm.max_descent`` rows (memoized; instances are interned and immutable).
 
 <a id="schubmult.combinatorics.wc_graph.WCGraph.resize"></a>
 
@@ -9828,6 +9938,9 @@ def right_hecke_root_at(i: int, j: int) -> tuple[int, int]
 ```
 
 Like `right_root_at`, transported via the 0-Hecke (Demazure) product instead.
+
+Not implemented: the original body (kept below) delegated to ``Permutation.right_hecke_root_at``,
+which does not exist.  `left_to_right_hecke_inversion` depends on it.
 
 <a id="schubmult.combinatorics.wc_graph.WCGraph.polyvalue"></a>
 
@@ -10281,12 +10394,42 @@ def schubmult_py(perm_dict, v)
 
 C++ ``schubmult_py``; returns ``None`` if any coefficient is non-integer or the size exceeds ``MAXN``.
 
+<a id="schubmult.mult._accel.schubmult_py_transition"></a>
+
+#### schubmult\_py\_transition
+
+```python
+def schubmult_py_transition(perm_dict, v)
+```
+
+C++ transition + Monk kernel; same contract as `schubmult_py`.
+
+<a id="schubmult.mult._accel.schubmult_py_hybrid"></a>
+
+#### schubmult\_py\_hybrid
+
+```python
+def schubmult_py_hybrid(perm_dict, v)
+```
+
+C++ cost-model dispatch between the v-path and transition kernels; same contract as `schubmult_py`.
+
+<a id="schubmult.mult._accel.pipe_dream_count"></a>
+
+#### pipe\_dream\_count
+
+```python
+def pipe_dream_count(v)
+```
+
+C++ ``S_v(1, ..., 1)``; returns ``None`` if ``v`` exceeds ``MAXN``.
+
 <a id="schubmult.mult._accel.schubmult_double"></a>
 
 #### schubmult\_double
 
 ```python
-def schubmult_double(perm_dict, v, var2, var3)
+def schubmult_double(perm_dict, v, var2, var3, probabilistic=False)
 ```
 
 C++ ``schubmult_double``; returns ``None`` if the size exceeds ``MAXN``.
@@ -10306,7 +10449,12 @@ C++ ``schubmult_q_fast``; non-integer coefficients are handled by linearity, one
 #### schubmult\_q\_double\_fast
 
 ```python
-def schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+def schubmult_q_double_fast(perm_dict,
+                            v,
+                            var2,
+                            var3,
+                            q_var,
+                            probabilistic=False)
 ```
 
 C++ ``schubmult_q_double_fast``; returns ``None`` if the size exceeds ``MAXN``.
@@ -10316,7 +10464,12 @@ C++ ``schubmult_q_double_fast``; returns ``None`` if the size exceeds ``MAXN``.
 #### schubmult\_double\_from\_elems
 
 ```python
-def schubmult_double_from_elems(perm_dict, v, var2, var3, elem_func)
+def schubmult_double_from_elems(perm_dict,
+                                v,
+                                var2,
+                                var3,
+                                elem_func,
+                                probabilistic=False)
 ```
 
 C++ ``schubmult_double`` with a custom elementary-symmetric ``elem_func``; ``None`` if size exceeds ``MAXN``.
@@ -10330,6 +10483,44 @@ def schubmult_double_alt_from_elems(perm_dict, v, var2, var3, elem_func)
 ```
 
 C++ ``schubmult_double_alt_from_elems``; ``None`` if size exceeds ``MAXN``.
+
+<a id="schubmult.mult._shadow"></a>
+
+# schubmult.mult.\_shadow
+
+Probabilistic zero testing for the multiplication kernels (``probabilistic=True``).
+
+The double kernels are layered dynamic programs whose states carry unexpanded partial sums. The
+signed terms cancel, and a state whose sum is zero as a polynomial -- but not structurally -- keeps
+fanning out: every descendant is dead work and its leaves are output terms with coefficient zero
+(6496 of them in a product of two `S_8` classes with 246 nonzero coefficients). Nothing short of
+expanding can see this exactly; polynomial identity testing is only known in randomized form.
+
+The kernels therefore carry a *shadow* of every partial sum: its value at ``points`` random points of
+`\mathbb{F}_p`, `p = 2^{61} - 1`, computed from the children's shadows as each node is built (two
+modular multiplications per term, no tree walks). A state whose shadow vanishes at every point is
+dropped at the end of its level. By Schwartz-Zippel a nonzero polynomial of total degree `d` vanishes
+at a random point with probability at most `d / p`, so with the default two points a product of
+`N` states is wrong with probability at most `N (d / p)^2` -- around `10^{-26}` for anything the
+kernels can finish. The sample points are drawn afresh for every call.
+
+:class:`ShadowEvaluator` evaluates the *inputs* of a kernel (the coefficients of ``perm_dict`` and
+the factorial elementary symmetric polynomials, both small) and is what the C++ kernel calls back.
+
+<a id="schubmult.mult._shadow.ShadowEvaluator"></a>
+
+## ShadowEvaluator Objects
+
+```python
+class ShadowEvaluator()
+```
+
+Evaluate SymEngine expressions at ``points`` random points of `\mathbb{F}_p`, memoized by node.
+
+Calling it returns a tuple of ``points`` integers. Symbols get their random values on first
+sight and keep them for the lifetime of the evaluator; expressions must be built from integers,
+rationals, symbols, ``+``, ``*`` and integer powers (a negative power whose base vanishes at a
+sample point raises ``ZeroDivisionError``).
 
 <a id="schubmult.mult.double"></a>
 
@@ -10505,7 +10696,7 @@ by summing ``schubmult_double(perm_dict1, v, var2, var3)`` scaled by
 #### schubmult\_double
 
 ```python
-def schubmult_double(perm_dict, v, var2=None, var3=None)
+def schubmult_double(perm_dict, v, var2=None, var3=None, probabilistic=False)
 ```
 
 Multiply ``sum_u coeff_u S_u(x, var2)`` by the double Schubert polynomial ``S_v(x, var3)``.
@@ -10521,6 +10712,12 @@ implementation ``_schubmult_double_python`` otherwise.
   multiply by.
 - `var2` - Secondary alphabet attached to ``perm_dict``'s permutations.
 - `var3` - Secondary alphabet attached to ``v``.
+- `probabilistic` - Drop intermediate states (and output terms) whose coefficient
+  vanishes at two random points of a prime field -- zero as a polynomial up to a
+  probability of error around ``1e-26`` (see :mod:`schubmult.mult._shadow`). The
+  kernels cancel heavily, so this prunes most of the work on large products and
+  returns only the nonzero terms; the exact default returns structurally nonzero
+  coefficients that may be zero as polynomials.
   
 
 **Returns**:
@@ -10812,7 +11009,7 @@ reflections in type ``A_{n-1}`` is
 #### monk\_chain
 
 ```python
-def monk_chain(k)
+def monk_chain(k: int) -> tuple[tuple[int, int], ...]
 ```
 
 Reduced ``(-omega_k)``-chain of reflections in ``A_{n-1}``, as ``(i, j)``, ``i <= k < j``.
@@ -10826,7 +11023,10 @@ survivors all sit at level ``1``.  The order is ``i`` decreasing, then ``j`` dec
 #### epsilon\_chain
 
 ```python
-def epsilon_chain(positions, inverse=False, ambient_rank=None)
+def epsilon_chain(
+        positions: int | Iterable[int],
+        inverse: bool = False,
+        ambient_rank: int | None = None) -> tuple[tuple[int, int, int], ...]
 ```
 
 Reduced ``(-eps_A)``-chain of reflections in ``A_{n-1}``, ``A = positions``.
@@ -10858,11 +11058,11 @@ Flipping to ``inverse=True`` exchanges those two families.
 #### one\_plus\_beta\_x\_groth
 
 ```python
-def one_plus_beta_x_groth(coeff_dict,
-                          positions,
-                          var2=None,
-                          beta=None,
-                          inverse=False)
+def one_plus_beta_x_groth(coeff_dict: PermCoeffDict,
+                          positions: int | Iterable[int],
+                          var2: Alphabet | None = None,
+                          beta: Expr | None = None,
+                          inverse: bool = False) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G_u(x, var2)`` by ``prod_{i in positions} (1 + beta*x_i)``.
@@ -10876,7 +11076,10 @@ operator ``prod_{i in positions} (1 + beta*x_i)^{-1}``, i.e. ``lambda = +eps_A``
 #### single\_variable\_groth
 
 ```python
-def single_variable_groth(coeff_dict, varnum, var2=None, beta=None)
+def single_variable_groth(coeff_dict: PermCoeffDict,
+                          varnum: int,
+                          var2: Alphabet | None = None,
+                          beta: Expr | None = None) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G_u(x, var2)`` by the single variable ``x_varnum``.
@@ -10891,7 +11094,8 @@ collapses to ``(-) var2[u(varnum)] = -y/(1 + beta*y)``, the formal inverse of
 #### elem\_sym\_perms\_groth
 
 ```python
-def elem_sym_perms_groth(u, k)
+def elem_sym_perms_groth(u: Permutation,
+                         k: int) -> dict[Permutation, dict[int, int]]
 ```
 
 K-theoretic analogue of ``elem_sym_perms``: ``{w: {d: multiplicity}}``.
@@ -10915,12 +11119,12 @@ the source of the K-theoretic multiplicities.
 #### grothmult\_double\_block
 
 ```python
-def grothmult_double_block(coeff_dict,
-                           positions,
-                           zvar=None,
-                           var2=None,
-                           beta=None,
-                           fgl=True)
+def grothmult_double_block(coeff_dict: PermCoeffDict,
+                           positions: int | Iterable[int],
+                           zvar: Expr | None = None,
+                           var2: Alphabet | None = None,
+                           beta: Expr | None = None,
+                           fgl: bool = True) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G_u(x, var2)`` by a linear block over ``positions``:
@@ -10949,7 +11153,8 @@ subsets of ``A`` (each term a ``one_plus_beta_x_groth`` call) and only cancel th
 #### groth\_elem\_sym\_poly
 
 ```python
-def groth_elem_sym_poly(p, k, zvar, var_x, beta)
+def groth_elem_sym_poly(p: int, k: int, zvar: Expr, var_x: Alphabet,
+                        beta: Expr) -> Expr
 ```
 
 ``E_p^beta(x_1..x_k; z) = e_p(x_1 (+) z, ..., x_k (+) z)``, ``x (+) z = x(1 + beta*z) + z``.
@@ -10963,13 +11168,13 @@ factorial elementary symmetric ``elem_sym_poly(p, k, x, [-z])``.
 #### grothmult\_double\_pieri
 
 ```python
-def grothmult_double_pieri(coeff_dict,
-                           p,
-                           k,
-                           zvar=None,
-                           var_x=None,
-                           var2=None,
-                           beta=None)
+def grothmult_double_pieri(coeff_dict: PermCoeffDict,
+                           p: int,
+                           k: int,
+                           zvar: Expr | None = None,
+                           var_x: Alphabet | None = None,
+                           var2: Alphabet | None = None,
+                           beta: Expr | None = None) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G_u(x, var2)`` by ``groth_elem_sym_poly(p, k, zvar, var_x, beta)``.
@@ -10992,7 +11197,11 @@ presumably needs that marking data rather than the moved/untouched split.
 #### grothmult\_double\_top
 
 ```python
-def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None)
+def grothmult_double_top(coeff_dict: PermCoeffDict,
+                         k: int,
+                         zvar: Expr | None = None,
+                         var2: Alphabet | None = None,
+                         beta: Expr | None = None) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G_u(x, var2)`` by the top linear block ``prod_{i=1}^{k}(x_i + zvar)``.
@@ -11032,11 +11241,11 @@ with ``z -> -z``.
 #### mult\_poly\_groth\_double
 
 ```python
-def mult_poly_groth_double(coeff_dict,
-                           poly,
-                           var_x=None,
-                           var_y=None,
-                           beta=None)
+def mult_poly_groth_double(coeff_dict: PermCoeffDict,
+                           poly: Expr,
+                           var_x: Alphabet | None = None,
+                           var_y: Alphabet | None = None,
+                           beta: Expr | None = None) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G_u(x, var_y)`` by an arbitrary polynomial in ``var_x``.
@@ -11050,7 +11259,9 @@ are handled by ``single_variable_groth``.
 
 ```python
 @cache
-def dgroth_to_dschub(v, var3, beta=None)
+def dgroth_to_dschub(v: PermLike,
+                     var3: Alphabet | None,
+                     beta: Expr | None = None) -> PermCoeffDict
 ```
 
 Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
@@ -11059,22 +11270,218 @@ Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
 ``var3`` and ``beta``.  Exact but slow; delegates to ``grothendieck_poly``
 with ``keep_as_schub=True``.  Memoized; callers must not mutate the result.
 
+<a id="schubmult.mult.groth_double.normalize_coeff"></a>
+
+#### normalize\_coeff
+
+```python
+def normalize_coeff(expr: Coeff,
+                    var2: GeneratingSet_base,
+                    beta: Expr | None = None) -> Expr
+```
+
+Cancelled normal form ``numer / prod (1 + beta*y_i)**e`` of a double Grothendieck coefficient.
+
+In the multiplicative variables ``t_i = 1 + beta*y_i`` (the ``e^{-gamma}`` of equivariant
+K-theory) every coefficient is a Laurent polynomial: the atoms are monomials, so plain
+expansion collects everything and the denominator is read off as the monomial of negative
+exponents.  No gcd is ever computed.  Passing to ``t`` first also keeps the expansion small:
+the unexpanded kernel output is a tower of products of atoms, which in ``y`` expands to
+thousands of monomials before cancelling and in ``t`` collapses immediately.
+
 <a id="schubmult.mult.groth_double.groth_elem_sym_func"></a>
 
 #### groth\_elem\_sym\_func
 
 ```python
-def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta)
+def groth_elem_sym_func(k: int, i: int, u1: Permutation, u2: Permutation,
+                        v1: Permutation, v2: Permutation, vdiff: int,
+                        varl1: GeneratingSet_base, varl2: GeneratingSet_base,
+                        beta: Expr) -> Expr
 ```
 
 Expression form of ``_groth_elem_sym_frac``; see there for the rule.
+
+<a id="schubmult.mult.groth_double.dgroth_phantom_expansion"></a>
+
+#### dgroth\_phantom\_expansion
+
+```python
+def dgroth_phantom_expansion(v: PermLike,
+                             var3: Alphabet | None = None,
+                             beta: Expr | None = None,
+                             th: Iterable[int] | None = None) -> PermCoeffDict
+```
+
+Expand ``G_v(x, var3)`` in double Schubert polynomials of the formal-inverse alphabet.
+
+Returns ``{sigma: coeff}`` with
+
+    G_v(x; z) = prod_i (1 + beta*x_i)^{lambda'_i} * sum_sigma coeff_sigma(beta, z) S_sigma((-)x; z),
+
+where ``lambda = th`` is a dominant shape with ``l(v^{-1} mu) = l(mu) - l(v)`` for
+``mu = uncode(lambda)`` (default ``theta(v^{-1})``, the shape of the v-path; the quantum
+kernel passes ``strict_theta(v^{-1})``), ``lambda'`` its conjugate, ``(-)x = -x/(1 + beta*x)``
+and the coefficients are polynomials in ``beta`` and the atoms ``1 + beta*z_t``.  Every
+``sigma`` satisfies the same length condition as ``v``, so the classical v-path over
+``lambda`` applies to each term.
+
+Derivation.  With ``mu`` dominant, ``G_v(x; z) = pi_w G_{mu^{-1}}(x; z)`` for isobaric divided
+differences ``pi_i = d_i (1 + beta*z_{i+1})`` acting on ``z``, ``w = (v mu)^{-1}``.  Taking the
+reduced word of ``w`` from the code ``c`` of ``v mu`` -- blocks ``s_{j+c_j-1} ... s_{j+1} s_j``,
+block ``1`` outermost -- every ``1 + beta*z`` commutes to the right within a block:
+
+    pi_{j+c_j-1} ... pi_j  =  d_{j+c_j-1} ... d_j o prod_{t=j+1}^{j+c_j} (1 + beta*z_t).
+
+So ``G_v`` is a composition of *ordinary* divided differences interleaved with
+multiplications by "phantom" factors ``1 + beta*z_t``, applied to
+``G_{mu^{-1}}(x; z) = prod_i (1+beta x_i)^{lambda'_i} (-1)^{|lambda|} S_{mu^{-1}}((-)x; z)``.
+Each ``d_i`` is distributed by the twisted Leibniz rule with the honest operator on the
+Schubert factor (``d_i^z S_sigma(a; z) = -S_{s_i sigma}(a; z)`` on a left descent, else ``0``,
+the v-path's ``monoperm`` pruning) and the skew operators on the phantoms, which only
+relabel (``s_i``) or consume a phantom (``d_i (1 + beta*z_t) = +-beta``).  The state is
+``(sigma, multiset of surviving phantoms)``; no polynomial arithmetic occurs.
+
+<a id="schubmult.mult.groth_double.dgroth_positive_phantom_expansion"></a>
+
+#### dgroth\_positive\_phantom\_expansion
+
+```python
+def dgroth_positive_phantom_expansion(
+        v: PermLike,
+        var3: Alphabet | None = None,
+        beta: Expr | None = None,
+        th: Iterable[int] | None = None) -> PermCoeffDict
+```
+
+Return sign-normalized phantom coefficients, certifying positivity in ``A_t = 1 + beta*z_t``.
+
+Defaults to the staircase ``(n-1, ..., 1)`` with ``n = len(Permutation(v))``.
+This length is at least two, including for the identity.
+Pass ``th`` explicitly to choose a larger staircase or another dominant shape.
+For the same shape, the result is ``(-1)**v.inv * dgroth_phantom_expansion(...)``:
+
+    G_v(x; z) = (-1)**v.inv prod_i (1 + beta*x_i)**lambda'_i
+                * sum_sigma result[sigma] S_sigma((-)x; z).
+
+Each returned coefficient is a sum of terms
+``m * beta**(sigma.inv - v.inv) * prod_t A_t`` with positive integer ``m``.
+The recurrence uses signed integer contributions, but checks that their net
+multiplicities are nonnegative after every divided difference. Positivity
+in all ranks is conjectural: a negative multiplicity raises ``ValueError``,
+never an absolute value or a fallback. No combinatorial realization or
+subtraction-free recurrence is asserted.
+
+<a id="schubmult.mult.groth_double.dgroth_copipe_expansion"></a>
+
+#### dgroth\_copipe\_expansion
+
+```python
+def dgroth_copipe_expansion(v: PermLike,
+                            var3: Alphabet | None = None,
+                            beta: Expr | None = None,
+                            n: int | None = None) -> PermCoeffDict
+```
+
+Conjectural unsigned staircase expansion, using reduced dreams with possibly unreduced complements.
+
+Returns the sign-normalized coefficients of ``dgroth_phantom_expansion``
+with ``th = (n-1, ..., 1)``; ``n`` defaults to ``len(Permutation(v))``.
+For each reduced pipe dream ``D`` of ``sigma*w0``, keep ``D`` when
+``v <= Demazure(co(D))`` in Bruhat order, and contribute
+
+    beta**(sigma.inv - v.inv) * prod_{(r,c) in crosses(D)} (1 + beta*var3[c]).
+
+Complementation is in the fixed rank-n staircase, even when the dream's
+permutation has a shorter window. There is no reducedness requirement on
+``co(D)``. Agreement with the phantom recurrence is experimental, not a
+theorem. This enumerates reduced dreams across S_n and is intended for
+small-rank research, not as a replacement for the multiplication kernel.
+The basis is ``S_sigma((-)x; z)`` with the staircase prefactor, not the
+ordinary double Schubert basis ``S_sigma(x; z)``.
+
+<a id="schubmult.mult.groth_double.dgroth_to_dschub_positive"></a>
+
+#### dgroth\_to\_dschub\_positive
+
+```python
+def dgroth_to_dschub_positive(v: PermLike,
+                              var3: Alphabet | None = None,
+                              beta: Expr | None = None) -> PermCoeffDict
+```
+
+Expand ``G_v(x; z)`` in ordinary double Schubert polynomials ``S_w(x; z)`` as a manifestly
+nonnegative sum over combinatorial objects: ``{w: a_w}`` with ``a_w`` in ``N[beta, z]``.
+
+No change of variables and no signed term occurs at any stage.  The formula composes
+three sign-free expansions, each in the original alphabets:
+
+1. Cauchy factorization over Demazure products (Fomin--Kirillov type)::
+
+       G_v(x; z) = sum_{u * v' = v} beta^(l(u) + l(v') - l(v)) G_{u^{-1}}(z) G_{v'}(x),
+
+   the sum over pairs ``(u, v')`` with Demazure product ``u @ v' == v``; ``G_{u^{-1}}(z)`` is the single
+   Grothendieck polynomial, a sum over (unreduced) pipe dreams ``P`` of ``u^{-1}`` with weight
+   ``beta^(|P| - l(u)) z^wt(P)``.
+2. Single Grothendieck to single Schubert: ``G_{v'}(x) = sum_{u'} beta^(l(u') - l(v')) c_{v', u'} S_{u'}(x)``
+   with ``c_{v', u'}`` the nonnegative integers of ``WCGraph.groth_to_schub`` (WC graphs ``D`` of
+   ``v'`` whose co-pipe-dream is reduced for ``u' w_0``).
+3. Single to double Schubert: ``S_{u'}(x) = sum_{u' = a w, l(a) + l(w) = l(u')} S_a(z) S_w(x; z)``,
+   ``S_a(z)`` a sum over reduced pipe dreams ``R`` of ``a`` with weight ``z^wt(R)``.
+
+Hence ``a_w`` is the weight generating function of triples ``(P, D, R)`` as above with
+``u * v' = v``, ``co(D) = u' w_0``, ``a w = u'``, weighted by ``beta^(|P| + l(u') - l(v))``
+times ``z^wt(P) z^wt(R)``: the pipe dream ``P`` carries its own ``beta^(|P| - l(u))`` from step
+1, which combines with the Cauchy and Grothendieck-to-Schubert powers ``beta^(l(u) + l(u') - l(v))``.
+Every weight is a monomial with coefficient ``+1``, so ``a_w``
+has nonnegative integer coefficients.  Agrees with ``dgroth_to_dschub`` for every ``v`` in
+``S_4`` and on samples in ``S_5``.  Enumerates the Bruhat interval below ``v`` twice; this is a
+research implementation, not a replacement for the multiplication kernel.
+
+<a id="schubmult.mult.groth_double.double_groth_times_double_schub"></a>
+
+#### double\_groth\_times\_double\_schub
+
+```python
+def double_groth_times_double_schub(groth_perm: PermLike,
+                                    schub_perm: PermLike,
+                                    coeffvar_groth: Alphabet | None = None,
+                                    coeffvar_schub: Alphabet | None = None,
+                                    beta: Expr | None = None) -> PermCoeffDict
+```
+
+``G_u(x; coeffvar_groth) * S_v(x; coeffvar_schub)`` expanded in the basis ``{G_w(x; coeffvar_groth)}``.
+
+This is the mixed product at the heart of ``grothmult_double``: a double Grothendieck polynomial
+times a double Schubert polynomial, computed by the v-path kernel ``_groth_schub_vpath_mul``
+(``S_v`` is expanded layer by layer over ``theta(v^{-1})`` as in ``schubmult_double``, with the
+K-theoretic Pieri coefficients ``_groth_elem_sym_frac``).  ``grothmult_double`` is this summed
+over the ``dgroth_to_dschub`` expansion of ``G_v`` in double Schubert polynomials.
+
+**Arguments**:
+
+- `groth_perm` - Permutation ``u`` indexing the double Grothendieck factor.
+- `schub_perm` - Permutation ``v`` indexing the double Schubert factor.
+- `coeffvar_groth` - Coefficient alphabet of ``G_u`` (and of the output basis); default ``y``.
+- `coeffvar_schub` - Coefficient alphabet of ``S_v``; default ``z``.
+- `beta` - K-theory parameter; defaults to ``schubmult.abc.beta``.
+  
+
+**Returns**:
+
+- `dict` - ``{w: coeff_w}`` with nonzero ``coeff_w`` rational in ``coeffvar_groth`` (denominators
+  are products of ``1 + beta*y_i``), polynomial in ``coeffvar_schub`` and ``beta``.
 
 <a id="schubmult.mult.groth_double.grothmult_double"></a>
 
 #### grothmult\_double
 
 ```python
-def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None)
+def grothmult_double(perm_dict: PermCoeffDict,
+                     v: PermLike,
+                     var2: Alphabet | None = None,
+                     var3: Alphabet | None = None,
+                     beta: Expr | None = None) -> PermCoeffDict
 ```
 
 Multiply double Grothendieck polynomials, mirroring ``schubmult_double``.
@@ -11082,13 +11489,12 @@ Multiply double Grothendieck polynomials, mirroring ``schubmult_double``.
 Computes the expansion of ``sum_u coeff_u G_u(x, var2) * G_v(x, var3)`` in
 the basis ``{G_w(x, var2)}`` and returns it as ``{w: coeff_w}``.
 
-``v = s_k`` uses the verified chain formula of Corollary 8.2, and
-``max_descent == 1`` folds that column by column.  General ``v`` goes through
-``dgroth_to_dschub`` (exact, slow) and the conjectural vpath kernel
-``_groth_schub_vpath_mul``, one run per double Schubert ``S_{v'}`` in the
-expansion of ``G_v``.
-
-The chain rank is inferred from the current permutation and selected positions.
+``G_v`` is never expanded in double Schubert polynomials of ``x``: the
+Grothendieck v-path kernel ``_groth_groth_vpath_mul`` runs the classical v-path
+over ``theta(v^{-1})`` directly on ``G_v``, using ``dgroth_phantom_expansion`` for
+the handful of ``S_sigma((-)x, var3)`` tops and the closed K-Pieri coefficients
+``_tilde_elem_sym_frac`` (conjectural, like ``grothmult_double_top``; verified
+against the polynomial identity through ``S_4 x S_4``).
 
 <a id="schubmult.mult.groth_quantum"></a>
 
@@ -11202,18 +11608,21 @@ specializations against the Maeno--Naito--Sagaki presentation
 
 Molev--Sagan assembly
 ---------------------
-``S_{v'}(x; z)`` is a sum over strict-theta v-paths of products of factorial elementary symmetric
-polynomials ``E_{p,k}(x; z)`` with strictly decreasing ``k``.  Each ``E_{p,k}`` is symmetric in
-``x_1..x_k`` and of degree ``<= 1`` in each variable, hence a combination of the
-``e_l(X_1..X_k)``, so the product is a combination of standard elementary monomials and
-``Q`` is multiplicative on it: ``Q(S_{v'}(x; z))`` is the same v-path sum with ``Q(E_{p,k})``.
-Since ``E_{k-q,k}(x; z_1..z_{q+1}) = (-1)^q d^z_q ... d^z_1 prod_{i<=k}(x_i - z_1)`` and ``Q``
-commutes with the ``z``-divided differences, the coefficient of ``G^q_{u2}`` in
-``Q(E_{k-q,k}(x; z)) G^q_{u1}(x; y)`` is ``_groth_elem_sym_frac`` with ``l(u2) - l(u1)`` replaced
-by the chain length and the quantum weight ``q^D`` attached.  Chaining the layers of the v-path
-recursion exactly as ``schubmult_q_double`` does gives ``G^q_u(x; y) Q(S_{v'}(x; z))``, and
-``dgroth_to_dschub`` (``G_v = sum c_{v'} S_{v'}``, ``Q`` linear over ``z, beta``) turns that into
-``G^q_u(x; y) G^q_v(x; z)``.
+``dgroth_phantom_expansion`` writes ``G_v(x; z) = prod_i (1 + beta*x_i)^{lambda'_i} sum_sigma c_sigma
+S_sigma((-)x; z)`` over the strict-theta shape ``lambda``, and each ``S_sigma((-)x; z)`` is a sum
+over strict-theta v-paths of products of ``E_{p,k}((-)x; z)`` with strictly decreasing ``k``.
+Absorbing the prefactor layer by layer, the layer factor is
+``F = prod_{j<=k}(1 + beta*x_j) E_{p,k}((-)x; z)``, symmetric in ``x_1..x_k`` and of degree ``<= 1``
+in each variable, hence a combination of the ``e_l(X_1..X_k)``; the product over layers is a
+combination of standard elementary monomials and ``Q`` is multiplicative on it: ``Q(G_v(x; z))``
+is the same v-path sum with ``Q(F)``.  The top block ``F_{q=0} = prod_{i<=k}(x_i (+) z_1)`` is
+``grothmult_q_double_top`` up to the rescaling of ``z``, the general ``q`` follows by the strip
+``pihat_q ... pihat_1`` in ``z`` which commutes with ``Q``, so the coefficient of ``G^q_{u2}`` in
+``Q(F) G^q_{u1}(x; y)`` is ``_tilde_elem_sym_frac`` with ``l(u2) - l(u1)`` replaced by the chain
+length and the quantum weight ``q^D`` attached.  Chaining the layers of the v-path recursion
+exactly as ``schubmult_q_double`` does gives ``G^q_u(x; y) G^q_v(x; z)``
+(``_qgroth_groth_vpath_mul``).  ``_qgroth_schub_vpath_mul`` is the same recursion for a quantum
+double Schubert factor ``Q(S_{v'}(x; z))`` with the classical layer factor ``E_{p,k}(x; z)``.
 
 <a id="schubmult.mult.groth_quantum_double.quantum_pieri_chains"></a>
 
@@ -11221,7 +11630,8 @@ recursion exactly as ``schubmult_q_double`` does gives ``G^q_u(x; y) Q(S_{v'}(x;
 
 ```python
 @cache
-def quantum_pieri_chains(u, k)
+def quantum_pieri_chains(
+        u: PermLike, k: int) -> dict[Permutation, tuple[int, tuple[int, ...]]]
 ```
 
 Endpoints of the Naito--Sagaki ``k``-Pieri chains from ``u`` in the quantum Bruhat graph.
@@ -11244,12 +11654,13 @@ undefined.
 #### grothmult\_q\_double\_top
 
 ```python
-def grothmult_q_double_top(coeff_dict,
-                           k,
-                           zvar=None,
-                           var2=None,
-                           beta=None,
-                           q_var=None)
+def grothmult_q_double_top(
+        coeff_dict: PermCoeffDict,
+        k: int,
+        zvar: Expr | None = None,
+        var2: Alphabet | None = None,
+        beta: Expr | None = None,
+        q_var: GeneratingSet_base | None = None) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G^q_u(x, var2)`` by the quantized top block ``Q(prod_{i<=k}(x_i + zvar))``.
@@ -11264,7 +11675,13 @@ The multiplier is ``groth_elem_sym_poly_q(k, k, zvar, x, beta, q_var, fgl=False)
 #### groth\_elem\_sym\_poly\_q
 
 ```python
-def groth_elem_sym_poly_q(p, k, zvar, var_x, beta, q_var=None, fgl=True)
+def groth_elem_sym_poly_q(p: int,
+                          k: int,
+                          zvar: Expr,
+                          var_x: Alphabet,
+                          beta: Expr,
+                          q_var: GeneratingSet_base | None = None,
+                          fgl: bool = True) -> Expr
 ```
 
 Quantization of ``groth_elem_sym_poly``: ``Q(e_p(x_1 (+) z, ..., x_k (+) z))``.
@@ -11278,14 +11695,14 @@ degree ``<= 1`` in each variable, so ``lm_quantize`` with ``k + 1`` slots applie
 #### grothmult\_q\_double\_pieri
 
 ```python
-def grothmult_q_double_pieri(coeff_dict,
-                             p,
-                             k,
-                             zvar=None,
-                             var2=None,
-                             beta=None,
-                             q_var=None,
-                             fgl=True)
+def grothmult_q_double_pieri(coeff_dict: PermCoeffDict,
+                             p: int,
+                             k: int,
+                             zvar: Expr | None = None,
+                             var2: Alphabet | None = None,
+                             beta: Expr | None = None,
+                             q_var: GeneratingSet_base | None = None,
+                             fgl: bool = True) -> PermCoeffDict
 ```
 
 Multiply ``sum_u coeff_u G^q_u(x, var2)`` by ``groth_elem_sym_poly_q(p, k, zvar, x, beta, q_var, fgl)``.
@@ -11299,12 +11716,13 @@ fold ``grothmult_double_pieri``.
 #### grothmult\_q\_double
 
 ```python
-def grothmult_q_double(perm_dict,
-                       v,
-                       var2=None,
-                       var3=None,
-                       beta=None,
-                       q_var=None)
+def grothmult_q_double(
+        perm_dict: PermCoeffDict,
+        v: PermLike,
+        var2: Alphabet | None = None,
+        var3: Alphabet | None = None,
+        beta: Expr | None = None,
+        q_var: GeneratingSet_base | None = None) -> PermCoeffDict
 ```
 
 Multiply quantum double Grothendieck polynomials, mirroring ``schubmult_q_double``.
@@ -11313,8 +11731,8 @@ Returns the expansion of ``sum_u coeff_u G^q_u(x, var2) * G^q_v(x, var3)`` in th
 ``{G^q_w(x, var2)}`` as ``{w: coeff_w}``, coefficients rational in ``var2`` (denominators
 are products of ``1 + beta*var2[a]``) and polynomial in ``var3``, ``beta``, ``q``.
 
-``G^q_v(x, var3)`` is expanded through ``dgroth_to_dschub`` and one run of the quantum
-v-path kernel ``_qgroth_schub_vpath_mul`` per double Schubert term.  At ``q = 0`` this is
+Computed by the quantum Grothendieck v-path ``_qgroth_groth_vpath_mul`` (no expansion of
+``G^q_v`` in quantum double Schubert polynomials).  At ``q = 0`` this is
 ``grothmult_double``; at ``beta = 0`` it is ``schubmult_q_double``.
 
 <a id="schubmult.mult.groth_quantum_double.grothmult_q_double_dict"></a>
@@ -11322,22 +11740,71 @@ v-path kernel ``_qgroth_schub_vpath_mul`` per double Schubert term.  At ``q = 0`
 #### grothmult\_q\_double\_dict
 
 ```python
-def grothmult_q_double_dict(perm_dict1,
-                            perm_dict2,
-                            var2=None,
-                            var3=None,
-                            beta=None,
-                            q_var=None)
+def grothmult_q_double_dict(
+        perm_dict1: PermCoeffDict,
+        perm_dict2: PermCoeffDict,
+        var2: Alphabet | None = None,
+        var3: Alphabet | None = None,
+        beta: Expr | None = None,
+        q_var: GeneratingSet_base | None = None) -> PermCoeffDict
 ```
 
 Product of two coefficient dicts: ``sum_v coeff2_v grothmult_q_double(perm_dict1, v, ...)``.
+
+<a id="schubmult.mult.groth_quantum_double.apply_kato"></a>
+
+#### apply\_kato
+
+```python
+def apply_kato(coeff_dict: PermCoeffDict,
+               parabolic_index: Iterable[int],
+               q_var: GeneratingSet_base | None = None,
+               n: int | None = None,
+               beta: Expr | None = None) -> PermCoeffDict
+```
+
+Project a full-flag quantum K product onto ``QK_T(G/P)`` for the parabolic ``parabolic_index``.
+
+Kato (arXiv:1906.09343, Theorem 2.19): ``QK_T(G/B) -> QK_T(G/P)``, ``O^w -> O^{[w]_P}`` with
+``[w]_P`` the minimal representative of ``w W_P``, ``q_j -> 1`` for ``j`` in ``P``, is a ring
+homomorphism -- unlike quantum cohomology, where the comparison is Peterson--Woodward's
+term-by-term lift (``quantum_double.apply_peterson_woodward``).  That statement is at
+``beta = -1``.  Conjugating by the regrading isomorphisms ``G^{(beta)}_w = (-beta)^{l(w)} G^{(-1)}_w``,
+``q_i = (-beta)^{deg q_i} q_i^{(-1)}`` on both sides gives the ``beta``-homogeneous form
+implemented here, valid identically in ``beta``:
+
+G_w      ->  (-beta)^{l([w]_P) - l(w)} G_{[w]_P},
+q_j      ->  beta^{-2}                              (j in P),
+q_i      ->  (-beta)^{deg_P(q_i) - 2} q_{i'}        (i not in P),
+
+where ``deg_P(q_i)`` is the ``c_1`` degree of the corresponding curve class of ``G/P``, the sum
+of the sizes of the two blocks meeting at ``i``, and ``i'`` reindexes the surviving ``q``
+consecutively as in ``apply_peterson_woodward``.  ``coeff_dict`` should be a product of
+Schubert classes of ``G/P`` (minimal coset representatives): its image is then polynomial in
+``beta`` (the ``beta^{-1}`` of individual terms cancel) and is the ``QK_T(G/P)`` product,
+homogeneous for ``deg beta = -1``, ``deg q_i = deg_P(q_i)``.  The map is defined on all of
+``QK_T(Fl_n)`` but a non-minimal ``G_w`` is not a class of ``G/P``; its image carries
+``beta^{-1}``.
+
+**Arguments**:
+
+- `coeff_dict` - Full-flag coefficient dict ``{Permutation: coeff}``.
+- `parabolic_index` - 1-indexed simple reflections ``s_j`` generating ``W_P``.
+- `q_var` - Quantum parameter generating set.
+- `n` - Ambient ``S_n``; terms indexed by longer permutations are dropped.  Defaults to
+  ``parabolic_index[-1] + 1``.
+- `beta` - K-theory parameter; defaults to ``schubmult.abc.beta``.
 
 <a id="schubmult.mult.groth_quantum_double.quantum_elem_sym"></a>
 
 #### quantum\_elem\_sym
 
 ```python
-def quantum_elem_sym(l, k, var_x, beta, q_var=None)
+def quantum_elem_sym(l: int,
+                     k: int,
+                     var_x: Alphabet,
+                     beta: Expr,
+                     q_var: GeneratingSet_base | None = None) -> Expr
 ```
 
 ``F^k_l(X) = sum_{J in [k], |J| = l} prod_{j in J, j+1 not in J} (1 - beta^2 q_j) prod_{j in J} X_j``, ``X_j = 1 + beta*x_j``.
@@ -11351,7 +11818,11 @@ belongs to the defining ideal of ``QK_T(Fl_N)``, not to the polynomials.
 #### lm\_quantize
 
 ```python
-def lm_quantize(poly, N, var_x, beta, q_var=None)
+def lm_quantize(poly: Expr,
+                N: int,
+                var_x: Alphabet,
+                beta: Expr,
+                q_var: GeneratingSet_base | None = None) -> Expr
 ```
 
 Lenart--Maeno quantization of a polynomial in ``x_1..x_{N-1}`` of degree ``<= N - i`` in ``x_i``.
@@ -11367,7 +11838,11 @@ is polynomial in ``beta``.  Raises if ``poly`` is not in the span.
 #### qgroth\_poly
 
 ```python
-def qgroth_poly(v, var_x=None, var_y=None, beta=None, q_var=None)
+def qgroth_poly(v: PermLike,
+                var_x: Alphabet | None = None,
+                var_y: Alphabet | None = None,
+                beta: Expr | None = None,
+                q_var: GeneratingSet_base | None = None) -> Expr
 ```
 
 The quantum double Grothendieck polynomial ``G^q_v(var_x; var_y)`` as an explicit expression.
@@ -11949,7 +12424,8 @@ def schubmult_q_double_fast(perm_dict,
                             v,
                             var2=None,
                             var3=None,
-                            q_var=_vars.q_var)
+                            q_var=_vars.q_var,
+                            probabilistic=False)
 ```
 
 Multiply ``sum_u coeff_u S_u(x, var2)`` by the quantum double Schubert polynomial ``S_v(x, var3)``.
@@ -11965,6 +12441,10 @@ alphabets are given), falling back to ``_schubmult_q_double_fast_python`` (the
 - `var2` - Secondary alphabet attached to ``perm_dict``'s permutations.
 - `var3` - Secondary alphabet attached to ``v``.
 - `q_var` - Quantum parameter generating set.
+- `probabilistic` - Drop intermediate states (and output terms) whose coefficient
+  vanishes at two random points of a prime field -- zero as a polynomial up to a
+  probability of error around ``1e-26`` (see :mod:`schubmult.mult._shadow`), as for
+  :func:`schubmult.mult.double.schubmult_double`.
   
 
 **Returns**:
@@ -12262,6 +12742,87 @@ its first ``N`` and remaining ``len(perm) - N`` values.
 **Returns**:
 
 - `dict` - Mapping ``{(firstperm, secondperm): coeff}``.
+
+<a id="schubmult.mult.transition"></a>
+
+# schubmult.mult.transition
+
+Ordinary Schubert products by transition + Monk, and the cost-model hybrid with `schubmult_py`.
+
+This is the algorithm of Buch's ``lrcalc``: expand one factor into monomials with the
+Lascoux--Schützenberger transition recursion ``S_w = x_r S_v + sum_i S_{v t_{ir}}`` (``r`` the last
+descent of ``w``), then multiply the monomials into the other factor one variable at a time by Monk's
+rule, as a Horner scheme over the Schubert basis.  Its cost is governed by the number of pipe dreams
+of the expanded factor, where the v-path kernel's is governed by the size of its v-path structure;
+the two are complementary, and `schubmult_py_hybrid` picks between them with a cost model fitted on
+exhaustive timings over ``S_7`` (see ``cpp/kernel_transition.h``).
+
+The compiled kernels in ``schubmult_cpp`` do the work; the Python implementations here are the
+reference and the fallback for permutations beyond the extension's ``MAXN``.
+
+<a id="schubmult.mult.transition.Monomial"></a>
+
+#### Monomial
+
+Exponent vector ``(a_1, a_2, ...)`` of ``x_1^{a_1} x_2^{a_2} ...``, trailing zeros trimmed.
+
+<a id="schubmult.mult.transition.transition_monomials"></a>
+
+#### transition\_monomials
+
+```python
+def transition_monomials(w: PermLike) -> dict[Monomial, int]
+```
+
+The monomial expansion of ``S_w`` as ``{exponent vector: coefficient}`` by the transition recursion.
+
+<a id="schubmult.mult.transition.mult_monomials_py"></a>
+
+#### mult\_monomials\_py
+
+```python
+def mult_monomials_py(perm_dict: PermCoeffDict,
+                      monomials: dict[Monomial, int]) -> PermCoeffDict
+```
+
+``(sum_u coeff_u S_u) * (sum of monomials)`` in the Schubert basis, Horner over the variables with Monk's rule.
+
+<a id="schubmult.mult.transition.pipe_dream_count"></a>
+
+#### pipe\_dream\_count
+
+```python
+def pipe_dream_count(w: PermLike) -> int
+```
+
+``S_w(1, ..., 1)``, the number of pipe dreams (RC graphs) of ``w``.
+
+<a id="schubmult.mult.transition.schubmult_py_transition"></a>
+
+#### schubmult\_py\_transition
+
+```python
+def schubmult_py_transition(perm_dict: PermCoeffDict,
+                            v: PermLike) -> PermCoeffDict
+```
+
+``(sum_u coeff_u S_u) * S_v`` by expanding ``S_v`` into monomials and multiplying them in by Monk's rule.
+
+Same contract as `schubmult_py`; faster when ``v`` has few pipe dreams relative to the size of
+its v-path structure (many descents, large theta entries), slower otherwise.
+
+<a id="schubmult.mult.transition.schubmult_py_hybrid"></a>
+
+#### schubmult\_py\_hybrid
+
+```python
+def schubmult_py_hybrid(perm_dict: PermCoeffDict,
+                        v: PermLike) -> PermCoeffDict
+```
+
+``(sum_u coeff_u S_u) * S_v`` by whichever of `schubmult_py` and `schubmult_py_transition` a cost model predicts to be faster.
+
+For a single ``u`` either factor may be expanded or recursed on; for several only ``v`` is.
 
 <a id="schubmult.rings"></a>
 
@@ -13060,6 +13621,46 @@ Tensor-like algebra on tuples of full Grassmannian WC graphs.
 
 Basis keys are tuples (g1, ..., gk) where each gi is a full Grassmannian
 WC graph. Simplification rules
+
+<a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorAlgebra.groth_elem_factor"></a>
+
+#### groth\_elem\_factor
+
+```python
+def groth_elem_factor(p, k, size, beta=1)
+```
+
+The Grothendieck v-path layer factor ``Etilde_{p,k}(x; 0)`` as elementary Grothendieck WC graphs.
+
+``Etilde_{p,k}(x; 0) = sum_{|I|=p} x_I prod_{j<=k, j not in I} (1 + beta*x_j)
+= G_{1^p}(x_1..x_k) + beta * G_{1^{p+1}}(x_1..x_k)``, a two-term sum of elementary
+Grothendieck polynomials (compare ``elem_sym``, which expands ``e_p`` over *all*
+``G_{1^{p'}}``, ``p' >= p``).  Each ``G_{1^{p'}}`` is the sum of its WC graphs weighted
+``beta**(crossings - p')``, so every graph here carries ``beta**(crossings - p)``.
+Variables beyond ``size`` are zero, which truncates ``k`` to ``size``.
+
+<a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorAlgebra.full_groth_elem"></a>
+
+#### full\_groth\_elem
+
+```python
+@cache
+def full_groth_elem(perm, length, beta=1)
+```
+
+``G_perm(x_1..x_length)`` as a sum of tensors of elementary Grothendieck WC graphs.
+
+Uses the Grothendieck v-path (``schubmult.mult.groth_double``) directly instead of
+passing through Schubert polynomials: with ``lambda = theta(perm^{-1})``,
+
+    G_perm(x) = sum_sigma c_sigma(beta) sum_{v-paths of sigma} prod_c s_c (-1)^{p_c} Etilde_{p_c, k_c}(x; 0),
+
+where ``dgroth_phantom_expansion`` (at ``z = 0``) supplies the handful of tops ``sigma``
+with their coefficients, the v-paths are those of ``compute_vpathdicts`` over ``lambda``
+with layer factor ``E_{k - vdiff, k}`` and sign ``s`` exactly as for Schubert polynomials,
+and ``Etilde = prod_{j<=k}(1 + beta*x_j) E_{p,k}((-)x; 0)`` is ``groth_elem_factor``.  The
+layers are folded top-down (increasing ``k``, the multiplication order of
+``full_schub_elem``) so the tops merge as soon as their paths meet.
 
 <a id="schubmult.rings.combinatorial.bounded_wc_factor_algebra.BoundedWCFactorAlgebra.key_to_wc_graph"></a>
 
@@ -20965,11 +21566,13 @@ Localize at the torus fixed point ``perm``: substitute ``x_i -> (-) y_{perm(i)}`
 def simplify(factor=True)
 ```
 
-Return a copy with each coefficient put in cancelled (and, by default, factored) rational
-normal form in ``y`` and ``beta``, dropping terms whose coefficient simplifies to zero.
+Return a copy with each coefficient in cancelled normal form ``numer / prod (1 + beta*y_i)**e``,
+dropping terms whose coefficient is zero; with ``factor=True`` the numerator is also factored.
 
 Products in this ring leave coefficients as unsimplified rational expressions; this
-makes them readable, e.g. ``(y_1 - y_2)/(1 + beta*y_2)``.
+makes them readable, e.g. ``(y_1 - y_2)/(1 + beta*y_2)``. Cancellation is done in the
+multiplicative variables ``1 + beta*y_i`` (`schubmult.mult.groth_double.normalize_coeff`),
+where it is a plain expansion; only the optional factoring of the numerator uses sympy.
 
 <a id="schubmult.rings.schubert.double_grothendieck_ring.DoubleGrothendieckRing"></a>
 
@@ -21368,6 +21971,28 @@ def divdiff_perm(perm)
 ```
 
 Apply ``partial_w`` for ``w = perm``, peeling simple reflections from the last descent.
+
+<a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.skew_divdiff"></a>
+
+#### skew\_divdiff
+
+```python
+def skew_divdiff(w, v)
+```
+
+Skew divided difference ``partial_{w/v}`` acting on the ``x`` variables, as a ring element.
+
+``partial_{w/v}`` (Macdonald, normalized as in Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is characterized by the
+generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``; it vanishes unless
+``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w`` and ``partial_{w/w} = w`` permutes the variables.
+On a double Schubert polynomial it is a mixed-alphabet structure constant (Samuel; Proposition 2.7 of Hwang):
+
+    partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x),   where  S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t),
+
+so each basis term costs one ``schubmult_double`` call with the ``x`` alphabet in the role of ``t``.
+The result has degree ``l(u) + l(v) - l(w)``; for ``l(w) = l(u) + l(v)`` it is the structure constant
+``c^w_{u,v}(y, x)`` and, at ``y = 0``, the ordinary ``c^w_{u,v}``.  By Hwang's Theorem 1.2, every
+coefficient is itself a single such constant via `schubmult.utils.perm_utils.block_lift`.
 
 <a id="schubmult.rings.schubert.double_schubert_ring.DoubleSchubertElement.isobaric_perm"></a>
 
@@ -23846,11 +24471,13 @@ Shared machinery for Sage parents backed by schubmult rings.
 
 A backed ring is a :class:`~sage.combinat.free_module.CombinatorialFreeModule` indexed by
 permutations whose base ring is an infinite polynomial ring over the scalars in the coefficient
-alphabets (``y``, ``z``, ``q``, ...). Arithmetic is delegated to a schubmult ring object
+alphabets (``y``, ``z``, ``q``, ...) -- or, with ``raw_coefficients=True``, the ring of unexpanded
+SymEngine expressions (:class:`~schubmult.sage.symengine_ring.SymEngineRing`), in which case the
+kernel output is used as is. Arithmetic is delegated to a schubmult ring object
 (:meth:`SchubmultBackedRing._schub_ring`) and coefficients are converted at the boundary.
 
 Index conventions: Sage variables are 0-indexed (``x0``, ``y_0``, ``q_0``), schubmult's are 1-indexed
-(``x_1``, ``y_1``, ``q_1``); see :mod:`schubmult.sage._convert`.
+(``x_1``, ``y_1``, ``q_1``); see :mod:`schubmult.sage._convert`. Raw coefficients keep schubmult's names.
 
 <a id="schubmult.sage._common.coefficient_into"></a>
 
@@ -24131,7 +24758,9 @@ Arbitrary polynomials in `x` and the alphabets are expanded in the basis::
 ```python
 def DoubleSchubertPolynomialRing(R,
                                  alphabet="y",
-                                 coefficient_alphabets=("y", "z"))
+                                 coefficient_alphabets=("y", "z"),
+                                 raw_coefficients=False,
+                                 probabilistic=False)
 ```
 
 Return the ring of double Schubert polynomials `\mathfrak{S}_w(x; \text{alphabet})` over ``R``.
@@ -24144,6 +24773,16 @@ INPUT:
 - ``coefficient_alphabets`` -- (default: ``('y', 'z')``) letters available in coefficients;
   ``alphabet`` is always included. Rings over ``R`` with the same set of letters share a base
   ring, which is what lets elements of one coerce into another (mixed products).
+- ``raw_coefficients`` -- (default: ``False``) if ``True``, the base ring is the ring of unexpanded
+  SymEngine expressions (:class:`~schubmult.sage.symengine_ring.SymEngineRing`) and the structure
+  constants are kept in the factored form the kernel produces, with schubmult's 1-based variable
+  names; ``R`` must be ``ZZ`` or ``QQ``. Terms whose coefficient vanishes at two random points
+  modulo `2^{61} - 1` are dropped (the kernels cancel, and most terms of a large product are such),
+  so a product is correct up to a probability of error below `(d / 2^{61})^2`, `d` the degree.
+- ``probabilistic`` -- (default: ``False``) run the kernel with probabilistic zero testing
+  (:func:`schubmult.mult.double.schubmult_double` with ``probabilistic=True``): intermediate
+  states that vanish at two random points of a prime field are pruned, which removes most of the
+  work on large products; a product is wrong with probability around `10^{-26}`
 
 EXAMPLES::
 
@@ -24161,6 +24800,24 @@ EXAMPLES::
     (y_1-y_0)*X_y[2, 1] + X_y[3, 1, 2]
     sage: a = X([2, 1, 3]) + X([3, 1, 2, 4]); a^2
     (y_1-y_0)*X_y[2, 1] + (y_2^2-y_2*y_1-y_2*y_0+2*y_2+y_1*y_0-2*y_0+1)*X_y[3, 1, 2] + (y_3+y_2-y_1-y_0+2)*X_y[4, 1, 2, 3] + X_y[5, 1, 2, 3, 4]
+
+With unexpanded coefficients (note the 1-based variables)::
+
+    sage: Y = DoubleSchubertPolynomialRing(ZZ, raw_coefficients=True); Y
+    Double Schubert polynomial ring in the alphabet y with X_y basis over Integer Ring with unexpanded coefficients
+    sage: TestSuite(Y).run()
+    sage: f = Y([3, 1, 2]) * Y([3, 1, 2]) * Y([1, 3, 2]); f
+    ((-y_1+y_3)*(-y_2+y_3)**2)*X_y[3, 1, 2] + ((-y_1+y_3)*(-y_2+y_3))*X_y[3, 2, 1] + ((-y_1+y_3)*(-y_2+y_3)+(-y_1-y_2+y_3+y_4)*(-y_2+y_4))*X_y[4, 1, 2, 3] + (-y_1-y_2+y_3+y_4)*X_y[4, 2, 1, 3] + (-y_1-2*y_2+y_3+y_4+y_5)*X_y[5, 1, 2, 3, 4] + X_y[5, 2, 1, 3, 4] + X_y[6, 1, 2, 3, 4, 5]
+    sage: Y(X([3, 1, 2]) * X([3, 1, 2]) * X([1, 3, 2])) == f, X(f) == X([3, 1, 2]) * X([3, 1, 2]) * X([1, 3, 2])
+    (True, True)
+    sage: f.expand() == Y([3, 1, 2]).expand()^2 * Y([1, 3, 2]).expand()
+    True
+
+With probabilistic zero testing in the kernel::
+
+    sage: XP = DoubleSchubertPolynomialRing(ZZ, probabilistic=True)
+    sage: XP([3, 1, 2]) * XP([3, 1, 2]) * XP([1, 3, 2]) == X(X([3, 1, 2]) * X([3, 1, 2]) * X([1, 3, 2]))
+    True
 
 <a id="schubmult.sage.double_schubert.DoubleSchubertPolynomial_class"></a>
 
@@ -24232,7 +24889,7 @@ class DoubleSchubertPolynomialRing_xbasis(SchubmultBackedRing)
 #### \_\_init\_\_
 
 ```python
-def __init__(R, alphabet, alphabets)
+def __init__(R, alphabet, alphabets, raw=False, probabilistic=False)
 ```
 
 EXAMPLES::
@@ -24474,13 +25131,15 @@ its name inside the infinite polynomial ring (which only has indexed variables)
 #### GrothendieckPolynomialRing
 
 ```python
-def GrothendieckPolynomialRing(R)
+def GrothendieckPolynomialRing(R, raw_coefficients=False)
 ```
 
 Return the ring of `\beta`-Grothendieck polynomials `\mathfrak{G}^\beta_w(x)` over ``R``.
 
 The base ring is ``R[beta]``. Ordinary Schubert polynomials (elements of Sage's
 :func:`SchubertPolynomialRing`) and polynomials in ``x0, x1, ...`` (and ``beta``) coerce in.
+With ``raw_coefficients=True`` the coefficients are unexpanded SymEngine expressions, as for
+:func:`~schubmult.sage.DoubleSchubertPolynomialRing`.
 
 EXAMPLES::
 
@@ -24507,7 +25166,8 @@ EXAMPLES::
 ```python
 def DoubleGrothendieckPolynomialRing(R,
                                      alphabet="y",
-                                     coefficient_alphabets=("y", "z"))
+                                     coefficient_alphabets=("y", "z"),
+                                     raw_coefficients=False)
 ```
 
 Return the ring of double `\beta`-Grothendieck polynomials `\mathfrak{G}^\beta_w(x; \text{alphabet})` over ``R``.
@@ -24516,7 +25176,8 @@ The base ring is the fraction field of ``R[beta][alphabets]`` (see :class:`Groth
 equivariant K-theoretic structure constants are rational in `\beta` and the second alphabet, with
 denominators that are products of `1 + \beta y_i`. As for
 :func:`~schubmult.sage.DoubleSchubertPolynomialRing`, rings over ``R`` with the same set of letters
-share a base ring and coerce into each other (mixed products).
+share a base ring and coerce into each other (mixed products). With ``raw_coefficients=True`` the
+coefficients are kept as the kernel produces them (unexpanded, over the factored denominators).
 
 EXAMPLES::
 
@@ -24540,6 +25201,16 @@ through `x \oplus y`, whereas :func:`~schubmult.sage.DoubleSchubertPolynomialRin
     sage: p = GD([3, 1, 2]).expand(); T = p.parent()
     sage: q = DoubleSchubertPolynomialRing(QQ)([3, 1, 2]).expand()
     sage: p.subs({T('beta'): 0}) == T(q.subs({g: -g for g in q.parent().gens() if str(g).startswith('y')}))
+    True
+
+With unexpanded coefficients the denominators stay factored and `\beta` prints as the schubmult
+symbol; the numerators are exactly what the kernel produces::
+
+    sage: GR = DoubleGrothendieckPolynomialRing(QQ, raw_coefficients=True)
+    sage: TestSuite(GR).run()
+    sage: f = GR([3, 1, 2]) * GR([2, 1]); f
+    (-(-y_1+y_3)/(1+β*y_3))*G_y[3, 1, 2] + ((1+β*y_1)/(1+β*y_3))*G_y[4, 1, 2, 3]
+    sage: GD(f) == GD([3, 1, 2]) * GD([2, 1])
     True
 
 <a id="schubmult.sage.grothendieck.GrothendieckCoefficient"></a>
@@ -24626,7 +25297,7 @@ class GrothendieckPolynomialRing_gbasis(_GrothendieckMixin,
 #### \_\_init\_\_
 
 ```python
-def __init__(R)
+def __init__(R, raw=False)
 ```
 
 EXAMPLES::
@@ -24667,7 +25338,7 @@ class DoubleGrothendieckPolynomialRing_gbasis(_GrothendieckMixin,
 #### \_\_init\_\_
 
 ```python
-def __init__(R, alphabet, alphabets)
+def __init__(R, alphabet, alphabets, raw=False)
 ```
 
 EXAMPLES::
@@ -25281,7 +25952,7 @@ that is, `(y_5-y_3)(y_5-y_1)(y_2-y_1)[X^{(3,1)}] + (y_5-y_1)^2[X^{(3,2)}] + (y_5
 #### QuantumSchubertPolynomialRing
 
 ```python
-def QuantumSchubertPolynomialRing(R, parabolic=None)
+def QuantumSchubertPolynomialRing(R, parabolic=None, raw_coefficients=False)
 ```
 
 Return the ring of quantum Schubert polynomials `\mathfrak{S}^q_w(x)` over ``R``.
@@ -25292,6 +25963,8 @@ INPUT:
 - ``parabolic`` -- (optional) block sizes `(n_1, \ldots, n_k)` of a partial flag variety; basis
   permutations may only have descents at the block boundaries `n_1 + \cdots + n_j` (an implicit
   unbounded last block follows the recorded ones)
+- ``raw_coefficients`` -- (default: ``False``) keep the coefficients as unexpanded SymEngine
+  expressions, as for :func:`~schubmult.sage.DoubleSchubertPolynomialRing`
 
 EXAMPLES::
 
@@ -25334,7 +26007,8 @@ Parabolic, blocks `(1, 2)`: the projective plane `\PP^2 = Gr(1, 3)` with the imp
 def QuantumDoubleSchubertPolynomialRing(R,
                                         alphabet="y",
                                         coefficient_alphabets=("y", "z"),
-                                        parabolic=None)
+                                        parabolic=None,
+                                        raw_coefficients=False)
 ```
 
 Return the ring of quantum double Schubert polynomials `\mathfrak{S}^q_w(x; \text{alphabet})` over ``R``.
@@ -25346,6 +26020,8 @@ INPUT:
 - ``coefficient_alphabets`` -- (default: ``('y', 'z')``) letters available in coefficients
 - ``parabolic`` -- (optional) block sizes of a partial flag variety, as for
   :func:`QuantumSchubertPolynomialRing`
+- ``raw_coefficients`` -- (default: ``False``) keep the coefficients as unexpanded SymEngine
+  expressions, as for :func:`~schubmult.sage.DoubleSchubertPolynomialRing`
 
 EXAMPLES::
 
@@ -25445,7 +26121,7 @@ class QuantumSchubertPolynomialRing_xbasis(_QuantumMixin, SchubmultBackedRing)
 #### \_\_init\_\_
 
 ```python
-def __init__(R, parabolic)
+def __init__(R, parabolic, raw=False)
 ```
 
 EXAMPLES::
@@ -25486,7 +26162,7 @@ class QuantumDoubleSchubertPolynomialRing_xbasis(_QuantumMixin,
 #### \_\_init\_\_
 
 ```python
-def __init__(R, alphabet, alphabets, parabolic)
+def __init__(R, alphabet, alphabets, parabolic, raw=False)
 ```
 
 EXAMPLES::
@@ -25511,6 +26187,293 @@ EXAMPLES::
     sage: from schubmult.sage import QuantumDoubleSchubertPolynomialRing
     sage: QuantumDoubleSchubertPolynomialRing(QQ, 'z').alphabet()
     'z'
+
+<a id="schubmult.sage.symengine_ring"></a>
+
+# schubmult.sage.symengine\_ring
+
+Unexpanded coefficients: a Sage ring of raw SymEngine expressions
+
+Every native Sage polynomial ring keeps its elements in expanded normal form. For Schubert structure
+constants that is an exponential loss: the kernels produce coefficients as products of linear
+factors (``(y_1 - y_3)*(y_2 - y_3)``, ``prod (1 + beta*y_i)**e`` denominators) whose expansions are
+vastly larger. :class:`SymEngineRing` is a coefficient ring whose elements are SymEngine expression
+trees kept exactly as the kernel built them: ``+`` and ``*`` are structural, zero is the literal
+``0``, and nothing is ever expanded unless asked for. A
+:class:`~sage.combinat.free_module.CombinatorialFreeModule` over it removes zero terms by truth
+value, so raw kernel output can be used as module coefficients without any conversion.
+
+Variables keep schubmult's names and 1-based indices (``y_1`` is the first variable), unlike the
+polynomial base rings of the other parents in :mod:`schubmult.sage`, which are 0-indexed.
+
+EXAMPLES::
+
+    sage: from schubmult.sage.symengine_ring import SymEngineRing
+    sage: E = SymEngineRing(QQ); E
+    Ring of SymEngine expressions over Rational Field
+    sage: y1, y2, y3 = (E.variable('y', i) for i in (1, 2, 3))
+    sage: c = (y1 - y3) * (y2 - y3); c
+    (y_1 - y_3)*(y_2 - y_3)
+    sage: c.expand()
+    y_2*y_1 - y_2*y_3 - y_3*y_1 + y_3**2
+    sage: c == c.expand()                          # equality of two expressions is semantic ...
+    True
+    sage: bool(c - c.expand()), c - c.expand() == 0   # ... zero tests are structural
+    (True, False)
+    sage: M = CombinatorialFreeModule(E, Permutations())
+    sage: v = c * M.monomial(Permutation([2, 1])) + (y1 - y2) * M.monomial(Permutation([1, 3, 2])); v
+    (y_1-y_2)*B[[1, 3, 2]] + ((y_1-y_3)*(y_2-y_3))*B[[2, 1]]
+    sage: v.map_coefficients(lambda a: a.expand())
+    (y_1-y_2)*B[[1, 3, 2]] + (y_2*y_1-y_2*y_3-y_3*y_1+y_3**2)*B[[2, 1]]
+    sage: c.to_polynomial(InfinitePolynomialRing(QQ, ['y']))
+    y_2^2 - y_2*y_1 - y_2*y_0 + y_1*y_0
+
+Expressions can be moved into a Sage polynomial ring (there the indices become 0-based), and Sage
+polynomials and rationals coerce in::
+
+    sage: R.<a0, a1> = QQ[]
+    sage: E(a0*a1 + 1) * c
+    (y_1 - y_3)*(y_2 - y_3)*(1 + a_2*a_1)
+    sage: E(QQ(1)/2) * y1
+    (1/2)*y_1
+
+<a id="schubmult.sage.symengine_ring.REPR_TREE_LIMIT"></a>
+
+#### REPR\_TREE\_LIMIT
+
+larger coefficient trees print in normal form
+
+<a id="schubmult.sage.symengine_ring.nonzero_mask"></a>
+
+#### nonzero\_mask
+
+```python
+def nonzero_mask(exprs, points=2)
+```
+
+For each SymEngine expression, whether it is nonzero at one of ``points`` random points modulo
+the prime `2^{61} - 1` (so certainly nonzero as a rational function).
+
+One shared evaluation per point over all the expressions: the coefficients of one product share
+most of their subtrees. An expression vanishing at every point is reported zero -- for a nonzero
+rational function of degree `d` that happens with probability at most `(d / 2^{61})^{	ext{points}}`;
+one undefined at every point (a denominator vanishing there) is reported nonzero.
+
+<a id="schubmult.sage.symengine_ring.is_identically_zero"></a>
+
+#### is\_identically\_zero
+
+```python
+def is_identically_zero(expr)
+```
+
+Whether the SymEngine expression ``expr`` is zero as a rational function.
+
+Evaluation at a few random points first (one pass over the shared subtrees): a nonzero value
+proves nonvanishing, which is the common case. Only an expression vanishing at every point is
+expanded (over a common denominator) for a proof.
+
+<a id="schubmult.sage.symengine_ring.symengine_to_sage_scalar"></a>
+
+#### symengine\_to\_sage\_scalar
+
+```python
+def symengine_to_sage_scalar(e, R)
+```
+
+SymEngine integer or rational -> element of ``R``.
+
+<a id="schubmult.sage.symengine_ring.tree_size"></a>
+
+#### tree\_size
+
+```python
+def tree_size(expr, limit)
+```
+
+Number of nodes of the expression *tree* (shared subtrees counted each time), stopping past ``limit``.
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression"></a>
+
+## SymEngineExpression Objects
+
+```python
+class SymEngineExpression(CommutativeRingElement)
+```
+
+A SymEngine expression as a Sage ring element. Arithmetic is structural (no expansion, no
+cancellation); ``bool``, ``is_zero`` and comparison with ``0`` test for the literal zero.
+``==`` against anything else is semantic: structural first, then evaluation at random integer
+points (which settles the nonzero case cheaply), and only an expression vanishing at every point is
+expanded.
+
+EXAMPLES::
+
+    sage: from schubmult.sage.symengine_ring import SymEngineRing
+    sage: E = SymEngineRing(ZZ); a = E.variable('a', 1); b = E.variable('b', 1)
+    sage: (a + b)^2 - (a + b)^2
+    0
+    sage: (a + b)^2 - (a^2 + 2*a*b + b^2)
+    -(2*a_1*b_1 + a_1**2 + b_1**2) + (a_1 + b_1)**2
+    sage: bool(_), _ == 0, _.is_zero(), _.is_identically_zero()
+    (True, False, False, True)
+    sage: (a + b)^2 == a^2 + 2*a*b + b^2
+    True
+    sage: hash(a + b) == hash(b + a)
+    True
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.expr"></a>
+
+#### expr
+
+```python
+def expr()
+```
+
+The underlying SymEngine expression.
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.is_identically_zero"></a>
+
+#### is\_identically\_zero
+
+```python
+def is_identically_zero()
+```
+
+Whether the expression is zero as a rational function (``is_zero`` tests for the literal zero).
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.expand"></a>
+
+#### expand
+
+```python
+def expand()
+```
+
+The expanded expression (sum of monomials); exponential in the size of the tree.
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.factor"></a>
+
+#### factor
+
+```python
+def factor()
+```
+
+The expression in factored form (via SymPy).
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.variables"></a>
+
+#### variables
+
+```python
+def variables()
+```
+
+The variables occurring in the expression, as ring elements.
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.subs"></a>
+
+#### subs
+
+```python
+def subs(in_dict=None, **kwds)
+```
+
+Substitute; keys may be ring elements, SymEngine symbols, or variable names (``y_1``).
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.to_polynomial"></a>
+
+#### to\_polynomial
+
+```python
+def to_polynomial(B, named=None)
+```
+
+The expression as an element of the Sage ring ``B`` (an infinite or finite polynomial ring,
+or the fraction field of one). The 1-based variable ``y_i`` becomes the 0-based ``y_{i-1}``.
+``named`` maps unindexed symbol names to elements of ``B``.
+
+<a id="schubmult.sage.symengine_ring.SymEngineExpression.normal_form"></a>
+
+#### normal\_form
+
+```python
+def normal_form()
+```
+
+The expression as a Sage polynomial (or fraction) in a ring on the symbols that occur, named as
+in the expression (``y_3`` stays ``y_3``; ``β`` becomes ``beta``). Computed in libsingular with
+the subtrees shared, which is far cheaper than ``expand``; this is how large coefficients print.
+
+EXAMPLES::
+
+    sage: from schubmult.sage.symengine_ring import SymEngineRing
+    sage: E = SymEngineRing(ZZ); y = [E.variable('y', i) for i in range(4)]
+    sage: ((y[1] - y[3]) * (y[2] - y[3])).normal_form()
+    y_1*y_2 - y_1*y_3 - y_2*y_3 + y_3^2
+    sage: (y[1] / (1 + E.symbol('β') * y[2])).normal_form()
+    y_1/(y_2*beta + 1)
+
+<a id="schubmult.sage.symengine_ring.normal_forms"></a>
+
+#### normal\_forms
+
+```python
+def normal_forms(exprs, R)
+```
+
+Sage polynomials (or fractions) over ``R`` for a batch of SymEngine expressions, in one ring on
+the union of their symbols and with one memo: the coefficients of a product share their subtrees.
+
+<a id="schubmult.sage.symengine_ring.SymEngineRing"></a>
+
+## SymEngineRing Objects
+
+```python
+class SymEngineRing(UniqueRepresentation, Parent)
+```
+
+The ring of SymEngine expressions with rational (``scalars=QQ``) or integer (``ZZ``) scalars.
+
+This is a commutative ring in Sage's sense -- it is the polynomial ring in all the indexed
+variables, presented without a normal form -- with the arithmetic cost model of the kernels:
+multiplication of coefficients is concatenation of factor lists.
+
+EXAMPLES::
+
+    sage: from schubmult.sage.symengine_ring import SymEngineRing
+    sage: E = SymEngineRing(ZZ); E
+    Ring of SymEngine expressions over Integer Ring
+    sage: E is SymEngineRing(ZZ), E is loads(dumps(E))
+    (True, True)
+    sage: TestSuite(E).run()
+    sage: E.variable('q', 2) * 3 + 1
+    1 + 3*q_2
+    sage: E(ZZ(1)/2)
+    Traceback (most recent call last):
+    ...
+    TypeError: 1/2 is not an integer
+
+<a id="schubmult.sage.symengine_ring.SymEngineRing.variable"></a>
+
+#### variable
+
+```python
+def variable(letter, i)
+```
+
+The schubmult variable ``<letter>_<i>`` (1-based ``i``) as a ring element.
+
+<a id="schubmult.sage.symengine_ring.SymEngineRing.symbol"></a>
+
+#### symbol
+
+```python
+def symbol(name)
+```
+
+An unindexed symbol (e.g. ``'beta'``) as a ring element.
 
 <a id="schubmult.symbolic"></a>
 
@@ -25921,6 +26884,27 @@ def div_diff(poly, v1, v2)
 Divided difference ``(poly - s(poly)) / (v1 - v2)`` where ``s`` swaps ``v1`` and ``v2``, computed
 structurally on the expression tree. Objects may override via ``_eval_div_diff``.
 
+<a id="schubmult.symbolic.poly.schub_poly.skew_div_diff"></a>
+
+#### skew\_div\_diff
+
+```python
+def skew_div_diff(poly, w, v, genset=None)
+```
+
+Skew divided difference ``partial_{w/v}`` of ``poly`` in the variables ``genset`` (default ``x``).
+
+``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is the unique family of
+operators satisfying the generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``.
+It is zero unless ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w``, and ``partial_{w/w} = w`` acts by
+permuting the variables ``x_i -> x_{w(i)}``.  Computed by peeling a left descent ``s_i`` of ``w = s_i w'``
+(Lemma 4.1 of Hwang, due to Samuel):
+
+    partial_{s_i w' / v} = partial_i partial_{w'/v} + s_i partial_{w'/ s_i v}   (second term only if l(s_i v) < l(v)).
+
+For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 of Hwang); the
+ring method ``DoubleSchubertElement.skew_divdiff`` uses that identity and is much faster on Schubert elements.
+
 <a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly_legacy"></a>
 
 #### grothendieck\_poly\_legacy
@@ -25963,24 +26947,11 @@ the product of factorial elementary symmetric factors row by row (from the code 
 #### isobaric\_strip\_on\_dschub\_dict
 
 ```python
-def isobaric_strip_on_dschub_dict(start, length, perm_dict, coeff_genset,
+def isobaric_strip_on_dschub_dict(start, length, schub_perm_dict, coeff_genset,
                                   beta)
 ```
 
 Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded.
-
-Coefficients landing on the same permutation merge at every stage instead of
-being carried per input basis element, mirroring ``compute_vpathdicts``.
-
-<a id="schubmult.symbolic.poly.schub_poly.isobaric_strip_on_dschub"></a>
-
-#### isobaric\_strip\_on\_dschub
-
-```python
-def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta)
-```
-
-`isobaric_strip_on_dschub_dict` on a single basis element, returned as a ring element.
 
 <a id="schubmult.symbolic.poly.schub_poly.apply_isobaric_to_schub_dict"></a>
 
@@ -26202,6 +27173,16 @@ class GeneratingSet_base()
 
 Interface for generating sets: indexing, length, ``index(symbol)`` (``-1`` if absent), and ``label``.
 
+<a id="schubmult.symbolic.poly.variables.GeneratingSet_base.index"></a>
+
+#### index
+
+```python
+def index(other: object) -> int
+```
+
+Position of the symbol ``other`` in this set, or ``-1``.
+
 <a id="schubmult.symbolic.poly.variables.ZeroGeneratingSet"></a>
 
 ## ZeroGeneratingSet Objects
@@ -26227,7 +27208,7 @@ The interned family ``name_0, name_1, ...``; ``gs[i]`` is the symbol ``name_i`` 
 #### \_\_call\_\_
 
 ```python
-def __call__(index)
+def __call__(index: int) -> Expr
 ```
 
 1-indexed
@@ -26238,7 +27219,7 @@ def __call__(index)
 
 ```python
 @property
-def label()
+def label() -> str
 ```
 
 The variable name, e.g. ``"x"``.
@@ -26248,7 +27229,7 @@ The variable name, e.g. ``"x"``.
 #### index
 
 ```python
-def index(v)
+def index(v: object) -> int
 ```
 
 Position of the symbol ``v`` in this set, or ``-1``.
@@ -26270,7 +27251,7 @@ renumbered consecutively; ``complement()`` gives the set of the masked variables
 
 ```python
 @property
-def base_genset()
+def base_genset() -> GeneratingSet_base
 ```
 
 The underlying unmasked generating set.
@@ -26281,7 +27262,7 @@ The underlying unmasked generating set.
 
 ```python
 @property
-def index_mask()
+def index_mask() -> tuple[int, ...]
 ```
 
 Sorted tuple of the hidden 1-indexed positions.
@@ -26291,7 +27272,7 @@ Sorted tuple of the hidden 1-indexed positions.
 #### complement
 
 ```python
-def complement()
+def complement() -> MaskedGeneratingSet
 ```
 
 The masked set on the complementary positions.
@@ -26301,7 +27282,7 @@ The masked set on the complementary positions.
 #### \_\_call\_\_
 
 ```python
-def __call__(index)
+def __call__(index: int) -> Expr
 ```
 
 1-indexed
@@ -26321,7 +27302,7 @@ A generating set over an explicit sequence of expressions (sympified on construc
 #### \_\_call\_\_
 
 ```python
-def __call__(index)
+def __call__(index: int) -> Expr
 ```
 
 1-indexed
@@ -26342,7 +27323,7 @@ Raised when an operation needs more generators than a generating set provides.
 
 ```python
 @cache
-def poly_genset(v: str)
+def poly_genset(v: str | int | float) -> GeneratingSet_base
 ```
 
 ``GeneratingSet(v)``, or a `ZeroGeneratingSet` for the sentinels ``ZeroVar``/``NoneVar``.
@@ -26352,7 +27333,10 @@ def poly_genset(v: str)
 #### genset\_dict\_from\_expr
 
 ```python
-def genset_dict_from_expr(expr, genset, length=None)
+def genset_dict_from_expr(
+        expr: Expr,
+        genset: GeneratingSet_base,
+        length: int | None = None) -> dict[tuple[int, ...], Expr]
 ```
 
 Write a polynomial in the generators of ``genset`` as ``{exponent_tuple: coeff}``.
@@ -26976,7 +27960,7 @@ Most functions here are used by the multiplication kernels in `schubmult.mult` a
 #### permtrim\_list
 
 ```python
-def permtrim_list(perm)
+def permtrim_list(perm: list[int]) -> list[int]
 ```
 
 Strip trailing fixed points ``perm[L-1] == L`` from a list in place and return it.
@@ -26986,7 +27970,8 @@ Strip trailing fixed points ``perm[L-1] == L`` from a list in place and return i
 #### has\_bruhat\_descent
 
 ```python
-def has_bruhat_descent(perm, i, j)
+def has_bruhat_descent(perm: Permutation | Sequence[int], i: int,
+                       j: int) -> bool
 ```
 
 Check if perm has a Bruhat descent from position i to j.
@@ -26998,7 +27983,7 @@ Optimized version assuming perm is a Permutation object with direct indexing.
 #### count\_bruhat
 
 ```python
-def count_bruhat(perm, i, j)
+def count_bruhat(perm: Permutation | Sequence[int], i: int, j: int) -> int
 ```
 
 Signed length change ``inv(perm * t_{ij}) - inv(perm)`` for the transposition of positions ``i < j``.
@@ -27008,7 +27993,8 @@ Signed length change ``inv(perm * t_{ij}) - inv(perm)`` for the transposition of
 #### has\_bruhat\_ascent
 
 ```python
-def has_bruhat_ascent(perm, i, j)
+def has_bruhat_ascent(perm: Permutation | Sequence[int], i: int,
+                      j: int) -> bool
 ```
 
 Check if perm has a Bruhat ascent from position i to j.
@@ -27020,7 +28006,7 @@ Optimized version assuming perm is a Permutation object with direct indexing.
 #### omega
 
 ```python
-def omega(i, qv)
+def omega(i: int, qv: Sequence[int]) -> int
 ```
 
 ``i``-th entry (1-indexed) of the Cartan-matrix image of the q-exponent vector ``qv``:
@@ -27032,7 +28018,7 @@ monomials to weights in the parabolic quantum product.
 #### sg
 
 ```python
-def sg(i, w)
+def sg(i: int, w: Permutation | Sequence[int]) -> int
 ```
 
 1 if ``w`` has a descent at 0-indexed position ``i``, else 0.
@@ -27042,7 +28028,7 @@ def sg(i, w)
 #### count\_less\_than
 
 ```python
-def count_less_than(arr, val)
+def count_less_than(arr: Sequence[int], val: int) -> int
 ```
 
 Number of leading entries of the sorted list ``arr`` that are ``< val``.
@@ -27052,7 +28038,7 @@ Number of leading entries of the sorted list ``arr`` that are ``< val``.
 #### artin\_sequences
 
 ```python
-def artin_sequences(n)
+def artin_sequences(n: int) -> set[tuple[int, ...]]
 ```
 
 All tuples ``(a_1, ..., a_n)`` with ``0 <= a_i <= n + 1 - i`` (Lehmer codes of ``S_{n+1}``).
@@ -27062,7 +28048,7 @@ All tuples ``(a_1, ..., a_n)`` with ``0 <= a_i <= n + 1 - i`` (Lehmer codes of `
 #### weak\_compositions
 
 ```python
-def weak_compositions(length, max_degree)
+def weak_compositions(length: int, max_degree: int) -> set[tuple[int, ...]]
 ```
 
 All tuples of the given ``length`` with entries in ``0..max_degree``.
@@ -27072,7 +28058,8 @@ All tuples of the given ``length`` with entries in ``0..max_degree``.
 #### is\_parabolic
 
 ```python
-def is_parabolic(w, parabolic_index)
+def is_parabolic(w: Permutation | Sequence[int],
+                 parabolic_index: Iterable[int]) -> bool
 ```
 
 Whether ``w`` has no descent at any of the (1-indexed) positions in ``parabolic_index``.
@@ -27082,7 +28069,7 @@ Whether ``w`` has no descent at any of the (1-indexed) positions in ``parabolic_
 #### add\_perm\_dict
 
 ```python
-def add_perm_dict(d1, d2)
+def add_perm_dict(d1: Mapping[K, Any], d2: Mapping[K, Any]) -> dict[K, Any]
 ```
 
 Return ``d1 + d2`` as coefficient dicts (keys merged, values added).
@@ -27092,7 +28079,8 @@ Return ``d1 + d2`` as coefficient dicts (keys merged, values added).
 #### add\_perm\_dict\_with\_coeff
 
 ```python
-def add_perm_dict_with_coeff(d1, d2, coeff)
+def add_perm_dict_with_coeff(d1: Mapping[K, Any], d2: Mapping[K, Any],
+                             coeff: Any) -> dict[K, Any]
 ```
 
 Return ``d1 + coeff * d2`` as coefficient dicts.
@@ -27102,7 +28090,7 @@ Return ``d1 + coeff * d2`` as coefficient dicts.
 #### p\_trans
 
 ```python
-def p_trans(part)
+def p_trans(part: Sequence[int]) -> list[int]
 ```
 
 Conjugate (transpose) of a partition given as a weakly decreasing list; ``[0]`` for the empty partition.
@@ -27112,7 +28100,7 @@ Conjugate (transpose) of a partition given as a weakly decreasing list; ``[0]`` 
 #### mu\_A
 
 ```python
-def mu_A(mu, A)
+def mu_A(mu: Sequence[int], A: Sequence[int]) -> list[int]
 ```
 
 The partition whose conjugate consists of the columns of ``mu`` indexed by ``A`` (0-indexed).
@@ -27122,7 +28110,7 @@ The partition whose conjugate consists of the columns of ``mu`` indexed by ``A``
 #### get\_cycles
 
 ```python
-def get_cycles(perm)
+def get_cycles(perm: Permutation) -> list[tuple[int, ...]]
 ```
 
 ``perm.get_cycles()``.
@@ -27132,7 +28120,7 @@ def get_cycles(perm)
 #### old\_code
 
 ```python
-def old_code(perm)
+def old_code(perm: Sequence[int]) -> list[int]
 ```
 
 Lehmer code of a permutation list computed by successive deletion from ``[1..L]``.
@@ -27142,7 +28130,7 @@ Lehmer code of a permutation list computed by successive deletion from ``[1..L]`
 #### cyclic\_sort
 
 ```python
-def cyclic_sort(L)
+def cyclic_sort(L: list[int]) -> list[int]
 ```
 
 Rotate the list so its maximum is last.
@@ -27152,7 +28140,7 @@ Rotate the list so its maximum is last.
 #### cyclic\_sort\_min
 
 ```python
-def cyclic_sort_min(L)
+def cyclic_sort_min(L: list[int]) -> list[int]
 ```
 
 Rotate the list so its minimum is first.
@@ -27162,7 +28150,7 @@ Rotate the list so its minimum is first.
 #### h\_vector
 
 ```python
-def h_vector(q_vector)
+def h_vector(q_vector: Sequence[int]) -> tuple[int, ...]
 ```
 
 Positions (1-indexed) where the vector strictly increases, up to its first decrease.
@@ -27172,7 +28160,7 @@ Positions (1-indexed) where the vector strictly increases, up to its first decre
 #### l\_vector
 
 ```python
-def l_vector(q_vector)
+def l_vector(q_vector: Sequence[int]) -> tuple[int, ...]
 ```
 
 Find l_j = last position where d equals j (where d decreases from j to j-1).
@@ -27182,7 +28170,7 @@ Find l_j = last position where d equals j (where d decreases from j to j-1).
 #### tau\_d
 
 ```python
-def tau_d(d)
+def tau_d(d: Sequence[int]) -> Permutation
 ```
 
 Partial permutation built from `h_vector`/`l_vector` of ``d`` (``tau[l_i - i] = h_i``), completed by
@@ -27193,17 +28181,69 @@ Partial permutation built from `h_vector`/`l_vector` of ``d`` (``tau[l_i - i] = 
 #### phi\_d
 
 ```python
-def phi_d(d)
+def phi_d(d: Sequence[int]) -> Permutation
 ```
 
 Companion of `tau_d` with the shifted placement ``phi[l_i - 1 - i] = h_i``.
+
+<a id="schubmult.utils.perm_utils.increasing_completion"></a>
+
+#### increasing\_completion
+
+```python
+def increasing_completion(values: Sequence[int], n: int) -> Permutation
+```
+
+The permutation in ``S_n`` whose one-line notation begins with the distinct ``values`` and
+continues with the remaining elements of ``{1, ..., n}`` in increasing order.
+
+Written ``<m_1, ..., m_k>`` in B.-H. Hwang, arXiv:2610.21053 (Definition 2.1); for example
+``<w(1), ..., w(k)>`` is ``w`` padded with fixed points.
+
+<a id="schubmult.utils.perm_utils.block_lift"></a>
+
+#### block\_lift
+
+```python
+def block_lift(
+        u: Permutation | Sequence[int], v: Permutation | Sequence[int],
+        w: Permutation | Sequence[int],
+        alpha: Sequence[int]) -> tuple[Permutation, Permutation, Permutation]
+```
+
+The block lift ``(u~, v~, w~)`` of ``(u, v, w, alpha)`` in ``S_{n + |alpha|}``.
+
+Due to Byung-Hak Hwang, *Coefficient lifting for skew divided differences and triple Schubert coefficients*,
+arXiv:2610.21053 (Definition 4.4); the identities below are Theorem 1.2 and Corollaries 5.1 and 5.3 there.
+
+For ``u, v, w`` in ``S_n`` and a weak composition ``alpha`` of length ``n``, each value ``i`` gets a
+block of ``alpha_i + 1`` consecutive values starting at the base value ``b_i = i + alpha_1 + ... + alpha_{i-1}``.
+Then ``u~ = u`` with ``|alpha|`` fixed points appended, ``v~`` sends position ``i`` to the smallest element
+``b_{v(i)}`` of its block, and ``w~`` sends it to the largest ``b_{w(i)} + alpha_{w(i)}`` (both completed
+increasingly, see `increasing_completion`).
+
+Hwang's Theorem 1.2: writing ``S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t)``, the coefficient of
+``t^alpha`` in ``c^w_{u,v}(y, t)`` is the single coefficient ``c^{w~}_{u~,v~}(y, 0)``, so that
+``partial_{w/v} S_u(x) = sum_{|alpha| = l(u) + l(v) - l(w)} c^{w~}_{u~,v~} x^alpha`` (Kirillov's conjecture)
+and, with ``v = w = id``, ``[x^alpha] S_u(x) = c^{w~}_{u~,v~}`` is a single Schubert structure constant.
+In ``schubmult`` conventions ``c^w_{u,v}(y, t) = schubmult_double({v: 1}, u, t, y)[w]``.
+
+**Arguments**:
+
+  u, v, w: Permutations (array form); trailing fixed points up to ``len(alpha)`` are implied.
+- `alpha` - Weak composition; its length ``n`` must be at least the sizes of ``u``, ``v``, ``w``.
+  
+
+**Returns**:
+
+  The triple ``(u~, v~, w~)`` of ``Permutation`` objects.
 
 <a id="schubmult.utils.perm_utils.conjugate_weak_composition"></a>
 
 #### conjugate\_weak\_composition
 
 ```python
-def conjugate_weak_composition(comp)
+def conjugate_weak_composition(comp: Sequence[int]) -> tuple[int, ...]
 ```
 
 Compute the conjugate of a weak composition.
@@ -27239,7 +28279,7 @@ This is equivalent to transposing the Ferrers diagram of the composition.
 #### find\_reduced\_fail
 
 ```python
-def find_reduced_fail(word, inserted)
+def find_reduced_fail(word: Sequence[int], inserted: int) -> int | None
 ```
 
 After changing letter ``inserted`` of a word, find the other position carrying the same root
@@ -27250,7 +28290,7 @@ After changing letter ``inserted`` of a word, find the other position carrying t
 #### is\_reduced
 
 ```python
-def is_reduced(word)
+def is_reduced(word: Sequence[int]) -> bool
 ```
 
 Whether the word of simple reflections is reduced (``inv`` of its product equals its length).
@@ -27260,7 +28300,7 @@ Whether the word of simple reflections is reduced (``inv`` of its product equals
 #### little\_bump\_pos
 
 ```python
-def little_bump_pos(word, index)
+def little_bump_pos(word: Sequence[int], index: int) -> tuple[int, ...]
 ```
 
 Little bump at position ``index``: decrement that letter (increment if it is 1), and while the
@@ -27271,7 +28311,7 @@ word is not reduced, repeat at the letter found by `find_reduced_fail`.
 #### little\_bump
 
 ```python
-def little_bump(word, i, j)
+def little_bump(word: Sequence[int], i: int, j: int) -> tuple[int, ...]
 ```
 
 Little bump of a reduced word at the letter whose right root is the inversion ``(i, j)``.
@@ -27281,7 +28321,7 @@ Little bump of a reduced word at the letter whose right root is the inversion ``
 #### little\_zero
 
 ```python
-def little_zero(word, length)
+def little_zero(word: Sequence[int], length: int) -> tuple[int, ...]
 ```
 
 Repeatedly Little-bump at the last descent until the product's code has fewer than ``length``

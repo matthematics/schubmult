@@ -519,6 +519,42 @@ def div_diff(poly, v1, v2):
     raise ValueError(f"Expected Expr but got {type(poly)}")
 
 
+def _swap_vars(poly, v1, v2):
+    """``poly`` with the symbols ``v1`` and ``v2`` interchanged."""
+    return poly.xreplace({v1: _s}).xreplace({v2: v1}).xreplace({_s: v2})
+
+
+def skew_div_diff(poly, w, v, genset=None):
+    r"""Skew divided difference ``partial_{w/v}`` of ``poly`` in the variables ``genset`` (default ``x``).
+
+    ``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is the unique family of
+    operators satisfying the generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``.
+    It is zero unless ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w``, and ``partial_{w/w} = w`` acts by
+    permuting the variables ``x_i -> x_{w(i)}``.  Computed by peeling a left descent ``s_i`` of ``w = s_i w'``
+    (Lemma 4.1 of Hwang, due to Samuel):
+
+        partial_{s_i w' / v} = partial_i partial_{w'/v} + s_i partial_{w'/ s_i v}   (second term only if l(s_i v) < l(v)).
+
+    For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 of Hwang); the
+    ring method ``DoubleSchubertElement.skew_divdiff`` uses that identity and is much faster on Schubert elements.
+    """
+    if genset is None:
+        genset = _vars.var1
+    w = pl.Permutation(w)
+    v = pl.Permutation(v)
+    poly = sympify(poly)
+    if w.inv == 0:
+        return poly if v.inv == 0 else S.Zero
+    if not v.bruhat_leq(w):
+        return S.Zero
+    i = min((~w).descents(zero_indexed=False))
+    w_rest = pl.s(i) * w
+    result = div_diff(skew_div_diff(poly, w_rest, v, genset), genset[i], genset[i + 1])
+    if i in (~v).descents(zero_indexed=False):
+        result += _swap_vars(skew_div_diff(poly, w_rest, pl.s(i) * v, genset), genset[i], genset[i + 1])
+    return result
+
+
 def _groth_plus(x1, y1, beta):
     """``x (+) y = x + y + beta x y``, the K-theoretic sum."""
     return x1 + y1 + beta * x1 * y1
