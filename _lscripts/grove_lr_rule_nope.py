@@ -184,22 +184,39 @@ def _grove_it_up(comp, bw, n):
     # groth = bw.full_groth_elem(uncode(comp), n, 1)
     #grove = 0
     seen = set()
-    grippy = GrovePoly(*comp).change_basis(GrothendieckPolyBasis)
-    for (groth_perm, _), coeff0 in grippy.items():
-        groth = bw.full_groth_elem(groth_perm, n, GrovePoly._basis.beta)
-        for key, coeff in groth.items():
-            # wc = bw.key_to_wc_graph(key).resize(len(comp))
-            # #grove += coeff * bw.full_groth_elem(perm, n, 1)
-            # if wc.grove_weight == tuple(comp):# and wc not in seen:
-                #assert coeff >= 0
-            grove += coeff * coeff0 * bw(key)
-            #seen.add(wc)
-        # elif wc.perm != uncode(comp):
-        #     grove += coeff * bw(key)
-        # rc_key = bw.key_to_wc_graph(key).resize(len(comp))
-        # if rc_key.grove_weight == tuple(comp) or rc_key.perm != uncode(comp):
-        # grove += coeff * bw(key)
-    #grove = bw.from_dict({k: v for k, v in grove.items() if (bw.key_to_wc_graph(k).resize(len(comp)).grove_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
+    #grippy = GrovePoly(*comp).change_basis(GrothendieckPolyBasis)
+    grippy = bw.full_groth_elem(uncode(comp), n, GrovePoly._basis.beta)
+    # for (groth_perm, _), coeff0 in grippy.items():
+    #     groth = bw.full_groth_elem(groth_perm, n, GrovePoly._basis.beta)
+    #     for key, coeff in groth.items():
+    #         # wc = bw.key_to_wc_graph(key).resize(len(comp))
+    #         # #grove += coeff * bw.full_groth_elem(perm, n, 1)
+    #         # if wc.grove_weight == tuple(comp):# and wc not in seen:
+    #             #assert coeff >= 0
+    #         grove += coeff * coeff0 * bw(key)
+    #         #seen.add(wc)
+    #     # elif wc.perm != uncode(comp):
+    #     #     grove += coeff * bw(key)
+    #     # rc_key = bw.key_to_wc_graph(key).resize(len(comp))
+    #     # if rc_key.grove_weight == tuple(comp) or rc_key.perm != uncode(comp):
+    #     # grove += coeff * bw(key)
+    # #grove = bw.from_dict({k: v for k, v in grove.items() if (bw.key_to_wc_graph(k).resize(len(comp)).grove_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
+    # return grove
+    # for (groth_perm, _), coeff0 in grippy.items():
+    #     groth = bw.full_groth_elem(groth_perm, n, GrovePoly._basis.beta)
+    for key, coeff in grippy.items():
+        wc = bw.key_to_wc_graph(key).resize(len(comp))
+        # #grove += coeff * bw.full_groth_elem(perm, n, 1)
+        if wc.grove_weight == tuple(comp) and wc not in seen:
+            #assert coeff >= 0
+            grove += bw(key)
+        seen.add(wc)
+    # elif wc.perm != uncode(comp):
+    #     grove += coeff * bw(key)
+    # rc_key = bw.key_to_wc_graph(key).resize(len(comp))
+    # if rc_key.grove_weight == tuple(comp) or rc_key.perm != uncode(comp):
+    # grove += coeff * bw(key)
+#grove = bw.from_dict({k: v for k, v in grove.items() if (bw.key_to_wc_graph(k).resize(len(comp)).grove_weight == tuple(comp) or bw.key_to_wc_graph(k).perm != uncode(comp))})
     return grove
 
 def _grove_it_up_old(comp, bw, n):

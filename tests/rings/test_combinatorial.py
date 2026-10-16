@@ -371,3 +371,36 @@ def test_bounded_wc_factor_algebra_groth_elem_factor_is_two_elementary_grothendi
                 for wc in WCGraph.all_wc_graphs(uncode([0] * (k - pp) + [1] * pp), k):
                     expected[wc.resize(4)] = beta ** (len(wc.perm_word) - p)
             assert all(elem.get(wc, 0) == expected.get(wc, 0) for wc in set(elem) | set(expected)), (p, k)
+
+
+def test_bounded_wc_factor_algebra_from_wc_graph_lifts_set_valued_graphs():
+    # The K-theoretic lift: every WC graph of perm (reduced or set-valued) has a unique factorization
+    # into elementary Grothendieck WC graphs with the staircase sizes p_k = k - code(perm w0)_{n-1-k},
+    # each factor a set-valued column of perm 1^{p_k} or 1^{p_k+1}, that squashes back to the graph.
+    from schubmult import BoundedRCFactorAlgebra, BoundedWCFactorAlgebra, Permutation, RCGraph
+    from schubmult.combinatorics.wc_graph import WCGraph
+
+    n = 4
+    ring = BoundedWCFactorAlgebra()
+    rc_ring = BoundedRCFactorAlgebra()
+    for perm in Permutation.all_permutations(n):
+        if perm.inv == 0:
+            continue
+        m = len(perm)
+        code = (perm * Permutation.w0(m)).pad_code(m - 1)
+        sizes = {k: k - code[m - 1 - k] for k in range(1, m)}
+        for wc in WCGraph.all_wc_graphs(perm, n):
+            elem = ring.from_wc_graph(wc, n + 1)
+            assert len(elem) == 1
+            key = next(iter(elem))
+            assert ring.key_to_wc_graph(key).resize(n) == wc
+            # one factor per height, of the prescribed size, set-valued exactly when the graph is
+            heights = [len(f) for f in key]
+            assert heights == sorted(set(heights))
+            assert all(f.perm.inv in (sizes[len(f)], sizes[len(f)] + 1) for f in key)
+            assert sum(len(f.perm_word) for f in key) == len(wc.perm_word)
+            if wc.is_reduced:
+                rc_key = next(iter(rc_ring.from_rc_graph(RCGraph.from_wc_graph(wc), n + 1)))
+                assert [RCGraph.from_wc_graph(f) for f in key] == list(rc_key)
+            else:
+                assert any(len(f.perm_word) > f.perm.inv for f in key)
