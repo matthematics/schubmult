@@ -276,6 +276,64 @@ def phi_d(d: Sequence[int]) -> Permutation:
     return Permutation.from_partial(phi)
 
 
+def increasing_completion(values: Sequence[int], n: int) -> Permutation:
+    """The permutation in ``S_n`` whose one-line notation begins with the distinct ``values`` and
+    continues with the remaining elements of ``{1, ..., n}`` in increasing order.
+
+    Written ``<m_1, ..., m_k>`` in arXiv:2610.21053 (Definition 2.1); for example
+    ``<w(1), ..., w(k)>`` is ``w`` padded with fixed points.
+    """
+    from schubmult.combinatorics.permutation import Permutation
+
+    values = list(values)
+    if len(set(values)) != len(values) or any(not 1 <= m <= n for m in values):
+        raise ValueError(f"{values} is not a list of distinct elements of [1, {n}]")
+    return Permutation(values + sorted(set(range(1, n + 1)) - set(values)))
+
+
+def block_lift(u: Permutation | Sequence[int], v: Permutation | Sequence[int], w: Permutation | Sequence[int], alpha: Sequence[int]) -> tuple[Permutation, Permutation, Permutation]:
+    r"""The block lift ``(u~, v~, w~)`` of ``(u, v, w, alpha)`` in ``S_{n + |alpha|}`` (arXiv:2610.21053, Definition 4.4).
+
+    For ``u, v, w`` in ``S_n`` and a weak composition ``alpha`` of length ``n``, each value ``i`` gets a
+    block of ``alpha_i + 1`` consecutive values starting at the base value ``b_i = i + alpha_1 + ... + alpha_{i-1}``.
+    Then ``u~ = u`` with ``|alpha|`` fixed points appended, ``v~`` sends position ``i`` to the smallest element
+    ``b_{v(i)}`` of its block, and ``w~`` sends it to the largest ``b_{w(i)} + alpha_{w(i)}`` (both completed
+    increasingly, see `increasing_completion`).
+
+    Theorem 1.2 there: writing ``S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t)``, the coefficient of
+    ``t^alpha`` in ``c^w_{u,v}(y, t)`` is the single coefficient ``c^{w~}_{u~,v~}(y, 0)``, so that
+    ``partial_{w/v} S_u(x) = sum_{|alpha| = l(u) + l(v) - l(w)} c^{w~}_{u~,v~} x^alpha`` (Kirillov's conjecture)
+    and, with ``v = w = id``, ``[x^alpha] S_u(x) = c^{w~}_{u~,v~}`` is a single Schubert structure constant.
+    In ``schubmult`` conventions ``c^w_{u,v}(y, t) = schubmult_double({v: 1}, u, t, y)[w]``.
+
+    Args:
+        u, v, w: Permutations (array form); trailing fixed points up to ``len(alpha)`` are implied.
+        alpha: Weak composition; its length ``n`` must be at least the sizes of ``u``, ``v``, ``w``.
+
+    Returns:
+        The triple ``(u~, v~, w~)`` of ``Permutation`` objects.
+    """
+    from schubmult.combinatorics.permutation import Permutation
+
+    u, v, w = Permutation(u), Permutation(v), Permutation(w)
+    alpha = list(alpha)
+    n = len(alpha)
+    if any(a < 0 for a in alpha):
+        raise ValueError(f"{alpha} is not a weak composition")
+    if any(p[i] != i + 1 for p in (u, v, w) for i in range(n, len(p))):
+        raise ValueError(f"u, v, w must lie in S_{n} for alpha of length {n}")
+    N = n + sum(alpha)
+    base = [0] * (n + 1)
+    for i in range(1, n + 1):
+        base[i] = i + sum(alpha[: i - 1])
+
+    # ``perm[i]`` is ``i + 1`` beyond the stored window, so the lifts pad with fixed points for free
+    u_lift = Permutation([u[i] for i in range(N)])
+    v_lift = increasing_completion([base[v[i]] for i in range(n)], N)
+    w_lift = increasing_completion([base[w[i]] + alpha[w[i] - 1] for i in range(n)], N)
+    return u_lift, v_lift, w_lift
+
+
 def conjugate_weak_composition(comp: Sequence[int]) -> tuple[int, ...]:
     """Compute the conjugate of a weak composition.
 

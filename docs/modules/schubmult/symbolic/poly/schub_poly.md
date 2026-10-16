@@ -236,6 +236,27 @@ def div_diff(poly, v1, v2)
 Divided difference ``(poly - s(poly)) / (v1 - v2)`` where ``s`` swaps ``v1`` and ``v2``, computed
 structurally on the expression tree. Objects may override via ``_eval_div_diff``.
 
+<a id="schubmult.symbolic.poly.schub_poly.skew_div_diff"></a>
+
+#### skew\_div\_diff
+
+```python
+def skew_div_diff(poly, w, v, genset=None)
+```
+
+Skew divided difference ``partial_{w/v}`` of ``poly`` in the variables ``genset`` (default ``x``).
+
+``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong / arXiv:2610.21053) is the unique family of
+operators satisfying the generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``.
+It is zero unless ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w``, and ``partial_{w/w} = w`` acts by
+permuting the variables ``x_i -> x_{w(i)}``.  Computed by peeling a left descent ``s_i`` of ``w = s_i w'``
+(Lemma 4.1 there, due to Samuel):
+
+    partial_{s_i w' / v} = partial_i partial_{w'/v} + s_i partial_{w'/ s_i v}   (second term only if l(s_i v) < l(v)).
+
+For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 there); the
+ring method ``DoubleSchubertElement.skew_divdiff`` uses that identity and is much faster on Schubert elements.
+
 <a id="schubmult.symbolic.poly.schub_poly.grothendieck_poly_legacy"></a>
 
 #### grothendieck\_poly\_legacy
@@ -278,24 +299,11 @@ the product of factorial elementary symmetric factors row by row (from the code 
 #### isobaric\_strip\_on\_dschub\_dict
 
 ```python
-def isobaric_strip_on_dschub_dict(start, length, perm_dict, coeff_genset,
+def isobaric_strip_on_dschub_dict(start, length, schub_perm_dict, coeff_genset,
                                   beta)
 ```
 
 Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded.
-
-Coefficients landing on the same permutation merge at every stage instead of
-being carried per input basis element, mirroring ``compute_vpathdicts``.
-
-<a id="schubmult.symbolic.poly.schub_poly.isobaric_strip_on_dschub"></a>
-
-#### isobaric\_strip\_on\_dschub
-
-```python
-def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta)
-```
-
-`isobaric_strip_on_dschub_dict` on a single basis element, returned as a ring element.
 
 <a id="schubmult.symbolic.poly.schub_poly.apply_isobaric_to_schub_dict"></a>
 

@@ -120,6 +120,30 @@ class DoubleSchubertElement(BaseSchubertElement):
         perm2 = perm.swap(desc, desc + 1)
         return self.divdiff(desc + 1).divdiff_perm(perm2)
 
+    def skew_divdiff(self, w, v):
+        r"""Skew divided difference ``partial_{w/v}`` acting on the ``x`` variables, as a ring element.
+
+        ``partial_{w/v}`` (Macdonald, normalized as in Gao--Xiong / arXiv:2610.21053) is characterized by the
+        generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``; it vanishes unless
+        ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w`` and ``partial_{w/w} = w`` permutes the variables.
+        On a double Schubert polynomial it is a mixed-alphabet structure constant (Samuel; Proposition 2.7 there):
+
+            partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x),   where  S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t),
+
+        so each basis term costs one ``schubmult_double`` call with the ``x`` alphabet in the role of ``t``.
+        The result has degree ``l(u) + l(v) - l(w)``; for ``l(w) = l(u) + l(v)`` it is the structure constant
+        ``c^w_{u,v}(y, x)`` and, at ``y = 0``, the ordinary ``c^w_{u,v}``.  By Theorem 1.2 there, every
+        coefficient is itself a single such constant via `schubmult.utils.perm_utils.block_lift`.
+        """
+        w = Permutation(w)
+        v = Permutation(v)
+        if not v.bruhat_leq(w):
+            return self.ring.zero
+        poly = S.Zero
+        for u, coeff in self.items():
+            poly += coeff * yz.schubmult_double({v: S.One}, u, self.ring.genset, self.ring.coeff_genset).get(w, S.Zero)
+        return self.ring.from_expr(expand(poly))
+
     def isobaric_perm(self, perm, beta):
         """Apply the beta-isobaric ``pi_w`` for ``w = perm``."""
         if perm.inv == 0:

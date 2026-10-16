@@ -361,3 +361,109 @@ def test_complete_sym():
     elem = H(5, 4, x[1], x[4], x[3], x[5], y[3], y[1], y[4], y[2], y[7], y[9], y[11], y[15])
     assert expand(elem - elem.split_out_vars([x[3], x[1]]), func=True) == S.Zero
     assert elem.xreplace({y[2]: x[4]}) == H(5, 3, [x[1], x[3], x[5]], [y[3], y[1], y[4], y[7], y[9], y[11], y[15]])
+
+
+# --- Skew divided differences (Macdonald; arXiv:2610.21053) --------------------------------------
+
+
+def _partial(poly, perm, genset):
+    """partial_w on a raw polynomial, peeling the last letter of a reduced word (rightmost acts first)."""
+    from schubmult import Permutation
+    from schubmult.symbolic.poly.schub_poly import div_diff
+
+    perm = Permutation(perm)
+    while perm.inv:
+        d = max(perm.descents(zero_indexed=False))
+        perm = perm.swap(d - 1, d)
+        poly = div_diff(poly, genset[d], genset[d + 1])
+    return poly
+
+
+def test_skew_div_diff_generalized_leibniz_rule():
+    """partial_w(fg) = sum_v (partial_{w/v} f)(partial_v g) (Macdonald II.2.17 in the Gao--Xiong normalization)."""
+    from schubmult import Permutation
+    from schubmult.abc import x
+    from schubmult.symbolic import expand
+    from schubmult.symbolic.poly.schub_poly import skew_div_diff
+
+    f = x[1] ** 2 * x[2] + 3 * x[1] * x[3] - x[2] * x[3] ** 2
+    g = x[2] ** 2 + x[1] * x[2] * x[3] + 2 * x[1]
+    S3 = Permutation.all_permutations(3)
+    for w in S3:
+        lhs = _partial(expand(f * g), w, x)
+        rhs = sum(skew_div_diff(f, w, v, x) * _partial(g, v, x) for v in S3)
+        assert expand(lhs - rhs) == 0, w
+
+
+def test_skew_div_diff_endpoints():
+    """partial_{w/id} = partial_w, partial_{w/w} = w (variables x_i -> x_{w(i)}), and zero unless v <= w."""
+    from schubmult import Permutation
+    from schubmult.abc import x
+    from schubmult.symbolic import expand
+    from schubmult.symbolic.poly.schub_poly import skew_div_diff
+
+    f = x[1] ** 2 * x[2] + 3 * x[1] * x[3]
+    w = Permutation([3, 1, 2])
+    assert expand(skew_div_diff(f, w, [], x) - _partial(f, w, x)) == 0
+    assert expand(skew_div_diff(f, w, w, x) - f.xreplace({x[1]: x[3], x[2]: x[1], x[3]: x[2]})) == 0
+    assert skew_div_diff(f, [2, 1, 3], [1, 3, 2], x) == 0
+    assert skew_div_diff(f, [], [2, 1], x) == 0
+    assert skew_div_diff(f, [], [], x) == f
+
+
+def test_skew_divdiff_matches_polynomial_operator_and_paper_example():
+    """DSx.skew_divdiff (via c^w_{u,v}(y, x), Prop. 2.7) agrees with the polynomial recurrence; running example of the paper."""
+    from schubmult import DSx, Permutation, Sx
+    from schubmult.abc import x, y
+    from schubmult.symbolic import expand
+    from schubmult.symbolic.poly.schub_poly import skew_div_diff
+
+    S3 = Permutation.all_permutations(3)
+    for u in S3:
+        poly = DSx(u).expand()
+        for w in S3:
+            for v in S3:
+                assert expand(DSx(u).skew_divdiff(w, v).expand() - skew_div_diff(poly, w, v, x)) == 0, (u, w, v)
+
+    u, v, w = [4, 3, 5, 1, 2, 6], [1, 4, 2, 6, 3, 5], [1, 6, 4, 3, 2, 5]
+    e1, e2, e3 = y[1] + y[2] + y[3], y[1] * y[2] + y[1] * y[3] + y[2] * y[3], y[1] * y[2] * y[3]
+    expected = (x[1] ** 3 - e1 * x[1] ** 2 + e2 * x[1] - e3) * (x[4] + x[6] - y[1] - y[2])
+    assert expand(DSx(u).skew_divdiff(w, v).expand() - expected) == 0
+    assert expand(Sx(u).skew_divdiff(w, v).expand() - x[1] ** 3 * (x[4] + x[6])) == 0
+    # d = 0: the skew divided difference is the structure constant itself
+    assert DSx([2, 1, 3]).skew_divdiff([3, 1, 2], [1, 3, 2]).expand() == 1
+    assert DSx([2, 1, 3]).skew_divdiff([1, 3, 2], [2, 1, 3]).expand() == 0
+    # linearity over the coefficient ring
+    elem = 2 * DSx([2, 3, 1]) + y[1] * DSx([3, 1, 2])
+    assert expand(elem.skew_divdiff([3, 1, 2], [2, 1, 3]).expand() - 2 * DSx([2, 3, 1]).skew_divdiff([3, 1, 2], [2, 1, 3]).expand() - y[1] * DSx([3, 1, 2]).skew_divdiff([3, 1, 2], [2, 1, 3]).expand()) == 0
+
+
+def test_skew_divdiff_single_coefficients_are_block_lift_structure_constants():
+    """Corollary 5.1: partial_{w/v} S_u(x) = sum_{|alpha| = d} c^{w~}_{u~,v~} x^alpha, so it lies in N[x]."""
+    import itertools
+
+    import sympy
+
+    from schubmult import Permutation, Sx
+    from schubmult.abc import x
+    from schubmult.mult.single import schubmult_py
+    from schubmult.symbolic import sympify_sympy
+    from schubmult.utils.perm_utils import block_lift
+
+    n = 4
+    gens = [sympify_sympy(x[i]) for i in range(1, n + 1)]
+    S4 = Permutation.all_permutations(n)
+    for u, v, w in [(S4[k], S4[(7 * k + 3) % 24], S4[(5 * k + 11) % 24]) for k in range(24)]:
+        d = u.inv + v.inv - w.inv
+        skew = Sx(u).skew_divdiff(w, v).expand()
+        if d < 0 or not v.bruhat_leq(w):
+            assert skew == 0
+            continue
+        poly = sympy.Poly(sympify_sympy(skew), *gens)
+        for alpha in itertools.product(range(d + 1), repeat=n):
+            if sum(alpha) != d:
+                continue
+            ul, vl, wl = block_lift(u, v, w, alpha)
+            coeff = poly.coeff_monomial(sympy.Mul(*[g**a for g, a in zip(gens, alpha)]))
+            assert coeff >= 0
+            assert coeff == schubmult_py({ul: 1}, vl).get(wl, 0), (u, v, w, alpha)
