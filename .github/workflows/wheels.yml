@@ -1,4 +1,4 @@
-# Prebuilt binary wheels (Linux / macOS / Windows, CPython 3.10-3.15) so users never need a
+# Prebuilt binary wheels (Linux / macOS / Windows, CPython 3.10-3.14) so users never need a
 # compiler: `pip install schubmult` picks the wheel, exactly as `symengine` itself is shipped.
 # Runs on tags and on demand; the publish job uploads to PyPI via trusted publishing.
 name: Wheels
@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0  # setuptools-scm needs the tags
       - uses: pypa/cibuildwheel@v3.2
         env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-* cp315-*"
+          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
           CIBW_SKIP: "*-musllinux_* *_i686 *-win32"
           # one Apple Silicon runner builds both; x86_64 wheels are tested under Rosetta
           CIBW_ARCHS_MACOS: "arm64 x86_64"

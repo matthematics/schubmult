@@ -24,7 +24,8 @@ Final release of 5.2.0, including the changes in 5.2.0b2 and 5.2.0b3.
 
 ### Changed
 
-- CI tests Python 3.15, and the wheel workflow builds CPython 3.15 wheels.
+- CI tests Python 3.15. The wheel workflow builds CPython 3.10-3.14 wheels; cibuildwheel does not
+  yet recognize the CPython 3.15 build selector.
 
 ### Fixed
 
