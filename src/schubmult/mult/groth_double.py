@@ -53,17 +53,31 @@ reflections in type ``A_{n-1}`` is
     ``t_{1,n}, t_{1,n-1}, ..., t_{1,k+1}, t_{2,n}, ..., t_{2,k+1}, ..., t_{k,k+1}``.
 """
 
+from __future__ import annotations
+
+import hashlib
 from fractions import Fraction
 from functools import cache
+from typing import TYPE_CHECKING, Any, overload
 
 from schubmult.abc import beta as _default_beta
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, Mul, Pow, S, sympify
-from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
+from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.perm_utils import add_perm_dict
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from schubmult._typing import Alphabet, Coeff, Expr, PermCoeffDict, PermLike
+
 __all__ = [
+    "dgroth_copipe_expansion",
+    "dgroth_phantom_expansion",
+    "dgroth_positive_phantom_expansion",
     "dgroth_to_dschub",
+    "dgroth_to_dschub_positive",
+    "double_groth_times_double_schub",
     "elem_sym_perms_groth",
     "epsilon_chain",
     "groth_elem_sym_func",
@@ -79,7 +93,7 @@ __all__ = [
 ]
 
 
-def monk_chain(k):
+def monk_chain(k: int) -> tuple[tuple[int, int], ...]:
     """Reduced ``(-omega_k)``-chain of reflections in ``A_{n-1}``, as ``(i, j)``, ``i <= k < j``.
 
     ``omega_k = eps_1 + ... + eps_k``, so this is ``epsilon_chain`` on ``{1, ..., k}``:
@@ -89,7 +103,7 @@ def monk_chain(k):
     return tuple((a, b) for a, b, _ in epsilon_chain(tuple(range(1, k + 1))))
 
 
-def epsilon_chain(positions, inverse=False, ambient_rank=None):
+def epsilon_chain(positions: int | Iterable[int], inverse: bool = False, ambient_rank: int | None = None) -> tuple[tuple[int, int, int], ...]:
     r"""Reduced ``(-eps_A)``-chain of reflections in ``A_{n-1}``, ``A = positions``.
 
     ``positions`` is a single index or an iterable of them (repeats allowed), and
@@ -116,6 +130,8 @@ def epsilon_chain(positions, inverse=False, ambient_rank=None):
     """
     if isinstance(positions, int):
         positions = (positions,)
+    else:
+        positions = tuple(positions)
     step = 1 if inverse else -1
     if ambient_rank is None:
         ambient_rank = max(positions) + len(positions)
@@ -194,7 +210,7 @@ def _rank(u, positions):
     return max(len(u), max(positions) + 1) + len(positions)
 
 
-def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, inverse=False):
+def one_plus_beta_x_groth(coeff_dict: PermCoeffDict, positions: int | Iterable[int], var2: Alphabet | None = None, beta: Expr | None = None, inverse: bool = False) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``prod_{i in positions} (1 + beta*x_i)``.
 
     The one-pass Pieri rule of Theorem 6.1 at ``lambda = -eps_A``; see
@@ -203,10 +219,10 @@ def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, inverse=F
     """
     if beta is None:
         beta = _default_beta
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
     positions = (positions,) if isinstance(positions, int) else tuple(positions)
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         for w, coeff in _one_plus_beta_x_terms(u, positions, var2, beta, inverse=inverse).items():
@@ -214,7 +230,7 @@ def one_plus_beta_x_groth(coeff_dict, positions, var2=None, beta=None, inverse=F
     return ret
 
 
-def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
+def single_variable_groth(coeff_dict: PermCoeffDict, varnum: int, var2: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the single variable ``x_varnum``.
 
     Returns ``{w: coeff_w}``.  This is ``_one_plus_beta_x_terms`` with the
@@ -224,11 +240,11 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
     """
     if beta is None:
         beta = _default_beta
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
     k = varnum
     positions = (k,)
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         y = var2[u[k - 1]]
@@ -239,7 +255,7 @@ def single_variable_groth(coeff_dict, varnum, var2=None, beta=None):
     return ret
 
 
-def elem_sym_perms_groth(u, k):
+def elem_sym_perms_groth(u: Permutation, k: int) -> dict[Permutation, dict[int, int]]:
     r"""K-theoretic analogue of ``elem_sym_perms``: ``{w: {d: multiplicity}}``.
 
     Same recursion as ``elem_sym_perms(u, p, k)`` -- a step is any Bruhat cover
@@ -256,7 +272,7 @@ def elem_sym_perms_groth(u, k):
     than once, and distinct chains can land on the same ``w`` at the same ``d``, which is
     the source of the K-theoretic multiplicities.
     """
-    out = {}
+    out: dict[Permutation, dict[int, int]] = {}
 
     def walk(w, last_b, d):
         if d:
@@ -272,7 +288,7 @@ def elem_sym_perms_groth(u, k):
     return out
 
 
-def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=None, fgl=True):
+def grothmult_double_block(coeff_dict: PermCoeffDict, positions: int | Iterable[int], zvar: Expr | None = None, var2: Alphabet | None = None, beta: Expr | None = None, fgl: bool = True) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by a linear block over ``positions``:
 
         fgl=True  ->  prod_{i in A} (x_i (+) zvar),   x (+) z = x*(1 + beta*z) + z
@@ -298,7 +314,7 @@ def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=Non
         beta = _default_beta
     if zvar is None:
         zvar = S.Zero
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
     positions = (positions,) if isinstance(positions, int) else tuple(positions)
 
     scale, shift = (S.One + beta * zvar, zvar) if fgl else (S.One, -zvar)
@@ -312,7 +328,7 @@ def grothmult_double_block(coeff_dict, positions, zvar=None, var2=None, beta=Non
     return ret
 
 
-def groth_elem_sym_poly(p, k, zvar, var_x, beta):
+def groth_elem_sym_poly(p: int, k: int, zvar: Expr, var_x: Alphabet, beta: Expr) -> Expr:
     """``E_p^beta(x_1..x_k; z) = e_p(x_1 (+) z, ..., x_k (+) z)``, ``x (+) z = x(1 + beta*z) + z``.
 
     The double Grothendieck elementary symmetric: ``p == k`` gives
@@ -327,7 +343,7 @@ def groth_elem_sym_poly(p, k, zvar, var_x, beta):
     return acc[p]
 
 
-def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, beta=None):  # noqa: ARG001
+def grothmult_double_pieri(coeff_dict: PermCoeffDict, p: int, k: int, zvar: Expr | None = None, var_x: Alphabet | None = None, var2: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:  # noqa: ARG001
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by ``groth_elem_sym_poly(p, k, zvar, var_x, beta)``.
 
     Exact, by folding the ``e_p`` DP over coefficient dicts one shifted variable
@@ -347,7 +363,7 @@ def grothmult_double_pieri(coeff_dict, p, k, zvar=None, var_x=None, var2=None, b
         beta = _default_beta
     if zvar is None:
         zvar = S.Zero
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
 
     # acc[r] = e_r(x_1 (+) z, ..., x_i (+) z) * input, folded as coefficient dicts
     acc = [{Permutation(key): value for key, value in coeff_dict.items()}] + [{} for _ in range(p)]
@@ -411,7 +427,7 @@ def _top_block_coeff(u, w, k, zvar, var2, beta, length=None):
     return beta**power * value
 
 
-def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
+def grothmult_double_top(coeff_dict: PermCoeffDict, k: int, zvar: Expr | None = None, var2: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the top linear block ``prod_{i=1}^{k}(x_i + zvar)``.
 
     Closed positive Molev--Sagan Pieri rule (conjectural; verified exhaustively on
@@ -448,9 +464,9 @@ def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
         beta = _default_beta
     if zvar is None:
         zvar = S.Zero
-    var2 = _genset(var2)
+    var2 = _genset(var2, "y")
 
-    ret = {}
+    ret: PermCoeffDict = {}
     for u, val in coeff_dict.items():
         u = Permutation(u)
         if k == 0:
@@ -461,14 +477,14 @@ def grothmult_double_top(coeff_dict, k, zvar=None, var2=None, beta=None):
     return ret
 
 
-def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None):
+def mult_poly_groth_double(coeff_dict: PermCoeffDict, poly: Expr, var_x: Alphabet | None = None, var_y: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     """Multiply ``sum_u coeff_u G_u(x, var_y)`` by an arbitrary polynomial in ``var_x``.
 
     Mirrors ``mult_poly_double``; the leaves of the ``Add``/``Mul``/``Pow`` recursion
     are handled by ``single_variable_groth``.
     """
-    var_x = _genset(var_x)
-    var_y = _genset(var_y)
+    var_x = _genset(var_x, "x")
+    var_y = _genset(var_y, "y")
     index = var_x.index(poly)
     if index != -1:
         return single_variable_groth(coeff_dict, index, var_y, beta)
@@ -484,10 +500,10 @@ def mult_poly_groth_double(coeff_dict, poly, var_x=None, var_y=None, beta=None):
             ret = mult_poly_groth_double(ret, base, var_x, var_y, beta)
         return ret
     if isinstance(poly, Add):
-        ret = {}
+        total: PermCoeffDict = {}
         for arg in poly.args:
-            ret = add_perm_dict(ret, mult_poly_groth_double(coeff_dict, arg, var_x, var_y, beta))
-        return ret
+            total = add_perm_dict(total, mult_poly_groth_double(coeff_dict, arg, var_x, var_y, beta))
+        return total
     return {perm: poly * coeff for perm, coeff in coeff_dict.items()}
 
 
@@ -513,15 +529,30 @@ def _chain_sums(u, k, beta):
     return sums
 
 
-def _genset(var):
-    """Wrap a plain sequence of symbols in a ``CustomGeneratingSet``; pass generating sets and ``None`` through."""
-    if var is None or isinstance(var, GeneratingSet_base):
+@overload
+def _genset(var: None, default: None = None) -> None: ...
+
+
+@overload
+def _genset(var: None, default: str) -> GeneratingSet_base: ...
+
+
+@overload
+def _genset(var: Alphabet, default: str | None = None) -> GeneratingSet_base: ...
+
+
+def _genset(var, default=None):
+    """Wrap a plain sequence of symbols in a ``CustomGeneratingSet``; pass generating sets through.
+    ``None`` becomes ``GeneratingSet(default)`` when a default name is given, else stays ``None``."""
+    if var is None:
+        return None if default is None else GeneratingSet(default)
+    if isinstance(var, GeneratingSet_base):
         return var
     return CustomGeneratingSet(var)
 
 
 @cache
-def dgroth_to_dschub(v, var3, beta=None):
+def dgroth_to_dschub(v: PermLike, var3: Alphabet | None, beta: Expr | None = None) -> PermCoeffDict:
     """Expand ``G_v(x, var3)`` in double Schubert polynomials: ``{v': coeff}``.
 
     ``sum_{v'} coeff_{v'} S_{v'}(x, var3) = G_v(x, var3)`` with coefficients in
@@ -533,18 +564,32 @@ def dgroth_to_dschub(v, var3, beta=None):
 
     if beta is None:
         beta = _default_beta
-    var3 = _genset(var3)
+    var3 = _genset(var3, "z")
     elem = grothendieck_poly(Permutation(v), GeneratingSet("x"), var3, beta, keep_as_schub=True)
     return {Permutation(key): value for key, value in elem.items() if value != S.Zero}
 
 
 # Flat fractions are ``(numer, {atom: exp}, probes)`` with ``probes`` the exact values of ``numer``
-# at two fixed integer points (Schwartz--Zippel shadows), held as Python ints/Fractions so the
+# at two integer points (Schwartz--Zippel shadows), held as Python ints/Fractions so the
 # shadow arithmetic bypasses symengine's per-op dispatch.  Carrying the shadows through every
 # multiplication/addition makes the hidden-zero test free, and lets dead path sums be pruned
 # mid-recursion, without ever expanding or re-evaluating the (large, unexpanded) numerators.
-_PROBE_POINTS = ((1000003, 7919), (999983, 104729))
-_probe_index = {}
+#
+# Each symbol gets two coordinates, independent pseudo-random 61-bit integers derived from its
+# name: the same on every platform and run, and with no relation between the two points. (Points
+# affine in a shared per-symbol index are not independent: the offset cancels in every homogeneous
+# linear form, so ``y_2 + y_3 - z_1 - z_2`` vanished at both whenever the indices balanced, and the
+# indices came from set iteration order, which differs between platforms.)
+_PROBE_RANGE = (1 << 61) - 1
+_probe_coords: dict[Any, tuple[int, int]] = {}
+
+
+def _probe_coord(s):
+    c = _probe_coords.get(s)
+    if c is None:
+        h = hashlib.blake2b(str(s).encode(), digest_size=16).digest()
+        c = _probe_coords[s] = (1 + int.from_bytes(h[:8], "little") % _PROBE_RANGE, 1 + int.from_bytes(h[8:], "little") % _PROBE_RANGE)
+    return c
 
 
 def _to_py_number(v):
@@ -559,14 +604,13 @@ def _to_py_number(v):
 
 
 def _probe_vals(expr):
-    """Exact values of ``expr`` at the two probe points; symbols are assigned coordinates on first sight."""
+    """Exact values of ``expr`` at the two probe points."""
     syms = getattr(expr, "free_symbols", None)
     if not syms:
         v = _to_py_number(expr)
         return (v, v)
-    for s in syms:
-        _probe_index.setdefault(s, len(_probe_index))
-    return tuple(_to_py_number(expr.xreplace({s: base + step * _probe_index[s] for s in syms})) for base, step in _PROBE_POINTS)
+    coords = {s: _probe_coord(s) for s in syms}
+    return tuple(_to_py_number(expr.xreplace({s: c[i] for s, c in coords.items()})) for i in range(2))
 
 
 def _frac_is_zero(f):
@@ -659,10 +703,64 @@ def _frac_to_expr(f, varl1, beta):
         if e:
             den = den * _atom_pow(varl1, beta, a, e)
     return n / den
-    return n / den
 
 
-def groth_elem_sym_func(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta):
+def normalize_coeff(expr: Coeff, var2: GeneratingSet_base, beta: Expr | None = None) -> Expr:
+    r"""Cancelled normal form ``numer / prod (1 + beta*y_i)**e`` of a double Grothendieck coefficient.
+
+    In the multiplicative variables ``t_i = 1 + beta*y_i`` (the ``e^{-gamma}`` of equivariant
+    K-theory) every coefficient is a Laurent polynomial: the atoms are monomials, so plain
+    expansion collects everything and the denominator is read off as the monomial of negative
+    exponents.  No gcd is ever computed.  Passing to ``t`` first also keeps the expansion small:
+    the unexpanded kernel output is a tower of products of atoms, which in ``y`` expands to
+    thousands of monomials before cancelling and in ``t`` collapses immediately.
+    """
+    from schubmult.symbolic import Symbol, expand
+
+    if beta is None:
+        beta = _default_beta
+    e = sympify(expr)
+    b = sympify(beta)
+    ysyms = [s for s in e.free_symbols if var2.index(s) != -1]
+    if not ysyms:
+        return expand(e)
+    atoms = {s: Symbol(f"_groth_atom_{var2.index(s)}") for s in ysyms}
+    laurent = expand(e.xreplace({s: (t - S.One) / b for s, t in atoms.items()}))
+    if laurent == S.Zero:
+        return S.Zero
+    gens = [*atoms.values(), b]
+    mins = dict.fromkeys(gens, 0)
+    for term in laurent.args if laurent.is_Add else (laurent,):
+        pd = term.as_powers_dict()
+        for g in gens:
+            k = int(pd.get(g, 0))
+            if k < mins[g]:
+                mins[g] = k
+    clear = S.One
+    for g, k in mins.items():
+        if k < 0:
+            clear = clear * g ** (-k)
+    back = {t: S.One + b * s for s, t in atoms.items()}
+    numer = expand(expand(laurent * clear).xreplace(back))
+    bpow = -mins[b]
+    if bpow > 0:
+        # after passing back to y the numerator may carry a common power of beta; cancel it against the denominator
+        common = min(int(term.as_powers_dict().get(b, 0)) for term in (numer.args if numer.is_Add else (numer,)))
+        common = min(common, bpow)
+        if common > 0:
+            numer = expand(numer / b**common)
+            bpow -= common
+    den = S.One
+    for s, t in atoms.items():
+        k = -mins[t]
+        if k > 0:
+            den = den * (S.One + b * s) ** k
+    if bpow > 0:
+        den = den * b**bpow
+    return numer / den
+
+
+def groth_elem_sym_func(k: int, i: int, u1: Permutation, u2: Permutation, v1: Permutation, v2: Permutation, vdiff: int, varl1: GeneratingSet_base, varl2: GeneratingSet_base, beta: Expr) -> Expr:
     """Expression form of ``_groth_elem_sym_frac``; see there for the rule."""
     return _frac_to_expr(_groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta), varl1, beta)
 
@@ -729,7 +827,7 @@ def _groth_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length
     return (bpow * value, denom, (bprobe[0] * vprobe[0], bprobe[1] * vprobe[1]))
 
 
-_ZERO_FRAC = (S.Zero, {}, (0, 0))
+_ZERO_FRAC: tuple[Any, dict[Any, int], tuple[Any, Any]] = (S.Zero, {}, (0, 0))
 
 
 @cache
@@ -798,7 +896,475 @@ def _elem_sym_dp(alphabet, zidx, vdiff, varl1, varl2, beta):
     return state[p]
 
 
-def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
+@cache
+def _tilde_window_fate(k, u1, u2):
+    """``(alphabet, denom, left)`` for the window ``u1(1..k) -> u2``; see ``_tilde_elem_sym_frac``.
+
+    ``alphabet`` lists the window positions that are not left-movers, in window order: the
+    fixed value ``u1(j)`` or ``None`` for an out-mover (a zero entry of the alphabet).
+    ``denom`` counts the atoms ``1 + beta*y_{u1(j)}`` of the fixed and out positions and
+    ``left`` is the number of left-movers.
+    """
+    window2 = [u2[j] for j in range(k)]
+    alphabet = []
+    denom = {}
+    left = 0
+    for j in range(k):
+        value = u1[j]
+        if window2[j] == value:
+            alphabet.append(value)
+            denom[value] = denom.get(value, 0) + 1
+        elif value in window2 and window2.index(value) < j:
+            left += 1
+        else:
+            alphabet.append(None)
+            denom[value] = denom.get(value, 0) + 1
+    return tuple(alphabet), denom, left
+
+
+@cache
+def _tilde_elem_sym_dp_probed(alphabet, zidx, vdiff, base_power, varl1, varl2, beta):
+    r"""``beta**base_power * E_{n - vdiff, n}(alphabet; 1 + beta*z)`` numerator by subset DP, with probes.
+
+    ``alphabet`` entries are fixed values ``a`` (the entry ``1 + beta*y_a``) or ``None`` (the
+    entry ``0``).  A chosen fixed entry pairs with ``z_c`` as ``(1 + beta*y_a) - (1 + beta*z_c)
+    = beta*(y_a - z_c)``; the ``beta`` is kept separate (``r`` counts them) so the possibly
+    negative ``base_power`` can be absorbed: every term has ``r >= #fixed - vdiff``, hence
+    ``base_power + r >= 0`` whenever the caller's chain is admissible.
+    """
+    p = len(alphabet) - vdiff
+    zvars = [varl2[a] for a in zidx]
+    ztilde = [S.One + beta * zz for zz in zvars]
+    # state[(c, r)]: c entries chosen so far, r of them fixed
+    state = {(0, 0): S.One}
+    for idx, value in enumerate(alphabet, start=1):
+        new_state = {}
+        for (c, r), acc in state.items():
+            if idx - 1 - c < vdiff:
+                new_state[(c, r)] = new_state.get((c, r), S.Zero) + acc
+            if c < p:
+                # the c-th chosen entry (0-indexed) at position idx pairs with z_{idx - c}
+                if value is None:
+                    new_state[(c + 1, r)] = new_state.get((c + 1, r), S.Zero) - acc * ztilde[idx - c - 1]
+                else:
+                    new_state[(c + 1, r + 1)] = new_state.get((c + 1, r + 1), S.Zero) + acc * (varl1[value] - zvars[idx - c - 1])
+        state = new_state
+    total = S.Zero
+    for (c, r), acc in state.items():
+        if c != p:
+            continue
+        power = base_power + r
+        if power < 0:
+            raise ValueError(f"negative beta power in Grothendieck Pieri coefficient: alphabet={alphabet}, vdiff={vdiff}, base_power={base_power}")
+        total = total + beta**power * acc
+    return total, _probe_vals(total)
+
+
+@cache
+def _tilde_elem_sym_frac(k, i, u1, u2, v1, v2, vdiff, varl1, varl2, beta, length=None):
+    r"""K-analogue of ``elem_sym_func`` for the Grothendieck v-path (``_groth_groth_vpath_mul``).
+
+    Coefficient of ``G_{u2}(x, varl1)`` in ``F * G_{u1}(x, varl1)`` where ``F`` is the layer factor
+
+        F = prod_{j<=k}(1 + beta*x_j) * E_{k - vdiff, k}((-)x; z_sel),      (-)x = -x/(1 + beta*x),
+
+    the classical v-path factor ``E_{k - vdiff, k}(x; z_sel)`` transported to the formal-inverse
+    alphabet and dressed with the ``1 + beta*x_j`` that ``G_mu(x; z) = prod (x_i (+) z_j)`` carries.
+    Equivalently ``F = (-1)^p sum_{|I|=p} prod_{j not in I}(1 + beta*x_j) prod_m (x_{i_m} (+) z_{..})``,
+    ``p = k - vdiff``, the double Grothendieck factorial elementary.  ``z_sel`` is the alphabet
+    ``call_zvars(v1, v2, k, i)``, exactly as in ``elem_sym_func``.
+
+    Closed form.  Sort the window positions ``j <= k`` by the fate of ``u1(j)`` in ``u2`` as in
+    ``_groth_elem_sym_frac`` (fixed ``Q`` / left / out) and put ``n = |Q| + #out``, ``q = vdiff``,
+    ``d = l(u2) - l(u1)``:
+
+        (-1)^#left beta^(d - k + q) prod_{Q cup out}(1 + beta*y_{u1(j)})^{-1}
+            * E_{n - q, n}( (1 + beta*y_Q, 0^#out); 1 + beta*z_sel ),
+
+    a factorial elementary symmetric polynomial in the multiplicative variables ``1 + beta*y``
+    of the fixed values, padded with one ``0`` per out-mover, over ``1 + beta*z_sel``.  At
+    ``q = 0`` this is the top block rule of ``grothmult_double_top`` rewritten for
+    ``prod_{j<=k}(x_j (+) z)`` (``z (-) y = ((1+beta z) - (1+beta y)) / (beta (1+beta y))``, and an
+    out-mover contributes ``(1 + beta*z)/(1 + beta*y)``); general ``q`` follows by applying the
+    strip ``pihat_q ... pihat_1`` in ``z`` (``pihat_i = (1 + beta*z_i) d_i``) to both sides, which
+    turns ``E_{n,n}(A; 1+beta z_1)`` into ``(-beta)^q (1+beta z_1)...(1+beta z_q) E_{n-q,n}(A; 1+beta z)``
+    for any first alphabet ``A`` and the top block into ``(1+beta z_1)...(1+beta z_q) (-1)^q F``.
+
+    Returns a flat fraction ``(numer, {a: exp}, probes)`` with denominator
+    ``prod_a (1 + beta*varl1[a])**exp`` (the same ``denom`` as ``_groth_elem_sym_frac``).
+
+    ``length`` overrides ``d = l(u2) - l(u1)``; the quantum kernel passes the length of the
+    quantum Bruhat chain instead.
+    """
+    from schubmult.symbolic.poly.schub_poly import call_zvars
+
+    alphabet, denom, left = _tilde_window_fate(k, u1, u2)
+    d = u2.inv - u1.inv if length is None else length
+    movers = left + sum(1 for a in alphabet if a is None)
+    if d < movers:
+        return _ZERO_FRAC
+    if len(alphabet) < vdiff:
+        return _ZERO_FRAC
+    zidx = tuple(call_zvars(v1, v2, k, i)[: vdiff + 1])
+    value, vprobe = _tilde_elem_sym_dp_probed(alphabet, zidx, vdiff, d - k + vdiff, varl1, varl2, beta)
+    if vprobe[0] == 0 and vprobe[1] == 0:
+        return _ZERO_FRAC
+    if left % 2:
+        return (-value, denom, (-vprobe[0], -vprobe[1]))
+    return (value, denom, vprobe)
+
+
+def dgroth_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, th: Iterable[int] | None = None) -> PermCoeffDict:
+    r"""Expand ``G_v(x, var3)`` in double Schubert polynomials of the formal-inverse alphabet.
+
+    Returns ``{sigma: coeff}`` with
+
+        G_v(x; z) = prod_i (1 + beta*x_i)^{lambda'_i} * sum_sigma coeff_sigma(beta, z) S_sigma((-)x; z),
+
+    where ``lambda = th`` is a dominant shape with ``l(v^{-1} mu) = l(mu) - l(v)`` for
+    ``mu = uncode(lambda)`` (default ``theta(v^{-1})``, the shape of the v-path; the quantum
+    kernel passes ``strict_theta(v^{-1})``), ``lambda'`` its conjugate, ``(-)x = -x/(1 + beta*x)``
+    and the coefficients are polynomials in ``beta`` and the atoms ``1 + beta*z_t``.  Every
+    ``sigma`` satisfies the same length condition as ``v``, so the classical v-path over
+    ``lambda`` applies to each term.
+
+    Derivation.  With ``mu`` dominant, ``G_v(x; z) = pi_w G_{mu^{-1}}(x; z)`` for isobaric divided
+    differences ``pi_i = d_i (1 + beta*z_{i+1})`` acting on ``z``, ``w = (v mu)^{-1}``.  Taking the
+    reduced word of ``w`` from the code ``c`` of ``v mu`` -- blocks ``s_{j+c_j-1} ... s_{j+1} s_j``,
+    block ``1`` outermost -- every ``1 + beta*z`` commutes to the right within a block:
+
+        pi_{j+c_j-1} ... pi_j  =  d_{j+c_j-1} ... d_j o prod_{t=j+1}^{j+c_j} (1 + beta*z_t).
+
+    So ``G_v`` is a composition of *ordinary* divided differences interleaved with
+    multiplications by "phantom" factors ``1 + beta*z_t``, applied to
+    ``G_{mu^{-1}}(x; z) = prod_i (1+beta x_i)^{lambda'_i} (-1)^{|lambda|} S_{mu^{-1}}((-)x; z)``.
+    Each ``d_i`` is distributed by the twisted Leibniz rule with the honest operator on the
+    Schubert factor (``d_i^z S_sigma(a; z) = -S_{s_i sigma}(a; z)`` on a left descent, else ``0``,
+    the v-path's ``monoperm`` pruning) and the skew operators on the phantoms, which only
+    relabel (``s_i``) or consume a phantom (``d_i (1 + beta*z_t) = +-beta``).  The state is
+    ``(sigma, multiset of surviving phantoms)``; no polynomial arithmetic occurs.
+    """
+    from schubmult.symbolic import expand
+
+    if beta is None:
+        beta = _default_beta
+    var3 = _genset(var3, "z")
+    v = Permutation(v)
+    if v.inv == 0 and th is None:
+        return {v: S.One}
+    states = _dgroth_phantom_states(v, th)
+    out: PermCoeffDict = {}
+    for (sg, ph), multiplicity in states.items():
+        term = S.NegativeOne**v.inv * multiplicity * beta ** (sg.inv - v.inv)
+        for t in ph:
+            term = term * (S.One + beta * var3[t])
+        out[sg] = out.get(sg, S.Zero) + term
+    return {sg: c for sg, c in out.items() if expand(c) != S.Zero}
+
+
+def dgroth_positive_phantom_expansion(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, th: Iterable[int] | None = None) -> PermCoeffDict:
+    r"""Return sign-normalized phantom coefficients, certifying positivity in ``A_t = 1 + beta*z_t``.
+
+    Defaults to the staircase ``(n-1, ..., 1)`` with ``n = len(Permutation(v))``.
+    This length is at least two, including for the identity.
+    Pass ``th`` explicitly to choose a larger staircase or another dominant shape.
+    For the same shape, the result is ``(-1)**v.inv * dgroth_phantom_expansion(...)``:
+
+        G_v(x; z) = (-1)**v.inv prod_i (1 + beta*x_i)**lambda'_i
+                    * sum_sigma result[sigma] S_sigma((-)x; z).
+
+    Each returned coefficient is a sum of terms
+    ``m * beta**(sigma.inv - v.inv) * prod_t A_t`` with positive integer ``m``.
+    The recurrence uses signed integer contributions, but checks that their net
+    multiplicities are nonnegative after every divided difference. Positivity
+    in all ranks is conjectural: a negative multiplicity raises ``ValueError``,
+    never an absolute value or a fallback. No combinatorial realization or
+    subtraction-free recurrence is asserted.
+    """
+    v = Permutation(v)
+    if th is None:
+        th = range(len(v) - 1, 0, -1)
+    if beta is None:
+        beta = _default_beta
+    var3 = _genset(var3, "z")
+    states = _dgroth_phantom_states(v, th, check_positive=True)
+    out: PermCoeffDict = {}
+    for (sg, ph), multiplicity in states.items():
+        term = multiplicity * beta ** (sg.inv - v.inv)
+        for t in ph:
+            term = term * (S.One + beta * var3[t])
+        out[sg] = out.get(sg, S.Zero) + term
+    return {sg: c for sg, c in out.items() if c != S.Zero}
+
+
+def _dgroth_phantom_states(v: Permutation, th: Iterable[int] | None, *, check_positive: bool = False) -> dict[tuple[Permutation, tuple[int, ...]], int]:
+    """Factor out ``(-1)**(mu.inv - steps) * beta**(sigma.inv - mu.inv + steps)`` from each state."""
+    from schubmult.combinatorics.permutation import uncode
+
+    mu_user = uncode([*((~v).theta() if th is None else th)])
+    mu = ~mu_user
+    vmu = v * mu_user
+    if vmu.inv != mu.inv - v.inv:
+        raise ValueError(f"dominant shape does not lie above v in weak order: v={list(v)}, shape={list(mu_user.code)}")
+    code = vmu.code
+    blocks = [(j + 1, code[j]) for j in range(len(code)) if code[j]]
+
+    def relabel(c: int, i: int) -> int:
+        return i + 1 if c == i else i if c == i + 1 else c
+
+    states: dict[tuple[Permutation, tuple[int, ...]], int] = {(mu, ()): 1}
+    for a, length in reversed(blocks):
+        states = {(sg, tuple(sorted((*ph, *range(a + 1, a + length + 1))))): c for (sg, ph), c in states.items()}
+        for i in range(a, a + length):
+            swap_i = Permutation([]).swap(i - 1, i)
+            new: dict[tuple[Permutation, tuple[int, ...]], int] = {}
+            for (sg, ph), c in states.items():
+                for r, t in enumerate(ph):
+                    if t == i or t == i + 1:
+                        key = (sg, tuple(sorted((*(relabel(tt, i) for tt in ph[:r]), *ph[r + 1 :]))))
+                        new[key] = new.get(key, 0) + (-c if t == i else c)
+                sinv = ~sg
+                if sinv[i - 1] > sinv[i]:
+                    key = (swap_i * sg, tuple(sorted(relabel(tt, i) for tt in ph)))
+                    new[key] = new.get(key, 0) + c
+            states = {key: c for key, c in new.items() if c}
+            if check_positive:
+                for (sg, ph), c in states.items():
+                    if c < 0:
+                        raise ValueError(f"negative phantom multiplicity: v={list(v)}, shape={list(mu_user.code)}, block={(a, length)}, i={i}, sigma={list(sg)}, phantoms={ph}, multiplicity={c}")
+    if check_positive:
+        for (sg, ph) in states:
+            if sg.inv < v.inv:
+                raise ValueError(f"negative beta power in phantom expansion: v={list(v)}, sigma={list(sg)}, phantoms={ph}")
+    return states
+
+
+def dgroth_copipe_expansion(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None, n: int | None = None) -> PermCoeffDict:
+    r"""Conjectural unsigned staircase expansion, using reduced dreams with possibly unreduced complements.
+
+    Returns the sign-normalized coefficients of ``dgroth_phantom_expansion``
+    with ``th = (n-1, ..., 1)``; ``n`` defaults to ``len(Permutation(v))``.
+    For each reduced pipe dream ``D`` of ``sigma*w0``, keep ``D`` when
+    ``v <= Demazure(co(D))`` in Bruhat order, and contribute
+
+        beta**(sigma.inv - v.inv) * prod_{(r,c) in crosses(D)} (1 + beta*var3[c]).
+
+    Complementation is in the fixed rank-n staircase, even when the dream's
+    permutation has a shorter window. There is no reducedness requirement on
+    ``co(D)``. Agreement with the phantom recurrence is experimental, not a
+    theorem. This enumerates reduced dreams across S_n and is intended for
+    small-rank research, not as a replacement for the multiplication kernel.
+    The basis is ``S_sigma((-)x; z)`` with the staircase prefactor, not the
+    ordinary double Schubert basis ``S_sigma(x; z)``.
+    """
+    v = Permutation(v)
+    n = len(v) if n is None else n
+    if not isinstance(n, int) or isinstance(n, bool) or n < max(v, default=1):
+        raise ValueError(f"ambient rank must be a positive integer containing v: v={list(v)}, n={n}")
+    if beta is None:
+        beta = _default_beta
+    var3 = _genset(var3, "z")
+    out: PermCoeffDict = {}
+    for (sigma, columns), multiplicity in _dgroth_copipe_states(v, n).items():
+        term = multiplicity * beta ** (sigma.inv - v.inv)
+        for c in columns:
+            term *= S.One + beta * var3[c]
+        out[sigma] = out.get(sigma, S.Zero) + term
+    return {sigma: c for sigma, c in out.items() if c != S.Zero}
+
+
+def _dgroth_copipe_states(v: Permutation, n: int) -> dict[tuple[Permutation, tuple[int, ...]], int]:
+    """Count column multisets directly, independently of the divided-difference recurrence."""
+    from schubmult.combinatorics.rc_graph import RCGraph
+
+    w0 = Permutation.w0(n)
+    states: dict[tuple[Permutation, tuple[int, ...]], int] = {}
+    for sigma in Permutation.all_permutations(n):
+        if sigma.inv < v.inv:
+            continue
+        for rc in RCGraph.all_rc_graphs(sigma * w0, n):
+            crosses = {(r + 1, t - r) for r, row in enumerate(rc) for t in row}
+            # The anti-diagonal co-reflection sends (r,c) to (n+1-r-c,c).
+            co_word = (r + c - 1 for r in range(1, n) for c in range(n - r, 0, -1) if (n + 1 - r - c, c) not in crosses)
+            co_perm = Permutation.hecke_ref_product(*co_word)
+            if v.bruhat_leq(co_perm):
+                key = (sigma, tuple(sorted(c for _, c in crosses)))
+                states[key] = states.get(key, 0) + 1
+    return states
+
+
+def dgroth_to_dschub_positive(v: PermLike, var3: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
+    r"""Expand ``G_v(x; z)`` in ordinary double Schubert polynomials ``S_w(x; z)`` as a manifestly
+    nonnegative sum over combinatorial objects: ``{w: a_w}`` with ``a_w`` in ``N[beta, z]``.
+
+    No change of variables and no signed term occurs at any stage.  The formula composes
+    three sign-free expansions, each in the original alphabets:
+
+    1. Cauchy factorization over Demazure products (Fomin--Kirillov type)::
+
+           G_v(x; z) = sum_{u * v' = v} beta^(l(u) + l(v') - l(v)) G_{u^{-1}}(z) G_{v'}(x),
+
+       the sum over pairs ``(u, v')`` with Demazure product ``u @ v' == v``; ``G_{u^{-1}}(z)`` is the single
+       Grothendieck polynomial, a sum over (unreduced) pipe dreams ``P`` of ``u^{-1}`` with weight
+       ``beta^(|P| - l(u)) z^wt(P)``.
+    2. Single Grothendieck to single Schubert: ``G_{v'}(x) = sum_{u'} beta^(l(u') - l(v')) c_{v', u'} S_{u'}(x)``
+       with ``c_{v', u'}`` the nonnegative integers of ``WCGraph.groth_to_schub`` (WC graphs ``D`` of
+       ``v'`` whose co-pipe-dream is reduced for ``u' w_0``).
+    3. Single to double Schubert: ``S_{u'}(x) = sum_{u' = a w, l(a) + l(w) = l(u')} S_a(z) S_w(x; z)``,
+       ``S_a(z)`` a sum over reduced pipe dreams ``R`` of ``a`` with weight ``z^wt(R)``.
+
+    Hence ``a_w`` is the weight generating function of triples ``(P, D, R)`` as above with
+    ``u * v' = v``, ``co(D) = u' w_0``, ``a w = u'``, weighted by ``beta^(|P| + l(u') - l(v))``
+    times ``z^wt(P) z^wt(R)``: the pipe dream ``P`` carries its own ``beta^(|P| - l(u))`` from step
+    1, which combines with the Cauchy and Grothendieck-to-Schubert powers ``beta^(l(u) + l(u') - l(v))``.
+    Every weight is a monomial with coefficient ``+1``, so ``a_w``
+    has nonnegative integer coefficients.  Agrees with ``dgroth_to_dschub`` for every ``v`` in
+    ``S_4`` and on samples in ``S_5``.  Enumerates the Bruhat interval below ``v`` twice; this is a
+    research implementation, not a replacement for the multiplication kernel.
+    """
+    from schubmult.combinatorics.rc_graph import RCGraph
+    from schubmult.combinatorics.wc_graph import WCGraph
+    from schubmult.symbolic import expand
+
+    v = Permutation(v)
+    if beta is None:
+        beta = _default_beta
+    var3 = _genset(var3, "z")
+    n = len(v)
+    zs = [var3[i] for i in range(n + 1)]
+
+    def single_groth(u):
+        # G_u(z) = sum over unreduced pipe dreams P of u of beta^(|P| - l(u)) z^wt(P)
+        return sum((wc.polyvalue(zs, beta=beta, prop_beta=True) for wc in WCGraph.all_wc_graphs(u, n)), S.Zero)
+
+    def single_schub(a):
+        # S_a(z) = sum over reduced pipe dreams R of a of z^wt(R)
+        return sum((rc.polyvalue(zs) for rc in RCGraph.all_rc_graphs(a, n)), S.Zero)
+
+    below = [u for u in Permutation.all_permutations(n) if u.bruhat_leq(v)]
+    # coefficient of the single Schubert polynomial S_{u'}(x) in G_v(x; z)
+    single: PermCoeffDict = {}
+    for u in below:
+        groth_u = None
+        for vp in below:
+            if u @ vp != v:
+                continue
+            if groth_u is None:
+                groth_u = single_groth(~u)
+            # c already carries beta^(l(u') - l(v')), so this prefactor is beta^(l(u) + l(u') - l(v));
+            # each unreduced dream P inside groth_u adds its own beta^(|P| - l(u))
+            pre = beta ** (u.inv + vp.inv - v.inv) * groth_u
+            for up, c in WCGraph.groth_to_schub(vp, beta).items():
+                single[up] = single.get(up, S.Zero) + pre * c
+    out: PermCoeffDict = {}
+    for up, coeff in single.items():
+        for w in Permutation.all_permutations(n):
+            a = up * ~w
+            if a.inv + w.inv != up.inv:
+                continue
+            out[w] = out.get(w, S.Zero) + coeff * single_schub(a)
+    return {w: c for w, value in out.items() if (c := expand(value)) != S.Zero}
+
+
+def _groth_vpath_topdown(perm_dict: PermCoeffDict, th: list[int], tops: dict[Permutation, Any], var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, pieri: Any, as_frac: bool = False) -> dict:
+    """Top-down driver of the Grothendieck v-path shared by the classical and quantum kernels.
+
+    ``th`` is the dominant shape, ``tops`` maps each top ``sigma * mu`` to its coefficient
+    ``c_sigma`` from ``dgroth_phantom_expansion``, and ``pieri(up, k)`` yields the Pieri support
+    of the layer factor on ``G_up`` as ``(up2, length, weight, weight_probes)`` -- ``length`` the
+    chain length handed to ``_tilde_elem_sym_frac`` (``None`` for ``l(up2) - l(up)``) and
+    ``weight`` an extra scalar (the quantum ``q^D``; ``1`` classically).
+
+    The layer factors commute, so the v-path chain ``e = v_0 -> ... -> v_L = sigma * mu`` may be
+    consumed from either end.  Going *top-down* -- start every top with weight ``c_sigma`` and
+    walk the reversed ``compute_vpathdicts`` transitions down to ``v_0 = e`` -- lets the sum over
+    tops cancel as soon as two paths meet, which it does massively: the tops
+    ``prod (1 + beta*x)^{lambda'} S_sigma((-)x; z)`` are long (every layer factor has ``p ~ k`` and
+    a nearly full K-Pieri support) and only their alternating sum is small.  Bottom-up the
+    cancellation would only happen after the last layer, with an order of magnitude more
+    states in between.  Transitions out of a state do not depend on the top, so the reversed
+    layer dictionaries are simply unioned over the tops.
+    """
+    from schubmult.utils.schub_lib import compute_vpathdicts
+
+    reverse: list[dict[Permutation, set]] = [{} for _ in th]
+    for top in tops:
+        for index, layer in enumerate(compute_vpathdicts(tuple(th), top)):
+            for v1, steps in layer.items():
+                for v2, vdiff, s in steps:
+                    reverse[index].setdefault(v2, set()).add((v1, vdiff, s))
+    identity = Permutation([1, 2])
+    ret_dict: dict[Permutation, Any] = {}
+    for u, val in perm_dict.items():
+        u = Permutation(u)
+        base = _frac_const(val)
+        vpathsums = {u: {top: _frac_scale(base, coeff, cprobe) for top, (coeff, cprobe) in tops.items()}}
+        for index in range(len(th) - 1, -1, -1):
+            k = th[index]
+            layer = reverse[index]
+            i = index + 1
+            newpathsums: dict[Permutation, dict[Permutation, Any]] = {}
+            for up, sums in vpathsums.items():
+                live = [(v2, sumval, layer[v2]) for v2, sumval in sums.items() if v2 in layer and not _frac_is_zero(sumval)]
+                if not live:
+                    continue
+                for up2, length, weight, wprobe in pieri(up, k):
+                    bucket = None
+                    for v2, sumval, steps in live:
+                        for v1, vdiff, s in steps:
+                            coeff = _tilde_elem_sym_frac(k, i, up, up2, v1, v2, vdiff, var2, var3, beta, length=length)
+                            if coeff is _ZERO_FRAC:
+                                continue
+                            si = int(s)
+                            contrib = _frac_mul(sumval, _frac_scale(coeff, si * weight, (si * wprobe[0], si * wprobe[1])))
+                            if bucket is None:
+                                bucket = newpathsums.setdefault(up2, {})
+                            bucket[v1] = _frac_add(bucket.get(v1), contrib, var2, beta)
+            vpathsums = newpathsums
+        for ep, sums in vpathsums.items():
+            pair = sums.get(identity)
+            if pair is not None and not _frac_is_zero(pair):
+                ret_dict[ep] = _frac_add(ret_dict.get(ep), pair, var2, beta)
+    if as_frac:
+        return {w: f for w, f in ret_dict.items() if not _frac_is_zero(f)}
+    ret = {w: _frac_to_expr(f, var2, beta) for w, f in ret_dict.items()}
+    return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
+
+
+def _classical_pieri(up, k):
+    """Pieri support of the classical layer factor: the marked-chain K-Pieri support, unit weight."""
+    return ((up2, None, 1, (1, 1)) for up2 in _top_block_support(up, k) | {up})
+
+
+def _groth_groth_vpath_mul(perm_dict: PermCoeffDict, v: PermLike, var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, as_frac: bool = False) -> dict:
+    """``sum_u coeff_u G_u(x, var2) * G_v(x, var3)`` in the ``G`` basis, by the Grothendieck v-path.
+
+    ``dgroth_phantom_expansion`` writes ``G_v`` as ``prod (1 + beta*x_i)^{lambda'_i}`` times a
+    short combination of ``S_sigma((-)x, var3)`` all living over the same dominant shape
+    ``lambda = theta(v^{-1})``; ``_groth_vpath_topdown`` runs their v-paths as one top-down pass
+    of the ``schubmult_double`` recursion.  The layer factor is
+    ``prod_{j<=k}(1 + beta*x_j) E_{k - vdiff, k}((-)x; z_sel)`` -- its ``1 + beta*x_j`` dressing
+    absorbs the global ``prod (1 + beta*x_i)^{lambda'_i}`` exactly -- with coefficients
+    ``_tilde_elem_sym_frac`` in place of ``_groth_elem_sym_frac``.
+
+    All path sums are flat fractions, reconstituted at the end (or returned raw with ``as_frac``).
+    """
+    from schubmult.combinatorics.permutation import uncode
+
+    v = Permutation(v)
+    th = list((~v).theta())
+    while th and th[-1] == 0:
+        th.pop()
+    if not th:
+        if as_frac:
+            return {Permutation(w): _frac_const(val) for w, val in perm_dict.items()}
+        return dict(perm_dict)
+    mu = uncode(th)
+    tops = {sigma * mu: (coeff, _probe_vals(coeff)) for sigma, coeff in dgroth_phantom_expansion(v, var3, beta, th).items()}
+    return _groth_vpath_topdown(perm_dict, th, tops, var2, var3, beta, _classical_pieri, as_frac)
+
+
+def _groth_schub_vpath_mul(perm_dict: PermCoeffDict, v: PermLike, var2: GeneratingSet_base, var3: GeneratingSet_base, beta: Expr, as_frac: bool = False) -> dict:
     """``sum_u coeff_u G_u(x, var2) * S_v(x, var3)`` in the ``G`` basis.
 
     Mirrors ``schubmult_double``: expand ``S_v`` by ``compute_vpathdicts`` over the
@@ -823,7 +1389,7 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
     mu = uncode(th)
     vmu = v * mu
     vpathdicts = compute_vpathdicts(tuple(th), vmu)
-    ret_dict = {}
+    ret_dict: dict[Permutation, Any] = {}
     for u, val in perm_dict.items():
         u = Permutation(u)
         vpathsums = {u: {Permutation([1, 2]): _frac_const(val)}}
@@ -831,7 +1397,7 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
             k = th[index]
             layer = vpathdicts[index]
             i = index + 1
-            newpathsums = {}
+            newpathsums: dict[Permutation, dict[Permutation, Any]] = {}
             for up, sums in vpathsums.items():
                 live = [(v_iter, sumval, layer[v_iter]) for v_iter, sumval in sums.items() if v_iter in layer and not _frac_is_zero(sumval)]
                 if not live:
@@ -861,33 +1427,53 @@ def _groth_schub_vpath_mul(perm_dict, v, var2, var3, beta, as_frac=False):
     return {w: coeff for w, coeff in ret.items() if coeff != S.Zero}
 
 
-def grothmult_double(perm_dict, v, var2=None, var3=None, beta=None):
+def double_groth_times_double_schub(groth_perm: PermLike, schub_perm: PermLike, coeffvar_groth: Alphabet | None = None, coeffvar_schub: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
+    r"""``G_u(x; coeffvar_groth) * S_v(x; coeffvar_schub)`` expanded in the basis ``{G_w(x; coeffvar_groth)}``.
+
+    This is the mixed product at the heart of ``grothmult_double``: a double Grothendieck polynomial
+    times a double Schubert polynomial, computed by the v-path kernel ``_groth_schub_vpath_mul``
+    (``S_v`` is expanded layer by layer over ``theta(v^{-1})`` as in ``schubmult_double``, with the
+    K-theoretic Pieri coefficients ``_groth_elem_sym_frac``).  ``grothmult_double`` is this summed
+    over the ``dgroth_to_dschub`` expansion of ``G_v`` in double Schubert polynomials.
+
+    Args:
+        groth_perm: Permutation ``u`` indexing the double Grothendieck factor.
+        schub_perm: Permutation ``v`` indexing the double Schubert factor.
+        coeffvar_groth: Coefficient alphabet of ``G_u`` (and of the output basis); default ``y``.
+        coeffvar_schub: Coefficient alphabet of ``S_v``; default ``z``.
+        beta: K-theory parameter; defaults to ``schubmult.abc.beta``.
+
+    Returns:
+        dict: ``{w: coeff_w}`` with nonzero ``coeff_w`` rational in ``coeffvar_groth`` (denominators
+        are products of ``1 + beta*y_i``), polynomial in ``coeffvar_schub`` and ``beta``.
+    """
+    if beta is None:
+        beta = _default_beta
+    coeffvar_groth = _genset(coeffvar_groth, "y")
+    coeffvar_schub = _genset(coeffvar_schub, "z")
+    return _groth_schub_vpath_mul({Permutation(groth_perm): S.One}, Permutation(schub_perm), coeffvar_groth, coeffvar_schub, beta)
+
+
+def grothmult_double(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | None = None, var3: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Multiply double Grothendieck polynomials, mirroring ``schubmult_double``.
 
     Computes the expansion of ``sum_u coeff_u G_u(x, var2) * G_v(x, var3)`` in
     the basis ``{G_w(x, var2)}`` and returns it as ``{w: coeff_w}``.
 
-    ``v = s_k`` uses the verified chain formula of Corollary 8.2, and
-    ``max_descent == 1`` folds that column by column.  General ``v`` goes through
-    ``dgroth_to_dschub`` (exact, slow) and the conjectural vpath kernel
-    ``_groth_schub_vpath_mul``, one run per double Schubert ``S_{v'}`` in the
-    expansion of ``G_v``.
-
-    The chain rank is inferred from the current permutation and selected positions.
+    ``G_v`` is never expanded in double Schubert polynomials of ``x``: the
+    Grothendieck v-path kernel ``_groth_groth_vpath_mul`` runs the classical v-path
+    over ``theta(v^{-1})`` directly on ``G_v``, using ``dgroth_phantom_expansion`` for
+    the handful of ``S_sigma((-)x, var3)`` tops and the closed K-Pieri coefficients
+    ``_tilde_elem_sym_frac`` (conjectural, like ``grothmult_double_top``; verified
+    against the polynomial identity through ``S_4 x S_4``).
     """
     if beta is None:
         beta = _default_beta
-    var2 = _genset(var2)
-    var3 = _genset(var3)
+    var2 = _genset(var2, "y")
+    var3 = _genset(var3, "z")
 
     v = Permutation(v)
     perm_dict = {Permutation(key): value for key, value in perm_dict.items()}
     if v.inv == 0:
         return perm_dict
-    ret = {}
-    for vprime, coeff in dgroth_to_dschub(v, var3, beta).items():
-        cprobe = _probe_vals(coeff)
-        for w, value in _groth_schub_vpath_mul(perm_dict, vprime, var2, var3, beta, as_frac=True).items():
-            ret[w] = _frac_add(ret.get(w), _frac_scale(value, coeff, cprobe), var2, beta)
-    out = {w: _frac_to_expr(f, var2, beta) for w, f in ret.items()}
-    return {w: value for w, value in out.items() if value != S.Zero}
+    return _groth_groth_vpath_mul(perm_dict, v, var2, var3, beta)

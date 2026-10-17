@@ -180,7 +180,7 @@ class GrothendieckPolyBasis(PolynomialBasis):
         if isinstance(other_basis, GlidePolyBasis):
             return lambda x: self.transition_glide(x)
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: self.transition_schubert(x)
+            return lambda x: other_basis.attach_key(self.transition_schubert(x))
         if isinstance(other_basis, LascouxPolyBasis):
             return lambda x: self.transition_lascoux(x)
         if isinstance(other_basis, MonomialBasis):

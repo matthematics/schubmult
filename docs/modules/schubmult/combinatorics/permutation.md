@@ -18,7 +18,7 @@ inversions, and Bruhat/weak order.
 ## Permutation Objects
 
 ```python
-class Permutation(Printable)
+class Permutation(LazyPrintable)
 ```
 
 A finite permutation, stored as a 1-indexed array and extended by the identity.

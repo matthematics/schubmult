@@ -95,7 +95,19 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return tuple(self) == tuple(other)
 
     def __hash__(self) -> int:
-        return hash((tuple(self), "Tweezers"))
+        # instances are interned by ``__xnew_cached__`` and immutable, so memoize: these graphs are
+        # hashed millions of times as factors of BoundedWCFactorAlgebra keys
+        try:
+            return self._hash
+        except AttributeError:
+            self._hash = hash((tuple(self), "Tweezers"))
+            return self._hash
+
+    def __getstate__(self):
+        # the memoized hash includes a string hash, which is salted per process: never pickle it
+        state = dict(self.__dict__)
+        state.pop("_hash", None)
+        return state
 
     def trans_co_pipe(self):
         """The complementary graph on twice as many rows: mark every position ``(i+j, j)`` that is
@@ -193,8 +205,13 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return ret
 
     def normalize(self) -> WCGraph:
-        """Resize to ``perm.max_descent`` rows."""
-        return self.resize(self.perm.max_descent)
+        """Resize to ``perm.max_descent`` rows (memoized; instances are interned and immutable)."""
+        try:
+            return self._normalized
+        except AttributeError:
+            rows = self.perm.max_descent
+            self._normalized = self if rows == len(self) else self.resize(rows)
+            return self._normalized
 
     def resize(self, new_length: int) -> WCGraph:
         """Truncate (via ``rowrange``) or extend to exactly ``new_length`` rows."""
@@ -626,23 +643,28 @@ class WCGraph(SchubertMonomialGraph, CrystalGraph, GridPrint, tuple):
         return result
 
     def right_hecke_root_at(self, i: int, j: int) -> tuple[int, int]:
-        """Like `right_root_at`, transported via the 0-Hecke (Demazure) product instead."""
-        if i <= 0 or j <= 0:
-            raise IndexError("i and j must be positive")
-        if len(self.perm_word) > 0:
-            index = self.bisect_left_coords_index(i, j)
-            if index < len(self.perm_word):
-                if self.left_to_right_inversion_coords(index) == (i, j):
-                    return self.perm.right_hecke_root_at(index, word=self.perm_word)
-                word_piece = list(self.perm_word[index:])
-            else:
-                word_piece = []
-            refl = ~Permutation.hecke_ref_product(*word_piece)
-            result = refl.act_root(i + j - 1, i + j)
+        """Like `right_root_at`, transported via the 0-Hecke (Demazure) product instead.
 
-        else:
-            result = (i + j - 1, i + j)
-        return result
+        Not implemented: the original body (kept below) delegated to ``Permutation.right_hecke_root_at``,
+        which does not exist.  `left_to_right_hecke_inversion` depends on it.
+        """
+        raise NotImplementedError("right_hecke_root_at needs a 0-Hecke analogue of Permutation.right_root_at")
+        # if i <= 0 or j <= 0:
+        #     raise IndexError("i and j must be positive")
+        # if len(self.perm_word) > 0:
+        #     index = self.bisect_left_coords_index(i, j)
+        #     if index < len(self.perm_word):
+        #         if self.left_to_right_inversion_coords(index) == (i, j):
+        #             return self.perm.right_hecke_root_at(index, word=self.perm_word)
+        #         word_piece = list(self.perm_word[index:])
+        #     else:
+        #         word_piece = []
+        #     refl = ~Permutation.hecke_ref_product(*word_piece)
+        #     result = refl.act_root(i + j - 1, i + j)
+        #
+        # else:
+        #     result = (i + j - 1, i + j)
+        # return result
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, *, beta: Expr = None, prop_beta: bool = False, crystal: bool = False, minus_convention=False) -> Expr:
         """Monomial (``y=None``), double (``y`` given), or beta-deformed Grothendieck contribution of this graph."""

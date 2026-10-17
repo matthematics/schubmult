@@ -40,6 +40,17 @@ def as_key(cls, x)
 
 Normalize *x* to a tuple key.
 
+<a id="schubmult.rings.free_algebra.monomial_slide_basis.MonomialSlideBasis.dual_basis"></a>
+
+#### dual\_basis
+
+```python
+@classmethod
+def dual_basis(cls)
+```
+
+Return the MonomialSlidePolyBasis as the dual of MonomialSlideBasis.
+
 <a id="schubmult.rings.free_algebra.monomial_slide_basis.MonomialSlideBasis.printing_term"></a>
 
 #### printing\_term

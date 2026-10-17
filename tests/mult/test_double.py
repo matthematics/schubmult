@@ -34,6 +34,7 @@ from schubmult.symbolic import S, sympify_sympy
 from schubmult.symbolic.common_polys import elem_sym_poly
 from schubmult.symbolic.poly.schub_poly import schubpoly
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, ZeroGeneratingSet
+from schubmult.utils.perm_utils import block_lift
 
 zero = ZeroGeneratingSet()
 S3 = [Permutation(list(p)) for p in itertools.permutations(range(1, 4))]
@@ -242,4 +243,63 @@ def test_schubmult_double_down_identity_and_s4_sweep():
     for uu in S4:
         for v in S4:
             schubmult_double_down({uu: S.One}, v, y, z)
+
+
+# --- Coefficient lifting (B.-H. Hwang, arXiv:2610.21053, Theorem 1.2) -----------------------------------------
+#
+# Writing S_u(x; y) S_v(x; t) = sum_w c^w_{u,v}(y, t) S_w(x; t), the coefficient of t^alpha in
+# c^w_{u,v}(y, t) is the single coefficient c^{w~}_{u~,v~}(y, 0) of the block lift.  schubmult_double
+# expands in the alphabet of its first argument, so c^w_{u,v}(y, t) = schubmult_double({v: 1}, u, t, y)[w].
+# This pins the double kernel against an identity that mixes ranks (S_n vs S_{n+|alpha|}) and both alphabets.
+
+
+def _triple_coeff(u, v, w, kernel=schubmult_double):
+    return sp(kernel({Permutation(v): S.One}, Permutation(u), z, y).get(Permutation(w), S.Zero))
+
+
+def _t_monomial_coeff(poly, alpha):
+    gens = [sp(z[i]) for i in range(1, len(alpha) + 1)]
+    return sympy.expand(sympy.Poly(poly, *gens).coeff_monomial(sympy.Mul(*[g**a for g, a in zip(gens, alpha)])))
+
+
+def _block_lift_rhs(u, v, w, alpha, kernel=schubmult_double):
+    ul, vl, wl = block_lift(u, v, w, alpha)
+    c = _triple_coeff(ul, vl, wl, kernel)
+    return sympy.expand(c.subs({sp(z[i]): 0 for i in range(1, len(alpha) + sum(alpha) + 1)}))
+
+
+def test_block_lift_running_example_of_paper():
+    """Example 5.5 / Table 1 of Hwang, arXiv:2610.21053: c^{164325}_{435126,142635}(y, t) and three of its t-coefficients."""
+    u, v, w = Permutation([4, 3, 5, 1, 2, 6]), Permutation([1, 4, 2, 6, 3, 5]), Permutation([1, 6, 4, 3, 2, 5])
+    c = _triple_coeff(u, v, w)
+    expected = sp((z[1] - y[1]) * (z[1] - y[2]) * (z[1] - y[3]) * (z[4] + z[6] - y[1] - y[2]))
+    assert sympy.expand(c - expected) == 0
+    for alpha in [(0, 0, 0, 0, 0, 0), (1, 0, 0, 1, 0, 0), (2, 0, 0, 1, 0, 0), (3, 0, 0, 0, 0, 1)]:
+        assert sympy.expand(_t_monomial_coeff(c, alpha) - _block_lift_rhs(u, v, w, alpha)) == 0
+    # the two |alpha| = d terms are the ordinary structure constants c^{w~}_{u~,v~} = 1 (Corollary 5.1)
+    for alpha in [(3, 0, 0, 1, 0, 0), (3, 0, 0, 0, 0, 1)]:
+        ul, vl, wl = block_lift(u, v, w, alpha)
+        assert schubmult_py({ul: 1}, vl).get(wl, 0) == 1
+
+
+def test_block_lift_coefficient_lifting_s3_exhaustive():
+    for u in S3:
+        for v in S3:
+            for w in S3:
+                d = u.inv + v.inv - w.inv
+                if d < 0:
+                    continue
+                c = _triple_coeff(u, v, w)
+                for alpha in itertools.product(range(d + 1), repeat=3):
+                    if sum(alpha) > d:
+                        continue
+                    assert sympy.expand(_t_monomial_coeff(c, alpha) - _block_lift_rhs(u, v, w, alpha)) == 0, (u, v, w, alpha)
+
+
+def test_block_lift_coefficient_lifting_pure_python_kernel():
+    u, v, w = Permutation([2, 3, 1, 4]), Permutation([1, 3, 2, 4]), Permutation([1, 3, 2, 4])
+    c = _triple_coeff(u, v, w, _schubmult_double_python)
+    assert c != 0
+    for alpha in [(0, 0, 0, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (2, 0, 0, 0), (1, 1, 0, 0), (0, 0, 0, 1), (0, 1, 1, 0)]:
+        assert sympy.expand(_t_monomial_coeff(c, alpha) - _block_lift_rhs(u, v, w, alpha, _schubmult_double_python)) == 0, alpha
 

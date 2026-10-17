@@ -1,8 +1,15 @@
+"""``grothmult_double`` console script: products of double Grothendieck polynomials.
+
+Example:
+    grothmult_double 3 1 2 - 2 1 3 --display-positive
+    grothmult_double --code 2 0 - 1 0 --mixed-var
+"""
+
 import sys
 
 from schubmult import GeneratingSet, Permutation, uncode
 from schubmult.abc import beta
-from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double
+from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double, normalize_coeff
 from schubmult.symbolic import S, sympify, sympify_sympy, expand
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
@@ -274,6 +281,18 @@ def groth_posify(val, var2, var3, msg):
 
 
 def main(argv=None):
+    """Entry point for the ``grothmult_double`` console script.
+
+    Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplies
+    their double Grothendieck polynomials via `schubmult.mult.groth_double.grothmult_double`,
+    and prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
+    ``y``/``z`` coefficient variables and the K-theory parameter ``beta``. With
+    ``--display-positive`` (only supported together with ``--mixed-var``), coefficients
+    are rewritten in the positive FGL basis of ``z_i - y_j``, ``(1 + y_j)^{-1}``, and
+    ``(1 + z_i)^{-1}`` via an integer program (see `groth_posify`). Returns the raw
+    result dict when the caller passes a ``None`` formatter (e.g. from tests); otherwise
+    prints and returns ``None``.
+    """
     if argv is None:
         argv = sys.argv
 
@@ -326,6 +345,9 @@ def main(argv=None):
         if mult:
             mul_exp = sympify(mulstring)
             coeff_dict = mult_poly_groth_double(coeff_dict, mul_exp, var2, var3)
+
+        if args.simplify and not args.display_positive:
+            coeff_dict = {perm: normalize_coeff(val, var2) for perm, val in coeff_dict.items()}
 
         # sort/filter up front so posified coefficients can stream out as each
         # one finishes (the LPs can take a long time); structural zero test only

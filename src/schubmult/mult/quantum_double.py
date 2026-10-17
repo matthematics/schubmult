@@ -333,7 +333,7 @@ def q_partial_posify_generic(val, u, v, w):
     return val2
 
 
-def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
+def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=None):
     """Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
 
     Implements the Peterson-Woodward comparison: for each ``q``-monomial of each coefficient,
@@ -345,11 +345,14 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
         coeff_dict: Full-flag quantum coefficient dict ``{Permutation: coeff}``.
         parabolic_index: Sorted list of 1-indexed positions generating the parabolic subgroup.
         q_var: Quantum parameter generating set.
+        n: Ambient flag size ``S_n``; results indexed by longer permutations are dropped. Defaults to
+            ``parabolic_index[-1] + 1``, which undercounts when the last block has size 1 (it
+            contributes no reflection), so callers that know the block sizes should pass their sum.
 
     Returns:
         dict: Parabolic quantum coefficient dict ``{Permutation: coeff}``.
     """
-    max_len = parabolic_index[-1] + 1
+    max_len = parabolic_index[-1] + 1 if n is None else n
     w_P = Permutation.longest_element(*parabolic_index)
     w_P_prime = Permutation([1, 2])
     coeff_dict_update = {}
@@ -566,7 +569,7 @@ def schubmult_q_double_dict_fast(perm_dict1, perm_dict2, var2=None, var3=None, q
     return ret
 
 
-def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
+def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var, probabilistic=False):
     """Multiply ``sum_u coeff_u S_u(x, var2)`` by the quantum double Schubert polynomial ``S_v(x, var3)``.
 
     Dispatches to the compiled ``schubmult_cpp`` kernel when available (and both secondary
@@ -579,18 +582,22 @@ def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_va
         var2: Secondary alphabet attached to ``perm_dict``'s permutations.
         var3: Secondary alphabet attached to ``v``.
         q_var: Quantum parameter generating set.
+        probabilistic: Drop intermediate states (and output terms) whose coefficient
+            vanishes at two random points of a prime field -- zero as a polynomial up to a
+            probability of error around ``1e-26`` (see :mod:`schubmult.mult._shadow`), as for
+            :func:`schubmult.mult.double.schubmult_double`.
 
     Returns:
         dict: Coefficient dict ``{Permutation: coeff}``.
     """
     if _accel.available and var2 is not None and var3 is not None:
-        ret = _accel.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+        ret = _accel.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var, probabilistic)
         if ret is not None:
             return ret
-    return _schubmult_q_double_fast_python(perm_dict, v, var2, var3, q_var)
+    return _schubmult_q_double_fast_python(perm_dict, v, var2, var3, q_var, probabilistic)
 
 
-def _schubmult_q_double_fast_python(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
+def _schubmult_q_double_fast_python(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var, probabilistic=False):
     """Pure-Python implementation of ``schubmult_q_double_fast``; see there for the contract."""
     if v == Permutation([1, 2]):
         return perm_dict
@@ -605,9 +612,24 @@ def _schubmult_q_double_fast_python(perm_dict, v, var2=None, var3=None, q_var=_v
     inv_mu = mu.inv
     ret_dict = {}
 
+    shadow = None
+    if probabilistic:
+        from schubmult.mult._shadow import ShadowEvaluator
+
+        shadow = ShadowEvaluator()
+
+    def prune(pathsums):
+        # the evaluator is memoized by node and the partial sums share their subtrees, so this is
+        # linear in the work already done to build them
+        if shadow is None:
+            return pathsums
+        return {up: {v2: s for v2, s in d.items() if s != 0 and any(shadow(sympify(s)))} for up, d in pathsums.items()}
+
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
+        if shadow is not None and not any(shadow(sympify(val))):
+            continue
         inv_u = u.inv
         vpathsums = {u: {Permutation([]): val}}
         for index in range(thL):
@@ -715,9 +737,11 @@ def _schubmult_q_double_fast_python(perm_dict, v, var2=None, var3=None, q_var=_v
                                     var2,
                                     var3,
                                 )
-            vpathsums = newpathsums
+            vpathsums = prune(newpathsums)
         toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
+    if shadow is not None:
+        ret_dict = {ep: c for ep, c in ret_dict.items() if c != 0 and any(shadow(sympify(c)))}
     return ret_dict
 
 

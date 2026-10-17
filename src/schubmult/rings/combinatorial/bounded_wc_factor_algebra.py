@@ -15,49 +15,83 @@ from schubmult.rings.printing import PrintingTerm, TypedPrintingTerm
 from schubmult.symbolic import S, Tuple
 
 
-def _tensor_to_rcs(weight_tensor, descents):
-    from schubmult import uncode
-    rcs = []
-    for i, desc in enumerate(descents):
-        wt = len(weight_tensor[i])
-        weight = [0] * desc
-        for w in weight_tensor[i]:
-            weight[w - 1] = 1
-        elem_rc = next(iter(WCGraph.all_wc_graphs(uncode([0]*(desc - wt) + [1] * wt), desc, weight=tuple(weight))))
-        rcs.append(elem_rc)
-    return CrystalGraphTensor(*rcs)
+@cache
+def _column_wcs(p: int, k: int) -> tuple[WCGraph, ...]:
+    """All ``k``-row WC graphs of the column permutation ``uncode([0]*(k-p) + [1]*p)``.
 
-def _all_tensors(weights, descents):
-    from schubmult.utils.schub_lib import hw_elementary_tensors
-    hw_tensors = hw_elementary_tensors(weights, descents)
-    for hw_tensor_weight in hw_tensors:
-        hw_tensor = _tensor_to_rcs(hw_tensor_weight, descents)
-        yield from hw_tensor.full_crystal
+    These are the set-valued column tableaux of shape ``1^p`` with entries in ``[k]``: their
+    row weights are 0/1 vectors and they carry ``p`` or more crossings.
+    """
+    from schubmult.combinatorics.permutation import uncode
 
-def _squash_it_up(tup):
-    ret = WCGraph([()])
-    for rc in tup:
-        ret = ret.resize(len(rc)).squash_product(rc)
-    return ret
-
-def _elem_factor_from_rc(rc):
-    from schubmult.combinatorics.permutation import Permutation
-    if rc.perm.inv == 0:
-        return {}
-    n = len(rc.perm)
-    weight = tuple(reversed([n - 1 - j - w for j, w in enumerate((rc.perm * Permutation.w0(n)).pad_code(n - 1))]))
-    hw_rc, raise_seq = rc.to_highest_weight()
-    good_tensor = None
-    for tensor in _all_tensors(weight, tuple(range(1,n))):
-        if _squash_it_up(tensor).resize(len(hw_rc)) == hw_rc:
-            good_tensor = tensor
-            break
-    if good_tensor is None:
-        raise ValueError(f"Could not find good tensor for WC graph {rc}")
-    to_lower = CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)
-    return to_lower
+    if p == 0:
+        return (WCGraph([()] * k),)
+    if p > k:
+        return ()
+    return tuple(WCGraph.all_wc_graphs(uncode([0] * (k - p) + [1] * p), k))
 
 
+def _elem_factor_from_rc(rc: WCGraph) -> tuple[WCGraph, ...]:
+    r"""The K-theoretic lift of ``rc``: its unique factorization into elementary Grothendieck WC graphs.
+
+    This is the set-valued analogue of ``lift_n`` for RC graphs.  Let ``u`` be the (Demazure)
+    permutation of ``rc``, ``n = len(u)``, ``w = w_0(n)`` the dominant permutation of the staircase
+    ``lambda = (n-1, ..., 1)`` and ``c = code(u w)`` (so ``l(u w) = l(w) - l(u)``).  The factor at
+    height ``k`` has prescribed size ``p_k = k - c_{n-1-k}``, exactly as in the reduced case.
+
+    Why the sizes and the K-theoretic factors: the double Grothendieck polynomial of ``w`` factors
+    over the staircase as ``prod_j prod_{i <= k_j} (x_i (+) y_j)`` and
+
+        ``prod_{i<=k} (x_i (+) y) = sum_p y^{k-p} Etilde_{p,k}(x)``,   ``Etilde_{p,k} = G_{1^p} + beta G_{1^{p+1}}``
+
+    (``groth_elem_factor``).  Hence the height-``k`` factor of size ``p_k`` is a set-valued column
+    of permutation ``1^{p_k}`` *or* ``1^{p_k+1}`` (``_column_wcs``), and every such tuple carries
+    ``beta**(crossings(rc) - l(u))`` because squash products add row weights.  Taking the
+    coefficient of ``y^{c}`` in the K-theoretic Cauchy expansion ``G_w(x;y) = sum G_u(x) H_u(y)``,
+    ``H_u = sum_{u * v^{-1} = w} beta^{..} G_v(y)`` (Demazure product), only the reduced complement
+    ``v = u w`` reaches the degree of ``y^{code(v)}``, with coefficient one, so exactly one tuple
+    squashes to each WC graph of ``u`` (reduced or not).  For a reduced ``rc`` the crossing count
+    forces every factor to be reduced, recovering the Schubert lift.
+
+    The search is pruned by row weights and by the splitting property of the lift: the squash
+    product of the factors of height ``<= j`` must have permutation ``uncode(c[n-1-j:]) w_0(j+1)``.
+    """
+    from schubmult.combinatorics.permutation import Permutation, uncode
+
+    u = rc.perm
+    if u.inv == 0:
+        return ()
+    n = len(u)
+    c = (u * Permutation.w0(n)).pad_code(n - 1)
+    sizes = [k - c[n - 1 - k] for k in range(1, n)]
+    expected_perms = [uncode(c[n - 1 - j:]) * Permutation.w0(j + 1) for j in range(1, n)]
+    num_rows = max(len(rc), n - 1)
+    target = list(rc.length_vector) + [0] * (num_rows - len(rc))
+    found = []
+
+    def search(k, remaining, acc, factors):
+        if k == n:
+            if not any(remaining) and acc.resize(len(rc)) == rc:
+                found.append(tuple(factors))
+            return
+        for p in (sizes[k - 1], sizes[k - 1] + 1):
+            for factor in _column_wcs(p, k):
+                weight = factor.length_vector
+                if any(weight[i] > remaining[i] for i in range(k)):
+                    continue
+                new_acc = factor if acc is None else acc.resize(k).squash_product(factor)
+                if new_acc.perm != expected_perms[k - 1]:
+                    continue
+                new_remaining = [remaining[i] - (weight[i] if i < k else 0) for i in range(num_rows)]
+                search(k + 1, new_remaining, new_acc, [*factors, factor])
+
+    search(1, target, None, [])
+    if len(found) != 1:
+        raise ValueError(f"Expected a unique elementary factorization of WC graph {rc}, found {len(found)}: {found}")
+    return found[0]
+
+
+@cache
 def _is_full_grassmannian_rc(rc: WCGraph) -> bool:
     return rc.perm.inv == 0 or rc.perm.descents() == {len(rc) - 1}
 
@@ -246,7 +280,17 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
             return self._size
 
         def __hash__(self):
-            return hash((self._size, self.factors))
+            try:
+                return self._hash
+            except AttributeError:
+                self._hash = hash((self._size, self.factors))
+                return self._hash
+
+        def __getstate__(self):
+            # factor hashes are salted per process (see WCGraph.__getstate__): never pickle the memo
+            state = dict(self.__dict__)
+            state.pop("_hash", None)
+            return state
 
         def __eq__(self, other):
             return isinstance(other, BoundedWCFactorAlgebra._key) and self.size == other.size and self.factors == other.factors
@@ -298,7 +342,8 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         self.dtype = type("BoundedWCFactorAlgebraElement", (BoundedWCFactorAlgebraElement,), {"ring": self})
 
     def from_wc_graph(self, rc, size):
-        tensor = self._normalize_key(self.make_key(tuple(_elem_factor_from_rc(rc)), size))
+        """The K-theoretic lift of ``rc`` (reduced or set-valued) as a basis element; see ``_elem_factor_from_rc``."""
+        tensor = self._normalize_key(self.make_key(_elem_factor_from_rc(rc), size))
         return self.from_dict({tensor: 1})
 
     def from_wc_graph_ring_element(self, elem, size):
@@ -355,16 +400,75 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
         return elem
 
 
+    def groth_elem_factor(self, p, k, size, beta=1):
+        r"""The Grothendieck v-path layer factor ``Etilde_{p,k}(x; 0)`` as elementary Grothendieck WC graphs.
+
+        ``Etilde_{p,k}(x; 0) = sum_{|I|=p} x_I prod_{j<=k, j not in I} (1 + beta*x_j)
+        = G_{1^p}(x_1..x_k) + beta * G_{1^{p+1}}(x_1..x_k)``, a two-term sum of elementary
+        Grothendieck polynomials (compare ``elem_sym``, which expands ``e_p`` over *all*
+        ``G_{1^{p'}}``, ``p' >= p``).  Each ``G_{1^{p'}}`` is the sum of its WC graphs weighted
+        ``beta**(crossings - p')``, so every graph here carries ``beta**(crossings - p)``.
+        Variables beyond ``size`` are zero, which truncates ``k`` to ``size``.
+        """
+        from schubmult import uncode
+
+        k = min(k, size)
+        res = self.zero
+        for pp in (p, p + 1):
+            if pp > k:
+                continue
+            if pp == 0:
+                res += self(self.make_key((), size))
+                continue
+            res += self.from_dict({self.make_key((rc,), size): beta ** (len(rc.perm_word) - p) for rc in WCGraph.all_wc_graphs(uncode([0] * (k - pp) + [1] * pp), k)})
+        return res
+
     @cache
     def full_groth_elem(self, perm, length, beta=1):
-        from ..polynomial_algebra import GrothendieckPoly, SchubertPolyBasis
-        # if beta != 1:
-        #     raise NotImplementedError("Grothendieck polynomials with beta != 1 are not implemented yet.")
-        schub_elem = GrothendieckPoly(perm, length).change_basis(SchubertPolyBasis)
-        res = 0
-        for (perm2, length), coeff in schub_elem.items():
-            res += beta ** (perm2.inv - perm.inv) * coeff * self.full_schub_elem(perm2, length, beta)
-        return res
+        r"""``G_perm(x_1..x_length)`` as a sum of tensors of elementary Grothendieck WC graphs.
+
+        Uses the Grothendieck v-path (``schubmult.mult.groth_double``) directly instead of
+        passing through Schubert polynomials: with ``lambda = theta(perm^{-1})``,
+
+            G_perm(x) = sum_sigma c_sigma(beta) sum_{v-paths of sigma} prod_c s_c (-1)^{p_c} Etilde_{p_c, k_c}(x; 0),
+
+        where ``dgroth_phantom_expansion`` (at ``z = 0``) supplies the handful of tops ``sigma``
+        with their coefficients, the v-paths are those of ``compute_vpathdicts`` over ``lambda``
+        with layer factor ``E_{k - vdiff, k}`` and sign ``s`` exactly as for Schubert polynomials,
+        and ``Etilde = prod_{j<=k}(1 + beta*x_j) E_{p,k}((-)x; 0)`` is ``groth_elem_factor``.  The
+        layers are folded top-down (increasing ``k``, the multiplication order of
+        ``full_schub_elem``) so the tops merge as soon as their paths meet.
+        """
+        from schubmult.combinatorics.permutation import Permutation, uncode
+        from schubmult.mult.groth_double import dgroth_phantom_expansion
+        from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+        from schubmult.utils.schub_lib import compute_vpathdicts
+
+        perm = Permutation(perm)
+        one = self(self.make_key((), length))
+        if perm.inv == 0:
+            return one
+        th = [t for t in (~perm).theta() if t]
+        mu = uncode(th)
+        reverse = [{} for _ in th]
+        sums = {}
+        for sigma, coeff in dgroth_phantom_expansion(perm, ZeroGeneratingSet(), beta, th).items():
+            top = sigma * mu
+            sums[top] = sums.get(top, self.zero) + coeff * one
+            for index, layer in enumerate(compute_vpathdicts(tuple(th), top)):
+                for v1, steps in layer.items():
+                    for v2, vdiff, s in steps:
+                        reverse[index].setdefault(v2, set()).add((v1, vdiff, s))
+        for index in range(len(th) - 1, -1, -1):
+            k = th[index]
+            new = {}
+            for v2, elem in sums.items():
+                for v1, vdiff, s in reverse[index].get(v2, ()):
+                    p = k - vdiff
+                    factor = self.groth_elem_factor(p, k, length, beta)
+                    new[v1] = new.get(v1, self.zero) + (int(s) * (-1) ** p) * (elem * factor)
+            sums = new
+        return sums.get(Permutation([1, 2]), self.zero)
 
 
     def schub_elem(self, perm, size, partition=None):
@@ -692,12 +796,15 @@ class BoundedWCFactorAlgebra(CrystalGraphRing):
     def mul(self, a, b):
         if isinstance(a, BoundedWCFactorAlgebraElement):
             if isinstance(b, BoundedWCFactorAlgebraElement):
-                accum = self.zero
+                # accumulate all key products in one dict; building the element once avoids
+                # re-normalizing the growing partial sum for every pair of terms
+                accum = {}
                 for left_key, left_coeff in a.items():
                     for right_key, right_coeff in b.items():
                         key = self._mul_keys(left_key, right_key)
-                        accum += left_coeff * right_coeff * self(key)
-                return accum
+                        accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
+                # keys from _mul_keys are already normal: skip from_dict's second normalization pass
+                return self._post_normalize_dict(accum)
             return self.from_dict({k: v * b for k, v in a.items()})
         return self.from_dict({k: v * a for k, v in b.items()})
 

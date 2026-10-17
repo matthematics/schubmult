@@ -144,6 +144,24 @@ def as_polynomial()
 
 Hook: expand this element to an explicit polynomial expression.
 
+<a id="schubmult.rings.base_ring.BaseRingElement.strip_zeros"></a>
+
+#### strip\_zeros
+
+```python
+def strip_zeros(exact=False, trials=2, seed=1)
+```
+
+Drop basis elements whose coefficient is zero.
+
+With ``exact=False`` only coefficients that are literally ``0`` are dropped (free). With
+``exact=True`` coefficients that are zero *as polynomials* are dropped too, detected by evaluating
+them at ``trials`` random integer points in exact arithmetic (never by expanding them): the kernels
+leave coefficients as products of factors, and in large products a sizeable fraction of those
+cancel to zero without looking like it. The test is probabilistic in the sense that a nonzero
+polynomial could vanish at every sample point; with the default parameters that probability is
+negligible. Costs well under one product's worth of time even for thousands of terms.
+
 <a id="schubmult.rings.base_ring.BaseRingElement.almosteq"></a>
 
 #### almosteq

@@ -519,6 +519,42 @@ def div_diff(poly, v1, v2):
     raise ValueError(f"Expected Expr but got {type(poly)}")
 
 
+def _swap_vars(poly, v1, v2):
+    """``poly`` with the symbols ``v1`` and ``v2`` interchanged."""
+    return poly.xreplace({v1: _s}).xreplace({v2: v1}).xreplace({_s: v2})
+
+
+def skew_div_diff(poly, w, v, genset=None):
+    r"""Skew divided difference ``partial_{w/v}`` of ``poly`` in the variables ``genset`` (default ``x``).
+
+    ``partial_{w/v}`` (Macdonald, in the normalization of Gao--Xiong and B.-H. Hwang, arXiv:2610.21053) is the unique family of
+    operators satisfying the generalized Leibniz rule ``partial_w(f g) = sum_v (partial_{w/v} f)(partial_v g)``.
+    It is zero unless ``v <= w`` in Bruhat order, ``partial_{w/id} = partial_w``, and ``partial_{w/w} = w`` acts by
+    permuting the variables ``x_i -> x_{w(i)}``.  Computed by peeling a left descent ``s_i`` of ``w = s_i w'``
+    (Lemma 4.1 of Hwang, due to Samuel):
+
+        partial_{s_i w' / v} = partial_i partial_{w'/v} + s_i partial_{w'/ s_i v}   (second term only if l(s_i v) < l(v)).
+
+    For a double Schubert polynomial ``partial_{w/v} S_u(x; y) = c^w_{u,v}(y, x)`` (Proposition 2.7 of Hwang); the
+    ring method ``DoubleSchubertElement.skew_divdiff`` uses that identity and is much faster on Schubert elements.
+    """
+    if genset is None:
+        genset = _vars.var1
+    w = pl.Permutation(w)
+    v = pl.Permutation(v)
+    poly = sympify(poly)
+    if w.inv == 0:
+        return poly if v.inv == 0 else S.Zero
+    if not v.bruhat_leq(w):
+        return S.Zero
+    i = min((~w).descents(zero_indexed=False))
+    w_rest = pl.s(i) * w
+    result = div_diff(skew_div_diff(poly, w_rest, v, genset), genset[i], genset[i + 1])
+    if i in (~v).descents(zero_indexed=False):
+        result += _swap_vars(skew_div_diff(poly, w_rest, pl.s(i) * v, genset), genset[i], genset[i + 1])
+    return result
+
+
 def _groth_plus(x1, y1, beta):
     """``x (+) y = x + y + beta x y``, the K-theoretic sum."""
     return x1 + y1 + beta * x1 * y1
@@ -654,34 +690,38 @@ def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
     return operator.apply(schub)
 
 
-def isobaric_strip_on_dschub_dict(start, length, perm_dict, coeff_genset, beta):
-    """Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded.
-
-    Coefficients landing on the same permutation merge at every stage instead of
-    being carried per input basis element, mirroring ``compute_vpathdicts``.
-    """
+def isobaric_strip_on_dschub_dict(start, length, schub_perm_dict, coeff_genset, beta):
+    """Apply one isobaric strip to a whole ``{perm: coeff}`` dict, folded. """
+    from schubmult.combinatorics.permutation import Permutation
     from schubmult.utils.schub_lib import elem_sym_positional_perms
 
     positions = list(range(start + 1, start + length + 1))
-    bigger = {}
-    for perm, coeff in perm_dict.items():
+    positions0 = list(range(start, start + length))
+
+    @cache
+    def cg_beta(index):
+        return coeff_genset[index] * beta + 1
+
+    @cache
+    def bdiff(diff):
+        return beta**diff
+
+    mulperm = Permutation.cycle(start, length)
+    result = {}
+    for perm, coeff in schub_perm_dict.items():
         for elem_perm, diff, sign in elem_sym_positional_perms(perm, length, *positions):
-            value = sign * coeff * (beta**diff) * prod([coeff_genset[perm[positions[p] - 1]] * beta + 1 for p in range(length) if perm[positions[p] - 1] == elem_perm[positions[p] - 1]])
-            bigger[elem_perm] = bigger.get(elem_perm, S.Zero) + value
-    for desc in range(start, start + length):
-        bigger = {perm2.swap(desc - 1, desc): v for perm2, v in bigger.items() if perm2[desc - 1] > perm2[desc]}
-    return bigger
-
-
-def isobaric_strip_on_dschub(start, length, schub_perm, ring, beta):
-    """`isobaric_strip_on_dschub_dict` on a single basis element, returned as a ring element."""
-    return ring.from_dict(isobaric_strip_on_dschub_dict(start, length, {schub_perm: S.One}, ring.coeff_genset, beta))
-
+            indperm = elem_perm * mulperm
+            if indperm.inv == elem_perm.inv - length:
+                value = bdiff(diff) * prod([cg_beta(perm[index]) for index in positions0 if perm[index] == elem_perm[index]])
+                result[indperm] = result.get(indperm, S.Zero) + coeff * sign * value
+    return result
 
 def apply_isobaric_to_schub_dict(diff_perm, perm_dict, coeff_genset, beta):
     """Fold every strip of ``diff_perm`` over the whole dict, merging between strips."""
-    strips = [[i, diff_perm.trimcode[i - 1]] for i in range(1, diff_perm.max_descent + 1)]
-    for strip in reversed(strips):
+    md = diff_perm.max_descent
+    tcd = diff_perm.trimcode
+    strips = [[i, tcd[i - 1]] for i in range(md, 0, -1)]
+    for strip in strips:
         if strip[1] == 0:
             continue
         perm_dict = isobaric_strip_on_dschub_dict(strip[0], strip[1], perm_dict, coeff_genset, beta)

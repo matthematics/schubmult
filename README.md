@@ -137,6 +137,34 @@ FA(1, 0) * FA(2)                  # word basis: concatenation, [102]
 
 `schubmult.symbolic` wraps SymEngine and SymPy behind one interface (`sympify`, `expand`, `Add`, `Mul`, `S`), provides indexed variable families (`GeneratingSet("x")` gives `x_1, x_2, ...`), and unevaluated elementary/complete symmetric polynomial atoms (`E`, `e`, `H`, `h`) so Schubert polynomials can be manipulated in the SEM basis. `schubmult.abc` exposes ready-made `x`, `y`, `z`, `q`, `beta` in the spirit of `sympy.abc`.
 
+## Using with SageMath
+
+Sage is **not** a dependency: everything above works in plain Python. If you do have Sage, install schubmult into that environment (`sage -pip install schubmult`, or `pip install schubmult` inside a conda `sage` env) and `schubmult.sage` provides Sage parents whose arithmetic is delegated to the kernels, alongside Sage's own `SchubertPolynomialRing`:
+
+```python
+sage: from schubmult.sage import DoubleSchubertPolynomialRing, QuantumSchubertPolynomialRing
+sage: X = DoubleSchubertPolynomialRing(QQ)
+sage: X([3, 1, 2]) * X([2, 1])
+(y_2-y_0)*X_y[3, 1, 2] + X_y[4, 1, 2, 3]
+sage: X([3, 1, 2]).expand()
+x0^2 - x0*y0 - x0*y1 + y0*y1
+sage: G = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))   # QH^*(Gr(2, 5))
+sage: G([3, 5, 1, 2, 4]) * G([1, 3, 2])
+q_0*Xq[1, 3, 2] + Xq[3, 6, 1, 2, 4, 5] + Xq[4, 5, 1, 2, 3]
+sage: from schubmult.sage import DoubleGrothendieckPolynomialRing
+sage: GD = DoubleGrothendieckPolynomialRing(QQ)                  # K_T of the flag variety
+sage: GD([2, 1]) * GD([2, 1])
+-((y_1-y_0)/(beta*y_1+1))*G_y[2, 1] + ((beta*y_0+1)/(beta*y_1+1))*G_y[3, 1, 2]
+sage: from schubmult.sage import PolynomialAlgebra
+sage: A = PolynomialAlgebra(QQ); k = A.key(); F = A.fundamental_slide()   # bases of QQ[x0, x1, ...]
+sage: F(k[1, 0, 2])
+F[1, 0, 2] + F[2, 0, 1]
+sage: k(A.schubert()[3, 1, 2])
+k[2]
+```
+
+`DoubleSchubertPolynomialRing`, `QuantumSchubertPolynomialRing`, `QuantumDoubleSchubertPolynomialRing` (with `parabolic=` block sizes), `GrothendieckPolynomialRing`, and `DoubleGrothendieckPolynomialRing` accept permutations, Sage polynomials, and elements of `SchubertPolynomialRing` and `KeyPolynomials`; a ring in another alphabet (`DoubleSchubertPolynomialRing(QQ, 'z')`) coerces in for mixed products, and `from_symmetric_function(f, n)` / `to_symmetric_function()` go back and forth with `SymmetricFunctions`. `PolynomialAlgebra(R)` (or `PolynomialAlgebra(R, n)` in `n` variables) is the polynomial ring with its combinatorial bases as mutually coercing realizations: Schubert and Grothendieck indexed by permutations, monomial/key/slide/forest/glide/Lascoux/grove by weak compositions, and in `n` variables the elementary symmetric basis; its K-theoretic bases are at `beta = -1`, whereas the Grothendieck rings keep `beta` as a variable. Variables are 0-indexed as in Sage (`x0, y0, q0`).
+
 ## Documentation
 
 Full API documentation, generated from the source docstrings, is at **<https://matthematics.github.io/schubmult/>**. To build it locally:
@@ -160,4 +188,4 @@ Tests live in `tests/`; the script tests compare CLI output against stored JSON 
 
 ## License
 
-GPL-3.0. See [LICENSE](LICENSE).
+GPL-3.0-or-later. See [LICENSE](LICENSE).

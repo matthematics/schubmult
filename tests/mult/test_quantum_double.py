@@ -8,7 +8,7 @@ from schubmult import Permutation
 from schubmult.abc import x, y, z
 from schubmult.mult.double import schubmult_double
 from schubmult.mult.quantum import schubmult_q
-from schubmult.mult.quantum_double import factor_out_q, mult_poly_q_double, schubmult_q_double, schubmult_q_double_fast, schubpoly_quantum, single_variable
+from schubmult.mult.quantum_double import factor_out_q, mult_poly_q_double, q_posify, schubmult_q_double, schubmult_q_double_fast, schubpoly_quantum, single_variable
 from schubmult.symbolic import S, sympify_sympy
 from schubmult.symbolic.poly.schub_poly import _vars
 from schubmult.symbolic.poly.variables import ZeroGeneratingSet
@@ -87,3 +87,36 @@ def test_factor_out_q_roundtrip():
     q_dict = factor_out_q(poly)
     total = sum((sp(k) * sp(v) for k, v in q_dict.items()), sympy.Integer(0))
     assert sympy.expand(total - sp(poly)) == 0
+
+
+def _manifestly_positive(expr):
+    # a minus sign is only allowed directly in front of a z-variable term
+    import re
+
+    return re.search(r"-\s*(\d+\*)?[y(]", str(expr)) is None
+
+
+def test_q_posify_regression_one_dominates_cases():
+    # These triples route through posify's one-dominates recursion (shifted alphabet) and
+    # previously either raised or produced an expression not equal to the raw coefficient.
+    cases = [
+        ([2, 4, 3, 1], [1, 4, 3, 2], [3, 4, 5, 1, 2]),
+        ([2, 4, 3, 1], [3, 1, 4, 2], [3, 5, 2, 1, 4]),
+        ([4, 2, 3, 1], [4, 1, 3, 2], [3, 4, 5, 1, 2]),
+    ]
+    for u, v, w in cases:
+        u, v, w = Permutation(u), Permutation(v), Permutation(w)
+        val = schubmult_q_double_fast({u: S.One}, v, y, z)[w]
+        positive = q_posify(u, v, w, val, y, z, q, False)
+        assert sympy.expand(sp(positive) - sp(val)) == 0, (u, v, w)
+        assert _manifestly_positive(positive), (u, v, w, positive)
+
+
+def test_q_posify_reconstructs_raw_value_for_s4():
+    S4 = [Permutation(list(p)) for p in itertools.permutations(range(1, 5))]
+    for u in S4:
+        for v in S4:
+            for w, val in schubmult_q_double_fast({u: S.One}, v, y, z).items():
+                positive = q_posify(u, v, w, val, y, z, q, False)
+                assert sympy.expand(sp(positive) - sp(val)) == 0, (u, v, w)
+                assert _manifestly_positive(positive), (u, v, w, positive)

@@ -158,7 +158,7 @@ class MonomialBasis(PolynomialBasis):
         if isinstance(other_basis, MonomialBasis):
             return lambda x: other_basis.attach_key(x)
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: self.transition_schubert(x)
+            return lambda x: other_basis.attach_key(self.transition_schubert(x))
         if isinstance(other_basis, MonomialSlidePolyBasis):
             return lambda x: self.transition_slide(x, other_basis)
         if isinstance(other_basis, DoubleForestPolyBasis):

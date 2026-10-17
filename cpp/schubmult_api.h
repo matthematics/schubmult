@@ -11,6 +11,7 @@
 #include "kernel_q.h"
 #include "kernel_q_double.h"
 #include "kernel_single.h"
+#include "kernel_transition.h"
 
 #include <map>
 #include <memory>
@@ -104,7 +105,7 @@ static PyExprDict expr_dict_out(const ExprDict& out) {
     return r;
 }
 
-static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy) {
+static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy, int kernel = 0) {
     IntDict in;
     int a_max = 1;
     for (const auto& kv : d) {
@@ -113,14 +114,35 @@ static PyIntDict api_schubmult_py(const PyIntDict& d, const PyPerm& vpy) {
     }
     int n = std::max(2, a_max + std::max(1, perm_len(vpy)) - 1);
     if (n > MAXN) die("product needs S_n with n > MAXN; rebuild the extension with a larger MAXN");
-    IntDict out = schubmult_single(in, perm_from_py(vpy), n);
+    Perm v = perm_from_py(vpy);
+    IntDict out = kernel == 1 ? schubmult_transition(in, v, n) : kernel == 2 ? schubmult_hybrid(in, v, n) : schubmult_single(in, v, n);
     PyIntDict r;
     for (const auto& kv : out) r.push_back({perm_to_py(kv.first), kv.second});
     return r;
 }
 
-static PyExprDict api_schubmult_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const Expr& elem_func) {
-    return expr_dict_out(schubmult_double(expr_dict_in(d), perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars(), elem_func)));
+// Shadow evaluation through a Python callable returning SHADOW_POINTS integers (ShadowEvaluator).
+static Shadow python_shadow(const Expr& evaluator) {
+    Shadow s;
+    s.eval = [evaluator](const Expr& e) {
+        Expr r = pyexpr_detail::checked(PyObject_CallFunctionObjArgs(evaluator.get(), e.get(), nullptr));
+        Expr seq = pyexpr_detail::checked(PySequence_Fast(r.get(), "evaluator must return a sequence"));
+        if (PySequence_Fast_GET_SIZE(seq.get()) != SHADOW_POINTS) die("evaluator must return exactly SHADOW_POINTS values");
+        ShadowVal v;
+        for (int i = 0; i < SHADOW_POINTS; ++i) {
+            unsigned long long x = PyLong_AsUnsignedLongLong(PySequence_Fast_GET_ITEM(seq.get(), i));
+            if (x == (unsigned long long)-1 && PyErr_Occurred()) throw PyErrorSet();
+            v.v[i] = (uint64_t)x % SHADOW_P;
+        }
+        return v;
+    };
+    return s;
+}
+
+static PyExprDict api_schubmult_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const Expr& elem_func, const Expr& evaluator = Expr()) {
+    if (evaluator.is_null()) return expr_dict_out(schubmult_double(expr_dict_in(d), perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars(), elem_func)));
+    Shadow shadow = python_shadow(evaluator);
+    return expr_dict_out(schubmult_double(expr_dict_in(d), perm_from_py(vpy), dict_bound(d, vpy), esc_for(y, z, PyVars(), elem_func), &shadow));
 }
 
 static PyExprDict api_schubmult_double_alt_from_elems(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const Expr& elem_func) {
@@ -146,6 +168,8 @@ static PyExprDict api_schubmult_q(const PyIntDict& d, const PyPerm& vpy, const P
     return r;
 }
 
-static PyExprDict api_schubmult_q_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const PyVars& q) {
-    return expr_dict_out(schubmult_q_double_fast(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, q)));
+static PyExprDict api_schubmult_q_double(const PyExprDict& d, const PyPerm& vpy, const PyVars& y, const PyVars& z, const PyVars& q, const Expr& evaluator = Expr()) {
+    if (evaluator.is_null()) return expr_dict_out(schubmult_q_double_fast(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, q)));
+    Shadow shadow = python_shadow(evaluator);
+    return expr_dict_out(schubmult_q_double_fast(expr_dict_in(d), perm_from_py(vpy), esc_for(y, z, q), &shadow));
 }

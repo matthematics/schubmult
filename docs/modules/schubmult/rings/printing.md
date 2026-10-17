@@ -2,21 +2,24 @@
 
 # schubmult.rings.printing
 
-SymPy atoms used to display ring basis elements.
+Display atoms for ring basis elements.
 
-Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert SymPy
-``Expr`` atom (``args == ()``, so SymPy never traverses into it) that knows how to render itself
-for ``str``, pretty printing, and LaTeX. Instances are interned via cached ``__xnew_cached__``
-constructors so equal keys give identical objects. The subclasses cover single/double Schubert
-(``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck (``G``/``DG``), separated
-descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+Every ring's ``printing_term(key)`` returns a `PrintingTerm` subclass instance: an inert atom
+that knows how to render itself for ``str``, pretty printing, and LaTeX. Instances are interned via
+cached ``__xnew_cached__`` constructors so equal keys give identical objects. The subclasses cover
+single/double Schubert (``S``/``DS``), quantum (``QS``/``QDS``, ``QPS``/``QPDS``), Grothendieck
+(``G``/``DG``), separated descents (``Xi``), and a `GenericPrintingTerm` ``name(key)`` fallback.
+
+A `PrintingTerm` is a plain Python object, so defining and creating them needs no SymPy. SymPy sees
+one through ``_sympy_``, which returns a copy whose class also derives from SymPy's ``Expr`` (an
+``Expr`` atom with ``args == ()``, so SymPy never traverses into it).
 
 <a id="schubmult.rings.printing.PrintingTerm"></a>
 
 ## PrintingTerm Objects
 
 ```python
-class PrintingTerm(ssymb.Expr)
+class PrintingTerm(LazyPrintable)
 ```
 
 Base display atom carrying a key, generating set, coefficient generating set, and prefix.

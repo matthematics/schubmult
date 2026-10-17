@@ -143,7 +143,10 @@ leaves non-reducible ``q``-pieces unchanged rather than running the LP.
 #### apply\_peterson\_woodward
 
 ```python
-def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var)
+def apply_peterson_woodward(coeff_dict,
+                            parabolic_index,
+                            q_var=_vars.q_var,
+                            n=None)
 ```
 
 Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
@@ -158,6 +161,9 @@ only the ``parabolic``-minimal results, and reindexes the surviving ``q`` variab
 - `coeff_dict` - Full-flag quantum coefficient dict ``{Permutation: coeff}``.
 - `parabolic_index` - Sorted list of 1-indexed positions generating the parabolic subgroup.
 - `q_var` - Quantum parameter generating set.
+- `n` - Ambient flag size ``S_n``; results indexed by longer permutations are dropped. Defaults to
+  ``parabolic_index[-1] + 1``, which undercounts when the last block has size 1 (it
+  contributes no reflection), so callers that know the block sizes should pass their sum.
   
 
 **Returns**:

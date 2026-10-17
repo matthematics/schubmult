@@ -13,7 +13,7 @@
 typedef std::vector<std::pair<Perm, Expr>> ExprDict;
 #endif
 
-static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n, ElemSymCache& esc) {
+static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n, ElemSymCache& esc, Shadow* shadow = nullptr) {
     MultSetup S = mult_setup(v);
     if (S.trivial) return perm_dict;
     const VPaths& vp = S.vp;
@@ -26,10 +26,15 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
 
     // Each sum entry holds the pending terms; at the end of a level they are summed
     // (SymEngine's Add merges like terms at the top level, as Python's + does) and
-    // structurally zero entries are dropped. Nothing is ever expanded.
-    typedef PermTable<ExprVec> Table;
+    // structurally zero entries are dropped. Nothing is ever expanded. With a shadow,
+    // entries whose value at the sample points is zero are dropped too (probabilistic=True).
+    struct Pending {
+        ExprVec terms;
+        ShadowVal val;
+    };
+    typedef PermTable<Pending> Table;
     typedef Table::VSum VSum;
-    std::unordered_map<Perm, ExprVec, PermHash> result;
+    std::unordered_map<Perm, Pending, PermHash> result;
 
     Table tabA, tabB;
     Table* A = &tabA;
@@ -44,7 +49,12 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
         int inv_u = perm_inv(u, n);
 
         A->reset();
-        A->sums[A->intern(u, inv_u)].push_back({vp.id_start, ExprVec{kv.second}});
+        Pending start{ExprVec{kv.second}, ShadowVal()};
+        if (shadow) {
+            start.val = shadow->of(kv.second);
+            if (start.val.is_zero()) continue;
+        }
+        A->sums[A->intern(u, inv_u)].push_back({vp.id_start, std::move(start)});
 
         for (int index = 0; index < thL; ++index) {
             int k = th[index];
@@ -70,22 +80,31 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
                     yvars_of(up, up2, k, yidx);
                     long id = -1;
                     for (const VSum& sv : sums) {
-                        const Expr& sumval = sv.second[0];
+                        const Expr& sumval = sv.second.terms[0];
+                        const ShadowVal& sumv = sv.second.val;
                         const auto& trs = trans[sv.first];
                         for (size_t t = 0; t < trs.size(); ++t) {
                             const Trans& tr = trs[t];
                             if (newk < tr.vdiff) continue;  // elem_sym_func == 0
                             Expr term;
+                            ShadowVal tv;
                             if (newk == tr.vdiff) {
                                 term = sumval;  // elem_sym_func == 1
+                                tv = sumv;
                             } else {
                                 const Expr& esf = esc.get(newk - tr.vdiff, newk, yidx, zidx[index][sv.first][t]);
                                 if (is_zero(esf)) continue;
                                 term = ex_mul(sumval, esf);
+                                if (shadow) tv = sumv * shadow->of(esf);
                             }
-                            if (tr.s < 0) term = ex_neg(term);
+                            if (tr.s < 0) {
+                                term = ex_neg(term);
+                                tv = -tv;
+                            }
                             if (id < 0) id = B->intern(up2, inv_up + udiff);
-                            B->get_or_insert((uint32_t)id, tr.v2).push_back(term);
+                            Pending& pd = B->get_or_insert((uint32_t)id, tr.v2);
+                            pd.terms.push_back(term);
+                            pd.val += tv;
 #ifdef STATS
                             ++n_terms;
 #endif
@@ -98,11 +117,12 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
             size_t alive = 0, live_sums = 0;
             for (auto& vec : B->sums) {
                 for (VSum& e : vec) {
-                    Expr s = ex_add(e.second);
-                    e.second.clear();
-                    if (!is_zero(s)) e.second.push_back(s);
+                    Pending& pd = e.second;
+                    Expr s = ex_add(pd.terms);
+                    pd.terms.clear();
+                    if (!is_zero(s) && !(shadow && pd.val.is_zero())) pd.terms.push_back(s);
                 }
-                vec.erase(std::remove_if(vec.begin(), vec.end(), [](const VSum& e) { return e.second.empty(); }), vec.end());
+                vec.erase(std::remove_if(vec.begin(), vec.end(), [](const VSum& e) { return e.second.terms.empty(); }), vec.end());
                 if (!vec.empty()) {
                     ++alive;
                     live_sums += vec.size();
@@ -116,14 +136,18 @@ static ExprDict schubmult_double(const ExprDict& perm_dict, const Perm& v, int n
         }
 
         for (uint32_t sid = 0; sid < A->count; ++sid)
-            if (ExprVec* c = A->find(sid, id_vmu)) result[A->perms[sid]].push_back((*c)[0]);
+            if (Pending* c = A->find(sid, id_vmu)) {
+                Pending& r = result[A->perms[sid]];
+                r.terms.push_back(c->terms[0]);
+                r.val += c->val;
+            }
     }
 
     ExprDict out;
     out.reserve(result.size());
     for (auto& kv : result) {
-        Expr s = ex_add(kv.second);
-        if (!is_zero(s)) out.push_back({kv.first, s});
+        Expr s = ex_add(kv.second.terms);
+        if (!is_zero(s) && !(shadow && kv.second.val.is_zero())) out.push_back({kv.first, s});
     }
     std::sort(out.begin(), out.end(), [](const std::pair<Perm, Expr>& x, const std::pair<Perm, Expr>& y) { return x.first < y.first; });
     return out;

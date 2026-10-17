@@ -121,6 +121,22 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
             help="Expand the output rather than leaving it as originally computed (slow)",
         )
 
+        parser.add_argument(
+            "--simplify",
+            action="store_true",
+            default=False,
+            dest="simplify",
+            help="Print coefficients in cancelled form numer / prod (1 + beta*y_i)**e instead of as computed (Grothendieck scripts only)",
+        )
+
+        parser.add_argument(
+            "--probabilistic",
+            action="store_true",
+            default=False,
+            dest="probabilistic",
+            help="Prune intermediate terms that vanish at random points of a prime field (Schwartz-Zippel, error probability ~1e-26); much faster on large products and the output contains only nonzero coefficients (schubmult_double and schubmult_q_double)",
+        )
+
     if quantum:
         parser.add_argument(
             "--parabolic",

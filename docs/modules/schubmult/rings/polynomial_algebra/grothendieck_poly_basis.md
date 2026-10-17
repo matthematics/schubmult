@@ -29,7 +29,7 @@ is set to 1 without loss of generality (see the module docstring).
 def product(key1, key2, coeff=S.One)
 ```
 
-Multiply two Grothendieck keys using the Grothendieck ring multiplication.
+Multiply two Grothendieck keys with the ``grothmult_py`` kernel at ``beta = 1``.
 
 <a id="schubmult.rings.polynomial_algebra.grothendieck_poly_basis.GrothendieckPolyBasis.transition_schubert"></a>
 

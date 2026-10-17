@@ -16,4 +16,5 @@ in various settings:
 - grothmult_q: Quantum (single) Grothendieck multiplication
 
 Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
+Exports resolve lazily (PEP 562) so that importing one kernel does not load all the others.
 

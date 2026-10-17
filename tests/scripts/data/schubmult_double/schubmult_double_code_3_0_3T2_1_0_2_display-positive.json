@@ -1,0 +1,40 @@
+{
+ "perms": [
+  [
+   3,
+   0,
+   3
+  ],
+  [
+   2,
+   1,
+   0,
+   2
+  ]
+ ],
+ "pr": true,
+ "ascode": true,
+ "mult": null,
+ "coprod": false,
+ "display_positive": true,
+ "msg": false,
+ "down": false,
+ "check": true,
+ "same": true,
+ "expa": false,
+ "disp_mode": "basic",
+ "mulstring": "",
+ "cmd_line": [
+  "script",
+  "--code",
+  "3",
+  "0",
+  "3",
+  "-",
+  "2",
+  "1",
+  "0",
+  "2",
+  "--display-positive"
+ ]
+}

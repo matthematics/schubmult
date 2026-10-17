@@ -22,6 +22,16 @@ positivity theorem). This module computes that manifestly positive form:
   special cases (``u`` dominates ``w``, the ``will_formula_work`` forward Monk
   case, and the dual Pieri expansion respectively).
 
+<a id="schubmult.mult.positivity.cbc_solver"></a>
+
+#### cbc\_solver
+
+```python
+def cbc_solver(msg=False)
+```
+
+PuLP ``COIN_CMD`` using the CBC binary bundled by ``pulp[cbc]``, falling back to ``cbc`` on PATH.
+
 <a id="schubmult.mult.positivity.compute_positive_rep"></a>
 
 #### compute\_positive\_rep

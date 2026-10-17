@@ -18,6 +18,28 @@ Keys are tuples encoding products of elementary symmetric polynomials
 e_k(x_1, ..., x_n). Each key specifies degrees and variable counts
 for the elementary symmetric factors.
 
+<a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis.is_key"></a>
+
+#### is\_key
+
+```python
+@classmethod
+def is_key(cls, x)
+```
+
+Return True if *x* is a ``(tuple/list, int)`` pair.
+
+<a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis.as_key"></a>
+
+#### as\_key
+
+```python
+@classmethod
+def as_key(cls, x)
+```
+
+Normalize *x* into a ``(tuple, int)`` key.
+
 <a id="schubmult.rings.polynomial_algebra.elem_sym_poly_basis.ElemSymPolyBasis.transition_schubert"></a>
 
 #### transition\_schubert

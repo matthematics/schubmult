@@ -82,3 +82,20 @@ def test_single_and_double_parabolic_constructors():
 
     assert single([2, 1, 3, 4]) is not None
     assert double([2, 1, 3, 4]) is not None
+
+
+def test_trailing_singleton_block_keeps_full_ambient():
+    """Blocks (2, 3, 1): the size-1 block adds no reflection, so Peterson-Woodward used to infer the
+    ambient as S_5 and drop sigma_42 = (3,6,1,2,4,5) from sigma_32 * sigma_1. The product must be an exact
+    polynomial identity and agree with the implicit-last-block ring QPSx(2, 3)."""
+    from schubmult import uncode
+    from schubmult.rings.schubert import QPSx
+    from schubmult.symbolic import S, expand
+
+    reference = QPSx(2, 3)
+    for blocks in [(2, 3, 1), (2, 3, 1, 1), (2, 3, 2)]:
+        ring = QPSx(*blocks)
+        u, v = ring(uncode([2, 3])), ring(uncode([0, 1]))
+        prod = u * v
+        assert expand(prod.as_polynomial() - u.as_polynomial() * v.as_polynomial()) == S.Zero, blocks
+        assert {k: expand(c) for k, c in prod.items()} == {k: expand(c) for k, c in (reference(uncode([2, 3])) * reference(uncode([0, 1]))).items()}, blocks

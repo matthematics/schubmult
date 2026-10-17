@@ -1,0 +1,372 @@
+"""Property tests for the SageMath integration (``schubmult.sage``).
+
+Skipped entirely when Sage is not importable; CI runs them in the ``sage-doctests`` job. Every product
+is checked against polynomial multiplication after ``expand()``, which is independent of the kernels
+under test (Sage does the polynomial arithmetic).
+"""
+
+import itertools
+
+import pytest
+
+sage_all = pytest.importorskip("sage.all")
+
+from sage.all import QQ, ZZ, Permutation, Permutations, PolynomialRing, SchubertPolynomialRing, SymmetricFunctions  # noqa: E402
+from sage.misc.sage_unittest import TestSuite as SageTestSuite  # noqa: E402  (aliased so pytest does not try to collect it)
+
+from schubmult.sage import (  # noqa: E402
+    DoubleGrothendieckPolynomialRing,
+    DoubleSchubertPolynomialRing,
+    GrothendieckPolynomialRing,
+    QuantumDoubleSchubertPolynomialRing,
+    QuantumSchubertPolynomialRing,
+)
+
+S3 = list(Permutations(3))
+S4_SAMPLE = [Permutation(p) for p in ([2, 1, 4, 3], [3, 1, 4, 2], [1, 4, 2, 3], [4, 2, 3, 1], [2, 4, 1, 3])]
+
+
+def common(*polys):
+    """Coerce polynomials from different finite rings into one ring on the union of their variables."""
+    names = sorted({str(g) for p in polys for g in p.parent().gens()})
+    T = PolynomialRing(QQ, names)
+    return [T(p) for p in polys]
+
+
+def product_matches(elem_product, *factors):
+    """``elem_product.expand()`` equals the product of the factors' expansions, in a common ring."""
+    lhs, *fs = common(elem_product.expand(), *(f.expand() for f in factors))
+    rhs = fs[0]
+    for f in fs[1:]:
+        rhs *= f
+    return lhs == rhs
+
+
+def zero_out(poly, prefix):
+    """Set every variable whose name starts with ``prefix`` to zero."""
+    return poly.subs({g: 0 for g in poly.parent().gens() if str(g).startswith(prefix)})
+
+
+@pytest.fixture(scope="module")
+def X():
+    return DoubleSchubertPolynomialRing(QQ)
+
+
+@pytest.fixture(scope="module")
+def Z():
+    return DoubleSchubertPolynomialRing(QQ, "z")
+
+
+@pytest.fixture(scope="module")
+def S():
+    return SchubertPolynomialRing(QQ)
+
+
+@pytest.fixture(scope="module")
+def Q():
+    return QuantumSchubertPolynomialRing(QQ)
+
+
+@pytest.fixture(scope="module")
+def QD():
+    return QuantumDoubleSchubertPolynomialRing(QQ)
+
+
+# --- Sage category framework -----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda: DoubleSchubertPolynomialRing(ZZ),
+        lambda: DoubleSchubertPolynomialRing(QQ, "z"),
+        lambda: QuantumSchubertPolynomialRing(QQ),
+        lambda: QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3)),
+        lambda: QuantumDoubleSchubertPolynomialRing(QQ),
+        lambda: QuantumDoubleSchubertPolynomialRing(QQ, parabolic=(1, 2)),
+        lambda: GrothendieckPolynomialRing(ZZ),
+        lambda: DoubleGrothendieckPolynomialRing(QQ),
+    ],
+    ids=["double_ZZ", "double_z", "quantum", "quantum_parabolic", "quantum_double", "quantum_double_parabolic", "grothendieck", "double_grothendieck"],
+)
+def test_sage_testsuite(make):
+    """Sage's generic parent/element/algebra axioms (associativity, distributivity, pickling, coercion)."""
+    SageTestSuite(make()).run(raise_on_failure=True)
+
+
+def test_unique_representation():
+    assert DoubleSchubertPolynomialRing(QQ) is DoubleSchubertPolynomialRing(QQ, "y", ("z", "y"))
+    assert QuantumSchubertPolynomialRing(QQ, parabolic=[2, 3]) is QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))
+
+
+# --- double Schubert -------------------------------------------------------------------------------
+
+
+def test_double_specializes_to_single(X, S):
+    """S_w(x; 0) = S_w(x)."""
+    for w in S3 + S4_SAMPLE:
+        lhs, rhs = common(zero_out(X(w).expand(), "y"), S(w).expand())
+        assert lhs == rhs, w
+
+
+def test_double_product_matches_polynomial_product(X):
+    for u, v in itertools.product(S3, S3):
+        assert product_matches(X(u) * X(v), X(u), X(v)), (u, v)
+
+
+def test_double_product_matches_polynomial_product_S4_sample(X):
+    for u, v in itertools.product(S4_SAMPLE, S3):
+        assert product_matches(X(u) * X(v), X(u), X(v)), (u, v)
+
+
+def test_mixed_alphabet_product(X, Z):
+    """S_u(x; y) S_v(x; z) via coercion of the z-ring into the y-ring."""
+    for u, v in itertools.product(S3, S3):
+        assert product_matches(X(u) * Z(v), X(u), Z(v)), (u, v)
+
+
+def test_polynomial_round_trip(X, Z):
+    for u, v in itertools.product(S3, S3):
+        p = X(u) * X(v)
+        assert X(p.expand()) == p, (u, v)
+        m = X(u) * Z(v)
+        assert X(m.expand()) == m, (u, v)
+
+
+def test_other_alphabet_round_trip(X, Z):
+    for w in S3 + S4_SAMPLE:
+        assert Z(X(Z(w))) == Z(w), w
+        assert X(Z(X(w))) == X(w), w
+
+
+def test_single_schubert_coerces(X, S):
+    for w in S3 + S4_SAMPLE:
+        lhs, rhs = common(X(S(w)).expand(), S(w).expand())
+        assert lhs == rhs, w
+    assert (X([2, 1]) + S([2, 1])).parent() is X
+
+
+def test_key_polynomials_convert_and_coerce(X, S):
+    """Key/atom polynomial variables z_i are read as x_i, as Sage's SchubertPolynomialRing does."""
+    from sage.combinat.key_polynomial import AtomPolynomialBasis, KeyPolynomialBasis
+
+    k, a = KeyPolynomialBasis(QQ), AtomPolynomialBasis(QQ)
+    for alpha in ([0, 2], [1, 0, 2], [2, 1], [0, 1, 1]):
+        assert X(k(alpha)) == X(S(k(alpha))), alpha
+        assert X(a(alpha)) == X(S(a(alpha))), alpha
+    assert (X([2, 1]) + k([1])).parent() is X
+    assert X.has_coerce_map_from(k)
+    for w in S3 + S4_SAMPLE:  # key polynomials of dominant weights are the Schubert polynomials of dominant permutations
+        code = w.to_lehmer_code()
+        if code == sorted(code, reverse=True):
+            assert X(k(code)) == X(S(w)), w
+
+
+def test_symmetric_functions_round_trip(X, S):
+    """s_lambda(x_0..x_{n-1}) is the Grassmannian Schubert polynomial; to_symmetric_function inverts it."""
+    from sage.combinat.permutation import from_lehmer_code
+
+    Sym = SymmetricFunctions(QQ)
+    s, h = Sym.s(), Sym.h()
+    for la, n in (([2, 1], 2), ([2, 1], 3), ([3, 1, 1], 3), ([1], 4), ([2, 2], 2)):
+        w = from_lehmer_code([0] * (n - len(la)) + list(reversed(la)) + [0] * la[0])  # Grassmannian, descent at n
+        assert S(s[la].expand(n, alphabet=[f"x{i}" for i in range(n)])) == S(w), (la, n)
+        f = X.from_symmetric_function(s[la], n)
+        assert f.to_symmetric_function(n) == s[la], (la, n)
+        assert X.from_symmetric_function(h[la], n).to_symmetric_function(n) == s(h[la]).restrict_partition_lengths(n, exact=False), (la, n)
+    assert X([2, 4, 1, 3]).to_symmetric_function().parent().base_ring().variable_names() == ("y0", "y1", "y2")
+    with pytest.raises(ValueError):
+        X([3, 2, 1]).to_symmetric_function()
+    with pytest.raises(TypeError):
+        X(s[2, 1])
+
+
+def test_divided_difference_is_the_operator(X):
+    """partial_i f = (f - s_i f) / (x_{i-1} - x_i) on the x variables, coefficients untouched."""
+    for w in S4_SAMPLE:
+        f = X(w) * X([2, 1, 3])
+        g = f.expand()
+        xs = [v for v in g.parent().gens() if str(v).startswith("x")]
+        for i in range(1, len(xs)):
+            swapped = g.subs({xs[i - 1]: xs[i], xs[i]: xs[i - 1]})
+            expected = (g - swapped) // (xs[i - 1] - xs[i])
+            lhs, rhs = common(f.divided_difference(i).expand(), expected)
+            assert lhs == rhs, (w, i)
+
+
+def test_invalid_permutation_rejected(X):
+    with pytest.raises(ValueError):
+        X([1, 2, 1])
+
+
+# --- quantum ---------------------------------------------------------------------------------------
+
+
+def test_quantum_product_matches_polynomial_product(Q):
+    for u, v in itertools.product(S3, S3):
+        assert product_matches(Q(u) * Q(v), Q(u), Q(v)), (u, v)
+
+
+def test_quantum_reduces_to_classical_at_q_zero(Q, S):
+    for u, v in itertools.product(S3, S3):
+        lhs, a, b = common(zero_out((Q(u) * Q(v)).expand(), "q"), S(u).expand(), S(v).expand())
+        assert lhs == a * b, (u, v)
+
+
+def test_quantum_monk(Q):
+    """S^q_{s_1} S^q_{s_1} = S^q_{312} + q_1 (Fomin-Gelfand-Postnikov)."""
+    q0 = Q.base_ring().gen(0)[0]
+    assert Q([2, 1]) * Q([2, 1]) == Q([3, 1, 2]) + q0 * Q.one()
+
+
+def test_quantum_double_product_matches_polynomial_product(QD):
+    for u, v in itertools.product(S3, S3):
+        assert product_matches(QD(u) * QD(v), QD(u), QD(v)), (u, v)
+
+
+def test_quantum_double_specializations(QD, Q, X):
+    """y = 0 gives quantum Schubert; q = 0 gives double Schubert."""
+    for w in S3 + S4_SAMPLE:
+        p = QD(w).expand()
+        lhs, rhs = common(zero_out(p, "y"), Q(w).expand())
+        assert lhs == rhs, w
+        lhs, rhs = common(zero_out(p, "q"), X(w).expand())
+        assert lhs == rhs, w
+
+
+# --- parabolic -------------------------------------------------------------------------------------
+
+
+def test_parabolic_rejects_non_parabolic_permutations():
+    P = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))
+    with pytest.raises(ValueError):
+        P([2, 1, 3])  # descent at 1 is inside the first block
+    assert P([1, 3, 2, 4, 6, 5]) is not None  # descent at N_2 = 5, increasing beyond
+
+
+def test_grassmannian_basis_is_schur_inside_the_box():
+    """Blocks (2, 3) = Gr(2, 5): sigma_lambda for lambda in the 2 x 3 box is s_lambda(x0, x1), no q."""
+    G = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))
+    s = SymmetricFunctions(QQ).schur()
+    for lam, w in [((1,), [1, 3, 2]), ((2, 1), [2, 4, 1, 3]), ((3, 2), [3, 5, 1, 2, 4]), ((3, 3), [4, 5, 1, 2, 3])]:
+        schur = s[lam].expand(2)  # in x0, x1
+        lhs, rhs = common(G(w).expand(), schur)
+        assert lhs == rhs, lam
+        assert not any(str(g).startswith("q") for g in G(w).expand().variables()), lam
+
+
+def test_grassmannian_quantum_pieri_gr_2_5():
+    """sigma_32 sigma_1 = sigma_33 + q sigma_1 in QH^*(Gr(2,5)), plus sigma_42 which lives past the box."""
+    G = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))
+    q0 = G.base_ring().gen(0)[0]
+    s32, s1, s33, s42 = G([3, 5, 1, 2, 4]), G([1, 3, 2]), G([4, 5, 1, 2, 3]), G([3, 6, 1, 2, 4, 5])
+    assert s32 * s1 == s33 + q0 * s1 + s42
+    # the q's in sigma_42 cancel against q sigma_1 on expansion
+    assert product_matches(s32 * s1, s32, s1)
+
+
+@pytest.mark.parametrize("blocks", [(2, 3), (1, 2), (2, 2)])
+def test_parabolic_product_matches_polynomial_product(blocks):
+    P = QuantumSchubertPolynomialRing(QQ, parabolic=blocks)
+    bounds = set(itertools.accumulate(blocks))
+    perms = [w for n in (3, 4, 5) for w in Permutations(n) if set(w.descents()) <= bounds and w.length() <= 3]
+    for u, v in itertools.product(perms, perms):
+        assert product_matches(P(u) * P(v), P(u), P(v)), (blocks, u, v)
+
+
+def test_parabolic_result_independent_of_implicit_block_size():
+    """Extending (2, 3) by an explicit extra block of any size gives the same structure constants."""
+    base = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3))
+    u, v = [3, 5, 1, 2, 4], [2, 4, 1, 3]
+    reference = {tuple(w): str(c) for w, c in base(u) * base(v)}
+    for extra in (1, 2, 3):
+        P = QuantumSchubertPolynomialRing(QQ, parabolic=(2, 3, extra))
+        assert {tuple(w): str(c) for w, c in P(u) * P(v)} == reference, extra
+
+
+def test_parabolic_quantum_double_product_matches_polynomial_product():
+    PD = QuantumDoubleSchubertPolynomialRing(QQ, parabolic=(1, 2))
+    perms = [w for w in Permutations(3) if set(w.descents()) <= {1, 3}]
+    for u, v in itertools.product(perms, perms):
+        assert product_matches(PD(u) * PD(v), PD(u), PD(v)), (u, v)
+
+
+# --- Grothendieck ----------------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def G():
+    return GrothendieckPolynomialRing(QQ)
+
+
+@pytest.fixture(scope="module")
+def GD():
+    return DoubleGrothendieckPolynomialRing(QQ)
+
+
+def test_grothendieck_product_matches_polynomial_product(G):
+    for u, v in itertools.product(S3, S3):
+        assert product_matches(G(u) * G(v), G(u), G(v)), (u, v)
+    for u, v in zip(S4_SAMPLE, reversed(S4_SAMPLE)):
+        assert product_matches(G(u) * G(v), G(u), G(v)), (u, v)
+
+
+def test_grothendieck_reduces_to_schubert_at_beta_zero(G, S):
+    """G_w(x)|_{beta=0} = S_w(x), and the same for products (the coefficients are polynomials in beta)."""
+    for w in S3 + S4_SAMPLE:
+        lhs, rhs = common(zero_out(G(w).expand(), "beta"), S(w).expand())
+        assert lhs == rhs, w
+    f = G([1, 3, 2]) * G([2, 1])
+    assert f == G([2, 3, 1]) + G([3, 1, 2]) + G.beta() * G([3, 2, 1])
+    assert S(zero_out(f.expand(), "beta")) == S([2, 3, 1]) + S([3, 1, 2])
+
+
+def test_grothendieck_coerces_schubert_and_polynomials(G, S):
+    """Schubert polynomials expand in the G basis with coefficients in Z[beta]; polynomials round-trip."""
+    for w in S3:
+        g = G(S(w))
+        assert zero_out(g.expand(), "beta") == S(w).expand()
+        assert G(g.expand()) == g, w
+    assert G(S([1, 3, 2])) == G([1, 3, 2]) - G.beta() * G([2, 3, 1])
+
+
+def test_double_grothendieck_product_matches_polynomial_product(GD):
+    """Structure constants are rational functions; the check happens in the fraction field."""
+    for u, v in itertools.product(S3, S3):
+        f = GD(u) * GD(v)
+        assert f.expand() == GD(u).expand() * GD(v).expand(), (u, v)
+    u, v = Permutation([3, 1, 4, 2]), Permutation([2, 4, 1, 3])
+    assert (GD(u) * GD(v)).expand() == GD(u).expand() * GD(v).expand()
+
+
+def test_double_grothendieck_specializations(GD, G, X):
+    """G_w(x; y)|_{y=0} = G_w(x) and G_w(x; y)|_{beta=0} = S_w(x; -y) (the second alphabet enters as x (+) y)."""
+    for w in S3 + S4_SAMPLE:
+        p = GD(w).expand()
+        lhs, rhs = common(zero_out(p, "y"), G(w).expand())
+        assert lhs == rhs, w
+        q = X(w).expand()
+        lhs, rhs = common(zero_out(p, "beta"), q.subs({g: -g for g in q.parent().gens() if str(g).startswith("y")}))
+        assert lhs == rhs, w
+
+
+def test_double_grothendieck_mixed_alphabets_and_round_trip(GD):
+    GZ = DoubleGrothendieckPolynomialRing(QQ, "z")
+    assert GD.base_ring() is GZ.base_ring()
+    f = GD([2, 1]) * GZ([2, 1])
+    assert f.parent() is GD
+    lhs, a, b = common(f.expand(), GD([2, 1]).expand(), GZ([2, 1]).expand())
+    assert lhs == a * b
+    for w in S3:
+        assert GD(GD(w).expand()) == GD(w), w
+
+
+def test_double_grothendieck_coefficients(GD):
+    """Coefficients live in Frac(Q[beta, y, z]), print beta (not beta_0) and are reduced."""
+    b = GD.beta()
+    y = GD.base_ring().ring().gen(1)
+    f = GD([2, 1]) * GD([2, 1])
+    assert f[Permutation([2, 1])] == (y[0] - y[1]) / (1 + b * y[1])
+    assert f[Permutation([3, 1, 2])] == (1 + b * y[0]) / (1 + b * y[1])
+    assert "beta_0" not in repr(f) and "beta" in repr(f)
+    assert str(b) == "beta"

@@ -43,11 +43,13 @@ class DoubleGrothendieckElement(BaseSchubertElement):
         return self.ring.perm_subs(self, perm)
 
     def simplify(self, factor=True):
-        """Return a copy with each coefficient put in cancelled (and, by default, factored) rational
-        normal form in ``y`` and ``beta``, dropping terms whose coefficient simplifies to zero.
+        """Return a copy with each coefficient in cancelled normal form ``numer / prod (1 + beta*y_i)**e``,
+        dropping terms whose coefficient is zero; with ``factor=True`` the numerator is also factored.
 
         Products in this ring leave coefficients as unsimplified rational expressions; this
-        makes them readable, e.g. ``(y_1 - y_2)/(1 + beta*y_2)``.
+        makes them readable, e.g. ``(y_1 - y_2)/(1 + beta*y_2)``. Cancellation is done in the
+        multiplicative variables ``1 + beta*y_i`` (`schubmult.mult.groth_double.normalize_coeff`),
+        where it is a plain expansion; only the optional factoring of the numerator uses sympy.
         """
         import sympy
 
@@ -55,12 +57,13 @@ class DoubleGrothendieckElement(BaseSchubertElement):
 
         new_dict = {}
         for perm, coeff in self.items():
-            expr = sympy.cancel(sympify_sympy(coeff))
-            if expr == 0:
+            expr = yz.normalize_coeff(coeff, self.ring.coeff_genset, self.ring._beta)
+            if expr == S.Zero:
                 continue
             if factor:
-                expr = sympy.factor(expr)
-            new_dict[perm] = sympify(expr)
+                num, den = sympify_sympy(expr).as_numer_denom()
+                expr = sympify(sympy.factor(num) / den)
+            new_dict[perm] = expr
         return self.ring.from_dict(new_dict)
 
 

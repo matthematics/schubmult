@@ -36,6 +36,7 @@ from schubmult.utils.schub_lib import (
 )
 
 zero = sympify(0)
+_shadow_prime = (1 << 61) - 1
 
 logger = get_logger(__name__)
 
@@ -279,7 +280,7 @@ def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
     return ret
 
 
-def schubmult_double(perm_dict, v, var2=None, var3=None):
+def schubmult_double(perm_dict, v, var2=None, var3=None, probabilistic=False):
     """Multiply ``sum_u coeff_u S_u(x, var2)`` by the double Schubert polynomial ``S_v(x, var3)``.
 
     Dispatches to the compiled ``schubmult_cpp`` kernel when available (and both
@@ -292,19 +293,34 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
             multiply by.
         var2: Secondary alphabet attached to ``perm_dict``'s permutations.
         var3: Secondary alphabet attached to ``v``.
+        probabilistic: Drop intermediate states (and output terms) whose coefficient
+            vanishes at two random points of a prime field -- zero as a polynomial up to a
+            probability of error around ``1e-26`` (see :mod:`schubmult.mult._shadow`). The
+            kernels cancel heavily, so this prunes most of the work on large products and
+            returns only the nonzero terms; the exact default returns structurally nonzero
+            coefficients that may be zero as polynomials.
 
     Returns:
         dict: Coefficient dict ``{Permutation: coeff}`` (polynomials in ``var2``/``var3``).
     """
     if _accel.available and var2 is not None and var3 is not None:
-        ret = _accel.schubmult_double(perm_dict, v, var2, var3)
+        ret = _accel.schubmult_double(perm_dict, v, var2, var3, probabilistic)
         if ret is not None:
             return ret
-    return _schubmult_double_python(perm_dict, v, var2, var3)
+    return _schubmult_double_python(perm_dict, v, var2, var3, probabilistic)
 
 
-def _schubmult_double_python(perm_dict, v, var2=None, var3=None):
+def _schubmult_double_python(perm_dict, v, var2=None, var3=None, probabilistic=False):
     """Pure-Python implementation of ``schubmult_double``; see there for the contract."""
+    shadow = None
+    if probabilistic:
+        from schubmult.mult._shadow import ShadowEvaluator
+
+        shadow = ShadowEvaluator()
+
+    def shadow_mul(a, b):
+        return tuple(x * y % _shadow_prime for x, y in zip(a, b))
+
     perm_dict = {Permutation(k): vv for k, vv in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
@@ -318,19 +334,21 @@ def _schubmult_double_python(perm_dict, v, var2=None, var3=None):
     inv_vmu = vmu.inv
     inv_mu = mu.inv
     ret_dict = {}
+    ret_shadow = {}
     while th[-1] == 0:
         th.pop()
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         inv_u = u.inv
-        vpathsums = {u: {Permutation([1, 2]): val}}
+        # state -> (partial sum, its shadow value or None)
+        vpathsums = {u: {Permutation([1, 2]): (val, shadow(sympify(val)) if shadow else None)}}
         for index in range(thL):
             mx_th = 0
             for vp in vpathdicts[index]:
                 for v2, vdiff, s in vpathdicts[index][vp]:
                     mx_th = max(mx_th, th[index] - vdiff)
-            newpathsums = {}
+            pending = {}
             for up in vpathsums:
                 inv_up = up.inv
                 newperms = elem_sym_perms(
@@ -339,17 +357,15 @@ def _schubmult_double_python(perm_dict, v, var2=None, var3=None):
                     th[index],
                 )
                 for up2, udiff in newperms:
-                    if up2 not in newpathsums:
-                        newpathsums[up2] = {}
+                    target = pending.setdefault(up2, {})
                     for v_iter in vpathdicts[index]:
-                        sumval = vpathsums[up].get(v_iter, zero)
+                        if v_iter not in vpathsums[up]:
+                            continue
+                        sumval, sumsh = vpathsums[up][v_iter]
                         if sumval == 0:
                             continue
                         for v2, vdiff, s in vpathdicts[index][v_iter]:
-                            newpathsums[up2][v2] = newpathsums[up2].get(
-                                v2,
-                                zero,
-                            ) + s * sumval * elem_sym_func(
+                            esf = elem_sym_func(
                                 th[index],
                                 index + 1,
                                 up,
@@ -361,9 +377,40 @@ def _schubmult_double_python(perm_dict, v, var2=None, var3=None):
                                 var2,
                                 var3,
                             )
+                            if shadow is not None:
+                                if esf == 0:
+                                    continue
+                                termsh = shadow_mul(sumsh, shadow(sympify(esf)))
+                                if s < 0:
+                                    termsh = tuple((-x) % _shadow_prime for x in termsh)
+                            else:
+                                termsh = None
+                            target.setdefault(v2, []).append((s * sumval * esf, termsh))
+            newpathsums = {}
+            for up2, by_v2 in pending.items():
+                for v2, terms in by_v2.items():
+                    total = zero
+                    for term, _ in terms:
+                        total = total + term
+                    if total == 0:
+                        continue
+                    totalsh = None
+                    if shadow is not None:
+                        totalsh = tuple(sum(ts[i] for _, ts in terms) % _shadow_prime for i in range(shadow.points))
+                        if not any(totalsh):
+                            continue
+                    newpathsums.setdefault(up2, {})[v2] = (total, totalsh)
             vpathsums = newpathsums
         toget = vmu
-        ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
+        for ep in vpathsums:
+            if toget in vpathsums[ep]:
+                total, totalsh = vpathsums[ep][toget]
+                ret_dict[ep] = ret_dict.get(ep, zero) + total
+                if shadow is not None:
+                    prev = ret_shadow.get(ep, (0,) * shadow.points)
+                    ret_shadow[ep] = tuple((a + b) % _shadow_prime for a, b in zip(prev, totalsh))
+    if shadow is not None:
+        ret_dict = {ep: c for ep, c in ret_dict.items() if any(ret_shadow[ep])}
     return ret_dict
 
 

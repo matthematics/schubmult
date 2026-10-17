@@ -1,5 +1,246 @@
 # Changelog
 
+## 5.2.0
+
+Final release of 5.2.0, including the changes in 5.2.0b2 and 5.2.0b3.
+
+### Added
+
+- **Skew divided differences and the block lift**, after Byung-Hak Hwang, *Coefficient lifting for skew
+  divided differences and triple Schubert coefficients* (arXiv:2610.21053). `DoubleSchubertElement.skew_divdiff(w, v)`
+  applies Macdonald's skew divided difference $\partial_{w/v}$ (Gao--Xiong normalization, characterized by
+  $\partial_w(fg)=\sum_v(\partial_{w/v}f)(\partial_v g)$) to a `DSx`/`Sx` element, using Samuel's identity
+  $\partial_{w/v}\mathfrak S_u(x;y)=c^w_{u,v}(y,x)$ so that each basis term is one `schubmult_double` call;
+  `schubmult.symbolic.poly.schub_poly.skew_div_diff` applies $\partial_{w/v}$ to an arbitrary polynomial by
+  the recurrence $\partial_{s_iw'/v}=\partial_i\partial_{w'/v}+s_i\partial_{w'/s_iv}$.
+  `schubmult.utils.perm_utils.block_lift(u, v, w, alpha)` builds the triple
+  $(\widetilde u_\alpha,\widetilde v_\alpha,\widetilde w_\alpha)\in S_{n+|\alpha|}$ for which the coefficient
+  of $t^\alpha$ in the triple Schubert coefficient $c^w_{u,v}(y,t)$ (`schubmult_double({v: 1}, u, t, y)[w]`)
+  is the single coefficient $c^{\widetilde w_\alpha}_{\widetilde u_\alpha,\widetilde v_\alpha}(y,0)$; at
+  $y=0$ this realizes every coefficient of $\partial_{w/v}\mathfrak S_u(x)$ (Kirillov's conjecture), and in
+  particular every coefficient of $\mathfrak S_u(x)$, as an ordinary structure constant. The identity is
+  verified against `schubmult_double` on all of $S_3$ and the paper's running example in the test suite,
+  giving the double kernel a rank-mixing consistency check it did not have before.
+
+### Changed
+
+- CI tests Python 3.15. The wheel workflow builds CPython 3.10-3.14 wheels; cibuildwheel does not
+  yet recognize the CPython 3.15 build selector.
+
+### Fixed
+
+- **`posify` / `q_posify` crashed or returned a wrong expression in the one-dominates recursion**
+  (`schubmult_q_double --mixed-var --display-positive`, `schubmult.mult.positivity.posify`). When
+  $u$ one-dominates $w$, `posify` strips the first row and recurses on $(\phi_1 u, v', \phi_1 w)$
+  over the shifted alphabet $y_2, y_3, \ldots$, passed as a plain tuple. Two bugs met there: the
+  reduced coefficient was still computed in the unshifted alphabet, so any recursion that bottomed
+  out in the integer program returned $c(y_1, y_2, \ldots)$ instead of $c(y_2, y_3, \ldots)$; and
+  `compute_positive_rep` used `tuple.index`, which raises on the $z$ variables where
+  `GeneratingSet.index` returns `-1`. Hit for instance by $u=2431$, $v=1432$, $w=34512$, where
+  `schubmult_q_double 2 4 3 1 - 1 4 3 2 --mixed-var --display-positive` died with a bare
+  `Exception`. The reduced coefficient is now computed in the shifted alphabet and
+  `compute_positive_rep` accepts plain sequences. `posify` and `q_posify` now reconstruct every
+  structure constant on all of $S_4$ (5,558 classical and 11,422 quantum coefficients), and both
+  are covered by direct unit tests.
+
+## 5.2.0b2
+
+Pre-release of 5.2.0: SageMath integration (`schubmult.sage`), a correctness fix for parabolic
+quantum products with trailing size-1 blocks, and much faster `ElementaryBasis` transitions. Since
+5.2.0b1: parabolic quantum Grothendieck products, a manifestly positive expansion of double
+Grothendieck polynomials in double Schubert polynomials, a transition + Monk kernel (lrcalc's
+algorithm) with a cost-model hybrid, probabilistic zero testing for the double and quantum double
+kernels, and fast normalization of double Grothendieck coefficients. Pre-releases install with
+`pip install --pre schubmult`; `pip install schubmult` keeps giving 5.1.1 until 5.2.0 is final.
+
+### Added
+
+- **Positive expansion of double Grothendieck polynomials in double Schubert polynomials**
+  (`schubmult.mult.groth_double.dgroth_to_dschub_positive`). Writes
+  $\mathfrak G_v(x;z)=\sum_w a_{v,w}(\beta,z)\,\mathfrak S_w(x;z)$ with every $a_{v,w}$ in
+  $\mathbb N[\beta,z]$, as a sum over triples of pipe dreams with no sign and no change of variables:
+  the Fomin--Kirillov Cauchy factorization over Demazure products
+  $\mathfrak G_v(x;z)=\sum_{u\,\star\,v'=v}\beta^{\ell(u)+\ell(v')-\ell(v)}\mathfrak G_{u^{-1}}(z)\mathfrak G_{v'}(x)$,
+  then Lenart's integer expansion of $\mathfrak G_{v'}(x)$ in Schubert polynomials
+  (`WCGraph.groth_to_schub`), then $\mathfrak S_{u'}(x)=\sum_{u'=aw}\mathfrak S_a(z)\mathfrak S_w(x;z)$.
+  Agrees with the exact divided-difference expansion `dgroth_to_dschub` on all of $S_4$ and samples
+  in $S_5$. Also new, and conjectural: `dgroth_positive_phantom_expansion` (the sign-normalized
+  staircase phantom expansion in the formal-inverse alphabet, with positivity checked at every step
+  and a `ValueError` on failure) and `dgroth_copipe_expansion`, an unsigned reduced-pipe-dream /
+  co-pipe-dream formula for the same coefficients, verified against the recurrence for every
+  permutation in $S_6$. These are small-rank research routines, not multiplication kernels.
+- **Parabolic quantum Grothendieck products.** `grothmult_q` and `grothmult_q_double` accept
+  `--parabolic g1 g2 ...` (block sizes) and return the product in $QK(G/P)$ resp. $QK_T(G/P)$ for the
+  partial flag variety $Fl(g_1, g_1+g_2, \ldots; n)$; inputs must be minimal coset representatives.
+  Uses Kato's ring homomorphism $QK_T(G/B)\twoheadrightarrow QK_T(G/P)$,
+  $\mathcal O^w\mapsto\mathcal O^{[w]_P}$, $Q_j\mapsto 1$ for $j\in P$ (arXiv:1906.09343, Thm 2.19),
+  so unlike `schubmult_q --parabolic` there is no Peterson--Woodward comparison term by term. Exposed
+  on the web app too.
+- **Transition + Monk kernel and a cost-model hybrid for single Schubert products**
+  (`schubmult.mult.transition`). `schubmult_py_transition` multiplies by expanding one factor into
+  monomials with the Lascoux--Schützenberger transition recursion (`transition_monomials`) and
+  folding them into the other factor one variable at a time by Monk's rule, as a Horner scheme over
+  the Schubert basis -- lrcalc's algorithm. Its cost is driven by the number of pipe dreams
+  (`pipe_dream_count`), the v-path kernel's by the number of v-paths, and an exhaustive comparison
+  over $S_7$ (all 12.7M unordered pairs) and scaling families to $S_{12}$ showed each is faster by
+  large factors where the other is slow; `schubmult_py_hybrid` picks between them with a cost model
+  fitted on that data. Both have C++ implementations in the extension. `schubmult_py` and `Sx` are
+  unchanged; the hybrid is opt-in.
+- **Probabilistic zero testing in the double and quantum double kernels**
+  (`schubmult_double --probabilistic`, `schubmult_q_double --probabilistic`;
+  `DoubleSchubertPolynomialRing(R, probabilistic=True)` in Sage). The layered DP of
+  `schubmult_double` has signed terms that cancel: a state whose partial sum is zero as a polynomial
+  but not structurally keeps fanning out, and its leaves are output terms with coefficient zero
+  (4187 terms returned for a 246-term answer). Partial sums are now shadowed by exact evaluations
+  at random integer points (Schwartz--Zippel; `schubmult.mult._shadow`) and dead states are pruned
+  as they arise. `X([4,1,6,5,2,3]) * X([8,1,7,6,2,3,5,4])` in Sage went from 11 s to 0.5 s. The
+  quantum double kernel keys its states by $q$-monomial, which alone makes the exact path ~18%
+  faster; with `--probabilistic` the benchmark `--code 2 0 5 5 0 5 - 3 0 5 0 3 3` halves again
+  (33 s / 2.65 GB -> 14.5 s / 0.84 GB). Exposed on the web app as a checkbox.
+- **Unexpanded coefficients in the Sage rings** (`raw_coefficients=True` on
+  `DoubleSchubertPolynomialRing`, `GrothendieckPolynomialRing`, ...). Every native Sage polynomial
+  ring stores expanded normal forms, and converting the kernels' factored coefficients through
+  libsingular dominated the time of large products. With `raw_coefficients=True` the base ring is
+  `schubmult.sage.symengine_ring.SymEngineRing`, whose elements are the kernel's SymEngine
+  expressions as is; zero testing is probabilistic (`nonzero_mask`, `is_identically_zero`) and
+  printing normalizes all coefficients at once with shared subtrees.
+- **`--simplify` on `grothmult_double`, `grothmult_q_double`** (and `schubmult_double`,
+  `schubmult_q_double`): normalize the output coefficients. Slower, but the printed result shrinks
+  from tens of thousands of characters per coefficient to something readable.
+- **Web app: download results as a file.** A checkbox emits the full result as a file download
+  instead of the text box, with its own limit (`SCHUBMULT_MAX_DOWNLOAD_BYTES`, default 100 MB)
+  separate from the display limit (`SCHUBMULT_MAX_OUTPUT_BYTES`, default 1 MB), for users who
+  actually want a large product rather than a truncated one.
+- **Baseline type hints** (`schubmult._typing`: `PermLike`, `PermCoeffDict`, `Alphabet`, `Expr`,
+  `Coeff`) on `Permutation`, `RCGraph`, `WCGraph`, the Grothendieck kernels and the variable
+  machinery, checked with mypy on that subset.
+- **`schubmult.sage`: SageMath integration.** Sage parents built on `CombinatorialFreeModule`
+  whose arithmetic is delegated to the schubmult kernels, alongside Sage's own
+  `SchubertPolynomialRing`:
+  - `DoubleSchubertPolynomialRing(R, alphabet='y')` -- double Schubert polynomials
+    $\mathfrak S_w(x; y)$ over `R[y, z]`; a ring in another alphabet
+    (`DoubleSchubertPolynomialRing(R, 'z')`) coerces in, so `X(u) * Z(v)` is the mixed product
+    $\mathfrak S_u(x;y)\,\mathfrak S_v(x;z)$ expanded in the `y`-basis.
+  - `QuantumSchubertPolynomialRing(R, parabolic=None)` and
+    `QuantumDoubleSchubertPolynomialRing(R, alphabet='y', parabolic=None)` -- quantum and
+    quantum double Schubert polynomials over `R[q]` resp. `R[q, y, z]`; `parabolic=(n_1, ..., n_k)`
+    gives the partial flag variety with those block sizes, with an implicit unbounded last block
+    (basis permutations may have descents exactly at the recorded boundaries and be increasing
+    beyond them; products extend by one new block as needed, never by enlarging a recorded one).
+  - `GrothendieckPolynomialRing(R)` and `DoubleGrothendieckPolynomialRing(R, alphabet='y')` --
+    $\beta$-Grothendieck polynomials $\mathfrak G^\beta_w(x)$ over `R[beta]` and their double
+    versions $\mathfrak G^\beta_w(x; y)$ (with $x \oplus y = x + y + \beta x y$) over the fraction
+    field of `R[beta, y, z]`, where the equivariant K-theoretic structure constants live (denominators
+    are products of $1 + \beta y_i$). `beta()` returns the deformation parameter; $\beta = 0$
+    recovers the (double) Schubert polynomials. Coefficients of the double ring are reduced
+    rational functions computed without any symbolic expansion on the schubmult side (a flat
+    numerator / atom-power denominator evaluation in the libsingular ring underneath, one gcd per
+    coefficient); a triple product of `S_4` elements with 24 terms and numerators of ~10^4 terms
+    takes a few seconds.
+  - `PolynomialAlgebra(R)` and `PolynomialAlgebra(R, n)` -- the polynomial ring `R[x0, x1, ...]`
+    (resp. in `n` variables) as a Sage parent with realizations (like `SymmetricFunctions`), each
+    indexed as in the literature: `schubert()` and `grothendieck()` by permutations (`S[3, 1, 2]`);
+    `monomial()`, `key()`, `fundamental_slide()`, `monomial_slide()`, `forest()` and the K-theoretic
+    `glide()`, `lascoux()`, `grove()` by weak compositions (`k[2, 0, 1]`); and, in `n` variables only,
+    `elementary()` -- products of elementary symmetric polynomials `e_a(x0..x_{j-1})`, whose indexing
+    depends on `n`. The K-theoretic bases are at `beta = -1`, the classical convention
+    (`G[1, 3, 2].expand()` is `x0 + x1 - x0*x1`); `GrothendieckPolynomialRing` and
+    `DoubleGrothendieckPolynomialRing` are unaffected and keep `beta` as a variable of their base ring.
+    schubmult's own bases work at `beta = 1` and the
+    layer converts through the grading (`P^{-1}_a(x) = (-1)^|a| P^{1}_a(-x)`). All bases coerce into one another through the
+    monomial basis, products come from the schubmult bases and Schubert kernels, Sage's
+    `SchubertPolynomialRing` and `KeyPolynomials` coerce in, and the elements coerce into the (double,
+    quantum, Grothendieck) Schubert rings above. schubmult's own `PolynomialAlgebra` is graded by the
+    number of variables (keys of different lengths multiply to zero, the structure dual to the free
+    algebra); the Sage parents are the plain polynomial ring and pad keys to a common number of
+    variables before calling schubmult.
+  - All accept lists/`Permutation`s, Sage polynomials (finite or `InfinitePolynomialRing`), and
+    elements of `SchubertPolynomialRing`, `KeyPolynomials` and `AtomPolynomials` (whose variables are
+    read as `x`, as Sage's Schubert ring does; these also coerce, so `X(w) + k([1])` works).
+    `project(n)` drops the classes that vanish in the flag variety of `C^n` (the rings are stable, so
+    a product carries every class of the infinite flag variety; e.g. Buch's equivariant quantum
+    `Gr(2, 5)` example is `(QD(u) * QD(v)).project(5)` with `parabolic=(2, 3)`).
+    `from_symmetric_function(f, n)` expands a symmetric function in `x0..x{n-1}` (a Schur function
+    gives the Grassmannian Schubert polynomial with descent at `n`) and `to_symmetric_function(n=None)`
+    reads a symmetric element back as a Schur expansion over the coefficient variables (Grassmannian
+    double Schubert polynomials are factorial Schur functions). `expand()` lands in
+    `R[x0.., y0.., q0..]`, 0-indexed like Sage; `divided_difference(i)` on the double ring.
+    Coefficients are converted at the boundary, so nothing SymEngine-flavoured leaks into the Sage API.
+  - Sage is **not** a dependency: the subpackage is inert unless imported, and
+    `tests/test_api_surface.py::test_package_is_fully_usable_without_sage` runs the whole package
+    with Sage imports blocked. Install schubmult into a Sage environment
+    (`sage -pip install schubmult`) to use it; CI runs the Sage doctests in a separate job against
+    conda-forge Sage.
+- **`strip_zeros(exact=True)` on every ring element.** The kernels leave coefficients as products of
+  factors, and in large products a sizeable fraction of them cancel to zero without looking like it
+  (7868 -> 3845 terms for a quantum double product in $S_8$). `strip_zeros()` (now on
+  `BaseRingElement`, so available in every ring) still only drops literal zeros; `exact=True` also drops
+  coefficients that are zero as polynomials, detected by evaluating them at random integer points in
+  exact arithmetic with memoized shared subtrees (`schubmult.symbolic.functions.vanish_at_random_points`)
+  -- about 0.7x the cost of the product itself, versus ~10x for expanding the coefficients. Products
+  are unchanged: stripping stays opt-in.
+
+### Fixed
+
+- **Parabolic quantum products with a trailing size-1 block** (`QPSx(2, 3, 1)`,
+  `QPSx(2, 3, 1, 1)`, ...). `apply_peterson_woodward` inferred the ambient flag size from the last
+  parabolic generator, and a size-1 block contributes none, so the ambient was taken one block
+  short: result permutations of length exactly `sum(blocks)` were dropped (for
+  $\sigma_{32}\sigma_1$ with blocks `(2,3,1)` the class $\sigma_{42}$ vanished) and the product no
+  longer matched the basis polynomials. `apply_peterson_woodward(..., n=)` now takes the ambient
+  size explicitly and the parabolic rings pass `sum(blocks)`. `QPSx(2, 3)`, `(2, 3, 1)`,
+  `(2, 3, 2)` and `(2, 3, 1, 1)` now all agree, as they should. The CLI (`--parabolic`), which only
+  knows generator indices, is unchanged.
+- **`CompositionSchubertPolyBasis` received `(perm, length)` keys.** Transitions landing in a
+  Schubert-type basis (from `MonomialBasis`, `GrothendieckPolyBasis`, and `SchubertPolyBasis` itself)
+  handed the target the keys of `SchubertPolyBasis` without normalizing them, so
+  `PolynomialAlgebra(CompositionSchubertPolyBasis(x)).from_expr(...)` and every `change_basis` into
+  that basis produced elements keyed by permutations instead of Lehmer codes, and any transition out
+  of the ring then failed. Keys now go through the target basis's `attach_key`.
+
+### Changed
+
+- **Double Grothendieck coefficients are normalized in the multiplicative variables.**
+  `DoubleGrothendieckElement.simplify()` ran `sympy.cancel` on the raw kernel output; coefficients
+  of one product in $K_T(Fl_5)$ reach ~65k characters unexpanded and took 8--58 s each (274 s for
+  `DGx([5,1,3,2,4]) * DGx([2,1,5,4,3])`, 56 terms; a 10-product run was 332 s against 0.2 s for
+  Buch's EquivCalc). Cancellation is now done in $t_i = 1+\beta y_i$: every coefficient is a Laurent
+  polynomial in the $t_i$, the denominator atoms become monomials, a single expansion collects
+  everything and the denominator is read off as the monomial of negative exponents. No gcd is
+  computed and nothing is expanded in $y$.
+- **`grothmult_double` keeps its result factored as Grothendieck factorial elementary symmetric
+  functions.** The kernel now parallels `schubmult_double` directly -- the v-path's layer factors are
+  the $K$-theoretic factorial elementaries `groth_elem_sym_poly` / `groth_elem_sym_func`, with the
+  Pieri coefficients in closed form (`_tilde_elem_sym_frac`) -- instead of transitioning
+  $\mathfrak G_v$ to the double Schubert basis first and applying the Schubert Pieri rule. The
+  quantum double kernel iterates its v-paths top-down for the same reason. `BoundedWCFactorAlgebra`'s
+  `full_groth_elem` likewise runs the Grothendieck v-path directly, with each layer factor
+  $\tilde E_{p,k}(x;0)=G_{1^p}(x_1..x_k)+\beta\,G_{1^{p+1}}(x_1..x_k)$ as a sum of elementary
+  Grothendieck WC graphs (`groth_elem_factor`), rather than approximating with Schubert elementaries.
+- **`positivity.py`** lost years-old, misleading comments and picked up a few small optimizations;
+  behaviour of `--display-positive` is unchanged.
+- **`ElementaryBasis` <-> `SchubertBasis` transitions are computed blockwise.** Both directions
+  go through the finite `(numvars, degree)` block: every elementary product of that degree is
+  expanded in the Schubert basis by the Pieri rule (`ElementaryBasis.schubert_block`, cached), which
+  is the Schubert -> Elem matrix, and its inverse is Elem -> Schubert. This replaces
+  `Sx.from_expr` on staircase-padded monomial-symmetric polynomials and RC-graph enumeration of
+  `S_{perm w0}`; e.g. `FA(2) * FA(2, 1)` in the elementary basis went from 25 s to 0.04 s. Results
+  are identical on every key checked ($n \le 3$, degree $\le 4$). `ElementaryBasis.degree_keys`
+  and `transition_from_schubert` are new; `ElementaryBasis.staircase` is gone.
+- **Test suite runs in ~1 min instead of ~8.** Slow tests were made cheaper without losing
+  coverage: exact zero tests of rational-function identities now evaluate at random rational
+  points (`schubmult.utils.test_utils.vanishes`) instead of `sympy.cancel` on huge unsimplified
+  differences (90 s -> 0.2 s for the double Grothendieck round trip); the heaviest
+  `--display-positive` script fixtures were replaced by same-flag, smaller permutations; a few
+  ring examples dropped one degree. CI runs `pytest -n auto` (`pytest-xdist`; `pip install -e
+  .[test]` locally) and triggers on pull requests into `develop` as well as `main`.
+- **Integration branch renamed `redevelop` -> `develop`.** Feature branches PR into `develop`;
+  `main` only receives final releases from `develop` or a `hotfix/*` branch.
+- **Docs deploy only from final release tags.** The docs workflow no longer runs on pushes to
+  `main`; it runs on release tags and refuses `.dev`, local (`+...`), and pre-release
+  (`a`/`b`/`rc`) versions, so a pre-release tag publishes wheels but leaves the documentation site
+  at the last final release.
+
 ## 5.1.1
 
 Patch release: compatibility with PuLP 4.0.0, a correctness fix for the elementary basis of

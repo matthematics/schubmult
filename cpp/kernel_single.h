@@ -9,8 +9,15 @@ typedef std::vector<std::pair<Perm, int_coef_t>> IntDict;
 
 // n: every permutation in the answer lies in S_n (the caller derives it from input sizes);
 // paths leaving S_n can never come back, so positions >= n are never touched.
+static IntDict schubmult_single_with_setup(const IntDict& perm_dict, const MultSetup& S, int n);
+
 static IntDict schubmult_single(const IntDict& perm_dict, const Perm& v, int n) {
-    MultSetup S = mult_setup(v);
+    return schubmult_single_with_setup(perm_dict, mult_setup(v), n);
+}
+
+// The v-path tables in S depend on v alone; callers multiplying many dicts by the same v can
+// build them once with mult_setup(v) and reuse.
+static IntDict schubmult_single_with_setup(const IntDict& perm_dict, const MultSetup& S, int n) {
     if (S.trivial) return perm_dict;
     const VPaths& vp = S.vp;
     const std::vector<int>& th = S.th;

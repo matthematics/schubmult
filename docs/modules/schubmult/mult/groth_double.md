@@ -2,6 +2,114 @@
 
 # schubmult.mult.groth\_double
 
+## Positive phantom expansion (experimental)
+
+`dgroth_positive_phantom_expansion(v, var3=None, beta=None, th=None)` returns
+the coefficients of `dgroth_phantom_expansion` multiplied by `(-1)**v.inv`,
+using the staircase `(n-1, ..., 1)` by default, where `n = len(Permutation(v))`.
+This length is at least two, even for the identity; use `th=[]` for its empty shape.
+Supply `th` explicitly to fix the ambient staircase (including for the identity,
+whose permutation representation is trimmed) or to use another dominant shape.
+
+For `lambda = th`, the normalization is
+
+```text
+G_v(x; z) = (-1)**v.inv prod_i (1 + beta*x_i)**lambda'_i
+            * sum_sigma result[sigma] S_sigma((-)x; z).
+```
+
+The implementation accumulates exact integer multiplicities of phantom-label
+multisets, factoring out the sign and beta degree. It checks nonnegativity after
+every divided difference, and returns sums of positive integer multiples of
+`beta**(sigma.inv - v.inv) * prod_t (1 + beta*z_t)`. Thus the returned expressions
+are manifestly nonnegative in the independent formal variables `beta` and `z`.
+Symbolic arithmetic is only needed to materialize the final coefficients.
+
+Positivity in arbitrary rank is conjectural, not proved by this algorithm.
+The integer recurrence still has signed contributions before aggregation:
+this is neither an unsigned combinatorial formula nor a subtraction-free algorithm.
+A negative net multiplicity or beta exponent raises `ValueError` with the
+offending state; there is no absolute-value correction or fallback.
+The original API retains its signed convention and default theta shape.
+Both APIs honor an explicitly supplied shape for the identity.
+
+## Unsigned co-pipe-dream formula (conjectural)
+
+`dgroth_copipe_expansion(v, var3=None, beta=None, n=None)` computes the same
+sign-normalized staircase coefficients by an independent enumeration, with
+no signed contributions. Here `n` is the ambient rank (default `len(Permutation(v))`),
+`w0` is its longest permutation, and `A_c = 1 + beta*z_c`.
+
+For each `sigma` in `S_n`, the proposed formula is
+
+```text
+C[v,sigma] = beta**(length(sigma) - length(v))
+             * sum_D prod_{(r,c) in crosses(D)} A_c,
+```
+
+where `D` ranges over reduced pipe dreams for `sigma*w0` whose co-pipe-dream
+has Demazure permutation at least `v` in Bruhat order. Co-pipe-dreams may
+be unreduced. Complementation always uses the full rank-n staircase, not
+the possibly smaller window of `sigma*w0`. Each surviving dream contributes
+one column multiset of size `n*(n-1)/2 - length(sigma)`.
+
+This agrees with the phantom recurrence for every permutation through `S_6`,
+including every individual column multiset and its multiplicity, not just the
+specialization `z=0`. This is experimental evidence, not a proof in arbitrary rank.
+Unlike `WCGraph.groth_to_schub`, this does not require an exact original
+Demazure permutation or a reduced complement: it uses an upper Bruhat filter
+on the complementary WCGraph.
+
+The identity being proposed is
+
+```text
+G_v(x; z) = (-1)**length(v) prod_{i=1}^{n-1} (1 + beta*x_i)**(n-i)
+            * sum_sigma C[v,sigma] S_sigma(-x/(1+beta*x); z).
+```
+
+This is a basis change with a formal-inverse alphabet and a staircase
+prefactor, not the ordinary expansion in `S_sigma(x; z)` computed by
+`dgroth_to_dschub`. The enumeration traverses reduced dreams across `S_n`;
+it is a small-rank research implementation, not a fast multiplication kernel.
+
+## Manifestly positive expansion in ordinary double Schubert polynomials
+
+`dgroth_to_dschub_positive(v, var3=None, beta=None)` returns
+`{w: a_w}` with `G_v(x; z) = sum_w a_w(beta, z) S_w(x; z)` and every
+`a_w` in `N[beta, z]`. The basis is the ordinary double Schubert basis
+in the original alphabets: no change of variables, no first-alphabet
+variables in the coefficients, and no signed term at any stage.
+
+The formula composes three sign-free expansions:
+
+1. **Cauchy over Demazure products.**
+   `G_v(x; z) = sum_{u * v' = v} beta**(l(u)+l(v')-l(v)) G_{u^{-1}}(z) G_{v'}(x)`,
+   where `*` is the Demazure (0-Hecke) product, `Permutation.__matmul__`. `G_{u^{-1}}(z)` is
+   the single Grothendieck polynomial, a sum over unreduced pipe dreams
+   `P` of `u^{-1}` weighted `beta**(|P| - l(u)) z**wt(P)`.
+2. **Single Grothendieck to single Schubert.**
+   `G_{v'}(x) = sum_{u'} beta**(l(u')-l(v')) c_{v',u'} S_{u'}(x)` with
+   the nonnegative integers `c_{v',u'}` of `WCGraph.groth_to_schub`:
+   WC graphs `D` of `v'` whose co-pipe-dream is reduced, with
+   `u' = co(D).perm * w0`.
+3. **Single to double Schubert.**
+   `S_{u'}(x) = sum_{u' = a w, l(a)+l(w)=l(u')} S_a(z) S_w(x; z)`, with
+   `S_a(z)` a sum over reduced pipe dreams `R` of `a` weighted `z**wt(R)`.
+
+So `a_w` is the weight generating function of triples `(P, D, R)` with
+`u * v' = v`, `co(D).perm * w0 = u'`, and `a w = u'` (lengths adding),
+each weighted by the monomial
+`beta**(|P|+l(u')-l(v)) z**wt(P) z**wt(R)` — the Cauchy and
+Grothendieck-to-Schubert powers give `beta**(l(u)+l(u')-l(v))`, and the
+pipe dream `P` contributes its own excess `beta**(|P|-l(u))`. Positivity of the ordinary
+transition therefore follows from positivity of the three ingredients.
+
+Verified against `dgroth_to_dschub` for every `v` in `S_1`..`S_4` and on
+samples in `S_5`. The implementation enumerates the Bruhat interval below
+`v`; it is a research routine, not a replacement for the multiplication
+kernel. The earlier rational conversion through the formal-inverse
+coefficient alphabet has been removed.
+
 K-theoretic Monk formula for double Grothendieck polynomials.
 
 Implements Lenart--Postnikov, *Affine Weyl groups in K-theory and representation
@@ -338,4 +446,3 @@ the basis ``{G_w(x, var2)}`` and returns it as ``{w: coeff_w}``.
 expansion of ``G_v``.
 
 The chain rank is inferred from the current permutation and selected positions.
-
