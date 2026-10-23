@@ -104,7 +104,7 @@ def main(argv=None):
         if parabolic_index:
             coeff_dict = apply_kato(coeff_dict, parabolic_index, n=n, beta=mult_beta)
             if beta == 0:
-                coeff_dict = {perm: sympify(val).subs(Gx._beta, beta) for perm, val in coeff_dict.items()}
+                coeff_dict = {perm: expand(sympify(val)).subs(Gx._beta, beta) for perm, val in coeff_dict.items()}
 
         if pr or formatter is None:
             raw_result_dict = _display_full(coeff_dict, args, formatter)

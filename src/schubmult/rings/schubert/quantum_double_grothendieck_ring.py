@@ -20,6 +20,8 @@ from schubmult.symbolic.poly.variables import GeneratingSet, ZeroGeneratingSet
 
 __all__ = ["QDGx", "QuantumDoubleGrothendieckElement", "QuantumDoubleGrothendieckRing"]
 
+_zero_coeff_genset = ZeroGeneratingSet()
+
 
 class QuantumDoubleGrothendieckElement(BaseSchubertElement):
     """A linear combination of quantum double Grothendieck polynomials."""
@@ -62,6 +64,8 @@ class QuantumDoubleGrothendieckRing(BaseSchubertRing):
     """
 
     def __init__(self, genset, coeff_genset, beta=None):
+        if isinstance(coeff_genset, ZeroGeneratingSet):
+            coeff_genset = _zero_coeff_genset
         super().__init__(genset, coeff_genset)
         self._beta = default_beta if beta is None else sympify(beta)
         self.dtype = type("QuantumDoubleGrothendieckElement", (QuantumDoubleGrothendieckElement,), {"ring": self})

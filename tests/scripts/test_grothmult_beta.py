@@ -94,3 +94,31 @@ def test_beta_with_parabolic_projection(script, value):
     for perm, coefficient in result.items():
         difference = sympify(coefficient) - expected[perm]
         assert sympify_sympy(difference).cancel() == 0
+
+
+def test_quantum_beta_zero_cancels_kato_laurent_coefficients():
+    from schubmult._scripts.grothmult_q import main
+
+    result = main(
+        [
+            "grothmult_q",
+            "2",
+            "1",
+            "-",
+            "2",
+            "1",
+            "-",
+            "2",
+            "1",
+            "-",
+            "2",
+            "1",
+            "--parabolic",
+            "1",
+            "2",
+            "--beta=0",
+            "--display-mode",
+            "raw",
+        ]
+    )
+    assert result == {Permutation([2, 1]): sympify("q_1")}

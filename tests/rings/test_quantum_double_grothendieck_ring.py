@@ -81,6 +81,14 @@ def test_zero_alphabet():
     assert not any(symbol in y for symbol in left.expand().free_symbols)
 
 
+def test_zero_alphabet_rings_are_compatible():
+    left, right = QDGx([2, 1], "0"), QDGx([1, 3, 2], "0")
+    assert left.ring == right.ring
+    assert left + right == left.ring.from_dict({Permutation([2, 1]): 1, Permutation([1, 3, 2]): 1})
+    assert left - right == left.ring.from_dict({Permutation([2, 1]): 1, Permutation([1, 3, 2]): -1})
+    assert left.ring(right) == right
+
+
 def test_classical_specialization():
     left, right = QDGx([1, 3, 2], beta=-1), QDGx([2, 1], beta=-1)
     product = (left * right).simplify()
