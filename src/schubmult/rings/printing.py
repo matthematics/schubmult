@@ -535,3 +535,17 @@ class DoubleGrothendieckPoly(PrintingTerm):
 
     def __reduce__(self):
         return (self.__class__, (self._key, self._genset, self._coeff_genset, self._prefix))
+
+
+class QuantumDoubleGrothendieckPoly(DoubleGrothendieckPoly):
+    """Quantum Grothendieck display atom, distinct from the classical basis."""
+
+    @cache
+    def __new__(cls, k, genset, coeff_genset, prefix="Q"):
+        return PrintingTerm.__new__(cls, k, genset, coeff_genset, prefix)
+
+    def _hashable_content(self):
+        return (self._key, self._genset, self._coeff_genset, self._prefix)
+
+    def __hash__(self):
+        return hash(("QuantumDoubleGrothendieckPoly", self._hashable_content()))
