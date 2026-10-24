@@ -89,6 +89,24 @@ polynomial expansion; `QDGx(w, "0")` uses the zero coefficient alphabet. The rin
 conversion and coproducts are not implemented. Products retain permutations outside any chosen
 finite symmetric group; a finite-flag comparison must handle those separately.
 
+### Generating sets
+
+`GeneratingSet("x")` supports any nonnegative index, including indices above 100.
+It starts with 10 cached symbols and grows geometrically on demand. Bounded slices
+such as `x[1:151]` also generate the requested variables. `len(x)`, iteration,
+negative indexing, and open-ended slices describe only the currently cached prefix;
+use explicit slice bounds when a computation needs a particular number of variables.
+`CustomGeneratingSet` remains a finite sequence.
+
+```python
+from schubmult import ChangeOfVariables, GeneratingSet
+
+x, t = GeneratingSet("x"), GeneratingSet("t")
+change = ChangeOfVariables(x, t, lambda i, target: 1 - 1 / target[i])
+change[150]                     # 1 - 1/t_150
+change.subs(x[150] + x[1]**2)   # simultaneous substitution of source variables
+```
+
 ### Command line
 
 Each ring has a CLI. Permutations are space-separated, factors are separated by `-`:

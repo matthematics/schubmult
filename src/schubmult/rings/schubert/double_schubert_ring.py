@@ -537,7 +537,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         elems = []
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1:], poly_genset(0)))]
+                elems += [(Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1 : k + 1], poly_genset(0)))]
         return dict(elems)
 
     @staticmethod
@@ -766,11 +766,11 @@ class DoubleSchubertRing(BaseSchubertRing):
             raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
             p_x = Permutation(x)
-            if max([0, *list(p_x.descents())]) > len(self.genset):
+            if not genset.is_infinite and max([0, *list(p_x.descents())]) > len(self.genset):
                 raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
             elem = self.from_dict({p_x: self.domain.one})
         elif isinstance(x, Permutation):
-            if max([0, *list(x.descents())]) > len(self.genset):
+            if not genset.is_infinite and max([0, *list(x.descents())]) > len(self.genset):
                 raise NotEnoughGeneratorsError(f"Not enough generators {x=} {len(genset)=}")
             elem = self.from_dict({x: self.domain.one})
         elif isinstance(x, DoubleSchubertElement):
@@ -904,11 +904,11 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
             raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
             p_x = Permutation(x)
-            if max([0, *list(p_x.descents())]) > len(self.genset):
+            if not genset.is_infinite and max([0, *list(p_x.descents())]) > len(self.genset):
                 raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
             elem = self.from_dict({p_x: self.domain.one})
         elif isinstance(x, Permutation):
-            if max([0, *list(x.descents())]) > len(self.genset):
+            if not genset.is_infinite and max([0, *list(x.descents())]) > len(self.genset):
                 raise NotEnoughGeneratorsError(f"Not enough generators {x=} {len(genset)=}")
             elem = self.from_dict({x: self.domain.one})
         elif x.ring == self:

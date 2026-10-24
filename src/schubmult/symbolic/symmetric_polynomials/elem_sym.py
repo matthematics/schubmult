@@ -14,7 +14,7 @@ from functools import cache
 
 from schubmult.symbolic import Add, Function, Integer, S, sympify, sympify_sympy
 from schubmult.symbolic.common_polys import elem_sym_poly
-from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
+from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError, ZeroGeneratingSet, _generator_prefix
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -115,7 +115,7 @@ class E(ElemSym_base):
         p = int(p)
         k = int(k)
         if hasattr(args[0], "__iter__"):
-            return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
+            return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), _generator_prefix(args[0], k), _generator_prefix(args[1], k + 1 - p))
         return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k : 2 * k + 1 - p]))
 
     @staticmethod
@@ -307,7 +307,7 @@ class e(ElemSym_base):
         p = int(p)
         k = int(k)
         if hasattr(args[0], "__iter__"):
-            return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]))
+            return ElemSym.__xnew_cached__(cls, p, k, _generator_prefix(args[0], k))
         return ElemSym.__xnew_cached__(cls, p, k, tuple(args))
 
     @staticmethod

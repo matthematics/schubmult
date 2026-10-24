@@ -98,7 +98,7 @@ class ElementaryBasis(FreeAlgebraBasis):
         res = Sx.one
         for i, a in enumerate(tup):
             if a:
-                res = Sx.elem_mul(res, e(a, min(i + 1, numvars), Sx.genset[1:]))
+                res = Sx.elem_mul(res, e(a, min(i + 1, numvars), Sx.genset[1 : min(i + 1, numvars) + 1]))
         return res
 
     @classmethod

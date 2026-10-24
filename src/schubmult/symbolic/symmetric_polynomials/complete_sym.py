@@ -11,7 +11,7 @@ from functools import cache
 
 from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, sympify, sympify_sympy
 from schubmult.symbolic.common_polys import complete_sym_poly
-from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
+from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError, ZeroGeneratingSet, _generator_prefix
 from schubmult.utils.logging import get_logger
 
 from .elem_sym import FactorialElemSym
@@ -94,7 +94,7 @@ class H(CompleteSym_base):
         p = int(p)
         k = int(k)
         if hasattr(args[0], "__iter__"):
-            return FactorialCompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
+            return FactorialCompleteSym.__xnew_cached__(cls, int(p), int(k), _generator_prefix(args[0], k), _generator_prefix(args[1], p + k - 1))
         return FactorialCompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k:]))
 
     @staticmethod
@@ -230,7 +230,7 @@ class h(CompleteSym_base):
         p = int(p)
         k = int(k)
         if hasattr(args[0], "__iter__"):
-            return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]))
+            return CompleteSym.__xnew_cached__(cls, int(p), int(k), _generator_prefix(args[0], k))
         return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args))
 
     @staticmethod

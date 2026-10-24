@@ -50,11 +50,11 @@ class ElemSymPolyBasis(PolynomialBasis):
             for i, a in enumerate(k[:n]):
                 if a == 0:
                     continue
-                to_add = self.ring.elem_mul(to_add, e(a, i + 1, self.ring.genset[1:]))
+                to_add = self.ring.elem_mul(to_add, e(a, i + 1, self.ring.genset[1 : i + 2]))
             for i, a in enumerate(k[n:]):
                 if a == 0:
                     continue
-                to_add = self.ring.elem_mul(to_add, e(a, n, self.ring.genset[1:]))
+                to_add = self.ring.elem_mul(to_add, e(a, n, self.ring.genset[1 : n + 1]))
             for perm, coeff in to_add.items():
                 res[(perm, n)] = res.get((perm, n), S.Zero) + v * coeff
         return res
@@ -69,9 +69,9 @@ class ElemSymPolyBasis(PolynomialBasis):
         for (k, n), v in dct.items():
             to_add = S.One
             for i, a in enumerate(k[:n]):
-                to_add *= expand_func(e(a, i + 1, self.ring.genset[1:]))
+                to_add *= expand_func(e(a, i + 1, self.ring.genset[1 : i + 2]))
             for i, a in enumerate(k[n:]):
-                to_add *= expand_func(e(a, n, self.ring.genset[1:]))
+                to_add *= expand_func(e(a, n, self.ring.genset[1 : n + 1]))
             res = add_perm_dict_with_coeff(res, self.monomial_basis.from_expr(to_add, length=n), coeff=v)
         return res
 

@@ -91,6 +91,7 @@ _lazy_exports = {
     "BaseRingElement": "schubmult.rings.base_ring",
     # Variables
     "GeneratingSet": "schubmult.symbolic.poly.variables",
+    "ChangeOfVariables": "schubmult.symbolic.poly.variables",
     "pull_out_var": "schubmult.utils.schub_lib",
     # Crystal structures
     "RootTableau": "schubmult.combinatorics.root_tableau",

@@ -10,7 +10,7 @@ from functools import cache
 from schubmult.symbolic import Integer, S, sympify_sympy
 
 #from schubmult.rings.poly_lib import elem_sym_poly_q
-from schubmult.symbolic.poly.variables import GeneratingSet, NotEnoughGeneratorsError
+from schubmult.symbolic.poly.variables import GeneratingSet, NotEnoughGeneratorsError, _generator_prefix
 
 from .elem_sym import ElemSym_base
 
@@ -28,7 +28,7 @@ class E_q(ElemSym_base):
         if not x_var:
             x_var = GeneratingSet("x")
         if hasattr(args[0], "__iter__"):
-            return QFactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]), x_var=x_var, q_var=q_var)
+            return QFactorialElemSym.__xnew_cached__(cls, int(p), int(k), _generator_prefix(args[0], k), _generator_prefix(args[1], k + 1 - p), x_var=x_var, q_var=q_var)
         return QFactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k : 2 * k + 1 - p]), x_var=x_var, q_var=q_var)
 
     def __hash__(self):
