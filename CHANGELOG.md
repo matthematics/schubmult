@@ -1,5 +1,44 @@
 # Changelog
 
+## 5.3.0
+
+New change-of-variables and quantum double Grothendieck APIs, on-demand generating-set growth,
+and prebuilt Python 3.15 wheels.
+
+### Added
+
+- **Change of variables** (#45). `ChangeOfVariables(source, target, mapping)` provides lazy indexed
+  images of a generating set, with labels inherited from the target alphabet.
+  For example, `ChangeOfVariables(x, t, lambda i, target: 1 - 1 / target[i])` represents
+  $x_i \mapsto 1 - 1/t_i$. Indexing computes individual images on demand, and `.subs(expr)`
+  simultaneously substitutes source variables in an expression. Exported from `schubmult`.
+- **Quantum double Grothendieck ring** (`QDGx`, `QuantumDoubleGrothendieckRing`). Stable elements
+  support linear combinations, multiplication through the conjectural equivariant quantum
+  K-Pieri kernel, coefficient simplification, and explicit Lenart--Maeno quantum polynomial
+  expansion. Beta is symbolic by default; `QDGx(w, beta=-1)` specializes it, mixed coefficient
+  alphabets are supported, and `QDGx(w, "0")` uses the zero alphabet. Arbitrary x-polynomial
+  conversion and coproducts are not implemented. Products retain permutations outside any chosen
+  finite symmetric group; finite-flag comparisons must handle those separately.
+- **`--beta EXPR` on all four `grothmult_*` commands**. Accepts a sympified expression, such as
+  `--beta=-1`, `--beta 0`, or `--beta "1/2"`; omitting it keeps beta symbolic.
+  Positive-display expressions are constructed with symbolic beta before specialization.
+  With `--parabolic --beta 0`, specialization is deferred until after Kato projection so inverse
+  powers of beta can cancel.
+
+### Changed
+
+- **Generating sets grow on demand** (#46). `GeneratingSet` starts with 10 cached symbols and
+  grows geometrically for nonnegative indexing and explicitly bounded slices, removing the
+  previous fixed index limit. `len()`, iteration, negative indexing, and open-ended slices
+  describe only the currently cached prefix; use explicit slice bounds when a computation needs
+  a particular number of variables. Masked sets and polynomial consumers follow the growing
+  alphabet. `CustomGeneratingSet` remains finite.
+- **Prebuilt CPython 3.15 wheels** (#48). Upgrade cibuildwheel from v3.2 to v4.3.4, which supports
+  the final Python 3.15 release, and restore the `cp315-*` build selector. Release wheels now
+  target CPython 3.10-3.15 on Linux (x86_64 and aarch64), macOS (Intel and Apple Silicon), and
+  Windows (x86_64). Pull requests changing the wheel workflow also build and smoke-test wheels;
+  publishing remains restricted to release tags.
+
 ## 5.2.0
 
 Final release of 5.2.0, including the changes in 5.2.0b2 and 5.2.0b3.

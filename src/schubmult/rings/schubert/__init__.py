@@ -5,6 +5,7 @@ The most commonly used entry points are the ring *instances*:
 - ``Sx``: ordinary (single) Schubert polynomials, ``Sx([3, 1, 2]) * Sx([2, 1, 3])``.
 - ``DSx``: double Schubert polynomials (second alphabet ``y``).
 - ``Gx`` / ``DGx``: (double) Grothendieck polynomials.
+- ``QDGx``: quantum double Grothendieck polynomials.
 - ``QSx`` / ``QDSx``: quantum (double) Schubert polynomials.
 - ``QPSx`` / ``QPDSx``: parabolic quantum (double) Schubert polynomials.
 
@@ -40,6 +41,9 @@ _lazy_exports = {
     "ParabolicQuantumDoubleSchubertElement": "schubmult.rings.schubert.parabolic_quantum_double_schubert_ring",
     "ParabolicQuantumDoubleSchubertRing": "schubmult.rings.schubert.parabolic_quantum_double_schubert_ring",
     "QDSx": "schubmult.rings.schubert.quantum_double_schubert_ring",
+    "QDGx": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
+    "QuantumDoubleGrothendieckElement": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
+    "QuantumDoubleGrothendieckRing": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
     "QPDSx": "schubmult.rings.schubert.parabolic_quantum_double_schubert_ring",
     "QPSx": "schubmult.rings.schubert.parabolic_quantum_schubert_ring",
     "QSx": "schubmult.rings.schubert.quantum_schubert_ring",
@@ -70,10 +74,13 @@ __all__ = [
     "NilHeckeRing",
     "ParabolicQuantumDoubleSchubertElement",
     "ParabolicQuantumDoubleSchubertRing",
+    "QDGx",
     "QDSx",
     "QPDSx",
     "QPSx",
     "QSx",
+    "QuantumDoubleGrothendieckElement",
+    "QuantumDoubleGrothendieckRing",
     "QuantumDoubleSchubertElement",
     "QuantumDoubleSchubertRing",
     "QuantumSingleSchubertRing",

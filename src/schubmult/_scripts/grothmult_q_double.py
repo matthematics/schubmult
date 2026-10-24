@@ -10,11 +10,11 @@ Example:
 
 import sys
 
-from schubmult import GeneratingSet, Permutation, uncode
+from schubmult import Gx, GeneratingSet, Permutation, uncode
 from schubmult._scripts.grothmult_q import _check_parabolic_inputs, _parabolic_blocks
 from schubmult.mult.groth_double import normalize_coeff
 from schubmult.mult.groth_quantum_double import apply_kato, grothmult_q_double
-from schubmult.symbolic import S
+from schubmult.symbolic import S, expand, sympify
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -67,6 +67,7 @@ def main(argv=None):
         Permutation.print_as_code = ascode
         same = args.same
         pr = args.pr
+        beta = sympify(args.beta) if args.beta is not None else Gx._beta
 
         if same:
             var3 = var2
@@ -83,15 +84,19 @@ def main(argv=None):
         if parabolic_index and not _check_parabolic_inputs(perms, parabolic_index, n):
             return 1
 
+        # Kato's inverse beta powers must cancel before specializing beta to zero.
+        mult_beta = Gx._beta if parabolic_index and beta == 0 else beta
         coeff_dict = {perms[0]: 1}
         for perm in perms[1:]:
-            coeff_dict = grothmult_q_double(coeff_dict, perm, var2, var3)
+            coeff_dict = grothmult_q_double(coeff_dict, perm, var2, var3, beta=mult_beta)
 
         if parabolic_index:
-            coeff_dict = apply_kato(coeff_dict, parabolic_index, n=n)
+            coeff_dict = apply_kato(coeff_dict, parabolic_index, n=n, beta=mult_beta)
+            if beta == 0:
+                coeff_dict = {perm: normalize_coeff(val, var2).subs(Gx._beta, beta) for perm, val in coeff_dict.items()}
 
         if args.simplify:
-            coeff_dict = {perm: normalize_coeff(val, var2) for perm, val in coeff_dict.items()}
+            coeff_dict = {perm: normalize_coeff(val, var2, beta=beta) if beta != 0 else expand(val) for perm, val in coeff_dict.items()}
 
         coeff_perms = [perm for perm, val in coeff_dict.items() if val != S.Zero]
         coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))

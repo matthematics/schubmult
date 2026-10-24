@@ -41,6 +41,9 @@ _lazy_exports = {
     # Rings
     "Gx": "schubmult.rings.schubert.grothendieck_ring",
     "DGx": "schubmult.rings.schubert.double_grothendieck_ring",
+    "QDGx": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
+    "QuantumDoubleGrothendieckRing": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
+    "QuantumDoubleGrothendieckElement": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
     "GrothendieckRing": "schubmult.rings.schubert.grothendieck_ring",
     "GrothendieckElement": "schubmult.rings.schubert.grothendieck_ring",
     "Sx": "schubmult.rings.schubert.schubert_ring",
@@ -88,6 +91,7 @@ _lazy_exports = {
     "BaseRingElement": "schubmult.rings.base_ring",
     # Variables
     "GeneratingSet": "schubmult.symbolic.poly.variables",
+    "ChangeOfVariables": "schubmult.symbolic.poly.variables",
     "pull_out_var": "schubmult.utils.schub_lib",
     # Crystal structures
     "RootTableau": "schubmult.combinatorics.root_tableau",

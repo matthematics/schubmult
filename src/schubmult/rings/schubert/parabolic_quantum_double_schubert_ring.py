@@ -118,7 +118,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         elem_func = self.elem_sym
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(Symbol(f"e_{p}_{k}"), elem_func(p, k, self.genset[1:], poly_genset(0)))]
+                elems += [(Symbol(f"e_{p}_{k}"), elem_func(p, k, self.genset[1 : k + 1], poly_genset(0)))]
         return dict(elems)
 
     @property
