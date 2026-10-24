@@ -23,7 +23,7 @@ def _slide_polynomial(comp, genset):
     power = comp[min_nonzero]
 
     for i in range(min_nonzero + 1):
-        ret += genset[min_nonzero + 1 - i] ** power * _slide_polynomial((0,) * i + comp[min_nonzero + 1 :], genset[min_nonzero + 1 - i :])
+        ret += genset[min_nonzero + 1 - i] ** power * _slide_polynomial((0,) * i + comp[min_nonzero + 1 :], genset[min_nonzero + 1 - i : len(comp) + 1])
 
     return ret
 

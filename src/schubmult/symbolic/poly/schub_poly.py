@@ -343,7 +343,7 @@ def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
     if newk == vdiff:
         return 1
     zvars = [varl2[i] for i in call_zvars(v1, v2, k, i)]
-    return elem_func(newk - vdiff, newk, varl1[1:], zvars)
+    return elem_func(newk - vdiff, newk, varl1[1 : newk + 1], zvars)
 
 
 def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_func):
@@ -686,7 +686,7 @@ def _strip_isobaric_with_ring(index, length, ring, beta, elem, backwards=False):
         operator = nh(~uncode([0] * (index - 1) + [length]))
     else:
         operator = nh(uncode([0] * (index - 1) + [length]))
-    schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, ring.genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
+    schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, ring.genset[index + 1 : index + 1 + length], [S.NegativeOne]) * ring.one).items()})
     return operator.apply(schub)
 
 
@@ -1005,7 +1005,7 @@ def _strip_isobaric(index, length, genset, beta, elem, backwards=False):
         operator = nh(~uncode([0] * (index - 1) + [length]))
     else:
         operator = nh(uncode([0] * (index - 1) + [length]))
-    schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, genset[index + 1 :], [S.NegativeOne]) * ring.one).items()})
+    schub = ring.from_dict({k: v * beta ** (k.inv) for k, v in (elem * E(length, length, genset[index + 1 : index + 1 + length], [S.NegativeOne]) * ring.one).items()})
     # schub = ring.from_expr(poly)
     return operator.apply(schub)
 

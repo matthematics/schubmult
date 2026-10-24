@@ -183,7 +183,7 @@ def _compat_seq_poly(comp, genset):
         genstart = 1
         working_comp = [a - 1 for a in working_comp]
     for i in range(1, last_elem + 1):
-        ret += genset[i] * _compat_seq_poly(working_comp, genset[genstart + i - 1 :])
+        ret += genset[i] * _compat_seq_poly(working_comp, genset[genstart + i - 1 : comp[0] + 1])
         working_comp = [a - 1 for a in working_comp]
     return ret
 

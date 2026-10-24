@@ -97,12 +97,12 @@ class SchubertPolyBasis(PolynomialBasis):
             part2 = self.ring.one
             for i in range(k - 1):
                 try:
-                    part1 *= e(part[i], i + 1, self.ring.genset[1:])
+                    part1 *= e(part[i], i + 1, self.ring.genset[1 : i + 2])
                 except IndexError:
                     pass
             for i in range(k - 1, len(part)):
                 try:
-                    part2 *= e(part[i], n if i + 1 > n else i + 1, self.ring.genset[1:])
+                    part2 *= e(part[i], n if i + 1 > n else i + 1, self.ring.genset[1 : min(n, i + 1) + 1])
                 except IndexError:
                     pass
             for v, coeff1 in part1.items():

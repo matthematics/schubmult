@@ -54,7 +54,7 @@ logger = get_logger(__name__)
 def _var_index(varlist, sym):
     """Position of ``sym`` in ``varlist`` or ``-1``.
 
-    ``posify`` recurses with ``var2[1:]``, which turns a ``GeneratingSet`` into a plain tuple
+    ``posify`` recurses with a shifted slice of ``var2``, turning a ``GeneratingSet`` into a plain tuple
     whose ``.index`` raises instead of returning ``-1`` for foreign symbols.
     """
     try:
@@ -438,9 +438,8 @@ def posify(
             for arr, v3 in vp:
                 tomul = prod([var2[1] - var3[arr[i]] for i in range(len(arr))])
 
-                # the reduced coefficient lives in the shifted alphabet var2[1:],
-                # matching the alphabet handed to the recursive posify call below
-                shifted_var2 = var2[1:]
+                # Include the full possible product support, not just the cached prefix.
+                shifted_var2 = var2[1 : max(len(u3) + len(v3), len(w3)) + 2]
                 val2 = schubmult_double_pair(u3, v3, shifted_var2, var3).get(
                     w3,
                     0,
