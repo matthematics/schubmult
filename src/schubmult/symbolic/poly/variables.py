@@ -19,7 +19,7 @@ import re
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import cache
-from typing import TYPE_CHECKING, Any, ClassVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, overload
 
 from schubmult.symbolic import Add, Mul, Pow, S, SympifyError, efficient_subs, expand, symbols, sympify
 from schubmult.utils.logging import get_logger
@@ -31,6 +31,8 @@ logger = get_logger(__name__)
 
 DEF_GENSET_SIZE = 10
 
+_GeneratingSetT = TypeVar("_GeneratingSetT", bound="GeneratingSet_base")
+
 
 class GeneratingSet_base:
     """Interface for generating sets: indexing, length, ``index(symbol)`` (``-1`` if absent), and ``label``."""
@@ -38,7 +40,7 @@ class GeneratingSet_base:
     _args: tuple[Any, ...]
     is_infinite = False
 
-    def __new__(cls, *args: Any) -> GeneratingSet_base:
+    def __new__(cls: type[_GeneratingSetT], *args: Any) -> _GeneratingSetT:
         obj = object.__new__(cls)
         obj._args = args
         return obj
@@ -253,11 +255,8 @@ class MaskedGeneratingSet(GeneratingSet_base):
         obj._mask_offsets = tuple(index - i for i, index in enumerate(index_mask))
         obj._index_lookup = {gset[base_index]: i for i, base_index in mask_dict.items()}
         obj._label = gset.label
+        obj.is_infinite = gset.is_infinite
         return obj
-
-    @property
-    def is_infinite(self) -> bool:
-        return self.base_genset.is_infinite
 
     @property
     def base_genset(self) -> GeneratingSet_base:
@@ -419,6 +418,7 @@ class ChangeOfVariables(GeneratingSet_base):
         obj._target = target
         obj._rule = rule
         obj._images = {}
+        obj.is_infinite = source.is_infinite and target.is_infinite
         return obj
 
     @property
@@ -435,10 +435,6 @@ class ChangeOfVariables(GeneratingSet_base):
     def label(self) -> str | None:
         """The label of the target generating set."""
         return self._target.label
-
-    @property
-    def is_infinite(self) -> bool:
-        return self._source.is_infinite and self._target.is_infinite
 
     def __getitem__(self, index):
         if isinstance(index, slice):
