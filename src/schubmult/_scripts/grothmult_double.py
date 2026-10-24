@@ -7,7 +7,7 @@ Example:
 
 import sys
 
-from schubmult import GeneratingSet, Permutation, uncode
+from schubmult import Gx, GeneratingSet, Permutation, uncode
 from schubmult.abc import beta
 from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double, normalize_coeff
 from schubmult.symbolic import S, sympify, sympify_sympy, expand
@@ -325,6 +325,7 @@ def main(argv=None):
         Permutation.print_as_code = ascode
         same = args.same
         pr = args.pr
+        beta_value = sympify(args.beta) if args.beta is not None else Gx._beta
 
         if same:
             var3 = var2
@@ -340,14 +341,23 @@ def main(argv=None):
         coeff_dict = {perms[0]: 1}
 
         for perm in perms[1:]:
-            coeff_dict = grothmult_double(coeff_dict, perm, var2, var3)
+            coeff_dict = grothmult_double(coeff_dict, perm, var2, var3, beta=beta_value)
 
         if mult:
             mul_exp = sympify(mulstring)
-            coeff_dict = mult_poly_groth_double(coeff_dict, mul_exp, var2, var3)
+            coeff_dict = mult_poly_groth_double(coeff_dict, mul_exp, var2, var3, beta=beta_value)
 
         if args.simplify and not args.display_positive:
-            coeff_dict = {perm: normalize_coeff(val, var2) for perm, val in coeff_dict.items()}
+            coeff_dict = {perm: normalize_coeff(val, var2, beta=beta_value) if beta_value != 0 else expand(val) for perm, val in coeff_dict.items()}
+
+        positive_coeff_dict = coeff_dict
+        if args.display_positive and args.beta is not None:
+            # The positivity solver needs the symbolic beta grading before specialization.
+            positive_coeff_dict = {perms[0]: 1}
+            for perm in perms[1:]:
+                positive_coeff_dict = grothmult_double(positive_coeff_dict, perm, var2, var3, beta=Gx._beta)
+            if mult:
+                positive_coeff_dict = mult_poly_groth_double(positive_coeff_dict, mul_exp, var2, var3, beta=Gx._beta)
 
         # sort/filter up front so posified coefficients can stream out as each
         # one finishes (the LPs can take a long time); structural zero test only
@@ -362,7 +372,9 @@ def main(argv=None):
                 print(f"posify {i + 1}/{len(coeff_perms)}: {str(perm)}", file=sys.stderr)
                 try:
                     # groth_posify verifies its own output exactly
-                    val = groth_posify(val, var2, var3, args.msg)
+                    val = groth_posify(positive_coeff_dict[perm], var2, var3, args.msg)
+                    if args.beta is not None:
+                        val = sympify(val).subs(Gx._beta, beta_value)
                 except Exception:
                     import traceback
 

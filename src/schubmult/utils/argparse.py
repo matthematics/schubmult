@@ -40,6 +40,14 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
     )
     parser.add_argument("-", nargs="+", action="append", dest="perms", help=SUPPRESS)
 
+    if prog_name.startswith("grothmult_"):
+        parser.add_argument(
+            "--beta",
+            default=None,
+            metavar="EXPR",
+            help="Use the sympified expression EXPR as beta in the multiplication",
+        )
+
     parser.add_argument(
         "-np",
         "--no-print",

@@ -31,7 +31,7 @@ Requires Python 3.10+. To build the documentation locally, install the `docs` ex
 ### Python
 
 ```python
-from schubmult import Sx, DSx, QSx, QDSx, Gx, DGx, Permutation
+from schubmult import Sx, DSx, QSx, QDSx, Gx, DGx, QDGx, Permutation
 from schubmult.abc import x, y, z
 
 # Ordinary Schubert polynomials: S_312 * S_132 = S_321 + S_4123
@@ -68,12 +68,26 @@ Gx([2, 1, 3]) * Gx([2, 1, 3])                # 𝔊_(3, 1, 2)(x)
 # -------------------------- + -----------------------------
 #         y_2*β + 1                      y_2*β + 1
 
+# Quantum double Grothendieck polynomials (conjectural equivariant quantum K-Pieri rule)
+g = QDGx([1, 3, 2], beta=-1)
+h = QDGx([2, 1, 3], beta=-1)
+product = (g * h).simplify()                 # multiplication uses the combinatorial kernel
+product.expand()                           # explicit Lenart--Maeno quantum polynomials
+g * QDGx([2, 1, 3], "z", beta=-1)           # mixed coefficient alphabets
+
 # Permutations use one-line notation; Lehmer codes are available too
 w = Permutation([3, 1, 4, 2])
 w.code, w.inv, w.descents()                  # ([2, 0, 1], 3, {0, 2})
 ```
 
 Ring objects: `Sx` (single), `DSx` (double), `QSx`/`QDSx` (quantum, quantum double), `QPSx`/`QPDSx` (parabolic quantum), `Gx`/`DGx` (single/double Grothendieck). Elements are dictionaries `{Permutation: coefficient}` with `*`, `+`, `.expand()`, `.coproduct()`, and change of basis between them. The underlying multiplication kernels live in `schubmult.mult` (`single`, `double`, `quantum`, `quantum_double`, `groth`, `groth_double`).
+
+`QDGx` constructs stable quantum double Grothendieck elements, with symbolic beta by default.
+It supports linear combinations, kernel multiplication, coefficient simplification, and explicit
+polynomial expansion; `QDGx(w, "0")` uses the zero coefficient alphabet. The ring class is
+`QuantumDoubleGrothendieckRing(x_alphabet, y_alphabet, beta=None)`. Arbitrary x-polynomial
+conversion and coproducts are not implemented. Products retain permutations outside any chosen
+finite symmetric group; a finite-flag comparison must handle those separately.
 
 ### Command line
 
@@ -92,6 +106,9 @@ grothmult_q_double 2 1 - 2 1 --mixed-var           # quantum double Grothendieck
 ```
 
 `--display-positive` writes double and quantum double coefficients as manifestly positive expressions in the differences `y_i - z_j` (Graham positivity), using integer programming to find a positive representative. Run any script with `--help` for the full option list.
+
+All four `grothmult_*` scripts accept `--beta EXPR` to use a sympified expression as beta in the multiplication, for example `--beta=-1`, `--beta 0`, or `--beta "1/2"`. Without this option, beta remains symbolic.
+For `--display-positive`, the positive expression is constructed with symbolic beta before specialization. With `--parabolic --beta 0`, specialization is deferred until after Kato projection so inverse powers of beta can cancel.
 
 ## Combinatorics
 

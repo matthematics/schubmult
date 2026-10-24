@@ -50,7 +50,7 @@ def main(argv=None):
         Permutation.print_as_code = ascode
         pr = args.pr
         raw_result_dict = {}
-        beta = Gx._beta
+        beta = sympify(args.beta) if args.beta is not None else Gx._beta
 
         if ascode:
             perms = [Permutation(uncode(perm)) for perm in perms]

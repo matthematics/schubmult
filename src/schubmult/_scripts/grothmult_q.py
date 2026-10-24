@@ -84,7 +84,7 @@ def main(argv=None):
 
         ascode = args.ascode
         pr = args.pr
-        beta = Gx._beta
+        beta = sympify(args.beta) if args.beta is not None else Gx._beta
         parabolic_index, n = _parabolic_blocks(args.parabolic)
 
         if ascode:
@@ -95,12 +95,16 @@ def main(argv=None):
         if parabolic_index and not _check_parabolic_inputs(perms, parabolic_index, n):
             return 1
 
+        # Kato's inverse beta powers must cancel before specializing beta to zero.
+        mult_beta = Gx._beta if parabolic_index and beta == 0 else beta
         coeff_dict = {perms[0]: 1}
         for perm in perms[1:]:
-            coeff_dict = grothmult_q(coeff_dict, perm, beta)
+            coeff_dict = grothmult_q(coeff_dict, perm, mult_beta)
 
         if parabolic_index:
-            coeff_dict = apply_kato(coeff_dict, parabolic_index, n=n)
+            coeff_dict = apply_kato(coeff_dict, parabolic_index, n=n, beta=mult_beta)
+            if beta == 0:
+                coeff_dict = {perm: expand(sympify(val)).subs(Gx._beta, beta) for perm, val in coeff_dict.items()}
 
         if pr or formatter is None:
             raw_result_dict = _display_full(coeff_dict, args, formatter)
