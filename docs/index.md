@@ -22,6 +22,13 @@ sage -pip install --pre schubmult # inside SageMath, for schubmult.sage
 
 SageMath is optional: everything except `schubmult.sage` works in plain Python.
 
+Release wheels target CPython 3.10-3.15 on Linux (x86_64 and aarch64), macOS (Intel
+and Apple Silicon), and Windows (x86_64). The Wheels workflow builds and smoke-tests
+them on release tags, on demand, and on pull requests that change the wheel workflow;
+only release tags publish to PyPI. Adding a new Python wheel target also requires a
+cibuildwheel version that supports it: the old v3.2 action rejects `cp315-*`, while
+v4.3.4 supports the final Python 3.15 release.
+
 ## Five-minute tour
 
 Rings are indexed by permutations in one-line notation; elements are `{Permutation: coefficient}`
