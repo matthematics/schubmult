@@ -11,6 +11,11 @@ Conjectural quantum K-theory Pieri rule; ``--display-positive``, ``--parabolic``
 
   grothmult_q_double 3 1 2 - 2 1 3 --mixed-var
 
+``--multiplicative-variables`` uses ``beta=-1`` and ``ChangeOfVariables`` with
+coefficient coordinates ``1-1/y_i`` (also ``1-1/z_i`` with ``--mixed-var``).
+Use ``--simplify`` to cancel the resulting rational coefficients.
+Other beta values and ``--display-positive`` conflict with this mode.
+
 <a id="schubmult._scripts.grothmult_q_double.main"></a>
 
 #### main
@@ -29,4 +34,3 @@ variables and quantum parameters ``q_i``. ``--display-positive``, ``--parabolic`
 ``--nil-hecke``, and ``--mult`` are not yet supported and cause an early exit.
 Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
 tests); otherwise prints and returns ``None``.
-

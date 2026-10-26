@@ -158,3 +158,79 @@ def test_real_computation_matches_display_and_download(web_app, monkeypatch):
         for worker in web_app._idle_workers:
             worker.kill()
         web_app._idle_workers.clear()
+
+
+@pytest.mark.parametrize("flavor", ["groth_double", "groth_q_double"])
+@pytest.mark.parametrize("download", [False, True])
+def test_multiplicative_variables_reach_real_script(web_app, monkeypatch, flavor, download):
+    monkeypatch.setenv("SCHUBMULT_DISABLE_SUBPROCESS", "1")
+    client = web_app.app.test_client()
+    payload = {
+        "flavor": flavor, "perms": "2 1 - 2 1",
+        "multiplicative_variables": True, "simplify": True, "download": download,
+    }
+    response = client.post("/api/compute", json=payload)
+    assert response.status_code == 200
+    body = response.json
+    assert body["ok"]
+    assert "--multiplicative-variables" in body["argv"]
+    assert body["stderr"] == ""
+    assert "y_1" in body["stdout"] and "y_2" in body["stdout"]
+    assert "beta" not in body["stdout"] and "β" not in body["stdout"]
+    assert ("q_1" in body["stdout"]) == (flavor == "groth_q_double")
+    # Turning the checkbox off restores the existing symbolic-beta convention.
+    payload["multiplicative_variables"] = False
+    original = client.post("/api/compute", json=payload).json
+    assert "--multiplicative-variables" not in original["argv"]
+    assert original["stdout"] != body["stdout"]
+
+
+@pytest.mark.parametrize("flavor", ["py", "groth", "double", "q", "groth_q", "q_double"])
+def test_multiplicative_option_unavailable_for_other_flavors(web_app, monkeypatch, flavor):
+    def run(flavor, argv, *, download):
+        assert "--multiplicative-variables" not in argv
+        return ("result", "", False, 0.1)
+
+    monkeypatch.setattr(web_app, "_run_script", run)
+    response = web_app.app.test_client().post("/api/compute", json={
+        "flavor": flavor, "perms": "2 1 - 2 1", "multiplicative_variables": True,
+    })
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("invalid", ["false", 1, None])
+def test_multiplicative_option_requires_boolean(web_app, monkeypatch, invalid):
+    def run(*args, **kwargs):
+        pytest.fail("Invalid request must not compute")
+    monkeypatch.setattr(web_app, "_run_script", run)
+    response = web_app.app.test_client().post("/api/compute", json={"multiplicative_variables": invalid})
+    assert response.status_code == 400
+    assert response.json == {"ok": False, "error": "multiplicative_variables must be a boolean"}
+
+
+def test_multiplicative_worker_matches_inline(web_app, monkeypatch):
+    if "fork" not in mp.get_all_start_methods():
+        pytest.skip("This worker test requires fork")
+    monkeypatch.setattr(web_app, "COMPUTE_TIMEOUT", 30)
+    monkeypatch.setattr(web_app, "MP_START_METHOD", "fork")
+    monkeypatch.delenv("SCHUBMULT_DISABLE_SUBPROCESS", raising=False)
+    argv = web_app._build_argv(
+        "grothmult_q_double", "1 2 4 3 - 1 3 4 2",
+        ascode=False, coprod=False, display_positive=False, mixed_var=True,
+        parabolic="1 2 1", mult=None, simplify=True, multiplicative_variables=True,
+    )
+    inline = web_app._run_inline("groth_q_double", argv, download=True)
+    assert inline[0] and inline[1:3] == ("", False)
+    try:
+        result = web_app._run_script("groth_q_double", argv, download=True)
+        assert result[:3] == inline[:3]
+        # Reusing the worker for a request with the option off must not retain
+        # the prior request's coordinates or beta specialization.
+        original_argv = [arg for arg in argv if arg != "--multiplicative-variables"]
+        original = web_app._run_script("groth_q_double", original_argv)
+        assert original[0] != result[0]
+        assert original[1:3] == ("", False)
+    finally:
+        for worker in web_app._idle_workers:
+            worker.kill()
+        web_app._idle_workers.clear()

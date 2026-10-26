@@ -10,12 +10,12 @@ Example:
 
 import sys
 
-from schubmult import Gx, GeneratingSet, Permutation, uncode
+from schubmult import Gx, Permutation, uncode
 from schubmult._scripts.grothmult_q import _check_parabolic_inputs, _parabolic_blocks
 from schubmult.mult.groth_double import normalize_coeff
 from schubmult.mult.groth_quantum_double import apply_kato, grothmult_q_double
-from schubmult.symbolic import S, expand, sympify
-from schubmult.utils.argparse import schub_argparse
+from schubmult.symbolic import S, expand, sympify, sympify_sympy
+from schubmult.utils.argparse import grothendieck_cli_variables, schub_argparse
 
 
 def main(argv=None):
@@ -26,7 +26,10 @@ def main(argv=None):
     `schubmult.mult.groth_quantum_double.grothmult_q_double`, and prints the resulting
     coefficient dictionary ``{Permutation: coefficient}`` in the ``y``/``z`` coefficient
     variables and quantum parameters ``q_i``. With ``--simplify`` coefficients are printed in
-    cancelled form ``numer / prod (1 + beta*y_i)**e``. With ``--parabolic g1 g2 ...`` (block
+    cancelled form ``numer / prod (1 + beta*y_i)**e``.
+    ``--multiplicative-variables`` selects ``beta=-1`` and ``1-1/y_i`` coefficient
+    coordinates (also ``1-1/z_i`` with ``--mixed-var``).
+    With ``--parabolic g1 g2 ...`` (block
     sizes of a parabolic subgroup) the result is projected to ``QK_T(G/P)`` by the
     ``beta``-homogeneous form of Kato's ring homomorphism
     (`schubmult.mult.groth_quantum_double.apply_kato`); inputs must be minimal coset
@@ -39,8 +42,6 @@ def main(argv=None):
         argv = sys.argv
 
     try:
-        var2 = GeneratingSet("y")
-        var3 = GeneratingSet("z")
         sys.setrecursionlimit(1000000)
 
         args, formatter = schub_argparse(
@@ -65,12 +66,10 @@ def main(argv=None):
         perms = args.perms
         ascode = args.ascode
         Permutation.print_as_code = ascode
-        same = args.same
         pr = args.pr
         beta = sympify(args.beta) if args.beta is not None else Gx._beta
 
-        if same:
-            var3 = var2
+        var2, var3 = grothendieck_cli_variables(args)
 
         if ascode:
             perms = [uncode(perm) for perm in perms]
@@ -96,7 +95,10 @@ def main(argv=None):
                 coeff_dict = {perm: normalize_coeff(val, var2).subs(Gx._beta, beta) for perm, val in coeff_dict.items()}
 
         if args.simplify:
-            coeff_dict = {perm: normalize_coeff(val, var2, beta=beta) if beta != 0 else expand(val) for perm, val in coeff_dict.items()}
+            if args.multiplicative_variables:
+                coeff_dict = {perm: sympify(sympify_sympy(val).cancel()) for perm, val in coeff_dict.items()}
+            else:
+                coeff_dict = {perm: normalize_coeff(val, var2, beta=beta) if beta != 0 else expand(val) for perm, val in coeff_dict.items()}
 
         coeff_perms = [perm for perm, val in coeff_dict.items() if val != S.Zero]
         coeff_perms.sort(key=lambda x: (-abs(perms[0].inv + perms[1].inv - x.inv), *x))

@@ -48,6 +48,13 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
             help="Use the sympified expression EXPR as beta in the multiplication",
         )
 
+    if prog_name in ("grothmult_double", "grothmult_q_double"):
+        parser.add_argument(
+            "--multiplicative-variables",
+            action="store_true",
+            help="Use beta=-1 and replace coefficient coordinates by 1-1/y_i (also 1-1/z_i with --mixed-var)",
+        )
+
     parser.add_argument(
         "-np",
         "--no-print",
@@ -219,6 +226,12 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
     )
 
     args = parser.parse_args(argv)
+    if getattr(args, "multiplicative_variables", False):
+        if args.beta is not None and _sym().sympify(args.beta) != -1:
+            parser.error("--multiplicative-variables requires --beta=-1")
+        if args.display_positive:
+            parser.error("--multiplicative-variables cannot be combined with --display-positive")
+        args.beta = "-1"
     args.mulstring = ""
 
     if args.mult is not None:
@@ -267,6 +280,21 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
         formatter = None
     init_logging(debug=args.debug)
     return args, formatter
+
+
+def grothendieck_cli_variables(args):
+    """Coefficient alphabets for the two double Grothendieck CLIs."""
+    from schubmult.symbolic.poly.variables import ChangeOfVariables, GeneratingSet
+
+    y, z = GeneratingSet("y"), GeneratingSet("z")
+    if args.multiplicative_variables:
+        # Distinct source names let simplification distinguish the additive
+        # coordinates from the multiplicative characters used in the result.
+        var2 = ChangeOfVariables(GeneratingSet("_groth_y"), y, lambda i, target: 1 - 1 / target[i])
+        var3 = ChangeOfVariables(GeneratingSet("_groth_z"), z, lambda i, target: 1 - 1 / target[i])
+    else:
+        var2, var3 = y, z
+    return var2, var2 if args.same else var3
 
 
 def _sym():

@@ -93,6 +93,7 @@
     <label id="sm-positive-label"><input type="checkbox" id="sm-positive"> Display positive (double / q_double)</label>
     <label id="sm-mixedvar-label"><input type="checkbox" id="sm-mixedvar"> Mixed variables y, z (double / q_double / groth_double / groth_q_double)</label>
     <label id="sm-simplify-label"><input type="checkbox" id="sm-simplify"> Simplify coefficients (groth_double / groth_q_double only; slower)</label>
+    <label id="sm-multiplicative-label"><input type="checkbox" id="sm-multiplicative"> Multiplicative variables: 1 &minus; 1/y<sub>i</sub> (also z with mixed variables), &beta; = &minus;1 (Grothendieck double flavors only)</label>
     <label id="sm-probabilistic-label"><input type="checkbox" id="sm-probabilistic"> Probabilistic zero testing (double / q_double; much faster on large products, error rate below 10<sup>-20</sup>)</label>
   </div>
 
@@ -150,11 +151,11 @@
     py:           { ascode: true, coprod: true,  display_positive: false, mixed_var: false, parabolic: false, simplify: false, probabilistic: false },
     groth:        { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: false, simplify: false, probabilistic: false },
     double:       { ascode: true, coprod: true,  display_positive: true,  mixed_var: true,  parabolic: false, simplify: false, probabilistic: true },
-    groth_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false, simplify: true,  probabilistic: false },
+    groth_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: false, simplify: true,  probabilistic: false, multiplicative_variables: true },
     q:            { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false, probabilistic: false },
     groth_q:      { ascode: true, coprod: false, display_positive: false, mixed_var: false, parabolic: true,  simplify: false, probabilistic: false },
     q_double:     { ascode: true, coprod: false, display_positive: true,  mixed_var: true,  parabolic: true,  simplify: false, probabilistic: true },
-    groth_q_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: true,  simplify: true,  probabilistic: false },
+    groth_q_double: { ascode: true, coprod: false, display_positive: false, mixed_var: true,  parabolic: true,  simplify: true,  probabilistic: false, multiplicative_variables: true },
   };
 
   function setEnabled(input, label, enabled) {
@@ -174,6 +175,7 @@
     setEnabled($('sm-positive'), $('sm-positive-label'), positiveEnabled);
     setEnabled($('sm-parabolic'), $('sm-parabolic-row'), caps.parabolic);
     setEnabled($('sm-simplify'), $('sm-simplify-label'), caps.simplify);
+    setEnabled($('sm-multiplicative'), $('sm-multiplicative-label'), !!caps.multiplicative_variables);
     // the coproduct does not go through the pruning kernel
     setEnabled($('sm-probabilistic'), $('sm-probabilistic-label'), caps.probabilistic && !$('sm-coprod').checked);
   }
@@ -218,6 +220,7 @@
       mixed_var: $('sm-mixedvar').checked,
       parabolic: $('sm-parabolic').value.trim(),
       simplify: $('sm-simplify').checked,
+      multiplicative_variables: $('sm-multiplicative').checked,
       probabilistic: $('sm-probabilistic').checked,
       mult: $('sm-mult').value.trim(),
       download: download,

@@ -39,6 +39,7 @@ frame-ancestors` header on the server).
 | `mixed_var`        | boolean | `false` | (`double`/`groth_double`/`q_double`/`groth_q_double` only) Use two variable sets `y`, `z` instead of just `y`. |
 | `parabolic`        | string  | `""`    | (`q`/`groth_q`/`q_double`/`groth_q_double` only) Space-separated block sizes of the parabolic subgroup, e.g. `"2 2"` for `Gr(2,4)` or `"1 2 1"` for `Fl(1,3;4)`. Input permutations must be increasing on each block (minimal coset representatives). Empty = full flag variety. |
 | `simplify`         | boolean | `false` | (`groth_double`/`groth_q_double` only) Print coefficients in cancelled form `numer / prod (1 + β*y_i)**e` instead of as computed. Slower. |
+| `multiplicative_variables` | boolean | `false` | (`groth_double`/`groth_q_double` only) Set `β=-1` and calculate with coefficient coordinates `1-1/y_i` (also `1-1/z_i` with `mixed_var=true`), using `ChangeOfVariables`. |
 | `probabilistic`    | boolean | `false` | (`double`/`q_double` only, not with `coprod`) Prune intermediate terms that vanish at random points of a prime field (Schwartz–Zippel). Much faster on large products and the output contains only nonzero coefficients; a product is wrong with probability below 10⁻²⁰. |
 | `mult`             | string  | `""`    | (Disabled by default on this host for security.) Polynomial factor parsed by SymPy. |
 | `download`         | boolean | `false` | Use the larger stdout limit for file output (all flavors). The response is still JSON; the widget saves `stdout` as a text file. |
@@ -59,6 +60,7 @@ a Lehmer code (which has no such constraint), set `ascode=true`.
 | `mixed_var`        |  —   |    —    |    ✓     |       ✓        |  —  |     —     |     ✓      |        ✓         |
 | `parabolic`        |  —   |    —    |    —     |       —        |  ✓  |     ✓     |     ✓      |        ✓         |
 | `simplify`         |  —   |    —    |    —     |       ✓        |  —  |     —     |     —      |        ✓         |
+| `multiplicative_variables` | — | — | — | ✓ | — | — | — | ✓ |
 | `probabilistic`    |  —   |    —    |    ✓     |       —        |  —  |     —     |     ✓      |        —         |
 
 Unsupported options are silently ignored for that flavor.  The `groth_q` and `groth_q_double`
@@ -68,6 +70,15 @@ coefficients are polynomials in the quantum parameters `q_i` and `β` (and ratio
 (quantum cohomology) while `groth_q`/`groth_q_double` project by Kato's ring homomorphism
 `QK_T(G/B) -> QK_T(G/P)` (arXiv:1906.09343); for the latter the input permutations must be
 minimal coset representatives or the request is rejected.
+
+The multiplicative-variable checkbox passes `--multiplicative-variables` to the
+corresponding CLI; its default is off, preserving the existing symbolic-`β`
+convention. Quantum parameters are not changed by the coordinate conversion;
+any requested parabolic projection still applies. With this option, `simplify`
+cancels rational coefficients in the multiplicative characters. It works in
+both display and download modes. A non-boolean `multiplicative_variables` field
+is rejected with HTTP 400. As with other flavor-specific options, `true` is
+ignored for unsupported flavors.
 
 ### Limits
 
@@ -182,6 +193,19 @@ curl -X POST https://schubmult.pythonanywhere.com/api/compute \
 curl -X POST https://schubmult.pythonanywhere.com/api/compute \
   -H 'Content-Type: application/json' \
   -d '{"flavor":"py","perms":"2 0 - 1 0","ascode":true}'
+```
+
+### Quantum double Grothendieck product in multiplicative characters
+```bash
+curl -X POST https://schubmult.pythonanywhere.com/api/compute \
+  -H 'Content-Type: application/json' \
+  -d '{"flavor":"groth_q_double","perms":"2 1 - 2 1","multiplicative_variables":true,"simplify":true}'
+```
+
+The equivalent CLI invocation is:
+
+```bash
+grothmult_q_double 2 1 - 2 1 --multiplicative-variables --simplify
 ```
 
 ### Coproduct (split a permutation along an index list)

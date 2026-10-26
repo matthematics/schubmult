@@ -7,11 +7,11 @@ Example:
 
 import sys
 
-from schubmult import Gx, GeneratingSet, Permutation, uncode
+from schubmult import Gx, Permutation, uncode
 from schubmult.abc import beta
 from schubmult.mult.groth_double import grothmult_double, mult_poly_groth_double, normalize_coeff
 from schubmult.symbolic import S, sympify, sympify_sympy, expand
-from schubmult.utils.argparse import schub_argparse
+from schubmult.utils.argparse import grothendieck_cli_variables, schub_argparse
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -287,6 +287,8 @@ def main(argv=None):
     their double Grothendieck polynomials via `schubmult.mult.groth_double.grothmult_double`,
     and prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
     ``y``/``z`` coefficient variables and the K-theory parameter ``beta``. With
+    ``--multiplicative-variables``, use ``beta=-1`` and ``1-1/y_i`` coefficient
+    coordinates (also ``1-1/z_i`` for mixed variables). With
     ``--display-positive`` (only supported together with ``--mixed-var``), coefficients
     are rewritten in the positive FGL basis of ``z_i - y_j``, ``(1 + y_j)^{-1}``, and
     ``(1 + z_i)^{-1}`` via an integer program (see `groth_posify`). Returns the raw
@@ -297,8 +299,6 @@ def main(argv=None):
         argv = sys.argv
 
     try:
-        var2 = GeneratingSet("y")
-        var3 = GeneratingSet("z")
         sys.setrecursionlimit(1000000)
 
         args, formatter = schub_argparse(
@@ -323,12 +323,10 @@ def main(argv=None):
 
         ascode = args.ascode
         Permutation.print_as_code = ascode
-        same = args.same
         pr = args.pr
         beta_value = sympify(args.beta) if args.beta is not None else Gx._beta
 
-        if same:
-            var3 = var2
+        var2, var3 = grothendieck_cli_variables(args)
 
         if ascode:
             perms = [uncode(perm) for perm in perms]
@@ -348,7 +346,10 @@ def main(argv=None):
             coeff_dict = mult_poly_groth_double(coeff_dict, mul_exp, var2, var3, beta=beta_value)
 
         if args.simplify and not args.display_positive:
-            coeff_dict = {perm: normalize_coeff(val, var2, beta=beta_value) if beta_value != 0 else expand(val) for perm, val in coeff_dict.items()}
+            if args.multiplicative_variables:
+                coeff_dict = {perm: sympify(sympify_sympy(val).cancel()) for perm, val in coeff_dict.items()}
+            else:
+                coeff_dict = {perm: normalize_coeff(val, var2, beta=beta_value) if beta_value != 0 else expand(val) for perm, val in coeff_dict.items()}
 
         positive_coeff_dict = coeff_dict
         if args.display_positive and args.beta is not None:

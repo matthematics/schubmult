@@ -32,6 +32,15 @@ No result file is stored on the host: output is buffered in server memory and
 sent as JSON, then the browser creates the download. Large downloads can consume
 several times their size in server and browser memory; this is not streaming.
 
+For **grothmult_double** and **grothmult_q_double**, select **Multiplicative
+variables** to calculate at `beta=-1` with coefficient coordinates `1-1/y_i`
+(also `1-1/z_i` when mixed variables are selected), using `ChangeOfVariables`.
+The checkbox is disabled and cleared for other flavors. It is off by default;
+leave it unchecked for the existing symbolic-beta convention. **Simplify
+coefficients** cancels the resulting rational coefficients. The coordinate
+conversion leaves quantum parameters unchanged and also works with parabolic
+projection and output downloads.
+
 ## Embed
 
 ```html
@@ -53,6 +62,7 @@ needed to run the widget. The bundled WordPress plugin includes this permission.
   "ascode": false,
   "coprod": false,
   "display_positive": false,
+  "multiplicative_variables": false,
   "download": false,
   "mult": ""
 }

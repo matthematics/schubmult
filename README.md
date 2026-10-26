@@ -89,6 +89,30 @@ polynomial expansion; `QDGx(w, "0")` uses the zero coefficient alphabet. The rin
 conversion and coproducts are not implemented. Products retain permutations outside any chosen
 finite symmetric group; a finite-flag comparison must handle those separately.
 
+### Paper examples: equivariant quantum K-theory
+
+[examples/duan_khlaif_zou_qk.py](examples/duan_khlaif_zou_qk.py) computes all 156 distinct
+explicit equivariant Schubert-class products in [Duan--Khlaif--Zou, arXiv:2606.15261v2](https://arxiv.org/abs/2606.15261v2):
+Table 3.2 (Fl(3)), Appendix A.1 (Fl(4)), Appendix A.2 (Fl(1,3;4)), and Appendix A.3 (Fl(1,2;4)).
+The script records printed page references and notes the repeated product in A.2 and the
+omitted equivariant square in A.3. It generates new answers, rather than automatically comparing
+against the paper's printed right-hand sides.
+
+```bash
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --list
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --example fl4-04
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --section fl134
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --tex --output products.tex
+```
+
+It uses `QuantumDoubleGrothendieckRing` at `beta=-1` with `ChangeOfVariables` implementing
+`z_i -> 1-1/y_i`, the paper's multiplicative equivariant-character convention. Finite-flag
+projection removes stable terms outside `S_n`; partial flags additionally use the existing
+Kato projection, with consecutive quantum-parameter indices. TeX output is a standalone
+document using `\widetilde{\mathfrak{G}}_w(x;y)`. Add `--non-equivariant` to specialize the
+selected products at `y_i=1`. The underlying equivariant quantum K-Pieri multiplication
+rule remains conjectural.
+
 ### Generating sets
 
 `GeneratingSet("x")` supports any nonnegative index, including indices above 100.
@@ -121,7 +145,16 @@ grothmult_py 2 1 3 - 2 1 3                         # Grothendieck
 grothmult_double 2 1 3 - 2 1 3                     # double Grothendieck (coefficients in y and β)
 grothmult_q 2 1 - 2 1                              # quantum Grothendieck (conjectural quantum K-Pieri rule; coefficients in q and β)
 grothmult_q_double 2 1 - 2 1 --mixed-var           # quantum double Grothendieck (coefficients in y, z, q and β)
+grothmult_q_double 2 1 - 2 1 --multiplicative-variables --simplify  # beta=-1, coordinates 1-1/y_i
 ```
+
+Both `grothmult_double` and `grothmult_q_double` support
+`--multiplicative-variables`: this uses `ChangeOfVariables` to calculate with
+`1-1/y_i` coefficient coordinates and fixes `beta=-1`. With `--mixed-var`, the
+second coefficient alphabet is also changed to `1-1/z_i`. Explicit
+`--beta=-1` is allowed; other beta values and `--display-positive` conflict
+with this mode and are rejected. Add `--simplify` to cancel the rational
+coefficients. Without the flag, the existing conventions are unchanged.
 
 `--display-positive` writes double and quantum double coefficients as manifestly positive expressions in the differences `y_i - z_j` (Graham positivity), using integer programming to find a positive representative. Run any script with `--help` for the full option list.
 
