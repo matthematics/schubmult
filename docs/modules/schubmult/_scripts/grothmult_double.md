@@ -42,9 +42,10 @@ Parses permutations (or, with ``--code``, Lehmer codes) from ``argv``, multiplie
 their double Grothendieck polynomials via `schubmult.mult.groth_double.grothmult_double`,
 and prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
 ``y``/``z`` coefficient variables and the K-theory parameter ``beta``. With
+``--multiplicative-variables``, use ``beta=-1`` and ``1-1/y_i`` coefficient
+coordinates (also ``1-1/z_i`` for mixed variables). With
 ``--display-positive`` (only supported together with ``--mixed-var``), coefficients
 are rewritten in the positive FGL basis of ``z_i - y_j``, ``(1 + y_j)^{-1}``, and
 ``(1 + z_i)^{-1}`` via an integer program (see `groth_posify`). Returns the raw
 result dict when the caller passes a ``None`` formatter (e.g. from tests); otherwise
 prints and returns ``None``.
-
