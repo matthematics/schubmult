@@ -18,6 +18,11 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing)
 
 The ring of quantum Schubert polynomials ``S^q_w(x)``; ``QSx`` is the standard instance.
 
+Construct with ``QuantumSingleSchubertRing(genset, q_var=GeneratingSet("t"))``
+to override the quantum alphabet. The default remains ``GeneratingSet("q")``,
+including for ``QSx``. The override applies to products, polynomial multiplication,
+expansion, and quantization.
+
 <a id="schubmult.rings.schubert.quantum_schubert_ring.QuantumSingleSchubertRing.quantize"></a>
 
 #### quantize
@@ -72,4 +77,3 @@ def new(x)
 
 Build an element from a permutation/Lehmer list, a classical or parabolic element (converted
 to the quantum basis), or a polynomial expression.
-
