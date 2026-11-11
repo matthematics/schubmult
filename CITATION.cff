@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use schubmult in your research, please cite it as below and include the version or Git commit you used."
+title: schubmult
+abstract: "Fast Schubert calculus in Python: Littlewood-Richardson coefficients, Schubert/Grothendieck rings, and the combinatorics behind them."
+type: software
+authors:
+  - family-names: Samuel
+    given-names: Matt
+repository-code: "https://github.com/matthematics/schubmult"
+url: "https://matthematics.github.io/schubmult/"
+license: GPL-3.0-or-later
+keywords:
+  - Schubert calculus
+  - Schubert polynomials
+  - Grothendieck polynomials
+  - Littlewood-Richardson coefficients
+  - algebraic combinatorics
+
+# arXiv preprint template: replace every XXXX.XXXXX, <PAPER_TITLE>, and <YEAR>, then uncomment.
+# GitHub's "Cite this repository" button will then show the preprint as the preferred citation.
+# preferred-citation:
+#   type: article
+#   authors:
+#     - family-names: Samuel
+#       given-names: Matt
+#   title: "<PAPER_TITLE>"
+#   year: <YEAR>
+#   journal: "arXiv preprint arXiv:XXXX.XXXXX"
+#   doi: 10.48550/arXiv.XXXX.XXXXX
+#   url: "https://arxiv.org/abs/XXXX.XXXXX"

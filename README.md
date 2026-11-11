@@ -10,6 +10,8 @@
 
 **Documentation:** <https://matthematics.github.io/schubmult/>
 
+**Citation:** [How to cite](#how-to-cite)
+
 ---
 
 ## Installation
@@ -280,6 +282,51 @@ pytest
 ```
 
 Tests live in `tests/`; the script tests compare CLI output against stored JSON cases in `tests/scripts/data`. `ruff check src/schubmult` should pass.
+
+## How to cite
+
+If you use `schubmult` in your research, please cite the software and, once available,
+the accompanying preprint. Include the version number (or Git commit hash for a
+development checkout) used for your computations.
+
+On GitHub, the **Cite this repository** button in the repository sidebar gives
+APA and BibTeX citations generated from [CITATION.cff](CITATION.cff).
+
+### Software
+
+Use this BibTeX template, replacing `<YEAR>` with the year of the cited release or
+commit and `<VERSION_OR_COMMIT>` with the version number or commit hash you used:
+
+```bibtex
+@misc{schubmult,
+  author = {Samuel, Matt},
+  title  = {{schubmult}},
+  year   = {<YEAR>},
+  url    = {https://github.com/matthematics/schubmult},
+  note   = {Version <VERSION_OR_COMMIT>}
+}
+```
+
+### Preprint (template)
+
+**arXiv link:** `<ARXIV_URL>`
+
+The preprint citation is not yet filled in. Replace the placeholders below with
+the paper's authors, title, year, arXiv identifier, and URL before citing it, or
+paste the BibTeX entry exported by arXiv. Also fill in and uncomment the
+`preferred-citation` block in [CITATION.cff](CITATION.cff). The software citation
+above can be used in the meantime.
+
+```bibtex
+@misc{schubmult_paper,
+  author        = {<AUTHORS>},
+  title         = {<PAPER_TITLE>},
+  year          = {<YEAR>},
+  eprint        = {<ARXIV_ID>},
+  archivePrefix = {arXiv},
+  url           = {<ARXIV_URL>}
+}
+```
 
 ## License
 
