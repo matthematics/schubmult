@@ -956,10 +956,14 @@ class RCGraph(WCGraph, CrystalGraph):
 
         Not implemented: the original body (kept below) calls ``NilPlactic.ed_insert_rsk`` with the
         four-argument signature of the private ``_ed_insert_rsk``, so it always raised ``TypeError``.
-        ``p_tableau``, ``q_tableau`` and ``shape`` depend on it.  Use `RootTableau.from_rc_graph`
+        ``p_tableau``, ``q_tableau`` and ``shape`` depend on it.  See the experimental
+        `schubmult.combinatorics.experimental.root_tableau.RootTableau.from_rc_graph`
         for the tableau data of an RC graph.
         """
-        raise NotImplementedError("edelman_greene was never wired to a working insertion; see RootTableau.from_rc_graph")
+        raise NotImplementedError(
+            "edelman_greene was never wired to a working insertion; "
+            "see experimental schubmult.combinatorics.experimental.root_tableau.RootTableau.from_rc_graph",
+        )
         # word1, word2 = (), ()
         # index = 0
         # for index, (row, col) in enumerate(list(reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]))):
@@ -2857,4 +2861,3 @@ class RCGraph(WCGraph, CrystalGraph):
 
 #     def crystal_length(self) -> int:
 #         return self.base_graph.transpose().crystal_length()
-

@@ -759,7 +759,8 @@ if __name__ == "__main__":
     from symengine import S
     from sympy import pretty_print
 
-    from schubmult import Permutation, RCGraph, RCGraphRing, RootTableau, Sx, CrystalGraphTensor, uncode, DSx
+    from schubmult import Permutation, RCGraph, RCGraphRing, Sx, CrystalGraphTensor, uncode, DSx
+    from schubmult.combinatorics.experimental.root_tableau import RootTableau
     # from schubmultutils.perm_utils import artin_sequences
 
     n = int(sys.argv[1])

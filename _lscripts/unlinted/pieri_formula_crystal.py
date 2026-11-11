@@ -7,7 +7,8 @@ from itertools import zip_longest
 import sympy
 from sympy import pretty_print
 
-from schubmult import CrystalGraphTensor, FreeAlgebra, NilPlactic, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
+from schubmult import CrystalGraphTensor, FreeAlgebra, NilPlactic, Permutation, RCGraph, RCGraphRing, SchubertBasis, Sx
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
 
 def all_reduced_subwords(reduced_word, u):
@@ -464,5 +465,4 @@ if __name__ == "__main__":
         #assert prod2 - prod == Sx.zero
         assert prod == the_sum2
         print(prod)
-
 

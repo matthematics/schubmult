@@ -170,8 +170,8 @@ The `schubmult.combinatorics` package provides the objects that index Schubert c
 - **`Permutation`** -- one-line notation, Lehmer codes (`uncode`), reduced words, Bruhat order, descents, dominant/Grassmannian tests.
 - **`RCGraph`** -- reduced compatible sequences / pipe dreams, with enumeration (`RCGraph.all_rc_graphs(w, n)`), Kashiwara crystal operators (`raising_operator(i)`, `lowering_operator(i)`), Edelman-Greene insertion, and the crystal products used in the transition formulas.
 - **`BPD`** -- bumpless pipe dreams with droop moves, the Gao-Huang bijection to RC graphs (`BPD.from_rc_graph`, `.to_rc_graph()`), and marked/unreduced variants for Grothendieck polynomials.
-- **`WCGraph`**, **`PipeDream`**, **`HPD`** -- K-theoretic and hybrid pipe dream models.
-- **Tableaux** -- `Plactic` (semistandard, jeu de taquin), `NilPlactic` (Edelman-Greene), `RootTableau`, `IncreasingTableau`, `SetValuedTableau`, `HeckePlactic`.
+- **`WCGraph`**, **`PipeDream`** -- K-theoretic pipe dream models.
+- **Tableaux** -- `Plactic` (semistandard, jeu de taquin), `NilPlactic` (Edelman-Greene), `IncreasingTableau`, and `SetValuedTableau`.
 - **Forests** -- indexed forests and the Thompson monoid factorization behind the forest and grove bases.
 
 ```python
@@ -186,6 +186,33 @@ rc.lowering_operator(1)                  # crystal operator f_1 (None when undef
 bpd = BPD.from_rc_graph(rc)              # Gao-Huang bijection
 assert bpd.to_rc_graph() == rc
 ```
+
+### Experimental combinatorics
+
+The `schubmult.combinatorics.experimental` namespace contains exploratory
+implementations that may be incomplete or incorrect:
+
+| Module | Main objects |
+| --- | --- |
+| `chute_move_element` | `ChuteMoveElement` |
+| `hecke_plactic` | `HeckePlactic` |
+| `hpd` | `HPD`, `HPDTile` |
+| `inversions_tableau` | `InversionsTableau` |
+| `quasi_crystal_graph` | `QuasiCrystalGraph`, `QuasiCrystalGraphTensor` |
+| `root_tableau` | `RootTableau` |
+
+These objects can be imported from the experimental namespace or their
+individual modules:
+
+```python
+from schubmult.combinatorics.experimental import HPD
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
+```
+
+The former `schubmult.combinatorics.<module>` paths and top-level
+`schubmult` exports for these objects are no longer provided.
+Pickles referencing the former module paths will not load without migration.
+`ChuteMoveRing` remains available, but its basis uses `ChuteMoveElement`.
 
 ## Rings and algebras
 

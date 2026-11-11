@@ -1,8 +1,8 @@
-"""`ChuteMoveRing`: a `SchubertMonomialRing` whose basis elements are `ChuteMoveElement`s
-(RC graphs marked with a set of simultaneous chute-move rows).
+"""`ChuteMoveRing`: a `SchubertMonomialRing` whose basis elements are experimental
+`ChuteMoveElement`s (RC graphs marked with simultaneous chute-move rows).
 """
 
-from schubmult.combinatorics.chute_move_element import ChuteMoveElement
+from schubmult.combinatorics.experimental.chute_move_element import ChuteMoveElement
 from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 
 # from .crystal_graph_ring import CrystalTensorRing

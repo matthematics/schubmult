@@ -13,6 +13,7 @@ from collections import Counter
 from itertools import zip_longest
 
 from schubmult import *
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
 
 def main(argv):
