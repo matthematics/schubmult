@@ -178,6 +178,13 @@ grothmult_double 2 1 3 - 2 1 3                     # double Grothendieck
 
 Run any script with `--help` for the full option list; see [`schubmult._scripts`](modules/schubmult/_scripts/index.md).
 
+## How to cite
+
+If you use `schubmult` in your research, please cite the software and, once available,
+the accompanying preprint. Record the version number or Git commit hash used for
+your computations. See the [citation guidance and BibTeX templates](https://github.com/matthematics/schubmult#how-to-cite)
+for the software citation and the preprint template.
+
 ## Contributing
 
 Issues and pull requests are welcome at [github.com/matthematics/schubmult](https://github.com/matthematics/schubmult).
