@@ -308,7 +308,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
     import sympy
     from sympy import pretty_print
 
-    from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
+    from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, RCGraph, RCGraphRing, SchubertBasis, Sx
+    from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
 
     def all_reduced_subwords(reduced_word, u):
@@ -618,7 +619,8 @@ def is_decomposable(w):
     return False
 
 def main():
-    from schubmult import Permutation, RCGraph, RootTableau, Sx, uncode
+    from schubmult import Permutation, RCGraph, Sx, uncode
+    from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
     try:
         n = int(sys.argv[1])
@@ -715,4 +717,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

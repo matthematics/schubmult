@@ -1,7 +1,7 @@
-"""`HeckePlactic`: size-preserving Hecke column insertion, a `Plactic` variant."""
+"""Experimental `HeckePlactic`: size-preserving Hecke column insertion, a `Plactic` variant."""
 
-from .permutation import Permutation
-from .plactic import Plactic
+from ..permutation import Permutation
+from ..plactic import Plactic
 
 
 class HeckePlactic(Plactic):
@@ -253,4 +253,3 @@ class HeckePlactic(Plactic):
         recording.reverse()
         insertion.reverse()
         return tuple(recording), tuple(insertion)
-

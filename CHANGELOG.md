@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Moved the experimental `chute_move_element`, `hecke_plactic`, `hpd`,
+  `inversions_tableau`, `quasi_crystal_graph`, and `root_tableau` modules to
+  `schubmult.combinatorics.experimental`. Their former module paths and
+  top-level `schubmult` exports are no longer available. Pickles referencing
+  the former module paths will not load without migration.
+
 ## 5.3.0
 
 New change-of-variables and quantum double Grothendieck APIs, on-demand generating-set growth,

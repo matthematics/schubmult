@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, "/home/matthematics/schubmult/_lscripts")
 from schubmult import RCGraph
-from schubmult.combinatorics.inversions_tableau import InversionsTableau
+from schubmult.combinatorics.experimental.inversions_tableau import InversionsTableau
 p = 4
 for rows in ([(4, 3, 2), (4,), (), ()], [(5, 3, 2), (4,), (), ()]):
     T = RCGraph(rows)

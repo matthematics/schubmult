@@ -1,10 +1,21 @@
-<a id="schubmult.combinatorics.hpd"></a>
+<a id="schubmult.combinatorics.experimental.hpd"></a>
 
-# schubmult.combinatorics.hpd
+# schubmult.combinatorics.experimental.hpd
 
-Bumpless Pipe Dreams (HPD) module
+Hybrid pipe dreams (HPD) -- experimental and incomplete.
 
-<a id="schubmult.combinatorics.hpd.HPDTile"></a>
+Hybrid pipe dreams (Knutson--Udell, "Interpolating between classic and bumpless pipe dreams")
+interpolate between classic pipe dreams and bumpless pipe dreams: each row is declared either
+classic (``id_vector[row] == 0``) or bumpless (``id_vector[row] == 1``), and the tiles are read with
+the corresponding convention row by row.  All-zero ``id_vector`` recovers a classic pipe dream
+(`schubmult.combinatorics.rc_graph.RCGraph`), all-one a bumpless one (`schubmult.combinatorics.bpd.BPD`).
+
+Development stopped partway through the port from `BPD`: the constructor requires ``id_vector``, but
+``delete_row``, ``append``, ``from_bruhat_path``, ``shiftup``, ``rothe_bpd``, ``resize``, and
+``right_zero_act`` still construct ``HPD(grid)`` without it and raise ``TypeError``.  The module is
+kept in the experimental namespace for possible future work.
+
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile"></a>
 
 ## HPDTile Objects
 
@@ -17,61 +28,61 @@ Enumeration of the possible tile types in a pipe dream.
 Each tile represents how two pipes (horizontal and vertical) interact in a square.
 Note: Whether a tile is "weighty" depends on the row's _id_vector value, not the tile itself.
 
-<a id="schubmult.combinatorics.hpd.HPDTile.TBD"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.TBD"></a>
 
 #### TBD
 
 Placeholder for uninitialized tile
 
-<a id="schubmult.combinatorics.hpd.HPDTile.BLANK"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.BLANK"></a>
 
 #### BLANK
 
 Both pipes go straight (no crossing, no elbow)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.CROSS"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.CROSS"></a>
 
 #### CROSS
 
 Pipes cross each other
 
-<a id="schubmult.combinatorics.hpd.HPDTile.HORIZ"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.HORIZ"></a>
 
 #### HORIZ
 
 Horizontal pipe
 
-<a id="schubmult.combinatorics.hpd.HPDTile.ELBOW_NW"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.ELBOW_NW"></a>
 
 #### ELBOW\_NW
 
 Elbow: bottom-right to top-left (╯)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.ELBOW_SE"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.ELBOW_SE"></a>
 
 #### ELBOW\_SE
 
 Elbow: top-left to bottom-right (╮)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.ELBOW_NE"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.ELBOW_NE"></a>
 
 #### ELBOW\_NE
 
 Elbow: bottom-right to top-left (╯)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.ELBOW_SW"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.ELBOW_SW"></a>
 
 #### ELBOW\_SW
 
 Elbow: top-left to bottom-right (╮)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.BUMP"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.BUMP"></a>
 
 #### BUMP
 
 Bump/osculating tile (pipes touch at corner)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.__str__"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.__str__"></a>
 
 #### \_\_str\_\_
 
@@ -81,7 +92,7 @@ def __str__() -> str
 
 Return base display symbol (use get_display_symbol() for context-aware rendering)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.get_display_symbol"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.get_display_symbol"></a>
 
 #### get\_display\_symbol
 
@@ -91,7 +102,7 @@ def get_display_symbol(is_weighty: bool) -> str
 
 Get display symbol based on whether the tile is in a weighty row
 
-<a id="schubmult.combinatorics.hpd.HPDTile.from_tiletype"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.from_tiletype"></a>
 
 #### from\_tiletype
 
@@ -102,7 +113,7 @@ def from_tiletype(cls, tile: TileType) -> HPDTile
 
 Convert from TileType to HPDTile
 
-<a id="schubmult.combinatorics.hpd.HPDTile.is_crossing"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.is_crossing"></a>
 
 #### is\_crossing
 
@@ -113,7 +124,7 @@ def is_crossing() -> bool
 
 True if this tile is a crossing
 
-<a id="schubmult.combinatorics.hpd.HPDTile.is_elbow"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.is_elbow"></a>
 
 #### is\_elbow
 
@@ -124,7 +135,7 @@ def is_elbow() -> bool
 
 True if this tile is any type of elbow
 
-<a id="schubmult.combinatorics.hpd.HPDTile.is_empty"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.is_empty"></a>
 
 #### is\_empty
 
@@ -135,7 +146,7 @@ def is_empty() -> bool
 
 True if this tile is empty (pipes go straight)
 
-<a id="schubmult.combinatorics.hpd.HPDTile.feeds_right"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.feeds_right"></a>
 
 #### feeds\_right
 
@@ -146,7 +157,7 @@ def feeds_right() -> bool
 
 True if the horizontal pipe continues to the right
 
-<a id="schubmult.combinatorics.hpd.HPDTile.feeds_up"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.feeds_up"></a>
 
 #### feeds\_up
 
@@ -157,7 +168,7 @@ def feeds_up() -> bool
 
 True if the vertical pipe continues upwards
 
-<a id="schubmult.combinatorics.hpd.HPDTile.entrance_from_bottom"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.entrance_from_bottom"></a>
 
 #### entrance\_from\_bottom
 
@@ -168,7 +179,7 @@ def entrance_from_bottom() -> bool
 
 True if a pipe can enter from the bottom
 
-<a id="schubmult.combinatorics.hpd.HPDTile.entrance_from_left"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPDTile.entrance_from_left"></a>
 
 #### entrance\_from\_left
 
@@ -179,7 +190,7 @@ def entrance_from_left() -> bool
 
 True if a pipe can enter from the left
 
-<a id="schubmult.combinatorics.hpd.HPD"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD"></a>
 
 ## HPD Objects
 
@@ -187,16 +198,14 @@ True if a pipe can enter from the left
 class HPD(SchubertMonomialGraph, DefaultPrinting)
 ```
 
-Bumpless Pipe Dream representation.
+Hybrid pipe dream (Knutson--Udell).  EXPERIMENTAL -- see the module docstring.
 
-A bumpless pipe dream is an n×n grid where:
-- HPDTile.CROSS (1) represents a crossing
-- HPDTile.BLANK (0) represents an empty box (pipes go straight)
-- For general pipe dreams, can use HPDTile.ELBOW_* (2-5) for elbows
+An n×n grid of `HPDTile` values together with an ``id_vector`` declaring each row classic (``0``)
+or bumpless (``1``); the tile conventions and the pipe labeling switch per row accordingly.
 
 Each HPD corresponds to a permutation and has an associated weight.
 
-<a id="schubmult.combinatorics.hpd.HPD.__init__"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -209,8 +218,9 @@ Initialize a HPD from a grid.
 **Arguments**:
 
 - `grid` - n×n array-like of HPDTile values, integers 0-5, or list of lists
+- `id_vector` - one entry per row, ``0`` for a classic row and ``1`` for a bumpless row
 
-<a id="schubmult.combinatorics.hpd.HPD.is_classic_row"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.is_classic_row"></a>
 
 #### is\_classic\_row
 
@@ -220,7 +230,7 @@ def is_classic_row(row: int) -> bool
 
 Check if row is a classic row (id_vector[row] == 0)
 
-<a id="schubmult.combinatorics.hpd.HPD.concat"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.concat"></a>
 
 #### concat
 
@@ -236,7 +246,7 @@ Concatenate a BPD and RCGraph into a HPD.
 - `bpd` - BPD instance
 - `rc` - RCGraph instance
 
-<a id="schubmult.combinatorics.hpd.HPD.is_weighty_position"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.is_weighty_position"></a>
 
 #### is\_weighty\_position
 
@@ -246,7 +256,7 @@ def is_weighty_position(row: int, col: int) -> bool
 
 Check if a position is in; a weighty row (id_vector[row] == 1)
 
-<a id="schubmult.combinatorics.hpd.HPD.row_index_to_label"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.row_index_to_label"></a>
 
 #### row\_index\_to\_label
 
@@ -269,7 +279,7 @@ Row labels are assigned counterclockwise:
 
   Row label (1-based)
 
-<a id="schubmult.combinatorics.hpd.HPD.row_label_to_index"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.row_label_to_index"></a>
 
 #### row\_label\_to\_index
 
@@ -290,7 +300,7 @@ Inverse of row_index_to_label.
 
   Physical row index (0-based, top to bottom)
 
-<a id="schubmult.combinatorics.hpd.HPD.from_rc_graph"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.from_rc_graph"></a>
 
 #### from\_rc\_graph
 
@@ -305,7 +315,7 @@ Create a HPD from an RC graph.
 
 - `rc` - RCGraph instance
 
-<a id="schubmult.combinatorics.hpd.HPD.swap_rows"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.swap_rows"></a>
 
 #### swap\_rows
 
@@ -324,7 +334,7 @@ Swap a classic row with the row below it.
 
   New HPD with the specified rows swapped
 
-<a id="schubmult.combinatorics.hpd.HPD.pipe_source_labels"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.pipe_source_labels"></a>
 
 #### pipe\_source\_labels
 
@@ -352,7 +362,7 @@ Invariants:
 
   Dict with keys 'top', 'bottom', 'left', 'right' mapping to row labels or None
 
-<a id="schubmult.combinatorics.hpd.HPD.from_bruhat_path"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.from_bruhat_path"></a>
 
 #### from\_bruhat\_path
 
@@ -363,7 +373,7 @@ def from_bruhat_path(cls, path: Sequence[Permutation]) -> HPD
 
 Create a HPD from a Bruhat path.
 
-<a id="schubmult.combinatorics.hpd.HPD.row_from_k_chain"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.row_from_k_chain"></a>
 
 #### row\_from\_k\_chain
 
@@ -397,7 +407,7 @@ k-chain from u to w and constructs a row of n tiles based on that chain.
   - If chain swaps values a,b with a < c < b: BUMP (╬)
   - Otherwise: CROSS (■)
 
-<a id="schubmult.combinatorics.hpd.HPD.build"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.build"></a>
 
 #### build
 
@@ -407,7 +417,7 @@ def build() -> None
 
 Build internal structures by resolving TBD tiles using lookup table.
 
-<a id="schubmult.combinatorics.hpd.HPD.__len__"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.__len__"></a>
 
 #### \_\_len\_\_
 
@@ -417,7 +427,7 @@ def __len__() -> int
 
 Return the size n of the n×n grid
 
-<a id="schubmult.combinatorics.hpd.HPD.__getitem__"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.__getitem__"></a>
 
 #### \_\_getitem\_\_
 
@@ -427,7 +437,7 @@ def __getitem__(key) -> HPDTile | np.ndarray
 
 Access grid elements, casting to HPDTile
 
-<a id="schubmult.combinatorics.hpd.HPD.shiftup"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.shiftup"></a>
 
 #### shiftup
 
@@ -437,7 +447,7 @@ def shiftup(shift: int = 1) -> HPD
 
 Shift the HPD up by a given amount.
 
-<a id="schubmult.combinatorics.hpd.HPD.perm"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.perm"></a>
 
 #### perm
 
@@ -455,7 +465,7 @@ Pipes enter from the bottom (vertical) and left (horizontal).
 
   Permutation object
 
-<a id="schubmult.combinatorics.hpd.HPD.permutation"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.permutation"></a>
 
 #### permutation
 
@@ -466,7 +476,7 @@ def permutation() -> Permutation
 
 Alias for perm property
 
-<a id="schubmult.combinatorics.hpd.HPD.inv"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.inv"></a>
 
 #### inv
 
@@ -483,7 +493,7 @@ This is a convenience property that delegates to perm.inv.
 
   Number of inversions in the permutation
 
-<a id="schubmult.combinatorics.hpd.HPD.length_vector"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.length_vector"></a>
 
 #### length\_vector
 
@@ -503,7 +513,7 @@ of weighty tiles in row i. Which tiles are weighty depends on _id_vector[i]:
 
   Tuple of integers representing the length vector
 
-<a id="schubmult.combinatorics.hpd.HPD.from_asm"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.from_asm"></a>
 
 #### from\_asm
 
@@ -522,7 +532,7 @@ Create a HPD from an ASM (Alternating Sign Matrix).
 
   HPD object
 
-<a id="schubmult.combinatorics.hpd.HPD.weight"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.weight"></a>
 
 #### weight
 
@@ -540,7 +550,7 @@ of empty squares (0s) in column i.
 
   Tuple of integers representing the weight
 
-<a id="schubmult.combinatorics.hpd.HPD.word"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.word"></a>
 
 #### word
 
@@ -559,7 +569,7 @@ weakly northeast of the crossing minus 1. Weakly northeast means all positions
 
   Tuple of integers representing the reduced word (1-indexed positions)
 
-<a id="schubmult.combinatorics.hpd.HPD.set_width"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.set_width"></a>
 
 #### set\_width
 
@@ -569,7 +579,7 @@ def set_width(width)
 
 Set the width of the HPD by adding empty columns on the right if needed.
 
-<a id="schubmult.combinatorics.hpd.HPD.is_valid"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.is_valid"></a>
 
 #### is\_valid
 
@@ -584,7 +594,7 @@ Check if this is a valid bpd.
 
   True if valid, False otherwise
 
-<a id="schubmult.combinatorics.hpd.HPD.__eq__"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.__eq__"></a>
 
 #### \_\_eq\_\_
 
@@ -594,7 +604,7 @@ def __eq__(other: object) -> bool
 
 Check equality of two HPDs
 
-<a id="schubmult.combinatorics.hpd.HPD.__hash__"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.__hash__"></a>
 
 #### \_\_hash\_\_
 
@@ -604,7 +614,7 @@ def __hash__() -> int
 
 Hash for use in sets and dicts
 
-<a id="schubmult.combinatorics.hpd.HPD.copy"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.copy"></a>
 
 #### copy
 
@@ -614,7 +624,7 @@ def copy() -> HPD
 
 Create a copy of this HPD
 
-<a id="schubmult.combinatorics.hpd.HPD.num_crossings"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.num_crossings"></a>
 
 #### num\_crossings
 
@@ -625,7 +635,7 @@ def num_crossings() -> int
 
 Total number of crossings in the HPD
 
-<a id="schubmult.combinatorics.hpd.HPD.right_root_at"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.right_root_at"></a>
 
 #### right\_root\_at
 
@@ -646,7 +656,7 @@ The inversion is determined by tracing the pipes through the HPD.
 
   The inversion value as an integer
 
-<a id="schubmult.combinatorics.hpd.HPD.left_root_at"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.left_root_at"></a>
 
 #### left\_root\_at
 
@@ -667,7 +677,7 @@ The inversion is determined by tracing the pipes through the HPD.
 
   The inversion value as an integer
 
-<a id="schubmult.combinatorics.hpd.HPD.monk_insert"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.monk_insert"></a>
 
 #### monk\_insert
 
@@ -677,7 +687,7 @@ def monk_insert(row)
 
 RETURNS NORMALIZED
 
-<a id="schubmult.combinatorics.hpd.HPD.combine"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.combine"></a>
 
 #### combine
 
@@ -687,7 +697,7 @@ def combine(other, shift=None) -> HPD
 
 Shift the HPD up by adding empty rows at the bottom.
 
-<a id="schubmult.combinatorics.hpd.HPD.product"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.product"></a>
 
 #### product
 
@@ -697,7 +707,7 @@ def product(other: HPD) -> dict[HPD, int]
 
 Compute the product of this HPD with another.
 
-<a id="schubmult.combinatorics.hpd.HPD.prod_with_bpd"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.prod_with_bpd"></a>
 
 #### prod\_with\_bpd
 
@@ -707,7 +717,7 @@ def prod_with_bpd(other: HPD) -> HPD
 
 Deprecated: Use product() instead. Returns the single HPD from product dictionary.
 
-<a id="schubmult.combinatorics.hpd.HPD.rebuild"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.rebuild"></a>
 
 #### rebuild
 
@@ -717,7 +727,7 @@ def rebuild() -> None
 
 Rebuild the HPD to resolve any TBD tiles
 
-<a id="schubmult.combinatorics.hpd.HPD.snap_width"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.snap_width"></a>
 
 #### snap\_width
 
@@ -727,7 +737,7 @@ def snap_width() -> HPD
 
 Snap the width of the HPD to the length of its permutation.
 
-<a id="schubmult.combinatorics.hpd.HPD.polyvalue"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.polyvalue"></a>
 
 #### polyvalue
 
@@ -745,7 +755,7 @@ Compute the Schubert polynomial value for this HPD.
 - `y` - Optional second set of variables for double Schubert polynomial
 - ```**_kwargs``` - Additional keyword arguments for polynomial computation (unused)
 
-<a id="schubmult.combinatorics.hpd.HPD.to_rc_graph"></a>
+<a id="schubmult.combinatorics.experimental.hpd.HPD.to_rc_graph"></a>
 
 #### to\_rc\_graph
 

@@ -1,11 +1,11 @@
-<a id="schubmult.combinatorics.chute_move_element"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element"></a>
 
-# schubmult.combinatorics.chute\_move\_element
+# schubmult.combinatorics.experimental.chute\_move\_element
 
-Chute moves on RC graphs: a marked-row wrapper tracking a before/after pair of RC graphs
+Experimental chute moves on RC graphs: a marked-row wrapper tracking a before/after pair of RC graphs
 related by simultaneous chute moves on a chosen set of non-adjacent rows.
 
-<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element.ChuteMoveElement"></a>
 
 ## ChuteMoveElement Objects
 
@@ -20,7 +20,7 @@ off the row's end down into the first available gap in the row below,
 raising ``ValueError`` if no valid chute move exists. Stores the pair
 ``(original, moved)`` RC graphs.
 
-<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.product"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element.ChuteMoveElement.product"></a>
 
 #### product
 
@@ -30,7 +30,7 @@ def product(other)
 
 Stack ``self`` above ``other`` (via the underlying RC graph product) and combine their marked rows.
 
-<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.chute_degree"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element.ChuteMoveElement.chute_degree"></a>
 
 #### chute\_degree
 
@@ -41,7 +41,7 @@ def chute_degree()
 
 Number of marked rows (simultaneous chute moves applied).
 
-<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.chute_move_rows"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element.ChuteMoveElement.chute_move_rows"></a>
 
 #### chute\_move\_rows
 
@@ -52,7 +52,7 @@ def chute_move_rows()
 
 The set of marked row indices.
 
-<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.cols"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element.ChuteMoveElement.cols"></a>
 
 #### cols
 
@@ -63,7 +63,7 @@ def cols()
 
 Number of columns of the underlying RC graph.
 
-<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.rows"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element.ChuteMoveElement.rows"></a>
 
 #### rows
 
@@ -74,7 +74,7 @@ def rows()
 
 Number of rows of the underlying RC graph.
 
-<a id="schubmult.combinatorics.chute_move_element.ChuteMoveElement.print_element"></a>
+<a id="schubmult.combinatorics.experimental.chute_move_element.ChuteMoveElement.print_element"></a>
 
 #### print\_element
 

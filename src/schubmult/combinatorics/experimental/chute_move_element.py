@@ -1,4 +1,4 @@
-"""Chute moves on RC graphs: a marked-row wrapper tracking a before/after pair of RC graphs
+"""Experimental chute moves on RC graphs: a marked-row wrapper tracking a before/after pair of RC graphs
 related by simultaneous chute moves on a chosen set of non-adjacent rows.
 """
 

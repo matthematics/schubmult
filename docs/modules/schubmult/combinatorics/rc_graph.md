@@ -620,6 +620,12 @@ def edelman_greene() -> tuple[NilPlactic, Plactic]
 Edelman-Greene correspondence: insert the inversions (in reverse reading order) to build the
 ``(P, Q)`` pair of a nilCoxeter tableau and a plactic recording tableau.
 
+Not implemented: the original body (kept below) calls ``NilPlactic.ed_insert_rsk`` with the
+four-argument signature of the private ``_ed_insert_rsk``, so it always raised ``TypeError``.
+``p_tableau``, ``q_tableau`` and ``shape`` depend on it.  See the experimental
+`schubmult.combinatorics.experimental.root_tableau.RootTableau.from_rc_graph`
+for the tableau data of an RC graph.
+
 <a id="schubmult.combinatorics.rc_graph.RCGraph.__mul__"></a>
 
 #### \_\_mul\_\_

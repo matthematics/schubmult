@@ -1,4 +1,4 @@
-"""`RootTableau`: root-labeled tableaux implementing dual Knuth equivalence via JDT
+"""Experimental `RootTableau`: root-labeled tableaux implementing dual Knuth equivalence via JDT
 (jeu-de-taquin) slides, with the Edelman-Greene invariant preserved by the crystal operators.
 """
 
@@ -12,11 +12,11 @@ import numpy as np
 from schubmult.symbolic import pretty_print  # noqa: F401
 from schubmult.utils._grid_print import GridPrint
 
-from .crystal_graph import CrystalGraph
-from .nilplactic import NilPlactic
-from .permutation import Permutation
-from .plactic import Plactic
-from .rc_graph import RCGraph
+from ..crystal_graph import CrystalGraph
+from ..nilplactic import NilPlactic
+from ..permutation import Permutation
+from ..plactic import Plactic
+from ..rc_graph import RCGraph
 
 # specific skew tableaux
 # subword
