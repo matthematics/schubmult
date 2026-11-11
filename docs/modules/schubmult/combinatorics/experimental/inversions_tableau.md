@@ -1,11 +1,11 @@
-<a id="schubmult.combinatorics.inversions_tableau"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau"></a>
 
-# schubmult.combinatorics.inversions\_tableau
+# schubmult.combinatorics.experimental.inversions\_tableau
 
-Inversions tableaux: a root -> label-set assignment on the positive roots ``(i, j)``
+Experimental inversions tableaux: a root -> label-set assignment on the positive roots ``(i, j)``
 (``i < j``) of a permutation, generalizing RC/WC graphs to a set-valued labeling.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau"></a>
 
 ## InversionsTableau Objects
 
@@ -17,7 +17,7 @@ A dict-like assignment of label sets to roots ``(i, j)`` of a permutation, satis
 three axioms checked by `is_valid`. Build via the constructor (dict of root -> int-or-set),
 `from_rc_graph`, or `from_wc_graph`; convert back via `to_rc_graph`/`to_wc_graph`.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.__init__"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -27,7 +27,7 @@ def __init__(_dict, *_, **__)
 
 Build from a mapping ``{(i, j): label_or_label_set}`` (roots to integer or set/frozenset labels).
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.iter_keys"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.iter_keys"></a>
 
 #### iter\_keys
 
@@ -37,7 +37,7 @@ def iter_keys(reverse=False)
 
 Iterates in word order
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.iter_items"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.iter_items"></a>
 
 #### iter\_items
 
@@ -47,7 +47,7 @@ def iter_items(reverse=False)
 
 Iterates in word order
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.from_rc_graph"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.from_rc_graph"></a>
 
 #### from\_rc\_graph
 
@@ -58,7 +58,7 @@ def from_rc_graph(cls, rc)
 
 Build from an `RCGraph`: each left-to-right inversion root gets the row it's crossed at as its label.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.from_wc_graph"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.from_wc_graph"></a>
 
 #### from\_wc\_graph
 
@@ -70,7 +70,7 @@ def from_wc_graph(cls, wc)
 Build from a `WCGraph`: replays its perm word/compatible sequence, tracking transported
 roots and accumulating labels at each simple-root position.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.perm_word"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.perm_word"></a>
 
 #### perm\_word
 
@@ -82,7 +82,7 @@ def perm_word()
 A (not necessarily reduced) word recovering the tableau's permutation, built by repeatedly
 peeling the largest label off a simple root and transporting the remaining roots.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.is_valid"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.is_valid"></a>
 
 #### is\_valid
 
@@ -96,7 +96,7 @@ Whether the root/label assignment satisfies the three defining axioms:
 index have disjoint label sets, and (3) the label sets of ``(i,j)``, ``(j,k)``, ``(i,k)``
 interleave consistently whenever all three roots are present.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.set_leq"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.set_leq"></a>
 
 #### set\_leq
 
@@ -107,7 +107,7 @@ def set_leq(set1, set2)
 
 Check if set1 <= set2, i.e. max(set1) <= min(set2).
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.set_lt"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.set_lt"></a>
 
 #### set\_lt
 
@@ -118,7 +118,7 @@ def set_lt(set1, set2)
 
 Check if set1 < set2, i.e. max(set1) < min(set2).
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.all_set_valued_inversions_tableaux"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.all_set_valued_inversions_tableaux"></a>
 
 #### all\_set\_valued\_inversions\_tableaux
 
@@ -135,7 +135,7 @@ filters by validity and target permutation.
 
 The optional ``max_value`` bounds all labels by ``{1, ..., max_value}``.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.perm"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.perm"></a>
 
 #### perm
 
@@ -146,7 +146,7 @@ def perm()
 
 The permutation recovered from `perm_word` via the 0-Hecke (Demazure) product.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.compatible_sequence"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.compatible_sequence"></a>
 
 #### compatible\_sequence
 
@@ -158,7 +158,7 @@ def compatible_sequence()
 The compatible sequence paired with `perm_word`: labels in weakly increasing order,
 each repeated by the size of its label set.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.is_reduced"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.is_reduced"></a>
 
 #### is\_reduced
 
@@ -169,7 +169,7 @@ def is_reduced()
 
 Whether ``perm_word`` is a reduced word for ``perm``.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.reduced_word"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.reduced_word"></a>
 
 #### reduced\_word
 
@@ -181,7 +181,7 @@ def reduced_word()
 A reduced word for ``perm``, obtained from ``perm_word`` by dropping non-ascending steps
 and folding their compatible-sequence entries into the surviving root's label set.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.is_set_valued"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.is_set_valued"></a>
 
 #### is\_set\_valued
 
@@ -192,7 +192,7 @@ def is_set_valued()
 
 Whether any root has more than a single label (a genuinely set-valued tableau).
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.to_rc_graph"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.to_rc_graph"></a>
 
 #### to\_rc\_graph
 
@@ -202,7 +202,7 @@ def to_rc_graph(length=None)
 
 Convert a reduced (non-set-valued) tableau to an `RCGraph` via ``RCGraph.from_reduced_compatible``.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.to_wc_graph"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.to_wc_graph"></a>
 
 #### to\_wc\_graph
 
@@ -212,7 +212,7 @@ def to_wc_graph(length=None)
 
 Convert to a `WCGraph` built directly from the root/label-set dictionary.
 
-<a id="schubmult.combinatorics.inversions_tableau.InversionsTableau.polyvalue"></a>
+<a id="schubmult.combinatorics.experimental.inversions_tableau.InversionsTableau.polyvalue"></a>
 
 #### polyvalue
 

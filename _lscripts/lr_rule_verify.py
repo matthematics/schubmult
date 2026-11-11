@@ -89,7 +89,8 @@ def safe_load_recording(filename):
 def worker(nn, shared_recording_dict, lock, task_queue, y, z):  # noqa: ARG001
     import sympy
 
-    from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx  # noqa: F401
+    from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, SchubertBasis, Sx  # noqa: F401
+    from schubmult.combinatorics.experimental.root_tableau import RootTableau  # noqa: F401
 
     
     while True:
@@ -324,7 +325,8 @@ def queue_producer(task_queue, perms, n, num_processors, skip_id, irreducible, b
     
 
 def main():
-    from schubmult import DSx, Permutation, RCGraph, RootTableau, Sx, uncode  # noqa: F401
+    from schubmult import DSx, Permutation, RCGraph, Sx, uncode  # noqa: F401
+    from schubmult.combinatorics.experimental.root_tableau import RootTableau  # noqa: F401
 
     parser = argparse.ArgumentParser(description="LR rule verification")
     parser.add_argument("n", type=int)

@@ -6,6 +6,7 @@ from prompt_toolkit.shortcuts import PromptSession
 from sympy import pretty_print
 
 from schubmult import *
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
 # Define a history file for storing past commands
 history_file = os.path.expanduser('~/.schubert_shell_history')
@@ -77,4 +78,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

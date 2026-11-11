@@ -28,8 +28,8 @@ import pytest
 
 import schubmult
 
-# Mirrors the package's own scan in schubmult/__init__.py. _scripts is research
-# code that the top-level __getattr__ deliberately tolerates failures from.
+# Import isolation includes the experimental package even though top-level
+# discovery excludes it. _scripts is separately maintained research code.
 _SKIPPED_DIRS = {"__pycache__", "tests", "docs", "scripts", "build", "_scripts"}
 
 # Top-level module names provided by [project.optional-dependencies]. A module
@@ -51,6 +51,7 @@ def _missing_optional_dependency(message):
 # Subpackages that declare a public surface via __all__.
 _SUBPACKAGES = [
     "schubmult.combinatorics",
+    "schubmult.combinatorics.experimental",
     "schubmult.mult",
     "schubmult.rings",
     "schubmult.rings.combinatorial",
@@ -146,8 +147,8 @@ def test_subpackage_export_resolves(package, name):
 def test_discovered_names_resolve():
     """Names reachable by attribute access must not raise.
 
-    The AST fallback in __getattr__ advertises every public class in every
-    module, including modules that cannot be imported. Such a name appears in
+    The AST fallback in __getattr__ advertises public names in non-experimental
+    modules, including modules that cannot be imported. Such a name appears in
     dir(schubmult) and fails only when accessed.
     """
     schubmult._scan_modules()

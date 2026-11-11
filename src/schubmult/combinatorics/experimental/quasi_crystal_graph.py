@@ -1,4 +1,4 @@
-"""Quasi-crystal variant of `CrystalGraph`: raising/lowering operators (``quasi_raising_operator``/
+"""Experimental quasi-crystal variant of `CrystalGraph`: raising/lowering operators (``quasi_raising_operator``/
 ``quasi_lowering_operator``) that may be undefined even mid-string, used where the standard
 crystal axioms only hold up to the extra ``ep[-2][0] > 0 and ep[-1][1] > 0`` obstruction
 checked in `QuasiCrystalGraphTensor`.
@@ -6,7 +6,7 @@ checked in `QuasiCrystalGraphTensor`.
 
 from itertools import zip_longest
 
-from .crystal_graph import CrystalGraph
+from ..crystal_graph import CrystalGraph
 
 
 class QuasiCrystalGraph(CrystalGraph):

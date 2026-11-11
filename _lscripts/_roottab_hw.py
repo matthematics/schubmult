@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, "/home/matthematics/schubmult/_lscripts")
 from itertools import permutations
 from schubmult import Permutation, RCGraph
-from schubmult.combinatorics.root_tableau import RootTableau
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
 from _lb_common import maxd, rroot
 
 def is_hw(T, p):

@@ -1,13 +1,13 @@
-"""Inversions tableaux: a root -> label-set assignment on the positive roots ``(i, j)``
+"""Experimental inversions tableaux: a root -> label-set assignment on the positive roots ``(i, j)``
 (``i < j``) of a permutation, generalizing RC/WC graphs to a set-valued labeling.
 """
 
 from functools import cached_property
 from itertools import combinations
 
-from .permutation import Permutation
-from .rc_graph import RCGraph
-from .wc_graph import WCGraph
+from ..permutation import Permutation
+from ..rc_graph import RCGraph
+from ..wc_graph import WCGraph
 
 
 def _is_compatible(compat_seq, word):

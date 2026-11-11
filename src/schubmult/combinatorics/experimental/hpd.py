@@ -1,5 +1,5 @@
 """
-Hybrid pipe dreams (HPD) -- EXPERIMENTAL, currently unmaintained.
+Hybrid pipe dreams (HPD) -- experimental and incomplete.
 
 Hybrid pipe dreams (Knutson--Udell, "Interpolating between classic and bumpless pipe dreams")
 interpolate between classic pipe dreams and bumpless pipe dreams: each row is declared either
@@ -9,8 +9,8 @@ the corresponding convention row by row.  All-zero ``id_vector`` recovers a clas
 
 Development stopped partway through the port from `BPD`: the constructor requires ``id_vector``, but
 ``delete_row``, ``append``, ``from_bruhat_path``, ``shiftup``, ``rothe_bpd``, ``resize``, and
-``right_zero_act`` still construct ``HPD(grid)`` without it and raise ``TypeError``.  Nothing in the
-package or the test suite depends on this module; it is kept for possible future work.
+``right_zero_act`` still construct ``HPD(grid)`` without it and raise ``TypeError``.  The module is
+kept in the experimental namespace for possible future work.
 """
 
 from __future__ import annotations

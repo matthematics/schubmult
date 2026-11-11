@@ -15,7 +15,7 @@ except ImportError:
 """
 Top-level schubmult package initializer.
 
-Lazily import and re-export public classes defined in submodules.
+Lazily import and re-export public classes defined in non-experimental submodules.
 Uses deferred AST scanning - only scans files when __dir__() or an unknown
 attribute is accessed for the first time.
 """
@@ -31,13 +31,10 @@ _lazy_exports = {
     "BoundedRCFactorAlgebra": "schubmult.rings.combinatorial.bounded_rc_factor_algebra",
     "BoundedWCFactorAlgebra": "schubmult.rings.combinatorial.bounded_wc_factor_algebra",
     "ThompsonAlgebra": "schubmult.rings.thompson_algebra",
-    "ChuteMoveElement": "schubmult.combinatorics.chute_move_element",
     "ChuteMoveRing": "schubmult.rings.combinatorial.chute_move_ring",
     "BPD": "schubmult.combinatorics.bpd",
     "ForestRCGraphRing": "schubmult.rings.combinatorial.forest_rc_ring",
     "TileType": "schubmult.combinatorics.bpd",
-    "HPD": "schubmult.combinatorics.hpd",
-    "HPDTile": "schubmult.combinatorics.hpd",
     # Rings
     "Gx": "schubmult.rings.schubert.grothendieck_ring",
     "DGx": "schubmult.rings.schubert.double_grothendieck_ring",
@@ -55,7 +52,6 @@ _lazy_exports = {
     "PipeDream": "schubmult.combinatorics.pipe_dream",
     "IncreasingTableau": "schubmult.combinatorics.increasing_tableau",
     "SetValuedTableau": "schubmult.combinatorics.set_valued_tableau",
-    "HeckePlactic": "schubmult.combinatorics.hecke_plactic",
     "DualRCGraphRing": "schubmult.rings.combinatorial.dual_rc_graph_ring",
     "ForestDual": "schubmult.rings.free_algebra.forest_basis",
     "ForestBasis": "schubmult.rings.free_algebra.forest_basis",
@@ -94,7 +90,6 @@ _lazy_exports = {
     "ChangeOfVariables": "schubmult.symbolic.poly.variables",
     "pull_out_var": "schubmult.utils.schub_lib",
     # Crystal structures
-    "RootTableau": "schubmult.combinatorics.root_tableau",
     "Plactic": "schubmult.combinatorics.plactic",
     "NilPlactic": "schubmult.combinatorics.nilplactic",
     "NilPlacticAlgebra": "schubmult.rings.combinatorial.plactic_algebra",
@@ -129,9 +124,12 @@ def _scan_modules():
     _scanned = True
 
     _skipped_dirs = {"__pycache__", "tests", "docs", "scripts", "build", "_scripts"}
+    experimental_root = _package_root / "combinatorics" / "experimental"
 
     for py in _package_root.rglob("*.py"):
         if py.samefile(Path(__file__)):
+            continue
+        if experimental_root in py.parents:
             continue
         if any(part in _skipped_dirs for part in py.parts):
             continue
