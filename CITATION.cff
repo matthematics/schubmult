@@ -5,7 +5,7 @@ abstract: "Fast Schubert calculus in Python: Littlewood-Richardson coefficients,
 type: software
 authors:
   - family-names: Samuel
-    given-names: Matt
+    given-names: Matthew J.
 repository-code: "https://github.com/matthematics/schubmult"
 url: "https://matthematics.github.io/schubmult/"
 license: GPL-3.0-or-later
@@ -18,13 +18,13 @@ keywords:
 
 # arXiv preprint template: replace every XXXX.XXXXX, <PAPER_TITLE>, and <YEAR>, then uncomment.
 # GitHub's "Cite this repository" button will then show the preprint as the preferred citation.
-# preferred-citation:
-#   type: article
-#   authors:
-#     - family-names: Samuel
-#       given-names: Matt
-#   title: "<PAPER_TITLE>"
-#   year: <YEAR>
-#   journal: "arXiv preprint arXiv:XXXX.XXXXX"
-#   doi: 10.48550/arXiv.XXXX.XXXXX
-#   url: "https://arxiv.org/abs/XXXX.XXXXX"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Samuel
+      given-names: Matthew J.
+  title: "schubmult: Symbolic algorithms and input-sensitive bounds for Schubert multiplication"
+  year: 2026
+  journal: "arXiv preprint arXiv:2611.14743"
+  doi: 10.48550/arXiv.2611.14743
+  url: "https://arxiv.org/abs/2611.14743"
