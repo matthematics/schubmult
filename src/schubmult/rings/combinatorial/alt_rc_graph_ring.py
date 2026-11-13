@@ -506,7 +506,8 @@ class AltRCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         # INSERTION WEIGHT TABLEAU
         # from symengine import S
 
-        from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
+        from schubmult import CrystalGraphTensor, Plactic, Sx
+        from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
         # from .schubert.schubert_ring import DSx
         # from .variables import GeneratingSet

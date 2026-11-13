@@ -1,4 +1,5 @@
 from schubmult import *
+from schubmult.combinatorics.experimental.hpd import HPD, HPDTile
 import numpy as np
 
 if __name__ == "__main__":

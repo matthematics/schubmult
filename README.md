@@ -10,6 +10,8 @@
 
 **Documentation:** <https://matthematics.github.io/schubmult/>
 
+**Citation:** [How to cite](#how-to-cite)
+
 ---
 
 ## Installation
@@ -89,6 +91,30 @@ polynomial expansion; `QDGx(w, "0")` uses the zero coefficient alphabet. The rin
 conversion and coproducts are not implemented. Products retain permutations outside any chosen
 finite symmetric group; a finite-flag comparison must handle those separately.
 
+### Paper examples: equivariant quantum K-theory
+
+[examples/duan_khlaif_zou_qk.py](examples/duan_khlaif_zou_qk.py) computes all 156 distinct
+explicit equivariant Schubert-class products in [Duan--Khlaif--Zou, arXiv:2606.15261v2](https://arxiv.org/abs/2606.15261v2):
+Table 3.2 (Fl(3)), Appendix A.1 (Fl(4)), Appendix A.2 (Fl(1,3;4)), and Appendix A.3 (Fl(1,2;4)).
+The script records printed page references and notes the repeated product in A.2 and the
+omitted equivariant square in A.3. It generates new answers, rather than automatically comparing
+against the paper's printed right-hand sides.
+
+```bash
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --list
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --example fl4-04
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --section fl134
+PYTHONPATH=src python examples/duan_khlaif_zou_qk.py --tex --output products.tex
+```
+
+It uses `QuantumDoubleGrothendieckRing` at `beta=-1` with `ChangeOfVariables` implementing
+`z_i -> 1-1/y_i`, the paper's multiplicative equivariant-character convention. Finite-flag
+projection removes stable terms outside `S_n`; partial flags additionally use the existing
+Kato projection, with consecutive quantum-parameter indices. TeX output is a standalone
+document using `\widetilde{\mathfrak{G}}_w(x;y)`. Add `--non-equivariant` to specialize the
+selected products at `y_i=1`. The underlying equivariant quantum K-Pieri multiplication
+rule remains conjectural.
+
 ### Generating sets
 
 `GeneratingSet("x")` supports any nonnegative index, including indices above 100.
@@ -121,7 +147,16 @@ grothmult_py 2 1 3 - 2 1 3                         # Grothendieck
 grothmult_double 2 1 3 - 2 1 3                     # double Grothendieck (coefficients in y and β)
 grothmult_q 2 1 - 2 1                              # quantum Grothendieck (conjectural quantum K-Pieri rule; coefficients in q and β)
 grothmult_q_double 2 1 - 2 1 --mixed-var           # quantum double Grothendieck (coefficients in y, z, q and β)
+grothmult_q_double 2 1 - 2 1 --multiplicative-variables --simplify  # beta=-1, coordinates 1-1/y_i
 ```
+
+Both `grothmult_double` and `grothmult_q_double` support
+`--multiplicative-variables`: this uses `ChangeOfVariables` to calculate with
+`1-1/y_i` coefficient coordinates and fixes `beta=-1`. With `--mixed-var`, the
+second coefficient alphabet is also changed to `1-1/z_i`. Explicit
+`--beta=-1` is allowed; other beta values and `--display-positive` conflict
+with this mode and are rejected. Add `--simplify` to cancel the rational
+coefficients. Without the flag, the existing conventions are unchanged.
 
 `--display-positive` writes double and quantum double coefficients as manifestly positive expressions in the differences `y_i - z_j` (Graham positivity), using integer programming to find a positive representative. Run any script with `--help` for the full option list.
 
@@ -135,8 +170,8 @@ The `schubmult.combinatorics` package provides the objects that index Schubert c
 - **`Permutation`** -- one-line notation, Lehmer codes (`uncode`), reduced words, Bruhat order, descents, dominant/Grassmannian tests.
 - **`RCGraph`** -- reduced compatible sequences / pipe dreams, with enumeration (`RCGraph.all_rc_graphs(w, n)`), Kashiwara crystal operators (`raising_operator(i)`, `lowering_operator(i)`), Edelman-Greene insertion, and the crystal products used in the transition formulas.
 - **`BPD`** -- bumpless pipe dreams with droop moves, the Gao-Huang bijection to RC graphs (`BPD.from_rc_graph`, `.to_rc_graph()`), and marked/unreduced variants for Grothendieck polynomials.
-- **`WCGraph`**, **`PipeDream`**, **`HPD`** -- K-theoretic and hybrid pipe dream models.
-- **Tableaux** -- `Plactic` (semistandard, jeu de taquin), `NilPlactic` (Edelman-Greene), `RootTableau`, `IncreasingTableau`, `SetValuedTableau`, `HeckePlactic`.
+- **`WCGraph`**, **`PipeDream`** -- K-theoretic pipe dream models.
+- **Tableaux** -- `Plactic` (semistandard, jeu de taquin), `NilPlactic` (Edelman-Greene), `IncreasingTableau`, and `SetValuedTableau`.
 - **Forests** -- indexed forests and the Thompson monoid factorization behind the forest and grove bases.
 
 ```python
@@ -151,6 +186,33 @@ rc.lowering_operator(1)                  # crystal operator f_1 (None when undef
 bpd = BPD.from_rc_graph(rc)              # Gao-Huang bijection
 assert bpd.to_rc_graph() == rc
 ```
+
+### Experimental combinatorics
+
+The `schubmult.combinatorics.experimental` namespace contains exploratory
+implementations that may be incomplete or incorrect:
+
+| Module | Main objects |
+| --- | --- |
+| `chute_move_element` | `ChuteMoveElement` |
+| `hecke_plactic` | `HeckePlactic` |
+| `hpd` | `HPD`, `HPDTile` |
+| `inversions_tableau` | `InversionsTableau` |
+| `quasi_crystal_graph` | `QuasiCrystalGraph`, `QuasiCrystalGraphTensor` |
+| `root_tableau` | `RootTableau` |
+
+These objects can be imported from the experimental namespace or their
+individual modules:
+
+```python
+from schubmult.combinatorics.experimental import HPD
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
+```
+
+The former `schubmult.combinatorics.<module>` paths and top-level
+`schubmult` exports for these objects are no longer provided.
+Pickles referencing the former module paths will not load without migration.
+`ChuteMoveRing` remains available, but its basis uses `ChuteMoveElement`.
 
 ## Rings and algebras
 
@@ -220,6 +282,51 @@ pytest
 ```
 
 Tests live in `tests/`; the script tests compare CLI output against stored JSON cases in `tests/scripts/data`. `ruff check src/schubmult` should pass.
+
+## How to cite
+
+If you use `schubmult` in your research, please cite the software and, once available,
+the accompanying preprint. Include the version number (or Git commit hash for a
+development checkout) used for your computations.
+
+On GitHub, the **Cite this repository** button in the repository sidebar gives
+APA and BibTeX citations generated from [CITATION.cff](CITATION.cff).
+
+### Software
+
+Use this BibTeX template, replacing `<YEAR>` with the year of the cited release or
+commit and `<VERSION_OR_COMMIT>` with the version number or commit hash you used:
+
+```bibtex
+@misc{schubmult,
+  author = {Samuel, Matt},
+  title  = {{schubmult}},
+  year   = {<YEAR>},
+  url    = {https://github.com/matthematics/schubmult},
+  note   = {Version <VERSION_OR_COMMIT>}
+}
+```
+
+### Preprint (template)
+
+**arXiv link:** `<ARXIV_URL>`
+
+The preprint citation is not yet filled in. Replace the placeholders below with
+the paper's authors, title, year, arXiv identifier, and URL before citing it, or
+paste the BibTeX entry exported by arXiv. Also fill in and uncomment the
+`preferred-citation` block in [CITATION.cff](CITATION.cff). The software citation
+above can be used in the meantime.
+
+```bibtex
+@misc{schubmult_paper,
+  author        = {<AUTHORS>},
+  title         = {<PAPER_TITLE>},
+  year          = {<YEAR>},
+  eprint        = {<ARXIV_ID>},
+  archivePrefix = {arXiv},
+  url           = {<ARXIV_URL>}
+}
+```
 
 ## License
 

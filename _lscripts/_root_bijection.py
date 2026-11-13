@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, "/home/matthematics/schubmult/_lscripts")
 from itertools import permutations
 from schubmult import Permutation, RCGraph
-from schubmult.combinatorics.inversions_tableau import InversionsTableau
+from schubmult.combinatorics.experimental.inversions_tableau import InversionsTableau
 from _lb_common import maxd
 from collections import Counter, defaultdict
 

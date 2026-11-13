@@ -7,7 +7,8 @@ from itertools import zip_longest
 import sympy
 from sympy import pretty_print
 
-from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
+from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, RCGraph, RCGraphRing, SchubertBasis, Sx
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
 
 def all_reduced_subwords(reduced_word, u):
@@ -133,5 +134,4 @@ if __name__ == "__main__":
             print("and")
             pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
             pretty_print(sm)
-
 

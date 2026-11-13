@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
 
     from schubmult import *
+    from schubmult.combinatorics.experimental.root_tableau import RootTableau
     from sympy import pretty_print
     import sys
 

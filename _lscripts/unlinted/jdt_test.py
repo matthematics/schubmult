@@ -16,7 +16,8 @@ from typing import Any, List, Optional, Sequence, Tuple
 import numpy as np
 from sympy import pretty_print
 
-from schubmult import Permutation, RCGraph, RootTableau
+from schubmult import Permutation, RCGraph
+from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
 Seed = 12345
 random.seed(Seed)

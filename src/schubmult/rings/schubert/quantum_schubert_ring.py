@@ -7,8 +7,6 @@ parabolic quantum rings (``QDSx``, ``QPSx``, ``QPDSx``) for convenience.
 
 from functools import cache
 
-import schubmult.mult.quantum as py
-import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert.schubert_ring as spr
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Add, Mul, Pow, S, sympify
@@ -34,11 +32,12 @@ from .quantum_double_schubert_ring import (
 class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     """The ring of quantum Schubert polynomials ``S^q_w(x)``; ``QSx`` is the standard instance."""
 
-    def __init__(cls, genset):
-        super().__init__(genset, poly_genset(0))
+    def __init__(self, genset, q_var=q_var):
+        """Use ``q_var`` as the quantum alphabet (default: ``GeneratingSet("q")``)."""
+        super().__init__(genset, poly_genset(0), q_var=q_var)
 
     def __hash__(self):
-        return hash((self.genset, self.coeff_genset, "QBS"))
+        return hash((self.genset, self.coeff_genset, self.q_var, "QBS"))
 
     def quantize(self, poly):
         """Quantize a polynomial: expand in classical Schubert polynomials, reinterpret each ``S_w`` as
@@ -54,7 +53,7 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         if other.ring == self:
             return other
         if type(other.ring) is QuantumDoubleSchubertRing:
-            if self.genset == other.ring.genset:
+            if self.genset == other.ring.genset and self.q_var == other.ring.q_var:
                 return other
         return None
 
@@ -62,8 +61,8 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     def cached_product(self, u, v, basis2):
         """Structure constants: ``schubmult_q_fast`` when ``basis2`` is this ring, else ``schubmult_q_double_fast``."""
         if self == basis2:
-            return py.schubmult_q_fast({u: S.One}, v)
-        return yz.schubmult_q_double_fast({u: S.One}, v, self.coeff_genset, basis2.coeff_genset)
+            return self.single_mul({u: S.One}, v)
+        return self.double_mul({u: S.One}, v, self.coeff_genset, basis2.coeff_genset)
 
     @cache
     def cached_positive_product(self, u, v, basis2):
@@ -80,7 +79,7 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         _Pow = Pow
         ind = self.genset.index(x)
         if ind != -1:
-            return self.from_dict(py.mult_poly_q(elem, x, self.genset))
+            return self.from_dict(self.mult_poly_single(elem, x, self.genset))
         if isinstance(x, _Add):
             return self.sum([self.mul_expr(elem, arg) for arg in x.args])
         if isinstance(x, _Mul):
@@ -107,10 +106,10 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         elif isinstance(x, Permutation):
             elem = self.from_dict({x: self.domain.one})
         elif isinstance(x, spr.DoubleSchubertElement):
-            if x.genset == self.genset:
-                return x.as_quantum()
+            if x.ring.genset == self.genset:
+                return self.from_expr(x.as_polynomial())
         elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
-            return x.as_quantum()
+            return self.from_expr(x.as_polynomial())
         else:
             elem = self.from_expr(x)
         return elem

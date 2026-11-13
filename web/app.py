@@ -269,7 +269,8 @@ def _tokenize(s: str) -> list[str]:
 
 def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
                 display_positive: bool, mixed_var: bool, parabolic: str | None,
-                mult: str | None, simplify: bool = False, probabilistic: bool = False) -> list[str]:
+                mult: str | None, simplify: bool = False, probabilistic: bool = False,
+                multiplicative_variables: bool = False) -> list[str]:
     """Build sys.argv-like list to pass to the script's main(). Validates input."""
     argv: list[str] = [prog]
     tokens = _tokenize(perms_raw)
@@ -338,6 +339,10 @@ def _build_argv(prog: str, perms_raw: str, *, ascode: bool, coprod: bool,
         argv.append("--mixed-var")
     if simplify:
         argv.append("--simplify")
+    if multiplicative_variables:
+        if prog not in ("grothmult_double", "grothmult_q_double"):
+            raise ValueError("--multiplicative-variables is only available for double Grothendieck flavors.")
+        argv.append("--multiplicative-variables")
     if probabilistic:
         argv.append("--probabilistic")
     # Validate parabolic but do NOT append it yet; --parabolic uses nargs="+" and
@@ -536,7 +541,12 @@ def compute():
     mult = (data.get("mult") or "").strip() or None
     simplify = bool(data.get("simplify", False))
     probabilistic = bool(data.get("probabilistic", False))
+    multiplicative_variables = data.get("multiplicative_variables", False)
     download = data.get("download", False)
+
+    if not isinstance(multiplicative_variables, bool):
+        _log_access(str(flavor), None, status="reject", error="multiplicative_variables must be a boolean")
+        return jsonify({"ok": False, "error": "multiplicative_variables must be a boolean"}), 400
 
     if not isinstance(download, bool):
         _log_access(str(flavor), None, status="reject", error="download must be a boolean")
@@ -549,6 +559,7 @@ def compute():
     # drop options the flavor does not support (the frontend greys them out too)
     if flavor not in ("groth_double", "groth_q_double"):
         simplify = False
+        multiplicative_variables = False
     if flavor not in ("double", "q_double"):
         probabilistic = False
     if flavor == "py":
@@ -588,7 +599,8 @@ def compute():
         argv = _build_argv(prog, perms_raw, ascode=ascode, coprod=coprod,
                            display_positive=display_positive,
                            mixed_var=mixed_var, parabolic=parabolic, mult=mult,
-                           simplify=simplify, probabilistic=probabilistic)
+                           simplify=simplify, probabilistic=probabilistic,
+                           multiplicative_variables=multiplicative_variables)
     except ValueError as e:
         _log_access(flavor, None, status="reject", error=str(e))
         return jsonify({"ok": False, "error": str(e)}), 400

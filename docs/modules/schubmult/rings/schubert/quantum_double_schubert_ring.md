@@ -5,8 +5,8 @@
 Quantum double Schubert polynomial ring: the ``QDSx`` interface.
 
 `QuantumDoubleSchubertRing` represents quantum double Schubert polynomials
-``S^q_w(x; y)`` with quantum parameters ``q_1, q_2, ...`` (the module-level
-``q_var``), dispatching products to `schubmult.mult.quantum_double`. Elements
+``S^q_w(x; y)`` with quantum parameters from a configurable generating set
+(defaulting to the module-level ``q_var``), dispatching products to `schubmult.mult.quantum_double`. Elements
 can be converted to/from the classical basis via ``as_classical``/``as_quantum``.
 
 <a id="schubmult.rings.schubert.quantum_double_schubert_ring.is_fact_elem_sym"></a>
@@ -37,7 +37,7 @@ An element of a `QuantumDoubleSchubertRing`: ``{Permutation: coeff}`` in the bas
 def subs(old, new)
 ```
 
-Substitute by round-tripping through the classical basis.
+Substitute in the polynomial, retaining this ring's quantum alphabet.
 
 <a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing"></a>
 
@@ -48,6 +48,12 @@ class QuantumDoubleSchubertRing(BaseSchubertRing)
 ```
 
 The ring of quantum double Schubert polynomials; ``QDSx`` is the standard constructor.
+
+Construct with ``QuantumDoubleSchubertRing(genset, coeff_genset, q_var=GeneratingSet("t"))``
+to use ``t_1, t_2, ...`` instead of the default ``q_1, q_2, ...``. The read-only
+``ring.q_var`` property exposes this alphabet. Multiplication, polynomial expansion,
+and classical-basis conversion all use it. The quantum alphabet participates in
+ring equality and hashing, keeping cached computations for different alphabets separate.
 
 <a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.printing_term"></a>
 
@@ -68,7 +74,7 @@ The ``QDSchubPoly`` display symbol for basis element ``k``.
 def symbol_elem_func()
 ```
 
-`QFactorialElemSym`.
+`QFactorialElemSym` with this ring's primary and quantum alphabets.
 
 <a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.elem_sym_subs"></a>
 
@@ -89,7 +95,7 @@ Substitution dict ``{e_p_k: elem_sym_poly_q(p, k, x)}`` for all ``1 <= p <= k <=
 def elem_sym()
 ```
 
-`QFactorialElemSym`.
+`QFactorialElemSym` with this ring's primary and quantum alphabets.
 
 <a id="schubmult.rings.schubert.quantum_double_schubert_ring.QuantumDoubleSchubertRing.is_elem_mul_type"></a>
 
@@ -299,9 +305,9 @@ Build an element from a permutation/Lehmer list or a polynomial expression.
 #### QDSx
 
 ```python
-def QDSx(x, genset=GeneratingSet("y"))
+def QDSx(x, genset=GeneratingSet("y"), q_var=GeneratingSet("q"))
 ```
 
 Construct a quantum double Schubert element in ``x`` with coefficient alphabet ``genset``
 (a `GeneratingSet` or a label string); e.g. ``QDSx([3, 1, 2])`` is ``S^q_{312}(x; y)``.
-
+``q_var`` optionally overrides the quantum generating set.

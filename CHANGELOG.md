@@ -1,29 +1,54 @@
 # Changelog
 
-## 5.3.0
+## 5.4.0
 
-New change-of-variables and quantum double Grothendieck APIs, on-demand generating-set growth,
-and prebuilt Python 3.15 wheels.
+New quantum double Grothendieck and change-of-variables APIs, custom quantum alphabets,
+multiplicative equivariant variables, on-demand generating-set growth, and Python 3.15 wheel support.
 
 ### Added
 
-- **Change of variables** (#45). `ChangeOfVariables(source, target, mapping)` provides lazy indexed
+- **Change of variables** (#45). `ChangeOfVariables(source, target, rule)` provides lazy indexed
   images of a generating set, with labels inherited from the target alphabet.
   For example, `ChangeOfVariables(x, t, lambda i, target: 1 - 1 / target[i])` represents
   $x_i \mapsto 1 - 1/t_i$. Indexing computes individual images on demand, and `.subs(expr)`
-  simultaneously substitutes source variables in an expression. Exported from `schubmult`.
-- **Quantum double Grothendieck ring** (`QDGx`, `QuantumDoubleGrothendieckRing`). Stable elements
-  support linear combinations, multiplication through the conjectural equivariant quantum
-  K-Pieri kernel, coefficient simplification, and explicit Lenart--Maeno quantum polynomial
-  expansion. Beta is symbolic by default; `QDGx(w, beta=-1)` specializes it, mixed coefficient
-  alphabets are supported, and `QDGx(w, "0")` uses the zero alphabet. Arbitrary x-polynomial
-  conversion and coproducts are not implemented. Products retain permutations outside any chosen
-  finite symmetric group; finite-flag comparisons must handle those separately.
-- **`--beta EXPR` on all four `grothmult_*` commands**. Accepts a sympified expression, such as
-  `--beta=-1`, `--beta 0`, or `--beta "1/2"`; omitting it keeps beta symbolic.
-  Positive-display expressions are constructed with symbolic beta before specialization.
-  With `--parabolic --beta 0`, specialization is deferred until after Kato projection so inverse
-  powers of beta can cancel.
+  substitutes source variables in an expression. Exported from `schubmult`.
+- **Quantum double Grothendieck ring** (#44). `QDGx` and `QuantumDoubleGrothendieckRing`
+  provide stable elements supporting linear combinations, multiplication through the conjectural
+  equivariant quantum K-Pieri kernel, coefficient simplification, and explicit Lenart--Maeno
+  quantum polynomial expansion. Beta is symbolic by default; `QDGx(w, beta=-1)` specializes it,
+  mixed coefficient alphabets are supported, and `QDGx(w, "0")` uses the zero alphabet.
+  Arbitrary x-polynomial conversion and coproducts are not implemented. Products retain
+  permutations outside any chosen finite symmetric group; finite-flag comparisons must handle
+  those separately.
+- **`--beta EXPR` on all four `grothmult_*` commands** (#44). Accepts a sympified expression,
+  such as `--beta=-1`, `--beta 0`, or `--beta "1/2"`; omitting it keeps beta symbolic.
+  `grothmult_double --mixed-var --display-positive` constructs the positive representation with
+  symbolic beta before specialization. For the quantum commands, `--parabolic --beta 0` defers
+  specialization until after Kato projection so inverse powers of beta can cancel.
+- **Custom quantum alphabets** (#52). `QuantumDoubleSchubertRing`, `QuantumSingleSchubertRing`,
+  and `QDSx(w, genset, q_var=...)` accept a `q_var` generating set in place of the default
+  `GeneratingSet("q")`, including a finite `CustomGeneratingSet` with entries such as `t[i]**2`.
+  Products, positive products, quantum elementary and factorial elementary symmetric functions, and
+  polynomial expansion use the ring's quantum alphabet. Rings with different quantum alphabets
+  compare and hash as distinct, so their products are cached separately.
+- **`--multiplicative-variables` for `grothmult_double` and `grothmult_q_double`** (#51).
+  Calculates at `beta=-1` with coefficient coordinates `1-1/y_i` (also `1-1/z_i` with
+  `--mixed-var`) through `ChangeOfVariables`, matching the multiplicative equivariant-character
+  convention. An explicit `--beta=-1` is allowed; other beta values and `--display-positive`
+  are rejected. Combine with `--simplify` to cancel the resulting rational coefficients. Quantum
+  parameters are unchanged, and the quantum command supports `--parabolic`.
+- **Multiplicative variables in the web widget** (#51). A *Multiplicative variables* checkbox
+  (`"multiplicative_variables"` in the JSON API) is available for the double Grothendieck
+  flavors, including mixed variables, simplification, parabolic projection, and downloads.
+  Non-boolean values are rejected, and the option is ignored for other flavors.
+- **Duan--Khlaif--Zou equivariant quantum K-theory examples** (#51).
+  `examples/duan_khlaif_zou_qk.py` computes 156 distinct explicit products listed in
+  [arXiv:2606.15261v2](https://arxiv.org/abs/2606.15261v2), with page references, `--list`,
+  `--example`, and `--section` selection, and optional standalone TeX output (`--tex`). It
+  computes new answers rather than automatically checking the paper's right-hand sides. Regression
+  tests cover the inventory, finite-flag projections, and selected coefficient identities.
+- **Citation metadata** (#53). `CITATION.cff` enables GitHub's *Cite this repository*, and the
+  README and documentation explain how to cite `schubmult`, including the version or commit used.
 
 ### Changed
 
@@ -33,11 +58,21 @@ and prebuilt Python 3.15 wheels.
   describe only the currently cached prefix; use explicit slice bounds when a computation needs
   a particular number of variables. Masked sets and polynomial consumers follow the growing
   alphabet. `CustomGeneratingSet` remains finite.
-- **Prebuilt CPython 3.15 wheels** (#48). Upgrade cibuildwheel from v3.2 to v4.3.4, which supports
-  the final Python 3.15 release, and restore the `cp315-*` build selector. Release wheels now
-  target CPython 3.10-3.15 on Linux (x86_64 and aarch64), macOS (Intel and Apple Silicon), and
-  Windows (x86_64). Pull requests changing the wheel workflow also build and smoke-test wheels;
-  publishing remains restricted to release tags.
+- **Experimental combinatorics modules moved** (#54). The `chute_move_element`, `hecke_plactic`,
+  `hpd`, `inversions_tableau`, `quasi_crystal_graph`, and `root_tableau` modules now live in
+  `schubmult.combinatorics.experimental`. Their former module paths and top-level `schubmult`
+  exports are no longer available. Pickles referencing the former module paths will not load
+  without migration.
+- **CPython 3.15 wheels** (#49). The release workflow upgrades cibuildwheel to v4.3.4 and targets
+  CPython 3.10-3.15 on Linux (x86_64 and aarch64), macOS (Intel and Apple Silicon), and Windows
+  (x86_64). Package metadata also lists Python 3.15. Pull requests changing the wheel workflow
+  build and smoke-test wheels; publishing remains restricted to release tags.
+
+## 5.3.0
+
+The `5.3.0` and `5.2.0` tags have identical source trees. Their published source distributions
+contain the same code, with only generated version and commit metadata differing. Features
+previously listed as 5.3.0 are included in 5.4.0 above.
 
 ## 5.2.0
 

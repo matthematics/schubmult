@@ -22,7 +22,8 @@ if __name__ == "__main__":
     import sympy
     from sympy import pretty_print
 
-    from schubmult import CrystalGraphTensor, NilPlactic, Permutation, RCGraph, RootTableau, Sx, uncode
+    from schubmult import CrystalGraphTensor, NilPlactic, Permutation, RCGraph, Sx, uncode
+    from schubmult.combinatorics.experimental.root_tableau import RootTableau
 
     n = int(sys.argv[1])
 

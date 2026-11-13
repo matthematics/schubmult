@@ -803,6 +803,9 @@ def factor_out_q(poly, q_var=_vars.q_var):
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
+        if q_var.index(base) != -1:
+            ret[poly] = 1
+            return ret
         exponent = int(poly.args[1])
 
         ret = factor_out_q(base, q_var)

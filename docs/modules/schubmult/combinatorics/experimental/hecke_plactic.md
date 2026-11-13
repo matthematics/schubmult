@@ -1,10 +1,10 @@
-<a id="schubmult.combinatorics.hecke_plactic"></a>
+<a id="schubmult.combinatorics.experimental.hecke_plactic"></a>
 
-# schubmult.combinatorics.hecke\_plactic
+# schubmult.combinatorics.experimental.hecke\_plactic
 
-`HeckePlactic`: size-preserving Hecke column insertion, a `Plactic` variant.
+Experimental `HeckePlactic`: size-preserving Hecke column insertion, a `Plactic` variant.
 
-<a id="schubmult.combinatorics.hecke_plactic.HeckePlactic"></a>
+<a id="schubmult.combinatorics.experimental.hecke_plactic.HeckePlactic"></a>
 
 ## HeckePlactic Objects
 
@@ -31,7 +31,7 @@ may repeat within a row.
 The recording tableau ``Q`` is an ordinary (single-valued) semistandard
 :class:`~schubmult.combinatorics.plactic.Plactic` tableau.
 
-<a id="schubmult.combinatorics.hecke_plactic.HeckePlactic.perm"></a>
+<a id="schubmult.combinatorics.experimental.hecke_plactic.HeckePlactic.perm"></a>
 
 #### perm
 
@@ -42,7 +42,7 @@ def perm()
 
 Hecke product of the row-reading word (the preserved K-Knuth class).
 
-<a id="schubmult.combinatorics.hecke_plactic.HeckePlactic.hecke_insert"></a>
+<a id="schubmult.combinatorics.experimental.hecke_plactic.HeckePlactic.hecke_insert"></a>
 
 #### hecke\_insert
 
@@ -55,7 +55,7 @@ Size-preserving Hecke column-insert ``letters`` into a copy of self.
 Returns the resulting :class:`HeckePlactic` (the insertion tableau ``P``).
 Use :meth:`hecke_insert_rsk` when the recording tableau ``Q`` is required.
 
-<a id="schubmult.combinatorics.hecke_plactic.HeckePlactic.hecke_insert_rsk"></a>
+<a id="schubmult.combinatorics.experimental.hecke_plactic.HeckePlactic.hecke_insert_rsk"></a>
 
 #### hecke\_insert\_rsk
 
@@ -75,7 +75,7 @@ tableau and ``Q`` is a single-valued semistandard
 Because insertion is size preserving, ``P`` and ``Q`` have the same shape
 and ``Q`` records the label ``k`` in each newly created box.
 
-<a id="schubmult.combinatorics.hecke_plactic.HeckePlactic.reverse_hecke_insert"></a>
+<a id="schubmult.combinatorics.experimental.hecke_plactic.HeckePlactic.reverse_hecke_insert"></a>
 
 #### reverse\_hecke\_insert
 
@@ -88,7 +88,7 @@ Reverse-insert the box at ``corner`` ``(row, col)``.
 Returns ``(Y, x)`` where ``Y`` is the resulting :class:`HeckePlactic`
 and ``x`` is the reconstructed letter.
 
-<a id="schubmult.combinatorics.hecke_plactic.HeckePlactic.hecke_uninsert_rsk"></a>
+<a id="schubmult.combinatorics.experimental.hecke_plactic.HeckePlactic.hecke_uninsert_rsk"></a>
 
 #### hecke\_uninsert\_rsk
 

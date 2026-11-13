@@ -5,9 +5,9 @@ generators (positions taken from ``x_var``), so the variable set need not be an 
 ``expand_func`` evaluates via `elem_sym_positional_poly_q`. Alias: `QFactorialElemSym`.
 """
 
-from functools import cache
+from functools import cache, partial
 
-from schubmult.symbolic import Integer, S, sympify_sympy
+from schubmult.symbolic import Expr, Integer, S, sympify_sympy
 
 #from schubmult.rings.poly_lib import elem_sym_poly_q
 from schubmult.symbolic.poly.variables import GeneratingSet, NotEnoughGeneratorsError, _generator_prefix
@@ -34,6 +34,15 @@ class E_q(ElemSym_base):
     def __hash__(self):
         return hash((self._p, self._k, self._genvars, self._coeffvars, self._x_var, self._q_var))
 
+    def _hashable_content(self):
+        return (*super()._hashable_content(), self._x_var, self._q_var)
+
+    @property
+    def func(self):
+        constructor = partial(type(self), x_var=self._x_var, q_var=self._q_var)
+        constructor.__name__ = type(self).__name__
+        return constructor
+
     @property
     def free_symbols(self):
         return {*self._genvars, *self._coeffvars}
@@ -54,14 +63,15 @@ class E_q(ElemSym_base):
         for i, v in enumerate(var1):
             if v in var2:
                 j = var2.index(v)
-                return QFactorialElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]], q_var=q_var)
+                return QFactorialElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]], x_var=x_var, q_var=q_var)
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
         var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
         var2 = tuple(sorted(var2, key=lambda x: sympify_sympy(x).sort_key()))
-        obj = ElemSym_base.__new__(
+        # Function.__new__ caches only positional arguments, omitting the alphabets.
+        obj = Expr._resolve().__new__(
             _class,
             Integer(p),
             Integer(k),

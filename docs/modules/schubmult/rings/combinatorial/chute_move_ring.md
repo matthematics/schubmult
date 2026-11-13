@@ -2,8 +2,8 @@
 
 # schubmult.rings.combinatorial.chute\_move\_ring
 
-`ChuteMoveRing`: a `SchubertMonomialRing` whose basis elements are `ChuteMoveElement`s
-(RC graphs marked with a set of simultaneous chute-move rows).
+`ChuteMoveRing`: a `SchubertMonomialRing` whose basis elements are experimental
+`ChuteMoveElement`s (RC graphs marked with simultaneous chute-move rows).
 
 <a id="schubmult.rings.combinatorial.chute_move_ring.ChuteMoveRingElement"></a>
 
