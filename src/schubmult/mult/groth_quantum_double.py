@@ -36,11 +36,10 @@ where ``w`` runs over the endpoints of the Naito--Sagaki ``k``-Pieri chains
 chain and ``q^D`` its quantum weight, and (Fix, Left, Out) sorts the window values ``u(i)``,
 ``i <= k``, exactly as in ``grothmult_double_top`` (``m = |Left| + |Out|``).  Equivalently the
 prefactor is ``beta^{l(w) - l(u) - m} Q^D``.  The pair ``(len, D)`` is an invariant of
-``(u, w, k)`` in every case computed so far; the code raises if that ever fails.  The rule is
-conjectural: it is verified in ``QK_T(Fl_3)`` symbolically and in ``QK_T(Fl_4)`` under random
-specializations against the Maeno--Naito--Sagaki presentation
-(``_lscripts/qk_equivariant_oracle.py``), and as a polynomial identity by
-``_lscripts/qgroth_kernel_check.py``.  Its specializations are theorems or existing kernels:
+``(u, w, k)`` by uniqueness of the quantum ``k``-Pieri chains; the code checks this
+when constructing the support. The equivariant quantum top-block rule follows from
+the quantum Pieri theorem, and iterating the layer factors gives the proved quantum
+double Grothendieck product. Its specializations include:
 ``q = 0`` is ``grothmult_double_top``, ``beta = 0`` is the ``p = k`` quantum Pieri rule of
 ``schubmult_q_double``, and ``y = 0``, ``beta = -1`` is Naito--Sagaki's quantum K Pieri theorem.
 
