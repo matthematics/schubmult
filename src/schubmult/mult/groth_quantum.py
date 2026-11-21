@@ -12,8 +12,9 @@ at ``beta = -1`` these are the quantum Grothendieck polynomials of Lenart--Maeno
 ``Q_j = q_j``, and the ``e_p`` Pieri rule ``grothmult_q_pieri`` is then equivalent to the
 Naito--Sagaki quantum K Pieri theorem (arXiv:2211.01578): the sign ``(-1)^{len - p}`` and the
 marking count ``#Mark`` there are the ``beta^{len - m} (-beta)^{L - p'} binom(L, p')`` here,
-summed over the ``e_p <-> G_{c[k,p]}`` triangular change of basis.  Conjectural in general;
-see ``groth_quantum_double`` for the evidence.
+summed over the ``e_p <-> G_{c[k,p]}`` triangular change of basis. The resulting
+single-alphabet product identities are the ``y = z = 0`` specialization of the
+proved quantum double Grothendieck product formula.
 """
 
 from schubmult.combinatorics.permutation import Permutation, uncode

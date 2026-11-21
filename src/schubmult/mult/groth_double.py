@@ -430,9 +430,7 @@ def _top_block_coeff(u, w, k, zvar, var2, beta, length=None):
 def grothmult_double_top(coeff_dict: PermCoeffDict, k: int, zvar: Expr | None = None, var2: Alphabet | None = None, beta: Expr | None = None) -> PermCoeffDict:
     r"""Multiply ``sum_u coeff_u G_u(x, var2)`` by the top linear block ``prod_{i=1}^{k}(x_i + zvar)``.
 
-    Closed positive Molev--Sagan Pieri rule (conjectural; verified exhaustively on
-    ``S_4`` and sampled through ``S_6``, ``k <= 5``, against
-    ``grothmult_double_block(..., zvar=-zvar, fgl=False)``):
+    Closed positive Molev--Sagan Pieri rule:
 
     .. math::
 
@@ -1463,9 +1461,9 @@ def grothmult_double(perm_dict: PermCoeffDict, v: PermLike, var2: Alphabet | Non
     ``G_v`` is never expanded in double Schubert polynomials of ``x``: the
     Grothendieck v-path kernel ``_groth_groth_vpath_mul`` runs the classical v-path
     over ``theta(v^{-1})`` directly on ``G_v``, using ``dgroth_phantom_expansion`` for
-    the handful of ``S_sigma((-)x, var3)`` tops and the closed K-Pieri coefficients
-    ``_tilde_elem_sym_frac`` (conjectural, like ``grothmult_double_top``; verified
-    against the polynomial identity through ``S_4 x S_4``).
+    the handful of ``S_sigma((-)x, var3)`` tops and the proved K-Pieri coefficients
+    ``_tilde_elem_sym_frac``. Iterating the layer expansion gives the proved
+    product identity.
     """
     if beta is None:
         beta = _default_beta

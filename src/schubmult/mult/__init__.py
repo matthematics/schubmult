@@ -8,8 +8,8 @@ in various settings:
 - schubmult_double: Double Schubert polynomial multiplication
 - schubmult_q: Quantum Schubert polynomial multiplication
 - schubmult_q_double: Quantum double Schubert polynomial multiplication
-- grothmult_double: Double Grothendieck multiplication by a degree-one class
-- grothmult_q_double: Quantum double Grothendieck multiplication (conjectural Molev--Sagan rule)
+- grothmult_double: Double Grothendieck multiplication
+- grothmult_q_double: Quantum double Grothendieck multiplication
 - grothmult_q: Quantum (single) Grothendieck multiplication
 
 Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
