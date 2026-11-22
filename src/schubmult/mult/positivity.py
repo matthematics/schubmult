@@ -19,7 +19,10 @@ positivity theorem). This module computes that manifestly positive form:
   case, and the dual Pieri expansion respectively).
 """
 
+from __future__ import annotations
+
 from functools import cache
+from typing import TYPE_CHECKING
 
 import psutil
 from cachetools import cached
@@ -47,10 +50,13 @@ from schubmult.utils.schub_lib import (
 
 from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic_alt
 
+if TYPE_CHECKING:
+    from schubmult._typing import Alphabet
+
 logger = get_logger(__name__)
 
 
-def _var_index(varlist, sym):
+def _var_index(varlist: Alphabet, sym: Symbol) -> int:
     """Position of ``sym`` in ``varlist`` or ``-1``.
 
     ``posify`` recurses with a shifted slice of ``var2``, turning a ``GeneratingSet`` into a plain tuple
@@ -62,7 +68,7 @@ def _var_index(varlist, sym):
         return -1
 
 
-def cbc_solver(msg=False):
+def cbc_solver(msg: bool = False):
     """PuLP ``COIN_CMD`` using the CBC binary bundled by ``pulp[cbc]``, falling back to ``cbc`` on PATH."""
     import pulp as pu
 
@@ -74,7 +80,7 @@ def cbc_solver(msg=False):
         return pu.COIN_CMD(msg=msg)
 
 
-def compute_positive_rep(val, var2=None, var3=None, msg=False):
+def compute_positive_rep(val: Add, var2: Alphabet, var3: Alphabet, msg: bool = False):
     """Express ``val`` as a nonnegative-integer combination of product-of-differences monomials.
 
     ``val`` must be a polynomial in ``var2``/``var3`` known (by positivity of
@@ -240,11 +246,11 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
 )
 def posify(
     val,
-    u2,
-    v2,
-    w2,
-    var2=None,
-    var3=None,
+    u2: Permutation,
+    v2: Permutation,
+    w2: Permutation,
+    var2: Alphabet,
+    var3: Alphabet,
     msg=False,
     optimize=True,
     n=_vars.n,
@@ -319,6 +325,7 @@ def posify(
 
     if len([i for i in v.code if i != 0]) == 1:
         cv = v.code
+        k: int = 0
         for i in range(len(cv)):
             if cv[i] != 0:
                 k = i + 1
@@ -434,13 +441,13 @@ def posify(
     return val
 
 
-def shiftsub(pol, var2=None):
+def shiftsub(pol, var2):
     """Shift every ``var2[i]`` in ``pol`` up to ``var2[i + 1]`` (for ``i`` in ``0..98``)."""
     subs_dict = {var2[i]: var2[i + 1] for i in range(99)}
     return efficient_subs(sympify(pol), subs_dict)
 
 
-def posify_generic_partial(val, u2, v2, w2):
+def posify_generic_partial(val, u2: Permutation, v2: Permutation, w2: Permutation):
     """``posify`` specialized to the fixed generic alphabets ``_vars.var_g1``/``_vars.var_g2``.
 
     Asserts (raises on mismatch) that the recomputed positive expression equals
@@ -455,7 +462,7 @@ def posify_generic_partial(val, u2, v2, w2):
 
 
 @cache
-def schubmult_generic_partial_posify(u2, v2):
+def schubmult_generic_partial_posify(u2: Permutation, v2: Permutation):
     """Manifestly positive expansion of ``S_{u2}(x, var_g1) * S_{v2}(x, var_g2)``.
 
     Returns ``{w2: coeff}`` where each ``coeff`` is the positive representation
@@ -465,7 +472,7 @@ def schubmult_generic_partial_posify(u2, v2):
     return {w2: posify_generic_partial(val, u2, v2, w2) for w2, val in schubmult_double_pair_generic_alt(u2, v2).items()}
 
 
-def forwardcoeff(u, v, perm, var2=None, var3=None):
+def forwardcoeff(u: Permutation, v: Permutation, perm: Permutation, var2: Alphabet, var3: Alphabet):
     """Closed-form structure constant ``c^{perm}_{u,v}(var2, var3)`` for the "forward" case
     (used when ``will_formula_work(u, v)`` holds in ``posify``).
 
@@ -484,7 +491,7 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
     return 0
 
 
-def dualcoeff(u, v, perm, var2=None, var3=None):
+def dualcoeff(u: Permutation, v: Permutation, perm: Permutation, var2: Alphabet, var3: Alphabet):
     """Closed-form structure constant ``c^{perm}_{u,v}(var2, var3)`` for the "dual" case
     (used in ``posify`` when ``will_formula_work(v, u)`` holds or ``u`` dominates ``perm``).
 

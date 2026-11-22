@@ -38,6 +38,8 @@ _lazy_exports = {
     # Rings
     "Gx": "schubmult.rings.schubert.grothendieck_ring",
     "DGx": "schubmult.rings.schubert.double_grothendieck_ring",
+    "DoubleGrothendieckRing": "schubmult.rings.schubert.double_grothendieck_ring",
+    "DoubleGrothendieckElement": "schubmult.rings.schubert.double_grothendieck_ring",
     "QDGx": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
     "QuantumDoubleGrothendieckRing": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
     "QuantumDoubleGrothendieckElement": "schubmult.rings.schubert.quantum_double_grothendieck_ring",
