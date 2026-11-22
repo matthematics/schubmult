@@ -259,7 +259,6 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                                 var2,
                                 var3,
                                 msg,
-                                False,
                             )
                         else:
                             val2 += q_part * pos.compute_positive_rep(

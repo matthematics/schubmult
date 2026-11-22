@@ -76,8 +76,8 @@ integer coefficients ``n_b`` matching ``val`` exactly.
 @cached(
     cache={},
     key=lambda val, u2, v2, w2, var2=None, var3=
-    None, msg=False, sign_only=False, optimize=True: hashkey(
-        val, u2, v2, w2, var2, var3, msg, sign_only, optimize),
+    None, msg=False, optimize=True, n=_vars.n: hashkey(
+        val, u2, v2, w2, var2, var3, msg, optimize, n),
 )
 def posify(val,
            u2,
@@ -86,7 +86,6 @@ def posify(val,
            var2=None,
            var3=None,
            msg=False,
-           sign_only=False,
            optimize=True,
            n=_vars.n)
 ```
@@ -105,7 +104,7 @@ length-one-difference case built from ``pull_out_var``/``schubpoly``
 directly). Falls back to ``compute_positive_rep`` (an integer-LP search)
 when no reduction or closed formula applies and ``optimize`` is true.
 
-Results are cached by ``(val, u2, v2, w2, var2, var3, msg, sign_only, optimize)``.
+Results are cached by all arguments.
 
 **Arguments**:
 
@@ -116,8 +115,6 @@ Results are cached by ``(val, u2, v2, w2, var2, var3, msg, sign_only, optimize)`
 - `var2` - First secondary alphabet.
 - `var3` - Second secondary alphabet.
 - `msg` - Verbosity flag passed down to ``compute_positive_rep``'s LP solver.
-- `sign_only` - If ``True``, only determine and return the sign of ``val``
-  (``-1``, ``0``, or ``1``) rather than a full positive expression.
 - `optimize` - If ``False``, return ``val`` unchanged when no closed-form
   reduction applies (skip the LP fallback); if ``None`` and that
   case is reached, raise.
@@ -126,8 +123,8 @@ Results are cached by ``(val, u2, v2, w2, var2, var3, msg, sign_only, optimize)`
 
 **Returns**:
 
-  A manifestly positive expression equal to ``val`` (or, if
-  ``sign_only``, one of ``-1``, ``0``, ``1``).
+  A manifestly positive expression equal to ``val``, or ``val`` itself
+  when no formula applies and optimization is disabled.
 
 <a id="schubmult.mult.positivity.shiftsub"></a>
 
