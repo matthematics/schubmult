@@ -19,6 +19,8 @@ positivity theorem). This module computes that manifestly positive form:
   case, and the dual Pieri expansion respectively).
 """
 
+from __future__ import annotations
+
 from functools import cache
 from typing import TYPE_CHECKING
 
