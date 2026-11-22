@@ -37,7 +37,6 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
     divdiffable,
     is_coeff_irreducible,
-    is_split_two,
     pull_out_var,
     reduce_coeff,
     reduce_descents,
@@ -237,7 +236,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
 
 @cached(
     cache={},
-    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, sign_only, optimize),
+    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, optimize=True, n=_vars.n: hashkey(val, u2, v2, w2, var2, var3, msg, optimize, n),
 )
 def posify(
     val,
@@ -247,7 +246,6 @@ def posify(
     var2=None,
     var3=None,
     msg=False,
-    sign_only=False,
     optimize=True,
     n=_vars.n,
 ):
@@ -265,7 +263,7 @@ def posify(
     directly). Falls back to ``compute_positive_rep`` (an integer-LP search)
     when no reduction or closed formula applies and ``optimize`` is true.
 
-    Results are cached by ``(val, u2, v2, w2, var2, var3, msg, sign_only, optimize)``.
+    Results are cached by all arguments.
 
     Args:
         val: The structure constant to re-express positively.
@@ -275,25 +273,22 @@ def posify(
         var2: First secondary alphabet.
         var3: Second secondary alphabet.
         msg: Verbosity flag passed down to ``compute_positive_rep``'s LP solver.
-        sign_only: If ``True``, only determine and return the sign of ``val``
-            (``-1``, ``0``, or ``1``) rather than a full positive expression.
         optimize: If ``False``, return ``val`` unchanged when no closed-form
             reduction applies (skip the LP fallback); if ``None`` and that
             case is reached, raise.
         n: Size of the ambient alphabet used when no other bound is available.
 
     Returns:
-        A manifestly positive expression equal to ``val`` (or, if
-        ``sign_only``, one of ``-1``, ``0``, ``1``).
+        A manifestly positive expression equal to ``val``, or ``val`` itself
+        when no formula applies and optimization is disabled.
     """
     if not v2.has_pattern([1, 4, 2, 3]) and not v2.has_pattern([4, 1, 3, 2]) and not v2.has_pattern([3, 1, 4, 2]) and not v2.has_pattern([1, 4, 3, 2]):
         logger.debug("Recording new characterization was used")
         return schubmult_double({u2: 1}, v2, var2, var3).get(w2, 0)
-    oldval = val
     if u2.inv + v2.inv - w2.inv == 0:
         return val
 
-    if not sign_only and expand(val) == 0:
+    if expand(val) == 0:
         return 0
 
     u, v, w = u2, v2, w2
@@ -313,9 +308,6 @@ def posify(
                             if is_coeff_irreducible(u, v, w):
                                 u, v, w = reduce_coeff(u, v, w)
 
-    if w != w2 and sign_only:
-        return 0
-
     if is_coeff_irreducible(u, v, w):
         u3, v3, w3 = try_reduce_v(u, v, w)
         if not is_coeff_irreducible(u3, v3, w3):
@@ -324,11 +316,8 @@ def posify(
             u3, v3, w3 = try_reduce_u(u, v, w)
             if not is_coeff_irreducible(u3, v3, w3):
                 u, v, w = u3, v3, w3
-    _split_two_b, _split_two = is_split_two(u, v, w)
 
     if len([i for i in v.code if i != 0]) == 1:
-        if sign_only:
-            return 0
         cv = v.code
         for i in range(len(cv)):
             if cv[i] != 0:
@@ -349,8 +338,6 @@ def posify(
         )
 
     if will_formula_work(v, u) or u.dominates(w):
-        if sign_only:
-            return 0
         return dualcoeff(u, v, w, var2, var3)
 
     if not v.has_pattern([1, 4, 2, 3]) and not v.has_pattern([4, 1, 3, 2]) and not v.has_pattern([3, 1, 4, 2]) and not v.has_pattern([1, 4, 3, 2]):
@@ -358,8 +345,6 @@ def posify(
         return schubmult_double({u: 1}, v, var2, var3).get(w, 0)
 
     if w.inv - u.inv == 1:
-        if sign_only:
-            return 0
         a, b = -1, -1
         for i in range(len(w)):
             if a == -1 and u[i] != w[i]:
@@ -412,60 +397,41 @@ def posify(
         return val
 
     if will_formula_work(u, v):
-        if sign_only:
-            return 0
         return forwardcoeff(u, v, w, var2, var3)
 
     c1 = (~u).code
     c2 = (~w).code
 
     if u.one_dominates(w):
-        if sign_only:
-            return 0
         while c1[0] != c2[0]:
             w = w.swap(c2[0] - 1, c2[0])
             v = v.swap(c2[0] - 1, c2[0])
 
             c2 = (~w).code
 
-        if c1[0] == c2[0]:
-            if sign_only:
-                return 0
-            vp = pull_out_var(c1[0] + 1, v)
-            u3 = phi1(u)
-            w3 = phi1(w)
-            val = 0
-            for arr, v3 in vp:
-                tomul = prod([var2[1] - var3[arr[i]] for i in range(len(arr))])
+        vp = pull_out_var(c1[0] + 1, v)
+        u3 = phi1(u)
+        w3 = phi1(w)
+        val = 0
+        for arr, v3 in vp:
+            tomul = prod([var2[1] - var3[arr[i]] for i in range(len(arr))])
 
-                # Include the full possible product support, not just the cached prefix.
-                shifted_var2 = var2[1 : max(len(u3) + len(v3), len(w3)) + 2]
-                val2 = schubmult_double_pair(u3, v3, shifted_var2, var3).get(
-                    w3,
-                    0,
-                )
-                val2 = posify(val2, u3, v3, w3, shifted_var2, var3, msg, optimize=optimize)
-                val += tomul * val2
+            # Include the full possible product support, not just the cached prefix.
+            shifted_var2 = var2[1 : max(len(u3) + len(v3), len(w3)) + 2]
+            val2 = schubmult_double_pair(u3, v3, shifted_var2, var3).get(
+                w3,
+                0,
+            )
+            val2 = posify(val2, u3, v3, w3, shifted_var2, var3, msg, optimize=optimize, n=n)
+            val += tomul * val2
 
-            return val
+        return val
 
-    if not sign_only:
-        if optimize:
-            if u.inv + v.inv - w.inv == 1:
-                val2 = compute_positive_rep(val, var2, var3, msg)
-            else:
-                val2 = compute_positive_rep(val, var2, var3, msg)
-            if val2 is not None:
-                val = val2
-            return val
-        if optimize is None:
-            raise ValueError("Optimize is None but no positive formula applied")
-        return oldval
-    d = expand(val).as_coefficients_dict()
-    for v in d.values():
-        if v < 0:
-            return -1
-    return 1
+    if optimize:
+        return compute_positive_rep(val, var2, var3, msg)
+    if optimize is None:
+        raise ValueError("Optimize is None but no positive formula applied")
+    return val
 
 
 def shiftsub(pol, var2=None):
@@ -481,7 +447,7 @@ def posify_generic_partial(val, u2, v2, w2):
     the input ``val``, as a consistency check.
     """
     val2 = val
-    val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, sign_only=False, optimize=False)
+    val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, optimize=False)
     if expand(val - val2) != 0:
         raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
 

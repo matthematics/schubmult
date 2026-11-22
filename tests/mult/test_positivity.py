@@ -66,6 +66,13 @@ def _manifestly_positive(expr):
     return re.search(r"-\s*(\d+\*)?[y(]", str(expr)) is None
 
 
+def test_posify_optimize_controls_lp_fallback():
+    u, v, w = Permutation([1, 2, 4, 3]), Permutation([1, 4, 3, 2]), Permutation([2, 3, 4, 1])
+    val = schubmult_double({u: 1}, v, y, z)[w]
+    assert posify(val, u, v, w, y, z, False, False) == val
+    assert _manifestly_positive(posify(val, u, v, w, y, z))
+
+
 def test_posify_one_dominates_recursion_uses_shifted_alphabet():
     # Regression: u one-dominates w, so posify recurses on (phi1(u), v3, phi1(w)) over the
     # shifted alphabet var2[1:] (a plain tuple). Previously the reduced coefficient was computed
