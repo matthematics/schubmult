@@ -2,7 +2,7 @@
 
 # schubmult.mult.positivity
 
-Manifestly positive representations of double Schubert structure constants.
+Manifestly positive representations of double Schubert and Grothendieck structure constants.
 
 The structure constants ``c^w_{u,v}(y, z)`` of double Schubert polynomial
 multiplication (``schubmult_double``) are known to be polynomials in the
@@ -21,6 +21,10 @@ positivity theorem). This module computes that manifestly positive form:
 - ``dualcoeff``/``forwardcoeff``/``dualpieri``: closed-form positive rules for
   special cases (``u`` dominates ``w``, the ``will_formula_work`` forward Monk
   case, and the dual Pieri expansion respectively).
+- ``groth_posify``: positive FGL representations of double Grothendieck
+  coefficients, using an integer program and restoring the symbolic ``beta`` grading.
+  ``groth_posify_many`` does a whole batch of coefficients, solving their integer
+  programs concurrently.
 
 <a id="schubmult.mult.positivity.cbc_solver"></a>
 
@@ -31,6 +35,79 @@ def cbc_solver(msg=False)
 ```
 
 PuLP ``COIN_CMD`` using the CBC binary bundled by ``pulp[cbc]``, falling back to ``cbc`` on PATH.
+
+<a id="schubmult.mult.positivity.groth_posify"></a>
+
+#### groth\_posify
+
+```python
+def groth_posify(val, var2, var3, msg=False)
+```
+
+Positive FGL form of a coefficient, at ``beta = 1``.
+
+Basis: all products of ``z_i - y_j``, ``(1 + y_j)^{-1}``, ``(1 + z_i)^{-1}``.
+Substituting ``u_j = 1 + y_j``, ``v_i = 1 + z_i`` (so ``y = u - 1``,
+``z = v - 1``) turns the value into a Laurent polynomial in ``u, v``; clearing
+the monomial denominator makes everything polynomial.  Candidates are
+difference products times leftover clearing monomials, expanded once, with
+``as_coefficients_dict`` terms used as opaque basis vectors for an integer
+LP.  ``beta`` is restored as ``beta**(k - d)`` for a term with ``k`` difference
+factors, where ``d`` is the homogeneous degree of the value (``deg y = deg z = 1``,
+``deg beta = -1``), the Laurent atoms ``(1 + beta*y)`` having degree 0 by construction.
+
+The problem splits into independent blocks by total degree.  Each block is
+reduced by an exact presolve and the remainder is solved
+as an integer program, escalating the number of difference factors.  The
+result is verified exactly: by an integer identity at ``beta = 1`` when
+homogeneity is structurally evident, otherwise by symbolic expansion.
+
+``msg`` is passed through to the solver as its verbosity option.  Use
+:func:`groth_posify_many` for several coefficients, whose integer programs can
+then be solved concurrently.
+
+<a id="schubmult.mult.positivity.groth_posify_many"></a>
+
+#### groth\_posify\_many
+
+```python
+def groth_posify_many(vals,
+                      var2,
+                      var3,
+                      msg=False,
+                      *,
+                      max_workers=None,
+                      progress=None)
+```
+
+:func:`groth_posify` of each coefficient in ``vals``, solving the integer programs concurrently.
+
+The solver subprocesses are driven by up to ``max_workers`` threads, while the symbolic work and the construction
+caches shared between coefficients stay on the calling thread.  The results do not depend on ``max_workers``: they
+are those of sequential :func:`groth_posify` calls, yielded in the order of ``vals`` as soon as each is ready.  If a
+coefficient has no positive representation, the results before it are yielded and then its exception is raised.
+Closing the generator early, or interrupting it, stops the solver processes and removes their temporary files.
+
+**Arguments**:
+
+- `vals` - Coefficients, as for :func:`groth_posify`.
+- `var2` - First secondary alphabet (``y``).
+- `var3` - Second secondary alphabet (``z``).
+- `msg` - Passed through to the solver as its verbosity option.
+- `max_workers` - Number of integer programs solved at once, at least 1; 1 runs everything on the calling
+  thread.  Defaults to 1.  If ``msg`` is enabled with multiple workers, solver logs may interleave.
+  Each solver process needs memory of its own, which is large for the hardest cases.
+- `progress` - Called as ``progress(i)``, on the calling thread, when work on ``vals[i]`` starts.
+  
+
+**Returns**:
+
+  A generator of the ``groth_posify`` results, in the order of ``vals``.
+  
+
+**Raises**:
+
+- `ValueError` - If ``max_workers`` is less than 1.
 
 <a id="schubmult.mult.positivity.compute_positive_rep"></a>
 
