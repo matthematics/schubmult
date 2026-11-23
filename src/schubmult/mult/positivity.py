@@ -762,7 +762,8 @@ def compute_positive_rep(val: Add, var2: Alphabet, var3: Alphabet, msg: bool = F
                 base_vectors[b1] = dct2
     lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
     vrs = {bv: lp_prob.add_variable(f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
-    lp_prob += 0
+    # lp_prob += 0
+    lp_prob += pu.lpSum(vrs.values())
     eqs = {}
     for bv, vec in base_vectors.items():
         for i in vec:
