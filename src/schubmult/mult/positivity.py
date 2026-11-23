@@ -1,4 +1,4 @@
-"""Manifestly positive representations of double Schubert structure constants.
+"""Manifestly positive representations of double Schubert and Grothendieck structure constants.
 
 The structure constants ``c^w_{u,v}(y, z)`` of double Schubert polynomial
 multiplication (``schubmult_double``) are known to be polynomials in the
@@ -17,10 +17,20 @@ positivity theorem). This module computes that manifestly positive form:
 - ``dualcoeff``/``forwardcoeff``/``dualpieri``: closed-form positive rules for
   special cases (``u`` dominates ``w``, the ``will_formula_work`` forward Monk
   case, and the dual Pieri expansion respectively).
+- ``groth_posify``: positive FGL representations of double Grothendieck
+  coefficients, using an integer program and restoring the symbolic ``beta`` grading.
+  ``groth_posify_many`` does a whole batch of coefficients, solving their integer
+  programs concurrently.
 """
 
 from __future__ import annotations
 
+import concurrent.futures as cf
+import operator
+import shutil
+import tempfile
+import threading
+from collections import deque
 from functools import cache
 from typing import TYPE_CHECKING
 
@@ -28,13 +38,14 @@ import psutil
 from cachetools import cached
 from cachetools.keys import hashkey
 
+from schubmult.abc import beta
 from schubmult.combinatorics.permutation import (
     Permutation,
     cycle,
     phi1,
     uncode,
 )
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, prod, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, prod, sympify, sympify_sympy
 from schubmult.symbolic.common_polys import _vars, efficient_subs, elem_sym_poly, schubpoly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
@@ -54,6 +65,12 @@ if TYPE_CHECKING:
     from schubmult._typing import Alphabet
 
 logger = get_logger(__name__)
+
+_posify_cache = {}
+
+# graceful failure ceiling: candidate enumeration and the LP grow combinatorially,
+# and unbounded growth has OOM-killed the whole machine before
+_MAX_CANDIDATES = 1_000_000
 
 
 def _var_index(varlist: Alphabet, sym: Symbol) -> int:
@@ -78,6 +95,556 @@ def cbc_solver(msg: bool = False):
         return pu.COIN_CMD(msg=msg, path=cbc_bin_path())
     except ImportError:
         return pu.COIN_CMD(msg=msg)
+
+
+def _solver(msg, tmpdir=None):
+    """The MILP solver: HiGHS if available, else CBC.  ``tmpdir`` receives its temporary files."""
+    import pulp as pu
+
+    if pu.HiGHS_CMD().available():
+        # HiGHS's presolve costs more than it saves on these equality systems (they are already reduced by _presolve).
+        # One thread per solver: concurrency comes from running several solvers, and the default thread pool of
+        # HiGHS only spins, which costs about 40% more CPU time without making a solve any faster
+        solver = pu.HiGHS_CMD(msg=msg, options=["presolve=off", "threads=1"])
+    else:
+        solver = cbc_solver(msg)
+    if tmpdir is not None:
+        solver.tmpDir = tmpdir
+    return solver
+
+
+def _is_optimal(status):
+    """``LpProblem.solve`` returns an int status in PuLP < 4 and an ``LpSolveStats`` object in PuLP >= 4."""
+    if status is None:
+        return False
+    return int(getattr(status, "status", status)) == 1
+
+
+def _exact_int(x):
+    """``x`` as a Python ``int`` if it is an exact integer (Python or symbolic), else ``None``."""
+    if isinstance(x, int):
+        return x
+    return int(x) if getattr(x, "is_Integer", False) else None
+
+
+def _weighted_degree(expr, weights):
+    """Degree of ``expr`` under the grading ``weights`` (``{symbol: weight}``), or ``None`` if not provably homogeneous.
+
+    Purely structural, so it never expands: every sum must have summands of one common degree.
+    """
+    if expr.is_Number:
+        return 0
+    if expr.is_Symbol:
+        return weights.get(expr)
+    if expr.is_Add:
+        degs = {_weighted_degree(arg, weights) for arg in expr.args}
+        return degs.pop() if len(degs) == 1 and None not in degs else None
+    if expr.is_Mul:
+        total = 0
+        for arg in expr.args:
+            deg = _weighted_degree(arg, weights)
+            if deg is None:
+                return None
+            total += deg
+        return total
+    if expr.is_Pow and expr.args[1].is_Integer:
+        deg = _weighted_degree(expr.args[0], weights)
+        return None if deg is None else deg * int(expr.args[1])
+    return None
+
+
+def _raise_if_cancelled(stop):
+    """Raise ``RuntimeError`` if the ``stop`` event of an abandoned run (or ``None``) is set; worker threads cannot be killed, so they poll."""
+    if stop is not None and stop.is_set():
+        raise RuntimeError("integer program cancelled")
+
+
+def _presolve(cands, target, stop=None):
+    """Exact presolve of ``sum_j a_j * cands[j] == target`` over integers ``a_j >= 0``.
+
+    ``cands`` is a list of ``{row: coefficient}`` dicts.  Repeatedly applies rules that are implied by
+    non-negativity and integrality: singleton rows fix their column, zero rows with one-signed columns
+    zero them, and a row with a positive (negative) target and no negative (positive) coefficient bounds
+    every column in it by the target.  Returns ``None`` if the system is infeasible, otherwise
+    ``(fixed, active, resid)``: the values fixed so far, the columns still free and the residual target.
+    A ``stop`` event that gets set cancels the presolve with a ``RuntimeError``.
+    """
+    rows = {}
+    for j, svec in enumerate(cands):
+        _raise_if_cancelled(stop)
+        for k in svec:
+            rows.setdefault(k, set()).add(j)
+    resid = dict(target)
+    active = set(range(len(cands)))
+    fixed = {}
+    queue = deque(set(rows) | set(resid))
+    queued = set(queue)
+
+    def remove(j, x):
+        active.discard(j)
+        if x:
+            fixed[j] = x
+        for k2, c2 in cands[j].items():
+            if x:
+                resid[k2] = resid.get(k2, 0) - x * c2
+            rows[k2].discard(j)
+            if k2 not in queued:
+                queued.add(k2)
+                queue.append(k2)
+
+    while queue:
+        _raise_if_cancelled(stop)
+        k = queue.popleft()
+        queued.discard(k)
+        t = resid.get(k, 0)
+        cols = rows.get(k)
+        if not cols:
+            if t != 0:
+                return None
+            continue
+        if len(cols) == 1:
+            (j,) = cols
+            c = cands[j][k]
+            if t % c or t // c < 0:
+                return None
+            remove(j, t // c)
+            continue
+        pos = [j for j in cols if cands[j][k] > 0]
+        neg = len(cols) - len(pos)
+        if (t > 0 and not pos) or (t < 0 and not neg):
+            return None
+        if t == 0 and (not pos or not neg):
+            for j in list(cols):
+                remove(j, 0)
+        elif t > 0 and not neg:
+            for j in [j for j in cols if cands[j][k] > t]:
+                remove(j, 0)
+        elif t < 0 and not pos:
+            for j in [j for j in cols if -cands[j][k] > -t]:
+                remove(j, 0)
+    return fixed, active, resid
+
+
+def _solve_milp(svecs, target, msg=False, tmpdir=None, stop=None):
+    """Non-negative integer multiplicities ``a`` with ``sum_j a[j] * svecs[j] == target``, or ``None`` if there are none.
+
+    ``svecs`` is a list of ``{row: coefficient}`` dicts.  Only integer arithmetic and a solver subprocess are involved,
+    so concurrent calls are safe.  The solver's temporary files go to ``tmpdir``.  A ``stop`` event that gets set cancels
+    the solve with a ``RuntimeError`` as soon as the next check is reached: during the presolve, the model construction,
+    and just before the solver is launched.
+    """
+    import pulp as pu
+
+    pre = _presolve(svecs, target, stop)
+    if pre is None:
+        return None
+    fixed, active, resid = pre
+    values = [0] * len(svecs)
+    for j, x in fixed.items():
+        values[j] = x
+    if not active:
+        return values
+    cols = sorted(active)
+    lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+    vrs = {}
+    for j in cols:
+        _raise_if_cancelled(stop)
+        vrs[j] = lp_prob.add_variable(f"a{j}", lowBound=0, cat="Integer")
+    # minimizing the total multiplicity solves about twice as fast as a feasibility-only objective
+    lp_prob += pu.lpSum(vrs.values())
+    eqs = {}
+    for j in cols:
+        _raise_if_cancelled(stop)
+        for k, c in svecs[j].items():
+            eqs.setdefault(k, {})[vrs[j]] = c
+    for k, terms in eqs.items():
+        _raise_if_cancelled(stop)
+        # lpSum rather than LpAffineExpression(dict): the latter cannot form constraints in PuLP >= 4
+        lp_prob += pu.lpSum(c * v for v, c in terms.items()) == resid.get(k, 0)
+    _raise_if_cancelled(stop)
+    status = lp_prob.solve(_solver(msg, tmpdir))
+    if not _is_optimal(status):
+        return None
+    # read values here: in PuLP >= 4 variables become unusable once lp_prob is garbage collected
+    for j, v in vrs.items():
+        x = v.value()
+        # round, don't truncate: solvers return near-integers like 0.9999999999996
+        values[j] = round(x) if x is not None else 0
+    return values
+
+
+def _resolve_workers(max_workers, n_items):
+    """Number of concurrent solves for ``n_items`` coefficients.
+
+    ``max_workers`` if given, otherwise one.
+    """
+    if max_workers is None:
+        workers = 1
+    else:
+        workers = operator.index(max_workers)
+        if workers < 1:
+            raise ValueError(f"max_workers must be at least 1, got {max_workers}")
+    return max(1, min(workers, n_items))
+
+
+def _terminate_solvers(tmpdir):
+    """Kill the solver processes working in ``tmpdir``, which show up as the temporary files on their command lines."""
+    for child in psutil.Process().children(recursive=True):
+        try:
+            if any(tmpdir in arg for arg in child.cmdline()):
+                child.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+
+
+def _abort_solves(futures, tmpdir, stop):
+    """Abandon the integer programs ``futures`` of an interrupted run: cancel the queued, kill the solvers of the running."""
+    stop.set()
+    for fut in futures:
+        fut.cancel()
+    live = [fut for fut in futures if not fut.done()]
+    while True:
+        # Workers that are still building a model notice ``stop`` within moments, so give them the chance to finish before
+        # scanning the process table: every file of the scan gives up the GIL, and next to threads that are busy in Python
+        # it takes a full switch interval to get it back, which makes the scan crawl for seconds.  What remains is waiting
+        # for a solver.  The loop repeats, since a worker that was building its model during an earlier sweep launches its
+        # solver later.
+        live = list(cf.wait(live, timeout=0.1).not_done)
+        # at least one sweep, for the solver of an inline solve that was interrupted before it had a future
+        _terminate_solvers(tmpdir)
+        if not live:
+            return
+
+
+class _InlineExecutor:
+    """Runs each job at once on the calling thread, for a single worker that needs no threads."""
+
+    def submit(self, fn, *args):
+        fut = cf.Future()
+        try:
+            fut.set_result(fn(*args))
+        except Exception as exc:
+            fut.set_exception(exc)
+        return fut
+
+    def shutdown(self, wait=True):
+        pass
+
+
+def _posify_steps(val, var2, var3):
+    """Coroutine behind :func:`groth_posify`: all the symbolic work, leaving the integer programs to the caller.
+
+    Yields each integer program as ``(svecs, target)``, to be answered with ``send`` of its :func:`_solve_milp`
+    solution (``None`` if there is none).  The result of ``groth_posify`` is the return value.
+    """
+    import itertools
+
+    try:
+        return int(val)
+    except Exception:
+        pass
+    bs = sympify(beta)
+    e = sympify(val)
+
+    # homogeneous degree: yz-degree minus beta-degree is constant across terms
+    num0 = expand(sympify(sympify_sympy(e).as_numer_denom()[0]))
+    t0 = next(mono for mono, c in num0.as_coefficients_dict().items() if c != 0)
+    t0d = t0.as_powers_dict()
+    d = sum(int(p) for g, p in t0d.items() if g.is_Symbol and sympify(g) != bs) - int(t0d.get(bs, 0))
+
+    e1 = expand(efficient_subs(e, {bs: S.One}))
+    frees = e1.free_symbols
+    ysyms = sorted([s for s in frees if var2.index(s) != -1], key=lambda s: var2.index(s))
+    zsyms = sorted([s for s in frees if var3.index(s) != -1], key=lambda s: var3.index(s))
+
+    uu = {ys: Symbol(f"u_{var2.index(ys)}") for ys in ysyms}
+    vv = {zs: Symbol(f"v_{var3.index(zs)}") for zs in zsyms}
+    back = {u: S.One + bs * sympify(ys) for ys, u in uu.items()}
+    back.update({v: S.One + bs * sympify(zs) for zs, v in vv.items()})
+
+    fwd = {sympify(ys): uu[ys] - S.One for ys in ysyms}
+    fwd.update({sympify(zs): vv[zs] - S.One for zs in zsyms})
+    laurent = expand(e1.subs(fwd))
+
+    # clear the (monomial) denominator structurally; everything is a polynomial
+    # in u, v from here on and terms are opaque basis vectors
+    num_l, den_l = laurent.as_numer_denom()
+    num_l = expand(num_l)
+    caps = {g: int(p) for g, p in den_l.as_powers_dict().items() if g != S.One and int(p) != 0}
+
+    # packed-int monomial representation over the u, v generators: PBITS bits
+    # of exponent per generator, so monomial products are plain integer sums
+    PBITS = 10
+    gens = [*[uu[ys] for ys in ysyms], *[vv[zs] for zs in zsyms]]
+    gshift = {g: PBITS * i for i, g in enumerate(gens)}
+
+    def to_vec(expr):
+        vec = {}
+        degs = {}
+        for mono, c in expr.as_coefficients_dict().items():
+            if c == 0:
+                continue
+            ci = _exact_int(c)
+            if ci is None:
+                raise ValueError(f"non-integer coefficient {c} in {val}")
+            key = 0
+            deg = 0
+            for g, p in mono.as_powers_dict().items():
+                if g in gshift:
+                    pi = _exact_int(p)
+                    if pi is None or pi < 0:
+                        raise ValueError(f"unexpected exponent {p} of {g}")
+                    key += pi << gshift[g]
+                    deg += pi
+                elif g != S.One:
+                    raise ValueError(f"unexpected generator {g}")
+            vec[key] = vec.get(key, 0) + ci
+            degs[key] = deg
+        return vec, degs
+
+    def dict_mul(a, b):
+        out = {}
+        for m1, c1 in a.items():
+            for m2, c2 in b.items():
+                k = m1 + m2
+                cc = out.get(k, 0) + c1 * c2
+                if cc:
+                    out[k] = cc
+                elif k in out:
+                    del out[k]
+        return out
+
+    vec0, deg0 = to_vec(num_l)
+    max_m = max(deg0.values(), default=0)
+    if max_m >= 1 << PBITS:
+        raise ValueError(f"degree {max_m} too large for the packed monomial representation")
+    # candidates are homogeneous of total degree #pairs + clearing-shift degree,
+    # so the problem splits into independent blocks by degree and degrees
+    # absent from the target can be pruned losslessly
+    target_degs = frozenset(deg0.values())
+    blocks = {}
+    for key, c in vec0.items():
+        blocks.setdefault(deg0[key], {})[key] = c
+
+    # construction state is shared across coefficients: difference products
+    # depend only on the generators, levels also on caps and target degrees;
+    # both are built lazily on demand
+    gens_key = (tuple(str(s) for s in ysyms), tuple(str(s) for s in zsyms))
+    prods_state = _posify_cache.get(gens_key)
+    if prods_state is None:
+        # difference products built incrementally: each level multiplies by one
+        # 2-term pair vector (integer convolution, no symbolic expand)
+        pair_vecs = [({1 << gshift[vv[zs]]: 1, 1 << gshift[uu[ys]]: -1}, (ys, zs)) for ys in ysyms for zs in zsyms]
+        prods_state = {"pair_vecs": pair_vecs, "prods": [[({0: 1}, (), 0)]]}
+        _posify_cache[gens_key] = prods_state
+
+    cache_key = (gens_key, tuple(sorted((str(g), p) for g, p in caps.items())), target_degs)
+    state = _posify_cache.get(cache_key)
+    if state is None:
+        # clearing monomials as precomputed packed shifts with their degrees
+        usage_shifts = []
+        for usage in itertools.product(*[range(caps[g] + 1) for g in caps]):
+            shift = 0
+            sdeg = 0
+            for g, a in zip(caps, usage):
+                shift += (caps[g] - a) << gshift[g]
+                sdeg += caps[g] - a
+            usage_shifts.append((shift, dict(zip(caps, usage)), sdeg))
+        state = {"usage_shifts": usage_shifts, "levels": {}}
+        _posify_cache[cache_key] = state
+
+    def get_level(m, degree):
+        """Candidates with ``m`` difference factors and total degree ``degree``."""
+        level = state["levels"].get(m)
+        if level is None:
+            prods = prods_state["prods"]
+            pair_vecs = prods_state["pair_vecs"]
+            shifts = {}
+            for shift, usage, sdeg in state["usage_shifts"]:
+                if m + sdeg in target_degs:
+                    shifts.setdefault(m + sdeg, []).append((shift, usage))
+            level = {}
+            if shifts:
+                while len(prods) <= m:
+                    cur = []
+                    for vec, combo, start in prods[-1]:
+                        for idx in range(start, len(pair_vecs)):
+                            pv, pair = pair_vecs[idx]
+                            cur.append((dict_mul(vec, pv), (*combo, pair), idx))
+                    prods.append(cur)
+                for deg, deg_shifts in shifts.items():
+                    level[deg] = [({k + shift: c for k, c in vec.items()}, combo, usage, m) for vec, combo, _ in prods[m] for shift, usage in deg_shifts]
+            state["levels"][m] = level
+        return level.get(degree, [])
+
+    # solve each degree block separately, escalating the factor-count ceiling:
+    # small LPs solve fast and usually suffice
+    chosen = []
+    for degree, target in sorted(blocks.items()):
+        candidates = []
+        values = None
+        for m in range(max(d, 0), degree + 1):
+            candidates = [*candidates, *get_level(m, degree)]
+            if len(candidates) > _MAX_CANDIDATES:
+                raise ValueError(f"candidate set too large ({len(candidates)}) for {val}")
+            values = yield ([svec for svec, _, _, _ in candidates], target)
+            if values is not None:
+                break
+        if values is None:
+            raise ValueError(f"no positive representation found for {val}")
+        chosen.extend((cand, x) for cand, x in zip(candidates, values) if x)
+
+    result = S.Zero
+    total = {}
+    for (svec, combo, usage, m), xi in chosen:
+        term = S.One
+        for ys, zs in combo:
+            term = term * (sympify(zs) - sympify(ys))
+        for g, a in usage.items():
+            if a:
+                term = term / back[g] ** a
+        result += xi * bs ** (m - d) * term
+        for k, c in svec.items():
+            total[k] = total.get(k, 0) + xi * c
+
+    # exact verification.  The integer identity is the claim at beta = 1; both sides are homogeneous of
+    # degree d (deg y = deg z = 1, deg beta = -1, Laurent atoms 1 + beta*y of degree 0), which determines
+    # them from their beta = 1 specialization.  When homogeneity of the input cannot be shown
+    # structurally, fall back to expanding the difference.
+    weights = {bs: -1, **dict.fromkeys(map(sympify, (*ysyms, *zsyms)), 1)}
+    if _weighted_degree(e, weights) == d:
+        if {k: c for k, c in total.items() if c} != vec0:
+            raise ValueError(f"positive representation check failed for {val}: got {result}")
+    else:
+        diff_num, _ = sympify_sympy(result - e).as_numer_denom()
+        if expand(sympify(diff_num)) != S.Zero:
+            raise ValueError(f"positive representation check failed for {val}: got {result}")
+    return result
+
+
+def groth_posify(val, var2, var3, msg=False):
+    """Positive FGL form of a coefficient, at ``beta = 1``.
+
+    Basis: all products of ``z_i - y_j``, ``(1 + y_j)^{-1}``, ``(1 + z_i)^{-1}``.
+    Substituting ``u_j = 1 + y_j``, ``v_i = 1 + z_i`` (so ``y = u - 1``,
+    ``z = v - 1``) turns the value into a Laurent polynomial in ``u, v``; clearing
+    the monomial denominator makes everything polynomial.  Candidates are
+    difference products times leftover clearing monomials, expanded once, with
+    ``as_coefficients_dict`` terms used as opaque basis vectors for an integer
+    LP.  ``beta`` is restored as ``beta**(k - d)`` for a term with ``k`` difference
+    factors, where ``d`` is the homogeneous degree of the value (``deg y = deg z = 1``,
+    ``deg beta = -1``), the Laurent atoms ``(1 + beta*y)`` having degree 0 by construction.
+
+    The problem splits into independent blocks by total degree.  Each block is
+    reduced by an exact presolve and the remainder is solved
+    as an integer program, escalating the number of difference factors.  The
+    result is verified exactly: by an integer identity at ``beta = 1`` when
+    homogeneity is structurally evident, otherwise by symbolic expansion.
+
+    ``msg`` is passed through to the solver as its verbosity option.  Use
+    :func:`groth_posify_many` for several coefficients, whose integer programs can
+    then be solved concurrently.
+    """
+    (result,) = groth_posify_many([val], var2, var3, msg, max_workers=1)
+    return result
+
+
+def groth_posify_many(vals, var2, var3, msg=False, *, max_workers=None, progress=None):
+    """:func:`groth_posify` of each coefficient in ``vals``, solving the integer programs concurrently.
+
+    The solver subprocesses are driven by up to ``max_workers`` threads, while the symbolic work and the construction
+    caches shared between coefficients stay on the calling thread.  The results do not depend on ``max_workers``: they
+    are those of sequential :func:`groth_posify` calls, yielded in the order of ``vals`` as soon as each is ready.  If a
+    coefficient has no positive representation, the results before it are yielded and then its exception is raised.
+    Closing the generator early, or interrupting it, stops the solver processes and removes their temporary files.
+
+    Args:
+        vals: Coefficients, as for :func:`groth_posify`.
+        var2: First secondary alphabet (``y``).
+        var3: Second secondary alphabet (``z``).
+        msg: Passed through to the solver as its verbosity option.
+        max_workers: Number of integer programs solved at once, at least 1; 1 runs everything on the calling
+            thread.  Defaults to 1.  If ``msg`` is enabled with multiple workers, solver logs may interleave.
+            Each solver process needs memory of its own, which is large for the hardest cases.
+        progress: Called as ``progress(i)``, on the calling thread, when work on ``vals[i]`` starts.
+
+    Returns:
+        A generator of the ``groth_posify`` results, in the order of ``vals``.
+
+    Raises:
+        ValueError: If ``max_workers`` is less than 1.
+    """
+    vals = list(vals)
+    workers = _resolve_workers(max_workers, len(vals))
+    return _posify_many(vals, var2, var3, msg, workers, progress)
+
+
+def _posify_many(vals, var2, var3, msg, workers, progress):
+    """Scheduler of :func:`groth_posify_many`: runs one :func:`_posify_steps` coroutine per coefficient.
+
+    A coroutine is resumed on this thread whenever the integer program it waits for is done.  Coroutines are started in
+    order, and the results are released in order.
+    """
+    n = len(vals)
+    tmpdir = tempfile.mkdtemp(prefix="schubmult-posify-")
+    stop = threading.Event()
+    pool = cf.ThreadPoolExecutor(workers, thread_name_prefix="posify") if workers > 1 else _InlineExecutor()
+    # more coroutines than workers, so that the pool keeps busy while this thread prepares the next programs
+    limit = 2 * workers if workers > 1 else 1
+    gens = {}  # index -> coroutine that has not finished
+    futs = {}  # index -> its pending integer program
+    results = {}
+    failure = None  # (index, exception) of the earliest failed coefficient
+    next_start = next_out = 0
+
+    def step(i, fut=None):
+        """Resume coroutine ``i`` with the outcome ``fut`` of its last program (none on the first step), and record what it does next."""
+        nonlocal failure
+        try:
+            if fut is None:
+                svecs, target = next(gens[i])
+            elif fut.exception() is None:
+                svecs, target = gens[i].send(fut.result())
+            else:
+                svecs, target = gens[i].throw(fut.exception())
+        except StopIteration as done:
+            del gens[i]
+            results[i] = done.value
+        except Exception as exc:
+            del gens[i]
+            if failure is None or i < failure[0]:
+                failure = (i, exc)
+        else:
+            futs[i] = pool.submit(_solve_milp, svecs, target, msg, tmpdir, stop)
+
+    try:
+        while True:
+            while next_out in results:
+                yield results.pop(next_out)
+                next_out += 1
+            if failure is not None and failure[0] == next_out:
+                raise failure[1]
+            if next_out == n:
+                return
+            # coefficients after the failed one are never needed
+            wanted = [i for i in futs if failure is None or i < failure[0]]
+            ready = [i for i in wanted if futs[i].done()]
+            if ready:
+                for i in ready:
+                    step(i, futs.pop(i))
+            elif next_start < n and len(gens) < limit and failure is None:
+                if progress is not None:
+                    progress(next_start)
+                gens[next_start] = _posify_steps(vals[next_start], var2, var3)
+                step(next_start)
+                next_start += 1
+            else:
+                cf.wait([futs[i] for i in wanted], return_when=cf.FIRST_COMPLETED)
+    finally:
+        if gens:
+            _abort_solves(list(futs.values()), tmpdir, stop)
+        pool.shutdown(wait=True)
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 def compute_positive_rep(val: Add, var2: Alphabet, var3: Alphabet, msg: bool = False):

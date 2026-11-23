@@ -81,3 +81,39 @@ def test_with_same_args_exec(capsys, json_file):
 
     perms = [uncode(p) if ascode else Permutation(p) for p in args["perms"]]
     assert_expansion_good(perms, ret_dict, same)
+
+
+def test_display_positive_output_does_not_depend_on_jobs(capsys):
+    from schubmult._scripts.grothmult_double import main
+
+    cmd = ["grothmult_double", "2", "1", "3", "-", "1", "3", "2", "--mixed-var", "--display-positive"]
+    outputs = []
+    for jobs in ("1", "3"):
+        main([*cmd, "--jobs", jobs])
+        captured = capsys.readouterr()
+        outputs.append((captured.out, captured.err))
+    assert outputs[0][0]
+    assert outputs[0] == outputs[1]
+
+
+def test_jobs_defaults_to_one():
+    from schubmult.utils.argparse import schub_argparse
+
+    args, _ = schub_argparse(
+        "grothmult_double",
+        "test",
+        ["2", "1", "3", "-", "1", "3", "2", "--display-positive"],
+        yz=True,
+        coprod=False,
+    )
+    assert args.jobs == 1
+
+
+@pytest.mark.parametrize("jobs", ["0", "-1", "many"])
+def test_jobs_must_be_a_positive_integer(capsys, jobs):
+    from schubmult._scripts.grothmult_double import main
+
+    with pytest.raises(SystemExit) as excinfo:
+        main(["grothmult_double", "2", "1", "3", "-", "1", "3", "2", "--display-positive", "--jobs", jobs])
+    assert excinfo.value.code == 2
+    assert "--jobs" in capsys.readouterr().err

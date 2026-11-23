@@ -1,12 +1,22 @@
 """Shared command-line parsing for the ``schubmult_*`` scripts (`schub_argparse`)."""
 
 import sys  # noqa: F401
-from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
+from argparse import SUPPRESS, ArgumentParser, ArgumentTypeError, RawDescriptionHelpFormatter
 
 # from sympy import init_printing
 from schubmult.utils.logging import init_logging
 
 # Indexed.sympify_sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
+
+
+def _positive_int(text):
+    try:
+        value = int(text)
+    except ValueError:
+        raise ArgumentTypeError(f"invalid integer value: {text!r}") from None
+    if value < 1:
+        raise ArgumentTypeError(f"must be at least 1, got {value}")
+    return value
 
 
 def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod=True):
@@ -104,6 +114,17 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False, coprod
             dest="msg",
             help="Display debug output during integer optimization for --display-positive",
         )
+
+        if prog_name == "grothmult_double":
+            parser.add_argument(
+                "-j",
+                "--jobs",
+                type=_positive_int,
+                default=1,
+                metavar="N",
+                help="Solve up to N integer programs of --display-positive at once (1 disables parallelism). "
+                "Default: 1. Each solver process needs its own memory",
+            )
 
         parser.add_argument(
             "--down",

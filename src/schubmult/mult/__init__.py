@@ -12,7 +12,7 @@ in various settings:
 - grothmult_q_double: Quantum double Grothendieck multiplication
 - grothmult_q: Quantum (single) Grothendieck multiplication
 
-Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
+Also includes positivity utilities (posify, compute_positive_rep, groth_posify, groth_posify_many) for root-based and FGL representations.
 Exports resolve lazily (PEP 562) so that importing one kernel does not load all the others.
 """
 
@@ -25,6 +25,8 @@ _exports = {
     "grothmult_q_dict": ("groth_quantum", "grothmult_q_dict"),
     "grothmult_q_pieri": ("groth_quantum", "grothmult_q_pieri"),
     "compute_positive_rep": ("positivity", "compute_positive_rep"),
+    "groth_posify": ("positivity", "groth_posify"),
+    "groth_posify_many": ("positivity", "groth_posify_many"),
     "posify": ("positivity", "posify"),
     "schubmult_q": ("quantum", "schubmult_q"),
     "factor_out_q": ("quantum_double", "factor_out_q"),
@@ -95,6 +97,8 @@ __all__ = [
     "factor_out_q",
     "groth_elem_sym_poly",
     "groth_elem_sym_poly_q",
+    "groth_posify",
+    "groth_posify_many",
     "grothmult_double",
     "grothmult_double_block",
     "grothmult_double_pieri",

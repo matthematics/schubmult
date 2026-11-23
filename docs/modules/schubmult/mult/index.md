@@ -15,6 +15,6 @@ in various settings:
 - grothmult_q_double: Quantum double Grothendieck multiplication (conjectural Molev--Sagan rule)
 - grothmult_q: Quantum (single) Grothendieck multiplication
 
-Also includes positivity utilities (posify, compute_positive_rep) for root-based representations.
+Also includes positivity utilities (posify, compute_positive_rep, groth_posify, groth_posify_many) for root-based and FGL representations.
 Exports resolve lazily (PEP 562) so that importing one kernel does not load all the others.
 

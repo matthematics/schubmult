@@ -160,6 +160,8 @@ coefficients. Without the flag, the existing conventions are unchanged.
 
 `--display-positive` writes double and quantum double coefficients as manifestly positive expressions in the differences `y_i - z_j` (Graham positivity), using integer programming to find a positive representative. Run any script with `--help` for the full option list.
 
+For `grothmult_double --mixed-var --display-positive`, `--jobs N` (`-j N`) sets how many coefficient integer programs to solve concurrently. The default is 1; increase it to enable parallelism. The output does not depend on the number of jobs. Each solver runs as a separate process with its own memory, which is large for the hardest products, so lower `--jobs` if memory is tight. From Python, use `schubmult.mult.groth_posify_many` with `max_workers` (default 1).
+
 All four `grothmult_*` scripts accept `--beta EXPR` to use a sympified expression as beta in the multiplication, for example `--beta=-1`, `--beta 0`, or `--beta "1/2"`. Without this option, beta remains symbolic.
 For `--display-positive`, the positive expression is constructed with symbolic beta before specialization. With `--parabolic --beta 0`, specialization is deferred until after Kato projection so inverse powers of beta can cancel.
 
