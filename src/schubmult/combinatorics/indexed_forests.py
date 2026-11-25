@@ -1289,10 +1289,9 @@ def word_to_pairinj_labeled(word):
     return tuple(out)
 
 
-def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabeling] | None:
+def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabeling]:
     """Forest analogue of RSK: insert a word of biletters letter by letter, returning the insertion
-    forest ``P`` (an `LBS`) and the recording forest ``Q`` (a `DecLabeling`), or ``None`` if the
-    word is not insertable. Each new letter becomes a root that absorbs the neighboring trees
+    forest ``P`` (an `LBS`) and the recording forest ``Q`` (a `DecLabeling`). Each new letter becomes a root that absorbs the neighboring trees
     at ``primary - 1`` / ``primary + 1`` as children.
     """
     if len(word_of_pairs) == 0:
