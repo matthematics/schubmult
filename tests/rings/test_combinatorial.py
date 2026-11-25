@@ -326,6 +326,41 @@ def test_bounded_rc_factor_algebra_multiplies_schuberts():
             expected_prod = Sx(perm1) * Sx(perm2)
             assert all(expected_prod.get(rc_result.perm, 0) == c for rc_result, c in prod.items()), f"Error: Bounded RC factor algebra multiplication mismatch for permutations {perm1} and {perm2}, {prod=} {expected_prod=}"
 
+def test_bounded_rc_factor_algebra_full_schub_elem_with_dominant():
+    from schubmult import BoundedRCFactorAlgebra, Permutation, RCGraph, Sx, uncode
+
+    ring = BoundedRCFactorAlgebra()
+    size = 3
+    u = Permutation([3, 1, 4, 2])
+    v = Permutation([1, 4, 2, 3])
+
+    elem_u = ring.full_schub_elem(u, size, dominant=u.mul_dominant())
+    elem_v = ring.full_schub_elem(v, size, dominant=uncode([2, 2]))
+    prod = (elem_u * elem_v).to_rc_graph_ring_element()
+    expected = {rc: c for w, c in (Sx(u) * Sx(v)).items() for rc in RCGraph.all_rc_graphs(w, size)}
+    assert dict(prod) == expected
+
+    with pytest.raises(ValueError, match="dominant envelope"):
+        ring.full_schub_elem(u, size, dominant=Permutation([3, 1, 2]))
+
+def test_bounded_rc_factor_algebra_divided_differences():
+    from schubmult import BoundedRCFactorAlgebra, Permutation, RCGraph, Sx
+
+    ring = BoundedRCFactorAlgebra()
+    size = 4
+
+    def as_rc_dict(sx_elem):
+        return {rc: c for w, c in sx_elem.items() if c != 0 for rc in RCGraph.all_rc_graphs(w, size)}
+
+    for w in Permutation.all_permutations(size):
+        elem = ring.full_schub_elem(w, size)
+        for i in range(1, size):
+            assert dict(elem.divdiff_descs(i).to_rc_graph_ring_element()) == as_rc_dict(Sx(w).divdiff(i))
+
+    w = Permutation([4, 2, 3, 1])
+    v = Permutation([2, 3, 1])
+    assert dict(ring.full_schub_elem(w, size).divdiff_perm(v).to_rc_graph_ring_element()) == as_rc_dict(Sx(w).divdiff_perm(v))
+
 def test_bounded_wc_factor_algebra_multiplies_grothendiecks():
     from schubmult import Permutation, BoundedWCFactorAlgebra, Gx
 

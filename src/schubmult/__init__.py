@@ -4,7 +4,167 @@ import ast
 import importlib
 import importlib.util
 from pathlib import Path
-from typing import Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
+
+if TYPE_CHECKING:
+    from schubmult.combinatorics.anti_rc_graph import (
+        AntiRCGraph,
+    )
+    from schubmult.combinatorics.bpd import (
+        BPD,
+        TileType,
+    )
+    from schubmult.combinatorics.crystal_graph import (
+        CrystalGraphTensor,
+    )
+    from schubmult.combinatorics.increasing_tableau import (
+        IncreasingTableau,
+    )
+    from schubmult.combinatorics.nilplactic import (
+        NilPlactic,
+    )
+    from schubmult.combinatorics.permutation import (
+        Permutation,
+        uncode,
+    )
+    from schubmult.combinatorics.pipe_dream import (
+        PipeDream,
+    )
+    from schubmult.combinatorics.plactic import (
+        Plactic,
+    )
+    from schubmult.combinatorics.rc_graph import (
+        RCGraph,
+    )
+    from schubmult.combinatorics.set_valued_tableau import (
+        SetValuedTableau,
+    )
+    from schubmult.combinatorics.wc_graph import (
+        WCGraph,
+    )
+    from schubmult.rings.base_ring import (
+        BaseRing,
+        BaseRingElement,
+    )
+    from schubmult.rings.combinatorial.bounded_rc_factor_algebra import (
+        BoundedRCFactorAlgebra,
+    )
+    from schubmult.rings.combinatorial.bounded_wc_factor_algebra import (
+        BoundedWCFactorAlgebra,
+    )
+    from schubmult.rings.combinatorial.bpd_ring import (
+        BPDRing,
+        BPDRingElement,
+    )
+    from schubmult.rings.combinatorial.chute_move_ring import (
+        ChuteMoveRing,
+    )
+    from schubmult.rings.combinatorial.dual_rc_graph_ring import (
+        DualRCGraphRing,
+    )
+    from schubmult.rings.combinatorial.eg_plactic_ring import (
+        EGPlacticRing,
+        EGPlacticRingElement,
+    )
+    from schubmult.rings.combinatorial.forest_rc_ring import (
+        ForestRCGraphRing,
+    )
+    from schubmult.rings.combinatorial.grass_tensor_algebra import (
+        GrassTensorAlgebra,
+        GrassTensorAlgebraElement,
+    )
+    from schubmult.rings.combinatorial.plactic_algebra import (
+        NilPlacticAlgebra,
+        PlacticAlgebra,
+        PlacticAlgebraElement,
+    )
+    from schubmult.rings.combinatorial.rc_graph_ring import (
+        GrassRCGraphRing,
+        RCGraphRing,
+        RCGraphRingElement,
+    )
+    from schubmult.rings.combinatorial.schubert_monomial_ring import (
+        SchubertMonomialRing,
+        SchubertMonomialRingElement,
+    )
+    from schubmult.rings.combinatorial.wc_graph_ring import (
+        WCGraphRing,
+        WCGraphRingElement,
+    )
+    from schubmult.rings.direct_product_ring import (
+        DirectProductRing,
+        DirectProductRingElement,
+    )
+    from schubmult.rings.free_algebra import (
+        FA,
+        ADSx,
+        AGx,
+        ASx,
+        CompositionSchubertBasis,
+        ElementaryBasis,
+        FreeAlgebra,
+        FreeAlgebraBasis,
+        GrothendieckBasis,
+        JBasis,
+        JTBasis,
+        NElementaryBasis,
+        SchubertBasis,
+        SchubertSchurBasis,
+        WordBasis,
+        ZBasis,
+    )
+    from schubmult.rings.free_algebra.forest_basis import (
+        ForestBasis,
+        ForestDual,
+    )
+    from schubmult.rings.nsym import (
+        NSym,
+    )
+    from schubmult.rings.polynomial_algebra import (
+        PolynomialAlgebra,
+    )
+    from schubmult.rings.quasisymmetric_functions import (
+        QSym,
+        QSymElement,
+    )
+    from schubmult.rings.schubert.double_grothendieck_ring import (
+        DGx,
+        DoubleGrothendieckElement,
+        DoubleGrothendieckRing,
+    )
+    from schubmult.rings.schubert.grothendieck_ring import (
+        GrothendieckElement,
+        GrothendieckRing,
+        Gx,
+    )
+    from schubmult.rings.schubert.nil_hecke import (
+        NilHeckeRing,
+    )
+    from schubmult.rings.schubert.quantum_double_grothendieck_ring import (
+        QDGx,
+        QuantumDoubleGrothendieckElement,
+        QuantumDoubleGrothendieckRing,
+    )
+    from schubmult.rings.schubert.schubert_ring import (
+        DoubleSchubertElement,
+        DoubleSchubertRing,
+        DSx,
+        SingleSchubertRing,
+        Sx,
+    )
+    from schubmult.rings.tensor_ring import (
+        TensorRing,
+    )
+    from schubmult.rings.thompson_algebra import (
+        ThompsonAlgebra,
+    )
+    from schubmult.symbolic.poly.variables import (
+        ChangeOfVariables,
+        GeneratingSet,
+    )
+    from schubmult.utils.schub_lib import (
+        pull_out_var,
+    )
 
 # Version is managed by setuptools-scm
 try:
@@ -161,7 +321,7 @@ def _scan_modules():
                         if not name.startswith("_") and name not in _module_map:
                             _module_map[name] = modname
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """
     Lazy import exported names. This allows `import schubmult` to succeed
     even if some optional dependencies are missing.

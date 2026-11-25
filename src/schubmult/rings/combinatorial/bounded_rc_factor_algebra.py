@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging  # noqa: F401
 from functools import cache
+from typing import cast
 
 from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
 from schubmult.combinatorics.rc_graph import RCGraph
@@ -56,13 +57,13 @@ def _is_row_root(root, k):
 
 
 @cache
-def _elem_factor_from_rc(rc):
+def _elem_factor_from_rc(rc) -> tuple[RCGraph, ...]:
     from schubmult.combinatorics.permutation import Permutation
 
     if rc.perm.inv == 0:
         return ()
     if rc.is_elem_sym:
-        return CrystalGraphTensor(rc.normalize())
+        return (rc.normalize(),)
     n = len(rc.perm)
     weight = tuple(reversed([n - 1 - j - w for j, w in enumerate((rc.perm * Permutation.w0(n)).pad_code(n - 1))]))
     hw_rc, raise_seq = rc.to_highest_weight()
@@ -73,7 +74,7 @@ def _elem_factor_from_rc(rc):
             break
     if good_tensor is None:
         raise ValueError(f"Could not find good tensor for RC graph {rc=} {n - 1=}")
-    return CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)
+    return tuple(cast("CrystalGraphTensor", CrystalGraphTensor(*good_tensor).reverse_raise_seq(raise_seq)))
 
 
 def _is_full_grassmannian_rc(rc: RCGraph) -> bool:
@@ -156,6 +157,7 @@ class BoundedRCFactorPrintingTerm(PrintingTerm):
     """Display symbol for a `BoundedRCFactorAlgebra` basis key."""
     is_commutative = False
     precedence = 50
+    _key: tuple
 
     def __new__(cls, key):
         return BoundedRCFactorPrintingTerm.__xnew_cached__(cls, key)
@@ -193,6 +195,8 @@ class BoundedRCFactorPrintingTerm(PrintingTerm):
 
 class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
     """Element of BoundedRCFactorAlgebra: finite linear combinations of Grass tensors."""
+
+    ring: BoundedRCFactorAlgebra
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
@@ -286,6 +290,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
     """
 
     _id = 0
+    dtype: type[BoundedRCFactorAlgebraElement]
 
     @property
     def make_key(self):
@@ -316,7 +321,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         self.dtype = type("BoundedRCFactorAlgebraElement", (BoundedRCFactorAlgebraElement,), {"ring": self})
 
     def from_rc_graph(self, rc, size):
-        tensor = self._normalize_key(self.make_key(tuple(_elem_factor_from_rc(rc)), size))
+        tensor = self._normalize_key(self.make_key(_elem_factor_from_rc(rc), size))
         return self.from_dict({tensor: 1})
 
     def from_rc_graph_ring_element(self, elem, size):
@@ -326,12 +331,12 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         return result
 
     def from_CEM_rep(self, the_cem, size):
-        from sympy import Add, Mul, Pow, expand, sympify
+        from sympy import Add, Expr, Mul, Pow, expand, sympify
 
         terms = []
         the_cem = expand(sympify(the_cem))
         for the_term in Add.make_args(the_cem):
-            coeff, rest = the_term.as_coeff_Mul()
+            coeff, rest = cast("Expr", the_term).as_coeff_Mul()
             if rest == 1:
                 terms.append((coeff, ()))
             else:
@@ -342,7 +347,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                         base, exponent = factor.as_base_exp()
                     else:
                         base = factor
-                    factors.extend([base] * exponent)
+                    factors.extend([base] * int(exponent))
                 terms.append((coeff, sorted(factors, key=lambda x: (x.numvars, -x.degree))))
 
         the_result = self.zero
@@ -370,7 +375,16 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 elem += coeff * self(new_key)
         return elem
 
-    def full_schub_elem(self, perm, size):
+    def full_schub_elem(self, perm, size, dominant=None):
+        """Signed elementary-factor lift of ``S_perm`` in ``size`` variables.
+
+        By default the ``ElemSymPolyBasis`` expansion is used. If ``dominant`` is given, it must be a dominant permutation
+        ``L`` with ``(perm * ~L).inv == L.inv - perm.inv`` (for example ``perm.mul_dominant()``), and the v-path expansion
+        against ``L`` is used instead. Factors in more than ``size`` variables are truncated to ``size`` variables.
+        """
+        if dominant is not None:
+            return self._full_schub_elem_dominant(perm, size, dominant)
+
         from schubmult.rings.polynomial_algebra import ElemSymPolyBasis, Schub
 
         schub_elem = Schub(perm, size).change_basis(ElemSymPolyBasis)
@@ -385,6 +399,72 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                     term *= self.elem_sym(part, size, size=size)
             schub += coeff * term
         return schub
+
+    def _full_schub_elem_dominant(self, perm, size, dominant):
+        from schubmult import Permutation, Sx
+        from schubmult.rings.free_algebra import FA
+
+        perm = Permutation(perm)
+        dominant = Permutation(dominant)
+        if not dominant.is_dominant:
+            raise ValueError(f"{dominant} is not dominant")
+        if (perm * ~dominant).inv != dominant.inv - perm.inv:
+            raise ValueError(f"{dominant} is not a dominant envelope of {perm}")
+
+        # Words encode ordered factors as (degree, numvars, degree, numvars, ...).
+        cem = Sx(perm).cem_rep(elem_func=lambda p, k, *_: FA(p, k), mumu=~dominant)
+        schub = self.zero
+        for word, coeff in cem.items():
+            factors = sorted(((word[i], word[i + 1]) for i in range(0, len(word), 2) if word[i] != 0), key=lambda factor: (factor[1], -factor[0]))
+            term = self(self.make_key((), size))
+            for degree, numvars in factors:
+                term *= self.elem_sym(degree, min(numvars, size), size=size)
+            schub += coeff * term
+        return schub
+
+    def div_diff_desc_key(self, index, key, reflect=False):
+        from schubmult.combinatorics.permutation import Permutation
+
+        key = self._normalize_key(key)
+        if len(key) == 0:
+            if not reflect:
+                return self.zero
+            return self(self.make_key((), key.size))
+
+        if not reflect:
+            first_rc = key[0]
+            result = self.zero
+            if len(first_rc) == index:
+                tack_on = self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=True)
+                for new_rc in first_rc.divdiff_desc(index):
+                    if not _is_full_grassmannian_rc(new_rc):
+                        raise ValueError(f"divdiff_desc produced non full Grassmannian RC graph: {new_rc} from {first_rc} at index {index} {key=} {key.size=}")
+                    if new_rc.perm.inv > 0:
+                        result += self(self.make_key((new_rc.normalize(),), key.size)) * tack_on
+                    else:
+                        result += tack_on
+            result += self(self.make_key((key[0],), key.size)) * self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=False)
+            return result
+        return self(key) + (
+            self.schub_elem(Permutation.ref_product(index + 1), key.size)
+            - 2 * self.schub_elem(Permutation.ref_product(index), key.size)
+            + (self.zero if index == 1 else self.schub_elem(Permutation.ref_product(index - 1), key.size))
+        ) * self.div_diff_desc_key(index, key, reflect=False)
+
+    def div_diff_perm_key(self, perm, key):
+        result = self(key)
+        while True:
+            descs = perm.descents()
+            if len(descs) == 0:
+                break
+            index = max(descs) + 1
+            new_result = self.zero
+            for the_key, coeff in result.items():
+                if coeff != 0:
+                    new_result += coeff * self.div_diff_desc_key(index, the_key)
+            result = new_result
+            perm = perm.swap(index - 1, index)
+        return result
 
     def schub_elem(self, perm, size, partition=None):
         from schubmult.combinatorics.permutation import Permutation
@@ -724,7 +804,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             return False
         return True
 
-    def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
+    def _mul_keys(self, left_key: BoundedRCFactorAlgebra._key, right_key: BoundedRCFactorAlgebra._key) -> BoundedRCFactorAlgebra._key:
         size = left_key.size
         if left_key.size != right_key.size:
             size = max(left_key.size, right_key.size)
