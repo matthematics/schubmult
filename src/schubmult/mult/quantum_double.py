@@ -17,13 +17,14 @@ action), and ``factor_out_q`` (split a polynomial by its ``q``-monomials).
 """
 
 from functools import cache
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 import schubmult.mult.positivity as pos
-from schubmult.combinatorics.permutation import Permutation, uncode
+from schubmult.combinatorics.permutation import Permutation, phi1, uncode
 from schubmult.mult import _accel
-from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, expand, prod, sympify
 from schubmult.symbolic.common_polys import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger
@@ -33,7 +34,10 @@ from schubmult.utils.perm_utils import (
     is_parabolic,
     omega,
 )
-from schubmult.utils.schub_lib import check_blocks, compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, elem_sym_positional_perms_q, reduce_q_coeff
+from schubmult.utils.schub_lib import check_blocks, compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, elem_sym_positional_perms_q, pull_out_var, reduce_q_coeff
+
+if TYPE_CHECKING:
+    from schubmult._typing import Alphabet
 
 logger = get_logger(__name__)
 
@@ -210,73 +214,70 @@ def schubmult_q_generic_partial_posify(u2, v2):
     return {w2: q_partial_posify_generic(val, u2, v2, w2) for w2, val in schubmult_q_double_pair_generic(u2, v2).items()}
 
 
+def _q_one_domination_peel(u, v, w, qv, var2, var3, q_var, msg):
+    """Peel one y-variable at fixed positive degree; None means the theorem does not apply."""
+    a, b = (~u)[0], (~w)[0]  # one-based positions of 1
+    # qv[i-1] = d_i; d_0 and trailing omitted coordinates are zero.
+    if a > b or any(qv[max(0, a - 2) : b]) or not u.one_dominates(w):
+        return None
+    for i in range(b - 1, a - 1, -1):
+        if v[i - 1] < v[i]:
+            return S.Zero
+        v = v.swap(i - 1, i)
+
+    u_small, w_small = phi1(u), phi1(w)
+    degree = qv[: a - 1] + qv[a:]
+    monomial = prod(q_var[i] ** d for i, d in enumerate(degree, 1) if d)
+    result = S.Zero
+    for indices, v_small in pull_out_var(a, v):
+        shifted_y = tuple(var2[1 : max(len(u_small) + len(v_small), len(w_small)) + 2])
+        raw = schubmult_q_double_pair(u_small, v_small, shifted_y, var3, q_var).get(w_small, S.Zero)
+        coeff = factor_out_q(raw, q_var).get(monomial, S.Zero)
+        if coeff != 0:
+            weight = prod(var2[1] - var3[j] for j in indices)
+            result += weight * _q_posify_degree(u_small, v_small, w_small, coeff, degree, shifted_y, var3, q_var, msg)
+    return result
+
+
+def _q_posify_degree(u, v, w, coeff, qv, var2, var3, q_var, msg):
+    """Posify just [q^qv] c^w_{u,v}; the caller keeps the original q-monomial."""
+    if sympify(coeff).is_Integer or (~v).code == (~v).medium_theta():
+        return coeff
+    while any(qv):
+        peeled = _q_one_domination_peel(u, v, w, qv, var2, var3, q_var, msg)
+        if peeled is not None:
+            return peeled
+        u, v, w, qv, changed = reduce_q_coeff(u, v, w, qv)
+        if not changed:
+            return pos.compute_positive_rep(coeff, var2, var3, msg)
+    return pos.posify(coeff, u, v, w, var2, var3, msg)
+
+
 def q_posify(u, v, w, val, var2, var3, q_var, msg):
     """Manifestly positive representation of the quantum double structure constant ``c^w_{u,v}``.
 
-    Splits ``val`` by ``q``-monomial (``factor_out_q``), then for each piece either takes it
-    as-is (integer, or when ``v``'s inverse code is already in medium-theta form), reduces the
-    triple ``(u, v, w)`` via ``reduce_q_coeff`` until the ``q``-monomial becomes trivial and
-    delegates to the classical ``posify``, or falls back to ``compute_positive_rep``.
-    Raises if the reconstruction does not equal ``val``.
+    Split by q-monomial, keeping integers and medium-theta coefficients as-is. At positive
+    degree, recursively peel by quantum 1-domination when its strip has degree zero; otherwise
+    try a Huang--Li step and retest. Delegate degree zero to classical ``posify`` and use the
+    LP only if neither quantum reduction applies. Check reconstruction against ``val``.
     """
-    # logger.debug(f"Line number {val=} {u=} {v=} {w=}")
-    # if not v.has_pattern([1, 4, 3, 2]) and not v.has_pattern([3, 1, 2]):
-    #     return schubmult_q_double_fast(u, v, var2, var3, q_var).get(w, S.Zero)
-    try:
-        val2 = int(expand(val))
-    except Exception:
-        # logger.debug("Line number")
-        val2 = 0
-        q_dict = factor_out_q(val)
-        # logger.debug(f"{q_dict=}")
-        # logger.debug("Line number")
-        for q_part in q_dict:
-            try:
-                val2 += q_part * int(q_dict[q_part])
-            except Exception:
-                try:
-                    # logger.debug("Line number")
-                    if (~v).code == (~v).medium_theta():
-                        val2 += q_part * q_dict[q_part]
-                    else:
-                        q_part2 = q_part
-                        qv = q_vector(q_part)
-                        u2, v2, w2 = u, v, w
-                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                        while did_one:
-                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                        q_part2 = np.prod(
-                            [q_var[i + 1] ** qv[i] for i in range(len(qv))],
-                        )
-                        if q_part2 == 1:
-                            # reduced to classical coefficient
-                            # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
-                            val2 += q_part * pos.posify(
-                                q_dict[q_part],
-                                u2,
-                                v2,
-                                w2,
-                                var2,
-                                var3,
-                                msg,
-                            )
-                        else:
-                            val2 += q_part * pos.compute_positive_rep(
-                                q_dict[q_part],
-                                var2,
-                                var3,
-                                msg,
-                            )
-                            if val2 is None:
-                                raise Exception
-                except Exception:
-                    import traceback
-
-                    traceback.print_exc()
-        if expand(val - val2) != 0:
-            # logger.debug("Different")
-            raise Exception
-    return val2
+    expanded = expand(val)
+    if expanded.is_Integer:
+        return int(expanded)
+    # Explicit alphabets also serve as cache keys in the smaller products.
+    if isinstance(var2, list):
+        var2 = tuple(var2)
+    if isinstance(var3, list):
+        var3 = tuple(var3)
+    if not isinstance(q_var, GeneratingSet_base):
+        q_var = CustomGeneratingSet(q_var)
+    result = S.Zero
+    for monomial, coeff in factor_out_q(val, q_var).items():
+        degree = q_vector(monomial, q_var)
+        result += monomial * _q_posify_degree(u, v, w, coeff, degree, var2, var3, q_var, msg)
+    if expand(val - result) != 0:
+        raise ValueError(f"Quantum positivity reconstruction failed for {u=}, {v=}, {w=}")
+    return result
 
 
 def q_partial_posify_generic(val, u, v, w):
@@ -762,7 +763,7 @@ def mul_q_dict(q_dict1, q_dict2):
     return ret
 
 
-def factor_out_q(poly, q_var=_vars.q_var):
+def factor_out_q(poly, q_var: "Alphabet" = _vars.q_var):
     """Split ``poly`` by its ``q``-monomials: return ``{q_monomial: coefficient}`` with coefficients
     free of ``q_var`` variables. Recurses over the ``Add``/``Mul``/``Pow`` structure; a polynomial
     with no ``q`` variables maps to ``{1: poly}``.

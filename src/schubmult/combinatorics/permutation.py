@@ -1028,10 +1028,7 @@ def cycle(p: int, q: int) -> Permutation:
 
 def phi1(u: Permutation) -> Permutation:
     """Drop the first entry of ``(~u).code`` and re-invert: one step of the ``dominates`` recursion."""
-    c_star = (~u).code
-    c_star.pop(0)
-    # print(f"{uncode(c_star)=}")
-    return ~(uncode(c_star))
+    return ~uncode((~u).code[1:])
 
 
 def split_perms(perms: Sequence[Permutation]) -> list[Permutation]:
@@ -1075,11 +1072,8 @@ def split_perms(perms: Sequence[Permutation]) -> list[Permutation]:
 
 
 def _one_dominates(u, w):
-    c_star_u = (~u).code
-    c_star_w = (~w).code
-
-    a = c_star_u[0]
-    b = c_star_w[0]
+    a = (~u)[0] - 1
+    b = (~w)[0] - 1
 
     for i in range(a, b):
         if i >= len(u) - 1:

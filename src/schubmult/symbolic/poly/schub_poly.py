@@ -217,7 +217,7 @@ def call_zvars(v1, v2, k, i, min_size=10):  # noqa: ARG001
     )
 
 
-def q_vector(q_exp, q_var=_vars.q_var):
+def q_vector(q_exp, q_var: vv.GeneratingSet_base = _vars.q_var):
     """Exponent vector of a monomial in the ``q`` variables (``q_1^a q_2^b -> [a, b]``); ``[]`` for 1,
     ``None`` if ``q_exp`` is not a ``q`` monomial.
     """
@@ -237,7 +237,7 @@ def q_vector(q_exp, q_var=_vars.q_var):
         return [0 for j in range(i - 1)] + [expon]
     if isinstance(q_exp, Mul):
         for a in q_exp.args:
-            v1 = q_vector(a)
+            v1 = q_vector(a, q_var)
             v1 += [0 for i in range(len(v1), len(ret))]
             ret += [0 for i in range(len(ret), len(v1))]
             ret = [ret[i] + v1[i] for i in range(len(ret))]
