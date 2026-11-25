@@ -120,11 +120,10 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg)
 
 Manifestly positive representation of the quantum double structure constant ``c^w_{u,v}``.
 
-Splits ``val`` by ``q``-monomial (``factor_out_q``), then for each piece either takes it
-as-is (integer, or when ``v``'s inverse code is already in medium-theta form), reduces the
-triple ``(u, v, w)`` via ``reduce_q_coeff`` until the ``q``-monomial becomes trivial and
-delegates to the classical ``posify``, or falls back to ``compute_positive_rep``.
-Raises if the reconstruction does not equal ``val``.
+Split by q-monomial, keeping integers and medium-theta coefficients as-is. At positive
+degree, recursively peel by quantum 1-domination when its strip has degree zero; otherwise
+try a Huang--Li step and retest. Delegate degree zero to classical ``posify`` and use the
+LP only if neither quantum reduction applies. Check reconstruction against ``val``.
 
 <a id="schubmult.mult.quantum_double.q_partial_posify_generic"></a>
 
@@ -303,7 +302,7 @@ Multiply two ``{q_monomial: coeff}`` dicts (convolution over monomials).
 #### factor\_out\_q
 
 ```python
-def factor_out_q(poly, q_var=_vars.q_var)
+def factor_out_q(poly, q_var: "Alphabet" = _vars.q_var)
 ```
 
 Split ``poly`` by its ``q``-monomials: return ``{q_monomial: coefficient}`` with coefficients

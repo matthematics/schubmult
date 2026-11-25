@@ -2,8 +2,10 @@
 
 import itertools
 
+import pytest
 import sympy
 
+import schubmult.mult.quantum_double as qdouble
 from schubmult import Permutation
 from schubmult.abc import x, y, z
 from schubmult.mult.double import schubmult_double
@@ -11,7 +13,7 @@ from schubmult.mult.quantum import schubmult_q
 from schubmult.mult.quantum_double import factor_out_q, mult_poly_q_double, q_posify, schubmult_q_double, schubmult_q_double_fast, schubpoly_quantum, single_variable
 from schubmult.symbolic import S, sympify_sympy
 from schubmult.symbolic.poly.schub_poly import _vars
-from schubmult.symbolic.poly.variables import ZeroGeneratingSet
+from schubmult.symbolic.poly.variables import GeneratingSet, ZeroGeneratingSet
 
 q = _vars.q_var
 zero = ZeroGeneratingSet()
@@ -110,6 +112,36 @@ def test_q_posify_regression_one_dominates_cases():
         positive = q_posify(u, v, w, val, y, z, q, False)
         assert sympy.expand(sp(positive) - sp(val)) == 0, (u, v, w)
         assert _manifestly_positive(positive), (u, v, w, positive)
+
+
+@pytest.mark.parametrize(
+    ("u", "v", "w", "q_var", "k"),
+    [
+        ([1, 4, 3, 2], [1, 4, 3, 2], [], q, 2),
+        # Move 1 from position 2 to 1, then peel again at positive degree.
+        ([1, 2, 5, 4, 3], [2, 1, 5, 4, 3], [2, 1], GeneratingSet("degree"), 3),
+    ],
+)
+def test_q_posify_peels_before_lp(monkeypatch, u, v, w, q_var, k):
+    u, v, w = map(Permutation, (u, v, w))
+    degree = q_var[k] * q_var[k + 1]
+    raw = schubmult_q_double_fast({u: S.One}, v, y, z, q_var)[w]
+    piece = factor_out_q(raw, q_var)[degree]
+    monkeypatch.setattr(qdouble.pos, "compute_positive_rep", lambda *args: pytest.fail("peel should not need the LP"))
+    result = q_posify(u, v, w, degree * piece, list(y[:12]), list(z[:12]), q_var, False)
+    assert sympy.expand(sp(result) - sp(degree * piece)) == 0
+    assert _manifestly_positive(result)
+
+
+def test_q_peel_vanishing_requires_a_clear_strip_and_one_domination():
+    # The missing descent in v forces zero only AFTER checking the hypotheses.
+    u, v, w = map(Permutation, ([2, 1, 3], [], [2, 3, 1]))
+    for degree in ([1], [0, 1], [0, 0, 1]):  # d_{a-1}, d_a, d_b with a=2, b=3
+        assert qdouble._q_one_domination_peel(u, v, w, degree, y, z, q, False) is None
+    clear = [0, 0, 0, 1]
+    assert qdouble._q_one_domination_peel(u, v, w, clear, y, z, q, False) == 0
+    assert qdouble._q_one_domination_peel(w, v, u, clear, y, z, q, False) is None  # b < a
+    assert qdouble._q_one_domination_peel(Permutation([1, 3, 2]), v, w, clear, y, z, q, False) is None  # descent in u
 
 
 def test_q_posify_reconstructs_raw_value_for_s4():

@@ -107,7 +107,7 @@ Indices of the ``z`` variables entering the elementary symmetric factor for the 
 #### q\_vector
 
 ```python
-def q_vector(q_exp, q_var=_vars.q_var)
+def q_vector(q_exp, q_var: vv.GeneratingSet_base = _vars.q_var)
 ```
 
 Exponent vector of a monomial in the ``q`` variables (``q_1^a q_2^b -> [a, b]``); ``[]`` for 1,
