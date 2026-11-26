@@ -210,74 +210,54 @@ def schubmult_q_generic_partial_posify(u2, v2):
     return {w2: q_partial_posify_generic(val, u2, v2, w2) for w2, val in schubmult_q_double_pair_generic(u2, v2).items()}
 
 
+def q_posify_monomial(u, v, w, monomial, coeff, var2, var3, q_var, msg):
+    """Manifestly positive form of ``coeff``, the coefficient of the ``q``-monomial ``monomial`` in ``c^w_{u,v}``.
+
+    Takes ``coeff`` as-is if it is an integer or ``v``'s inverse code is already in medium-theta
+    form. Otherwise reduces the triple ``(u, v, w)`` via ``reduce_q_coeff`` until the ``q``-monomial
+    becomes trivial and delegates to the classical ``posify``, or falls back to
+    ``compute_positive_rep``. Raises if the reconstruction does not equal ``coeff``.
+
+    The per-degree step of ``q_posify``. Also used as the ``coeff_map`` of
+    ``apply_peterson_woodward``, whose output is no longer indexed by the full-flag ``w``.
+    """
+    try:
+        return int(expand(coeff))
+    except Exception:
+        pass
+    if (~v).code == (~v).medium_theta():
+        return coeff
+    qv = q_vector(monomial)
+    u2, v2, w2, qv, did_one = reduce_q_coeff(u, v, w, qv)
+    while did_one:
+        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+    if np.prod([q_var[i + 1] ** qv[i] for i in range(len(qv))]) == 1:
+        # reduced to classical coefficient
+        result = pos.posify(coeff, u2, v2, w2, var2, var3, msg, False)
+    else:
+        result = pos.compute_positive_rep(coeff, var2, var3, msg)
+    if result is None or expand(coeff - result) != 0:
+        raise ValueError(f"Quantum positivity reconstruction failed for {u=}, {v=}, {w=}, q-monomial {monomial}")
+    return result
+
+
 def q_posify(u, v, w, val, var2, var3, q_var, msg):
     """Manifestly positive representation of the quantum double structure constant ``c^w_{u,v}``.
 
-    Splits ``val`` by ``q``-monomial (``factor_out_q``), then for each piece either takes it
-    as-is (integer, or when ``v``'s inverse code is already in medium-theta form), reduces the
-    triple ``(u, v, w)`` via ``reduce_q_coeff`` until the ``q``-monomial becomes trivial and
-    delegates to the classical ``posify``, or falls back to ``compute_positive_rep``.
-    Raises if the reconstruction does not equal ``val``.
-    """
-    # logger.debug(f"Line number {val=} {u=} {v=} {w=}")
-    # if not v.has_pattern([1, 4, 3, 2]) and not v.has_pattern([3, 1, 2]):
-    #     return schubmult_q_double_fast(u, v, var2, var3, q_var).get(w, S.Zero)
-    try:
-        val2 = int(expand(val))
-    except Exception:
-        # logger.debug("Line number")
-        val2 = 0
-        q_dict = factor_out_q(val)
-        # logger.debug(f"{q_dict=}")
-        # logger.debug("Line number")
-        for q_part in q_dict:
-            try:
-                val2 += q_part * int(q_dict[q_part])
-            except Exception:
-                try:
-                    # logger.debug("Line number")
-                    if (~v).code == (~v).medium_theta():
-                        val2 += q_part * q_dict[q_part]
-                    else:
-                        q_part2 = q_part
-                        qv = q_vector(q_part)
-                        u2, v2, w2 = u, v, w
-                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                        while did_one:
-                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                        q_part2 = np.prod(
-                            [q_var[i + 1] ** qv[i] for i in range(len(qv))],
-                        )
-                        if q_part2 == 1:
-                            # reduced to classical coefficient
-                            # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
-                            val2 += q_part * pos.posify(
-                                q_dict[q_part],
-                                u2,
-                                v2,
-                                w2,
-                                var2,
-                                var3,
-                                msg,
-                                False,
-                            )
-                        else:
-                            val2 += q_part * pos.compute_positive_rep(
-                                q_dict[q_part],
-                                var2,
-                                var3,
-                                msg,
-                            )
-                            if val2 is None:
-                                raise Exception
-                except Exception:
-                    import traceback
+    Splits ``val`` by ``q``-monomial (``factor_out_q``) and rewrites each piece with
+    ``q_posify_monomial``, which checks its reconstruction.
 
-                    traceback.print_exc()
-        if expand(val - val2) != 0:
-            # logger.debug("Different")
-            raise Exception
-    return val2
+    ``w`` must index the full-flag product: for parabolic output, posify before projecting via
+    the ``coeff_map`` of ``apply_peterson_woodward``.
+    """
+    try:
+        return int(expand(val))
+    except Exception:
+        pass
+    result = 0
+    for q_part, coeff in factor_out_q(val).items():
+        result += q_part * q_posify_monomial(u, v, w, q_part, coeff, var2, var3, q_var, msg)
+    return result
 
 
 def q_partial_posify_generic(val, u, v, w):
@@ -333,7 +313,7 @@ def q_partial_posify_generic(val, u, v, w):
     return val2
 
 
-def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=None):
+def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=None, coeff_map=None):
     """Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
 
     Implements the Peterson-Woodward comparison: for each ``q``-monomial of each coefficient,
@@ -348,6 +328,9 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=No
         n: Ambient flag size ``S_n``; results indexed by longer permutations are dropped. Defaults to
             ``parabolic_index[-1] + 1``, which undercounts when the last block has size 1 (it
             contributes no reflection), so callers that know the block sizes should pass their sum.
+        coeff_map: Optional ``(w_1, q_part, coeff) -> coeff`` applied to each surviving full-flag
+            piece ``q_part * coeff`` of ``coeff_dict[w_1]`` before it is reindexed. Use it for anything
+            that needs the full-flag index, such as ``q_posify_monomial``.
 
     Returns:
         dict: Parabolic quantum coefficient dict ``{Permutation: coeff}``.
@@ -389,6 +372,8 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=No
             except Exception:
                 pass
             q_val_part = q_dict[q_part]
+            if coeff_map is not None:
+                q_val_part = coeff_map(w_1, q_part, q_val_part)
             coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
     return coeff_dict_update
 
