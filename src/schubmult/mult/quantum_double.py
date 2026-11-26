@@ -253,17 +253,7 @@ def _q_posify_degree(u, v, w, coeff, qv, var2, var3, q_var, msg):
     return pos.posify(coeff, u, v, w, var2, var3, msg)
 
 
-def q_posify(u, v, w, val, var2, var3, q_var, msg):
-    """Manifestly positive representation of the quantum double structure constant ``c^w_{u,v}``.
-
-    Split by q-monomial, keeping integers and medium-theta coefficients as-is. At positive
-    degree, recursively peel by quantum 1-domination when its strip has degree zero; otherwise
-    try a Huang--Li step and retest. Delegate degree zero to classical ``posify`` and use the
-    LP only if neither quantum reduction applies. Check reconstruction against ``val``.
-    """
-    expanded = expand(val)
-    if expanded.is_Integer:
-        return int(expanded)
+def _posify_alphabets(var2, var3, q_var):
     # Explicit alphabets also serve as cache keys in the smaller products.
     if isinstance(var2, list):
         var2 = tuple(var2)
@@ -271,12 +261,43 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
         var3 = tuple(var3)
     if not isinstance(q_var, GeneratingSet_base):
         q_var = CustomGeneratingSet(q_var)
+    return var2, var3, q_var
+
+
+def q_posify_monomial(u, v, w, monomial, coeff, var2, var3, q_var, msg):
+    """Manifestly positive form of ``coeff``, the coefficient of the ``q``-monomial ``monomial`` in ``c^w_{u,v}``.
+
+    The per-degree step of ``q_posify``, checked against ``coeff``. Also used as the ``coeff_map``
+    of ``apply_peterson_woodward``, whose output is no longer indexed by the full-flag ``w``.
+    """
+    expanded = expand(coeff)
+    if expanded.is_Integer:
+        return int(expanded)
+    var2, var3, q_var = _posify_alphabets(var2, var3, q_var)
+    result = _q_posify_degree(u, v, w, coeff, q_vector(monomial, q_var), var2, var3, q_var, msg)
+    if expand(coeff - result) != 0:
+        raise ValueError(f"Quantum positivity reconstruction failed for {u=}, {v=}, {w=}, q-monomial {monomial}")
+    return result
+
+
+def q_posify(u, v, w, val, var2, var3, q_var, msg):
+    """Manifestly positive representation of the quantum double structure constant ``c^w_{u,v}``.
+
+    Split by q-monomial, keeping integers and medium-theta coefficients as-is. At positive
+    degree, recursively peel by quantum 1-domination when its strip has degree zero; otherwise
+    try a Huang--Li step and retest. Delegate degree zero to classical ``posify`` and use the
+    LP only if neither quantum reduction applies. Check each piece's reconstruction.
+
+    ``w`` must index the full-flag product: for parabolic output, posify before projecting via
+    the ``coeff_map`` of ``apply_peterson_woodward``.
+    """
+    expanded = expand(val)
+    if expanded.is_Integer:
+        return int(expanded)
+    var2, var3, q_var = _posify_alphabets(var2, var3, q_var)
     result = S.Zero
     for monomial, coeff in factor_out_q(val, q_var).items():
-        degree = q_vector(monomial, q_var)
-        result += monomial * _q_posify_degree(u, v, w, coeff, degree, var2, var3, q_var, msg)
-    if expand(val - result) != 0:
-        raise ValueError(f"Quantum positivity reconstruction failed for {u=}, {v=}, {w=}")
+        result += monomial * q_posify_monomial(u, v, w, monomial, coeff, var2, var3, q_var, msg)
     return result
 
 
@@ -333,7 +354,7 @@ def q_partial_posify_generic(val, u, v, w):
     return val2
 
 
-def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=None):
+def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=None, coeff_map=None):
     """Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
 
     Implements the Peterson-Woodward comparison: for each ``q``-monomial of each coefficient,
@@ -348,6 +369,9 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=No
         n: Ambient flag size ``S_n``; results indexed by longer permutations are dropped. Defaults to
             ``parabolic_index[-1] + 1``, which undercounts when the last block has size 1 (it
             contributes no reflection), so callers that know the block sizes should pass their sum.
+        coeff_map: Optional ``(w_1, q_part, coeff) -> coeff`` applied to each surviving full-flag
+            piece ``q_part * coeff`` of ``coeff_dict[w_1]`` before it is reindexed. Use it for anything
+            that needs the full-flag index, such as ``q_posify_monomial``.
 
     Returns:
         dict: Parabolic quantum coefficient dict ``{Permutation: coeff}``.
@@ -389,6 +413,8 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var, n=No
             except Exception:
                 pass
             q_val_part = q_dict[q_part]
+            if coeff_map is not None:
+                q_val_part = coeff_map(w_1, q_part, q_val_part)
             coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
     return coeff_dict_update
 

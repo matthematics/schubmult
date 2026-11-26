@@ -10,7 +10,7 @@ Example:
 import sys
 from functools import cached_property
 
-from schubmult.symbolic import simplify, sympify
+from schubmult.symbolic import expand, simplify, sympify
 from schubmult.utils.argparse import schub_argparse
 
 from schubmult.combinatorics.permutation import Permutation, permtrim, uncode
@@ -18,6 +18,7 @@ from schubmult.mult.quantum_double import (
     apply_peterson_woodward,
     nil_hecke,
     q_posify,
+    q_posify_monomial,
     schubmult_q_double,
     schubmult_q_double_fast,
 )
@@ -118,8 +119,10 @@ def main(argv=None):
     prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
     ``y``/``z`` coefficient variables and quantum parameters ``q_i``. With
     ``--parabolic``, the result is projected via the Peterson-Woodward theorem
-    (`apply_peterson_woodward`). With ``--display-positive``, coefficients are rewritten
-    positively via `schubmult.mult.quantum_double.q_posify`. ``--nil-hecke N`` substitutes
+    (`apply_peterson_woodward`) into ``S_n`` for ``n`` the sum of the block sizes. With
+    ``--display-positive``, coefficients are rewritten positively via
+    `schubmult.mult.quantum_double.q_posify`; with ``--parabolic``, each full-flag piece is
+    posified before projection (`schubmult.mult.quantum_double.q_posify_monomial`). ``--nil-hecke N`` substitutes
     up to ``N`` Fomin-Gelfand-Postnikov commuting difference operators
     (`schubmult.mult.quantum_double.nil_hecke`) instead of multiplying permutations.
     Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from
@@ -156,14 +159,10 @@ def main(argv=None):
         display_positive = args.display_positive
         pr = args.pr
         parabolic_index = []
-        start = 0
-        # 1, 2 | 3
-        for i in range(len(args.parabolic)):
-            end = start + int(args.parabolic[i])
-            parabolic_index += list(range(start + 1, end))
-            # start += int(args.parabolic[i])
-            start = end
-        # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
+        parabolic_n = 0
+        for size in args.parabolic:
+            parabolic_index += list(range(parabolic_n + 1, parabolic_n + int(size)))
+            parabolic_n += int(size)
         parabolic = len(parabolic_index) != 0
         slow = args.slow
         nil_N = 0
@@ -204,13 +203,23 @@ def main(argv=None):
                 else:
                     coeff_dict = schubmult_q_double(coeff_dict, perm, var2, var3)
 
+        q_display_positive = display_positive and not same and not nilhecke and not nilhecke_apply
+
         if parabolic:
-            coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index)
+            coeff_map = None
+            if q_display_positive:
+                # Projection moves each piece [q^d] c^{w_1}_{u,v} to a new index, so posify it first.
+                def coeff_map(w, monomial, coeff):
+                    return q_posify_monomial(perms[0], perms[1], w, monomial, coeff, var2, var3, _vars.q_var, msg)
+
+            coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index, n=parabolic_n, coeff_map=coeff_map)
+            # Pieces from different full-flag indices can cancel without being structurally zero.
+            coeff_dict = {perm: val for perm, val in coeff_dict.items() if expand(val) != 0}
 
         if display_positive and not nilhecke and not nilhecke_apply:
             if same:
                 coeff_dict = {perm: sv_posify(val) for perm, val in coeff_dict.items()}
-            else:
+            elif not parabolic:
                 coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
 
         raw_result_dict = {}

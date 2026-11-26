@@ -20,7 +20,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, parabolic):
             # start += int(args.parabolic[i])
             start = end
         # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
-        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index)
+        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index, n=start)
 
     for k, v in coeff_dict.items():
         if v != 0:
@@ -98,6 +98,39 @@ def test_with_same_args_exec(capsys, json_file):
     input_dict = {(perms[0]) if not ascode else uncode(perms[0]): 1}
     print(f"{v_tuple=} {input_dict=}")
     assert_dict_good(v_tuple, input_dict, ret_dict, parabolic)
+
+
+def test_parabolic_projection_keeps_trailing_singleton_block():
+    from schubmult import Permutation, schubmult_q
+    from schubmult._scripts.schubmult_q import main
+    from schubmult.mult.quantum_double import apply_peterson_woodward
+
+    u = Permutation([1, 2, 4, 3])
+    full_flag = schubmult_q({u: 1}, u)
+    expected = {w: c for w, c in apply_peterson_woodward(full_flag, [1, 2], n=4).items() if c != 0}
+    old_cutoff = apply_peterson_woodward(full_flag, [1, 2])
+    actual = main(
+        [
+            "schubmult_q",
+            "--parabolic",
+            "3",
+            "1",
+            "--code",
+            "0",
+            "0",
+            "1",
+            "-",
+            "0",
+            "0",
+            "1",
+            "--display-mode",
+            "raw",
+        ]
+    )
+
+    assert any(len(w) == 4 for w in expected)
+    assert not any(len(w) == 4 and c != 0 for w, c in old_cutoff.items())
+    assert actual == expected
 
 
 if __name__ == "__main__":
