@@ -110,6 +110,19 @@ def schubmult_q_generic_partial_posify(u2, v2)
 Manifestly positive (where possible) expansion of ``S_{u2} * S_{v2}`` over the generic alphabets,
 applying ``q_partial_posify_generic`` to each coefficient.
 
+<a id="schubmult.mult.quantum_double.q_posify_monomial"></a>
+
+#### q\_posify\_monomial
+
+```python
+def q_posify_monomial(u, v, w, monomial, coeff, var2, var3, q_var, msg)
+```
+
+Manifestly positive form of ``coeff``, the coefficient of the ``q``-monomial ``monomial`` in ``c^w_{u,v}``.
+
+The per-degree step of ``q_posify``, checked against ``coeff``. Also used as the ``coeff_map``
+of ``apply_peterson_woodward``, whose output is no longer indexed by the full-flag ``w``.
+
 <a id="schubmult.mult.quantum_double.q_posify"></a>
 
 #### q\_posify
@@ -123,7 +136,10 @@ Manifestly positive representation of the quantum double structure constant ``c^
 Split by q-monomial, keeping integers and medium-theta coefficients as-is. At positive
 degree, recursively peel by quantum 1-domination when its strip has degree zero; otherwise
 try a Huang--Li step and retest. Delegate degree zero to classical ``posify`` and use the
-LP only if neither quantum reduction applies. Check reconstruction against ``val``.
+LP only if neither quantum reduction applies. Check each piece's reconstruction.
+
+``w`` must index the full-flag product: for parabolic output, posify before projecting via
+the ``coeff_map`` of ``apply_peterson_woodward``.
 
 <a id="schubmult.mult.quantum_double.q_partial_posify_generic"></a>
 
@@ -145,7 +161,8 @@ leaves non-reducible ``q``-pieces unchanged rather than running the LP.
 def apply_peterson_woodward(coeff_dict,
                             parabolic_index,
                             q_var=_vars.q_var,
-                            n=None)
+                            n=None,
+                            coeff_map=None)
 ```
 
 Project a full-flag quantum product onto the parabolic quantum cohomology for ``parabolic_index``.
@@ -163,6 +180,9 @@ only the ``parabolic``-minimal results, and reindexes the surviving ``q`` variab
 - `n` - Ambient flag size ``S_n``; results indexed by longer permutations are dropped. Defaults to
   ``parabolic_index[-1] + 1``, which undercounts when the last block has size 1 (it
   contributes no reflection), so callers that know the block sizes should pass their sum.
+- `coeff_map` - Optional ``(w_1, q_part, coeff) -> coeff`` applied to each surviving full-flag
+  piece ``q_part * coeff`` of ``coeff_dict[w_1]`` before it is reindexed. Use it for anything
+  that needs the full-flag index, such as ``q_posify_monomial``.
   
 
 **Returns**:

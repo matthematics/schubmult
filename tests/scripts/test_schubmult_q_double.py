@@ -90,7 +90,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, parabolic, same=True, displa
             # start += int(args.parabolic[i])
             start = end
         # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
-        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index)
+        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index, n=start)
     # print(f"{coeff_dict=}",file=sys.stderr)
     # print(f"{coeff_dict=}")
     # print(f"{ret_dict=}")
@@ -184,6 +184,25 @@ def test_with_same_args_exec(capsys, json_file):
     input_dict = {(permtrim(perms[0])) if not ascode else (permtrim(uncode(perms[0]))): 1}
 
     assert_dict_good(v_tuple, input_dict, ret_dict, parabolic, same, display_positive, slow)
+
+
+def test_parabolic_display_positive_mixed_var():
+    # Posify full-flag pieces before Peterson-Woodward reindexes them; the trailing size-1 block is part of S_4.
+    from schubmult import QPDSx, Permutation
+    from schubmult._scripts.schubmult_q_double import main
+    from schubmult.symbolic import expand
+
+    argv = ["schubmult_q_double", "--mixed-var", "1", "3", "4", "2", "-", "1", "3", "4", "2", "--parabolic", "1", "2", "1", "--display-mode", "raw"]
+    raw = main(argv)
+    pos = main([*argv, "--display-positive"])
+    R = QPDSx(1, 2, 1)
+    ring = {w: c for w, c in (R(Permutation([1, 3, 4, 2])) * R(Permutation([1, 3, 4, 2]), "z")).items() if len(w) <= 4 and expand(c) != 0}
+    assert any(len(w) == 4 for w in raw)
+    assert raw.keys() == pos.keys() == ring.keys()
+    for w, val in pos.items():
+        assert expand(val - raw[w]) == 0
+        assert expand(val - ring[w]) == 0
+        assert re.search(r"-(?!\s*(\d+\*)?z_)", str(val)) is None, val
 
 
 if __name__ == "__main__":
