@@ -1,5 +1,47 @@
 # Changelog
 
+## 5.4.1
+
+Hotfix release: parabolic quantum products from `schubmult_q` and `schubmult_q_double`, and
+therefore from the web calculator, could silently drop terms or fail with `--display-positive`.
+
+### Fixed
+
+- **`--parabolic` dropped terms when the composition ended in blocks of size 1**
+  (`schubmult_q`, `schubmult_q_double`). The Peterson--Woodward projection kept only
+  permutations in $S_n$, with $n$ inferred as one more than the last parabolic generator. A
+  block of size 1 contributes no generator, so trailing size-1 blocks made $n$ too small and
+  valid terms were discarded without warning. For example, the following returned no terms
+  instead of $\sigma_{1342}$:
+  `schubmult_q --parabolic 3 1 --code 0 0 1 - 0 0 1`. This command returned only 3 of its
+  116 terms:
+  `schubmult_q_double --mixed-var 1 2 4 7 5 3 6 - 1 3 5 6 2 7 4 --parabolic 2 2 1 1 1`.
+  Both commands now project into $S_n$ with $n$ the sum of the block sizes.
+- **`schubmult_q_double --mixed-var --parabolic --display-positive` failed.** Positivity was
+  applied after projection, so `q_posify` received a projected coefficient indexed by its
+  projected permutation, while it requires the full-flag structure constant $c^w_{u,v}$.
+  Projection changes both the permutation and the $q$-monomial, so the reduction targeted the
+  wrong coefficient and the reconstruction check failed with a bare `Exception`, for instance on
+  `schubmult_q_double --mixed-var 1 3 2 - 2 4 1 3 --parabolic 1 1 2 --display-positive`.
+  Each full-flag piece $[q^d]\,c^w_{u,v}$ is now made positive before projection, using its
+  original indices, and projected coefficients that cancel to zero are omitted. The output
+  agrees with the command without `--display-positive` and with `QPDSx`. The `QPDSx` /
+  `ParabolicQuantumDoubleSchubertRing` API was not affected by either bug.
+
+### Changed
+
+- **`q_posify` errors are no longer swallowed.** It previously printed a traceback for each
+  $q$-piece it could not process and then raised a bare `Exception`. Errors from the positivity
+  routines now propagate, and a failed reconstruction raises `ValueError` naming $u$, $v$, $w$,
+  and the $q$-monomial.
+
+### Added
+
+- `schubmult.mult.quantum_double.apply_peterson_woodward` accepts
+  `coeff_map(w, q_monomial, coeff)`, applied to each surviving full-flag piece before it is
+  reindexed. `schubmult.mult.quantum_double.q_posify_monomial` makes the coefficient of a single
+  $q$-monomial positive and checks the result; `q_posify` now applies it to each $q$-monomial.
+
 ## 5.4.0
 
 New quantum double Grothendieck and change-of-variables APIs, custom quantum alphabets,

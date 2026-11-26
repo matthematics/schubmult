@@ -28,8 +28,10 @@ their quantum double Schubert polynomials via
 prints the resulting coefficient dictionary ``{Permutation: coefficient}`` in the
 ``y``/``z`` coefficient variables and quantum parameters ``q_i``. With
 ``--parabolic``, the result is projected via the Peterson-Woodward theorem
-(`apply_peterson_woodward`). With ``--display-positive``, coefficients are rewritten
-positively via `schubmult.mult.quantum_double.q_posify`. ``--nil-hecke N`` substitutes
+(`apply_peterson_woodward`) into ``S_n`` for ``n`` the sum of the block sizes. With
+``--display-positive``, coefficients are rewritten positively via
+`schubmult.mult.quantum_double.q_posify`; with ``--parabolic``, each full-flag piece is
+posified before projection (`schubmult.mult.quantum_double.q_posify_monomial`). ``--nil-hecke N`` substitutes
 up to ``N`` Fomin-Gelfand-Postnikov commuting difference operators
 (`schubmult.mult.quantum_double.nil_hecke`) instead of multiplying permutations.
 Returns the raw result dict when the caller passes a ``None`` formatter (e.g. from

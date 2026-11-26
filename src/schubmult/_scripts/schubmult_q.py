@@ -31,7 +31,7 @@ def _display_full(coeff_dict, args, formatter):
     parabolic = len(parabolic_index) != 0
 
     if parabolic:
-        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index)
+        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index, n=start)
 
     coeff_perms = list(coeff_dict.keys())
     coeff_perms.sort(key=lambda x: (x.inv, *x))
