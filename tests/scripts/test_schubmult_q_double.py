@@ -186,18 +186,28 @@ def test_with_same_args_exec(capsys, json_file):
     assert_dict_good(v_tuple, input_dict, ret_dict, parabolic, same, display_positive, slow)
 
 
-def test_parabolic_display_positive_mixed_var():
-    # Posify full-flag pieces before Peterson-Woodward reindexes them; the trailing size-1 block is part of S_4.
+@pytest.mark.parametrize(
+    ("u", "v", "blocks"),
+    [
+        # The trailing size-1 block is part of S_4.
+        ((1, 3, 4, 2), (1, 3, 4, 2), (1, 2, 1)),
+        # Posifying after projection uses the wrong index and fails at w = ().
+        ((1, 3, 2), (2, 4, 1, 3), (1, 1, 2)),
+    ],
+)
+def test_parabolic_display_positive_mixed_var(u, v, blocks):
+    # Posify full-flag pieces before Peterson-Woodward reindexes them.
     from schubmult import QPDSx, Permutation
     from schubmult._scripts.schubmult_q_double import main
     from schubmult.symbolic import expand
 
-    argv = ["schubmult_q_double", "--mixed-var", "1", "3", "4", "2", "-", "1", "3", "4", "2", "--parabolic", "1", "2", "1", "--display-mode", "raw"]
+    n = sum(blocks)
+    argv = ["schubmult_q_double", "--mixed-var", *map(str, u), "-", *map(str, v), "--parabolic", *map(str, blocks), "--display-mode", "raw"]
     raw = main(argv)
     pos = main([*argv, "--display-positive"])
-    R = QPDSx(1, 2, 1)
-    ring = {w: c for w, c in (R(Permutation([1, 3, 4, 2])) * R(Permutation([1, 3, 4, 2]), "z")).items() if len(w) <= 4 and expand(c) != 0}
-    assert any(len(w) == 4 for w in raw)
+    R = QPDSx(*blocks)
+    ring = {w: c for w, c in (R(Permutation(u)) * R(Permutation(v), "z")).items() if len(w) <= n and expand(c) != 0}
+    assert any(len(w) == n for w in raw)
     assert raw.keys() == pos.keys() == ring.keys()
     for w, val in pos.items():
         assert expand(val - raw[w]) == 0
